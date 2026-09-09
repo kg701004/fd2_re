@@ -229,12 +229,13 @@
    "chapter": 7,
    "tag": "post",
    "handler": "0x234bb",
-   "n_beats": 9,
+   "n_beats": 10,
    "ops": {
     "layout_units": 1,
     "dialog": 2,
     "act": 2,
-    "unknown": 1,
+    "palette_brightness_ramp": 1,
+    "memset": 1,
     "join": 1,
     "sync_party": 1,
     "increment_chapter": 1
@@ -583,9 +584,11 @@
    "ops": {
     "layout_units": 1,
     "dialog": 5,
-    "unknown": 4,
+    "find_item_slot": 2,
+    "remove_inventory_slot": 1,
     "grant_item": 1,
     "act": 2,
+    "unknown": 1,
     "join": 2,
     "sync_party": 1,
     "increment_chapter": 1
@@ -609,14 +612,16 @@
    "chapter": 21,
    "tag": "post",
    "handler": "0x244b6",
-   "n_beats": 13,
+   "n_beats": 15,
    "ops": {
     "layout_units": 1,
     "dialog": 3,
     "act": 2,
     "pan": 2,
-    "unknown": 2,
+    "palette_transition_loop": 1,
     "delay": 1,
+    "memset": 2,
+    "unknown": 1,
     "sync_party": 1,
     "increment_chapter": 1
    }
@@ -630,8 +635,9 @@
     "loadch_call": 1,
     "deactivate_unit": 1,
     "pan": 3,
-    "unknown": 4,
+    "palette_transition_loop": 1,
     "redraw": 2,
+    "palette_delta_ramp": 3,
     "delay": 4,
     "dialog": 5,
     "act": 3,
@@ -647,15 +653,20 @@
    "n_beats": 43,
    "ops": {
     "layout_units": 1,
-    "unknown": 10,
+    "party_has_item": 1,
     "dialog": 10,
     "join": 2,
     "act": 6,
+    "roster_has": 1,
     "deactivate_unit": 2,
     "sync_party": 1,
     "increment_chapter": 1,
     "delay": 4,
+    "sprite_walk_on": 3,
+    "buffer_flicker": 2,
+    "palette_delta_ramp": 2,
     "load_res": 3,
+    "unknown": 1,
     "prepare_chapter_aux_graphics": 1,
     "pan": 2
    }
@@ -678,11 +689,14 @@
    "chapter": 23,
    "tag": "post",
    "handler": "0x24c1e",
-   "n_beats": 11,
+   "n_beats": 12,
    "ops": {
     "dialog": 2,
     "redraw": 2,
-    "unknown": 5,
+    "unknown": 2,
+    "reveal_wipe": 2,
+    "palette_brightness_ramp": 1,
+    "memset": 1,
     "sync_party": 1,
     "increment_chapter": 1
    }
@@ -691,16 +705,18 @@
    "chapter": 24,
    "tag": "pre",
    "handler": "0x3396a",
-   "n_beats": 19,
+   "n_beats": 20,
    "ops": {
     "loadch_call": 1,
     "load_res": 1,
     "pan": 1,
     "dialog": 2,
+    "memset": 1,
     "play_sfx": 5,
-    "unknown": 5,
+    "buffer_flicker": 4,
     "delay": 3,
-    "focus_unit": 1
+    "focus_unit": 1,
+    "unknown": 1
    }
   },
   {
@@ -755,7 +771,9 @@
     "pan": 2,
     "act": 2,
     "dialog": 6,
-    "unknown": 7,
+    "party_has_item": 1,
+    "palette_transition_loop": 3,
+    "palette_delta_ramp": 3,
     "reset_pose": 1,
     "focus_unit": 1
    }
@@ -764,16 +782,20 @@
    "chapter": 26,
    "tag": "post",
    "handler": "0x250cc",
-   "n_beats": 37,
+   "n_beats": 39,
    "ops": {
     "layout_units": 1,
     "dialog": 9,
     "act": 5,
-    "unknown": 14,
+    "party_has_item": 1,
     "pan": 1,
+    "unknown": 11,
     "delay": 5,
+    "palette_transition_loop": 1,
+    "memset": 2,
     "sync_party": 1,
-    "increment_chapter": 1
+    "increment_chapter": 1,
+    "unit_present": 1
    }
   },
   {
@@ -785,12 +807,14 @@
     "loadch_call": 1,
     "deactivate_unit": 1,
     "pan": 1,
-    "unknown": 4,
+    "palette_transition_loop": 1,
     "redraw": 1,
+    "palette_delta_ramp": 1,
     "delay": 1,
     "act": 3,
     "reset_pose": 1,
     "dialog": 1,
+    "unknown": 2,
     "focus_unit": 1
    }
   },
@@ -824,13 +848,18 @@
    "chapter": 28,
    "tag": "post",
    "handler": "0x2548c",
-   "n_beats": 40,
+   "n_beats": 41,
    "ops": {
     "dialog": 6,
-    "unknown": 17,
+    "unknown": 4,
     "spawn": 1,
     "pan": 1,
+    "camera_step_to": 1,
+    "unit_present": 1,
+    "buffer_flicker": 9,
     "delay": 13,
+    "palette_delta_ramp": 2,
+    "memset": 1,
     "sync_party": 1,
     "increment_chapter": 1
    }
@@ -860,40 +889,31 @@
     "dialog": 4,
     "act": 2,
     "pan": 2,
-    "unknown": 7,
+    "camera_step_to": 1,
+    "palette_transition_loop": 1,
+    "unknown": 4,
     "increment_chapter": 1,
     "loadch": 1,
     "redraw": 2,
+    "palette_delta_ramp": 1,
     "delay": 1
    }
   }
  ],
  "unknown_targets": {
-  "0x11d40": 2,
   "0x1f882": 4,
   "0x13536": 2,
-  "0x31860": 2,
-  "0x1b8e7": 1,
   "0x24336": 1,
-  "0x24618": 8,
-  "0x11df2": 12,
-  "0x24b14": 3,
-  "0x24bde": 1,
-  "0x2189a": 3,
-  "0x24b4d": 15,
-  "0x4dbfc": 1,
+  "0x4df4c": 1,
   "0x17aa9": 3,
-  "0x24d22": 2,
-  "0x37416": 1,
+  "0x3776e": 1,
   "0x25052": 6,
   "0x25089": 4,
   "0x1c2da": 1,
-  "0x22253": 2,
-  "0x2bce5": 2,
-  "0x35822": 3,
-  "0x35bba": 1,
-  "0x12cea": 2,
-  "0x35e5a": 4,
+  "0x31529": 2,
+  "0x35b78": 3,
+  "0x35f10": 1,
+  "0x361b0": 4,
   "0x33f78": 7
  }
 }

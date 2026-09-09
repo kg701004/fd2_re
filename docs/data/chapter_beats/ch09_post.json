@@ -9,7 +9,8 @@
     "ebx",
     "esi",
     "edi"
-   ]
+   ],
+   "args_are_raw_pushes": true
   },
   {
    "op": "unknown",
@@ -34,7 +35,7 @@
   {
    "op": "delay",
    "addr": "0x23700",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]

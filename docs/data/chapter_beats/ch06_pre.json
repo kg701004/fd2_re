@@ -22,7 +22,8 @@
    "target": "0x10b4e",
    "args": [
     1
-   ]
+   ],
+   "raw_placement_gate": 1
   },
   {
    "op": "pan",

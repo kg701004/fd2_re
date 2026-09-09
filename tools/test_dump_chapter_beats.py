@@ -70,6 +70,34 @@ class StructureControlFlowTest(unittest.TestCase):
             [1, 0, 0],
         )
 
+    def test_normalize_keeps_arg_order_provenance_apart_for_the_two_unknown_kinds(self):
+        # 兩種 unknown 的 args 順序**相反**,而 IR 這一層以前一律叫 raw_args ——
+        # 消費端因此分不出哪一筆能照簽名順序讀。正反例成對:沒有第二個斷言,
+        # 一個永遠寫 raw_args 的實作也會通過第一個。
+        raw_kind = {"op": "unknown", "addr": "0x1", "target": "0xaaa",
+                    "args": [1, 2, 3], "args_are_raw_pushes": True}
+        sliced_kind = {"op": "unknown", "addr": "0x2", "target": "0xbbb",
+                       "args": [4, 5]}
+        got = handler_scripts.normalize([raw_kind, sliced_kind])
+        self.assertEqual(got[0]["raw_args"], [1, 2, 3])
+        self.assertTrue(got[0]["args_are_raw_pushes"])
+        self.assertNotIn("args", got[0])
+        self.assertEqual(got[1]["args"], [4, 5])
+        self.assertNotIn("raw_args", got[1])
+        self.assertNotIn("args_are_raw_pushes", got[1])
+
+    def test_normalize_carries_doc_anchored_name_provenance(self):
+        # 名稱是文件錨定來的,IR 這一層必須看得出來;順便釘住「有名稱但 args 仍是
+        # 原始 push」這個組合(0x22253 的真實情況)不會在轉換時被抹平。
+        named = {"op": "unit_present", "addr": "0x3", "target": "0x22253",
+                 "args": [10, 15], "args_are_raw_pushes": True,
+                 "op_name_source": "doc-anchored"}
+        got = handler_scripts.normalize([named])[0]
+        self.assertEqual(got["op"], "unit_present")
+        self.assertEqual(got["op_name_source"], "doc-anchored")
+        self.assertTrue(got["args_are_raw_pushes"])
+        self.assertEqual(got["source"]["target"], "0x22253")
+
     def test_10652_is_not_exported_as_a_complete_chapter_background_load(self):
         self.assertEqual(
             beats.PRIM[0x10652],

@@ -32,6 +32,17 @@
    ]
   },
   {
+   "op": "memset",
+   "addr": "0x339d9",
+   "target": "0x37910",
+   "args": [
+    "dword ptr [0x3a49]",
+    0,
+    153216
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
    "op": "play_sfx",
    "addr": "0x339eb",
    "target": "0x25a96",
@@ -40,17 +51,18 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x339f5",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x33a02",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     600
    ]
@@ -64,17 +76,18 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x33a1e",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x33a2b",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     600
    ]
@@ -88,17 +101,18 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x33a47",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x33a54",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     600
    ]
@@ -112,12 +126,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x33a70",
    "target": "0x24b4d",
    "args": [
     60
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -147,7 +162,7 @@
   {
    "op": "unknown",
    "addr": "0x1a80a",
-   "target": "0x37416",
+   "target": "0x3776e",
    "args": [
     "dword ptr [0x3b13]"
    ]

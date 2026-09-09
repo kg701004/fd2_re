@@ -35,12 +35,13 @@
    }
   },
   {
-   "op": "unknown",
+   "op": "reveal_wipe",
    "addr": "0x24c82",
    "target": "0x24d22",
    "args": [
     "edi"
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -52,14 +53,15 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_brightness_ramp",
    "addr": "0x24cc9",
    "target": "0x11d40",
    "args": [
-    "esi",
+    0,
     255,
-    0
-   ]
+    "esi"
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "redraw",
@@ -86,12 +88,24 @@
    }
   },
   {
-   "op": "unknown",
+   "op": "reveal_wipe",
    "addr": "0x24cf3",
    "target": "0x24d22",
    "args": [
     "edi"
-   ]
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
+   "op": "memset",
+   "addr": "0x24d0b",
+   "target": "0x37910",
+   "args": [
+    655360,
+    0,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "sync_party",

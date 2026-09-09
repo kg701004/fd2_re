@@ -16,7 +16,8 @@
    "target": "0x10b4e",
    "args": [
     4
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "act",

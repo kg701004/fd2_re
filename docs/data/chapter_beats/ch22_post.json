@@ -8,12 +8,13 @@
    "args": []
   },
   {
-   "op": "inventory_has",
+   "op": "party_has_item",
    "addr": "0x247be",
    "target": "0x24b14",
    "args": [
     100
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: FUN_00024b14(item_id) is already fully decompiled and live-verified in 99-chapter-sweep-results.md 'Step 1' -- for char_idx 0..15, calls FUN_0002aedb(char_idx,item_id) (linear scan of that unit's up to 8 inventory slots via FUN_0001b8a6/FUN_0001b722), returns 1 if any unit carries item_id, else -1. item_id=100 is exe_tables/item.json id 100 (type 34, price 2, all combat stats 0 -- a non-combat/key item, name not yet decoded). Same target+args also appears unresolved in ch26_post.json/ch26_pre.json; fixed there too."
   },
   {
@@ -55,8 +56,10 @@
    "addr": "0x24838",
    "target": "0x24bde",
    "args": [
-    18
+    13
    ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: 0x24bde is a second, independently-compiled instance of the doc25 roster_has(id) pattern (linear scan [0x53bf7]+i*0x50, byte[+8]==id, count bound [0x53bfb]) -- NOT the canonical 0x33499 entry point, but bit-identical semantics; same id=18 already verified at ch16_post.json's 0x33499 call. Falls outside Ghidra's function-boundary detection because its Watcom stack-check prologue (PUSH 0x8; CALL 0x3702f) doesn't match the PUSH EBP pattern Ghidra's analyzer looks for -- same 'object1' blind spot documented elsewhere in this project."
   },
   {
@@ -157,29 +160,31 @@
   {
    "op": "delay",
    "addr": "0x2496a",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     400
    ]
   },
   {
-   "op": "play_effect_animation",
+   "op": "sprite_walk_on",
    "addr": "0x24978",
    "target": "0x2189a",
    "args": [
-    10,
+    1,
     15,
-    1
+    10
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: FUN_0002189a(unit_idx, frame_start, frame_step) is byte-exact disassembled. Once: compute unit_idx's battlefield screen position from its grid X/Y ([0x53a45]+unit_idx*0x50, bytes 0/1, each *24(0x18) minus camera offsets [0x53aa9]/[0x53aad]), call FUN_0003706e(px,py,0x25680) -> EBP (a resource/buffer handle). Then a fixed 10-iteration loop (hardcoded CMP EBX,0xa -- NOT read from any argument, despite superficially matching this call's frame_start=10): each iteration looks up a per-frame offset from table [0x53a6d] indexed by the loop counter, copies via the known memcpy primitive FUN_0003771c, calls FUN_000219ad/FUN_000127a9 (uncharacterized helpers) with an accumulator ESI that starts at frame_start and increments by frame_step each frame, then presents via the same known primitive FUN_00011eb0(dst=0xA0000+0x504,...) used by 0x24b4d/animate_toggle. Net effect: plays a 10-frame animation over the given unit's screen position, indexed by an accumulating frame cursor. Exact visual content (which effect/sprite) undetermined -- see 91-worklist.md 1511."
   },
   {
-   "op": "animate_toggle",
+   "op": "buffer_flicker",
    "addr": "0x24982",
    "target": "0x24b4d",
    "args": [
     30
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: FUN_00024b4d(count) is byte-exact disassembled -- for i in 0..count-1: src alternates between two buffers 0x1c8(456) bytes apart based on i&1 (base [0x53a49]+0x8088, +0x1c8 on odd i), calls the known present primitive FUN_00011eb0(dst=0xA0000+0x504, dstStride=0x140, src, srcStride=0x1c8, 0x138, rows=0xc0), then delays 20 units via FUN_0003790a. Shape strongly suggests a two-frame ping-pong animation played `count` times (not a monotonic wipe, since the source toggles back and forth). Exact screen region / which two images remain undetermined -- see 91-worklist.md 1511 for the full derivation."
   },
   {
@@ -194,29 +199,31 @@
   {
    "op": "delay",
    "addr": "0x249b6",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     400
    ]
   },
   {
-   "op": "play_effect_animation",
+   "op": "sprite_walk_on",
    "addr": "0x249c4",
    "target": "0x2189a",
    "args": [
-    10,
+    1,
     15,
-    1
+    10
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: same FUN_0002189a(unit_idx=10, frame_start=15, frame_step=1) as the 0x24978 call site -- see that note for the full derivation."
   },
   {
-   "op": "animate_toggle",
+   "op": "buffer_flicker",
    "addr": "0x249ce",
    "target": "0x24b4d",
    "args": [
     30
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: same FUN_00024b4d(count=30) two-frame ping-pong animation as the 0x24982 call site -- see that note for the full derivation."
   },
   {
@@ -231,41 +238,43 @@
   {
    "op": "delay",
    "addr": "0x24a02",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     400
    ]
   },
   {
-   "op": "play_effect_animation",
+   "op": "sprite_walk_on",
    "addr": "0x24a10",
    "target": "0x2189a",
    "args": [
-    16,
+    1,
     30,
-    1
+    16
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: same FUN_0002189a(unit_idx=16, frame_start=30, frame_step=1) as the 0x24978/0x249c4 call sites -- see that note for the full derivation."
   },
   {
-   "op": "set_palette_range",
+   "op": "palette_delta_ramp",
    "addr": "0x24a24",
    "target": "0x11df2",
    "args": [
-    "ebx",
+    0,
     255,
-    0
+    "ebx"
    ],
-   "note": "2026-09-06: FUN_00011df2(start,end,delta) is byte-exact disassembled -- a VGA DAC palette-write primitive, distinct from the already-known 0x11d40 fade primitive (doc35 line 220). For index=start..end: OUTPORTB(0x3C8,index) then 3x OUTPORTB(0x3C9, clamp(basePalette[[0x53a65]+index*3+channel] + delta, 0, 0x3f)) for R/G/B. delta=0 here means this writes the UNCHANGED base palette (a restore/copy, not a fade). args[0]='ebx' means start is a dynamic register value at this call site (the outer repeat_hint loop's own counter), not a constant.",
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x24a1c",
     "limit": 64
-   }
+   },
+   "note": "2026-09-06: FUN_00011df2(start,end,delta) is byte-exact disassembled -- a VGA DAC palette-write primitive, distinct from the already-known 0x11d40 fade primitive (doc35 line 220). For index=start..end: OUTPORTB(0x3C8,index) then 3x OUTPORTB(0x3C9, clamp(basePalette[[0x53a65]+index*3+channel] + delta, 0, 0x3f)) for R/G/B. delta=0 here means this writes the UNCHANGED base palette (a restore/copy, not a fade). args[0]='ebx' means start is a dynamic register value at this call site (the outer repeat_hint loop's own counter), not a constant."
   },
   {
    "op": "delay",
    "addr": "0x24a2e",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     4
    ],
@@ -295,7 +304,7 @@
   {
    "op": "unknown",
    "addr": "0x24a92",
-   "target": "0x4dbfc",
+   "target": "0x4df4c",
    "args": [
     "dword ptr [0x3a51]"
    ],
@@ -317,7 +326,7 @@
    ]
   },
   {
-   "op": "set_palette_range",
+   "op": "palette_delta_ramp",
    "addr": "0x24ab4",
    "target": "0x11df2",
    "args": [
@@ -325,6 +334,7 @@
     255,
     0
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: same FUN_00011df2 palette-write primitive as 0x24a24 (see that note), here writing the full base palette range 0..255 unchanged (delta=0)."
   },
   {

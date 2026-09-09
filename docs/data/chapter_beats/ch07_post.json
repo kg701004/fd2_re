@@ -42,14 +42,26 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_brightness_ramp",
    "addr": "0x23599",
    "target": "0x11d40",
    "args": [
-    64,
+    0,
     255,
-    0
-   ]
+    64
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
+   "op": "memset",
+   "addr": "0x235ad",
+   "target": "0x37910",
+   "args": [
+    655360,
+    0,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "join",

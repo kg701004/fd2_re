@@ -47,8 +47,13 @@ op 名稱(2026-09-09 加入,與參數個數是**兩種不同的主張**)
 母體擴大後判定 LIKELY,它的 `args` 仍然保留原始 push 並標記。反過來也一樣。這是刻意
 的——worklist 說的「填錯比留 unknown 更糟」主要針對語意,兩件事不混為一談。
 
-27 個目標中 11 個有名稱;`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無命名段落,
-維持 unknown。
+27 個目標中 13 個有名稱;`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無命名段落,
+`0x3776e` 的鄰居 `0x3771c` 才是被反組譯成 memmove 的那個(doc13 明寫它自己「語意仍是
+推測,未證實」),這些一律維持 unknown。
+
+`0x24bde` 的名稱刻意與 PRIM 的 `0x33499` 相同:doc25 記載它是同一個 `roster_has(id)`
+原語的第二個獨立編譯實例,本體逐位元組相同。所以撞名規則不是一律禁止,而是**撞名時
+引文必須自己提到那個名字**——引文沒提到就是認錯函式,照樣擋下。
 
 用法
 ----
@@ -396,6 +401,19 @@ DOC_OP_NAMES = {
               "figure/台座的色盤淡入(brightness ramp 0→48)"),
     0x11df2: ("palette_delta_ramp", 3, "50-cutscene-script-system-design.md",
               "是獨立的調色盤/淡變數值計算函式"),
+    # 這兩筆是 2026-09-09 續六補的,補的理由是我自己前一輪的判準不一致:
+    # 當初以「判定 WEAK/LIKELY」為由排除它們,但 WEAK/LIKELY 講的是**參數個數**的
+    # 信心,而本表的設計明說名稱與參數個數互不帶動。文件對這兩個位址的**語意**都
+    # 已經反組譯到底,排除它們沒有道理。
+    #
+    # 0x24bde 的名稱刻意與 PRIM 的 0x33499 相同——doc25 明說它是「同一個 roster_has(id)
+    # 原語的第二個獨立編譯實例」,本體逐位元組相同,只是 Watcom 序頭讓 Ghidra 漏判了
+    # function 邊界。撞名在這裡是**正確答案**,所以撞名規則改成「撞名時引文必須自己
+    # 提到那個名字」,而不是一律禁止。
+    0x24bde: ("roster_has", 1, "25-battle-event-system.md",
+              "同一個`roster_has(id)`原語的第二個獨立編譯實例"),
+    0x24618: ("palette_transition_loop", 4, "58-remake-live-verification-log.md",
+              "反編譯確認函式本體正是已證實的 9-frame/0x40-step palette 迴圈"),
 }
 # 刻意留在 unknown 的:`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無任何命名段落;
 # `0x31529`/`0x25089`/`0x3776e` 只有假陽性或旁證(`0x3776e` 的鄰居 `0x3771c` 才是被
@@ -418,6 +436,16 @@ def anchor_lines(doc: str, quote: str, addr: int) -> list[int]:
         if any(hexa in lines[j] for j in range(lo, hi)):
             out.append(i + 1)
     return out
+
+
+def collision_ok(name: str, quote: str, prim_names: set[str]) -> bool:
+    """與 PRIM 撞名時,引文必須自己說出那個名字(否則就是認錯函式)。
+
+    同一個原語被編譯成兩份是真的會發生:doc25 記載 `0x24bde` 是 `0x33499` 的
+    `roster_has(id)` 第二個獨立編譯實例,本體逐位元組相同。所以撞名不能一律禁止,
+    但也不能一律放行——放行條件必須寫在引文裡。
+    """
+    return name not in prim_names or name in quote
 
 
 def doc_op_name(target: int) -> str | None:
@@ -573,12 +601,17 @@ def selftest() -> int:
         got = derive(collect_wide(cg, addr))["argc"]
         if got != want:
             name_bad.append(f"{addr:#07x} {name}: 文件 {want}、推得 {got}({doc}:{where[0]})")
-    # 非平凡性:名稱不得重複,也不得與 PRIM 既有 op 名撞名(撞名代表其中一邊認錯函式)。
+    # 非平凡性:名稱不得在本表內重複。與 PRIM 撞名則要看情況——同一個原語被編譯成
+    # 兩份是真的會發生(0x24bde vs 0x33499),所以規則是**撞名時引文必須自己提到那個
+    # 名字**;引文沒提到就是認錯函式,照樣擋下。
     names = [n for n, _, _, _ in DOC_OP_NAMES.values()]
     prim_names = {n for n, _ in DC.PRIM.values()}
-    dup = sorted({n for n in names if names.count(n) > 1} | (set(names) & prim_names))
+    dup = sorted(n for n in set(names) if names.count(n) > 1)
     if dup:
-        name_bad.append(f"名稱重複或與 PRIM 撞名:{dup}")
+        name_bad.append(f"名稱在本表內重複:{dup}")
+    for addr, (name, _w, _d, quote) in sorted(DOC_OP_NAMES.items()):
+        if not collision_ok(name, quote, prim_names):
+            name_bad.append(f"{addr:#07x} {name}: 與 PRIM 撞名,但引文沒有說它是同一個原語")
     ok10 = not name_bad and len(DOC_OP_NAMES) >= 10
     print(f"    {'PASS' if ok10 else 'FAIL'}: {len(DOC_OP_NAMES)} 筆 op 名稱"
           + ("全部定位成功且參數個數相符" if ok10 else f",問題 {name_bad}"))
@@ -601,11 +634,39 @@ def selftest() -> int:
     kept = anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x2aedb)
     if not (raw_hits > len(kept) >= 1):
         ctrl.append(f"假陽性回歸失效:純比對 {raw_hits} 處、加鄰近後 {len(kept)} 處")
+    # (d) 撞名規則的兩極,兩邊都走同一個 collision_ok:0x24bde 用它真正的引文必須
+    #     **放行**(引文自己說了「同一個 roster_has(id) 原語的第二個獨立編譯實例」),
+    #     同一個名字換成本表裡另一段沒提到它的真實引文則必須**擋下**。只驗放行那一邊,
+    #     一個永遠回 True 的實作也會通過。
+    prim_now = {n for n, _ in DC.PRIM.values()}
+    _n, _w, _d, q_bde = DOC_OP_NAMES[0x24bde]
+    other_quote = DOC_OP_NAMES[0x24618][3]
+    if not collision_ok(_n, q_bde, prim_now):
+        ctrl.append("0x24bde 用它真正的引文卻被擋下")
+    if collision_ok(_n, other_quote, prim_now):
+        ctrl.append("換成沒提到 roster_has 的引文仍然放行 —— 撞名規則是裝飾")
     ok10b = not ctrl
-    print(f"    {'PASS' if ok10b else 'FAIL'}: 三個控制"
+    print(f"    {'PASS' if ok10b else 'FAIL'}: 四個控制"
           + (f"全部如預期(假陽性 {raw_hits} -> {len(kept)})" if ok10b else f",問題 {ctrl}"))
     if not ok10b:
         fails.append(f"op 名稱負向控制失效:{ctrl}")
+
+    print("\n(11) 已登錄的產物必須與本工具現在會產出的內容一致(把驗證往前搬)")
+    # 2026-09-09 實際踩到:加了兩個 op 名稱、卻忘了重生 native_argcounts.json,
+    # 一直到 10 軸驗證的 artifacts 軸(整輪 30 分鐘)才報出漂移。同一件事在這裡
+    # 2 秒就能知道。這不是取代 verify_generated_artifacts,是把它的回饋提前。
+    art = ROOT / "docs" / "data" / "native_argcounts.json"
+    if not art.exists():
+        ok11, detail = False, "產物不存在"
+    else:
+        want = json.loads(art.read_text(encoding="utf-8"))
+        got = report(exe, only_unknown=True, wide=True)
+        diff = sorted(k for k in set(want) | set(got) if want.get(k) != got.get(k))
+        ok11 = not diff
+        detail = "相同" if ok11 else f"漂移 {diff[:4]} —— 請重跑 --wide --json 重生"
+    print(f"    {'PASS' if ok11 else 'FAIL'}: {art.name} {detail}")
+    if not ok11:
+        fails.append(f"已登錄產物漂移:{detail}")
 
     if fails:
         print("\nSELFTEST FAILED:")
@@ -615,7 +676,7 @@ def selftest() -> int:
     print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
           "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
           "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
-          "+ 11 個 op 名稱的錨點複驗與三個負向控制)。")
+          "+ 13 個 op 名稱的錨點複驗與四個負向控制 + 已登錄產物的即時漂移檢查)。")
     return 0
 
 

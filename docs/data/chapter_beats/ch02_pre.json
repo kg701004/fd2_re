@@ -19,7 +19,7 @@
   {
    "op": "delay",
    "addr": "0x32eac",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -47,7 +47,8 @@
    "target": "0x10b4e",
    "args": [
     1
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "pan",
@@ -61,7 +62,7 @@
   {
    "op": "delay",
    "addr": "0x32f0a",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]

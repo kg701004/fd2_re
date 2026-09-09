@@ -181,7 +181,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "palette_transition_loop"
   },
   "0x24b14": {
     "argc": 1,
@@ -225,7 +225,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "roster_has"
   },
   "0x24d22": {
     "argc": 1,

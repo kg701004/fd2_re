@@ -13,7 +13,7 @@
   {
    "op": "unknown",
    "addr": "0x254c0",
-   "target": "0x35bba",
+   "target": "0x35f10",
    "args": [
     20
    ]
@@ -33,7 +33,8 @@
    "target": "0x10b4e",
    "args": [
     9
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "pan",
@@ -45,16 +46,17 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "camera_step_to",
    "addr": "0x2551d",
    "target": "0x12cea",
    "args": [
-    10,
-    15
-   ]
+    15,
+    10
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "unit_present",
    "addr": "0x25535",
    "target": "0x22253",
    "args": [
@@ -63,7 +65,9 @@
     10,
     15,
     "ebx"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -75,44 +79,47 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x25570",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x2557d",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     600
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x25587",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x25594",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     600
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x2559e",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -124,44 +131,47 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x255d9",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x255e6",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x255f0",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x255fd",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x25607",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -173,49 +183,52 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x25642",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x2564f",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x25659",
    "target": "0x24b4d",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x25663",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     100
    ]
   },
   {
-   "op": "unknown",
+   "op": "buffer_flicker",
    "addr": "0x2566d",
    "target": "0x24b4d",
    "args": [
     40
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x2567a",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -223,13 +236,13 @@
   {
    "op": "unknown",
    "addr": "0x25682",
-   "target": "0x35e5a",
+   "target": "0x361b0",
    "args": []
   },
   {
    "op": "delay",
    "addr": "0x2568c",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     300
    ]
@@ -237,13 +250,13 @@
   {
    "op": "unknown",
    "addr": "0x25694",
-   "target": "0x35e5a",
+   "target": "0x361b0",
    "args": []
   },
   {
    "op": "delay",
    "addr": "0x2569e",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     300
    ]
@@ -251,13 +264,13 @@
   {
    "op": "unknown",
    "addr": "0x256a6",
-   "target": "0x35e5a",
+   "target": "0x361b0",
    "args": []
   },
   {
    "op": "delay",
    "addr": "0x256b0",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     300
    ]
@@ -272,14 +285,15 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x256eb",
    "target": "0x11df2",
    "args": [
-    "ebx",
+    0,
     255,
-    0
+    "ebx"
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x256e3",
     "limit": 64
@@ -288,7 +302,7 @@
   {
    "op": "delay",
    "addr": "0x256f5",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     4
    ],
@@ -298,22 +312,34 @@
    }
   },
   {
+   "op": "memset",
+   "addr": "0x2570f",
+   "target": "0x37910",
+   "args": [
+    655360,
+    0,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
    "op": "delay",
    "addr": "0x2571c",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     800
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x25733",
    "target": "0x11df2",
    "args": [
-    "ebx",
+    0,
     255,
-    0
+    "ebx"
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x2572b",
     "limit": null
@@ -322,7 +348,7 @@
   {
    "op": "delay",
    "addr": "0x2573d",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     4
    ],

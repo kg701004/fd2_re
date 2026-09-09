@@ -15,9 +15,14 @@ cdecl 從右到左 push,故「最近 N 個 push」reverse 後才是函式簽名�
     維持原始 push 並標記 `args_are_raw_pushes`,因為猜錯個數比留著原樣更糟。
   * **op 名稱**另走一條獨立的路:`derive_native_argcounts.DOC_OP_NAMES` 只收 repo
     文件裡已反組譯、且引文可逐字定位(位址須在引文 ±3 行內)的名稱,命中時把
-    `op` 換掉並附 `op_name_source: doc-anchored`。11 個名稱共命中 52 條 beat,
-    unknown 101 -> 49。
+    `op` 換掉並附 `op_name_source: doc-anchored`。13 個名稱共命中 61 條 beat,
+    unknown 101 -> 40。
   * 兩者**不互相帶動**:`0x22253` 有名稱但參數個數判 LIKELY,args 仍是原始 push。
+
+人工註記(`docs/data/chapter_beats_notes.json`):
+  2026-09-06 手寫進已提交 chapter_beats 的 12 條反組譯註記,依 (檔名, 呼叫端位址)
+  索引。`all` 匯出時貼回對應 beat;**貼不上就整批丟錯**——重生會整檔覆蓋,沒有這個
+  機制,某次重生就會把這些證據安靜刪掉而沒人發現。
 
 用法:
   python3 dump_chapter_beats.py <EXE> ch0                  只跑序章(0x3231b),核對 doc47 §7
@@ -572,9 +577,39 @@ def cmd_handler(cg, fx, start, end):
         print(json.dumps(b, ensure_ascii=False))
 
 
+NOTES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          'docs', 'data', 'chapter_beats_notes.json')
+
+
+def load_notes(path=NOTES_FILE):
+    """人工加在 beat 上的反組譯註記,依 (檔名, 呼叫端位址) 索引。
+
+    這些是 2026-09-06 手寫進已提交 chapter_beats 的 RE 證據(例如「`0x24bde` 是
+    doc25 `roster_has(id)` 原語的第二個獨立編譯實例」)。重生會覆蓋整個檔案,所以
+    註記另外存一份、匯出時貼回去——否則每次重生都會安靜地把證據刪掉。
+    """
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding='utf-8') as f:
+        return json.load(f).get('notes', {})
+
+
+def attach_notes(basename, beats, notes):
+    """把註記貼回對應位址的 beat;貼不上就丟錯,不讓註記靜默消失。"""
+    want = dict(notes.get(basename, {}))
+    for b in walk_beats(beats):
+        n = want.pop(b.get('addr'), None)
+        if n is not None:
+            b['note'] = n
+    if want:
+        raise KeyError(f"{basename}:註記位址在重生結果裡找不到 {sorted(want)}")
+    return beats
+
+
 def cmd_all(cg, fx, outdir, quiet=False):
     import os
     os.makedirs(outdir, exist_ok=True)
+    notes = load_notes()
     pre_entries = resolve_table(fx, TABLE_PRE, N_CHAPTERS)
     post_entries = resolve_table(fx, TABLE_POST, N_CHAPTERS)
     pre_uniq = sorted(set(h for _, h in pre_entries))
@@ -590,6 +625,7 @@ def cmd_all(cg, fx, outdir, quiet=False):
                 continue
             data = table[ch]
             path = os.path.join(outdir, f'ch{ch:02d}_{tag}.json')
+            attach_notes(f'ch{ch:02d}_{tag}.json', data['beats'], notes)
             with open(path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=1)
             ops = {}
@@ -616,11 +652,13 @@ def cmd_all(cg, fx, outdir, quiet=False):
 DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            'org_game', '炎龍騎士團', 'FLAME2', 'FD2.EXE')
 # 2026-09-08 實測值(修好位址表之後)。這是天花板不是目標:允許往下,不允許悄悄變多。
-# 2026-09-09:11 個 doc 錨定的 op 名稱上線後實測 49(101 -> 49),天花板隨之收緊到 55。
-UNKNOWN_CEILING = 55
-# 這 11 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
+# 2026-09-09:doc 錨定的 op 名稱上線後實測 40(101 -> 49 -> 40),天花板隨之收緊到 45。
+UNKNOWN_CEILING = 45
+# 這 13 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
 # 一個都沒對上」——那代表位址認錯,而錯名比留 unknown 更糟,正是本項的原始警語。
-DOC_NAMED_BEATS = 52
+DOC_NAMED_BEATS = 61
+# 2026-09-06 手寫進已提交 chapter_beats 的反組譯註記數(現存於 chapter_beats_notes.json)。
+NOTE_COUNT = 12
 
 
 def resolvable(cg, addr):
@@ -709,6 +747,7 @@ def selftest():
     import tempfile
     named: dict[str, int] = {}
     raw_push_named = []
+    got_notes = 0
     with tempfile.TemporaryDirectory() as td:
         _stats, unknown = cmd_all(cg, fx, td, quiet=True)
         for fn in sorted(os.listdir(td)):
@@ -724,6 +763,8 @@ def selftest():
                         named[o['op']] = named.get(o['op'], 0) + 1
                         if o.get('args_are_raw_pushes'):
                             raw_push_named.append(o['target'])
+                    if 'note' in o and 'addr' in o:
+                        got_notes += 1
                     stack.extend(o.values())
                 elif isinstance(o, list):
                     stack.extend(o)
@@ -755,6 +796,30 @@ def selftest():
           f"args 仍標記為原始 push={hex(0x22253) in raw_push_named}")
     if not ok4c:
         fails.append("名稱與參數個數兩種主張沒有保持獨立(0x22253)")
+
+    print("\n(4d) 人工註記必須全部貼回,而且貼不上要立刻失敗(不能安靜消失)")
+    # 12 條 2026-09-06 手寫進已提交檔的 RE 註記。重生會整檔覆蓋,所以它們另存一份;
+    # 沒有這一題,某次重生就會把證據刪掉而沒人發現。
+    notes = load_notes()
+    want_notes = sum(len(v) for v in notes.values())
+    ok4d = want_notes >= NOTE_COUNT and got_notes == want_notes
+    print(f"    {'PASS' if ok4d else 'FAIL'}: 登錄 {want_notes} 條(應 >= {NOTE_COUNT})、"
+          f"實際貼回 {got_notes} 條")
+    if not ok4d:
+        fails.append(f"人工註記沒有全部貼回:登錄 {want_notes}、貼回 {got_notes}")
+
+    print("\n(4e) 負向控制:註記位址對不上時必須丟錯,而不是默默略過")
+    # 沒有這一題,attach_notes 就算整段 pop 寫錯、一條都貼不上,第 (4d) 題也只會看到
+    # 「貼回 0 條」而不知道是機制壞了還是登錄檔空的。
+    try:
+        attach_notes('ch00_pre.json', [{'op': 'x', 'addr': '0x1'}],
+                     {'ch00_pre.json': {'0xdeadbeef': '不存在的位址'}})
+        ok4e = False
+    except KeyError:
+        ok4e = True
+    print(f"    {'PASS' if ok4e else 'FAIL'}: 對不上的位址{'有' if ok4e else '沒有'}丟錯")
+    if not ok4e:
+        fails.append("attach_notes 對不上的位址沒有丟錯 —— 註記會安靜消失")
 
     print("\n(5) 非空控制:必須真的抽出 30 章 × pre/post")
     ok5 = len(_stats) == 60

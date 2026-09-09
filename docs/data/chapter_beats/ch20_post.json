@@ -17,39 +17,42 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "find_item_slot",
    "addr": "0x241bd",
-   "target": "0x31860",
+   "target": "0x2aedb",
    "args": [
-    "edx",
-    "eax"
+    "eax",
+    "edx"
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x241a8",
     "limit": -1
    }
   },
   {
-   "op": "unknown",
+   "op": "find_item_slot",
    "addr": "0x24209",
-   "target": "0x31860",
+   "target": "0x2aedb",
    "args": [
-    "eax",
-    "ebx"
+    "ebx",
+    "eax"
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x241f4",
     "limit": -1
    }
   },
   {
-   "op": "unknown",
+   "op": "remove_inventory_slot",
    "addr": "0x24218",
    "target": "0x1b8e7",
    "args": [
-    "eax",
-    "ebx"
-   ]
+    "ebx",
+    "eax"
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "grant_item",
@@ -106,7 +109,8 @@
    "op": "unknown",
    "addr": "0x242c9",
    "target": "0x24336",
-   "args": []
+   "args": [],
+   "args_are_raw_pushes": true
   },
   {
    "op": "dialog",

@@ -69,7 +69,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x245ce",
    "target": "0x24618",
    "args": [
@@ -77,21 +77,46 @@
     10,
     "eax",
     "dword ptr [0x3ab9]"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x245db",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]
   },
   {
+   "op": "memset",
+   "addr": "0x245f2",
+   "target": "0x37910",
+   "args": [
+    655360,
+    255,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
    "op": "unknown",
    "addr": "0x245fa",
    "target": "0x1f882",
-   "args": []
+   "args": [],
+   "args_are_raw_pushes": true
+  },
+  {
+   "op": "memset",
+   "addr": "0x2460b",
+   "target": "0x37910",
+   "args": [
+    655360,
+    0,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "sync_party",

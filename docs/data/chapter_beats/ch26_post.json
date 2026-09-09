@@ -25,12 +25,13 @@
    ]
   },
   {
-   "op": "inventory_has",
+   "op": "party_has_item",
    "addr": "0x25186",
    "target": "0x24b14",
    "args": [
     100
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: FUN_00024b14(item_id) already fully decompiled+live-verified in 99-chapter-sweep-results.md 'Step 1' (scans all 16 party unit inventories for item_id via FUN_0002aedb/FUN_0001b8a6/FUN_0001b722, returns 1 if found). Same target+args in ch22_post.json/ch26_pre.json. item_id=100 = exe_tables/item.json id 100 (type 34, price 2, no combat stats -- likely a key item)."
   },
   {
@@ -90,8 +91,8 @@
    "addr": "0x25244",
    "target": "0x25052",
    "args": [
-    5,
-    80
+    80,
+    5
    ]
   },
   {
@@ -108,14 +109,14 @@
    "addr": "0x25277",
    "target": "0x25052",
    "args": [
-    4,
-    80
+    80,
+    4
    ]
   },
   {
    "op": "delay",
    "addr": "0x25284",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]
@@ -125,14 +126,14 @@
    "addr": "0x25290",
    "target": "0x25052",
    "args": [
-    3,
-    80
+    80,
+    3
    ]
   },
   {
    "op": "delay",
    "addr": "0x2529d",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     250
    ]
@@ -142,14 +143,14 @@
    "addr": "0x252a9",
    "target": "0x25052",
    "args": [
-    2,
-    80
+    80,
+    2
    ]
   },
   {
    "op": "delay",
    "addr": "0x252b3",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     100
    ]
@@ -159,14 +160,14 @@
    "addr": "0x252bf",
    "target": "0x25052",
    "args": [
-    2,
-    80
+    80,
+    2
    ]
   },
   {
    "op": "delay",
    "addr": "0x252c9",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     50
    ]
@@ -176,12 +177,12 @@
    "addr": "0x252d5",
    "target": "0x25052",
    "args": [
-    2,
-    80
+    80,
+    2
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x252ee",
    "target": "0x24618",
    "args": [
@@ -189,21 +190,46 @@
     10,
     "eax",
     "dword ptr [0x3ab9]"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x252fb",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]
   },
   {
+   "op": "memset",
+   "addr": "0x25312",
+   "target": "0x37910",
+   "args": [
+    655360,
+    255,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
+  },
+  {
    "op": "unknown",
    "addr": "0x2531a",
    "target": "0x1f882",
-   "args": []
+   "args": [],
+   "args_are_raw_pushes": true
+  },
+  {
+   "op": "memset",
+   "addr": "0x2532b",
+   "target": "0x37910",
+   "args": [
+    655360,
+    0,
+    64000
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "sync_party",
@@ -219,7 +245,8 @@
    "op": "unknown",
    "addr": "0x2533e",
    "target": "0x25089",
-   "args": []
+   "args": [],
+   "args_are_raw_pushes": true
   },
   {
    "op": "dialog",
@@ -269,14 +296,14 @@
    "addr": "0x253fa",
    "target": "0x1c2da",
    "args": [
-    "eax",
-    1,
+    0,
     19,
-    0
+    1,
+    "eax"
    ]
   },
   {
-   "op": "unknown",
+   "op": "unit_present",
    "addr": "0x2541f",
    "target": "0x22253",
    "args": [
@@ -285,7 +312,9 @@
     255,
     255,
     1
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -300,12 +329,13 @@
    "op": "unknown",
    "addr": "0x25458",
    "target": "0x25089",
-   "args": []
+   "args": [],
+   "args_are_raw_pushes": true
   },
   {
    "op": "unknown",
    "addr": "0x2545d",
-   "target": "0x2bce5",
+   "target": "0x31529",
    "args": []
   }
  ]

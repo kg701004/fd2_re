@@ -34,12 +34,13 @@
    ]
   },
   {
-   "op": "inventory_has",
+   "op": "party_has_item",
    "addr": "0x33b3f",
    "target": "0x24b14",
    "args": [
     100
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: FUN_00024b14(item_id) already fully decompiled+live-verified in 99-chapter-sweep-results.md 'Step 1' (scans all 16 party unit inventories for item_id via FUN_0002aedb/FUN_0001b8a6/FUN_0001b722, returns 1 if found). Same target+args in ch22_post.json/ch26_post.json. item_id=100 = exe_tables/item.json id 100 (type 34, price 2, no combat stats -- likely a key item)."
   },
   {
@@ -70,7 +71,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x33bb9",
    "target": "0x24618",
    "args": [
@@ -78,17 +79,20 @@
     2,
     "eax",
     "dword ptr [0x3ab9]"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33bca",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -100,7 +104,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x33c09",
    "target": "0x24618",
    "args": [
@@ -108,17 +112,20 @@
     2,
     "dword ptr [0x3abd]",
     "dword ptr [0x3ab9]"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33c1a",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "act",
@@ -138,7 +145,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x33c66",
    "target": "0x24618",
    "args": [
@@ -146,17 +153,20 @@
     2,
     "dword ptr [0x3abd]",
     "eax"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33c77",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",

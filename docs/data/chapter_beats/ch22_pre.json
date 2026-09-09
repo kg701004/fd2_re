@@ -29,7 +29,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x336e5",
    "target": "0x24618",
    "args": [
@@ -37,7 +37,9 @@
     10,
     "eax",
     "eax"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "redraw",
@@ -48,19 +50,20 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x3372d",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x3373a",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]
@@ -149,30 +152,32 @@
    "target": "0x10b4e",
    "args": [
     1
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "delay",
    "addr": "0x3382d",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33841",
    "target": "0x11df2",
    "args": [
+    0,
     255,
-    255,
-    0
-   ]
+    255
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x3384b",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     100
    ]
@@ -186,19 +191,20 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33866",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x33873",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]

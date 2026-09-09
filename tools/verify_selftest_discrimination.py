@@ -116,6 +116,9 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "sync_native_join_constructor.py": (["--selftest"], "offline"),
     "export_acting_resources.py": (["--selftest"], "offline"),
     "export_engine_assets.py":    (["--selftest"], "offline"),
+    # 2026-09-09 補進來:它是把原始 beats 變成下游真正消費的 IR 的轉換層,
+    # 卻一直沒有 --selftest,因此從來沒被突變測試掃過。
+    "export_handler_scripts.py": (["--selftest"], "offline"),
     "disasm_le.py":              (["--selftest"], "ghidra"),
     "event_handler_dump.py":     (["--selftest"], "ghidra"),
     "export_story_index_map.py": (["--selftest"], "offline"),

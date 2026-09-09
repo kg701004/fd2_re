@@ -62,12 +62,13 @@
    "target": "0x10b4e",
    "args": [
     4
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "delay",
    "addr": "0x22fe8",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     100
    ]
@@ -92,7 +93,7 @@
   {
    "op": "delay",
    "addr": "0x23030",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -117,7 +118,7 @@
   {
    "op": "delay",
    "addr": "0x23078",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -134,7 +135,7 @@
   {
    "op": "delay",
    "addr": "0x23091",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -150,7 +151,7 @@
   {
    "op": "delay",
    "addr": "0x230a8",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]

@@ -214,7 +214,8 @@
    "target": "0x10b4e",
    "args": [
     1
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "act",
@@ -273,7 +274,8 @@
    "target": "0x10b4e",
    "args": [
     3
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "pan",
@@ -324,7 +326,8 @@
    "target": "0x10b4e",
    "args": [
     5
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "dialog",
@@ -483,7 +486,7 @@
   {
    "op": "delay",
    "addr": "0x32847",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -500,7 +503,7 @@
   {
    "op": "delay",
    "addr": "0x32885",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -520,7 +523,8 @@
    "target": "0x32999",
    "args": [
     1
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "act",
@@ -545,7 +549,8 @@
    "target": "0x32999",
    "args": [
     2
-   ]
+   ],
+   "raw_placement_gate": 0
   },
   {
    "op": "act",
@@ -567,7 +572,7 @@
   {
    "op": "delay",
    "addr": "0x32903",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     200
    ]
@@ -599,7 +604,7 @@
   {
    "op": "delay",
    "addr": "0x3292b",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     100
    ]

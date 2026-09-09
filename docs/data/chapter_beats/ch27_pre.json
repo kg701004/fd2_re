@@ -29,7 +29,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_transition_loop",
    "addr": "0x33ce2",
    "target": "0x24618",
    "args": [
@@ -37,7 +37,9 @@
     10,
     "eax",
     "eax"
-   ]
+   ],
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "redraw",
@@ -48,19 +50,20 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_delta_ramp",
    "addr": "0x33d26",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
    "addr": "0x33d33",
-   "target": "0x375b2",
+   "target": "0x3790a",
    "args": [
     500
    ]
@@ -107,17 +110,17 @@
   {
    "op": "unknown",
    "addr": "0x33d95",
-   "target": "0x35822",
+   "target": "0x35b78",
    "args": [
-    6,
+    0,
     16,
-    0
+    6
    ]
   },
   {
    "op": "unknown",
    "addr": "0x33da3",
-   "target": "0x35822",
+   "target": "0x35b78",
    "args": [
     7,
     16,
