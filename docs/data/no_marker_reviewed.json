@@ -33752,6 +33752,14 @@
    "excerpt": "**2026-09-09 續十:兩支互相牽制的工具對同一批檔案給出不同答案,而原有的交叉驗證看不到**。續八把 hygiene 的實際待處理清到 0,但 `artifacts` 軸同時還在說「尚待處理 7 個」。查下去那 7 個正是 6 個 ui-traces(hygiene 已標 `remake_derived`)加 `docs/data/ida/fd2_xrefs.json`(已標 `lost",
    "verdict": "benign",
    "note": "工具流程記錄:兩支驗證工具對永久豁免種類的認定不一致與其修法,不宣稱任何遊戲行為。"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 226,
+   "excerpt_sha1": "f35f97ba5cbba4e8aaf02898b5ffc99430932e44",
+   "excerpt": "**2026-09-10:`--open` 報 0 而我把它當成「沒事了」轉述出去,那是假陰性**。盤點時 `worklist_status --open` 印「沒有任何項目的最新一段主張有待辦工作」,而同時有 6 個 D、38 個 C 標籤——兩者衝突,我卻直接引用了那句話。查根因:判準的**引文與否定處理是對的**(那兩層本來就是被真實假陽性逼出來的),問題在 `OPEN_WORDS` 只有 ",
+   "verdict": "benign",
+   "note": "工具流程記錄:worklist_status 的開放判準詞彙覆蓋不足與兩層修法,不宣稱任何遊戲行為。"
   }
  ]
 }

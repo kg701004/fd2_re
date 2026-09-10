@@ -31,6 +31,8 @@ What it gives you
     python tools/worklist_status.py --summary          # per-class counts
     python tools/worklist_status.py --open             # items whose NEWEST dated
                                                        #段 still asserts open work
+    python tools/worklist_status.py --review           # 嚴格判準沒抓到、但含候選未完成
+                                                       # 用語的項目(需人工複讀)
     python tools/worklist_status.py --item 587         # one item, chronological
     python tools/worklist_status.py --append 587 --text "**2026-09-08 …**"
     python tools/worklist_status.py --selftest
@@ -39,7 +41,7 @@ What it gives you
 the END of the item, so the file stops accumulating reversed bullets. Existing
 reversed bullets are left alone -- rewriting历史 text is a separate decision.
 
-Verification design (`--selftest`, 6 checks)
+Verification design (`--selftest`, 8 checks)
 --------------------------------------------
 1. Structural: every line that looks like an item header is claimed by exactly
    one item, and no item's body contains another item's header.
@@ -53,6 +55,12 @@ Verification design (`--selftest`, 6 checks)
 6. Round-trip: `--append` then re-parse must show the appended text as the item's
    newest segment, and must not disturb neighbouring items (byte comparison of
    every other item's block).
+7. 分類器:引號內與被否定的「開放」字樣不得算數,加一個真正開放敘述的負向控制。
+8. **兩層判準的分工**(2026-09-10 加):`--open` 的嚴格判準只認 7 個詞,而真實文字寫的是
+   「仍未完成的那一步」「剩餘只有…」——它報 0 時我把那句話當成「沒事了」轉述出去,那是
+   錯的。修法不是把詞加進 OPEN_WORDS(實測會有約六成假陽性:否定式、引文、remake 已無
+   對象),而是另立 `REVIEW_WORDS` + `--review`,並讓 `--summary`/`--open` 永遠附帶候選
+   計數。四個成對案例釘住分工,外加真實檔案上的非平凡性。
 """
 
 from __future__ import annotations
@@ -96,6 +104,23 @@ OPEN_WORDS = ("尚未關閉", "仍不宣告", "仍待完成", "仍缺的一步",
 # ...but the same words are quoted in order to negate them. These win.
 CLOSE_WORDS = ("已解", "已關閉", "已完成", "不成立", "已定案", "無殘留", "不應繼續",
                "範圍消失", "已無對象", "已閉合", "不是仍待完成", "本項閉合")
+
+# --- 候選用語:嚴格判準看不到、但值得人工複讀的 ------------------------------
+#
+# 2026-09-10 實測到的問題:`--open` 印「沒有任何項目的最新一段主張有待辦工作」,而同時
+# 有 6 個 D、38 個 C 標籤——我把那句話當成「沒事了」轉述出去,那是錯的。原因不是判準的
+# 引文/否定處理有問題(那兩層做得對),而是 `OPEN_WORDS` 只有 7 個詞,而實際文字寫的是
+# 「仍未完成的那一步」「剩餘只有…」「仍未逐一展開」——一個都不在表內。
+#
+# **修法刻意不是把這些詞加進 OPEN_WORDS**。實測 16 個候選項目裡只有 5~6 個是真的開放,
+# 其餘是**否定式**(「沒有剩餘缺口」)、**引文**(247/370/407 引用 doc32 舊結論的「未解決」)
+# 或 **remake 已無對象**(447/510/555/1042)——加進去會讓 `--open` 產生約六成假陽性,
+# 比現在的假陰性更糟。所以分成兩層:嚴格判準維持原樣負責「可直接相信」,候選清單負責
+# 「不要再讓 0 被讀成沒事」,由人一次讀完。
+REVIEW_WORDS = ("剩餘", "未解", "未完成", "未展開", "未逐一", "尚待", "待查", "待補",
+                "待驗", "維持 D", "維持D")
+# 否定詞:嚴格判準原本只處理 不是/並非/非,候選這一層還常見「沒有剩餘」「無殘留」。
+NEGATORS = ("不是", "並非", "非", "沒有", "無")
 
 
 class Item:
@@ -166,11 +191,29 @@ class Item:
         * **Negated claims don't count.** 53 and 1604 both end 「…不是仍待完成的
           工作」. An open word preceded by 不是/並非/非 is dropped.
         """
-        seg = re.sub(r"[「『][^」』]*[」』]", "", self.newest_segment)
-        seg = re.sub(r"(?:不是|並非|非)\s*(?:" + "|".join(OPEN_WORDS) + ")", "", seg)
+        seg = self._scrubbed(OPEN_WORDS)
         if any(w in seg for w in CLOSE_WORDS):
             return False
         return any(w in seg for w in OPEN_WORDS)
+
+    def _scrubbed(self, words: tuple) -> str:
+        """最新一段,去掉引文與被否定的宣稱。兩層都是被真實假陽性逼出來的。"""
+        seg = re.sub(r"[「『][^」』]*[」』]", "", self.newest_segment)
+        return re.sub(r"(?:" + "|".join(NEGATORS) + r")\s*(?:" + "|".join(words) + ")",
+                      "", seg)
+
+    def review_flags(self) -> list[str]:
+        """候選用語:嚴格判準沒抓到、但值得人工複讀的。
+
+        故意寬鬆——它的用途是「別讓 0 被讀成沒事」,不是分類。實測約半數會是否定式、
+        引文或 remake 已無對象;那正是要人讀的原因,不是把它自動化掉的理由。
+        """
+        if self.is_open():
+            return []
+        seg = self._scrubbed(REVIEW_WORDS)
+        if any(w in seg for w in CLOSE_WORDS):
+            return []
+        return [w for w in REVIEW_WORDS if w in seg]
 
 
 def parse(path: Path = WORKLIST, pattern: re.Pattern = ITEM) -> list[Item]:
@@ -190,17 +233,48 @@ def cmd_summary(items: list[Item]) -> None:
     print(f"項目總數 {len(items)}:" + "  ".join(f"{k}={c[k]}" for k in sorted(c)))
     op = [it for it in items if it.is_open()]
     print(f"最新一段仍主張有待辦工作的:{len(op)} 項" + (f" -> {[it.num for it in op]}" if op else ""))
+    note = _review_note(items)
+    if note:
+        print(note)
+
+
+def _review_note(items: list[Item]) -> str:
+    """永遠附在 open 計數旁邊的一行。
+
+    沒有它,「0 項」會被讀成「沒事了」——2026-09-10 我就是這樣轉述出去的。
+    """
+    n = sum(1 for it in items if it.review_flags())
+    if not n:
+        return ""
+    return (f"另有 {n} 項的最新一段含**候選用語**但未達嚴格判準,需人工複讀:`--review`"
+            "(實測約半數是否定式/引文/remake 已無對象)")
 
 
 def cmd_open(items: list[Item]) -> None:
     op = [it for it in items if it.is_open()]
     if not op:
-        print("沒有任何項目的最新一段主張有待辦工作。")
-        return
+        print("沒有任何項目的最新一段以嚴格判準主張有待辦工作。")
     for it in op:
         seg = it.newest_segment.replace("\n", " ")
         hit = [w for w in OPEN_WORDS if w in seg]
         print(f"{it.num} ({it.cls}) {hit}\n   {seg[:300]}\n")
+    note = _review_note(items)
+    if note:
+        print(note)
+
+
+def cmd_review(items: list[Item]) -> None:
+    """列出候選項目與命中詞的前後文,供一次讀完後自行判斷。"""
+    rows = [(it, it.review_flags()) for it in items]
+    rows = [(it, f) for it, f in rows if f]
+    print(f"候選 {len(rows)} 項(嚴格判準未命中、最新一段無結案語、且去掉引文與否定後仍含候選用語):\n")
+    for it, flags in rows:
+        seg = it._scrubbed(REVIEW_WORDS).replace("\n", " ")
+        print(f"{it.num} ({it.cls}) {flags}")
+        for w in flags:
+            i = seg.find(w)
+            print(f"    …{seg[max(0, i - 30):i + 26]}…")
+        print()
 
 
 def cmd_item(items: list[Item], num: str) -> int:
@@ -326,12 +400,45 @@ def selftest() -> int:
     if bad4:
         fails.append(f"分類器誤判:{bad4}")
 
+    print("\n(8) 兩層判準:嚴格的可直接相信,候選的只負責『別讓 0 被讀成沒事』")
+    # 2026-09-10 的實測問題:`--open` 報 0,而同時有 6 個 D、38 個 C 標籤,我把那句話當成
+    # 「沒事了」轉述出去。成因是 OPEN_WORDS 只有 7 個詞。四個案例把兩層的分工釘住——
+    # 只驗其中任何一個,一個「永遠回傳空」或「永遠回傳全部」的實作都會通過。
+    cases = [
+        ("嚴格漏掉、候選要抓到",
+         "X - D - **2026-09-10 仍未完成的那一步:還要再跑一次。**", False, True),
+        ("否定式:兩層都不能抓",
+         "X - D - **2026-09-10 本行的 RE 側沒有剩餘缺口。**", False, False),
+        ("結案語壓過候選用語",
+         "X - D - **2026-09-10 剩餘工作已無對象,本項閉合。**", False, False),
+        ("嚴格判準本來就抓得到的,不得跑進候選清單",
+         "X - D - **2026-09-10 本項尚未關閉,缺口仍待完成。**", True, False),
+    ]
+    bad7 = []
+    for why, line, want_open, want_review in cases:
+        it = Item("X", "D", 0, [line])
+        got_open, got_review = it.is_open(), bool(it.review_flags())
+        ok = (got_open, got_review) == (want_open, want_review)
+        print(f"    {'PASS' if ok else 'FAIL'}: {why} -> open={got_open}, review={got_review}"
+              f"(應 {want_open}, {want_review})")
+        if not ok:
+            bad7.append(why)
+    # 非平凡性:在真實檔案上,候選清單必須非空、且不得吞掉整份清單。
+    n_rev = sum(1 for it in items if it.review_flags())
+    if not (0 < n_rev < len(items) // 3):
+        bad7.append(f"候選清單在真實檔案上不合理:{n_rev}/{len(items)}")
+    print(f"    {'PASS' if not bad7 else 'FAIL'}: 真實檔案上候選 {n_rev} 項"
+          f"(需 0 < n < {len(items) // 3})")
+    if bad7:
+        fails.append(f"兩層判準的分工不成立:{bad7}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(5 正向 + 1 故障注入 + 1 往返 + 1 負向控制)。")
+    print("\n--selftest passed(5 正向 + 1 故障注入 + 1 往返 + 1 負向控制 "
+          "+ 嚴格/候選兩層判準的四個成對案例與非平凡性)。")
     return 0
 
 
@@ -340,6 +447,8 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--summary", action="store_true")
     ap.add_argument("--open", action="store_true")
+    ap.add_argument("--review", action="store_true",
+                    help="列出嚴格判準未命中、但含候選未完成用語的項目(需人工複讀)")
     ap.add_argument("--item")
     ap.add_argument("--append")
     ap.add_argument("--text")
@@ -356,6 +465,9 @@ def main() -> int:
         return cmd_item(items, a.item)
     if a.open:
         cmd_open(items)
+        return 0
+    if a.review:
+        cmd_review(items)
         return 0
     cmd_summary(items)
     return 0
