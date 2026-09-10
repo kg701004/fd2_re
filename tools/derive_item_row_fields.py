@@ -6,7 +6,10 @@
 worklist 1354 的殘留是「`0x602ad` table 真正邊界與未命名欄位語意」。邊界已於
 2026-09-10 由兩個獨立方向定出(215 列);**欄位**這一半先前只知道 5 個
 (`+0x00` type、`+0x0b`/`+0x0c` 傳給 `0x14818` 的兩個槽、`+0x0d` AI 過濾、
-`+0x10` 效果型態),其餘記為「未命名」。
+`+0x10` 效果型態),其餘記為「未命名」。**2026-09-11 補完並訂正**:`K[0..5]` 六個
+欄位的語意已由消費端全部解出(見 `CONSUMER_SEMANTICS`),其中兩個舊標籤是錯的——
+`+0x0d` 不是「AI 可選旗標」而是效果型態、`+0x10` 不是「效果型態」而是範圍形狀碼。
+論證在 doc27 §6.7 / doc32。
 
 本工具用兩條互相獨立的機制把它補完,兩條都不靠人工判讀:
 
@@ -62,9 +65,23 @@ ITEMS_JSON = ROOT / "docs" / "data" / "exe_tables" / "item.json"
 CONSUMER_SEMANTICS = {
     0x0B: "Attack ring 路徑傳給 0x14818 的 radius 槽(worklist 1118 已否證『通用射程』解讀)",
     0x0C: "同上,mode 槽",
-    0x0D: "AI 道具評分掃描的唯一過濾欄位,為 0 即跳過(worklist 541)",
-    0x10: "效果型態;AI 側 >0xf 會被夾成 1(值域實測 {0,1,2,3,4,31})",
+    0x0D: "效果型態;套用端 0x20cbd 以它做 switch 分派(型態 5/13 共用 0x211a4),"
+          "AI 評分器只測它 !=0(doc27 §6.7;修正 worklist 541 的『AI 可選旗標』)",
+    0x0E: "效果強度(u16);套用端 0x20cb5 是 `movzx edx, word ptr [eax+0xe]`,整字讀取",
+    0x10: "傳給 0x14818 的範圍形狀碼(選取階段);>=0x10 表直線/十字,arm = 值-0x10"
+          "(值域實測 {0,1,2,3,4,31};31 = 光束炮的貫穿十字)",
+    0x11: "敵我關係選擇器(0=對敵方,1=對我方);AI 用道具路徑 0x150a2 讀,**取反**後當 "
+          "0x14818 的 sideSelector",
+    0x12: "傳給 0x14818 的範圍形狀碼(生效階段);玩家路徑 0x1bd7d、AI 路徑 0x150fe",
+    0x15: "同 +0x11 的敵我關係選擇器,玩家用道具路徑 0x1bd24 讀,直接當 sideSelector"
+          "——兩條路徑各自從不同偏移讀同一個語意欄位,這就是兩欄全列相等的原因",
 }
+
+# `disasm_le.py refs 602ad` 對全 image 只找到一筆 fixup(`0x4e8cb`,在 ROW_ACCESSOR 內),
+# 所以下面的消費端掃描涵蓋的是**全部**消費端,不是抽樣;沒有 inline 算位址的漏網路徑。
+SIDE_SELECTOR_OFFSETS = (0x11, 0x15)
+SIDE_SELECTOR_MAX = 3          # 0x14818 只認得 0/1/2/3 四個選擇器碼
+EFFECT_TYPE_OFFSET = 0x0D      # ==0 的列不會走到 0x14818
 
 
 def load_tables():
@@ -243,13 +260,32 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"鏡像/常數偵測不符預期:{mir} / {const}")
 
+    print("\n(6) 鏡像的**解釋**必須可證偽:兩個選擇器欄位只在真的會走到 0x14818 的列上"
+          "\n    落在 0..3,不會走到的列則否——後者是本檢查的負向控制")
+    # 為什麼這樣寫:+0x11/+0x15 全列相等只是現象,(5) 已經測了。這裡測的是**機制**——
+    # 消費端 0x14818 只認得 0/1/2/3 四個 sideSelector 碼,而 +0x0d==0 的列根本不會被
+    # 送進去。若那 182 列也剛好落在 0..3,這個檢查就是平凡的;實測它們的值是 5,
+    # 所以「值域約束只在可達子集上成立」是一個有內容、可被破壞的斷言。
+    reachable = [r for r in rows if r[EFFECT_TYPE_OFFSET] != 0]
+    unreachable = [r for r in rows if r[EFFECT_TYPE_OFFSET] == 0]
+    in_range = all(r[o] <= SIDE_SELECTOR_MAX
+                   for r in reachable for o in SIDE_SELECTOR_OFFSETS)
+    control = unreachable and all(r[o] > SIDE_SELECTOR_MAX
+                                  for r in unreachable for o in SIDE_SELECTOR_OFFSETS)
+    ok6 = in_range and control
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 可達 {len(reachable)} 列全在 0..3 = {in_range};"
+          f"不可達 {len(unreachable)} 列全在範圍外 = {bool(control)}")
+    if not ok6:
+        fails.append(f"選擇器值域約束不成立(可達={in_range} / 負向控制={bool(control)}),"
+                     f"鏡像的機制解釋因此失去依據")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(邊界一致 + 跨產物全列對映 + 寬度判定 + "
-          "放寬門檻的負向控制 + 鏡像/常數偵測)。")
+          "放寬門檻的負向控制 + 鏡像/常數偵測 + 選擇器值域的可達/不可達對照)。")
     return 0
 
 
