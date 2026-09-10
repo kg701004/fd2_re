@@ -4568,11 +4568,15 @@ esi .. 0x64                        ; 第二段逐幀迴圈,結構與上面完全
 ; 參數(push ebx 之後):[esp+8]=container, [esp+0xc]=index, 再三個往後傳
 entry = container + index * 4
 ptr   = container + dword[entry + 8]     ; container+8 起的 4-byte offset 表
-w     = word[ptr + 0]                    ; 16-bit 寬
-h     = word[ptr + 2]                    ; 16-bit 高
-0x4e98d(ptr + 9, w, h, arg3, arg4, arg5) ; 像素資料自 ptr+9 起,6 個參數
+x     = word[ptr + 0]                    ; 16-bit(見下方更正:是 x,不是寬)
+y     = word[ptr + 2]                    ; 16-bit(是 y,不是高)
+0x4e98d(ptr + 9, x, y, arg3, arg4, arg5) ; 像素資料自 ptr+9 起,6 個參數
 ret
 ```
+
+> **2026-09-10 同輪自我更正**:本節初稿把 `word[ptr+0]`/`word[ptr+2]` 寫成「寬/高」。
+> 展開 `0x4e98d` 本體後確認是**錯的**——見 §13.4。當時我是從「一幀圖前面兩個 16-bit
+> 欄位」這個**可信的形狀**推出寬高,而沒有去看消費端怎麼用它。
 
 **判定**:這是一支 frame blit —— 依索引在容器的 offset 表裡查出一幀、讀它的 16-bit
 尺寸表頭、把像素交給低階貼圖 `0x4e98d`。整個函式**沒有任何聲音相關呼叫**,也沒有任何
@@ -4591,3 +4595,36 @@ ret
 **誠實範圍**:`0x4e98d` 本體本輪未展開,所以「低階貼圖」是由參數形狀
 (pixels, w, h, dest, stride, transparent)推得,不是逐指令證實;offset 表在
 `container+8` 的完整表頭格式(前 8 bytes 是什麼)也未追。
+
+## 13.4 `0x4e98d` 本體:4 模式 RLE 貼圖,並更正 §13.3 的一個欄位判讀
+
+§13.3 把 `0x4e98d` 標為「本體未展開」,並註明「低階貼圖」是由參數形狀推得。同輪展開後,
+形狀的結論成立,但**我對 `0x2eb9f` 傳進去的那兩個 16-bit 欄位判讀錯了**。
+
+```
+esi = param_1
+ax = word[esi]   -> [0x527b4]      ; 寬(下面當每列剩餘計數用)
+ax = word[esi+2] -> [0x527b6]      ; 高
+ecx = param_2 ; eax = param_3 ; edi = param_4 ; edx = param_5
+edi += param_3 * param_5 + param_2 ; 目的位址 = dest + y*stride + x
+edx -= 寬                          ; 每列畫完後要跨過的餘量
+if param_6 == -1: 走 RLE 解碼;否則走純色/其他分支
+RLE:控制位元組的高位以 `shl cl,1 / jb` 連續判斷,分成 4 種模式
+    (rep stosb 填色 / 逐 byte 交錯 / rep movsb 直拷 / 跳過 N 格)
+```
+
+**更正**:`0x4e98d` 的 `param_2`/`param_3` 是**目的地的 x / y**(由
+`0x4e98d` 的 `edi += param_3*param_5 + param_2` 直接證實),而**寬高是它自己從 `param_1` 指向的
+資料前 4 bytes 讀出來的**。所以 `0x2eb9f` 讀的 `word[ptr+0]`/`word[ptr+2]` 是**該幀的
+x/y 位移**,不是寬高;真正的寬高在 `ptr+9` 那塊資料的開頭,像素從 `ptr+13` 起。
+
+**我怎麼弄錯的**:`0x2eb9f` 讀兩個相鄰 16-bit 欄位後把它們往下傳,而「幀資料前面兩個
+16-bit 是寬高」是這個 repo 裡到處都成立的形狀(FDICON、tileset、DATO 幀都是),
+於是我直接照那個形狀寫,**沒有去看消費端怎麼用**。消費端一看就定案了。這與本 repo
+`+0x0b`/`+0x0c` 那個三方命名矛盾是同一類錯誤:欄位語意要由**讀它的那一端**決定。
+
+**佐證**:`0x4e98d` 的 4 模式 RLE 文法與 `decode_figani`/`decode_sprite` 已記載的「同族 4 模式
+文法」一致,而 `[0x527b4]` 被當成每列剩餘計數(`sub bx, cx` 直到歸零換行)也與
+`edx = stride - 寬` 的每列跨距互相吻合——兩處都指向同一個「寬」。
+
+**誠實範圍**:`param_6 != -1` 的那兩條分支(`0x4eac2` 與 `0x4ea4b`)本輪未展開。
