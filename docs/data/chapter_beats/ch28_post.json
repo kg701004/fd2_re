@@ -11,12 +11,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "zero_hp_from",
    "addr": "0x254c0",
    "target": "0x35f10",
    "args": [
     20
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",

@@ -2816,3 +2816,40 @@ ch06 戰後 handler 讀的是 `[+0x11]`(index 17),**本身就超出 12**。
 順帶佐證:`0x1e2d6` 的 `test byte ptr [esi+5], 1` 與 doc13 已證實的 `record[+5]` bit0
 (死亡/隱藏)語意一致。
 
+
+## 14. `0x35f10` = 從指定索引起把單位 HP 歸零(2026-09-10,靜態全文反組譯)
+
+`0x35f10` 是 `dump_chapter_beats` 剩下的未命名原語之一,先前留白的理由與 `0x1c2da`
+相同——**本體未展開**(doc25 舊文明寫)。本輪反組譯完 `0x35f10..0x35f47`(56 bytes)。
+
+**簽名**:`0x35f10(start_index)` —— 1 個參數,`derive_native_argcounts` 判定
+對 `0x35f10` 判定 **CONFIRMED**(4 個呼叫端,cleanup 全為 `add esp,4`)。
+
+**本體**:
+
+```
+edx = start_index
+while edx < [0x53beb]:                  ; [0x53beb] = 目前單位總數
+    unit = [0x53a45] + edx * 0x50       ; 單位陣列,stride 0x50
+    word [unit + 0x40] = 0              ; ← 把 current HP 寫 0
+    edx++
+call 0x1db65                            ; 收尾(本輪未展開)
+```
+
+`unit[+0x40]` = **current HP**,不是本輪新命名:doc03 的欄位表直接記載
+「`0x40` | current HP(2) | `0x1c81f` 直接讀/減寫並向下 clamp 0」,doc13 §110/§102
+另從傷害路徑獨立佐證(`0x2ebe1` 直接讀寫 `target+0x40`)。
+
+**四個呼叫端的形狀完全一致**,都是「先對話、再歸零」:
+
+| 呼叫端 | 前一步 | `start_index` |
+|---|---|---|
+| `0x254c0` | `0x15f84`(dialog) | `0x14` |
+| `0x356aa` | `0x15f84`(dialog) | `0x12` |
+| `0x35ce0` | `0x15f84`(dialog) | `0x10` |
+| `0x35eff` | `0x15f84`(dialog) | `0x14` |
+
+**誠實範圍**:本節只主張**機制**(從 `start_index` 到單位陣列尾端把 HP 寫 0),
+不主張它的敘事用途。四個 `start_index`(16/18/20)落在玩家單位之後、看起來像是
+「清掉我方以外的單位」,但沒有任何呼叫端被反組譯到足以證明陣營界線就在那裡,
+所以不寫成 `wipe_enemies`。`0x1db65` 的語意同樣未展開。

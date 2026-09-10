@@ -344,7 +344,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "zero_hp_from"
   },
   "0x361b0": {
     "argc": 0,
