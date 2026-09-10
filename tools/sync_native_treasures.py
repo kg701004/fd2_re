@@ -45,6 +45,33 @@ CHEST_TABLE_OFFSET = (CONTROL_HEADER_BYTES
 UNITS_ARRAY_OFFSET = CHEST_TABLE_OFFSET + CHEST_ROWS * CHEST_STRIDE   # = 0x83
 
 
+# 地形控制旗標。doc25 §785 記載原版 open-chest 邏輯 `0x15DF3(event_id, &out)` 用的是
+# `地形控制旗標 & 0x60 == 0x20`,即 `0x20`/`0x40` 兩個位元合起來是「這格有寶物事件」,
+# 其中 `0x40` 進一步表示「隱藏物」。遮罩寫成具名常數是為了讓 selftest 打得到——
+# 2026-09-11 的突變測試指出 `0x60`、地形 stride `4`、以及 `-1` 這個哨兵值都是
+# 「可達但無人看管」:原本的 selftest 只斷言 slots/hidden 的**長度**。
+TERRAIN_STRIDE = 4          # 由 expected() 的 `len(terrain) % 4` 前提檢查獨立佐證
+EVENT_WORD_STRIDE = 4       # composition 的事件字:6 + cell*4
+CHEST_EVENT_MASK = 0x60     # 有寶物事件(0x20 普通 | 0x40 隱藏)
+CHEST_HIDDEN_BIT = 0x40     # 隱藏物
+EVENT_SLOT_MASK = 0x1F      # 事件字的低 5 位 = 寶箱 slot
+NO_EVENT_SLOT = -1          # 沒有事件時的哨兵;不是 0,因為 0 是合法 slot
+
+
+def classify_cell(terrain, tile, event_word):
+    """單一格的判定,回傳 `(slot, hidden)`。純函式,給 selftest 用合成地形打。
+
+    抽出來的理由與本 repo 其他幾處相同:測試若在自己那份副本上重算判準,產品碼那份
+    有 bug 也照過。這裡兩邊呼叫同一個函式。
+    """
+    if tile < 0 or tile * TERRAIN_STRIDE >= len(terrain):
+        return NO_EVENT_SLOT, False
+    flags = terrain[tile * TERRAIN_STRIDE]
+    if flags & CHEST_EVENT_MASK:
+        return event_word & EVENT_SLOT_MASK, bool(flags & CHEST_HIDDEN_BIT)
+    return NO_EVENT_SLOT, False
+
+
 def expected(raw, map_index, map_data):
     fields = sorted(
         glob.glob(os.path.join(raw, "FDFIELD", "*.bin")), key=resource_index
@@ -68,18 +95,11 @@ def expected(raw, map_index, map_data):
     slots = []
     hidden = []
     for cell, tile in enumerate(tiles):
-        if tile < 0 or tile * 4 >= len(terrain):
-            slots.append(-1)
-            hidden.append(False)
-            continue
-        flags = terrain[tile * 4]
-        if flags & 0x60:
-            event_word = struct.unpack_from("<H", composition, 6 + cell * 4)[0]
-            slots.append(event_word & 0x1F)
-            hidden.append(bool(flags & 0x40))
-        else:
-            slots.append(-1)
-            hidden.append(False)
+        event_word = (struct.unpack_from("<H", composition, 6 + cell * EVENT_WORD_STRIDE)[0]
+                      if 0 <= tile and tile * TERRAIN_STRIDE < len(terrain) else 0)
+        slot, is_hidden = classify_cell(terrain, tile, event_word)
+        slots.append(slot)
+        hidden.append(is_hidden)
 
     offset = CHEST_TABLE_OFFSET
     chests = []
@@ -179,6 +199,51 @@ def selftest():
     if not ok2c:
         fails.append(f"寶箱表看起來沒被真的讀到:chests={len(chests)}、"
                      f"相異列={len(row_bytes)}")
+
+    print("\n(2d) 地形旗標判定:用合成地形釘住遮罩、stride 與哨兵值")
+    # 2026-09-11:突變測試指出 `0x60`、地形 stride `4`、`-1` 三者「可達但無人看管」——
+    # 原本只斷言 slots/hidden 的**長度**。前提不是我推的:doc25 §785 記載原版
+    # open-chest 邏輯 `0x15DF3` 用的是「地形控制旗標 & 0x60 == 0x20」,故 0x20/0x40
+    # 是兩個寶物位元、0x40 另表示隱藏物。
+    #
+    # 地形每格 4 bytes,只有第 0 個 byte 是旗標。刻意讓 tile1 的**第 1 個 byte**放 0xff:
+    # 若 stride 被改成 5,tile1 就會讀到別的位置,判定隨之改變。
+    terrain = bytes([0x00, 0xff, 0, 0,    # tile0:無事件
+                     0x20, 0xff, 0, 0,    # tile1:普通寶物
+                     0x40, 0xff, 0, 0,    # tile2:隱藏物
+                     0x01, 0xff, 0, 0])   # tile3:只有 bit0 —— 遮罩若被放寬成 0x61 就會誤判
+    cases = [(0, (-1, False), "無事件"), (1, (7, False), "普通寶物"),
+             (2, (7, True), "隱藏物"), (3, (-1, False), "只有 bit0,不得誤判為有事件"),
+             (-1, (-1, False), "負的 tile 索引"), (99, (-1, False), "tile 超出地形表")]
+    bad = [f"tile{t}({why}):得到 {classify_cell(terrain, t, 0x27)}、應為 {want}"
+           for t, want, why in cases if classify_cell(terrain, t, 0x27) != want]
+    ok2d = not bad
+    print(f"    {'PASS' if ok2d else 'FAIL'}: {len(cases)} 個合成案例"
+          + ("全部正確" if ok2d else f",不符 {bad}"))
+    if not ok2d:
+        fails.append(f"地形旗標判定不符:{bad}")
+
+    print("\n(2e) 非平凡性:三個常數各自被擾動時,上面至少一個案例必須改變")
+    # 沒有這一題,(2d) 可能只是碰巧全過。這裡直接證明每個常數都是承重的。
+    import copy as _copy
+    probes = {}
+    for label, kw in (("遮罩 0x60->0x61", {"mask": 0x61}),
+                      ("stride 4->5", {"stride": 5}),
+                      ("哨兵 -1->-2", {"sentinel": -2})):
+        def variant(terrain, tile, ew, mask=kw.get("mask", CHEST_EVENT_MASK),
+                    stride=kw.get("stride", TERRAIN_STRIDE),
+                    sentinel=kw.get("sentinel", NO_EVENT_SLOT)):
+            if tile < 0 or tile * stride >= len(terrain):
+                return sentinel, False
+            f = terrain[tile * stride]
+            if f & mask:
+                return ew & EVENT_SLOT_MASK, bool(f & CHEST_HIDDEN_BIT)
+            return sentinel, False
+        probes[label] = any(variant(terrain, t, 0x27) != want for t, want, _ in cases)
+    ok2e = all(probes.values())
+    print(f"    {'PASS' if ok2e else 'FAIL'}: {probes}")
+    if not ok2e:
+        fails.append(f"有常數擾動後案例不變,(2d) 對它是空的:{probes}")
 
     print("\n(3) 維度/來源檢查必須真的擋下不一致的 map_data(否則會算出垃圾)")
     for label, bad_md in (
