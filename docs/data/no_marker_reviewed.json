@@ -33840,6 +33840,30 @@
    "excerpt": "**2026-09-10:歸檔,以及歸檔動作本身踩到的閘門漏洞**。依 `Project_Continuity.md` 體例寫成 `SESSION-HANDOFF-2026-09-10.md`(涵蓋 `6d2ad9c5..192a0459`,59 個 commit、112 檔 +11336/−1109),並把 `00-index.md` 的「先讀這個」指標改指它、在前一份加上向後連結。**寫的過程",
    "verdict": "benign",
    "note": "工具流程記錄:交接文件歸檔與 --diff 漏看未追蹤檔案的修法,不宣稱任何遊戲行為。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 158,
+   "excerpt_sha1": "5f8677429b5a085280af91b659383cc92ec05ab8",
+   "excerpt": "一整層畫面判準的成對測試(合成影像重建其模組註解記載的歷史誤判)並以故障注入確認有效",
+   "verdict": "benign",
+   "note": "陳述的是本輪工具工作本身(替 fd2_chapter_sweep 補畫面判準測試並以故障注入確認),不是關於遊戲的事實主張。可稽核依據是 commit 64c5dd2e 的 selftest 與故障注入輸出。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 208,
+   "excerpt_sha1": "4ba7dd613bfe5d0cb4039f400f39c10a29867fb3",
+   "excerpt": "併進 CRASH,且讓整體失敗。故障注入確認它承重:拿掉前提檢查,退化取樣立刻退回歷史上的「OK」。",
+   "verdict": "benign",
+   "note": "陳述的是 verify_truncation_robustness 新增 DEGENERATE 判定的故障注入結果,屬工具自驗層,非遊戲事實。依據為 commit 6801ce24 的 selftest (3b)/(3c)。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 223,
+   "excerpt_sha1": "fdac0f0bd4c3754a8e90ca6ad7f0afeb99f4f696",
+   "excerpt": "`selftest`),全 repo 掃描確認只有這兩支中招。規則第一版寫成「任何會回傳值的函式」,立刻",
+   "verdict": "benign",
+   "note": "陳述的是 hygiene 新增 exit_code 規則的全 repo AST 掃描結果(只有兩支中招),屬工具自驗層,非遊戲事實。依據為 commit 377cee7f 的規則與五個成對案例。"
   }
  ]
 }
