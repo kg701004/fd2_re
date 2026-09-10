@@ -17,7 +17,7 @@
 戰場命中/選單游標等處呼叫的通用「播放樣本」函式(`table_ptr, index, priority` 三參數):
 
 ```
-0x026896  play_sfx_a(table, index, priority):
+0x026896  play_sfx_a(table, index, priority):   ; **第三個參數其實是 loop count,見 §19 訂正**
 0x0268c7    push  [0x53ee4]            ; SFX 播放 handle A
 0x0268cd    call  0x3a2b5              ; 取狀態/index 檢查(-1 則跳過)
 0x0268dc    mov   eax, index
@@ -1431,6 +1431,87 @@ Miles AIL 配置 sample handle 的標準用法(`0x39xxx` 這一段正是 play_sf
 play_sfx、一處是上面的初始化);`[0x54133]` 是靜音/暫停旗標(19 個引用,判準是
 `!= 0 就跳過播放`)。
 
-**誠實範圍**:`0x392d0`/`0x39805`/`0x39521`/`0x39694` 的本體未展開,「Miles AIL
+~~**誠實範圍**:`0x392d0`/`0x39805`/`0x39521`/`0x39694` 的本體未展開,「Miles AIL
 sample handle」是由**呼叫形狀 + 兩次配置 + 驅動層位址群**推得,不是逐指令證實到
-驅動內部。兩個 handle 是否有優先權差異(例如 `_b` 可被搶佔)本輪未查。
+驅動內部。兩個 handle 是否有優先權差異(例如 `_b` 可被搶佔)本輪未查。~~
+**兩項均已於 §19 補完(2026-09-11):四個函式的名字直接來自 binary 自帶的 AIL_DEBUG
+追蹤字串——是資料,不是推論;而「優先權差異」這個問題不成立,整份 image 從未呼叫過任何
+優先權/音量/pan/取樣率設定 API。**
+
+## 19. 整層 Miles AIL 的函式名是**資料**,不是推論 —— 105 個進入點機械命名(2026-09-11)
+
+§(play_sfx 那節)的「誠實範圍」寫著:`0x392d0`/`0x39805`/`0x39521`/`0x39694` 的本體未展開,
+「Miles AIL sample handle」是由呼叫形狀推得。本輪發現**根本不需要展開本體**。
+
+### 19.1 這份 binary 連進來的 AIL 保留了它自己的 AIL_DEBUG 追蹤設施
+
+每個 AIL API 進入點在共用前導之後,都會把**自己的名字**當格式字串傳給追蹤函式 `0x3f46b`:
+
+```
+0x39316  mov  edi, [esp + 0x10]
+0x3931a  push edi
+0x3931b  push 0x5078d              ; "AIL_allocate_sample_handle(0x%X)
+"
+0x39320  mov  ebp, [0x54164]
+0x39326  push ebp
+0x39327  call 0x3f46b
+```
+
+obj2 裡這種 `AIL_xxx(fmt)
+` 追蹤字串共 **105 條**,涵蓋 Miles AIL 的整個 API 表面
+(startup/shutdown、timer、DIG 與 MDI driver、sample、sequence、timbre、channel、
+wave synthesizer)。環境變數名 `AIL_DEBUG` / `AIL_SYS_DEBUG` 也在同一段(`0x50313`/`0x50320`)。
+
+### 19.2 `tools/derive_ail_entry_points.py`(新,已登錄產物重生表與突變測試表)
+
+用兩段互相獨立的機制把「字串 → 進入點」做成可重生的對照表
+(`docs/data/ail_entry_points.json`,105/105 全解出):
+
+- **字串端**:掃 obj2 找 `AIL_<name>(<fmt>)
+`。
+- **程式端**:用 LE fixup 表反查每條字串被哪個 `push imm32` 引用,再往前找共用前導對
+  `[0x54178]`(巢狀深度計數)的引用,跨過連續的單 byte `push ebx/ebp/esi/edi` 即進入點。
+
+**判準是四個先以手工反組譯獨立確認過的位址必須被純機械地重現**
+(`0x392d0`/`0x39521`/`0x39694`/`0x39805`),寫進 `--selftest`。另有負向控制:把前導錨點
+換成 `0x54174`(前導裡另一個被讀、但**不是**被 `inc` 的全域),對照表必須對不上真值——
+第一版沒有這個控制,而「往前找最近的前導」這一步若沒做事,真值檢查會平凡通過。
+**開發過程中這條真值檢查真的抓到一個錯**:前導對 `[0x54178]` 有**兩次**引用(讀 + 寫,
+相隔 7 個 byte),第一版取「最近的一次」抓到寫,105 個進入點全部固定偏後 9~10 個 byte,
+名字卻全對——只看名字對不對是驗不出來的。
+
+### 19.3 因此可以確認的、以及必須訂正的
+
+**確認**:`play_sfx_a`(`0x25a96`)/`_b`(`0x25b45`)的整段序列現在是字面上的 AIL 呼叫,不是「標準用法」的推測:
+
+```
+AIL_stop_sample(h)                        0x39805
+AIL_init_sample(h)                        0x39521
+AIL_set_sample_address(h, base+[eax+6], [eax+0xa]-[eax+6])   0x39694
+AIL_set_sample_loop_count(h, p3)          0x39aae
+AIL_start_sample(h)                       0x39798
+```
+
+`_a` 全程用 `[0x53ee4]`、`_b` 全程用 `[0x53ee8]`,兩者都由 `AIL_allocate_sample_handle`
+(`0x392d0`)對同一個驅動配置——**兩個獨立 voice**這個結論由函式名直接證實。
+
+**訂正一(本文「⚠ 位址勘誤(第 9 輪…)」那張新舊版對照表)**:「`play_sfx_a` 內 `AIL_init_sample` 呼叫」的新版位址寫成
+`0x25afd`/`call 0x391d1`。`0x25afd` 是 `push [0x53ee4]`,真正的 `call` 在 `0x25b03`,
+目標是 **`0x39521`**;而 `0x391d1` **不是任何 AIL 進入點**(它落在 `AIL_install_DIG_driver_file`
+= `0x39176` 的函式體中段)。
+
+**訂正二(本文開頭的簽名)**:`play_sfx_a(table, index, priority)` 的第三個參數不是優先權,
+是 **loop count**。逐指令核對堆疊:進入點 `push 0x1c; call 0x3702f; push ebx; sub esp,8` 之後
+`[esp+0x18]` 就是第三個參數,而 `0x25b20 push [esp+0x18]` 正是
+`AIL_set_sample_loop_count(handle, n)` 的第二個實參。所有呼叫端傳的 `1` 是「播一次」,
+不是「優先權 1」。**這又是欄位/參數語意由消費端決定的一例**——「小整數 + 播音函式 = 優先權」
+是形狀推論,追到消費端只要一步。
+
+**訂正三(「優先權差異」這個問題不成立)**:整份 image 對
+`AIL_set_sample_volume`(`0x399c2`)、`AIL_set_sample_pan`(`0x39a38`)、
+`AIL_set_sample_playback_rate`(`0x3994c`)的呼叫端數皆為 **0**;同一支掃描工具對
+`AIL_init_sample`(`0x39521`)與 `AIL_start_sample`(`0x39798`)各回 **2 筆**
+(`play_sfx_a` 與 `play_sfx_b`),所以這個「0」不是掃描失效——有正向對照。
+遊戲從不設音量、pan、取樣率或任何優先權,兩個 handle 的設定完全對稱。
+這順帶**獨立佐證**了本文既有的結論「兩支的差別是 `[0x53ee4]`/`[0x53ee8]` 兩個獨立播放 voice,不是音量差異」:
+音量 API 根本沒被呼叫過。

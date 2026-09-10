@@ -32,10 +32,16 @@ if hasattr(sys.stdout, "reconfigure"):
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from le_xref import parse_le
 
-try:
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
-except ImportError:
-    sys.exit("need capstone: run under docker uv (見 README)")
+# capstone 只有反組譯路徑需要,**匯入時不要求**。本檔的 `load_code`/`build_fixups`
+# 是純位元組/fixup 操作,已被 `derive_ail_entry_points.py` 這類不反組譯的工具重用;
+# 模組層 `sys.exit` 會讓那些工具在沒有 capstone 的直譯器(例如 WSL python3,正是
+# `verify_everything` 的 wsl 軸所用)上整個掛掉,而它們根本不需要這個相依。
+def _capstone():
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    except ImportError:
+        sys.exit("need capstone: run under docker uv (見 README)")
+    return Cs(CS_ARCH_X86, CS_MODE_32)
 
 CODE_BASE = 0x10000
 
@@ -209,7 +215,7 @@ def main(a):
     )
     meta = parse_le(d)
     code, base = load_code(d, meta)
-    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    md = _capstone()
     md.detail = False
     cmd = a[2]
 

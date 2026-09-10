@@ -199,7 +199,10 @@ def axis_wsl(timeout: int) -> dict:
     script.parent.mkdir(parents=True, exist_ok=True)
     tools = ["worklist_status", "encode_text", "decode_story_text",
              "audit_evidence_provenance", "safe_output", "fd2_env_healthcheck",
-             "verify_docs_match_cli", "verify_selftest_discrimination"]
+             "verify_docs_match_cli", "verify_selftest_discrimination",
+             # 2026-09-11:純位元組/fixup 工具,刻意不相依 capstone —— 放進本軸
+             # 正是為了讓「哪天又在模組層要求反組譯器」立刻在這裡失敗。
+             "derive_ail_entry_points"]
     body = ["#!/bin/bash", "cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re || exit 1",
             "fail=0", "for t in " + " ".join(tools) + "; do",
             '  python3 "tools/$t.py" --selftest >/dev/null 2>&1 || { echo "FAIL $t"; fail=$((fail+1)); }',

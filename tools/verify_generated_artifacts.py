@@ -141,6 +141,10 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 2026-09-11:worklist 1354 的欄位配置,由 0x4e8bc 消費端掃描 + 跨產物全列對映導出。
     ("docs/data/item_row_field_consumers.json", "derive_item_row_fields.py",
      ["--json", "{out}"], "bytes"),
+    # 2026-09-11:Miles AIL 105 個 API 進入點,名字直接取自 binary 自帶的
+    # AIL_DEBUG 追蹤字串(是資料,不是推論);見 doc36。
+    ("docs/data/ail_entry_points.json", "derive_ail_entry_points.py",
+     ["--exe", EXE, "--json", "{out}"], "bytes"),
     ("docs/data/chapter_beats", "dump_chapter_beats.py", [EXE, "all", "{out}"], "dir"),
 ]
 
