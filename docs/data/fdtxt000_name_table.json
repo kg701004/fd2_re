@@ -162,5 +162,26 @@
   "instruction_level_evidence": "`FUN_0002ac7d`(轉職後數值處理)開頭:`0x2acc1 movzx eax, byte ptr [esi+0x20]` / `0x2acc5 add eax, 0x96` / `0x2acca mov dword ptr [0x53ad9], eax`。",
   "why_this_matters": "本檔既有的 `_how_it_is_used.index_convention` 只記載了三個採用 `id + 1` 的寫入端(復活用 record[+8]+1、轉職用 record[+7]+1、整備必要角色用 id+1)。**`+0x96` 是第四種慣例,先前未記載** —— `DAT_00053ad9` 是一個共用的字串索引暫存器,不同呼叫端使用不同的基底偏移,不能假設一律 `+1`。全 image 共 11 個 `mov [0x53ad9],eax` 寫入點,本輪只逐一確認了 `0x2acca` 這一個的偏移。"
  },
- "_discrepancy_flagged_2026_09_07": "本檔既有的 `69..75 races` 標籤**存疑**:實際內容為 士兵/騎兵/傭兵/豹人/精靈/龍人/惡魔 —— 前三項是單位類型而非種族,與同檔 `77..128 unit type names` 的分類重疊。而 **141..150 才是結構乾淨的種族表**(以「其他」「龍」收尾)。本輪**不逕行改寫既有標籤**(未取得該段的程式碼側索引證據),僅標記此矛盾供後續解決。"
+ "_discrepancy_flagged_2026_09_07": "本檔既有的 `69..75 races` 標籤**存疑**:實際內容為 士兵/騎兵/傭兵/豹人/精靈/龍人/惡魔 —— 前三項是單位類型而非種族,與同檔 `77..128 unit type names` 的分類重疊。而 **141..150 才是結構乾淨的種族表**(以「其他」「龍」收尾)。本輪**不逕行改寫既有標籤**(未取得該段的程式碼側索引證據),僅標記此矛盾供後續解決。",
+ "_string_index_writers_2026_09_10": {
+  "why": "既有的 `_class_name_index_convention` 記著「全 image 共 11 個 `mov [0x53ad9],eax` 寫入點,本輪只逐一確認了 `0x2acca` 這一個的偏移」。本輪把 11 個全部逐一解出來——偏移決定該情境選用字串表的哪一段,不確認就等於不知道那些呼叫端顯示的是什麼。",
+  "method": "對 `0x3ad9`(= 文件慣用的 `0x53ad9`,反組譯輸出省掉 obj2 的 0x50000 基底)做全 image 位元組掃描找出參照,再從每個寫入點往回線性反組譯 24 bytes 取出計算式。11 個寫入點與既有記載的數量相符。",
+  "writers": {
+   "0x191e3": "lea eax,[ebx+0xb5] —— 基底 +0xb5,來源 movzx ebx, word [edx+eax+0x54]",
+   "0x1ac8e": "lea eax,[ebx+0xb5] —— 基底 +0xb5",
+   "0x35916": "add eax,0xb5 —— 基底 +0xb5,來源 movzx eax, byte [esp+eax+8]",
+   "0x2acca": "add eax,0x96 —— 基底 +0x96,來源 movzx eax, byte [esi+0x20](職業 id);既有記載的那一個",
+   "0x28d23": "inc eax —— 基底 +1,來源 record[+7](職業)",
+   "0x2ab2f": "inc eax —— 基底 +1,來源 record[+7](職業)",
+   "0x28fb3": "inc eax —— 基底 +1,來源 record[+8](角色 id)",
+   "0x29193": "inc eax —— 基底 +1,來源 record[+8](角色 id)",
+   "0x2a553": "inc eax —— 基底 +1,來源 record[+8](角色 id)",
+   "0x2b496": "inc eax —— 基底 +1,來源堆疊引數 [esp+0x10]",
+   "0x28a07": "add eax,esi —— **基底是變數**,來源 record[+7];esi 的來源本輪未追,是這 11 個裡唯一沒有定值的"
+  },
+  "finding": "**慣例有四種,不是兩種**:`+1`(6 個寫入點)、`+0x96`(1 個)、**`+0xb5`(3 個,先前未記為 [0x53ad9] 的慣例)**、以及一個變數偏移。",
+  "cross_check_0xb5": "`+0xb5` = 181 正是本檔 `_layout_verified_programmatically` 標為「武器/道具名」的起點,而 `docs/data/item_labels.json` 由**另一條呼叫路徑**獨立記載同一個基底:`string_index_formula: \"0xb5 + item_id\"`,provenance `0x184c0 -> 0x15f84([0x53a7d], 0xb5 + item_id, ...)`——它不經過 [0x53ad9]。兩份互不相干的產物對這個基底一致。",
+  "bearing_on_the_69_75_question": "`_discrepancy_flagged_2026_09_07` 問 69..75 該不該叫 races。本輪的結果指出:走 `+1` 慣例時,id 68..74 就會落在索引 69..75,與 76..127 落在 77..128 是**同一個定址空間、同一組寫入點**;所以 69..75 比較像是單位類型表的前段,而不是獨立的種族表(真正結構乾淨的種族表在 141..150)。這是旁證不是定案——沒有任何一個呼叫端被證明只會產生 68..74 這個範圍。"
+ },
+ "_transcription_independently_replicated_2026_09_10": "本輪把三張證據圖(001-035 / 069-104 / 105-140)重新逐字轉錄一次,**先轉錄、後比對**:玩家名區塊 32/32 與 `character_names_by_id` 完全相同,單位/首領區塊 55/55 與 `unit_types_by_index` 完全相同,合計 87/87 零不一致。前者本身又已對照過 2026-09-07 實機讀出的 13 個名字,所以這條複驗鏈是:實機名冊 -> 玩家名區塊 -> 我的判讀方法 -> 未知區塊。"
 }
