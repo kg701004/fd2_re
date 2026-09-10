@@ -33912,6 +33912,38 @@
    "excerpt": "(維持既有「實測值 +3」慣例);doc 錨定名稱 19 → **21**,命中 beat 84 → **86**。",
    "verdict": "benign",
    "note": "陳述的是 unknown 天花板與 doc 錨定名稱計數的變化,屬工具棘輪的統計數字,可由 dump_chapter_beats 的 --selftest 輸出直接複驗,不是遊戲事實主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 302,
+   "excerpt_sha1": "8983e7179568f3022bcc9394a797535f6947ac80",
+   "excerpt": "| 「doc13 明寫語意未證實」「單一呼叫端」 | 真的是封鎖——證據確實不足 |",
+   "verdict": "benign",
+   "note": "陳述的是 0x361b0 的被呼叫者在本專案已命名這件事(工具/文件狀態),完整逐指令依據在 doc35 §12,該處帶位址標記。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 329,
+   "excerpt_sha1": "36ba71e6b6df985e21ddc3c7cc2905b1f5d0e86c",
+   "excerpt": "`DOC_OP_NAMES`,名稱必須通過錨點複驗(引文逐字存在、位址在 ±3 行內);每一個都寫明",
+   "verdict": "benign",
+   "note": "陳述的是本輪四個命名所遵守的流程紀律(先寫文件章節、再進 DOC_OP_NAMES、由錨點複驗),屬流程說明,不是關於遊戲的事實主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 335,
+   "excerpt_sha1": "063c46381171f24dd576e7064a8f722474da446e",
+   "excerpt": "這直接證實 argc=0。呼叫端訊號模糊時往被呼叫端本體看,是與現有兩條都獨立的第三條路,",
+   "verdict": "benign",
+   "note": "陳述的是 0x25089 argc 的第三條證據路徑(讀被呼叫端本體),完整依據在 doc25 §15,該處帶位址標記。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 338,
+   "excerpt_sha1": "337cd420ed3c3badc0962ebcbe9068e2e1165b1f",
+   "excerpt": "**棘輪連續收緊四次**(每次都維持既有的「實測值 +3」慣例):",
+   "verdict": "benign",
+   "note": "陳述的是 unknown 天花板與命名計數的棘輪變化,屬工具統計數字,可由 dump_chapter_beats --selftest 直接複驗。"
   }
  ]
 }
