@@ -137,12 +137,13 @@
    }
   },
   {
-   "op": "unknown",
+   "op": "wait_ticks",
    "addr": "0x258f4",
    "target": "0x17aa9",
    "args": [
     1
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x258e8",
     "limit": 40
@@ -184,10 +185,11 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "scene_charcard_orchestrator",
    "addr": "0x25970",
    "target": "0x31529",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   }
  ]
 }

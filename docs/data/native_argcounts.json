@@ -53,7 +53,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "clear_acted_flags"
   },
   "0x17aa9": {
     "argc": 1,
@@ -67,7 +67,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "wait_ticks"
   },
   "0x1b8e7": {
     "argc": 2,
@@ -253,7 +253,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "palette_ramp_down"
   },
   "0x25089": {
     "argc": 0,
@@ -299,7 +299,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "scene_charcard_orchestrator"
   },
   "0x33f78": {
     "argc": 3,
@@ -316,7 +316,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "camera_step_then_present"
   },
   "0x35b78": {
     "argc": 3,
@@ -330,7 +330,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "give_item_to_group"
   },
   "0x35f10": {
     "argc": 1,

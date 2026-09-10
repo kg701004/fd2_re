@@ -15,8 +15,8 @@ cdecl 從右到左 push,故「最近 N 個 push」reverse 後才是函式簽名�
     維持原始 push 並標記 `args_are_raw_pushes`,因為猜錯個數比留著原樣更糟。
   * **op 名稱**另走一條獨立的路:`derive_native_argcounts.DOC_OP_NAMES` 只收 repo
     文件裡已反組譯、且引文可逐字定位(位址須在引文 ±3 行內)的名稱,命中時把
-    `op` 換掉並附 `op_name_source: doc-anchored`。13 個名稱共命中 61 條 beat,
-    unknown 101 -> 40。
+    `op` 換掉並附 `op_name_source: doc-anchored`。19 個名稱共命中 84 條 beat,
+    unknown 101 -> 17。
   * 兩者**不互相帶動**:`0x22253` 有名稱但參數個數判 LIKELY,args 仍是原始 push。
 
 人工註記(`docs/data/chapter_beats_notes.json`):
@@ -681,11 +681,11 @@ def cmd_all(cg, fx, outdir, quiet=False):
 DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            'org_game', '炎龍騎士團', 'FLAME2', 'FD2.EXE')
 # 2026-09-08 實測值(修好位址表之後)。這是天花板不是目標:允許往下,不允許悄悄變多。
-# 2026-09-09:doc 錨定的 op 名稱上線後實測 40(101 -> 49 -> 40),天花板隨之收緊到 45。
-UNKNOWN_CEILING = 45
-# 這 13 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
+# 2026-09-09:doc 錨定的 op 名稱上線後實測 17(101 -> 49 -> 40 -> 17),天花板隨之收緊到 20。
+UNKNOWN_CEILING = 20
+# 這 19 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
 # 一個都沒對上」——那代表位址認錯,而錯名比留 unknown 更糟,正是本項的原始警語。
-DOC_NAMED_BEATS = 61
+DOC_NAMED_BEATS = 84
 # 2026-09-06 手寫進已提交 chapter_beats 的反組譯註記數(現存於 chapter_beats_notes.json)。
 NOTE_COUNT = 12
 

@@ -13,10 +13,11 @@
    "args_are_raw_pushes": true
   },
   {
-   "op": "unknown",
+   "op": "clear_acted_flags",
    "addr": "0x23ebf",
    "target": "0x13536",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "redraw",

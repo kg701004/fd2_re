@@ -34,14 +34,15 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "give_item_to_group",
    "addr": "0x33e16",
    "target": "0x35b78",
    "args": [
     9,
     19,
     8
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",

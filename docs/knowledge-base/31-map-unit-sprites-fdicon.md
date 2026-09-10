@@ -340,3 +340,39 @@ routine 刻意支援「離場」與「進場/就地」兩種語意的共用機�
   精確對照。完成度:**「可能已部分由 `ComposeNativeTransitionFrame` 覆蓋」的舊猜測已被本輪修正**——
   `ComposeNativeTransitionFrame` 服務的是 `0x24618`(§9.1 明確是不同 native 位址),不覆蓋 `0x22253`;
   兩者只是共用 `ApplyIndexedTransitionPass`/`0x22046` 幾何原語,不能因此判定 898 部分關閉。仍應維持 D。
+
+## 10. 訂正:`0x33f78` wrapper 自己是 **3 引數**,不是 5——那個 5 屬於它呼叫的 `0x22253` [驗]
+
+**2026-09-09,純靜態反組譯(現行參考版 `FD2.EXE`)**。§9.5 寫「需要換成 `NativeStagingPresent`
+(已完成,對應 `0x33f78` wrapper 的 5 引數)」,而 `NativeStagingPresent` 有 `Slot/X/Y/FocusX/FocusY`
+五個欄位。**wrapper 的 ABI 不是 5**:
+
+```
+0x33f78  push 0x18 ; call 0x3702f      ; Watcom 序頭(24-byte frame)
+0x33f82  push dword ptr [esp + 0xc]
+0x33f86  push dword ptr [esp + 0xc]
+0x33f8a  call 0x12cea                  ; 鏡頭步進(2 引數,doc58 已載 `0x12cea(param_1,param_2)`)
+0x33f8f  add  esp, 8
+0x33f92  push dword ptr [esp + 0xc]
+0x33f96  push dword ptr [esp + 0xc]
+0x33f9a  push dword ptr [esp + 0x14]
+0x33f9e  push dword ptr [esp + 0x14]
+0x33fa2  push dword ptr [esp + 0x14]
+0x33fa6  call 0x22253                  ; 單位現身/離場演出引擎(5 引數,§9 已載)
+0x33fab  add  esp, 0x14                ; 20 = 5 個 dword
+0x33fae  ret
+```
+
+**呼叫端側的獨立佐證**:對 `0x33f78` 做全 image 位元組掃描找到 10 個呼叫端,其中 **9 個是 `add esp, 12`**
+(`0x33ea4`/`0x33eb2`/`0x33ec0`/`0x33ece`/`0x33f45`/`0x33f53`/`0x33f61`/`0x3635b`/`0x363a9`),
+第 10 個 `0x363c4` 以 `jmp` 尾呼叫、沒有自己的清理。緊鄰連續 `push` 數在前 7 個呼叫端也是 3。
+兩個互相獨立的訊號都得出 **3**。
+
+**所以那個 5 是 `0x22253` 的**:`0x33f78` 這個 wrapper 收 3 個引數,先用其中兩個呼叫 `0x12cea` 做鏡頭步進,
+再把 3 個引數加上另外 2 個值湊成 5 個 push 交給 `0x22253`。`NativeStagingPresent` 五個欄位
+描述的是**下游那一層**的資料形狀,不是 wrapper 的呼叫慣例;§9.5 把兩者記成同一件事。
+
+**這筆是被工具反過來抓到的**:`tools/derive_native_argcounts.py` 的 op 名稱入場規則要求
+「文件記載的參數個數必須與呼叫端推導相符」,`0x33f78` 因為 5≠3 被擋下,才回頭查出本節。
+同一條規則先前也抓到 doc58 把 `0x2aedb` 簡寫成 `(index)`(實為 2 引數)。
+

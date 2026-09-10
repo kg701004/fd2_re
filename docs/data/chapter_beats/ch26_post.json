@@ -87,13 +87,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x25244",
    "target": "0x25052",
    "args": [
     80,
     5
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -105,13 +106,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x25277",
    "target": "0x25052",
    "args": [
     80,
     4
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -122,13 +124,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x25290",
    "target": "0x25052",
    "args": [
     80,
     3
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -139,13 +142,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x252a9",
    "target": "0x25052",
    "args": [
     80,
     2
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -156,13 +160,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x252bf",
    "target": "0x25052",
    "args": [
     80,
     2
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -173,13 +178,14 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_ramp_down",
    "addr": "0x252d5",
    "target": "0x25052",
    "args": [
     80,
     2
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "palette_transition_loop",
@@ -333,10 +339,11 @@
    "args_are_raw_pushes": true
   },
   {
-   "op": "unknown",
+   "op": "scene_charcard_orchestrator",
    "addr": "0x2545d",
    "target": "0x31529",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   }
  ]
 }

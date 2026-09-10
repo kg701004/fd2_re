@@ -287,7 +287,8 @@
    "handler": "0x235f9",
    "n_beats": 12,
    "ops": {
-    "unknown": 2,
+    "unknown": 1,
+    "clear_acted_flags": 1,
     "redraw": 1,
     "palfade": 1,
     "delay": 1,
@@ -553,7 +554,8 @@
    "handler": "0x23e74",
    "n_beats": 20,
    "ops": {
-    "unknown": 2,
+    "unknown": 1,
+    "clear_acted_flags": 1,
     "redraw": 1,
     "palfade": 1,
     "delay": 1,
@@ -693,7 +695,7 @@
    "ops": {
     "dialog": 2,
     "redraw": 2,
-    "unknown": 2,
+    "wait_ticks": 2,
     "reveal_wipe": 2,
     "palette_brightness_ramp": 1,
     "memset": 1,
@@ -789,13 +791,15 @@
     "act": 5,
     "party_has_item": 1,
     "pan": 1,
-    "unknown": 11,
+    "palette_ramp_down": 6,
     "delay": 5,
     "palette_transition_loop": 1,
     "memset": 2,
+    "unknown": 4,
     "sync_party": 1,
     "increment_chapter": 1,
-    "unit_present": 1
+    "unit_present": 1,
+    "scene_charcard_orchestrator": 1
    }
   },
   {
@@ -814,7 +818,7 @@
     "act": 3,
     "reset_pose": 1,
     "dialog": 1,
-    "unknown": 2,
+    "give_item_to_group": 2,
     "focus_unit": 1
    }
   },
@@ -839,7 +843,7 @@
     "pan": 1,
     "act": 1,
     "dialog": 2,
-    "unknown": 1,
+    "give_item_to_group": 1,
     "reset_pose": 1,
     "focus_unit": 1
    }
@@ -874,7 +878,8 @@
     "act": 1,
     "pan": 3,
     "dialog": 3,
-    "unknown": 8,
+    "camera_step_then_present": 7,
+    "unknown": 1,
     "reset_pose": 1,
     "focus_unit": 1
    }
@@ -891,29 +896,25 @@
     "pan": 2,
     "camera_step_to": 1,
     "palette_transition_loop": 1,
-    "unknown": 4,
+    "unknown": 2,
     "increment_chapter": 1,
     "loadch": 1,
     "redraw": 2,
     "palette_delta_ramp": 1,
-    "delay": 1
+    "delay": 1,
+    "wait_ticks": 1,
+    "scene_charcard_orchestrator": 1
    }
   }
  ],
  "unknown_targets": {
   "0x1f882": 4,
-  "0x13536": 2,
   "0x24336": 1,
   "0x4df4c": 1,
-  "0x17aa9": 3,
   "0x3776e": 1,
-  "0x25052": 6,
   "0x25089": 4,
   "0x1c2da": 1,
-  "0x31529": 2,
-  "0x35b78": 3,
   "0x35f10": 1,
-  "0x361b0": 4,
-  "0x33f78": 7
+  "0x361b0": 4
  }
 }

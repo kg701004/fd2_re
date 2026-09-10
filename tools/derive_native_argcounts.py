@@ -47,9 +47,20 @@ op 名稱(2026-09-09 加入,與參數個數是**兩種不同的主張**)
 母體擴大後判定 LIKELY,它的 `args` 仍然保留原始 push 並標記。反過來也一樣。這是刻意
 的——worklist 說的「填錯比留 unknown 更糟」主要針對語意,兩件事不混為一談。
 
-27 個目標中 13 個有名稱;`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無命名段落,
-`0x3776e` 的鄰居 `0x3771c` 才是被反組譯成 memmove 的那個(doc13 明寫它自己「語意仍是
-推測,未證實」),這些一律維持 unknown。
+27 個目標中 **19 個**有名稱。**先前寫「13 個,其餘全庫查無命名段落」是錯的**:當時的搜尋
+要求位址與確認詞出現在**同一行**,而文件是在表格、標題、敘述裡命名的——`0x17aa9`(doc23
+「tick 計數忙等」)、`0x25052`(doc56 給了完整簽名)、`0x13536`(doc56「對全部 runtime
+records 執行 raw `+5 &= 0x7F`」)、`0x31529`(doc35 §9.11.3 標題)、`0x35b78`(doc25 §11
+訂正過的簽名)全都有,只是搜不到。這是同一個 session 裡第四次「查無資料」的結論來自不完整
+的搜尋,寫在這裡當提醒。
+
+仍然維持 unknown 的 8 個各有理由:`0x3776e` doc13 明寫「語意仍是推測,**未證實**」(被反組譯成
+memmove 的是它的鄰居 `0x3771c`);`0x35f10` doc25 明寫「本體未展開」;`0x361b0`/`0x1c2da`/
+`0x4df4c` 文件只提到被呼叫、沒有命名(`0x4df4c` 另有一筆未收斂的行為矛盾);`0x1f882`/
+`0x25089` 有合併清理風險;`0x24336` 全 image 只有一個呼叫端。
+
+`doc_argc` 記 `None` 表示**文件只給名稱、沒給簽名**:此時名稱由文件負責、參數個數由本工具的
+雙訊號推導負責(規則是必須 CONFIRMED),兩種主張各自有支撐,不互相借力。
 
 `0x24bde` 的名稱刻意與 PRIM 的 `0x33499` 相同:doc25 記載它是同一個 `roster_has(id)`
 原語的第二個獨立編譯實例,本體逐位元組相同。所以撞名規則不是一律禁止,而是**撞名時
@@ -414,6 +425,30 @@ DOC_OP_NAMES = {
               "同一個`roster_has(id)`原語的第二個獨立編譯實例"),
     0x24618: ("palette_transition_loop", 4, "58-remake-live-verification-log.md",
               "反編譯確認函式本體正是已證實的 9-frame/0x40-step palette 迴圈"),
+    # 2026-09-09 續:先前判定這幾個「全庫查無命名段落」——**那是搜尋方式的問題**,
+    # 我當時要求位址與確認詞出現在**同一行**,而文件是在表格、標題、敘述裡命名的。
+    # 這是本 session 第四次「查無資料」的結論來自不完整的搜尋。
+    #
+    # 文件沒有寫出參數個數的,`doc_argc` 記 None:名稱由文件負責,參數個數由本工具的
+    # 雙訊號推導負責(規則是此時必須 CONFIRMED)。兩種主張分開,與整張表的設計一致。
+    0x17aa9: ("wait_ticks", 1, "23-boot-title-and-scenario-flow.md",
+              "是 tick 計數忙等"),
+    0x25052: ("palette_ramp_down", 2, "56-fd2-remake-sdd.md",
+              "is an independently editable palette-ramp primitive"),
+    0x13536: ("clear_acted_flags", None, "56-fd2-remake-sdd.md",
+              "runtime records 執行 raw `+5 &= 0x7F`"),
+    0x31529: ("scene_charcard_orchestrator", None, "35-battle-animation-rendering.md",
+              "一個「換場+角色卡」的 orchestrator"),
+    # doc25 §11 明寫這是**訂正**先前 §10.2/§10.4.2/§10.4.3 的讀法,3 個引數與推導相符。
+    # 名稱刻意不叫 `grant_item`(PRIM 的 0x1c220 是 1 引數的另一個函式)。
+    0x35b78: ("give_item_to_group", 3, "25-battle-event-system.md",
+              "func_0x35B78(group_id, item_id, count?)"),
+    # 這一筆是**先被本規則擋下、回頭查證後才成立**的:doc31 §9.5 寫「`0x33f78` wrapper
+    # 的 5 引數」,而兩個訊號都得出 3(9/10 個呼叫端 `add esp,12`)。反組譯本體發現那個
+    # 5 屬於它呼叫的 `0x22253`——wrapper 收 3 個引數,先用兩個呼叫 `0x12cea` 做鏡頭步進,
+    # 再湊 5 個 push 交給 `0x22253`。訂正寫在 doc31 §10,名稱錨在那一節。
+    0x33f78: ("camera_step_then_present", 3, "31-map-unit-sprites-fdicon.md",
+              "這個 wrapper 收 3 個引數,先用其中兩個呼叫 `0x12cea` 做鏡頭步進"),
 }
 # 刻意留在 unknown 的:`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無任何命名段落;
 # `0x31529`/`0x25089`/`0x3776e` 只有假陽性或旁證(`0x3776e` 的鄰居 `0x3771c` 才是被
@@ -427,13 +462,15 @@ def anchor_lines(doc: str, quote: str, addr: int) -> list[int]:
     `FUN_0002aedb(char_idx, item_id)` 出現兩次,只有一處旁邊有位址)。
     """
     lines = (DOCS / doc).read_text(encoding="utf-8").split("\n")
-    hexa = hex(addr)
+    # 位址比對**不分大小寫**:文件裡 `0x35B78` 與 `0x35b78` 兩種寫法都有(doc25 同一節
+    # 就混用),分大小寫會讓錨點在正確的段落上落空。引文仍然逐字比對,不放寬。
+    hexa = hex(addr).lower()
     out = []
     for i, line in enumerate(lines):
         if quote not in line:
             continue
         lo, hi = max(0, i - ANCHOR_WINDOW), min(len(lines), i + ANCHOR_WINDOW + 1)
-        if any(hexa in lines[j] for j in range(lo, hi)):
+        if any(hexa in lines[j].lower() for j in range(lo, hi)):
             out.append(i + 1)
     return out
 
@@ -598,9 +635,15 @@ def selftest() -> int:
         if not where:
             name_bad.append(f"{addr:#07x} {name}: 引文在 {doc} 找不到(或位址不在 ±{ANCHOR_WINDOW} 行內)")
             continue
-        got = derive(collect_wide(cg, addr))["argc"]
-        if got != want:
-            name_bad.append(f"{addr:#07x} {name}: 文件 {want}、推得 {got}({doc}:{where[0]})")
+        d = derive(collect_wide(cg, addr))
+        if want is None:
+            # 文件只給名稱、沒給簽名:參數個數這一半就必須由本工具自己站得住,
+            # 也就是雙訊號一致到 CONFIRMED。否則兩半都沒有支撐。
+            if d["verdict"] != "CONFIRMED":
+                name_bad.append(f"{addr:#07x} {name}: 文件沒給簽名,而推導判定是 "
+                                f"{d['verdict']}(需 CONFIRMED)")
+        elif d["argc"] != want:
+            name_bad.append(f"{addr:#07x} {name}: 文件 {want}、推得 {d['argc']}({doc}:{where[0]})")
     # 非平凡性:名稱不得在本表內重複。與 PRIM 撞名則要看情況——同一個原語被編譯成
     # 兩份是真的會發生(0x24bde vs 0x33499),所以規則是**撞名時引文必須自己提到那個
     # 名字**;引文沒提到就是認錯函式,照樣擋下。
@@ -676,7 +719,7 @@ def selftest() -> int:
     print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
           "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
           "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
-          "+ 13 個 op 名稱的錨點複驗與四個負向控制 + 已登錄產物的即時漂移檢查)。")
+          "+ 19 個 op 名稱的錨點複驗與四個負向控制 + 已登錄產物的即時漂移檢查)。")
     return 0
 
 

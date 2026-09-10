@@ -108,24 +108,26 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "give_item_to_group",
    "addr": "0x33d95",
    "target": "0x35b78",
    "args": [
     0,
     16,
     6
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "give_item_to_group",
    "addr": "0x33da3",
    "target": "0x35b78",
    "args": [
     7,
     16,
     7
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "focus_unit",

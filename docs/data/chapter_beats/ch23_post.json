@@ -23,12 +23,13 @@
    }
   },
   {
-   "op": "unknown",
+   "op": "wait_ticks",
    "addr": "0x24c6d",
    "target": "0x17aa9",
    "args": [
     1
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x24c61",
     "limit": 30
@@ -76,12 +77,13 @@
    }
   },
   {
-   "op": "unknown",
+   "op": "wait_ticks",
    "addr": "0x24cdd",
    "target": "0x17aa9",
    "args": [
     1
    ],
+   "op_name_source": "doc-anchored",
    "repeat_hint": {
     "loop_back_to": "0x24cc1",
     "limit": 12

@@ -43,44 +43,48 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33ea4",
    "target": "0x33f78",
    "args": [
     21,
     21,
     5
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33eb2",
    "target": "0x33f78",
    "args": [
     22,
     23,
     5
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33ec0",
    "target": "0x33f78",
    "args": [
     23,
     20,
     5
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33ece",
    "target": "0x33f78",
    "args": [
     24,
     24,
     5
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -116,34 +120,37 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33f45",
    "target": "0x33f78",
    "args": [
     24,
     22,
     18
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33f53",
    "target": "0x33f78",
    "args": [
     25,
     21,
     18
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "camera_step_then_present",
    "addr": "0x33f61",
    "target": "0x33f78",
    "args": [
     26,
     23,
     18
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "reset_pose",
