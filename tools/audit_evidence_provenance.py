@@ -533,6 +533,47 @@ def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
               "(每份文件一個 JSON,`_order.json` 是建議處理順序——由少到多)。")
 
 
+def line_ending_flips(base: str = "HEAD", min_lines: int = 40,
+                      ratio: float = 0.2) -> list[tuple[str, int, int]]:
+    """行尾被整份改寫的檔案 -> [(路徑, git 看到的變動行數, 忽略空白後的行數)]。
+
+    2026-09-10 加。同一天**三次**被這件事咬到:用 Python `write_text(..., newline="\\n")`
+    改一個原本是 CRLF 的檔,整份就變成 LF。最嚴重的一次是 doc35——git 看到
+    **8905 行變動**(4469 增 / 4436 刪),而真正新增的只有 33 行。若真的提交下去,
+    該檔的 blame 就毀了,而且 code review 完全看不出改了什麼。
+
+    判準是兩個 `git diff` 的**差**:一般 diff 的行數 vs `--ignore-all-space` 的行數。
+    只有行尾變動時,前者很大、後者接近 0。用比值而不是絕對值,才不會把「真的大改」
+    誤報成行尾翻轉。`min_lines` 讓小檔不觸發。
+    """
+    import subprocess as _sp
+
+    def _numstat(extra: list[str]) -> dict[str, int]:
+        r = _sp.run(["git", "diff", *extra, "--numstat", base],
+                    cwd=str(REPO), capture_output=True, text=True,
+                    encoding="utf-8", errors="replace")
+        out: dict[str, int] = {}
+        for line in (r.stdout or "").splitlines():
+            parts = line.split("\t")
+            if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+                out[parts[2]] = int(parts[0]) + int(parts[1])
+        return out
+
+    return flip_decision(_numstat([]), _numstat(["--ignore-all-space"]), min_lines, ratio)
+
+
+def flip_decision(plain: dict[str, int], spaceless: dict[str, int],
+                  min_lines: int = 40, ratio: float = 0.2) -> list[tuple[str, int, int]]:
+    """`line_ending_flips` 的純判定部分,抽出來讓 selftest 打得到**真正跑的那一份**
+    (不是在測試裡重寫一次判準)。"""
+    hits = []
+    for path, total in plain.items():
+        real = spaceless.get(path, 0)
+        if total >= min_lines and real <= total * ratio:
+            hits.append((path, total, real))
+    return sorted(hits)
+
+
 def scan_diff(base: str = "HEAD") -> list[Claim]:
     """只掃 `git diff <base>` 裡**新增**的 knowledge-base 行,不重掃全庫。
 
@@ -783,6 +824,22 @@ def selftest() -> int:
     checks += 1
     if scan_text_one("2026-08-18 以 Ghidra 唯讀重讀 `0x51e63` 逐位元組複核").addr_only:
         fails.append("具名原版工具支撐的 ORIGINAL 不該被標成 addr_only")
+
+    # --- 2026-09-10:行尾整檔翻轉的偵測。同一天被咬三次,最嚴重一次 git 看到 8905 行
+    # 變動而真正的改動只有 33 行。四個成對案例含**兩個必須不報**的:真的大改、以及
+    # 小檔(否則這道檢查會在每次正常編輯時亂叫,很快就會被關掉)。
+    checks += 4
+    flip_cases = [
+        ("純行尾翻轉的大檔", True, {"a.md": 8905}, {"a.md": 33}),
+        ("真的大改(空白無關的改動佔多數)", False, {"b.md": 900}, {"b.md": 880}),
+        ("小檔的行尾翻轉(低於門檻,不報)", False, {"c.md": 12}, {"c.md": 0}),
+        ("正常編輯(兩者相同)", False, {"d.md": 60}, {"d.md": 60}),
+    ]
+    for label, want, plain, spaceless in flip_cases:
+        got = bool(flip_decision(plain, spaceless))
+        if got != want:
+            fails.append(f"行尾翻轉判定錯誤:{label} 應{'報' if want else '不報'},實際"
+                         f"{'報了' if got else '沒報'}")
 
     # --- FLAME2 迴歸:原版目錄名含 `E2`,不可被當成「E2E 驗證」收進來 ---
     checks += 2
@@ -1195,6 +1252,15 @@ def main() -> int:
         return mark_reviewed_batch(items, scan(KB))
 
     if args.diff is not None:
+        flips = line_ending_flips(args.diff)
+        if flips:
+            for f, tot, real in flips:
+                print(f"  FAIL 行尾整檔翻轉:{f} —— git 看到 {tot} 行變動,"
+                      f"忽略空白後只有 {real} 行是真的改動")
+            print(f"\n{len(flips)} 個檔案的行尾被整份改寫(CRLF <-> LF)。"
+                  "這樣提交會產生假的全檔差異、毀掉該檔的 blame。"
+                  "請把行尾改回與 HEAD 一致再提交。")
+            return 1
         new_claims = scan_diff(args.diff)
         bad = [c for c in new_claims if c.status == "NO_MARKER"]
         unreg_remake = [c for c in new_claims if c.status == "REMAKE_ONLY"

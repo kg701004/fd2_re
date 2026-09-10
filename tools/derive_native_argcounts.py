@@ -410,6 +410,10 @@ DOC_OP_NAMES = {
               "10-iteration 的 sprite walk-on 動畫迴圈"),
     0x11d40: ("palette_brightness_ramp", 3, "35-battle-animation-rendering.md",
               "figure/台座的色盤淡入(brightness ramp 0→48)"),
+    # 2026-09-10:8 個「argc 已 CONFIRMED 但無名稱」的原語之一,先前留白的理由是
+    # 本體未展開。本輪從 0x22c04 那條路徑追進去,完整反組譯後寫成 doc35 §11。
+    0x1c2da: ("present_effect_on_targets", 4, "35-battle-animation-rendering.md",
+              "對一組目標單位播放音效並逐一疊繪效果圖"),
     0x11df2: ("palette_delta_ramp", 3, "50-cutscene-script-system-design.md",
               "是獨立的調色盤/淡變數值計算函式"),
     # 這兩筆是 2026-09-09 續六補的,補的理由是我自己前一輪的判準不一致:
@@ -719,7 +723,8 @@ def selftest() -> int:
     print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
           "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
           "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
-          "+ 19 個 op 名稱的錨點複驗與四個負向控制 + 已登錄產物的即時漂移檢查)。")
+          f"+ {len(DOC_OP_NAMES)} 個 op 名稱的錨點複驗與四個負向控制 + "
+          "已登錄產物的即時漂移檢查)。")
     return 0
 
 

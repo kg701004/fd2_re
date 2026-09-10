@@ -298,7 +298,7 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "present_effect_on_targets",
    "addr": "0x253fa",
    "target": "0x1c2da",
    "args": [
@@ -306,7 +306,8 @@
     19,
     1,
     "eax"
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "unit_present",

@@ -98,7 +98,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "present_effect_on_targets"
   },
   "0x1f882": {
     "argc": 0,
