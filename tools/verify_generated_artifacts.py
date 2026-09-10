@@ -138,6 +138,9 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 貼回(貼不上就丟錯),唯一手工結構化的 ch06_post.json 移到 chapter_beats_manual/
     # (它的外層 `if native_event_state_eq` 沒有任何抽取器產得出來)。留一個產不出來
     # 的檔在目錄裡,登錄項目會永遠報漂移——所以先把它移出去,再讓整個目錄可比對。
+    # 2026-09-11:worklist 1354 的欄位配置,由 0x4e8bc 消費端掃描 + 跨產物全列對映導出。
+    ("docs/data/item_row_field_consumers.json", "derive_item_row_fields.py",
+     ["--json", "{out}"], "bytes"),
     ("docs/data/chapter_beats", "dump_chapter_beats.py", [EXE, "all", "{out}"], "dir"),
 ]
 

@@ -166,6 +166,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "extract_maps.py":            (["--selftest"], "offline"),
     "render_story.py":            (["--selftest"], "offline"),
     "derive_native_argcounts.py": (["--selftest"], "offline"),
+    "derive_item_row_fields.py":  (["--selftest"], "offline"),
     "export_sprites.py":          (["--selftest"], "offline"),
     "extract_all.py":             (["--selftest"], "offline"),
     # 這兩支雖然是實機工具,但純邏輯(判準)已抽出可離線驗;實機取得層不涵蓋。
