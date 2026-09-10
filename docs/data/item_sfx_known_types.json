@@ -1,9 +1,24 @@
 {
-  "type5_13_HP_restore_via_0x211a4": 13,
-  "type11_MP_restore_inline_via_0x20c6f_at_0x20dcd": 13,
-  "type16_weapon_charm_AP_plus15pct_0x22721": 17,
-  "type15_armor_charm_DP_plus15pct_0x22866": 18,
-  "type12_haste_HIT_EV_plus15_0x22997": 19,
-  "unidentified_caller_0x214ad_blindspot": 9,
-  "unidentified_caller_0x22c04_blindspot": 25
+ "type5_13_HP_restore_via_0x211a4": 13,
+ "type11_MP_restore_inline_via_0x20c6f_at_0x20dcd": 13,
+ "type16_weapon_charm_AP_plus15pct_0x22721": 17,
+ "type15_armor_charm_DP_plus15pct_0x22866": 18,
+ "type12_haste_HIT_EV_plus15_0x22997": 19,
+ "caller_0x214ad_single_target_damage": 9,
+ "caller_0x22c04_multi_target_exp_award": 25,
+ "_resolved_2026_09_10": {
+  "why": "這兩筆原本記為 unidentified_caller_..._blindspot(音效索引 9 與 25 有呼叫端但不知道是什麼動作)。本輪逐指令反組譯兩支函式本體。",
+  "0x214ad": {
+   "sfx_index": 9,
+   "shape": "單一目標的傷害動作。[0x53ec4]=0 後依序 0x1c4cc(...,9,...) / 0x1ca89(...,9) 做演出,再 eax=0x1c75e(byte[ebx], 9);eax==0 走 0x1e1dc(未造成傷害),否則 0x1e0db(eax, 0x5e, byte[ebx]) 顯示傷害;收尾 0x11cac(0) 重繪 + 0x1df58。byte[ebx] 是目標單位索引。",
+   "corroboration": "0x1c75e 由 doc03 表列記載為傷害函式(以 unit +0x20 class ID 索引 command damage multiplier table),doc13 §110 另有完整 dataflow;不是本輪自行命名。"
+  },
+  "0x22c04": {
+   "sfx_index": 25,
+   "shape": "多目標動作,對 esi 陣列中 edi 個單位逐一處理:僅對 (unit[+5] & 0x80) 已設(Acted)者生效,清掉該 bit 後取 level=byte[+0x21]、class=byte[+0x20];若 8 < class < 0x19 則 level += 0x1e,再 <<3 累加進 [0x53ec8]。不符合者走 0x1e1dc。",
+   "meaning": "[0x53ec8] 由 doc13 §622 記載為 EXP pipeline(NativeExperience),故本函式是**依等級加權的經驗值授予**,對特定職業區間額外 +0x1e(<<3 後即 +240)。",
+   "corroboration": "unit[+0x20]=class ID 見 doc03 表列;unit[+0x21]=level 見 doc25 §13 的窮舉(讀等級 byte[reg+0x21]);unit[+5] bit7=Acted 見 doc13 battle input dispatch。三個欄位都不是本輪新命名。"
+  },
+  "still_open": "0x1c2da(在 0x22c04 內以 (arg, 0x19, edi, esi) 4 參數被呼叫,與 0x1c4cc 同簽名)仍是 8 個未命名原語之一;本輪只確認它在此處與 0x1c4cc 並列於演出路徑,未定其語意。"
+ }
 }
