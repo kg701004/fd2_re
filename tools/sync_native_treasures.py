@@ -23,6 +23,28 @@ def resource_index(path):
     return int(os.path.basename(path).split("_")[1].split(".")[0])
 
 
+# FDFIELD 控制段的版面。拆成具名常數是為了讓 selftest 打得到 —— 2026-09-10
+# 的突變測試指出這串算術「可達但無人看管」:selftest 只斷言 slots/hidden 的長度,
+# 把 chests 印出來卻沒有斷言,於是 3/16/3/16/2 任何一個被改都照樣通過。
+#
+# 這兩個數字有**反組譯來源**,不是從本檔的算式反推的(那會是自我實現):
+#   doc50 §692:寶箱 reward 必須用 slot 關聯 control `+0x53+slot*3`  -> 起點 0x53
+#   doc25 §957:units 陣列在 `[0x53a55]+0x83 + k*0x1a`,並明寫
+#              `0x83`=3+48+32+48=header+turn_events+保留+chests  -> 終點 0x83
+# 兩份文件各自獨立地釘住這張表的起點與終點,而它們之間差 16*3 = 48。
+CONTROL_HEADER_BYTES = 3
+TURN_EVENT_ROWS = 16
+TURN_EVENT_STRIDE = 3
+RESERVED_ROWS = 16
+RESERVED_STRIDE = 2
+CHEST_ROWS = 16
+CHEST_STRIDE = 3
+CHEST_TABLE_OFFSET = (CONTROL_HEADER_BYTES
+                      + TURN_EVENT_ROWS * TURN_EVENT_STRIDE
+                      + RESERVED_ROWS * RESERVED_STRIDE)      # = 0x53
+UNITS_ARRAY_OFFSET = CHEST_TABLE_OFFSET + CHEST_ROWS * CHEST_STRIDE   # = 0x83
+
+
 def expected(raw, map_index, map_data):
     fields = sorted(
         glob.glob(os.path.join(raw, "FDFIELD", "*.bin")), key=resource_index
@@ -59,11 +81,14 @@ def expected(raw, map_index, map_data):
             slots.append(-1)
             hidden.append(False)
 
-    offset = 3 + 16 * 3 + 16 * 2
+    offset = CHEST_TABLE_OFFSET
     chests = []
-    for slot in range(16):
-        native_type = control[offset + slot * 3]
-        value = struct.unpack_from("<H", control, offset + slot * 3 + 1)[0]
+    # 這裡原本重寫一次 `range(16)` 與 `slot * 3` 的字面值,與上面的具名常數各自為政:
+    # 突變測試把這兩個字面值改掉時,(2b) 的版面斷言完全看不到(它管的是常數)。
+    # 改用同一組常數,版面就只有一個來源。
+    for slot in range(CHEST_ROWS):
+        native_type = control[offset + slot * CHEST_STRIDE]
+        value = struct.unpack_from("<H", control, offset + slot * CHEST_STRIDE + 1)[0]
         if native_type == 0xFF or value == 0:
             continue
         kind = parse_field.native_reward_kind(native_type)
@@ -125,6 +150,35 @@ def selftest():
           f"hidden {len(hidden)}、chests {len(chests)}")
     if not ok2:
         fails.append(f"輸出長度不等於 w×h:{len(slots)}/{len(hidden)} vs {w * h}")
+
+    print("\n(2b) 寶箱表的版面算術必須對上兩份反組譯來源的文件值")
+    # 上面的 (2) 只斷言 slots/hidden 的長度,chests 只印不驗 —— 於是
+    # `3 + 16*3 + 16*2` 這串算術「可達但無人看管」,任一項被改都照樣通過。
+    # 這裡用**文件記載的兩個位址**釘它,而不是拿本檔自己的算式當答案:
+    #   doc50 §692 -> 起點 0x53;doc25 §957 -> units 起點 0x83(該文自己寫明
+    #   0x83 = 3+48+32+48),兩者之差正好是 16*3 的寶箱表。
+    ok2b = (CHEST_TABLE_OFFSET == 0x53 and UNITS_ARRAY_OFFSET == 0x83
+            and UNITS_ARRAY_OFFSET - CHEST_TABLE_OFFSET == CHEST_ROWS * CHEST_STRIDE)
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 寶箱表 0x{CHEST_TABLE_OFFSET:02x}"
+          f"(doc50 應為 0x53)-> units 0x{UNITS_ARRAY_OFFSET:02x}(doc25 應為 0x83)"
+          f",相距 {UNITS_ARRAY_OFFSET - CHEST_TABLE_OFFSET}(應為 {CHEST_ROWS * CHEST_STRIDE})")
+    if not ok2b:
+        fails.append(f"控制段版面算術與文件不符:0x{CHEST_TABLE_OFFSET:02x}/"
+                     f"0x{UNITS_ARRAY_OFFSET:02x}")
+
+    print("\n(2c) 非平凡性:寶箱表確實被讀到,且讀出的欄位隨 slot 變動")
+    # 沒有這一題,(2b) 只是在驗兩個常數彼此相等,可能整段程式碼根本沒用到它們。
+    control = open(sorted(glob.glob(os.path.join(raw, "FDFIELD", "*.bin")),
+                          key=resource_index)[1], "rb").read()
+    row_bytes = {control[CHEST_TABLE_OFFSET + s * CHEST_STRIDE:
+                         CHEST_TABLE_OFFSET + (s + 1) * CHEST_STRIDE]
+                 for s in range(CHEST_ROWS)}
+    ok2c = len(chests) > 0 and len(row_bytes) > 1
+    print(f"    {'PASS' if ok2c else 'FAIL'}: map0 取出 {len(chests)} 個寶箱、"
+          f"16 列原始位元組有 {len(row_bytes)} 種相異值(1 種代表讀到的是常數區)")
+    if not ok2c:
+        fails.append(f"寶箱表看起來沒被真的讀到:chests={len(chests)}、"
+                     f"相異列={len(row_bytes)}")
 
     print("\n(3) 維度/來源檢查必須真的擋下不一致的 map_data(否則會算出垃圾)")
     for label, bad_md in (
@@ -224,4 +278,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # 2026-09-10:原本是裸呼叫 `main()`,回傳值被丟掉,於是 `--selftest` 即使
+    # 印出 SELFTEST FAILED 也**照樣 exit 0**。任何以離開碼判斷的呼叫端
+    # (verify_all_tools 的 selftest 層、突變測試的基準與捕捉判定)都只會看到通過
+    # —— 這也正是這支工具長期被判 WEAK 的原因:它的 selftest 不可能失敗。
+    raise SystemExit(main())

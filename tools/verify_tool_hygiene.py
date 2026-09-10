@@ -94,7 +94,8 @@ ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
 BASELINE = ROOT / "docs" / "data" / "hygiene_baseline.json"
 
-RULES = ("docstring", "correctness", "console", "shebang", "lazy_import", "regenerable")
+RULES = ("docstring", "correctness", "console", "shebang", "lazy_import", "regenerable",
+         "exit_code")
 
 # 延遲 import 常用的第三方名稱。把模組層 import 改成函式內延遲 import 時,很容易
 # 漏掉其中一條路徑 —— 2026-09-08 改 decode_fdicon.py 時就漏了 `--overview` 分支,
@@ -255,6 +256,45 @@ def registry_tools() -> set[str]:
     return {tool for _art, tool, _argv, _kind in vg.REGISTRY}
 
 
+def discarded_exit_code(src: str) -> list[str]:
+    """`__main__` 區塊裡把 `main()`/`selftest()` 的離開碼丟掉的地方。
+
+    2026-09-10 實際發生:`sync_native_treasures.py` 與 `sync_native_field_events.py`
+    的 `__main__` 是裸呼叫 `main()`,而 `main()` 會 `return selftest()`。於是
+    `--selftest` **印出 SELFTEST FAILED 之後仍然 exit 0** —— 所有以離開碼判斷的
+    呼叫端(verify_all_tools 的 selftest 層、突變測試的基準與捕捉判定)都只看到通過,
+    那兩支工具因此長期被判 WEAK:它們的 selftest 根本不可能失敗。
+
+    這是「管線吃掉離開碼」那一類的靜態版本,而且更隱蔽:訊息還是照印,只有離開碼
+    是啞的。故意只在 `main()` 真的會回傳值時才報,避免對回傳 None 的工具誤報。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return []
+    # 只看 `main`/`selftest` —— 依慣例承載離開碼的就這兩個。第一版寫成「任何會
+    # 回傳值的函式」,立刻誤報 `gtl2wopl.py`:它的 `build_wopl()` 回傳的是
+    # `(n_mel, n_perc)` 這種資料,丟掉完全正確,而且它的 selftest 路徑本來就寫了
+    # `sys.exit(selftest())`。丟掉資料回傳值不是缺陷,丟掉離開碼才是。
+    EXIT_CARRIERS = ("main", "selftest")
+    returns_value = {
+        n.name for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and n.name in EXIT_CARRIERS
+        and any(isinstance(s, ast.Return) and s.value is not None for s in ast.walk(n))
+    }
+    out = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.If) and "__main__" in ast.dump(node.test)):
+            continue
+        for stmt in node.body:
+            if (isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call)
+                    and getattr(stmt.value.func, "id", None) in returns_value):
+                out.append(f"__main__ 裸呼叫 {stmt.value.func.id}(),"
+                           f"離開碼被丟棄(失敗仍會 exit 0)")
+    return out
+
+
 def violations() -> list[dict]:
     """Every current violation, as {kind, name, rule, detail}."""
     out: list[dict] = []
@@ -270,6 +310,9 @@ def violations() -> list[dict]:
         if raw.startswith(b"#!") and b"\r\n" in raw.split(b"\n", 1)[0] + b"\n":
             out.append({"kind": "tool", "name": p.name, "rule": "shebang",
                         "detail": "shebang 行是 CRLF,WSL 下無法執行"})
+        for detail in discarded_exit_code(src):
+            out.append({"kind": "tool", "name": p.name, "rule": "exit_code",
+                        "detail": detail})
         try:
             doc = ast.get_docstring(ast.parse(src))
         except SyntaxError:
@@ -774,6 +817,32 @@ def selftest() -> int:
     if not ok5:
         fails.append("掃描範圍或規則明顯不對")
 
+    print("\n(5b) exit_code 規則的五個成對案例(丟掉離開碼要報,丟掉資料不報)")
+    # 2026-09-10 真的發生過:兩支工具的 __main__ 裸呼叫 main(),於是 --selftest
+    # 印出 SELFTEST FAILED 仍然 exit 0,以離開碼判斷的呼叫端全都只看到通過。
+    # 第一版規則寫成「任何會回傳值的函式」,立刻誤報 gtl2wopl 的資料回傳 ——
+    # 那個形狀就放在下面當負向控制,免得規則為了抓真陽性而變得過寬。
+    exit_cases = [
+        ("裸呼叫 main(),main 回傳離開碼", True,
+         "def main():\n    return 1\nif __name__ == '__main__':\n    main()\n"),
+        ("raise SystemExit(main())", False,
+         "def main():\n    return 1\nif __name__ == '__main__':\n"
+         "    raise SystemExit(main())\n"),
+        ("裸呼叫資料函式(gtl2wopl 的形狀)", False,
+         "def build(x):\n    return (1, 2)\nif __name__ == '__main__':\n    build(3)\n"),
+        ("main 回傳 None,裸呼叫", False,
+         "def main():\n    print('x')\nif __name__ == '__main__':\n    main()\n"),
+        ("裸呼叫 selftest()", True,
+         "def selftest():\n    return 1\nif __name__ == '__main__':\n    selftest()\n"),
+    ]
+    wrong = [lbl for lbl, want, src in exit_cases
+             if bool(discarded_exit_code(src)) != want]
+    ok5b = not wrong
+    print(f"    {'PASS' if ok5b else 'FAIL'}: {len(exit_cases)} 個案例"
+          + ("全部正確" if ok5b else f",判錯 {wrong}"))
+    if not ok5b:
+        fails.append(f"exit_code 規則的成對案例判錯:{wrong}")
+
     print("\n(6) 交叉驗證:與擁有各條規則的兄弟工具必須一致")
     for ok, msg in cross_check():
         print(f"    {'PASS' if ok else 'FAIL'}: {msg}")
@@ -787,7 +856,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(故障注入 + 配對控制 + 雙向棘輪 + 基準線完整性 "
           "+ lost_input / remake_derived 兩組永久豁免證明的正反例 "
-          "+ 非恆假 + 三項跨工具交叉驗證)。")
+          "+ exit_code 規則的五個成對案例 + 非恆假 + 三項跨工具交叉驗證)。")
     return 0
 
 

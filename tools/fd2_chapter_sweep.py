@@ -3583,7 +3583,7 @@ def selftest() -> int:
 THEME_BLUE = (56, 85, 154)   # 模組註解記載的實測 UI 主題藍(HUD 底色與側板共用)
 
 
-def _synth_screen(fills: list[tuple[tuple[int, int, int, int], tuple[int, int, int]]],
+def _selftest_synth_screen(fills: list[tuple[tuple[int, int, int, int], tuple[int, int, int]]],
                   strip_pattern: str = "flat"):
     """造一張 1024x768 合成畫面。`strip_pattern` 控制 dialogue 取樣列:
     flat = 低變異(像對話面板),textured = 高變異(像地形)。"""
@@ -3624,18 +3624,18 @@ def _selftest_screen_predicates() -> list[str]:
 
     with tempfile.TemporaryDirectory() as td:
         # (a) 真 HUD(左):框內主題藍,框右細長條是地形。
-        real_l = _synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
+        real_l = _selftest_synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
                                 (BATTLE_HUD_RIGHT_STRIP_REGION, terrain)], "textured")
         # (b) 2026-08-27 endturngen 記載的誤判:整面 flashback 對話框——框內
         #     一樣是主題藍,但**面板一路藍到框右邊**。當年這張同時騙過變異
         #     檢查與藍佔比檢查,strip 判準才是擋下它的那一條。
-        fake_panel = _synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
+        fake_panel = _selftest_synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
                                     (BATTLE_HUD_RIGHT_STRIP_REGION, THEME_BLUE)], "textured")
         # (c) ch19 的鏡像 HUD(右)。
-        real_r = _synth_screen([(BATTLE_HUD_BOX_REGION_R, THEME_BLUE),
+        real_r = _selftest_synth_screen([(BATTLE_HUD_BOX_REGION_R, THEME_BLUE),
                                 (BATTLE_HUD_LEFT_STRIP_REGION_R, terrain)], "textured")
         # (d) 空白畫面 = null 對照。
-        blank = _synth_screen([], "textured")
+        blank = _selftest_synth_screen([], "textured")
 
         pa = as_png(real_l, td, "a.png")
         pb = as_png(fake_panel, td, "b.png")
@@ -3669,7 +3669,7 @@ def _selftest_screen_predicates() -> list[str]:
             fails.append(f"HUD 側別判定錯誤:{sides}")
 
         print("    (6d) 對話變異判準:平坦=對話面板、粗糙紋理=地形")
-        flat = as_png(_synth_screen([], "flat"), td, "e.png")
+        flat = as_png(_selftest_synth_screen([], "flat"), td, "e.png")
         got_d = (screen_looks_like_dialogue(flat), screen_looks_like_dialogue(pd))
         ok6d = got_d == (True, False)
         print(f"        {'PASS' if ok6d else 'FAIL'}: 平坦={got_d[0]} 紋理={got_d[1]}")

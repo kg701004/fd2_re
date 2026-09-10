@@ -324,4 +324,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # 2026-09-10:與 sync_native_treasures.py 同一個洞 —— 裸呼叫會丟掉 main() 的
+    # 回傳值,`--selftest` 印出 SELFTEST FAILED 仍然 exit 0,以離開碼判斷的呼叫端
+    # 全都只看得到通過。
+    raise SystemExit(main())
