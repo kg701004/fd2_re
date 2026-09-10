@@ -33880,6 +33880,14 @@
    "excerpt": "`scan_text_one()` 這個**副本**,而 `scan()` 與 `scan_diff()` 各有自己的一份逐字複製。",
    "verdict": "benign",
    "note": "陳述的是 audit_evidence_provenance 自身三處重複程式碼的合併(scan / scan_diff / scan_text_one),屬工具重構紀錄,不是關於遊戲的事實主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 290,
+   "excerpt_sha1": "e82e5d6975b3ea4cef8a4c95677a231efdb8e9a8",
+   "excerpt": "逐一讀過、確認為措辭誤命中的項目,沒有一個是真正開放的工作。",
+   "verdict": "benign",
+   "note": "陳述的是 worklist --review 候選清單的複核結果(7 個為措辭誤命中),屬工作管理紀錄,不是關於遊戲的事實主張。各項的判讀依據見 §8.0 與各 worklist 項目自身的最新一段。"
   }
  ]
 }
