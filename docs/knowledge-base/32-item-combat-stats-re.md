@@ -932,7 +932,7 @@ EXE。本輪用 `analyzeHeadless -readOnly`(`ProbeClassChange.java`/`ProbeClassC
 (`ProbeAudit0820b.java`,`disassemble()` fallback)。結果：`0x31793` 在新版**確實是合法的可反組譯
 程式碼**(不是資料或未對齊的位元組),但內容與轉職候選判定完全無關——它呼叫的是已知的 `0x11eb0`
 (viewport `memmove` blitter,見 worklist L1120)與 `0x11d40`(已證實的 postbattle handler helper)、
-`0x2eb9f`(疑似文字/數字渲染),並比對 `[0x53c03]==0x1a`(章節/模式號)做分支——看起來是某個無關的
+`0x2eb9f`(~~疑似文字/數字渲染~~ **2026-09-10 更正:反組譯本體後確認是「依索引取幀並貼圖」的 frame blit,與文字無關;見 doc35 §13.3**),並比對 `[0x53c03]==0x1a`(章節/模式號)做分支——看起來是某個無關的
 UI/清單畫面,不是轉職邏輯。這是**第二個獨立資料點**,強化(而非首次證明)`0x31793`/`0x526a7` 這類
 「用同一位址直接查」的 spot-check 方法已經走到頭:新版 EXE 在這個 code 區段做過重新編譯/佈局,兩個
 獨立位址的探測都指向「同位址已被別的功能佔用」而非「移了幾個 byte」,要繼續追這條線必須做全檔
