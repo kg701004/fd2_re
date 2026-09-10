@@ -3552,14 +3552,150 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"名冊不隨章節變化:{sorted(sizes)}")
 
+    fails += _selftest_screen_predicates()
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(索引慣例的兩個交叉核對 + 刻意範圍差異的後果 + "
-          "反向對照 + 時序去重 + 非平凡性)。實機掃描未涵蓋(NO_EXEC),見 docstring。")
+          "反向對照 + 時序去重 + 非平凡性 + 畫面判準的六個合成案例)。"
+          "送鍵/tmux/除錯器那一層仍未涵蓋(NO_EXEC),見 docstring。")
     return 0
+
+
+# --------------------------------------------------------------------------
+# 畫面判準這一層的離線核心
+#
+# 2026-09-10:突變測試在 seed 1 給這支工具 0/12(WEAK),seed 2 才抓到——
+# 差異來自抽樣落點,不是隨機噪音:全檔 57 個函式、3568 行,而 selftest 只
+# 約束了名冊推導那 5 個函式,突變落在其餘任何地方都無人看管。
+#
+# 這些畫面判準看似「要有實機截圖才能驗」,其實不必:它們是 (PNG -> bool)
+# 的純函式,而且每一條門檻的來歷、以及**歷史上騙過它的那幾張畫面**,都
+# 已經寫在上面的模組註解裡並附實測數值。所以這裡用合成影像把那些案例重建
+# 出來——關鍵不在「真畫面能過」,而在**當年誤判的那一張現在必須被擋下**。
+# 每組都是成對的:真 HUD 與 flashback 對話框「只差右側細長條」,其餘像素
+# 完全相同,所以通過與否只能由那道 strip 判準決定,不會被別的條件湊巧判對。
+# --------------------------------------------------------------------------
+
+THEME_BLUE = (56, 85, 154)   # 模組註解記載的實測 UI 主題藍(HUD 底色與側板共用)
+
+
+def _synth_screen(fills: list[tuple[tuple[int, int, int, int], tuple[int, int, int]]],
+                  strip_pattern: str = "flat"):
+    """造一張 1024x768 合成畫面。`strip_pattern` 控制 dialogue 取樣列:
+    flat = 低變異(像對話面板),textured = 高變異(像地形)。"""
+    from PIL import Image
+    im = Image.new("RGB", (1024, 768), (20, 20, 20))
+    px = im.load()
+    x0, x1, step = SCREENSHOT_DIALOGUE_STRIP_X_RANGE
+    for x in range(x0, x1):
+        # textured 交替黑/白,變異遠高於門檻;flat 為單一灰階。
+        px[x, SCREENSHOT_DIALOGUE_STRIP_Y] = (
+            (250, 250, 250) if (strip_pattern == "textured" and (x // step) % 2) else (40, 40, 40))
+    for (box, color) in fills:
+        for x in range(box[0], box[2]):
+            for y in range(box[1], box[3]):
+                px[x, y] = color
+    return im
+
+
+def _selftest_screen_predicates() -> list[str]:
+    fails: list[str] = []
+    print("\n(6) 畫面判準的離線核心:合成影像重建模組註解記載的歷史誤判")
+    try:
+        from PIL import Image  # noqa: F401
+    except ImportError:
+        # 讀不到不等於通過,也不等於失敗——給它自己的狀態並說清楚。
+        print("    SKIP: 此直譯器沒有 Pillow,畫面判準無法離線判定"
+              "(注意 screen_looks_like_dialogue 在無 PIL 時 fail-open 回 True,"
+              "所以這裡不能拿它的回傳值當證據)")
+        return fails
+
+    import tempfile
+    terrain = (90, 140, 60)  # 非 HUD 藍的地形綠
+
+    def as_png(im, tmpdir, name):
+        p = Path(tmpdir) / name
+        im.save(p)
+        return p
+
+    with tempfile.TemporaryDirectory() as td:
+        # (a) 真 HUD(左):框內主題藍,框右細長條是地形。
+        real_l = _synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
+                                (BATTLE_HUD_RIGHT_STRIP_REGION, terrain)], "textured")
+        # (b) 2026-08-27 endturngen 記載的誤判:整面 flashback 對話框——框內
+        #     一樣是主題藍,但**面板一路藍到框右邊**。當年這張同時騙過變異
+        #     檢查與藍佔比檢查,strip 判準才是擋下它的那一條。
+        fake_panel = _synth_screen([(BATTLE_HUD_BOX_REGION, THEME_BLUE),
+                                    (BATTLE_HUD_RIGHT_STRIP_REGION, THEME_BLUE)], "textured")
+        # (c) ch19 的鏡像 HUD(右)。
+        real_r = _synth_screen([(BATTLE_HUD_BOX_REGION_R, THEME_BLUE),
+                                (BATTLE_HUD_LEFT_STRIP_REGION_R, terrain)], "textured")
+        # (d) 空白畫面 = null 對照。
+        blank = _synth_screen([], "textured")
+
+        pa = as_png(real_l, td, "a.png")
+        pb = as_png(fake_panel, td, "b.png")
+        pc = as_png(real_r, td, "c.png")
+        pd = as_png(blank, td, "d.png")
+
+        got = (screen_shows_battle_hud(pa), screen_shows_battle_hud(pb),
+               screen_shows_battle_hud(pc), screen_shows_battle_hud(pd))
+        ok6 = got == (True, False, True, False)
+        print(f"    {'PASS' if ok6 else 'FAIL'}: 真HUD左={got[0]} flashback誤判={got[1]}"
+              f"(須 False) ch19鏡像右={got[2]} 空白={got[3]}")
+        if not ok6:
+            fails.append(f"HUD 判準的成對案例不符:{got}")
+
+        print("    (6b) 非平凡性:(a) 與 (b) 只在框右細長條不同,其餘像素完全相同")
+        da, db = list(real_l.getdata()), list(fake_panel.getdata())
+        diff_xy = {(i % 1024, i // 1024) for i, (p, q) in enumerate(zip(da, db)) if p != q}
+        sx0, sy0, sx1, sy1 = BATTLE_HUD_RIGHT_STRIP_REGION
+        ok6b = bool(diff_xy) and all(sx0 <= x < sx1 and sy0 <= y < sy1 for x, y in diff_xy)
+        print(f"        {'PASS' if ok6b else 'FAIL'}: 相異像素 {len(diff_xy)} 個,"
+              f"全部落在 strip 內={ok6b}")
+        if not ok6b:
+            fails.append("成對案例的差異不只在 strip,判準歸因不成立")
+
+        print("    (6c) _find_hud_box_side 必須說出是哪一側,不能只回真假")
+        sides = (_find_hud_box_side(real_l), _find_hud_box_side(real_r),
+                 _find_hud_box_side(blank))
+        ok6c = sides == ("L", "R", None)
+        print(f"        {'PASS' if ok6c else 'FAIL'}: {sides}(應為 ('L','R',None))")
+        if not ok6c:
+            fails.append(f"HUD 側別判定錯誤:{sides}")
+
+        print("    (6d) 對話變異判準:平坦=對話面板、粗糙紋理=地形")
+        flat = as_png(_synth_screen([], "flat"), td, "e.png")
+        got_d = (screen_looks_like_dialogue(flat), screen_looks_like_dialogue(pd))
+        ok6d = got_d == (True, False)
+        print(f"        {'PASS' if ok6d else 'FAIL'}: 平坦={got_d[0]} 紋理={got_d[1]}")
+        if not ok6d:
+            fails.append(f"對話變異判準不符:{got_d}")
+
+        print("    (6e) _is_hud_blue 的四個門檻各自都要有作用(案例貼在翻轉點上)")
+        # 2026-09-10:第一版這裡寫的是「離門檻很遠」的案例(例如 b=55 對上
+        # `60 < b`),突變測試把 55 改成 56 照樣通過——測到的只是「很暗的顏色
+        # 不是藍色」這種沒人會寫錯的事。改成每個案例**剛好落在翻轉點**:任何一個
+        # 門檻被 ±1,至少一個案例的預期值就會反轉。(期望值直接寫在案例裡,
+        # 因為「全部都該是 False」那種寫法會讓貼邊案例無法表達。)
+        cases = {
+            "b > r+20 的翻轉點(b 恰為 r+21)": ((50, 40, 71), True),
+            "60 < b 的翻轉點(b 恰為 61)":     ((10, 10, 61), True),
+            "b < 200 的翻轉點(b 恰為 200)":   ((10, 10, 200), False),
+            "r < 100 的翻轉點(r 恰為 100)":   ((100, 40, 190), False),
+        }
+        wrong = [k for k, (px, want) in cases.items() if _is_hud_blue(px) != want]
+        ok6e = not wrong and _is_hud_blue(THEME_BLUE)
+        print(f"        {'PASS' if ok6e else 'FAIL'}: 主題藍={_is_hud_blue(THEME_BLUE)},"
+              f"判錯的翻轉點={wrong or '無'}")
+        if not ok6e:
+            fails.append(f"_is_hud_blue 邊界不成立:{wrong}")
+
+    return fails
 
 
 if __name__ == "__main__":

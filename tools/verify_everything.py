@@ -49,8 +49,21 @@ Repetition
 ----------
 `--rounds N` runs everything N times. Rounds are not identical by construction:
 `discrim` advances its mutation seed each round, so round 2 samples mutations
-round 1 never tried. Anything that changes between rounds is reported as
-UNSTABLE, which is its own finding -- a verifier that flaps is not usable.
+round 1 never tried. Two different things can change, and they are reported
+separately -- conflating them is what let a real difference hide:
+
+* **UNSTABLE** -- the axis's pass/fail *verdict* flips between rounds. A
+  verifier that flaps is not usable; this is a hard finding.
+* **跨輪內容有變** -- the verdict held but the *conclusion* changed (e.g.
+  discrim reporting "62 discriminating / 1 weak" then "63 / 0"). Not
+  necessarily a defect -- resampling legitimately moves borderline tools, see
+  `verify_selftest_discrimination.py`'s own note on `decode_story_text.py` --
+  but it must be printed, with both rounds' text, not swallowed.
+
+Until 2026-09-10 only the boolean was compared, so the second kind was
+silently summarised as "no cross-round inconsistency". `axis_discrim` also
+threw away the line naming *which* tool was weak, so the difference could not
+be chased after the fact; it now carries that line through.
 
 Known-benign
 ------------
@@ -125,7 +138,11 @@ def axis_discrim(round_no: int, timeout: int) -> dict:
     rc, out = run([PY, "tools/verify_selftest_discrimination.py", "--offline",
                    "--tries", "12", "--seed", str(round_no)], timeout)
     tail = [l for l in out.splitlines() if l.strip().startswith("共")]
-    return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}")}
+    # 「弱 1」而不說是哪一支,等於沒報。這一行是 discrim 自己印出來的名單,
+    # 之前被整段丟棄,使得跨輪 62/1 vs 63/0 的差異事後無從追查。
+    named = [l.strip() for l in out.splitlines() if l.strip().startswith("弱(")]
+    return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}"),
+            "fails": named[:3]}
 
 
 def axis_hygiene(timeout: int) -> dict:
@@ -211,6 +228,21 @@ AXES = {
 }
 
 
+def classify_rounds(history: dict[str, list[bool]],
+                    details: dict[str, list[str]]) -> tuple[list, list, list]:
+    """跨輪分類器,回傳 (unstable, drifted, failed)。
+
+    抽成獨立函式的原因:selftest 原本用字面值就地重算 `all(...)`,那只驗證了
+    「我在 selftest 裡寫的那行對不對」,`main()` 真正跑的那行有 bug 也照過。
+    現在兩邊呼叫同一個函式,成對案例才真的釘得住它。
+    """
+    unstable = [k for k, v in history.items() if len(set(v)) > 1]
+    failed = [k for k, v in history.items() if not all(v)]
+    drifted = [k for k, v in details.items()
+               if k not in unstable and len(set(v)) > 1]
+    return unstable, drifted, failed
+
+
 def selftest() -> int:
     """The driver must (a) actually invoke each axis and (b) fail when an axis
     fails. A driver that reports OK regardless is worse than not having one."""
@@ -223,17 +255,41 @@ def selftest() -> int:
         fails.append("AXES 表與預期不符")
 
     print("\n(2) 正向控制:一個必定失敗的軸必須讓整體判定為失敗")
-    probe = {"ok": False, "detail": "deliberate"}
-    overall = all(r["ok"] for r in [{"ok": True}, probe])
-    print(f"    {'PASS' if not overall else 'FAIL'}: 整體={overall}(應為 False)")
-    if overall:
+    _, _, f2 = classify_rounds({"a": [True, True], "b": [False, False]},
+                               {"a": ["x", "x"], "b": ["y", "y"]})
+    print(f"    {'PASS' if f2 == ['b'] else 'FAIL'}: failed={f2}(應為 ['b'])")
+    if f2 != ["b"]:
         fails.append("失敗的軸沒有讓整體失敗")
 
-    print("\n(3) 負向控制:全部成功時整體必須判定為成功")
-    overall2 = all(r["ok"] for r in [{"ok": True}, {"ok": True}])
-    print(f"    {'PASS' if overall2 else 'FAIL'}: 整體={overall2}")
-    if not overall2:
-        fails.append("全部成功卻判定失敗")
+    print("\n(3) 負向控制:全部成功且結論一字不差時,三個清單都必須是空的")
+    u3, d3, f3 = classify_rounds({"a": [True, True]}, {"a": ["同一句", "同一句"]})
+    ok3 = not u3 and not d3 and not f3
+    print(f"    {'PASS' if ok3 else 'FAIL'}: unstable={u3} drifted={d3} failed={f3}")
+    if not ok3:
+        fails.append("全部成功卻報出不一致")
+
+    print("\n(3b) 成對案例:判定翻轉 = UNSTABLE;判定相同而內容變 = 內容漂移")
+    #     右邊那組正是 2026-09-10 真實漏掉的那筆:兩輪都 ok=True,只有數字不同。
+    u_flip, d_flip, _ = classify_rounds({"a": [True, False]}, {"a": ["p", "q"]})
+    u_same, d_same, _ = classify_rounds(
+        {"discrim": [True, True]},
+        {"discrim": ["共 63 個工具:有鑑別力 62 / 弱 1 / 基準就失敗 0",
+                     "共 63 個工具:有鑑別力 63 / 弱 0 / 基準就失敗 0"]})
+    ok3b = (u_flip == ["a"] and d_flip == []          # 翻轉只算一次,不重複計為漂移
+            and u_same == [] and d_same == ["discrim"])
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 翻轉→unstable={u_flip},drifted={d_flip};"
+          f" 同判定→unstable={u_same},drifted={d_same}")
+    if not ok3b:
+        fails.append("UNSTABLE 與內容漂移沒有被正確分開")
+
+    print("\n(3c) 非平凡性:若把內容比對拿掉,(3b) 右邊那組必須變成偵測不到")
+    #     沒有這個控制,(3b) 可能只是被別的條件湊巧判對。
+    blind = [k for k, v in {"discrim": [True, True]}.items() if len(set(v)) > 1]
+    ok3c = blind == [] and d_same == ["discrim"]
+    print(f"    {'PASS' if ok3c else 'FAIL'}: 只看布林值={blind}(舊行為,應為空)"
+          f",看內容={d_same}")
+    if not ok3c:
+        fails.append("內容漂移檢查是平凡的(只看布林值也偵測得到)")
 
     print("\n(4) 已知良性清單必須非空且附理由(避免它靜默腐爛成空殼)")
     ok4 = bool(KNOWN_BENIGN) and all(len(v) > 10 for v in KNOWN_BENIGN.values())
@@ -246,7 +302,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(1 正向 + 2 負向 + 清單完整性)。")
+    print("\n--selftest passed(1 正向 + 2 負向 + UNSTABLE/內容漂移的成對案例"
+          "與非平凡性控制 + 清單完整性)。")
     return 0
 
 
@@ -263,6 +320,7 @@ def main() -> int:
 
     skip = {s.strip() for s in a.skip.split(",") if s.strip()}
     history: dict[str, list[bool]] = {}
+    details: dict[str, list[str]] = {}
     for rnd in range(1, a.rounds + 1):
         print(f"\n{'=' * 70}\n第 {rnd}/{a.rounds} 輪\n{'=' * 70}")
         for name, fn in AXES.items():
@@ -272,23 +330,35 @@ def main() -> int:
             t0 = time.time()
             r = fn(rnd, a.timeout)
             history.setdefault(name, []).append(r["ok"])
+            details.setdefault(name, []).append(r["detail"])
             mark = "OK  " if r["ok"] else "**FAIL**"
             print(f"  {name:<12} {mark} {r['detail']}  [{time.time() - t0:.0f}s]")
             for f in r.get("fails", [])[:3]:
                 print(f"               - {f}")
 
     print(f"\n{'=' * 70}")
-    unstable = [k for k, v in history.items() if len(set(v)) > 1]
-    failed = [k for k, v in history.items() if not all(v)]
+    # 判定跨輪相同、但結論內容不同 —— 舊版只比對 ok 布林值,所以 discrim
+    # 的「62 有鑑別力/1 弱」對「63/0」兩輪都是 ok=True,被歸為「無不一致」。
+    # 這種漂移不必然是缺陷(discrim 每輪換 seed,抽樣本來就會動),但它
+    # 絕不該被一句「無跨輪不一致」蓋掉:是哪一支、飄多少,要看得見。
+    unstable, drifted, failed = classify_rounds(history, details)
     print("已知良性(不應「修」):")
     for k, why in KNOWN_BENIGN.items():
         print(f"  {k}: {why}")
     if unstable:
-        print(f"\n**不穩定(跨輪結果不一致,本身就是問題)**: {unstable}")
+        print(f"\n**不穩定(跨輪判定不一致,本身就是問題)**: {unstable}")
+    if drifted:
+        print("\n跨輪判定相同但**結論內容有變**(不必然是缺陷,但必須看得見):")
+        for k in drifted:
+            for i, d in enumerate(details[k], 1):
+                print(f"  {k} 第{i}輪: {d}")
     if failed:
         print(f"**失敗的軸**: {failed}")
         return 1
-    print(f"\n全部 {len(history)} 個軸 × {a.rounds} 輪皆通過,且無跨輪不一致。")
+    tailmsg = "" if drifted else ",且無跨輪不一致"
+    print(f"\n全部 {len(history)} 個軸 × {a.rounds} 輪皆通過{tailmsg}。")
+    if drifted:
+        print(f"跨輪內容有變的軸:{drifted}(見上)。")
     return 0
 
 

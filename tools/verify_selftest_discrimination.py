@@ -37,6 +37,39 @@ a random mutation may land in a code path the selftest legitimately does not
 cover, so a zero score is a prompt to look, not a verdict. The per-tool mutation
 score (caught / attempted) is printed so the reader can judge.
 
+The zero score's denominator (2026-09-10)
+-----------------------------------------
+`fd2_chapter_sweep.py` was reported WEAK (0/12) at several seeds. Taken at face
+value that says "the selftest is useless", so a whole layer of paired screen-
+predicate tests was added to it and fault-injection-verified -- and the score
+barely moved (0/12 -> 1/12). The number was not measuring what it appeared to.
+
+Mutation sites are sampled uniformly over the WHOLE FILE (`rng.sample`). That
+tool is 3568 lines / 57 functions, nearly all of it tmux/xdotool/debugger code
+no offline selftest can execute. The expected catch rate is therefore pinned in
+the single digits by *file composition*, no matter how good the selftest is --
+and "WEAK" could not distinguish "the selftest is weak" from "every mutation
+landed where the selftest cannot reach". A verdict whose rival explanation
+predicts the same observation points work in the wrong direction, which is
+exactly what happened.
+
+So each mutation is now classified by where it landed, using the lines the
+selftest actually executes (traced via `trace.Trace` over `selftest()`):
+
+* landed on a line the selftest executes, and that line is NOT inside the
+  selftest itself -- the only mutations that carry evidence. Escapes here are
+  printed individually ("逃掉但執行得到"), because those are the actionable ones.
+* landed inside `selftest`/`_selftest_*` -- mutating a test's own input or
+  assertion. Two real examples: `(10, 10, 61)` -> `(11, 10, 61)` and
+  `natural_join_order(0)` -> `(1)`; both perturbed inputs have the same correct
+  answer, so escaping proves nothing.
+* landed on a line the selftest never runs -- no evidence either way.
+
+New verdict **UNREACHABLE_SAMPLE**: attempted > 0 but not one mutation reached
+executable product code. That run says nothing about selftest quality and must
+not be read as WEAK. WEAK now means what it claims: a reachable product-code
+mutation survived.
+
 **Use enough tries.** These selftests have mutation hit-rates around 25%, so five
 attempts miss entirely about a quarter of the time -- `decode_story_text.py` was
 reported WEAK at 5 tries and DISCRIMINATING at both 10 (4/10) and 20 (5/20). The
@@ -195,6 +228,24 @@ def exit_code_constants(tree: ast.AST) -> set[int]:
     `return 1` inside a selftest makes the process exit non-zero without any
     check having run, so a selftest that verifies nothing still scores a point.
     Those mutations measure the exit path, not discrimination, and are skipped.
+
+    2026-09-10 -- this was far too broad, and the reachability work above is what
+    exposed it. It marked every constant inside **every `return` anywhere in the
+    file**, so ordinary logic like `return a + 3`, `return w * 2`, `return v &
+    0xff` was silently excluded from mutation across all 63 tools: a whole class
+    of product code the harness could never test, invisible because excluded
+    sites are simply never counted. The exclusion now matches what it claims --
+    a return whose value **is** a bare int/bool constant, inside a function whose
+    return value really does become the process exit code (`selftest`/`main`).
+    `exit()`/`SystemExit`/`raise` stay excluded wherever they appear.
+
+    Corroboration that the old rule was wrong, not merely loose: this harness's
+    own blind negative control (check 2) is a selftest that calls `add()` and
+    asserts nothing, and `add` is `return a + 3`. Under the old rule that `3` was
+    unmutatable, so the probe scored 0 for the wrong reason -- the only mutations
+    left were in the selftest's own arguments. With the rule narrowed, the probe
+    scores 0 because a genuinely reachable product mutation survives, which is
+    exactly what the control is supposed to demonstrate.
     """
     out: set[int] = set()
 
@@ -204,8 +255,12 @@ def exit_code_constants(tree: ast.AST) -> set[int]:
                 out.add(id(c))
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.Return) and node.value is not None:
-            mark(node.value)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+                node.name in ("selftest", "main") or node.name.startswith("_selftest")):
+            for sub in ast.walk(node):
+                # 只跳過「整個回傳值就是一個裸常數」的情形,不跳過運算式裡的常數。
+                if isinstance(sub, ast.Return) and isinstance(sub.value, ast.Constant):
+                    mark(sub.value)
         elif isinstance(node, ast.Call):
             f = node.func
             nm = (getattr(f, "attr", None) or getattr(f, "id", None) or "")
@@ -222,12 +277,15 @@ class Mutator(ast.NodeTransformer):
 
     def __init__(self, target: int, skip: set[int] | None = None):
         self.target, self.seen, self.applied = target, 0, None
+        self.applied_line: int | None = None
         self.skip = skip or set()
 
-    def _hit(self, what: str) -> bool:
+    def _hit(self, what: str, node=None) -> bool:
         self.seen += 1
         if self.seen - 1 == self.target:
             self.applied = what
+            # 記下突變落在哪一行,才能回答「這個突變 selftest 跑得到嗎」。
+            self.applied_line = getattr(node, "lineno", None)
             return True
         return False
 
@@ -238,7 +296,7 @@ class Mutator(ast.NodeTransformer):
         flip = {ast.Eq: ast.NotEq, ast.NotEq: ast.Eq, ast.Lt: ast.GtE,
                 ast.GtE: ast.Lt, ast.Gt: ast.LtE, ast.LtE: ast.Gt}
         t = type(node.ops[0])
-        if t in flip and self._hit(f"compare {t.__name__}->{flip[t].__name__}"):
+        if t in flip and self._hit(f"compare {t.__name__}->{flip[t].__name__}", node):
             node.ops = [flip[t]()]
         return node
 
@@ -246,10 +304,10 @@ class Mutator(ast.NodeTransformer):
         if id(node) in self.skip:
             return node
         if isinstance(node.value, bool):
-            if self._hit(f"bool {node.value}->{not node.value}"):
+            if self._hit(f"bool {node.value}->{not node.value}", node):
                 return ast.copy_location(ast.Constant(value=not node.value), node)
         elif isinstance(node.value, int) and -1 <= node.value <= 0x10000:
-            if self._hit(f"int {node.value}->{node.value + 1}"):
+            if self._hit(f"int {node.value}->{node.value + 1}", node):
                 return ast.copy_location(ast.Constant(value=node.value + 1), node)
         return node
 
@@ -272,6 +330,117 @@ def mutate(src: str, idx: int) -> tuple[str | None, str]:
         return ast.unparse(tree), m.applied
     except Exception:
         return None, ""
+
+
+def mutate_at(src: str, idx: int) -> tuple[str | None, str, int | None]:
+    """`mutate()` 外加突變落在的行號。分成兩個函式是為了不動既有呼叫端的簽名。"""
+    tree = ast.parse(src)
+    m = Mutator(idx, exit_code_constants(tree))
+    tree = m.visit(tree)
+    if m.applied is None:
+        return None, "", None
+    ast.fix_missing_locations(tree)
+    try:
+        return ast.unparse(tree), m.applied, m.applied_line
+    except Exception:
+        return None, "", None
+
+
+# --------------------------------------------------------------------------
+# 「這個突變,selftest 有機會看到嗎?」
+#
+# 2026-09-10:`fd2_chapter_sweep.py` 連續在數個 seed 被判 WEAK(0/12)。我先
+# 照字面把它當成「selftest 不夠力」,補了一整層畫面判準的成對測試並以故障注入
+# 確認有效——分數卻幾乎沒動(seed 1 由 0/12 變 1/12,seed 3/4 仍是 0/12)。
+#
+# 原因不在被測工具,在這個度量本身:突變落點是 `rng.sample(range(n))`,對**全檔**
+# 均勻抽樣。那支工具 3568 行、57 個函式,其中絕大多數是 tmux/xdotool/除錯器的
+# 實機層,任何離線 selftest 都執行不到;可測核心只佔一小塊,於是期望捕捉率被
+# 檔案組成壓在個位數,和 selftest 寫得多好無關。
+#
+# 這正是「若對立假說預測同樣的觀測值,這個檢查就是裝飾」:WEAK 這個判定原本
+# 無法分辨「selftest 沒用」與「樣本全落在實機層」。所以這裡把 selftest 實際
+# 執行過的行號量出來,把兩者分開報——而不是繼續把工程力氣投進一個不會動的數字。
+# --------------------------------------------------------------------------
+
+_TRACE_SNIPPET = """
+import json, sys, trace
+sys.path.insert(0, {tools!r})
+sys.argv = ['x', '--selftest']
+try:
+    mod = __import__({modname!r})
+except Exception as e:
+    print(json.dumps({{"error": "import: %s" % e}})); raise SystemExit(0)
+fn = getattr(mod, 'selftest', None)
+if fn is None:
+    print(json.dumps({{"error": "no selftest attribute"}})); raise SystemExit(0)
+tr = trace.Trace(count=1, trace=0)
+try:
+    tr.runfunc(fn)
+except SystemExit:
+    pass
+except Exception as e:
+    print(json.dumps({{"error": "run: %s" % e}})); raise SystemExit(0)
+lines = sorted({{ln for (f, ln) in tr.results().counts if f == {target!r}}})
+print(json.dumps({{"lines": lines}}))
+"""
+
+
+def verdict_for(attempted: int, caught: int, reach_known: bool, reachable: int) -> str:
+    """由「試了幾個/抓到幾個/落點知不知道/其中幾個可達產品碼」定判定。
+
+    抽成函式是為了讓 selftest 打得到**真正跑的那一份**;就地重算一遍只驗證了
+    selftest 自己寫的那行對不對。`reach_known` 為 False 時不得宣稱
+    UNREACHABLE_SAMPLE——追蹤失敗是「不知道」,不是「沒有可達突變」。
+    """
+    if not attempted:
+        return "NO_SITES"
+    if caught:
+        return "DISCRIMINATING"
+    if reach_known and reachable == 0:
+        return "UNREACHABLE_SAMPLE"
+    return "WEAK"
+
+
+def selftest_own_lines(src: str) -> set[int]:
+    """selftest 自己(及其 `_selftest_*` 輔助函式)佔用的行號。
+
+    突變落在這裡面時,改的是**測試自己的輸入或斷言**,不是被測邏輯。實測到的
+    兩個例子:`(10, 10, 61)` 被改成 `(11, 10, 61)`、`natural_join_order(0)` 被
+    改成 `(1)` —— 兩者的正確答案都沒變,所以「沒被抓到」完全不代表 selftest 弱。
+    把兩側分開算,逃掉的產品碼突變才是真正該修的線索。
+    """
+    lines: set[int] = set()
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return lines
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and "selftest" in node.name:
+            lines.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
+    return lines
+
+
+def executed_lines(name: str, timeout: int) -> tuple[set[int] | None, str]:
+    """回傳 (selftest 真正執行過的行號集合, 說明)。拿不到就回 (None, 原因) ——
+    拿不到不等於「沒有可達行」,那是兩件事,不可混為一談。"""
+    target = str((TOOLS / name).resolve())
+    code = _TRACE_SNIPPET.format(tools=str(TOOLS), modname=name[:-3], target=target)
+    try:
+        r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return None, "追蹤逾時"
+    out = (r.stdout or "").strip().splitlines()
+    for line in reversed(out):
+        try:
+            d = json.loads(line)
+        except Exception:
+            continue
+        if "lines" in d:
+            return set(d["lines"]), f"{len(d['lines'])} 行"
+        return None, d.get("error", "未知")
+    return None, "追蹤沒有輸出"
 
 
 BACKUP_SUFFIX = ".premutation"
@@ -366,10 +535,16 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
     rng = random.Random(base + seed * 7919)
     picks = rng.sample(range(n), min(tries, n)) if n else []
     caught, attempted, examples = 0, 0, []
+    escapes: list[str] = []
+    reach_lines, reach_why = executed_lines(name, timeout)
+    own_lines = selftest_own_lines(src)
+    out["executed_lines"] = (len(reach_lines) if reach_lines is not None else None)
+    out["executed_lines_note"] = reach_why
+    reachable_attempted = reachable_caught = 0
     root_before = _root_entries()
     try:
         for idx in picks:
-            mutated, what = mutate(src, idx)
+            mutated, what, at_line = mutate_at(src, idx)
             if mutated is None:
                 continue
             # A mutation that breaks the file outright teaches nothing.
@@ -378,6 +553,10 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
             except SyntaxError:
                 continue
             attempted += 1
+            in_reach = reach_lines is not None and at_line in reach_lines
+            in_product = in_reach and at_line not in own_lines
+            if in_product:
+                reachable_attempted += 1
             # 備份必須在**第一次改寫之前**就落地,否則被砍時沒有東西可還原。
             bak = _backup_path(path)
             if not bak.exists():
@@ -389,8 +568,14 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
                 passed = False
             if not passed:
                 caught += 1
+                if in_product:
+                    reachable_caught += 1
                 if len(examples) < 3:
                     examples.append(what)
+            elif in_product:
+                # 逃掉的、而且 selftest 明明執行得到的突變——這才是真正該修的線索,
+                # 也是唯一能區分「selftest 不夠力」與「樣本沒落到可測範圍」的證據。
+                escapes.append(f"L{at_line}: {what}")
     finally:
         path.write_bytes(original)
         out["side_effects"] = quarantine_side_effects(root_before)
@@ -406,7 +591,13 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
 
     out.update(mutations_attempted=attempted, mutations_caught=caught,
                examples=examples,
-               verdict=("DISCRIMINATING" if caught else "WEAK") if attempted else "NO_SITES")
+               reachable_attempted=reachable_attempted,
+               reachable_caught=reachable_caught,
+               reachable_escapes=escapes[:5])
+    # 一個突變都沒落在 selftest 執行得到的產品碼上時,這一輪對 selftest 的品質
+    # **沒有提供任何證據**,報成 WEAK 會把力氣導向錯的地方。判定邏輯見 verdict_for。
+    out["verdict"] = verdict_for(attempted, caught,
+                                 reach_lines is not None, reachable_attempted)
     return out
 
 
@@ -418,9 +609,15 @@ def selftest() -> int:
     tmp = TOOLS / "_mutscore_probe.py"
 
     print("(1) 正向控制:一個真的會檢查東西的 selftest 必須被突變抓到")
+    # 探針的前提要寫明:`add` 裡必須有一個**產品碼側、且 selftest 真的會執行到**
+    # 的可突變判準(`a > 100`)。原本兩個探針的 add 都只是 `return a + b`,一個
+    # 可突變的常數或比較都沒有——於是負向控制得 0 分的真正原因是「無處可突變」,
+    # 而不是它宣稱的「selftest 什麼都不檢查」。兩者的觀測值相同,證據力卻不同。
     tmp.write_text(
         "import sys\n"
         "def add(a, b):\n"
+        "    if a > 100:\n"
+        "        return -1\n"
         "    return a + b\n"
         "def selftest():\n"
         "    return 0 if add(2, 2) == 4 else 1\n"
@@ -437,6 +634,8 @@ def selftest() -> int:
     tmp.write_text(
         "import sys\n"
         "def add(a, b):\n"
+        "    if a > 100:\n"
+        "        return -1\n"
         "    return a + b\n"
         "def selftest():\n"
         "    add(2, 2)\n"
@@ -444,8 +643,13 @@ def selftest() -> int:
         "if __name__ == '__main__':\n"
         "    sys.exit(selftest())\n", encoding="utf-8")
     blind = test_tool(tmp.name, tries=40, timeout=60)
-    ok2 = blind["verdict"] == "WEAK" and blind["mutations_caught"] == 0
-    print(f"    {'PASS' if ok2 else 'FAIL'}: {blind['mutations_caught']}/{blind['mutations_attempted']} 被抓到(應為 0)")
+    # 0 分不夠——還要確認**確實有可達的產品碼突變逃掉**,否則「無處可突變」也是 0 分,
+    # 兩種情形的觀測值一樣但意義相反,這正是 2026-09-10 UNREACHABLE_SAMPLE 要分開的事。
+    ok2 = (blind["verdict"] == "WEAK" and blind["mutations_caught"] == 0
+           and blind["reachable_attempted"] > 0)
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {blind['mutations_caught']}/{blind['mutations_attempted']} 被抓到"
+          f"(應為 0),其中可達產品碼 {blind['reachable_attempted']} 個(必須 >0,"
+          f"否則 0 分的原因是無處可突變):{blind.get('reachable_escapes')}")
     if not ok2:
         fails.append(f"負向控制被誤判為有鑑別力:{blind}")
 
@@ -541,12 +745,50 @@ def selftest() -> int:
     tmp.unlink(missing_ok=True)
     del INVOKE[tmp.name]
 
+    print("\n(4) 落點分類:selftest 自己的行 vs 產品碼,必須分得開")
+    probe_src = (
+        "def add(a, b):\n"
+        "    return a + 3\n"
+        "def selftest():\n"
+        "    assert add(1, 1) == 4\n"
+        "    return 0\n")
+    own = selftest_own_lines(probe_src)
+    ok4 = own == {3, 4, 5} and 2 not in own
+    print(f"    {'PASS' if ok4 else 'FAIL'}: selftest 佔用 {sorted(own)}"
+          f"(應為 [3, 4, 5]),產品碼第 2 行不在其中={2 not in own}")
+    if not ok4:
+        fails.append(f"selftest_own_lines 分不出兩側:{sorted(own)}")
+
+    print("\n(4b) 成對案例:UNREACHABLE_SAMPLE 只在『沒有任何產品碼突變可達』時成立")
+    # 這是 2026-09-10 真正發生過的形狀:0/12 被抓到,但 12 個突變沒有一個落在
+    # selftest 執行得到的產品碼上——那一輪對 selftest 品質沒有提供任何證據,
+    # 報成 WEAK 會把工程力氣導向錯的地方。
+    got = (verdict_for(12, 0, True, 0),    # 全落在實機層/測試自己 -> 無證據
+           verdict_for(12, 0, True, 1),    # 有一個可達卻逃掉 -> 真的弱
+           verdict_for(12, 1, True, 1),    # 抓到 -> 有鑑別力
+           verdict_for(12, 0, False, 0))   # 追蹤失敗:不知道就不能宣稱無證據
+    want = ("UNREACHABLE_SAMPLE", "WEAK", "DISCRIMINATING", "WEAK")
+    ok4b = got == want
+    print(f"    {'PASS' if ok4b else 'FAIL'}: {got}")
+    if not ok4b:
+        fails.append(f"判定分類不符:{got} != {want}")
+
+    print("\n(4c) 非平凡性:上面四組若只看 caught,前三組會擠成同一個答案")
+    collapsed = {("DISCRIMINATING" if c else "WEAK") for _, c, _, _ in
+                 [(12, 0, True, 0), (12, 0, True, 1), (12, 1, True, 1)]}
+    ok4c = len(collapsed) == 2 and len(set(got[:3])) == 3
+    print(f"    {'PASS' if ok4c else 'FAIL'}: 只看 caught 得到 {len(collapsed)} 種、"
+          f"加上落點得到 {len(set(got[:3]))} 種")
+    if not ok4c:
+        fails.append("落點資訊沒有帶來新的區分力")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(正向控制 + 負向控制 + 還原驗證)。")
+    print("\n--selftest passed(正向控制 + 負向控制(含『0 分的原因』檢定)+ "
+          "還原驗證 + 落點分類的成對案例與非平凡性控制)。")
     return 0
 
 
@@ -598,14 +840,25 @@ def main() -> int:
         best["passes"] = a.passes
         rows.append(best)
         v = best["verdict"]
+        reach = best.get("reachable_attempted")
         extra = (f"{caught_total}/{attempted_total} 被抓到"
                  + (f" ({a.passes} 輪累計)" if a.passes > 1 else "")
                  if attempted_total else best.get("detail", ""))
+        if attempted_total and reach is not None:
+            # 分母比分子重要:12 個突變裡有幾個 selftest 根本執行不到?
+            extra += f"(其中 {reach} 個是 selftest 執行得到的**產品碼**)"
         print(f"  {n:<40} {v:<16} {extra}")
+        for e in best.get("reachable_escapes", [])[:3]:
+            print(f"      逃掉但執行得到:{e}")
     weak = [r["tool"] for r in rows if r["verdict"] == "WEAK"]
+    unreach = [r["tool"] for r in rows if r["verdict"] == "UNREACHABLE_SAMPLE"]
     bad = [r["tool"] for r in rows if r["verdict"] == "BASELINE_FAIL"]
     good = sum(1 for r in rows if r["verdict"] == "DISCRIMINATING")
-    print(f"\n共 {len(rows)} 個工具:有鑑別力 {good} / 弱 {len(weak)} / 基準就失敗 {len(bad)}")
+    print(f"\n共 {len(rows)} 個工具:有鑑別力 {good} / 弱 {len(weak)} / "
+          f"樣本沒落到可測範圍 {len(unreach)} / 基準就失敗 {len(bad)}")
+    if unreach:
+        print(f"  樣本沒落到可測範圍(這一輪對 selftest 品質未提供證據,"
+              f"不是「弱」):{unreach}")
     if weak:
         print(f"  弱(值得人工檢視,不等於壞):{weak}")
     if bad:
