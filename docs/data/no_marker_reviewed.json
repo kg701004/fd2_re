@@ -33760,6 +33760,86 @@
    "excerpt": "**2026-09-10:`--open` 報 0 而我把它當成「沒事了」轉述出去,那是假陰性**。盤點時 `worklist_status --open` 印「沒有任何項目的最新一段主張有待辦工作」,而同時有 6 個 D、38 個 C 標籤——兩者衝突,我卻直接引用了那句話。查根因:判準的**引文與否定處理是對的**(那兩層本來就是被真實假陽性逼出來的),問題在 `OPEN_WORDS` 只有 ",
    "verdict": "benign",
    "note": "工具流程記錄:worklist_status 的開放判準詞彙覆蓋不足與兩層修法,不宣稱任何遊戲行為。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 4,
+   "excerpt_sha1": "6a0e3cc7e2a7302b4545187cb64997058d90e24a",
+   "excerpt": "> 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證。",
+   "verdict": "benign",
+   "note": "交接文件的體例聲明(引用 Project_Continuity 的寫法要求),不是關於遊戲的主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 11,
+   "excerpt_sha1": "8d21c409fe565ea2f850844dcbbb773a1abcc5ab",
+   "excerpt": "1. 「**自動逐項修正優化所有工具,若需要新建工具請自行新建並多向多重多次交叉驗證確認新建",
+   "verdict": "benign",
+   "note": "引用使用者本輪的指示原文,不是關於遊戲的主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 26,
+   "excerpt_sha1": "e0a55d114cc5f92cd1d5214dc8f552b8473462c1",
+   "excerpt": "| **產物重生** | 重跑產生器與已提交檔逐位元組比對 | 15 個登錄項目 |",
+   "verdict": "benign",
+   "note": "驗證等級對照表的一列,描述本專案的驗證方法,不是關於遊戲的主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 40,
+   "excerpt_sha1": "5e51937d6c8eba9618daead37ece0eafa0325f4c",
+   "excerpt": "| 已登錄產物 | 9 → 26 | **89**(+50 已證明重生比對不適用) |",
+   "verdict": "benign",
+   "note": "本輪工具/產物統計數字,可由 verify_generated_artifacts 重跑覆核,不是關於遊戲的主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 44,
+   "excerpt_sha1": "dbf1df5198c91408f05640e531dc6f660e9858c8",
+   "excerpt": "| 驗證軸 | 8 | 10(加 `hygiene`、`truncation`) |",
+   "verdict": "benign",
+   "note": "驗證軸數量統計,可由 verify_everything 覆核,不是關於遊戲的主張。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 66,
+   "excerpt_sha1": "838166ee6b9da3fd37c9dceb3b21a496c97ec548",
+   "excerpt": "| 兩支互相牽制的工具對同一批檔案給出不同答案(0 vs 7) | `no_generator_set()` 只認 3 種永久豁免的其中 1 種 | 補齊 + 新增比對「實際待處理」最終數字的交叉驗證 |",
+   "verdict": "benign",
+   "note": "記錄兩支驗證工具之間的不一致與修法,對象是工具不是遊戲。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 77,
+   "excerpt_sha1": "643435085b489004e9298eba5c6cd62fb6f0e2bc",
+   "excerpt": "2. **第五次同類**:引用 `--open` 的「0 項」當成「沒事了」。修法不是加詞(實測會有約六成",
+   "verdict": "benign",
+   "note": "記錄我自己判讀錯誤的教訓,對象是流程不是遊戲。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 85,
+   "excerpt_sha1": "26dc3d427b60bbfa8b9dbc8e3276c06ff3d17a71",
+   "excerpt": "6. **反覆高估封鎖範圍**:先前判定「13 支工具需要實機」,實測全部有離線可驗的核心。",
+   "verdict": "benign",
+   "note": "記錄我自己高估封鎖範圍的教訓,對象是流程不是遊戲。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 118,
+   "excerpt_sha1": "d33670c9c74b0b97854c56dafdc34261c8ac0498",
+   "excerpt": "4. **驗證期間也不要下重負載指令**:實測會讓整輪從 ~35 分鐘拖到 ~70 分鐘。",
+   "verdict": "benign",
+   "note": "記錄驗證期間的操作注意事項(實測耗時),對象是流程不是遊戲。"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 227,
+   "excerpt_sha1": "1a808816a7f96c5068fe8b01e4e01b7170f9a6ce",
+   "excerpt": "**2026-09-10:歸檔,以及歸檔動作本身踩到的閘門漏洞**。依 `Project_Continuity.md` 體例寫成 `SESSION-HANDOFF-2026-09-10.md`(涵蓋 `6d2ad9c5..192a0459`,59 個 commit、112 檔 +11336/−1109),並把 `00-index.md` 的「先讀這個」指標改指它、在前一份加上向後連結。**寫的過程",
+   "verdict": "benign",
+   "note": "工具流程記錄:交接文件歸檔與 --diff 漏看未追蹤檔案的修法,不宣稱任何遊戲行為。"
   }
  ]
 }

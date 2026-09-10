@@ -532,7 +532,40 @@ def scan_diff(base: str = "HEAD") -> list[Claim]:
                         "docs/knowledge-base/*.md"],
                        cwd=REPO, capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
-    return parse_diff_claims(r.stdout or "")
+    return parse_diff_claims((r.stdout or "") + _untracked_as_diff())
+
+
+def _untracked_as_diff() -> str:
+    """把**未追蹤**的 knowledge-base 文件轉成 unified diff 的形狀。
+
+    2026-09-10 實測到的漏洞:`git diff` **完全不含未追蹤檔案**,所以一份**全新的**
+    知識庫文件會整份繞過這道閘門——而那正是風險最高的一種新增(一整份沒有任何來源
+    標記的文字,一次進庫)。當天寫 `SESSION-HANDOFF-2026-09-10.md` 時 `--diff` 報
+    「新增 0 筆驗證主張」,而手動跑 `classify()` 在同一份檔案上得到 11 筆。
+
+    做法是合成 diff 文字再交給既有的 `parse_diff_claims()`,而不是另寫一條掃描路徑:
+    這樣審閱登錄表的跳過、長度門檻、`EXCLUSION_TAG` 等規則自動一致,不會兩邊漂移。
+    """
+    r = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all",
+                        "--", "docs/knowledge-base"],
+                       cwd=REPO, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    out = []
+    for line in (r.stdout or "").splitlines():
+        if not line.startswith("?? "):
+            continue
+        rel = line[3:].strip().strip('"')
+        if not rel.endswith(".md"):
+            continue
+        try:
+            body = (REPO / rel).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        lines = body.split("\n")
+        out.append(f"+++ b/{rel}")
+        out.append(f"@@ -0,0 +1,{len(lines)} @@")
+        out.extend("+" + l for l in lines)
+    return "\n".join(out) + ("\n" if out else "")
 
 
 def parse_diff_claims(diff_text: str, reviewed: set | None = None) -> list[Claim]:
@@ -1032,6 +1065,31 @@ def selftest() -> int:
             if len(load_no_marker_reviews(tmp_reg3)) != 1:
                 fails.append("mark_reviewed_batch 負對照失敗:同一批裡對同一筆主張"
                              "登錄兩次,應該只留 1 筆卻沒有")
+
+        # --- 未追蹤的新文件不得繞過 --diff(2026-09-10)---
+        # 實測到的漏洞:`git diff` 完全不含未追蹤檔案,所以一份**全新的**知識庫文件會
+        # 整份繞過這道閘門——而那是風險最高的一種新增。當天寫 SESSION-HANDOFF-2026-09-10
+        # 時 `--diff` 報「新增 0 筆」,手動 classify() 在同一份檔案上得到 11 筆。
+        # 成對:`.md` 必須被看見,非 `.md` 必須被忽略(只驗前者的話,一個「把整個工作區
+        # 都塞進來」的實作也會通過)。
+        probe_md = KB / "_selftest_untracked_probe.md"
+        probe_txt = KB / "_selftest_untracked_probe.txt"
+        claim_line = "本輪已用 Ghidra headless 逐位元組確認過這張表,結果完全一致。"
+        try:
+            probe_md.write_text(claim_line + "\n", encoding="utf-8")
+            probe_txt.write_text(claim_line + "\n", encoding="utf-8")
+            syn = _untracked_as_diff()
+            got = parse_diff_claims(syn, reviewed=set())
+            names = {c.file for c in got}
+            checks += 2
+            if probe_md.name not in names:
+                fails.append("未追蹤的 .md 沒有被 --diff 看見 —— 全新文件會整份繞過閘門")
+            if probe_txt.name in names:
+                fails.append("非 .md 的未追蹤檔也被收進來了 —— 範圍過寬")
+        finally:
+            for p in (probe_md, probe_txt):
+                if p.exists():
+                    p.unlink()
 
         # --- _build_review_entry 的四種輸入必須各自可辨(2026-09-09)---
         # 起因是實際踩到:傳 repo 相對路徑被拒,而訊息說「行號可能已經漂移」,
