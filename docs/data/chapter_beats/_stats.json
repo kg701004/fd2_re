@@ -668,7 +668,7 @@
     "buffer_flicker": 2,
     "palette_delta_ramp": 2,
     "load_res": 3,
-    "unknown": 1,
+    "reset_field_cell_bytes": 1,
     "prepare_chapter_aux_graphics": 1,
     "pan": 2
    }
@@ -718,7 +718,7 @@
     "buffer_flicker": 4,
     "delay": 3,
     "focus_unit": 1,
-    "unknown": 1
+    "heap_free": 1
    }
   },
   {
@@ -910,8 +910,5 @@
    }
   }
  ],
- "unknown_targets": {
-  "0x4df4c": 1,
-  "0x3776e": 1
- }
+ "unknown_targets": {}
 }

@@ -4661,3 +4661,49 @@ x/y 位移**,不是寬高;真正的寬高在 `ptr+9` 那塊資料的開頭,像�
 `xor ebx,ebx` 之後只用 ebx。`derive_native_argcounts` 因**合併清理**把它判為 WEAK/0——
 值相同但那是猜的;本體給的是證明。這是本輪第三次用「讀被呼叫端本體」補上呼叫端訊號
 模糊的缺口(另兩次是 `0x25089`、`0x24336`)。
+
+## 15. `0x4df4c` = FDFIELD 格子位元組重置,以及一筆掛錯物件的「矛盾」(2026-09-10)
+
+`0x4df4c` 是最後兩個未命名原語之一,`derive_native_argcounts` 的 docstring 記著
+「文件只提到被呼叫、沒有命名(另有一筆**未收斂的行為矛盾**)」。**兩個理由都不成立。**
+
+**本體**(`0x4df4c..0x4df83`):
+
+```
+edi   = param_1
+count = byte[edi] * byte[edi + 2]     ; 表頭給的兩個維度相乘
+edi  += 4                             ; 跳過 4-byte 表頭
+重複 count 次:
+    byte[edi + 3] = 0xff
+    byte[edi + 2] &= 0x1f
+    byte[edi + 1] &= 0x03
+    edi += 4
+```
+
+**它早就被逐指令驗證過了**。`docs/data/verified_addresses.json` 這一筆是
+`0x4df4c` 那一筆是 `confidence=verified`,語意欄寫的是「以 header 後的 4-byte cells 逐筆將 byte+3 初始化為
+0xff(每一筆 cell 皆寫,非只有第一筆),再對 byte+2 mask 0x1f、byte+1 mask 0x3
+(read-modify-write)。迴圈次數 count=param_1[0]*param_1[2]」——與上面的反組譯**逐字相符**。
+精確呼叫點也記著:`0x1097a`(`PUSH [0x53a51]; CALL 0x4df4c`),`[0x53a51]` 是 FDFIELD buffer。
+
+### 15.1 那筆「未收斂的矛盾」掛錯了物件,而且早已解決
+
+`verified_addresses.json` 裡標成 `disputed` 的是 **`0x4dbfc`**——一個**錯誤位址**,
+它落在別的函式體中段,根本不是合法進入點。爭議的內容是「這個**數字**在專案裡出現在
+兩種不同語境」,不是「`0x4df4c` 的行為有兩種說法」。
+
+而且它**早已解決**:doc58 續三十 記「發現一個待查矛盾(本輪未解決,誠實記錄不強行
+收斂)」,**續三十一 的標題就是**「追完續三十留下的 `0x4dbfc`↔`0x4df4c` 矛盾——確認是
+同一個 exporter 位址標籤錯誤,不是兩個不同 call site」,並訂正了三處。
+`known_address_errata.json` 也記著「後續:已修正完成」。
+
+**兩個層次的錯誤疊在一起**:(a) 把**錯誤位址**的爭議記成**正確位址**的爭議;
+(b) 引用的是**產生懷疑的那一節**,而不是**下一節的結論**。後者正是本專案一再出現的
+「讀最新一段」問題,只是這次發生在跨節引用上。
+
+**`0x4df4c` 的參數個數 = 1**,`derive_native_argcounts` 判定 CONFIRMED(32 個呼叫端);本體也只讀
+`[ebp+8]` 這一個參數,兩條證據一致。
+
+**誠實範圍**:三個遮罩(`0xff`/`0x1f`/`0x03`)各自對應 FDFIELD 格子的哪個欄位語意,
+本節不主張——那屬於 FDFIELD 格式的範圍,doc11/doc53 各有記載。本節只證實這支函式
+對每一格做了什麼。

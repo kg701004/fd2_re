@@ -302,12 +302,13 @@
    "args": []
   },
   {
-   "op": "unknown",
+   "op": "reset_field_cell_bytes",
    "addr": "0x24a92",
    "target": "0x4df4c",
    "args": [
     "dword ptr [0x3a51]"
    ],
+   "op_name_source": "doc-anchored",
    "note": "2026-09-06: 0x4dbfc falls inside FUN_0004dbe7 (entry 0x4dbe7), decompiled and confirmed to be a generic Watcom-runtime 64-bit shift/normalize helper (classic unsigned-divide-by-shift pattern: shift both operands left/right together based on leading-zero position, no game-specific data touched) -- almost certainly compiler-inserted arithmetic support for a numeric computation elsewhere (e.g. percentage/score formatting), not a distinct game-logic gate. Genuinely still unresolved: which surrounding computation this feeds and why only one arg (dword ptr [0x3a51]) shows in this extraction against the decompile's 2-param signature. Left as unknown rather than guessed."
   },
   {

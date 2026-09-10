@@ -375,7 +375,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "heap_free"
   },
   "0x37910": {
     "argc": 3,
@@ -406,6 +406,6 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "reset_field_cell_bytes"
   }
 }

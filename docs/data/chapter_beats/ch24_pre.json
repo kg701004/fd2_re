@@ -160,12 +160,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "heap_free",
    "addr": "0x1a80a",
    "target": "0x3776e",
    "args": [
     "dword ptr [0x3b13]"
-   ]
+   ],
+   "op_name_source": "doc-anchored"
   }
  ]
 }
