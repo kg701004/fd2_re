@@ -33864,6 +33864,22 @@
    "excerpt": "`selftest`),全 repo 掃描確認只有這兩支中招。規則第一版寫成「任何會回傳值的函式」,立刻",
    "verdict": "benign",
    "note": "陳述的是 hygiene 新增 exit_code 規則的全 repo AST 掃描結果(只有兩支中招),屬工具自驗層,非遊戲事實。依據為 commit 377cee7f 的規則與五個成對案例。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 249,
+   "excerpt_sha1": "0e73b81a2a97d1085384662237c784647d9490ac",
+   "excerpt": "實測三者各自都會讓**恰好一個章節檔**改變(ch02_post / ch01_post / ch01_post),",
+   "verdict": "benign",
+   "note": "陳述的是本輪對 dump_chapter_beats 三個判準做的重生差異實測(每個突變各影響一個章節檔),屬工具自驗層,不是關於遊戲的事實主張。依據為該工具新增的selftest 檢查 (6) 與逐一故障注入輸出。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 255,
+   "excerpt_sha1": "7f8f483647aae89d5e308aad7b86fbddfe8f5f10",
+   "excerpt": "`scan_text_one()` 這個**副本**,而 `scan()` 與 `scan_diff()` 各有自己的一份逐字複製。",
+   "verdict": "benign",
+   "note": "陳述的是 audit_evidence_provenance 自身三處重複程式碼的合併(scan / scan_diff / scan_text_one),屬工具重構紀錄,不是關於遊戲的事實主張。"
   }
  ]
 }

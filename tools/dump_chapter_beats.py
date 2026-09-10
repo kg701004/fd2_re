@@ -889,6 +889,42 @@ def selftest():
     if not ok5:
         fails.append(f"只抽出 {len(_stats)} 筆")
 
+    print("\n(6) 重生漂移:全 30 章重生一次,必須與已提交的 chapter_beats 逐檔相同")
+    # 2026-09-10 加。突變測試指出三個「可達但無人看管」的判準:切分前綴的
+    # `int(beat['addr'],16) < call.address`、迴圈辨識的 `parts[0] != accumulator`、
+    # 以及 `test byte [x+5], 1` 的 `parts[1] == '1'`。上面每一題都只驗某個局部性質,
+    # 沒有任何一題會因為這三個判準被改而失敗。
+    #
+    # 實測三者各自都會讓**恰好一個章節檔**的內容改變(ch02_post / ch01_post /
+    # ch01_post),所以「重生並逐檔比對」就是能同時釘住三者的最小檢查 ——
+    # 而且全 30 章重生只要 1.3 秒,沒有理由不放進 selftest。
+    #
+    # 這與 `verify_generated_artifacts` 做的是同一個比對,但那是另一支工具的另一個軸;
+    # 放在這裡的意義是**讓這支工具自己的 selftest 有能力失敗**,突變測試才量得到它。
+    import tempfile as _tf
+    from pathlib import Path as _P
+    committed = _P(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) \
+        / "docs" / "data" / "chapter_beats"
+    drift: list[str] = []
+    if not committed.is_dir():
+        print("    SKIP: 找不到已提交的 chapter_beats,無法比對(不計為通過)")
+    else:
+        with _tf.TemporaryDirectory() as td:
+            # main() 吃的是完整 sys.argv,argv[0] 是程式名。
+            main(["dump_chapter_beats.py", str(DEFAULT_EXE), "all", td])
+            for q in sorted(committed.glob("*.json")):
+                fresh = _P(td) / q.name
+                if not fresh.exists():
+                    drift.append(f"{q.name}(重生時沒產生)")
+                elif json.loads(fresh.read_text(encoding="utf-8")) != \
+                        json.loads(q.read_text(encoding="utf-8")):
+                    drift.append(q.name)
+        ok6 = not drift
+        print(f"    {'PASS' if ok6 else 'FAIL'}: 比對 {len(list(committed.glob('*.json')))} 檔,"
+              f"相異 {len(drift)}{'' if ok6 else ' -> ' + str(drift[:5])}")
+        if not ok6:
+            fails.append(f"重生結果與已提交檔不同:{drift[:5]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -896,7 +932,7 @@ def selftest():
         return 1
     print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + 故障注入 + 未收錄原語的"
           "參數個數與 WEAK 不採信 + unknown 天花板 + doc 錨定名稱的命中率與獨立性控制 + "
-          "非空控制)。")
+          "非空控制 + 全 30 章重生逐檔比對)。")
     return 0
 
 

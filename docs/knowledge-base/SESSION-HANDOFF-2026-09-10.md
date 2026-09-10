@@ -242,7 +242,29 @@ commit 範圍 `6d2ad9c5..192a0459`(**59 個 commit**,112 檔變動 +11336 / −1
 * `sync_native_treasures` 還有 3 個逃掉的可達突變,全在地形旗標語意那塊
   (`terrain[tile*4]` 的 stride、`flags & 0x60`、`slots.append(-1)`),需要各自的地形對照
   資料才能有意義地釘住。
-* 31 筆逃掉的可達突變裡,尚未處理判準邏輯類:`dump_chapter_beats` 的三個比較
-  (L444/L498/L505)與 `audit_evidence_provenance` 的 `addr_only`(L269)。
-* 良性那批(`md5[:8]` 的顯示截斷、`locale.getpreferredencoding(False)`、`ensure_ascii=False`)
-  應連同理由登錄,而不是當缺陷修。
+### 8.5 判準邏輯類的逃逸已處理(`46be9f0b` 之後)
+
+* **`dump_chapter_beats` 的三個判準**(切分前綴的 `int(beat['addr'],16) < call.address`、
+  迴圈辨識的 `parts[0] != accumulator`、`test byte [x+5], 1` 的 `parts[1] == '1'`):
+  實測三者各自都會讓**恰好一個章節檔**改變(ch02_post / ch01_post / ch01_post),
+  但原本每一題 selftest 都只驗局部性質,沒有一題會因此失敗。新增檢查 (6):
+  **全 30 章重生一次、與已提交檔逐檔比對** —— 只要 1.3 秒,三個突變全部被抓到,
+  且訊息直接點名是哪一個章節檔變了。這與 `verify_generated_artifacts` 是同一個比對,
+  放進來的意義是**讓這支工具自己的 selftest 有能力失敗**,突變測試才量得到它。
+* **`audit_evidence_provenance` 的 `addr_only`**:原本已經有成對案例,但它們走的是
+  `scan_text_one()` 這個**副本**,而 `scan()` 與 `scan_diff()` 各有自己的一份逐字複製。
+  改掉 `scan()` 裡那份,測試完全不反應。三處合併成單一 `make_claim()`,成對案例
+  因此同時釘住三條路徑;兩種突變(比較反轉、拿掉 `not`)都被抓到。
+  **這是同一天內第三次踩到同一個形狀**:測試打在重寫的副本上,而不是真正跑的那份
+  (另兩次是 `verify_everything.classify_rounds` 與 `verify_selftest_discrimination.verdict_for`)。
+
+### 8.6 判定為良性的逃逸(附理由,不當缺陷修)
+
+| 位置 | 突變 | 為什麼不修 |
+|---|---|---|
+| `verify_tool_hygiene.py:467/469` | `md5[:8]` → `[:9]` | 只影響**錯誤訊息裡**顯示幾個 hex 字元,不影響任何判定;釘它等於把訊息格式變成契約 |
+| `verify_docs_match_cli.py:141` | `getpreferredencoding(False)` → `True` | 傳 `True` 會呼叫 `setlocale`(非執行緒安全),但回傳的編碼相同,判定不變。`False` 是刻意的,已在該處說明 |
+| `audit_evidence_provenance.py:450/483/527` | `ensure_ascii=False` → `True` | 只改登錄檔裡非 ASCII 字元的跳脫寫法,`json.loads` 讀回來完全相同;不是行為差異 |
+
+判準是:**這個突變會不會改變任何一個「對/錯」的判定**。會 → 補測試;只改顯示或
+等價編碼 → 記理由。三筆都屬後者。

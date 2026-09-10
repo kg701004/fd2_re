@@ -253,6 +253,27 @@ def classify(text: str) -> tuple[str, list[str], list[str]] | None:
     return status, r, o
 
 
+def make_claim(file: str, lineno: int, text: str) -> Claim | None:
+    """把一行文字變成 Claim(含 addr_only 判定);不是驗證主張就回 None。
+
+    2026-09-10:這段判定原本**逐字複製在三處** —— `scan()`、`scan_diff()` 的內層,
+    以及專供 selftest 用的 `scan_text_one()`。突變測試指出 `scan()` 那一份的
+    `status == "ORIGINAL"` 是「可達但無人看管」:selftest 的 addr_only 成對案例
+    走的是 `scan_text_one()` 的**那一份副本**,所以改掉 `scan()` 裡的判定,測試
+    完全不會反應。這與今天稍早在 `verify_everything` 與 `verify_selftest_
+    discrimination` 修掉的是同一個形狀:測試打在重寫的副本上,而不是真正跑的那份。
+
+    三處合併成這一個函式,成對案例因此同時釘住全部三條路徑。
+    """
+    got = classify(text)
+    if got is None:
+        return None
+    status, r, o = got
+    return Claim(file, lineno, status, r, o, text[:200],
+                 addr_only=(status == "ORIGINAL"
+                            and not _hits(text, ORIGINAL_MARKERS_NAMED)))
+
+
 def scan(kb: Path) -> list[Claim]:
     claims: list[Claim] = []
     for p in sorted(kb.glob("*.md")):
@@ -261,13 +282,9 @@ def scan(kb: Path) -> list[Claim]:
             s = line.strip()
             if len(s) < 30 or EXCLUSION_TAG in s:
                 continue
-            got = classify(s)
-            if got is None:
-                continue
-            status, r, o = got
-            claims.append(Claim(p.name, n, status, r, o, s[:200],
-                                addr_only=(status == "ORIGINAL"
-                                           and not _hits(s, ORIGINAL_MARKERS_NAMED))))
+            c = make_claim(p.name, n, s)
+            if c is not None:
+                claims.append(c)
     return claims
 
 
@@ -606,12 +623,9 @@ def parse_diff_claims(diff_text: str, reviewed: set | None = None) -> list[Claim
                 s = raw[1:].strip()
                 if (len(s) >= 30 and EXCLUSION_TAG not in s
                         and (cur_file, _sha(s[:200])) not in reviewed):
-                    got = classify(s)
-                    if got is not None:
-                        status, hr, ho = got
-                        claims.append(Claim(cur_file, cur_line, status, hr, ho, s[:200],
-                                            addr_only=(status == "ORIGINAL"
-                                                       and not _hits(s, ORIGINAL_MARKERS_NAMED))))
+                    c = make_claim(cur_file, cur_line, s)
+                    if c is not None:
+                        claims.append(c)
             if cur_line is not None:
                 cur_line += 1
         elif raw.startswith("-"):
@@ -621,10 +635,7 @@ def parse_diff_claims(diff_text: str, reviewed: set | None = None) -> list[Claim
 
 def scan_text_one(text: str) -> Claim:
     """把單行文字走完 scan() 的同一條路(含 addr_only 判定),給 selftest 用。"""
-    status, r, o = classify(text)
-    return Claim("<selftest>", 1, status, r, o, text[:200],
-                 addr_only=(status == "ORIGINAL"
-                            and not _hits(text, ORIGINAL_MARKERS_NAMED)))
+    return make_claim("<selftest>", 1, text)
 
 # --------------------------------------------------------------------------- #
 # 反向驗證
