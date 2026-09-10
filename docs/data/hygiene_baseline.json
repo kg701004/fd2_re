@@ -92,12 +92,6 @@
    "permanent": "no_generator"
   },
   {
-   "name": "docs/data/chapter_beats_manual/ch06_post.json",
-   "rule": "regenerable",
-   "reason": "手工結構化的 handler IR,沒有產生器:它的外層 `if native_event_state_eq(index=17,value=1,slot_count=44)` 沒有任何抽取器產得出來,內層的 any_unit_inactive diamond 在現行參考版 EXE 也沒被 structure_control_flow 的形狀比對命中(獨立待查項)。2026-09-09 從 docs/data/chapter_beats/ 移出來,因為該目錄已整個登錄成 `dump_chapter_beats.py <EXE> all` 的產物並逐位元組比對,留一個產不出來的檔在裡面會永遠報漂移。**永久豁免**,但宣稱是可證偽的:verify_generated_artifacts.discover() 每次掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-   "permanent": "no_generator"
-  },
-  {
    "name": "docs/data/chapter_beats_notes.json",
    "rule": "regenerable",
    "reason": "人工維護的來源檔,不是產物:它是從 2026-09-06 手寫進已提交 chapter_beats 的 12 條反組譯註記萃取出來的,dump_chapter_beats 只**讀**它、把註記貼回重生結果,沒有任何工具會寫它。**永久豁免**,但宣稱是可證偽的:verify_generated_artifacts.discover() 每次掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",

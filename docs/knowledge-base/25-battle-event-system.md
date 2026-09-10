@@ -2887,3 +2887,40 @@ while bl < [0x53bfb]:                    ; 名冊人數
 
 **誠實範圍**:本節只主張這個迴圈做了什麼;它在遊戲流程中何時被呼叫(例如是否等同
 「旅館/教會全體恢復」)本輪未追,所以名稱只描述機制。
+
+## 16. ch06_post 的短路 AND:手工 IR 退役,改由機械辨識(2026-09-10)
+
+`docs/data/chapter_beats_manual/ch06_post.json` 是全 61 個 chapter_beats 裡**唯一**
+手工結構化的檔案。它的存在理由(寫在該檔 `_provenance` 裡)是:handler `0x232e8` 的
+真實條件是**兩個判準的短路 AND、共用一個 else 臂**——
+
+```
+0x2331e mov   eax, [0x3ad5]          ; State.NativeEventState(見 §12)
+0x23323 movzx eax, byte [eax + 0x11]
+0x23327 cmp   eax, 1
+0x2332a jne   0x23393                ; 事件旗標 != 1 -> 跳共用 else
+0x2332c push  0x2b
+0x2332e call  0x34894                ; unit_inactive(43)
+0x23336 test  eax, eax
+0x23338 jne   0x23393                ; 43 號不活躍 -> 跳同一個共用 else
+```
+
+當時的機械辨識器只認得後面那個 diamond,會產出 `if any_unit_inactive([43])`——
+**丟掉外層的事件旗標守衛,是不完整的條件主張**。前一輪因此刻意讓它維持扁平
+(有損但看得出來),並把這個檔案手工寫出正確結構。
+
+**2026-09-10 已可機械重生**:`dump_chapter_beats._event_state_predicate` 認得
+`[0x3ad5] + N == V` 這個形狀,與既有的 diamond 合成 `and`;認不出前一個判準時仍然
+退回扁平,不猜。機械輸出的語意與手工檔逐項相符(then = layout_units/dialog(4)/join(12)、
+else = dialog(5)),且全 30 章只有這一章改變。手工檔因此退役,`hygiene_baseline.json`
+的對應豁免條目一併移除——那條理由寫的是「沒有任何機械辨識器認得出來」,現在是假的,
+而棘輪的規則本來就是「不再違規的基準線條目也要讓閘門失敗」。
+
+**極性是這裡最容易錯的地方**:兩個判準都是「不成立就跳」,所以**落下去**那一臂才是
+「兩者皆成立」。而 `not` 要不要加,取決於分支助憶符——`jne` 不跳表示單位仍有效
+(加 `not`),`je` 不跳表示單位不活躍(不加)。實作第一版把否定寫死,對 `je` 的情形會
+**反向描述整個章節的邏輯**;`--selftest` 的 (2c) 用一個 `je` 的 fixture 專門擋這件事。
+
+原始 `_provenance` 全文保留於此,供日後追溯:
+
+> 手工結構化,不是任何工具的輸出,所以從 docs/data/chapter_beats/ 移出來(2026-09-09)。那個目錄現在整個由 `dump_chapter_beats.py <EXE> all` 產生並逐位元組比對。**2026-09-09 續:為什麼抽取器產不出這個結構,已經查清楚了**——handler 0x232e8 的真實條件是**兩個判準的短路 AND,共用一個 else 臂**:`0x2331e mov eax,[0x3ad5]` / `0x23323 movzx eax,byte [eax+0x11]` / `0x23327 cmp eax,1` / `0x2332a jne 0x23393`,接著 `0x2332c push 0x2b` / `0x2332e call 0x34894`(unit_inactive) / `0x23336 test eax,eax` / `0x23338 jne 0x23393`——**兩個條件跳都跳到 0x23393**。本檔用巢狀 if 去模擬它,代價是 `dialog text_index 5` 在兩個 else 臂各寫一次(重複)。抽取器刻意維持扁平:只認後面那個 diamond 會產出 `if any_unit_inactive([43])`,那是**不完整的條件主張**(丟掉事件旗標守衛),假結構比看得出有損的扁平更糟。外層那個旗標的語意見 doc25 §12(本輪新增):`[0x3ad5]` 就是既有記載的 `[0x53AD5]`=`State.NativeEventState`(doc11 L163;反組譯輸出省掉了 obj2 的 0x50000 基底,用已知對子 `[0x3c03]`/`[0x53c03]` 核對確認),指向一個 32 位元組陣列,章節載入器 `0x1088d` 之後由 `0x2060b push [0x3ad5]; call 0x37910` 做 memset(...,0,0x20) 清零,個別位元組由戰鬥事件 handler 寫入(`mov byte [eax+0x11],1` 全 image 5 處、`[+0x10]` 13 處),另有 `0x24f35`/`0x24fb6` 把 `[+0xc]` 當對白索引用——即**每章的事件旗標陣列**;doc25 §3.2.4 記的「12-byte」是當時探測的寶箱 slot 數,不是配置大小,已在 §12 更正。要讓本檔可重生,需要的是「條件是連接詞」這個表達能力,不是再放寬 diamond 的判準。

@@ -99,6 +99,13 @@ EDITION_MOVED = {
 }
 UNIT_INACTIVE_OPSTRS = {hex(a) for a in EDITION_MOVED['unit_inactive']}
 
+# 事件旗標陣列的指標全域。反組譯輸出省略 obj2 的 0x50000 基底,所以這裡是
+# `0x3ad5` 而文件寫 `[0x53AD5]`(= State.NativeEventState,doc25 §12)。
+# 32 位元組的長度由 `0x1088d` 章節載入後的 `0x2060b push [0x3ad5]; call 0x37910`
+# = memset(...,0,0x20) 證實,超出範圍的索引一律不採信。
+EVENT_STATE_PTR = '0x3ad5'
+EVENT_STATE_BYTES = 0x20
+
 # 非原語(編譯器插入的堆疊探測/輔助函式),線性掃描時直接跳過、清空 pushes 不記 beat:
 # 0x36cd7 / 0x375c0 是舊版位址(現行 EXE 各 0 個呼叫端,保留只為讓舊資料仍可重現);
 # 0x3702f 是現行版本的 Watcom stack-check(541 個呼叫端),缺了它每個 handler 的序頭
@@ -338,6 +345,51 @@ def _immediate(op):
         return None
 
 
+def _event_state_predicate(insns, jump_idx):
+    """把 `[0x3ad5]` 事件旗標的比較解成一個具名條件;認不出來就回 None。
+
+    形狀(ch06_post `0x2331e..0x2332a`,doc25 §12 已記載這個陣列的語意):
+
+        mov   eax, dword ptr [0x3ad5]      ; State.NativeEventState 指標
+        movzx eax, byte ptr [eax + N]      ; 第 N 個旗標位元組
+        cmp   eax, V
+        jne   T                            ; 不等於 V 就跳走
+
+    `[0x3ad5]` 是反組譯輸出省略 obj2 的 0x50000 基底後的寫法,即文件裡的
+    `[0x53AD5]`。回 None 時呼叫端會維持既有的扁平輸出,**不會產生猜的結構**。
+    """
+    if jump_idx < 3:
+        return None
+    cmp_ins, movzx_ins, mov_ins = insns[jump_idx - 1], insns[jump_idx - 2], insns[jump_idx - 3]
+    if cmp_ins.mnemonic != 'cmp' or movzx_ins.mnemonic != 'movzx' or mov_ins.mnemonic != 'mov':
+        return None
+    cmp_parts = [p.strip() for p in cmp_ins.op_str.split(',')]
+    mz_parts = [p.strip() for p in movzx_ins.op_str.split(',')]
+    mv_parts = [p.strip() for p in mov_ins.op_str.split(',')]
+    if len(cmp_parts) != 2 or len(mz_parts) != 2 or len(mv_parts) != 2:
+        return None
+    # mov <reg>, dword ptr [<事件旗標全域>]
+    if not (mv_parts[1].startswith('dword ptr [0x') and mv_parts[1].endswith(']')):
+        return None
+    base = mv_parts[1][len('dword ptr ['):-1]
+    if base != EVENT_STATE_PTR:
+        return None
+    reg = mv_parts[0]
+    # movzx <reg2>, byte ptr [<同一個 reg> + N]
+    prefix, suffix = f'byte ptr [{reg} + ', ']'
+    if not (mz_parts[1].startswith(prefix) and mz_parts[1].endswith(suffix)):
+        return None
+    index = _immediate(mz_parts[1][len(prefix):-len(suffix)])
+    value = _immediate(cmp_parts[1])
+    if index is None or value is None or cmp_parts[0] != mz_parts[0]:
+        return None
+    if not 0 <= index < EVENT_STATE_BYTES:
+        return None          # 超出 memset(...,0,0x20) 證實的 32 位元組範圍就不採信
+    return {'op': 'native_event_state_eq',
+            'event_state_index': index,
+            'event_state_value': value}
+
+
 def structure_control_flow(insns, beats):
     """Recover proven fixed-slot ``any inactive`` diamonds into structured IR.
 
@@ -435,11 +487,25 @@ def structure_control_flow(insns, beats):
         # 以 `mov byte [eax+0x11],1` 設定,共 5 處)。**假的結構比扁平更糟**:扁平
         # 至少看得出有損,假結構會被下游當成完整條件。所以維持扁平,留給
         # 「條件是連接詞」這件事單獨處理。
-        if any(ins.mnemonic in ('je', 'jz', 'jne', 'jnz')
-               and ins.op_str == hex(target_addr)
-               and ins.address < branch.address
-               for ins in insns):
-            continue
+        #
+        # 2026-09-10:這件事現在做得到了,所以不再一律跳過。上面那段留下的工作是
+        # 「條件是連接詞」——本輪加了 `_event_state_predicate`,把前一個判準也解成
+        # 具名條件,兩者合成 `and`。**安全性維持不變**:解不出前一個判準時仍然
+        # `continue` 回到扁平輸出,絕不產生猜的結構。
+        #
+        # 兩個判準都是「不成立就跳到同一個 T」,所以落下去那一臂的成立條件是
+        # 「A 成立 **且** B 不成立」,taken 臂是 else。
+        extra = None
+        shared = [k for k, ins in enumerate(insns)
+                  if ins.mnemonic in ('je', 'jz', 'jne', 'jnz')
+                  and ins.op_str == hex(target_addr)
+                  and ins.address < branch.address]
+        if shared:
+            if len(shared) != 1:
+                continue                      # 三個以上判準的短路鏈,本輪不處理
+            extra = _event_state_predicate(insns, shared[0])
+            if extra is None or insns[shared[0]].mnemonic not in ('jne', 'jnz'):
+                continue                      # 認不出來 -> 維持扁平(有損但看得出來)
 
         prefix = [beat for beat in beats if int(beat['addr'], 16) < call.address]
         fallthrough = [beat for beat in beats
@@ -456,16 +522,29 @@ def structure_control_flow(insns, beats):
             inactive, active = fallthrough, taken
         else:
             inactive, active = taken, fallthrough
+        condition = {'op': 'any_unit_inactive', 'unit_slots': [slot]}
+        then_arm, else_arm = inactive, active
+        if extra is not None:
+            # 短路 AND:兩個判準都是「不成立就跳到同一個 T」,所以**落下去那一臂**
+            # 才是「兩者皆成立」,taken 臂是共用的 else。
+            #
+            # 極性必須由分支的助憶符決定,不能寫死:`jne T` 不跳 => eax==0 => 單位
+            # 仍有效 => `not any_unit_inactive`;`je T` 不跳 => eax!=0 => 單位不活躍
+            # => `any_unit_inactive` 本身。第一版把否定寫死,對 `je` 的情形會**反向
+            # 描述整個章節的邏輯**——這正是條件極性最容易出錯的地方,所以用資料表達
+            # 而不是靠讀者自己反推。
+            inner = {'op': 'any_unit_inactive', 'unit_slots': [slot]}
+            if branch.mnemonic in ('jne', 'jnz'):
+                inner = {'op': 'not', 'operand': inner}
+            condition = {'op': 'and', 'operands': [extra, inner]}
+            then_arm, else_arm = fallthrough, taken
         conditional = {
             'op': 'if',
             'addr': hex(branch.address),
             'target': hex(target_addr),
-            'condition': {
-                'op': 'any_unit_inactive',
-                'unit_slots': [slot],
-            },
-            'then': inactive,
-            'else': active,
+            'condition': condition,
+            'then': then_arm,
+            'else': else_arm,
         }
         return prefix + [conditional] + suffix
 
@@ -772,6 +851,36 @@ def selftest():
     print(f"    {'PASS' if ok2b else 'FAIL'}: 落下去 -> {got_plain}、共用 else -> {got_shared}")
     if not ok2b:
         fails.append(f"diamond 辨識的兩極不成立:落下去={got_plain}、共用 else={got_shared}")
+
+    print("\n(2c) 短路 AND:認得出前一個判準時要合成 `and`,認不出來必須退回扁平")
+    # 2026-09-10:(2b) 當初的結論是「共用 else 一律維持扁平」,理由是「單一判準的 if
+    # 會是不完整的條件主張」。那個理由只支持「不要產生**半個**條件」,不支持「永遠
+    # 不結構化」——本輪把前一個判準也解出來,兩者合成 `and`。安全性靠 (2c) 第二題
+    # 維持:解不出來時仍然扁平,絕不猜。
+    def _es(jmp):                       # [0x3ad5] + 0x11 == 1 的四條指令
+        return [_I(0x0e0, 'mov', 'eax, dword ptr [0x3ad5]'),
+                _I(0x0e4, 'movzx', 'eax, byte ptr [eax + 0x11]'),
+                _I(0x0e8, 'cmp', 'eax, 1'), _I(0x0ec, jmp, '0x120')]
+
+    conj = structure_control_flow(*(lambda st: (st, extract_beats(st)))(_stream(_es('jne'))))
+    node = next((b for b in conj if b['op'] == 'if'), None)
+    cond = (node or {}).get('condition', {})
+    ok2c1 = (cond.get('op') == 'and'
+             and cond['operands'][0] == {'op': 'native_event_state_eq',
+                                         'event_state_index': 17, 'event_state_value': 1}
+             # 這個 fixture 的分支是 `je`(不跳 => eax!=0 => 不活躍),所以**不加 not**。
+             # 第一版把否定寫死,這一題就是為了擋那個極性錯誤。
+             and cond['operands'][1] == {'op': 'any_unit_inactive', 'unit_slots': [6]}
+             and [x['op'] for x in node['then']] == ['dialog']
+             and [x['op'] for x in node['else']] == ['act'])
+    # 認不出前一個判準(不是事件旗標形狀)時必須維持扁平
+    bogus = _stream([_I(0x0e8, 'cmp', 'ebx, 1'), _I(0x0ec, 'jne', '0x120')])
+    ok2c2 = 'if' not in [b['op'] for b in structure_control_flow(bogus, extract_beats(bogus))]
+    ok2c = ok2c1 and ok2c2
+    print(f"    {'PASS' if ok2c else 'FAIL'}: 合成 and={ok2c1}(含極性:`je` 不得加 not)、"
+          f"認不出來退回扁平={ok2c2}")
+    if not ok2c:
+        fails.append(f"短路 AND 的兩極不成立:合成={ok2c1}、退回扁平={ok2c2}")
 
     print("\n(3) 故障注入:把某個 op 的所有位址換成解不開的,第 (1) 項必須失敗")
     keep = dict(PRIM)

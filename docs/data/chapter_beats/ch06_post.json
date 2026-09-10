@@ -8,43 +8,63 @@
    "args": []
   },
   {
-   "op": "unit_inactive",
-   "addr": "0x2332e",
-   "target": "0x34894",
-   "args": [
-    43
-   ]
-  },
-  {
-   "op": "layout_units",
-   "addr": "0x23358",
-   "target": "0x233c6",
-   "args": []
-  },
-  {
-   "op": "dialog",
-   "addr": "0x2337f",
-   "target": "0x15f84",
-   "args": [
-    "dword ptr [0x3a79]",
-    4
-   ]
-  },
-  {
-   "op": "join",
-   "addr": "0x23389",
-   "target": "0x112a5",
-   "args": [
-    12
-   ]
-  },
-  {
-   "op": "dialog",
-   "addr": "0x233b2",
-   "target": "0x15f84",
-   "args": [
-    "dword ptr [0x3a79]",
-    5
+   "op": "if",
+   "addr": "0x23338",
+   "target": "0x23393",
+   "condition": {
+    "op": "and",
+    "operands": [
+     {
+      "op": "native_event_state_eq",
+      "event_state_index": 17,
+      "event_state_value": 1
+     },
+     {
+      "op": "not",
+      "operand": {
+       "op": "any_unit_inactive",
+       "unit_slots": [
+        43
+       ]
+      }
+     }
+    ]
+   },
+   "then": [
+    {
+     "op": "layout_units",
+     "addr": "0x23358",
+     "target": "0x233c6",
+     "args": []
+    },
+    {
+     "op": "dialog",
+     "addr": "0x2337f",
+     "target": "0x15f84",
+     "args": [
+      "dword ptr [0x3a79]",
+      4
+     ]
+    },
+    {
+     "op": "join",
+     "addr": "0x23389",
+     "target": "0x112a5",
+     "args": [
+      12
+     ]
+    }
+   ],
+   "else": [
+    {
+     "op": "dialog",
+     "addr": "0x233b2",
+     "target": "0x15f84",
+     "args": [
+      "dword ptr [0x3a79]",
+      5
+     ]
+    }
    ]
   },
   {

@@ -201,10 +201,10 @@
    "chapter": 6,
    "tag": "post",
    "handler": "0x232e8",
-   "n_beats": 7,
+   "n_beats": 3,
    "ops": {
     "sync_party": 1,
-    "unit_inactive": 1,
+    "if": 1,
     "layout_units": 1,
     "dialog": 2,
     "join": 1,
