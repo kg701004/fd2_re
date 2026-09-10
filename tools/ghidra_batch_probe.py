@@ -160,6 +160,15 @@ def _selftest_queries() -> list[dict]:
     ]
 
 
+# analyzeHeadless 的 stdout/stderr 不保證是 UTF-8:Windows 端的錯誤訊息(例如「專案被鎖住」)
+# 會以系統 ANSI codepage(此機為 CP950)輸出。本工具在 `-X utf8` 下跑時 `text=True` 會嚴格用
+# UTF-8 解碼,一個 0xbd 就讓 wrapper 自己丟 UnicodeDecodeError——**真正的錯誤訊息因此完全看不到**,
+# 症狀看起來像「Ghidra 壞了」。實際踩到過一次(2026-09-11,前一次被砍掉的 run 留下 .lock)。
+# 明確指定 errors="replace":壞位元組變成 U+FFFD,訊息照樣印得出來。
+PIPE_ENCODING = "utf-8"
+PIPE_ERRORS = "replace"
+
+
 def _run_selftest_check(name: str, condition: bool, detail: str, failures: list[str]) -> None:
     status = "PASS" if condition else "FAIL"
     print(f"  [{status}] {name}" + ("" if condition else f" -- {detail}"))
@@ -182,7 +191,9 @@ def run_selftest(args: argparse.Namespace) -> int:
         )
         print("[ghidra_batch_probe --selftest] running known-ground-truth queries...")
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=args.timeout)
+            proc = subprocess.run(cmd, capture_output=True, text=True,
+                                  encoding=PIPE_ENCODING, errors=PIPE_ERRORS,
+                                  timeout=args.timeout)
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             print(f"error: could not run analyzeHeadless for selftest: {e}", file=sys.stderr)
             return 3
@@ -196,6 +207,27 @@ def run_selftest(args: argparse.Namespace) -> int:
         def get(qid: str):
             r = results.get(qid)
             return r.get("result") if r and r.get("ok") else None
+
+        # 管線解碼設定本身要有回歸檢查:這一項不碰 Ghidra,直接叫一個子行程吐出**非 UTF-8**
+        # 位元組(CP950 的「專案」二字),用與 analyzeHeadless 完全相同的 subprocess 參數去讀。
+        # 故障注入的形式:同一段位元組改用 errors="strict" 必須真的丟 UnicodeDecodeError——
+        # 若哪天它不丟了,代表這個檢查已經測不到東西,要一起改。
+        cp950 = b"\xb1M\xae\xd7 locked; see log\n"
+        probe = [sys.executable, "-c",
+                 "import sys; sys.stdout.buffer.write(%r)" % cp950]
+        decoded = subprocess.run(probe, capture_output=True, text=True,
+                                 encoding=PIPE_ENCODING, errors=PIPE_ERRORS).stdout
+        try:
+            cp950.decode(PIPE_ENCODING)          # strict:必須失敗,否則樣本沒有鑑別力
+            strict_raises = False
+        except UnicodeDecodeError:
+            strict_raises = True
+        _run_selftest_check(
+            "non-UTF-8 pipe output survives decoding (and the sample really is non-UTF-8)",
+            strict_raises and "locked; see log" in decoded,
+            f"strict_raises={strict_raises} decoded={decoded!r}",
+            failures,
+        )
 
         r = get("st_bytes")
         _run_selftest_check(
@@ -332,6 +364,8 @@ def main() -> int:
             cmd,
             capture_output=True,
             text=True,
+            encoding=PIPE_ENCODING,
+            errors=PIPE_ERRORS,
             timeout=args.timeout,
         )
     except subprocess.TimeoutExpired:
