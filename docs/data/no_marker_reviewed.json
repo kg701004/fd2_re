@@ -33944,6 +33944,14 @@
    "excerpt": "**棘輪連續收緊四次**(每次都維持既有的「實測值 +3」慣例):",
    "verdict": "benign",
    "note": "陳述的是 unknown 天花板與命名計數的棘輪變化,屬工具統計數字,可由 dump_chapter_beats --selftest 直接複驗。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-10.md",
+   "line": 117,
+   "excerpt_sha1": "f8dc196ab71ab31ce2bde56b71269f50f558052f",
+   "excerpt": "* **不刪除**。實測這 6 個檔**被 `91-worklist.md` 與 `SESSION-HANDOFF-2026-07-06.md` 引用**,",
+   "verdict": "benign",
+   "note": "陳述的是本輪對 repo 內檔案引用關係的實測(6 個 ui-traces 被兩份文件引用,故不刪除),屬工作管理與檔案維護紀錄,不是關於遊戲的事實主張。可由 grep 直接複驗。"
   }
  ]
 }

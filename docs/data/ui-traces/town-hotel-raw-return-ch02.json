@@ -1,20 +1,57 @@
 {
-  "name": "town_ch02 hotel raw route and return",
-  "source_campaign": "remake/assets/scenarios/campaign_full.json",
-  "start": "town_ch02",
-  "events": [
-    {"input": "enter", "outcome": "opt0", "node": "hotel_ch02"},
-    {"input": "enter", "selector": 0, "raw_resource": 13, "raw_callee": "0x2ffa5"},
-    {"input": "down", "selector": 1},
-    {"input": "enter", "raw_resource": 13, "raw_callee": "0x30012"},
-    {"input": "down", "selector": 2},
-    {"input": "enter", "raw_resource": 13, "raw_callee": "0x301f4"},
-    {"input": "down", "selector": 3, "secondary_raw_callee": "0x197e5"},
-    {"input": "enter", "raw_callee": "0x19953", "secondary_raw_callee": "0x197e5"},
-    {"input": "escape", "node": "town_ch02"}
-  ],
-  "limitations": [
-    "The four selector branches remain address-level; no service name or party/gold mutation is inferred.",
-    "The raw route is recorded for a future indexed/UI callee adapter and stays fail-closed."
-  ]
+ "_not_original_evidence": "**這不是關於原版遊戲的證據。** 本檔是 remake 側的 UI 追蹤腳本:`node`/`expected_nodes` 是 remake 的節點名,數值(如 gold_before/gold_after)來自 remake 的 inventory API,本檔自己的 `limitations` 欄位也明寫「Native ... semantics and original E2 visual parity remain open」。依 2026-09-02 使用者指示「remake 驗證過的資料本身就有問題,驗出來的也會有問題」,本檔的任何欄位都不得被引用為原版行為的依據。",
+ "_retention_decision_2026_09_10": "為什麼保留而不刪除(2026-09-10 判定):本檔被 `docs/knowledge-base/91-worklist.md` 與 `SESSION-HANDOFF-2026-07-06.md` 引用,刪除會製造懸空引用(本專案已被 doc83 那種懸空引用咬過一次),而 07-06 是歷史交接紀錄不應回頭改寫。也不重錄:重錄 DOSBox 原版會產生**完全不同的產物**(原版側截圖/追蹤),不是重生本檔——本檔斷言的是 remake 節點名,那個對象已不存在。因此處置是讓檔案**自己聲明它是什麼**,消除誤引用風險而保留紀錄。",
+ "name": "town_ch02 hotel raw route and return",
+ "source_campaign": "remake/assets/scenarios/campaign_full.json",
+ "_source_campaign_status": "**已失效**:此路徑在 2026-09-02 隨 `remake/` 整個目錄移除,現已不存在。保留欄位只為說明本檔當初的產生來源,不可再解析。",
+ "start": "town_ch02",
+ "events": [
+  {
+   "input": "enter",
+   "outcome": "opt0",
+   "node": "hotel_ch02"
+  },
+  {
+   "input": "enter",
+   "selector": 0,
+   "raw_resource": 13,
+   "raw_callee": "0x2ffa5"
+  },
+  {
+   "input": "down",
+   "selector": 1
+  },
+  {
+   "input": "enter",
+   "raw_resource": 13,
+   "raw_callee": "0x30012"
+  },
+  {
+   "input": "down",
+   "selector": 2
+  },
+  {
+   "input": "enter",
+   "raw_resource": 13,
+   "raw_callee": "0x301f4"
+  },
+  {
+   "input": "down",
+   "selector": 3,
+   "secondary_raw_callee": "0x197e5"
+  },
+  {
+   "input": "enter",
+   "raw_callee": "0x19953",
+   "secondary_raw_callee": "0x197e5"
+  },
+  {
+   "input": "escape",
+   "node": "town_ch02"
+  }
+ ],
+ "limitations": [
+  "The four selector branches remain address-level; no service name or party/gold mutation is inferred.",
+  "The raw route is recorded for a future indexed/UI callee adapter and stays fail-closed."
+ ]
 }
