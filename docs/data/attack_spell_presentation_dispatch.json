@@ -117,7 +117,8 @@
    "sfx": [
     {
      "site": "0x2cc05",
-     "index": null
+     "index": 1,
+     "index_source": "由 cmp ebx,1 / jne 守衛釘死(見 _sfx_index_trigger_conditions)"
     },
     {
      "site": "0x2ccdc",
@@ -182,7 +183,22 @@
    "0x2bfd9 天火術:逐槽位 byte `[esp+eax+0x30]` != 0 → idx 2、== 0 → idx 1。"
   ],
   "rejected_overgeneralisation": "一度想把 `DAT_00053fb2` 當成 10 個 handler 共用的階段變數。**實測否決**:對 10 個 handler 逐一計算 `0x53fb2` 的參照次數,只有 `0x2bd6c` 有(15 次),其餘 9 個與分派器皆為 0。各 handler 使用各自的狀態來源(全域/區域/逐目標陣列),不是同一個變數。",
-  "note": "部分呼叫走 `play_sfx_b`(0x25b45) 而非 `play_sfx_a`(0x25a96);兩者差異(優先權/聲道)本輪未查。"
+  "note": "部分呼叫走 `play_sfx_b`(0x25b45) 而非 `play_sfx_a`(0x25a96);兩者差異(優先權/聲道)本輪未查。",
+  "completed_2026_09_11": {
+   "scope": "先前只解出 4/10 個 handler(finding 原文寫「2/3」)。本輪把其餘 6 個(9 個 sfx 呼叫點)逐一反組譯完,現為 **10/10**。",
+   "conditions": {
+    "0x2b996 火炎術 @0x2ba63": "[ebx*4 + 0x53f76] == 3 -> idx 1(play_sfx_a);逐目標槽位陣列狀態",
+    "0x2bb33 烈炎術 @0x2bd62": "[ebx*4 + 0x53f92] == 5 -> idx 1(play_sfx_a);逐目標槽位陣列狀態",
+    "0x2c217 電擊術 @0x2c395": "[eax*4 + 0x54018] == 0 -> idx 1(play_sfx_a);eax 取自 [esp+0x28]",
+    "0x2c441 落雷術 @0x2c55a": "階段 eax == 3 -> idx 1(play_sfx_b)",
+    "0x2c441 落雷術 @0x2c666": "test eax,eax 後 eax == 0 才落下來 -> idx 1(play_sfx_a)",
+    "0x2cafc 神雷術 @0x2cc05": "逐目標槽位迴圈 ebx == 1(cmp ebx,1 / jne 守衛)-> idx **1**;先前記為 None 是因為抽取器看到的是 push 暫存器而非立即值,但支配條件把它釘死。與本日 0x28a07 的『變數偏移其實是 +1』同一手法。",
+    "0x2ce1a 咒　殺 @0x2cef2": "動畫影格計數 [0x5412e] == 6 -> idx 1(play_sfx_a)",
+    "0x2ce1a 咒　殺 @0x2cf08": "同一計數 == 0x24 -> idx 2(play_sfx_b);迴圈跑到 0x2c 結束"
+   },
+   "conclusion": "**10/10 全部是動畫階段或逐目標槽位狀態,沒有任何一個是戰鬥結果(命中/未中/連擊)**——2026-09-07 在 4 個 handler 上得到的結論,在全部十個上都成立,不是取樣巧合。",
+   "still_open": "play_sfx_a(0x25a96) 與 play_sfx_b(0x25b45) 的差別(音量/聲道)仍未查;各條件所讀的全域(0x53f76 / 0x53f92 / 0x54018 / 0x5412e)之欄位語意本輪未展開,只確認它們是動畫/槽位狀態而非戰鬥結果。"
+  }
  },
  "_boundary_reproved_2026_09_08": {
   "why": "重驗時一支腳本把本表算成 11 筆,查清後是**判準**的問題,不是工具也不是原始結論。以下把邊界用三條互相獨立的證據釘死,並寫下正確的判準,避免再被弱測試動搖。",
