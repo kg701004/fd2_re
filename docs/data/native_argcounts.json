@@ -165,7 +165,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "play_fullscreen_animation"
   },
   "0x24618": {
     "argc": 4,

@@ -106,11 +106,12 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "play_fullscreen_animation",
    "addr": "0x242c9",
    "target": "0x24336",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",

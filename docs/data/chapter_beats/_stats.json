@@ -590,7 +590,7 @@
     "remove_inventory_slot": 1,
     "grant_item": 1,
     "act": 2,
-    "unknown": 1,
+    "play_fullscreen_animation": 1,
     "join": 2,
     "sync_party": 1,
     "increment_chapter": 1
@@ -912,7 +912,6 @@
  ],
  "unknown_targets": {
   "0x1f882": 4,
-  "0x24336": 1,
   "0x4df4c": 1,
   "0x3776e": 1
  }
