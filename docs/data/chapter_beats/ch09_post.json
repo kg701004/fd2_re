@@ -2,7 +2,7 @@
  "handler": "0x235f9",
  "beats": [
   {
-   "op": "unknown",
+   "op": "palfade_in",
    "addr": "0x23623",
    "target": "0x1f882",
    "args": [
@@ -10,7 +10,8 @@
     "esi",
     "edi"
    ],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "clear_acted_flags",

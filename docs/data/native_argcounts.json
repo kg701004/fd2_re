@@ -119,7 +119,7 @@
       "0x3403b"
     ],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "palfade_in"
   },
   "0x2189a": {
     "argc": 3,

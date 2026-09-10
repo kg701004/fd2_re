@@ -287,7 +287,7 @@
    "handler": "0x235f9",
    "n_beats": 12,
    "ops": {
-    "unknown": 1,
+    "palfade_in": 1,
     "clear_acted_flags": 1,
     "redraw": 1,
     "palfade": 1,
@@ -554,7 +554,7 @@
    "handler": "0x23e74",
    "n_beats": 20,
    "ops": {
-    "unknown": 1,
+    "palfade_in": 1,
     "clear_acted_flags": 1,
     "redraw": 1,
     "palfade": 1,
@@ -623,7 +623,7 @@
     "palette_transition_loop": 1,
     "delay": 1,
     "memset": 2,
-    "unknown": 1,
+    "palfade_in": 1,
     "sync_party": 1,
     "increment_chapter": 1
    }
@@ -795,7 +795,7 @@
     "delay": 5,
     "palette_transition_loop": 1,
     "memset": 2,
-    "unknown": 1,
+    "palfade_in": 1,
     "sync_party": 1,
     "increment_chapter": 1,
     "restore_roster_full": 2,
@@ -911,7 +911,6 @@
   }
  ],
  "unknown_targets": {
-  "0x1f882": 4,
   "0x4df4c": 1,
   "0x3776e": 1
  }

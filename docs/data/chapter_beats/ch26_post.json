@@ -220,11 +220,12 @@
    "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "palfade_in",
    "addr": "0x2531a",
    "target": "0x1f882",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "memset",
