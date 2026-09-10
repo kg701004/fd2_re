@@ -864,7 +864,7 @@
     "unit_present": 1,
     "buffer_flicker": 9,
     "delay": 13,
-    "unknown": 3,
+    "palette_fade_in_hold_out": 3,
     "palette_delta_ramp": 2,
     "memset": 1,
     "sync_party": 1,
@@ -882,7 +882,7 @@
     "pan": 3,
     "dialog": 3,
     "camera_step_then_present": 7,
-    "unknown": 1,
+    "palette_fade_in_hold_out": 1,
     "reset_pose": 1,
     "focus_unit": 1
    }
@@ -914,7 +914,6 @@
   "0x1f882": 4,
   "0x24336": 1,
   "0x4df4c": 1,
-  "0x3776e": 1,
-  "0x361b0": 4
+  "0x3776e": 1
  }
 }

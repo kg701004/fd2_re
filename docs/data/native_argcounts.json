@@ -358,7 +358,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "palette_fade_in_hold_out"
   },
   "0x3776e": {
     "argc": 1,

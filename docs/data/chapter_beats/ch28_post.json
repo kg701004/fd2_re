@@ -235,10 +235,11 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_fade_in_hold_out",
    "addr": "0x25682",
    "target": "0x361b0",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -249,10 +250,11 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_fade_in_hold_out",
    "addr": "0x25694",
    "target": "0x361b0",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",
@@ -263,10 +265,11 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_fade_in_hold_out",
    "addr": "0x256a6",
    "target": "0x361b0",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "delay",

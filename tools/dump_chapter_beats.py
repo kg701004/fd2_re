@@ -683,13 +683,15 @@ DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 # 2026-09-08 實測值(修好位址表之後)。這是天花板不是目標:允許往下,不允許悄悄變多。
 # 2026-09-09:doc 錨定的 op 名稱上線後實測 17(101 -> 49 -> 40 -> 17),天花板隨之收緊到 20。
 # 2026-09-10:命名 0x1c2da(present_effect_on_targets)後實測 16,再命名 0x35f10
-# (zero_hp_from)後實測 15、再命名 0x25089(restore_roster_full)後實測 11;
-# 天花板同步收緊到 14——維持既有的「實測值 +3」慣例,不留下讓 unknown 悄悄爬回去的空間。
-UNKNOWN_CEILING = 14
+# 2026-09-10 一輪連續命名四個原語(present_effect_on_targets / zero_hp_from /
+# restore_roster_full / palette_fade_in_hold_out)後實測 7;天花板同步收緊到 10
+# ——維持既有的「實測值 +3」慣例,不留下讓 unknown 悄悄爬回去的空間。
+UNKNOWN_CEILING = 10
 # 這 20 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
 # 一個都沒對上」——那代表位址認錯,而錯名比留 unknown 更糟,正是本項的原始警語。
-# 2026-09-10:新增 0x1c2da / 0x35f10 / 0x25089 後,由 19 個名稱/84 beat 變成 22 個/90 beat。
-DOC_NAMED_BEATS = 90
+# 2026-09-10:新增 0x1c2da / 0x35f10 / 0x25089 / 0x361b0 後,
+# 由 19 個名稱/84 beat 變成 23 個/94 beat。
+DOC_NAMED_BEATS = 94
 # 2026-09-06 手寫進已提交 chapter_beats 的反組譯註記數(現存於 chapter_beats_notes.json)。
 NOTE_COUNT = 12
 

@@ -96,10 +96,11 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "palette_fade_in_hold_out",
    "addr": "0x33efd",
    "target": "0x361b0",
-   "args": []
+   "args": [],
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
