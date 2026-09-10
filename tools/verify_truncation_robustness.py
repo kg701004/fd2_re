@@ -59,20 +59,36 @@ RAW = ROOT / "extracted" / "raw"
 GAME = ROOT / "org_game" / "炎龍騎士團" / "FLAME2"
 
 
-def _sample(subdir: str, limit: int = 600) -> bytes:
+# 截斷掃描用的前綴上限。取樣函式回傳**完整檔案**,由 probe() 自己截到這個長度:
+# 前提檢查(完整檔必須解得開)與截斷掃描(所有前綴)是兩件不同的事,合用同一份
+# 被截短的資料會讓前者恆假 —— 見 probe() 裡 DEGENERATE 的說明。
+TRUNC_LIMIT = 600
+
+
+def _sample(subdir: str, magic: bytes | None = None) -> bytes:
+    """取 `subdir` 下第一個夠大的檔的**完整內容**。
+
+    `magic` 是這一列的前提:容器 parser 的取樣必須真的是那個容器。2026-09-10
+    以前這裡只取「排序後第一個」檔,而 `FDOTHER_000.bin` 並不是 LMI1 —— 於是
+    `decode_lmi.lmi_offsets` 這一列自 2026-09-08 登錄以來,601 個輸入**每一個**
+    都停在 `d[:4] != b"LMI1"` 這道門,一行實質邏輯都沒跑到,卻每輪都報 OK。
+    """
     d = RAW / subdir
     if not d.is_dir():
         return b""
     for fn in sorted(os.listdir(d)):
         p = d / fn
-        if p.is_file() and p.stat().st_size > 32:
-            return p.read_bytes()[:limit]
+        if not (p.is_file() and p.stat().st_size > 32):
+            continue
+        b = p.read_bytes()
+        if magic is None or b[:len(magic)] == magic:
+            return b
     return b""
 
 
-def _dat(name: str, limit: int = 600) -> bytes:
+def _dat(name: str) -> bytes:
     p = GAME / name
-    return p.read_bytes()[:limit] if p.is_file() else b""
+    return p.read_bytes() if p.is_file() else b""
 
 
 # (模組, 函式, 說明, 取樣資料, 由 body 組出呼叫引數, 合法例外)
@@ -94,9 +110,28 @@ DECODERS = [
     ("render_map", "_tile_rle", "地圖 tile RLE(native 0x4deda)",
      lambda: _sample("FDSHAP"), lambda b: ((b, 24, 24), {}), ()),
     ("unpack_dat", "parse_directory", "LLLLLL 容器目錄",
-     lambda: _dat("ANI.DAT"), lambda b: ((b,), {}), ("NotAContainer", "error")),
+     lambda: _dat("ANI.DAT"), lambda b: ((b,), {}), ("NotAContainer",)),
     ("decode_lmi", "lmi_offsets", "LMI1 目錄",
-     lambda: _sample("FDOTHER"), lambda b: ((b,), {}), ("NotLMI", "error")),
+     lambda: _sample("FDOTHER", b"LMI1"), lambda b: ((b,), {}), ("NotLMI",)),
+    # 2026-09-10 補進來的四個。它們不是有人判斷過「不需要」而略過的,是**簽名不符
+    # 合這張表的形狀**(只吃路徑、不吃 bytes)因而靜默落榜——而落榜的列不會出現在
+    # 「安全 9 / 崩潰 0」這個總數裡,所以看起來毫無破綻。
+    #
+    # 四支的守衛旁邊都有 2026-09-08 的註解,彼此互相點名為「同一輪一併修的姊妹
+    # 問題」,而那一輪只有本來就吃 bytes 的 `decode_lmi.lmi_offsets` 進了表。
+    # 另外兩支尤其容易被誤認為已涵蓋:`render_map` 與 `decode_dato` 的**像素/幀
+    # RLE** 早就在表上,但上面那層**目錄/offset 表** parser 是不同的函式。
+    ("dump_remap", "parse_lmi_bytes", "LMI1 目錄(remap 端的第二個實作)",
+     lambda: _sample("FDOTHER", b"LMI1"), lambda b: ((b,), {}), ("ValueError",)),
+    # FDICON 不在 extracted/raw/ 底下(它不是 .DAT 容器的成員,是 FLAME2/ 下的
+    # 獨立檔),所以 `_sample("FDICON")` 只會回空 bytes 而整列變成 SKIP ——
+    # 而 SKIP 不是通過。取樣改走 `_dat`。
+    ("decode_fdicon", "load_bytes", "FDICON 6-byte 檔頭 + offset 表",
+     lambda: _dat("FDICON.B24"), lambda b: ((b,), {}), ("NotFDICON",)),
+    ("render_map", "decode_tileset_bytes", "tileset 6-byte 檔頭 + tile 目錄",
+     lambda: _sample("FDSHAP"), lambda b: ((b,), {}), ("ValueError",)),
+    ("decode_dato", "frames_bytes", "DATO 幀 offset 表",
+     lambda: _sample("DATO"), lambda b: ((b,), {}), ("ValueError",)),
 ]
 
 
@@ -109,10 +144,31 @@ def _call(mod, fn, body, mk):
 
 def probe(entry, steps: int, seed: int = 0) -> dict:
     mod, fn, desc, get, mk, allowed = entry
-    body = get()
-    if not body:
+    full = get()
+    if not full:
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "SKIP",
                 "detail": "找不到取樣資料"}
+
+    # 前提:完整的、未截斷的真實檔案必須解得開。
+    #
+    # 2026-09-10 加上。沒有這一關,一列可以每輪報 OK 而其實什麼都沒測到:
+    # `decode_lmi.lmi_offsets` 的取樣不是 LMI1 檔,601 個輸入全部停在 magic 那道
+    # 門;`unpack_dat.parse_directory`/`decode_fdicon`/`render_map` 的取樣則是被
+    # 600-byte 上限砍過的頭,目錄宣稱的筆數當然超出檔案大小,於是完整取樣自己就
+    # 先被拒了。兩種情形下,「安全 N / 崩潰 0」都只是在說「這個 parser 會拒絕
+    # 不是它的東西」——那是格式閘門,不是截斷韌性。
+    #
+    # 對立假說會預測同樣的觀測值,所以那樣的檢查是裝飾。DEGENERATE 是獨立的判定,
+    # 不併進 OK,也不併進 CRASH。
+    try:
+        _call(mod, fn, full, mk)
+    except Exception as exc:                                  # noqa: BLE001
+        return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "DEGENERATE",
+                "detail": (f"完整取樣({len(full)} bytes)自己就被拒:"
+                           f"{type(exc).__name__}: {str(exc)[:60]} —— "
+                           f"截斷掃描只會反覆測到格式閘門")}
+
+    body = full[:TRUNC_LIMIT]
     rng = random.Random(seed * 7919 + len(body))
     bad: dict[str, int] = {}
     n_tested = 0
@@ -206,9 +262,13 @@ def selftest() -> int:
         sys.modules.pop("zz_trunc_probe", None)
 
     print("\n(3) 合法例外清單要生效,但不能變成萬用赦免")
-    e_ok = ("unpack_dat", "parse_directory", "", lambda: b"not a container" * 4,
+    # 2026-09-10:這一組原本餵 `b"not a container" * 4`,而那份取樣**完整時就會被
+    # 拒**——加上前提檢查之後它會被判為 DEGENERATE(本來也就該如此)。改用真的
+    # ANI.DAT:完整檔解得開(前提成立),而它的截斷前綴會丟 NotAContainer,
+    # 於是「有宣告 / 沒宣告」這組對照仍然成立,而且用的是真實資料。
+    e_ok = ("unpack_dat", "parse_directory", "", lambda: _dat("ANI.DAT"),
             lambda b: ((b,), {}), ("NotAContainer",))
-    e_bad = ("unpack_dat", "parse_directory", "", lambda: b"not a container" * 4,
+    e_bad = ("unpack_dat", "parse_directory", "", lambda: _dat("ANI.DAT"),
              lambda b: ((b,), {}), ())
     r_ok, r_bad = probe(e_ok, 20), probe(e_bad, 20)
     ok3 = r_ok["verdict"] == "OK" and r_bad["verdict"] == "CRASH"
@@ -216,6 +276,38 @@ def selftest() -> int:
           f"不宣告 -> {r_bad['verdict']}(應為 CRASH,證明清單不是無條件放行)")
     if not ok3:
         fails.append("合法例外清單沒有鑑別力")
+
+    print("\n(3b) 取樣退化必須被判為 DEGENERATE,不得混進 OK")
+    # 2026-09-10 之前真的發生過:`decode_lmi.lmi_offsets` 的取樣不是 LMI1 檔,
+    # 601 個輸入全部停在 magic 那道門,一行實質邏輯都沒跑到,卻每輪報 OK。
+    # 換成真的 LMI1 檔之後,它與 dump_remap 同時暴露出 struct.error(長度 4/5)。
+    e_degen = ("decode_lmi", "lmi_offsets", "", lambda: b"NOPE" + b"\x00" * 64,
+               lambda b: ((b,), {}), ("NotLMI",))
+    e_real = ("decode_lmi", "lmi_offsets", "", lambda: _sample("FDOTHER", b"LMI1"),
+              lambda b: ((b,), {}), ("NotLMI",))
+    r_degen, r_real = probe(e_degen, 12), probe(e_real, 12)
+    ok3b = r_degen["verdict"] == "DEGENERATE" and r_real["verdict"] == "OK"
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 非 LMI1 取樣 -> {r_degen['verdict']}"
+          f"(應為 DEGENERATE);真 LMI1 取樣 -> {r_real['verdict']}(應為 OK)")
+    if not ok3b:
+        fails.append(f"退化取樣沒有被分出來:{r_degen['verdict']}/{r_real['verdict']}")
+
+    print("\n(3c) 非平凡性:若拿掉前提檢查,上面那個退化取樣會被判成 OK")
+    # 沒有這個控制,(3b) 可能只是被別的條件湊巧判對。
+    import decode_lmi as _dl
+    blind_bad = {}
+    for c in range(69):
+        try:
+            _dl.lmi_offsets((b"NOPE" + b"\x00" * 64)[:c])
+        except _dl.NotLMI:
+            pass
+        except Exception as exc:                              # noqa: BLE001
+            blind_bad[type(exc).__name__] = 1
+    ok3c = not blind_bad          # 全部停在 magic -> 舊判準會說「安全」
+    print(f"    {'PASS' if ok3c else 'FAIL'}: 舊判準下該取樣的非預期例外={blind_bad or '無'}"
+          f"(空的才代表舊判準會誤報 OK,這一題才有意義)")
+    if not ok3c:
+        fails.append("退化取樣在舊判準下就會被抓到,(3b) 因此是平凡的")
 
     print("\n(4) 非空控制:登錄表必須真的跑到資料,不能整排 SKIP")
     rows = [probe(e, 12) for e in DECODERS]
@@ -244,7 +336,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(故障注入 + 配對控制 + 例外清單的鑑別力 + "
-          "非空控制 + 跨工具交叉驗證)。")
+          "取樣退化的成對案例與非平凡性控制 + 非空控制 + 跨工具交叉驗證)。")
     return 0
 
 
@@ -261,15 +353,23 @@ def main() -> int:
 
     rows = [probe(e, a.steps, a.seed) for e in DECODERS]
     bad = [r for r in rows if r["verdict"] == "CRASH"]
+    degen = [r for r in rows if r["verdict"] == "DEGENERATE"]
+    skipped = [r for r in rows if r["verdict"] == "SKIP"]
     for r in rows:
-        print(f"  {r['verdict']:<6} {r['tool']:<34} {r['desc']}")
+        print(f"  {r['verdict']:<10} {r['tool']:<34} {r['desc']}")
         print(f"         {r['detail']}")
     print(f"\n共 {len(rows)} 個解碼器:安全 {sum(1 for r in rows if r['verdict'] == 'OK')}"
-          f" / 崩潰 {len(bad)} / 無取樣資料 {sum(1 for r in rows if r['verdict'] == 'SKIP')}")
+          f" / 崩潰 {len(bad)} / **取樣退化 {len(degen)}** / 無取樣資料 {len(skipped)}")
     if bad:
         print("**截斷或損壞的輸入會讓這些解碼器丟出非預期例外**:",
               [r["tool"] for r in bad])
-    return 1 if bad else 0
+    if degen:
+        # 退化必須讓整體失敗:一列測不到東西卻報 OK,正是這道檢查存在的理由。
+        print("**這些列的取樣無效,測不到任何東西(不是通過)**:",
+              [r["tool"] for r in degen])
+    if skipped:
+        print("**這些列找不到取樣資料(不是通過)**:", [r["tool"] for r in skipped])
+    return 1 if (bad or degen) else 0
 
 
 if __name__ == "__main__":

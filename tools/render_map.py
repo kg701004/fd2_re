@@ -55,7 +55,14 @@ def _tile_rle(body, width, height):
 
 def decode_tileset(path, with_masks=False):
     """回傳 indexed tiles; with_masks keeps native transparent spans distinct from index 0."""
-    d = open(path, "rb").read()
+    return decode_tileset_bytes(open(path, "rb").read(), with_masks, path)
+
+
+def decode_tileset_bytes(d, with_masks=False, path="<bytes>"):
+    """`decode_tileset` 的 bytes 核心 —— 見 `decode_fdicon.load_bytes` 的說明:
+    只吃路徑的 parser 不符合截斷登錄表的形狀,因此一直被靜默排除在窮舉之外。
+    這支尤其容易誤以為已涵蓋,因為它的 `_tile_rle` 早就在表上,但**目錄那一層**
+    (下面這三個界限)不是同一個函式。"""
     # 2026-09-08:原本沒有任何長度檢查,截斷或非 tileset 的檔案會丟出原始的
     # struct.error。decode_fdicon.load 是同一個檔頭形狀、同一類問題,同一輪一併修。
     if len(d) < 6:

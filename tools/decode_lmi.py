@@ -40,6 +40,17 @@ def lmi_offsets(d):
     # 資源數去解,安靜地產出垃圾。改成真的例外。
     if d[:4] != b"LMI1":
         raise NotLMI("非 LMI1 容器")
+    # 2026-09-10:magic 通過後直接讀 offset 4 的 2 bytes,長度 4 或 5 的輸入
+    # (magic 齊全但筆數欄位不完整)會丟出原始 struct.error。下面那道守衛管的是
+    # 目錄**內容**的界限,管不到讀出 n 這個動作本身 —— 守衛加深了一層。
+    # `dump_remap.parse_lmi_bytes` 是同一份邏輯的第二個實作,同樣的洞;
+    # `unpack_dat.parse_directory` 是同一個形狀的第三例。
+    #
+    # 這三個洞在 2026-09-08 那輪都沒被抓到,因為當時登錄的取樣檔不是 LMI1,
+    # 601 個輸入全部停在上面那道 magic 就返回了。見 verify_truncation_robustness
+    # 的 DEGENERATE 判定。
+    if len(d) < 6:
+        raise NotLMI(f"只有 {len(d)} bytes,不足以讀出目錄筆數")
     n = struct.unpack_from("<H", d, 4)[0]
     if 6 + n * 4 > len(d):
         raise NotLMI(f"目錄宣稱 {n} 筆,超出檔案大小 {len(d)}")

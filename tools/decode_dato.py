@@ -127,7 +127,12 @@ def selftest():
 
 def frames(path):
     """回傳 [(w,h,pixels), ...](通常 4 幀)。"""
-    d = open(path, "rb").read()
+    return frames_bytes(open(path, "rb").read())
+
+
+def frames_bytes(d):
+    """`frames` 的 bytes 核心 —— 見 `decode_fdicon.load_bytes` 的說明。這支同樣
+    容易被誤認為已涵蓋:它的 `rle` 在截斷登錄表上,但**幀 offset 表**這一層不是。"""
     if len(d) < 16:
         return []
     offs = [struct.unpack_from("<I", d, 4 * i)[0] for i in range(4)]

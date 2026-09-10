@@ -23,9 +23,18 @@ if hasattr(sys.stdout, "reconfigure"):
 
 
 def parse_lmi(path):
-    d = open(path, "rb").read()
+    return parse_lmi_bytes(open(path, "rb").read())
+
+
+def parse_lmi_bytes(d):
+    """`parse_lmi` 的 bytes 核心 —— 見 `decode_fdicon.load_bytes` 的說明:
+    只吃路徑的 parser 不符合截斷登錄表的形狀,因此一直被靜默排除在窮舉之外。"""
     if d[:4] != b"LMI1":
         raise ValueError("非 LMI1 容器")
+    # 2026-09-10:與 `decode_lmi.lmi_offsets` 同一個洞(見那邊的說明)——
+    # magic 通過後未檢查長度就讀 offset 4 的 2 bytes,長度 4/5 會丟 struct.error。
+    if len(d) < 6:
+        raise ValueError(f"只有 {len(d)} bytes,不足以讀出目錄筆數")
     n = struct.unpack_from("<H", d, 4)[0]
     # 2026-09-08:原本沒有這個檢查,目錄宣稱的筆數超出檔案大小時會丟出原始的
     # `struct.error: unpack_from requires a buffer of at least N bytes` ——

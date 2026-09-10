@@ -37,10 +37,23 @@ def parse_directory(data: bytes):
     """回傳 sub-resource 的 (offset, length) 清單;非本格式則丟 NotAContainer。"""
     if data[:6] != MAGIC:
         raise NotAContainer("缺少 LLLLLL magic")
+    # 2026-09-10:magic 檢查放行後直接讀 offset 6 的 4 bytes,長度 6~9 的輸入
+    # (magic 齊全但目錄第一格不完整)會丟出原始的 struct.error —— 正是本專案
+    # 已知的「讀過頭」bug 類別,與 decode_lmi/dump_remap/decode_fdicon/render_map
+    # 在 2026-09-08 一併修掉的是同一個形狀。這一支當時沒被一起修,而它是四個姊妹
+    # 裡**唯一早就登錄在窮舉截斷測試裡**的那個 —— 之所以沒被抓到,是因為它的
+    # 合法例外清單寫了 `"error"`,而 `struct.error.__name__` 就是 `"error"`,
+    # 等於把要偵測的症狀本身列為合法。詳見 DECODERS 表上的說明。
+    if len(data) < 10:
+        raise NotAContainer(f"只有 {len(data)} bytes,不足以讀出目錄第一格")
     first = struct.unpack_from("<I", data, 6)[0]
     if first < 6 or first > len(data) or (first - 6) % 4 != 0:
         raise NotAContainer(f"目錄起點不合理: 0x{first:x}")
     n = (first - 6) // 4
+    # first == 6 是合法通過上面所有檢查的,但會得到 n == 0,於是下面的 `offs[-1]`
+    # 對空 list 取值丟 IndexError。截斷掃描沒抽中這個輸入,不代表它不存在。
+    if n == 0:
+        raise NotAContainer("目錄是空的(起點等於檔頭尾端)")
     offs = [struct.unpack_from("<I", data, 6 + 4 * i)[0] for i in range(n)]
     # 健全性檢查:單調遞增且都在範圍內
     for i in range(n - 1):

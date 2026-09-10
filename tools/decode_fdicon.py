@@ -26,7 +26,18 @@ class NotFDICON(Exception):
 
 
 def load(path):
-    d = open(path, "rb").read()
+    return load_bytes(open(path, "rb").read())
+
+
+def load_bytes(d):
+    """路徑版的 bytes 核心。
+
+    2026-09-10 拆出來的原因:`verify_truncation_robustness` 的登錄表只收**吃
+    bytes** 的函式,於是這個容器 parser 從來沒被窮舉截斷跑過——不是有人判斷它
+    不需要,而是它的簽名不符合登錄表的形狀,靜默地被排除在外。同一個 2026-09-08
+    輪次修好的四個姊妹 parser 裡,只有 `decode_lmi.lmi_offsets`(本來就吃 bytes)
+    進了登錄表,而那張表報「安全 9 / 崩潰 0」時看起來毫無破綻。
+    """
     # 2026-09-08:原本沒有任何長度檢查,餵進截斷或非 FDICON 的檔案會丟出原始的
     # `struct.error: unpack_from requires a buffer of at least N bytes`——
     # 呼叫端無法分辨「這不是 FDICON」與「這支工具有 bug」。dump_remap.parse_lmi
