@@ -248,11 +248,12 @@
    "addr": "0x25338"
   },
   {
-   "op": "unknown",
+   "op": "restore_roster_full",
    "addr": "0x2533e",
    "target": "0x25089",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "dialog",
@@ -333,11 +334,12 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "restore_roster_full",
    "addr": "0x25458",
    "target": "0x25089",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "scene_charcard_orchestrator",

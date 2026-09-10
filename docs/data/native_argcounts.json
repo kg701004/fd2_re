@@ -271,7 +271,7 @@
       "0x25458"
     ],
     "known_op": null,
-    "doc_op_name": null
+    "doc_op_name": "restore_roster_full"
   },
   "0x2aedb": {
     "argc": 2,

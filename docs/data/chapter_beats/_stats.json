@@ -795,9 +795,10 @@
     "delay": 5,
     "palette_transition_loop": 1,
     "memset": 2,
-    "unknown": 3,
+    "unknown": 1,
     "sync_party": 1,
     "increment_chapter": 1,
+    "restore_roster_full": 2,
     "present_effect_on_targets": 1,
     "unit_present": 1,
     "scene_charcard_orchestrator": 1
@@ -898,7 +899,7 @@
     "pan": 2,
     "camera_step_to": 1,
     "palette_transition_loop": 1,
-    "unknown": 2,
+    "restore_roster_full": 2,
     "increment_chapter": 1,
     "loadch": 1,
     "redraw": 2,
@@ -914,7 +915,6 @@
   "0x24336": 1,
   "0x4df4c": 1,
   "0x3776e": 1,
-  "0x25089": 4,
   "0x361b0": 4
  }
 }

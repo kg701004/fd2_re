@@ -66,22 +66,24 @@
    "op_name_source": "doc-anchored"
   },
   {
-   "op": "unknown",
+   "op": "restore_roster_full",
    "addr": "0x25850",
    "target": "0x25089",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "increment_chapter",
    "addr": "0x25855"
   },
   {
-   "op": "unknown",
+   "op": "restore_roster_full",
    "addr": "0x2585b",
    "target": "0x25089",
    "args": [],
-   "args_are_raw_pushes": true
+   "args_are_raw_pushes": true,
+   "op_name_source": "doc-anchored"
   },
   {
    "op": "loadch",
