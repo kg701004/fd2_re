@@ -348,3 +348,59 @@ if/then/else condition node 需要重寫 `ch22_post.json` 的 beat 結構(不只
 本輪只完成演算法層級的證據，未動 JSON 或 compiler。
 
 > 相關:doc 25(事件系統架構)· doc 24(戰役迴圈 [0x53ecc] 狀態機)· doc 19(腳本系統)· doc 09(劇情)· doc 03(單位結構/roster)· doc 56 L2502(0x24838 caller-level evidence)。工具:`tools/event_handler_dump.py`;資料:`docs/data/battle_events.json`。worklist L1511 完成度:**演算法閉合**，JSON/compiler 接線未做，留待下一輪。
+
+## 8. 逐章 JOIN 對照表(全 30 章機械抽取,2026-09-10)[驗]
+
+worklist 848 把「逐章 join_id/handler 對應表」列為入隊機制的剩餘工作,並定性為「隨 doc57
+UI-07 逐章稽核持續累積的副產品」。**它不必逐章累積**:`docs/data/chapter_beats/` 已經是全 30 章
+pre/post handler 的機械抽取結果,每個 `join` beat 都帶著呼叫端位址與 `char_id`,整張表一次就能導出。
+
+方法:對 `docs/data/chapter_beats/ch*.json` 走訪全部 beats(含 `if` 分支內),取 `op == "join"`
+(原生 `0x112a5` 建構子)。共 **28 筆**。角色名取自 `docs/data/fdtxt000_name_table.json`。
+
+| 檔案 | handler | 呼叫端 | char_id | 名稱 |
+|---|---|---|---|---|
+| ch00_pre | `0x3231b` | `0x327f7` | 0 | 索爾 |
+| ch00_pre | `0x3231b` | `0x32801` | 9 | 悠妮 |
+| ch00_pre | `0x3231b` | `0x3280b` | 4 | 亞雷斯 |
+| ch00_pre | `0x3231b` | `0x32815` | 30 | 蓋亞 |
+| ch01_post | `0x22f37` | `0x230d9` | 8 | 希莉亞 |
+| ch02_post | `0x230f2` | `0x231af` | 2 | 鐵諾 |
+| ch04_post | `0x231f9` | `0x2327d` | 10 | 瑪琳 |
+| ch05_post | `0x23296` | `0x232a2` | 13 | 貝克威 |
+| ch06_post | `0x232e8` | `0x23389` | 12 | 凱麗 |
+| ch07_post | `0x234bb` | `0x2327d` | 5 | 洛娜 |
+| ch09_post | `0x235f9` | `0x23771` | 11 | 索菲亞 |
+| ch09_post | `0x235f9` | `0x2377b` | 6 | 萊汀 |
+| ch10_post | `0x23790` | `0x237c8` | 14 | 珊 |
+| ch11_post | `0x237d5` | `0x23892` | 17 | 米亞斯多德 |
+| ch12_post | `0x2389f` | `0x237c8` | 3 | 哈瓦特 |
+| ch14_post | `0x239bd` | `0x237c8` | 15 | 塞可邦勒 |
+| ch15_post | `0x23a0a` | `0x23b4a` | 18 | 蜜蒂 |
+| ch16_post | `0x23b5f` | `0x23cc1` | 16 | 凱拉斯 |
+| ch17_post | `0x23cd5` | `0x23e1b` | 21 | 約拿 |
+| ch17_post | `0x23cd5` | `0x23e25` | 7 | 蘭斯洛特 |
+| ch19_post | `0x23e74` | `0x23ff1` | 25 | 謝多 |
+| ch19_post | `0x23e74` | `0x240be` | 28 | 達克塞 |
+| ch20_post | `0x240fa` | `0x24312` | 24 | 希爾法 |
+| ch20_post | `0x240fa` | `0x2431c` | 23 | 羅蘭 |
+| ch22_post | `0x24754` | `0x247f4` | 22 | 卡里斯 |
+| ch22_post | `0x24754` | `0x2492b` | 19 | 羅德曼 |
+| ch24_post | `0x24df2` | `0x24e6c` | 26 | 聖寇拉斯 |
+| ch24_post | `0x24df2` | `0x237c8` | 29 | 亞齊梅吉 |
+
+**兩個獨立對照(不是自我比對)**:
+
+* `tools/fd2_chapter_sweep.py` 的 selftest 第 (1) 題早就釘住 `CH17_POST_JOINS = [21, 7]` 與
+  `CH20_POST_JOINS = [24, 23]`,理由是當年為了確定索引慣例做過兩次反組譯核對——本表這兩列逐字相符。
+* 序章的 `0/9/4/30` 與 doc47 §7 記載的「序章尾 `0/9/4/0x1e` 四連呼」相同。
+
+**一個容易誤讀的地方**:`0x2327d` 出現在 ch04/ch07,`0x237c8` 出現在 ch10/ch12/ch14/ch24——
+**同一個呼叫端位址、不同的 char_id**。那不是矛盾:這些位址是共用尾段(`call 0x112a5`),各章自己的
+`push <id>` 在跳進共用尾段之前,例如 `0x235b5 push 5; jmp 0x2327d`。所以識別一筆 JOIN 要用
+(handler, char_id),不能只用呼叫端位址。
+
+**範圍誠實**:本表只涵蓋走 `0x112a5` 的 JOIN。ch03/ch08/ch13/ch18/ch21/ch23/ch25-29 沒有 `join`
+beat,代表那些章的 pre/post handler 裡沒有這個呼叫,不代表遊戲中那幾章沒有人入隊(例如靠對話
+分支或別的機制的情況,本輪未查)。
+
