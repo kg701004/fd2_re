@@ -12,11 +12,18 @@ linear ↔ file:**必須逐 object 換算**(2026-09-08 修正)。
   object 2(base 0x50000)偏 0x1000、object 3(base 0x60000)偏 0xD000 ——
   後者甚至讀到檔案結尾之外。**只影響資料段**;程式碼段(obj1)新舊公式等價。
 
+fixup 表同樣**必須走完全部 object**(2026-09-11 修正)。`build_fixups` 原本寫死
+只走 obj1 的頁,所以 `refs` 對任何**存放在資料段**的參照一律回**空結果** ——
+本專案的間接跳表(`0x51b91`/`0x51d01`)全在 obj2,實測 412 筆 fixup 完全看不見,
+「這四個函式沒有呼叫端」這個錯誤結論差點因此成立。空結果與「確實沒有」在輸出上
+一模一樣,所以判斷絕對不能只看 `refs` 印不印得出東西:用一個**已知存在**的參照當
+對照組(`refs 0x35854` 必須報 `0x51c79`),這一條現在釘在 selftest 第 (6) 題。
+
 用法:
   python3 disasm_le.py <FD2.EXE> dis <linear_hex> [count]      反組譯 count 條指令
   python3 disasm_le.py <FD2.EXE> range <start_hex> <end_hex>   反組譯 linear 範圍
   python3 disasm_le.py <FD2.EXE> calls <target_hex>            找對 target 的相對 call/jmp 來源(linear)
-  python3 disasm_le.py <FD2.EXE> refs <abs_hex>                找 code 中被 fixup 成 abs 的位置(資料 xref)
+  python3 disasm_le.py <FD2.EXE> refs <abs_hex>                找**全部 object** 中被 fixup 成 abs 的位置(xref)
   python3 disasm_le.py <FD2.EXE> data <linear_hex> <length>   印出同一 LE object 的 raw bytes/ASCII
 """
 import hashlib
@@ -105,17 +112,48 @@ def dump_data(d, meta, start, length):
         print(f"{start + i:#08x}  {hexes:<47}  |{text}|")
 
 
-def build_fixups(d, meta):
-    """回傳 {code_linear: target_abs} —— 每個被 patch 的位置→其絕對 target。"""
+def page_owner(meta, pg):
+    """0-based 全域頁號 -> (物件, 該頁的 linear 起點);不屬於任何物件則回 (None, None)。
+
+    LE 的 fixup page table 是**整個映像**的頁號索引(1-based),不是每個物件各自從 0 起算。
+    物件 N 佔 `first .. first+pages-1` 這段全域頁號。
+    """
+    for obj in meta['objs']:
+        lo = obj['first'] - 1
+        if lo <= pg < lo + obj['pages']:
+            return obj, obj['base'] + (pg - lo) * meta['page_size']
+    return None, None
+
+
+def total_pages(meta):
+    return sum(o['pages'] for o in meta['objs'])
+
+
+def build_fixups(d, meta, objects=None):
+    """回傳 {src_linear: target_abs} —— 每個被 patch 的位置→其絕對 target。
+
+    `objects` 為 None 時走**全部物件**;給一個 1-based 物件編號集合則只走那些。
+
+    2026-09-11 修正:這裡原本寫死 `npages = meta['objs'][0]['pages']`、
+    `page_lin = CODE_BASE + pg * page_size`,也就是**只走 object 1(程式碼段)**。
+    後果不是報錯,是 `refs` 對任何存放在資料段的參照回傳**空結果**——本專案的
+    間接跳表(`0x51b91`/`0x51d01`)全在 obj2,實測曾讓「這四個函式沒有呼叫端」
+    這個結論差點成立。空結果與「確實沒有」在輸出上長得一模一樣。
+    對照組見 selftest 第 (3) 題:`0x35854` 已知登記在 `0x51c79`,必須掃得到。
+    """
     page_size = meta['page_size']
     fixpage = meta['fixpage']; fixrec = meta['fixrec']
-    npages = meta['objs'][0]['pages']
+    npages = total_pages(meta)
     fx = {}
     for pg in range(npages):
+        obj, page_lin = page_owner(meta, pg)
+        if obj is None:
+            continue
+        if objects is not None and meta['objs'].index(obj) + 1 not in objects:
+            continue
         off0 = struct.unpack_from('<I', d, fixpage + pg * 4)[0]
         off1 = struct.unpack_from('<I', d, fixpage + (pg + 1) * 4)[0]
         p = fixrec + off0; end = fixrec + off1
-        page_lin = CODE_BASE + pg * page_size
         while p < end:
             src_type = d[p]; flags = d[p + 1]; p += 2
             srcoff = struct.unpack_from('<h', d, p)[0]; p += 2
@@ -200,13 +238,46 @@ def selftest():
     if not ok4:
         fails.append("各 object 換算基準相同 —— 逐 object 換算沒有生效")
 
+    print("\n(5) fixup 表必須走完**全部** object,不能只走 object 1")
+    # 這題是為一個會安靜回空結果的缺陷設的:`refs` 建在 build_fixups 上,而它
+    # 原本寫死只走 obj1 的頁,所以任何**存放在資料段**的參照都掃不到。空結果
+    # 與「確實沒有」在輸出上一模一樣,實測差點讓「這四個函式沒有呼叫端」成立。
+    fx_all = build_fixups(d, meta)
+    fx_o1 = build_fixups(d, meta, objects={1})
+    pages_seen = total_pages(meta)
+    ok5a = pages_seen == sum(o["pages"] for o in meta["objs"]) and len(fx_all) > len(fx_o1)
+    print(f"    {'PASS' if ok5a else 'FAIL'}: 全域頁數 {pages_seen},"
+          f"fixup 全物件 {len(fx_all)} > 只 obj1 {len(fx_o1)}")
+    if not ok5a:
+        fails.append(f"fixup 沒有走完全部 object:{len(fx_all)} vs {len(fx_o1)}")
+
+    print("\n(6) 已知真值 + 配對的負向控制:0x35854 必須掃得到、且該證據只在 obj2")
+    # 0x35854 是事件 58 的 handler,已知登記在 obj2 的跳表 0x51c79。
+    hits_all = sorted(l for l, t in fx_all.items() if t == 0x35854)
+    hits_o1 = sorted(l for l, t in fx_o1.items() if t == 0x35854)
+    ok6 = hits_all == [0x51C79] and hits_o1 == []
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 全物件 -> {[hex(h) for h in hits_all]}"
+          f"(應為 ['0x51c79']);限定 obj1 -> {[hex(h) for h in hits_o1]}(應為空)")
+    if not ok6:
+        fails.append(f"已知真值對照失敗:全物件 {hits_all},obj1 {hits_o1}")
+
+    print("\n(7) 頁號歸屬必須逐頁落在正確的 object,且沒有頁被漏掉")
+    owned = [page_owner(meta, pg)[0] for pg in range(pages_seen)]
+    ok7 = (all(o is not None for o in owned)
+           and page_owner(meta, pages_seen)[0] is None
+           and page_owner(meta, meta["objs"][1]["first"] - 1)[1] == meta["objs"][1]["base"])
+    print(f"    {'PASS' if ok7 else 'FAIL'}: {pages_seen} 頁全部有歸屬、"
+          f"超出範圍回 None、obj2 首頁 linear = {hex(meta['objs'][1]['base'])}")
+    if not ok7:
+        fails.append("頁號→object 歸屬不正確")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(資料段錨點回歸 + 跨工具逐位址對照 + 越界拒絕 + "
-          "非恆真控制)。")
+          "非恆真控制 + fixup 全物件涵蓋 + 已知真值配對負向控制 + 頁號歸屬)。")
     return 0
 
 
