@@ -1,0 +1,207 @@
+{
+ "_source": "fd2_re — 全域事件跳表 0x51b91 的 58..89 槽位逐格判定。",
+ "_generator": "tools/verify_event_dispatch_table.py",
+ "_method": "純位元組序頭樣式(push imm32 + call __STK / + jmp 共用尾段),不做線性反組譯。",
+ "_table_base": "0x51b91",
+ "_code_base": "0x10000",
+ "_note": "doc25 §10 的位址欄是未重定位值,一律比實際入口低 0x356;先前的「14 個 table artifact」全部是該偏移造成的假象。",
+ "_monotonic": true,
+ "_verdict_counts": {
+  "CLEAN_PROLOGUE": 28,
+  "TAIL_MERGED_STUB": 4
+ },
+ "slots": {
+  "58": {
+   "entry": "0x35854",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x44 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x354fe"
+  },
+  "59": {
+   "entry": "0x35997",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35641"
+  },
+  "60": {
+   "entry": "0x359cb",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35675"
+  },
+  "61": {
+   "entry": "0x35a0d",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x30 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x356b7"
+  },
+  "62": {
+   "entry": "0x35bee",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35898"
+  },
+  "63": {
+   "entry": "0x35c1d",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x358c7"
+  },
+  "64": {
+   "entry": "0x35c40",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x358ea"
+  },
+  "65": {
+   "entry": "0x35cf1",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x3599b"
+  },
+  "66": {
+   "entry": "0x35d1e",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x359c8"
+  },
+  "67": {
+   "entry": "0x35d85",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35a2f"
+  },
+  "68": {
+   "entry": "0x35d9e",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35a48"
+  },
+  "69": {
+   "entry": "0x35e0e",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35ab8"
+  },
+  "70": {
+   "entry": "0x35e5b",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35b05"
+  },
+  "71": {
+   "entry": "0x35ec1",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35b6b"
+  },
+  "72": {
+   "entry": "0x35f48",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35bf2"
+  },
+  "73": {
+   "entry": "0x35f79",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35c23"
+  },
+  "74": {
+   "entry": "0x35f88",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35c32"
+  },
+  "75": {
+   "entry": "0x35fcf",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35c79"
+  },
+  "76": {
+   "entry": "0x360b6",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x30 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35d60"
+  },
+  "77": {
+   "entry": "0x36214",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35ebe"
+  },
+  "78": {
+   "entry": "0x36228",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35ed2"
+  },
+  "79": {
+   "entry": "0x3623c",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35ee6"
+  },
+  "80": {
+   "entry": "0x362b0",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35f5a"
+  },
+  "81": {
+   "entry": "0x362c5",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35f6f"
+  },
+  "82": {
+   "entry": "0x362e8",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x35f92"
+  },
+  "83": {
+   "entry": "0x363de",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x28 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x36088"
+  },
+  "84": {
+   "entry": "0x36416",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x10 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x360c0"
+  },
+  "85": {
+   "entry": "0x3642e",
+   "verdict": "CLEAN_PROLOGUE",
+   "detail": "push 0x4 ; call __STK(0x3702f)",
+   "doc25_recorded": "0x360d8"
+  },
+  "86": {
+   "entry": "0x36439",
+   "verdict": "TAIL_MERGED_STUB",
+   "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)",
+   "doc25_recorded": "0x360e3"
+  },
+  "87": {
+   "entry": "0x36440",
+   "verdict": "TAIL_MERGED_STUB",
+   "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)",
+   "doc25_recorded": "0x360ea"
+  },
+  "88": {
+   "entry": "0x36447",
+   "verdict": "TAIL_MERGED_STUB",
+   "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)",
+   "doc25_recorded": "0x360f1"
+  },
+  "89": {
+   "entry": "0x3644e",
+   "verdict": "TAIL_MERGED_STUB",
+   "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)",
+   "doc25_recorded": "0x360f8"
+  }
+ }
+}

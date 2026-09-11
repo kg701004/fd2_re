@@ -79,15 +79,25 @@ def load_code(d, meta):
     return d[start:start + o['vsize']], o['base']
 
 
-def dump_data(d, meta, start, length):
-    """Print a bounded, reproducible LE-linear hexdump for data/table RE."""
+def object_bytes(d, meta, start, length):
+    """LE-linear 位址範圍 -> raw bytes,**逐 object 換算**(不可套 obj1 的公式)。
+
+    2026-09-11 從 `dump_data` 抽出:`derive_ail_entry_points.py` 與
+    `verify_event_dispatch_table.py` 都要讀 obj2 的資料表,先前各自複製了同一段
+    位移計算。抽出來之後只有這一份,而且受本檔 --selftest 的資料段錨點回歸保護。
+    """
     if length < 0 or length > 0x10000:
         raise ValueError("length must be in 0..0x10000")
     obj = next((o for o in meta['objs'] if o['base'] <= start and start + length <= o['base'] + o['vsize']), None)
     if obj is None:
         raise ValueError("range outside one LE object")
     foff = meta['data_off'] + (obj['first'] - 1) * meta['page_size'] + (start - obj['base'])
-    raw = d[foff:foff + length]
+    return d[foff:foff + length]
+
+
+def dump_data(d, meta, start, length):
+    """Print a bounded, reproducible LE-linear hexdump for data/table RE."""
+    raw = object_bytes(d, meta, start, length)
     for i in range(0, len(raw), 16):
         row = raw[i:i + 16]
         hexes = " ".join(f"{b:02x}" for b in row)

@@ -145,6 +145,9 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # AIL_DEBUG 追蹤字串(是資料,不是推論);見 doc36。
     ("docs/data/ail_entry_points.json", "derive_ail_entry_points.py",
      ["--exe", EXE, "--json", "{out}"], "bytes"),
+    # 2026-09-11:事件跳表 58..89 的逐格入口判定,推翻 doc25 的「14 個 table artifact」。
+    ("docs/data/event_dispatch_table_58_89.json", "verify_event_dispatch_table.py",
+     ["--exe", EXE, "--json", "{out}"], "bytes"),
     ("docs/data/chapter_beats", "dump_chapter_beats.py", [EXE, "all", "{out}"], "dir"),
 ]
 

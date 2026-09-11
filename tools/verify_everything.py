@@ -202,7 +202,7 @@ def axis_wsl(timeout: int) -> dict:
              "verify_docs_match_cli", "verify_selftest_discrimination",
              # 2026-09-11:純位元組/fixup 工具,刻意不相依 capstone —— 放進本軸
              # 正是為了讓「哪天又在模組層要求反組譯器」立刻在這裡失敗。
-             "derive_ail_entry_points"]
+             "derive_ail_entry_points", "verify_event_dispatch_table"]
     body = ["#!/bin/bash", "cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re || exit 1",
             "fail=0", "for t in " + " ".join(tools) + "; do",
             '  python3 "tools/$t.py" --selftest >/dev/null 2>&1 || { echo "FAIL $t"; fail=$((fail+1)); }',
