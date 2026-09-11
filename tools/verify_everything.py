@@ -40,6 +40,13 @@ The axes, and what each exists to catch
                rather than crash. Four decoders had the same unguarded-index
                bug; 36 real sub-resources hit one of them.
   worklist     `worklist_status.py --selftest` -- the worklist parser.
+  citations    `verify_address_citations.py` -- the only axis that asks whether a
+               conclusion already proven WRONG is still being argued from. Every
+               other axis re-derives what the docs claim; this one re-derives what
+               they should have stopped claiming. `known_address_errata.json` had
+               existed since 2026-08-20 and no axis read it, so 263 uncorrected
+               citations of 26 disproven addresses sat in the knowledge base with
+               nothing able to notice. Both-directions ratchet, like `hygiene`.
   tests        every `tools/test_*.py`.
   wsl          the same offline selftests under the OTHER interpreter. This axis
                alone found the PIL import that made two tools unusable in the
@@ -226,6 +233,7 @@ AXES = {
     "hygiene": lambda r, t: axis_hygiene(t),
     "truncation": lambda r, t: axis_truncation(t),
     "worklist": lambda r, t: axis_simple("worklist", ["tools/worklist_status.py", "--selftest"], t),
+    "citations": lambda r, t: axis_simple("citations", ["tools/verify_address_citations.py"], t),
     "tests": lambda r, t: axis_tests(t),
     "wsl": lambda r, t: axis_wsl(t),
 }
@@ -252,7 +260,7 @@ def selftest() -> int:
     fails = []
     print("(1) 每個軸都必須真的被呼叫到,且名稱與 AXES 表一致")
     ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "findings",
-                        "hygiene", "truncation", "worklist", "tests", "wsl"}
+                        "hygiene", "truncation", "worklist", "citations", "tests", "wsl"}
     print(f"    {'PASS' if ok1 else 'FAIL'}: {sorted(AXES)}")
     if not ok1:
         fails.append("AXES 表與預期不符")

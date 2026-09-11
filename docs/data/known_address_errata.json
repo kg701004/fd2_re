@@ -3,7 +3,8 @@
     "purpose": "已知的位址勘誤史——曾經被誤植、後來訂正的位址對照表。這是本專案最容易被誤用的高風險資訊:引用任何位址前,先在這裡查一下是不是踩到已知的錯誤位址。",
     "schema_version": 1,
     "created": "2026-08-20",
-    "how_to_query": "python tools/query_verified_address.py <地址> 會同時檢查本檔的 wrong_address/correct_address 欄位並提示。"
+    "how_to_query": "python tools/query_verified_address.py <地址> 會同時檢查本檔的 wrong_address/correct_address 欄位並提示。",
+    "citation_check_note": "每筆 errata 的 citation_check 由 tools/verify_address_citations.py 消費:mode/flag/edges 說明這筆勘誤在文件裡要掃什麼,baseline 是目前的 ARGUED 存量(雙向棘輪)。新增 errata 條目時必須一併寫 citation_check,否則該工具會失敗。"
   },
   "errata": [
     {
@@ -21,7 +22,25 @@
       ],
       "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
       "correction_section": "§6.3",
-      "still_pending": "13/37/56 三份文件的既有引用因數量多、風險高,僅補了簡短訂正註記,未逐一改寫每個引用點——讀者遇到字面 0x2a6bd 引用時仍需自行換算為 0x2ff01。"
+      "still_pending": "13/37/56 三份文件的既有引用因數量多、風險高,僅補了簡短訂正註記,未逐一改寫每個引用點——讀者遇到字面 0x2a6bd 引用時仍需自行換算為 0x2ff01。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2a6bd"
+        ],
+        "note": "still_pending 明講 doc13/37/56 的字面引用未逐一改寫。",
+        "baseline": {
+          "13-battle-menu-system.md": 4,
+          "27-combat-rules-and-validation-checklist.md": 10,
+          "36-sfx-audio-data.md": 4,
+          "37-spell-effect-figani.md": 7,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 13,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 13,
+          "SESSION-HANDOFF-2026-07-06.md": 14
+        }
+      }
     },
     {
       "wrong_address": "0x276ec",
@@ -38,7 +57,25 @@
       ],
       "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
       "correction_section": "§6.3",
-      "still_pending": "功能性結論(derived-strike 倍率 15/20/12/18)本身不受影響仍成立,只有位址標籤需要在引用時換算。"
+      "still_pending": "功能性結論(derived-strike 倍率 15/20/12/18)本身不受影響仍成立,只有位址標籤需要在引用時換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x276ec"
+        ],
+        "note": "功能性結論(derived-strike 倍率)不受影響,錯的只有位址標籤本身。",
+        "baseline": {
+          "13-battle-menu-system.md": 6,
+          "27-combat-rules-and-validation-checklist.md": 9,
+          "37-spell-effect-figani.md": 3,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 2,
+          "98-tooling-infrastructure.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
     },
     {
       "wrong_address": "0x4dbfc",
@@ -54,7 +91,23 @@
       ],
       "correction_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
       "correction_section": "續三十/續三十一",
-      "still_pending": "已修正完成(commit 4cbe5949、2b6d0722)。純文件/資料層修正,函式簽名/邏輯/行為完全未動,go build/test 全綠。注意:0x4dbfc 這個數字另外也在 SESSION-HANDOFF 2026-07-28 出現過,語境是『FDFIELD byte+3 不是 live renderer state,0x4dbfc 先全填 0xff』——那筆記錄描述的行為其實就是 0x4df4c 的行為,同一錯誤標籤的更早期出現。"
+      "still_pending": "已修正完成(commit 4cbe5949、2b6d0722)。純文件/資料層修正,函式簽名/邏輯/行為完全未動,go build/test 全綠。注意:0x4dbfc 這個數字另外也在 SESSION-HANDOFF 2026-07-28 出現過,語境是『FDFIELD byte+3 不是 live renderer state,0x4dbfc 先全填 0xff』——那筆記錄描述的行為其實就是 0x4df4c 的行為,同一錯誤標籤的更早期出現。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4dbfc"
+        ],
+        "note": "remake 側已修正但已隨 remake/ 一併移除;知識庫裡的字面引用仍在。",
+        "baseline": {
+          "05-image-compression-format.md": 1,
+          "11-enemy-ai.md": 2,
+          "35-battle-animation-rendering.md": 1,
+          "56-fd2-remake-sdd.md": 9,
+          "58-remake-live-verification-log.md": 4,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 8
+        }
+      }
     },
     {
       "wrong_address": "0x3453E",
@@ -70,7 +123,27 @@
       ],
       "correction_doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
       "correction_section": "§7.1.1",
-      "still_pending": "doc26 §1 表格與 ch16_post.json/候選檔內 unit_inactive beat 的 target 欄位需要一次獨立審計訂正(已用 spawn_task 另開追蹤,尚未執行)。"
+      "still_pending": "doc26 §1 表格與 ch16_post.json/候選檔內 unit_inactive beat 的 target 欄位需要一次獨立審計訂正(已用 spawn_task 另開追蹤,尚未執行)。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3453e"
+        ],
+        "note": "still_pending:doc26 §1 表格與 unit_inactive beat 的 target 欄位仍待訂正。",
+        "baseline": {
+          "25-battle-event-system.md": 3,
+          "26-per-chapter-event-handlers.md": 15,
+          "27-combat-rules-and-validation-checklist.md": 1,
+          "28-chapter-objectives-and-recruits.md": 3,
+          "40-speaker-portrait-mapping.md": 6,
+          "48-dosbox-x-debugger-build.md": 1,
+          "50-cutscene-script-system-design.md": 2,
+          "56-fd2-remake-sdd.md": 3,
+          "91-worklist.md": 6,
+          "98-tooling-infrastructure.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
     },
     {
       "wrong_address": "0x773AF",
@@ -84,7 +157,18 @@
       ],
       "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
       "correction_section": "§3.6",
-      "still_pending": "已修正完成,tools/dump_exe_tables.py ANCHORS['crit'] 已使用正確值 0x774BC。"
+      "still_pending": "已修正完成,tools/dump_exe_tables.py ANCHORS['crit'] 已使用正確值 0x774BC。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x773af"
+        ],
+        "note": "crit 表 file offset 抄錯;工具已改用 0x774BC,文件引用另計。",
+        "baseline": {
+          "03-exe-and-data-structures.md": 1,
+          "32-item-combat-stats-re.md": 1
+        }
+      }
     },
     {
       "wrong_address": "0x55445 (硬編碼於 dump_native_movement_cost_rows,未經 ANCHORS 間接引用)",
@@ -99,7 +183,17 @@
       ],
       "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
       "correction_section": "第 122-131 行(第 6 輪)",
-      "still_pending": "已修正完成(commit 4d5638fb),test_dump_exe_tables.py 的 test_native_movement_cost_rows_have_exact_29_by_20_boundary 同步更新為新版 0x7A659,4/4 單元測試通過。"
+      "still_pending": "已修正完成(commit 4d5638fb),test_dump_exe_tables.py 的 test_native_movement_cost_rows_have_exact_29_by_20_boundary 同步更新為新版 0x7A659,4/4 單元測試通過。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x55445"
+        ],
+        "note": "這是舊版(357074B,已遺失)EXE 的 offset。對現行基準 EXE 無效,即使在歷史語境下被引用也應同行標明,否則會被當成可用值。",
+        "baseline": {
+          "03-exe-and-data-structures.md": 1
+        }
+      }
     },
     {
       "wrong_address": "0x55689 (硬編碼於 dump_class_equip_types,未經 ANCHORS 間接引用)",
@@ -113,7 +207,18 @@
       ],
       "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
       "correction_section": "第 122-131 行(第 6 輪)",
-      "still_pending": "已修正完成(commit 4d5638fb)。"
+      "still_pending": "已修正完成(commit 4d5638fb)。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x55689"
+        ],
+        "note": "同 #5,舊版 EXE offset。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
     },
     {
       "wrong_address": "0x565D8 / 0x53E00",
@@ -127,7 +232,22 @@
       ],
       "correction_doc": "tools/export_acting_resources.py",
       "correction_section": "module header comment(2026-08-20 rebased 說明)",
-      "still_pending": "已修正完成。舊常數保留在檔案註解中僅供歷史對照,不可用於當前基準 EXE。"
+      "still_pending": "已修正完成。舊常數保留在檔案註解中僅供歷史對照,不可用於當前基準 EXE。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x565d8",
+          "0x53e00"
+        ],
+        "note": "同 #5,舊版 EXE offset。",
+        "baseline": {
+          "47-intro-handler-full-transcript.md": 2,
+          "48-dosbox-x-debugger-build.md": 2,
+          "50-cutscene-script-system-design.md": 6,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
     },
     {
       "wrong_address": "0x027fc9 / [0x5411f] / [0x54117]",
@@ -141,7 +261,24 @@
       ],
       "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
       "correction_section": "第 12 輪",
-      "still_pending": "已修正完成(commit ba5fc4b2)。round10/11 舊位址段落刻意保留在 battle_sfx_map.json 供歷史對照,一律以 round12_verified_chain 為準。remake atkAnim 現有 SFX hook 點(#48/64/88)尚未接上本輪驗證過的真實資源家族(#82-90)。"
+      "still_pending": "已修正完成(commit ba5fc4b2)。round10/11 舊位址段落刻意保留在 battle_sfx_map.json 供歷史對照,一律以 round12_verified_chain 為準。remake atkAnim 現有 SFX hook 點(#48/64/88)尚未接上本輪驗證過的真實資源家族(#82-90)。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x27fc9",
+          "0x5411f",
+          "0x54117"
+        ],
+        "note": "errata 檔內同時出現 0x027fc9 與 0x27fc9 兩種寫法,掃描前一律正規化。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 3,
+          "36-sfx-audio-data.md": 26,
+          "37-spell-effect-figani.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "91-worklist.md": 7,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
     },
     {
       "wrong_address": "0x027fc9(僅限『native command ID32-35 複合 handler』這條語意鏈,與上一筆 0x27fc9→0x2ff01『總派送函式』勘誤是不同的兩件事,不可混用)",
@@ -156,7 +293,13 @@
       ],
       "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
       "correction_section": "§6.5",
-      "still_pending": "doc56/SESSION-HANDOFF-2026-07-06.md 裡舊的『0x27fc9』字面引用尚未逐一改寫為0x2d80d(功能性結論不受影響,已由本輪§6.5獨立重新驗證);remake battle package 尚未接上ID32-35四分支的完整演出邏輯。"
+      "still_pending": "doc56/SESSION-HANDOFF-2026-07-06.md 裡舊的『0x27fc9』字面引用尚未逐一改寫為0x2d80d(功能性結論不受影響,已由本輪§6.5獨立重新驗證);remake battle package 尚未接上ID32-35四分支的完整演出邏輯。",
+      "citation_check": {
+        "mode": "none",
+        "reason": "字面位址與 #8 相同(0x27fc9),已由 #8 掃描。本筆記錄的是同一個錯誤位址上的**第二條語意鏈**(ID32-35 複合 handler),不是另一個要掃的字面位址;分開掃會讓同一行被計兩次。",
+        "note": "correct_address(0x2d80d)與 #8 的(0x2ff01)不同,這是刻意保留的兩筆。",
+        "baseline": {}
+      }
     },
     {
       "wrong_address": "N/A(系統性規律,非單一位址)",
@@ -172,7 +315,13 @@
       ],
       "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
       "correction_section": "§B(2026-08-14/08-19/08-20 三輪批注)",
-      "still_pending": "已成為本專案的標準換算捷徑,新增工具引用資料表 offset 時應直接查 verified_addresses.json 的 file_offset 條目,不要再手動套公式重算。"
+      "still_pending": "已成為本專案的標準換算捷徑,新增工具引用資料表 offset 時應直接查 verified_addresses.json 的 file_offset 條目,不要再手動套公式重算。",
+      "citation_check": {
+        "mode": "none",
+        "reason": "wrong_address 欄位是 'N/A(系統性規律,非單一位址)' —— 新舊版 +0x25214 位移規則沒有對應任何單一字面位址,無法以字面掃描表達。",
+        "note": "這筆的風險由 #5/#6/#7 三筆具體的舊版 offset 承接掃描。",
+        "baseline": {}
+      }
     },
     {
       "wrong_address": "0x2545d call 0x2bce5 / 0x25970 call 0x2bce5(即『戰後跳表 idx26/idx29 handler 呼叫結局montage renderer 0x2bce5』這條呼叫邊界 claim,注意:0x2545d/0x25970 本身作為 handler 內位址、以及 0x2bce5 本身作為 ending renderer 的存在,兩者都沒有錯,錯的只是『前者直接 CALL 後者』這條邊)",
@@ -190,7 +339,32 @@
       ],
       "correction_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
       "correction_section": "§9.12",
-      "still_pending": "重要邊界(不要誤讀成『0x2bce5 不存在』):0x2bce5 本身作為結局 montage renderer 的既有反組譯(FDOTHER #0x36 frame decoder、palette timing 等,91-worklist.md #1226/#1354/#1570)未被本輪推翻,只有『0x2545d/0x25970 直接呼叫它』這條特定邊被推翻。0x2bce5 實際如何被觸發(若真的會被觸發)仍未知——doc35 §9.11.8 已記錄一個未驗證的間接呼叫/跳轉表線索(`CALL dword ptr [EBP*4+0x524c6]`),留給下一輪。doc58 續六十二(2026-08-24)真正打贏 ch27 後深入結局 montage 時,對 0x2bce5/0x2c548 下的斷點也從未命中——這與本勘誤完全吻合(不是新矛盾),但代表續六十二實際觀察到的『逐角色回顧卡』內容(萊汀/悠妮兩張卡)很可能走的是另一條路徑,值得下一輪核對是否與 §9.11 找到的『角色卡 renderer』(0x31c49,經 0x31529 的另一分支)或 table_post[30] 有關——本輪未驗證,不宣稱已定案。91-worklist.md L1179/L1898、doc39 L253、doc50 L655、SESSION-HANDOFF L221/443/452 的字面『0x2bce5』引用已在原地加註訂正(未刪除原文),doc58 續三十二~續六十四的原始記錄未改寫,已在文末追加續六十五訂正說明。**2026-08-27 已解答此處留下的間接呼叫/跳轉表線索(doc35 §9.22/§9.23,2026-08-30 覆核確認無更新矛盾)**:`CALL dword ptr [EBP*4+0x524c6]`/`CALL dword ptr [EAX*4+0x524c6]` 正是答案本身——這是既有的 `0x524c6` phase-table carousel 主控引擎(`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`,doc35 §9.13 定位)。live `BPPM` 記憶體寫入斷點在真正的結局 montage 播放期間(CG1 懸浮小島、角色回顧卡背景圖)直接命中「正在寫像素」的迴圈,回溯出呼叫鏈是 `FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266` → 小 wrapper `FUN_0002eb9f`(native `0x2eb9f-0x2ebe0`,本輪首次完整反編譯) → `FUN_0004e8d3`(CG1,LUT 重映射淡入淡出)或其姊妹函式 `FUN_0004e98d`(角色卡背景圖,RLE 解碼+三模式重著色,本輪首次發現)。`0x2bce5`/`0x2c548` 這兩個字面位址本身依然從未被證實可達(call_scan 全 exe 0 筆,與本勘誤一致),但『montage 實際怎麼畫出來』這個功能性問題已有高信心答案,不需要再假設一個獨立的『0x2bce5 renderer』入口存在。完整證據見 doc35 §9.22-§9.23、91-worklist.md 對應 862-867/899/1017-1020 項目下方『重大進展(2026-08-27)』段落。"
+      "still_pending": "重要邊界(不要誤讀成『0x2bce5 不存在』):0x2bce5 本身作為結局 montage renderer 的既有反組譯(FDOTHER #0x36 frame decoder、palette timing 等,91-worklist.md #1226/#1354/#1570)未被本輪推翻,只有『0x2545d/0x25970 直接呼叫它』這條特定邊被推翻。0x2bce5 實際如何被觸發(若真的會被觸發)仍未知——doc35 §9.11.8 已記錄一個未驗證的間接呼叫/跳轉表線索(`CALL dword ptr [EBP*4+0x524c6]`),留給下一輪。doc58 續六十二(2026-08-24)真正打贏 ch27 後深入結局 montage 時,對 0x2bce5/0x2c548 下的斷點也從未命中——這與本勘誤完全吻合(不是新矛盾),但代表續六十二實際觀察到的『逐角色回顧卡』內容(萊汀/悠妮兩張卡)很可能走的是另一條路徑,值得下一輪核對是否與 §9.11 找到的『角色卡 renderer』(0x31c49,經 0x31529 的另一分支)或 table_post[30] 有關——本輪未驗證,不宣稱已定案。91-worklist.md L1179/L1898、doc39 L253、doc50 L655、SESSION-HANDOFF L221/443/452 的字面『0x2bce5』引用已在原地加註訂正(未刪除原文),doc58 續三十二~續六十四的原始記錄未改寫,已在文末追加續六十五訂正說明。**2026-08-27 已解答此處留下的間接呼叫/跳轉表線索(doc35 §9.22/§9.23,2026-08-30 覆核確認無更新矛盾)**:`CALL dword ptr [EBP*4+0x524c6]`/`CALL dword ptr [EAX*4+0x524c6]` 正是答案本身——這是既有的 `0x524c6` phase-table carousel 主控引擎(`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`,doc35 §9.13 定位)。live `BPPM` 記憶體寫入斷點在真正的結局 montage 播放期間(CG1 懸浮小島、角色回顧卡背景圖)直接命中「正在寫像素」的迴圈,回溯出呼叫鏈是 `FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266` → 小 wrapper `FUN_0002eb9f`(native `0x2eb9f-0x2ebe0`,本輪首次完整反編譯) → `FUN_0004e8d3`(CG1,LUT 重映射淡入淡出)或其姊妹函式 `FUN_0004e98d`(角色卡背景圖,RLE 解碼+三模式重著色,本輪首次發現)。`0x2bce5`/`0x2c548` 這兩個字面位址本身依然從未被證實可達(call_scan 全 exe 0 筆,與本勘誤一致),但『montage 實際怎麼畫出來』這個功能性問題已有高信心答案,不需要再假設一個獨立的『0x2bce5 renderer』入口存在。完整證據見 doc35 §9.22-§9.23、91-worklist.md 對應 862-867/899/1017-1020 項目下方『重大進展(2026-08-27)』段落。",
+      "citation_check": {
+        "mode": "edge",
+        "edges": [
+          [
+            "0x2545d",
+            "0x2bce5"
+          ],
+          [
+            "0x25970",
+            "0x2bce5"
+          ],
+          [
+            "0x25089",
+            "0x2bce5"
+          ]
+        ],
+        "note": "**這筆是本掃描最大的偽陽性來源**:實測用 regex 掃 wrong_address 散文會把 0x2bce5 掃出 628 筆,佔全部命中的 66%。但本筆正文明講『0x2bce5 本身作為 ending renderer 的存在沒有錯,0x2545d/0x25970 本身作為 handler 內位址也沒有錯,錯的只是「前者直接 CALL 後者」這條邊』。所以只有兩個位址**相鄰出現**才算引用了被推翻的那條邊;只看「同一行」會把長行裡並列的兩個獨立事實一起抓進來。",
+        "baseline": {
+          "31-map-unit-sprites-fdicon.md": 1,
+          "35-battle-animation-rendering.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
     },
     {
       "wrong_address": "0x318ad / 0x31e80 / 0x32004 / 0x320fc / 0x31d3c / 0x318c7 / 0x31a29 / 0x36d98",
@@ -206,7 +380,22 @@
       ],
       "correction_doc": "docs/knowledge-base/25-battle-event-system.md",
       "correction_section": "§9.1(2026-08-26續輪追加段落)",
-      "still_pending": "0x318ad(facility entry/cap gate 本體)、0x320fc(reorder)、0x31d3c(最終確認)三個對回答『部署上限』問題最關鍵的位址仍未在 FD2Analysis3 精確定位。但**這不影響本輪對部署上限問題本身的結論**——同一套 cap/confirm/cursor-skip 邏輯已由 docs/knowledge-base/58-remake-live-verification-log.md 2026-08-17/18(續九~續十一,task #118)透過完全獨立的路徑(即時記憶體 + 對照實際執行的 509158-byte FD2.EXE 做純檔案 byte-signature 搜尋,而非透過任何 Ghidra 專案)驗證過:file offset `0x50f4e`(cap 立即值,0x0f=15預設/chapter>26時0x13=19)、`0x510f7`(`CMP EAX,EBP;JNZ`精確比對,不是『選夠就好』)。該投資獨立於本次 FD2Analysis3 位址飄移問題,細節見 doc25 §9.1 本輪新增段落與 doc91 UI-VIS-PREPARATION 條目。"
+      "still_pending": "0x318ad(facility entry/cap gate 本體)、0x320fc(reorder)、0x31d3c(最終確認)三個對回答『部署上限』問題最關鍵的位址仍未在 FD2Analysis3 精確定位。但**這不影響本輪對部署上限問題本身的結論**——同一套 cap/confirm/cursor-skip 邏輯已由 docs/knowledge-base/58-remake-live-verification-log.md 2026-08-17/18(續九~續十一,task #118)透過完全獨立的路徑(即時記憶體 + 對照實際執行的 509158-byte FD2.EXE 做純檔案 byte-signature 搜尋,而非透過任何 Ghidra 專案)驗證過:file offset `0x50f4e`(cap 立即值,0x0f=15預設/chapter>26時0x13=19)、`0x510f7`(`CMP EAX,EBP;JNZ`精確比對,不是『選夠就好』)。該投資獨立於本次 FD2Analysis3 位址飄移問題,細節見 doc25 §9.1 本輪新增段落與 doc91 UI-VIS-PREPARATION 條目。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x318ad",
+          "0x31e80",
+          "0x32004",
+          "0x320fc",
+          "0x31d3c",
+          "0x318c7",
+          "0x31a29",
+          "0x36d98"
+        ],
+        "note": "八個位址在 FD2Analysis3 全部 in_function:false。其中兩個已定位(0x32004→0x32194、0x318c7→0x31a57),其餘六個仍未定出真正入口 —— 但『不是合法函式入口』這件事對八個都成立,所以八個都掃。",
+        "baseline": {}
+      }
     },
     {
       "wrong_address": "0x526b9",
@@ -220,7 +409,22 @@
       ],
       "correction_doc": "docs/knowledge-base/25-battle-event-system.md",
       "correction_section": "§9.1(2026-08-26『記錄儲存完畢！』確認文字 gate 段落)",
-      "still_pending": "已修正完成。`0x526b9` 這個舊位址字面引用只出現在 doc25 §9.1 本文(非本輪新增段落)裡,尚未逐一改寫成 `0x523e7`,但功能性結論(城鎮流程 vs 整備限定流程的 raw chapter 分類)本身完全不受影響。"
+      "still_pending": "已修正完成。`0x526b9` 這個舊位址字面引用只出現在 doc25 §9.1 本文(非本輪新增段落)裡,尚未逐一改寫成 `0x523e7`,但功能性結論(城鎮流程 vs 整備限定流程的 raw chapter 分類)本身完全不受影響。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x526b9"
+        ],
+        "note": "still_pending:doc25 §9.1 本文的字面引用尚未逐一改寫成 0x523e7。",
+        "baseline": {
+          "25-battle-event-system.md": 6,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
     }
   ]
 }

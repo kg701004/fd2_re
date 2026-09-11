@@ -33952,6 +33952,70 @@
    "excerpt": "* **不刪除**。實測這 6 個檔**被 `91-worklist.md` 與 `SESSION-HANDOFF-2026-07-06.md` 引用**,",
    "verdict": "benign",
    "note": "陳述的是本輪對 repo 內檔案引用關係的實測(6 個 ui-traces 被兩份文件引用,故不刪除),屬工作管理與檔案維護紀錄,不是關於遊戲的事實主張。可由 grep 直接複驗。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3817,
+   "excerpt_sha1": "a8f14afd415e37ae41a31051763f58e3d3db0869",
+   "excerpt": "## 2026-09-11 — `tools/verify_address_citations.py`:第十一軸,唯一在問「已經證實錯的結論,還有沒有人在拿它立論」",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3821,
+   "excerpt_sha1": "b86fee0a83caf4d38d065f4999750bcb59bf5b7b",
+   "excerpt": "`docs/data/known_address_errata.json` 從 **2026-08-20** 就存在,`tools/query_verified_address.py`",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3822,
+   "excerpt_sha1": "b44a2f5ecf43312fea1302804744aca34c6306ad",
+   "excerpt": "也一直能查。但**十條驗證軸沒有任何一條讀它**。後果是結構性的:",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3825,
+   "excerpt_sha1": "13db651f960c1f0ad42d676e42188555ac90b3b0",
+   "excerpt": "* 所以一個位址被證實錯誤之後,舊的引用不會自己消失,也沒有任何機制會注意到它們還在。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3854,
+   "excerpt_sha1": "0c6bb80a069b87f4979ae5192f5019e30b166021",
+   "excerpt": "`query_verified_address.py` 讀的 `wrong_address`/`correct_address` 完全未動):",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3876,
+   "excerpt_sha1": "016db41aae2c7c13020cf107806580587a0b824a",
+   "excerpt": "300~550 字元的長行,一行裡把五六個位址當成**各自獨立的事實**並列。實測 10 筆同行命中裡兩種",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3915,
+   "excerpt_sha1": "53c6e6bfd38564fcbfca29bbdbb47b0030741a32",
+   "excerpt": "訂正註記」。實測這三份共 74 次引用,其中 **60 次身上沒有任何訂正**(13: 10/14、37: 11/13、",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3944,
+   "excerpt_sha1": "f3bcfcf8a3b5a996e410d99a56a8022cc0100aac",
+   "excerpt": "* **`known_address_errata.json` 本身的內容沒有被重新驗證過**。本工具驗的是「引用有沒有帶訂正」,",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
   }
  ]
 }
