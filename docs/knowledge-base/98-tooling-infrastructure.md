@@ -4483,3 +4483,150 @@ AST 掃描(讀取但從未被綁定的名稱;pyflakes 未安裝,不新增套件)
 `--tries 12` 是隨機取樣,每一輪都會抽到新的突變;三輪的新真缺口 16 → 2 → 5,**不是單調
 收斂到零**,不能據此宣稱「已無缺口」。要下那個結論需要窮舉模式(每個常數各突變一次),
 本輪沒做。第三輪剩下的 15 個可達逃逸中,5 個已修、其餘全部是上表已證明的等價突變。
+
+## 2026-09-11 續七:「請解決不穩定問題」—— 突變測試本身的兩個不穩定來源,與窮舉模式
+
+續六的三輪複掃,新缺口 16 → 2 → 5,不收斂。查下去,不穩定**來自 harness 本身,不是被測工具**。
+
+### 來源一:抽樣挑的是「編號」,而編號隨檔案內容整體位移
+
+`test_tool` 以 `rng.sample(range(n))` 挑突變點的**編號**;編號是 AST 走訪順序,檔案任何
+一處多一個常數,後面所有編號全部位移。種子早就固定了(2026-09-08 修掉 `hash(name)`),
+但固定種子擋不住「母體變了」。實測續六只補了 selftest 題目、產品碼沒動的三支,
+用舊版抽樣比對修改前後各自抽到的 12 個突變(以「該行文字 + 突變種類」比對):
+
+| 工具 | 突變點數 | 前後樣本相同的 |
+|---|---|---|
+| `decode_fdicon.py` | 114 → 137 | **2/12** |
+| `export_acting_resources.py` | 52 → 81 | **1/12** |
+| `sync_native_join_constructor.py` | 43 → 51 | 7/12 |
+
+也就是說,每補一題 selftest,下一輪就換一組樣本 —— 「修完又冒出新逃逸」量到的是樣本,
+不是工具變差。修法:每個突變點帶一個**穩定鍵**(所在函式 | 該行文字 | 突變種類 # 同鍵序號,
+不含行號與編號),抽樣改以穩定鍵的雜湊排序取前 N 個。新增的突變點只可能擠掉少數入選者,
+不會重洗整組。Mutator 為此加了範圍追蹤;以修改前存下的基準逐一比對,83 支工具、8602 個
+突變點的(行號, 突變種類)序列**全部相同**,編號沒有被這次修改動到。
+
+### 來源二:落點追蹤對 5 支工具永遠失敗
+
+「這個突變 selftest 執行得到嗎」靠追蹤 selftest 執行過的行。舊版以 `mod.selftest()`
+**不帶參數**呼叫,於是:
+
+- `encode_text.py`(`selftest(src, g2c, c2g)`)、`decode_story_text.py`(`selftest(src)`)
+  每次都 TypeError —— 後者正是歷史上 WEAK/DISCRIMINATING 來回翻轉的那支;
+- `safe_output.py`、`realesrgan_batch.py`、`realesrgan_upscale.py` 的進入點叫 `_selftest`,
+  每次都「no selftest attribute」。
+
+這 5 支的落點**永遠未知**,判定也就永遠無法分類。修法:改用與 `run_selftest` **完全相同的
+命令列**(INVOKE 的 argv,`runpy` 以 `__main__` 執行),以 `sys.settrace` 只記錄 selftest
+(或 `_selftest`)框架存活期間執行到的同檔行 —— 語意與舊版「只算 selftest 期間」相同。
+selftest 從未被呼叫時回報錯誤,不當成「0 行可達」。驗證:舊方法原本追得到的 6 支,新舊
+行集合**逐一相同**;原本追不到的 5 支現在分別追到 120 / 130 / 67 / 49 / 97 行。
+
+### 窮舉模式與等價突變登錄表
+
+`--exhaustive` 不再抽樣:selftest 執行得到的產品碼上**每一個**突變點都測。結果只取決於
+原始碼 —— 同一份程式碼跑幾次都一樣,修掉一個缺口只會讓逃逸數變少,**可以歸零**。
+
+已證明的等價突變登錄在 `docs/data/equivalent_mutants.json`(穩定鍵 + 理由 + 證據,缺一即
+丟例外),從逃逸清單扣除。登錄表本身也被檢查:
+
+- 登錄為等價**卻被抓到** → 登錄表的主張是錯的,失敗(抽樣模式碰到也失敗);
+- 窮舉時**找不到**該突變點 → 條目已過期(原始碼改了),失敗。
+
+窮舉的 exit code:有未登錄的可達逃逸、登錄錯誤、過期、落點無法追蹤(`NO_REACH_TRACE`,
+新的獨立狀態,不併進任何既有判定)或基準失敗,任一即 1。
+
+成本實測(舊追蹤器,新增可追的 5 支未計):69 支、1212 個可達產品碼突變點,約 58 分鐘;
+最重的是 `verify_event_dispatch_table.py`(41 點 × 29 秒)。工具之間不能平行 —— 部分 selftest
+會 import 其他工具,同時就地突變會互相污染。所以窮舉是定期跑的完整判定,不是每次提交的閘門;
+`verify_everything` 的 discrim 軸維持抽樣(已改穩定鍵),每輪換 seed 的設計不變。
+
+### 順手修掉的兩個報表缺口
+
+- 逃逸原本截成前 5 個(`escapes[:5]`,印出時再截成 3 個):`verify_truncation_robustness`
+  報 0/6 卻只列得出 3 個,總數與明細對不上。現在全列。
+- `--passes > 1` 時只保留「最好那一輪」的逃逸,其他輪找到的線索被丟掉。現在依穩定鍵跨輪去重合併。
+- `count_sites`、`mutate` 改完後已無呼叫端,刪除。
+
+### harness 自己的驗證
+
+新增 selftest (5)(6)(6b)(7):
+
+| 題 | 釘住什麼 |
+|---|---|
+| (5) | 開頭插入不相干突變點:舊鍵全保留、編號確實位移(前提)、穩定鍵樣本只被擠掉;對照組「依編號抽樣」在同一編輯下確實重洗(證明判準能說不) |
+| (6) | 探針恰好 3 個可達點、1 個逃逸:兩次窮舉結果相同;登錄後逃逸被扣除、登錄錯誤與過期各自被報 |
+| (6b) | 登錄表缺理由、重複鍵丟例外;檔案不存在 = 空 |
+| (7) | 帶命令列參數的 `selftest`、名為 `_selftest` 的進入點都追得到;從未呼叫 → 錯誤、窮舉判 `NO_REACH_TRACE` |
+
+(7) 的 `_selftest` 那一半是寫完後自己檢查才補的:只有前一半時,把 `ENTRY` 裡的 `_selftest`
+刪掉 selftest 照樣通過。故障注入(要求輸出含 `SELFTEST FAILED` 且無 Traceback):
+
+| 注入 | 結果 |
+|---|---|
+| 穩定鍵改依編號排序 | (5) 乾淨 FAIL |
+| 登錄錯誤條件反轉 | (6) 乾淨 FAIL |
+| 過期檢查條件反轉 | (6) 乾淨 FAIL |
+| 追蹤不帶 argv | (7) 乾淨 FAIL |
+| `ENTRY` 刪掉 `_selftest` | (7) 乾淨 FAIL |
+| 窮舉只測第一個點 | (6) 乾淨 FAIL |
+| 登錄表不扣除 | (6) 乾淨 FAIL |
+
+還原後 rc=0、位元組相同。`main` 的 exit code 邏輯不在 selftest 範圍內,由下方真實窮舉的
+輸出與 rc 驗證。
+
+### 結果:穩定量尺第一次照出的真實存量
+
+全量窮舉(`--offline --exhaustive`,69 支,約 1 小時):
+
+| | 數量 |
+|---|---|
+| 可達產品碼突變點 | 1311 |
+| 抓到 | 990(75.5%) |
+| 未登錄的可達逃逸 | **321**,分佈在 51 支(int 284 / bool 18 / compare 19) |
+| 判定 | 有鑑別力 64 / WEAK 1 / NO_SITES 4 / 落點無法追蹤 0 / 基準失敗 0 |
+
+工具 rc=1、印出「窮舉結論:未歸零」—— `main` 的 exit code 在真實跑法上驗證。
+
+**可重現性**:`decode_lmi`、`decode_sprite`、`derive_item_row_fields`、`callgraph_le`、
+`decode_fdicon`、`audit_evidence_provenance` 六支重跑窮舉,抓到數與逃逸鍵集合**逐一相同**。
+
+**與抽樣時期的對照**:抽樣每輪只看得到 15~26 個逃逸,321 才是全貌。續六補的 23 個缺口相對
+存量只是一小部分 —— 這不是退步,是量尺第一次誠實。逃逸最多的:`dump_chapter_beats`×52、
+`verify_truncation_robustness`×26、`sync_native_field_events`×22、`audit_evidence_provenance`×15、
+`render_map`×13。
+
+先前追不到的 5 支現在第一次被量到。其中 `realesrgan_batch` 判 WEAK:selftest 執行得到的產品碼
+只有 `subprocess_rc` 那一行的兩個布林,而該函式只回傳 returncode —— `text=True` 是等價突變
+(已登錄),`capture_output=True` 改掉會讓子行程輸出洩漏到主控台,外部觀察得到,**不登錄**。
+NO_SITES 的 4 支(`export_sfx`、`patch_units_ap_dp_mv`、`patch_units_hit_ev`、`safe_output`)是
+selftest 執行得到的產品碼上沒有任何突變點。
+
+**登錄表首批 8 筆,只收已有證明者**:`audit_evidence_provenance` 的 `raw[6:]`、
+`derive_ail_entry_points` 的 `split("(", 1)`、`fd2_crash_ladder` 的 `args[1]` 與 `>= 2`(同一個
+22/22 實測)、`verify_generated_artifacts` 與 `realesrgan_batch` 的 `text=True`(同一條函式庫
+行為)、`verify_truncation_robustness` 的 decode_lmi `576` 與 `filler * 64`(續三逐位元組實測)。
+刻意**不收**的:
+
+- `dump_chapter_beats` 的 `indent=1` / `ensure_ascii`:由 artifacts 軸逐位元組比對覆蓋,但
+  selftest **其實抓得到**,不是等價;登錄表的定義是「任何 selftest 都不可能抓到」,收進去
+  就是登錄一個假主張。
+- figani 的 `24 -> 25`:同一行文字有 4 個同類突變點(穩定鍵 #0~#3),續三只量過其中一個
+  且沒記下是哪一個,不能推定其餘。
+- `verify_truncation_robustness` 其餘 20 餘個:例如 `n_tested` 計數 `0 -> 1` 會改變印出的
+  數字,selftest 抓得到 —— 是缺口,不是等價。
+
+登錄表在真實資料上的驗證:對有條目的 6 支重跑窮舉,逃逸 audit 15→14、derive_ail 2→1、
+crash_ladder 4→2、truncation 26→24、realesrgan_batch 2→1、generated_artifacts 13→12,
+共扣除 8 筆,**登錄錯誤 0、過期 0**;6 支仍各自 rc=1(剩下的是未處理的存量,正確)。
+
+### 誠實範圍
+
+- **不穩定已解決**:量尺可重現(六支實證)、不隨不相干的編輯重洗(selftest (5) 含對照組)、
+  可以歸零(登錄表三態)。
+- **存量 321(扣除登錄後 313)尚未處理**。那是另一件工作,規模是續六的十幾倍,需要逐支判讀
+  真缺口與等價突變。建議先把續三用過的判準(突變後對工具做一次正常執行、輸出逐位元組相同
+  即等價)做成自動的等價探針,先篩掉 fixture 參數類的候選,其餘再人工判讀。
+- 窮舉約 1 小時,是定期跑的完整判定,**不是**提交閘門;`verify_everything` 的 discrim 軸仍是
+  抽樣(已改穩定鍵)。

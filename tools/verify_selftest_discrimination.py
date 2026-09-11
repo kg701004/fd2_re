@@ -83,11 +83,36 @@ be mutated. The source is therefore edited **in place** and restored in a
 A restore mismatch raises SystemExit immediately rather than letting the run
 continue over a mutated tree.
 
+Stability (2026-09-11)
+----------------------
+Three successive full sweeps reported 16 -> 2 -> 5 new real gaps and never
+converged. Two causes, both in this harness, not in the tools:
+
+* Sampling picked site **indices**, and an index is AST visit order: one extra
+  constant anywhere shifts every later index. `decode_fdicon.py` gained only
+  selftest checks, yet its two 12-mutation samples shared 2 mutations. Each fix
+  therefore chased a fresh sample. Sites now carry a **stable key** (enclosing
+  function | line text | mutation # occurrence) and sampling ranks by its hash.
+* The reach trace called `selftest()` with no arguments, so tools whose selftest
+  takes CLI arguments (`encode_text.py`, `decode_story_text.py`) or is named
+  `_selftest` were never traced. It now runs the exact INVOKE command line.
+
+`--exhaustive` drops sampling altogether: every site on product code the
+selftest executes is mutated. The result depends only on the source, so it is
+reproducible and can reach zero. Proven equivalent mutants are registered in
+`docs/data/equivalent_mutants.json` (stable key + reason + evidence) and are
+subtracted; a registered entry that gets caught (the registry is wrong) or no
+longer matches any site (stale) fails the run.
+
 Usage
 -----
     python tools/verify_selftest_discrimination.py --list
     python tools/verify_selftest_discrimination.py --offline      # no Ghidra/DOSBox
-    python tools/verify_selftest_discrimination.py --tool encode_text.py
+    python tools/verify_selftest_discrimination.py --offline --exhaustive
+    python tools/verify_selftest_discrimination.py --tool encode_text.py --exhaustive
+    python tools/verify_selftest_discrimination.py --equivalents docs/data/equivalent_mutants.json
+    python tools/verify_selftest_discrimination.py --tool decode_image.py --tries 20 --seed 3 --passes 2 --timeout 300 --json out.json
+    python tools/verify_selftest_discrimination.py --include-ghidra
     python tools/verify_selftest_discrimination.py --selftest
 """
 
@@ -97,7 +122,6 @@ import argparse
 import ast
 import hashlib
 import json
-import random
 import subprocess
 import sys
 import time
@@ -281,17 +305,33 @@ def exit_code_constants(tree: ast.AST) -> set[int]:
 class Mutator(ast.NodeTransformer):
     """Apply exactly one behaviour-changing edit, chosen by index."""
 
-    def __init__(self, target: int, skip: set[int] | None = None):
+    def __init__(self, target: int, skip: set[int] | None = None, record: bool = False):
         self.target, self.seen, self.applied = target, 0, None
         self.applied_line: int | None = None
         self.skip = skip or set()
+        # 突變點的穩定識別需要「所在函式」;`sites` 只在列舉模式(record=True)收集。
+        self.scope: list[str] = []
+        self.sites: list[tuple[int | None, str, str]] | None = [] if record else None
+
+    def _scoped(self, node):
+        # 走訪順序與預設的 generic_visit 完全相同,只多記一層範圍名稱 —— 突變點的
+        # 編號因此不變(以全部工具的突變點序列逐一比對過)。
+        self.scope.append(node.name)
+        self.generic_visit(node)
+        self.scope.pop()
+        return node
+
+    visit_FunctionDef = visit_AsyncFunctionDef = visit_ClassDef = _scoped
 
     def _hit(self, what: str, node=None) -> bool:
         self.seen += 1
+        # 記下突變落在哪一行,才能回答「這個突變 selftest 跑得到嗎」。
+        line = getattr(node, "lineno", None)
+        if self.sites is not None:
+            self.sites.append((line, what, ".".join(self.scope) or "<module>"))
         if self.seen - 1 == self.target:
             self.applied = what
-            # 記下突變落在哪一行,才能回答「這個突變 selftest 跑得到嗎」。
-            self.applied_line = getattr(node, "lineno", None)
+            self.applied_line = line
             return True
         return False
 
@@ -318,28 +358,8 @@ class Mutator(ast.NodeTransformer):
         return node
 
 
-def count_sites(src: str) -> int:
-    tree = ast.parse(src)
-    m = Mutator(-1, exit_code_constants(tree))
-    m.visit(tree)
-    return m.seen
-
-
-def mutate(src: str, idx: int) -> tuple[str | None, str]:
-    tree = ast.parse(src)
-    m = Mutator(idx, exit_code_constants(tree))
-    tree = m.visit(tree)
-    if m.applied is None:
-        return None, ""
-    ast.fix_missing_locations(tree)
-    try:
-        return ast.unparse(tree), m.applied
-    except Exception:
-        return None, ""
-
-
 def mutate_at(src: str, idx: int) -> tuple[str | None, str, int | None]:
-    """`mutate()` 外加突變落在的行號。分成兩個函式是為了不動既有呼叫端的簽名。"""
+    """套用第 idx 個突變,回傳 (突變後原始碼, 突變種類, 落點行號)。"""
     tree = ast.parse(src)
     m = Mutator(idx, exit_code_constants(tree))
     tree = m.visit(tree)
@@ -350,6 +370,42 @@ def mutate_at(src: str, idx: int) -> tuple[str | None, str, int | None]:
         return ast.unparse(tree), m.applied, m.applied_line
     except Exception:
         return None, "", None
+
+
+def list_sites(src: str) -> list[dict]:
+    """列出每個突變點:編號、行號、突變種類、所在函式,以及**穩定鍵**。
+
+    2026-09-11:抽樣原本以 `rng.sample(range(n))` 挑**編號**,而編號是 AST 走訪順序,
+    檔案任何一處多一個常數,後面的編號全部位移。實測只補了 selftest 題目、產品碼沒動
+    的 `decode_fdicon.py`,前後兩次抽到的 12 個突變只有 2 個相同 —— 每次修補都在追
+    一組新樣本,三輪複掃的新缺口 16 -> 2 -> 5 不會收斂。穩定鍵是「所在函式 | 該行
+    文字 | 突變種類 # 同鍵序號」,不含行號與編號,不相干的編輯動不到它。
+    """
+    tree = ast.parse(src)
+    m = Mutator(-1, exit_code_constants(tree), record=True)
+    m.visit(tree)
+    lines = src.splitlines()
+    seen: dict[str, int] = {}
+    out = []
+    for idx, (line, what, scope) in enumerate(m.sites or []):
+        text = " ".join(lines[line - 1].split()) if line and line <= len(lines) else ""
+        base = f"{scope}|{text}|{what}"
+        occ = seen.get(base, 0)
+        seen[base] = occ + 1
+        out.append({"idx": idx, "line": line, "what": what, "func": scope,
+                    "text": text, "key": f"{base}#{occ}"})
+    return out
+
+
+def stable_picks(name: str, sites: list[dict], tries: int, seed: int = 0) -> list[int]:
+    """依穩定鍵的雜湊挑出 `tries` 個突變點,回傳其編號。
+
+    新增的突變點只可能**擠掉**原本入選的少數幾個,不會把整組樣本重新洗牌;同一份
+    原始碼與同一個 seed 永遠得到同一組。`--seed` 仍可刻意換一組樣本。
+    """
+    ranked = sorted(sites, key=lambda s: hashlib.sha1(
+        f"{name}|{seed}|{s['key']}".encode("utf-8")).hexdigest())
+    return [s["idx"] for s in ranked[:tries]]
 
 
 # --------------------------------------------------------------------------
@@ -369,26 +425,56 @@ def mutate_at(src: str, idx: int) -> tuple[str | None, str, int | None]:
 # 執行過的行號量出來,把兩者分開報——而不是繼續把工程力氣投進一個不會動的數字。
 # --------------------------------------------------------------------------
 
+# 2026-09-11:原本以 `mod.selftest()` **不帶參數**直接呼叫。`encode_text.py`
+# (`selftest(src, g2c, c2g)`)與 `decode_story_text.py`(`selftest(src)`)的
+# selftest 需要命令列給的參數,於是追蹤**每一次**都失敗、落點永遠未知 ——
+# 後者正是歷史上 WEAK/DISCRIMINATING 來回翻轉的那支。現在改成用與 run_selftest
+# **完全相同的命令列**(INVOKE 的 argv,runpy 以 __main__ 執行),只記錄 selftest
+# 框架(含其呼叫的同檔函式)存活期間執行到的行,語意與舊版「只算 selftest 期間」
+# 相同。selftest 從未被呼叫時回報錯誤,不當成「0 行可達」。
 _TRACE_SNIPPET = """
-import json, sys, trace
+import json, os, runpy, sys
 sys.path.insert(0, {tools!r})
-sys.argv = ['x', '--selftest']
+target = os.path.normcase(os.path.abspath({target!r}))
+sys.argv = [{target!r}, *{argv!r}]
+lines, depth, entered, norm = set(), [0], [False], {{}}
+ENTRY = ("selftest", "_selftest")   # safe_output / realesrgan_* 的進入點叫 _selftest
+
+def _in_target(code):
+    f = code.co_filename
+    if f not in norm:
+        norm[f] = os.path.normcase(os.path.abspath(f)) == target
+    return norm[f]
+
+def _local(frame, event, arg):
+    if event == "line" and depth[0] > 0:
+        lines.add(frame.f_lineno)
+    elif event == "return" and frame.f_code.co_name in ENTRY:
+        depth[0] -= 1
+    return _local
+
+def _global(frame, event, arg):
+    if not _in_target(frame.f_code):
+        return None
+    if frame.f_code.co_name in ENTRY:
+        depth[0] += 1
+        entered[0] = True
+    return _local
+
+err = None
+sys.settrace(_global)
 try:
-    mod = __import__({modname!r})
-except Exception as e:
-    print(json.dumps({{"error": "import: %s" % e}})); raise SystemExit(0)
-fn = getattr(mod, 'selftest', None)
-if fn is None:
-    print(json.dumps({{"error": "no selftest attribute"}})); raise SystemExit(0)
-tr = trace.Trace(count=1, trace=0)
-try:
-    tr.runfunc(fn)
+    runpy.run_path({target!r}, run_name="__main__")
 except SystemExit:
     pass
-except Exception as e:
-    print(json.dumps({{"error": "run: %s" % e}})); raise SystemExit(0)
-lines = sorted({{ln for (f, ln) in tr.results().counts if f == {target!r}}})
-print(json.dumps({{"lines": lines}}))
+except BaseException as e:
+    err = "run: %s" % e
+finally:
+    sys.settrace(None)
+if not entered[0]:
+    print(json.dumps({{"error": err or "selftest() 從未被呼叫"}}))
+else:
+    print(json.dumps({{"lines": sorted(lines)}}))
 """
 
 
@@ -431,7 +517,7 @@ def executed_lines(name: str, timeout: int) -> tuple[set[int] | None, str]:
     """回傳 (selftest 真正執行過的行號集合, 說明)。拿不到就回 (None, 原因) ——
     拿不到不等於「沒有可達行」,那是兩件事,不可混為一談。"""
     target = str((TOOLS / name).resolve())
-    code = _TRACE_SNIPPET.format(tools=str(TOOLS), modname=name[:-3], target=target)
+    code = _TRACE_SNIPPET.format(tools=str(TOOLS), target=target, argv=list(INVOKE[name][0]))
     try:
         r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True,
                            text=True, encoding="utf-8", errors="replace", timeout=timeout)
@@ -515,7 +601,8 @@ def recover_orphaned_backups(root: Path = TOOLS) -> list[str]:
     return restored
 
 
-def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
+def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
+              exhaustive: bool = False, equivalents: dict | None = None) -> dict:
     path = TOOLS / name
     recover_orphaned_backups()
     original = path.read_bytes()
@@ -530,22 +617,31 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
         out["detail"] = tail.strip().splitlines()[-1:] or [""]
         return out
 
-    n = count_sites(src)
-    out["mutation_sites"] = n
-    # 種子必須穩定。原本用 `hash(name)`,而 Python 對字串的 hash **每個行程都不同**
-    # (PYTHONHASHSEED 隨機化),於是同一支工具每次跑抽到不同突變、結果無法重現——
-    # `decode_story_text.py` 一次判 WEAK、一次判 DISCRIMINATING 就是這樣來的,
-    # 當時我誤以為只是取樣變異,其實還疊了一層不可重現性。改用 md5 固定;
-    # 要刻意探索不同樣本請用 --seed(見 --passes)。
-    base = int(hashlib.md5(name.encode("utf-8")).hexdigest()[:8], 16)
-    rng = random.Random(base + seed * 7919)
-    picks = rng.sample(range(n), min(tries, n)) if n else []
+    sites = list_sites(src)
+    out["mutation_sites"] = len(sites)
     caught, attempted, examples = 0, 0, []
-    escapes: list[str] = []
+    escapes: list[dict] = []
+    caught_keys: set[str] = set()
     reach_lines, reach_why = executed_lines(name, timeout)
     own_lines = selftest_own_lines(src)
     out["executed_lines"] = (len(reach_lines) if reach_lines is not None else None)
     out["executed_lines_note"] = reach_why
+    product = [s for s in sites if reach_lines is not None
+               and s["line"] in reach_lines and s["line"] not in own_lines]
+    if exhaustive:
+        # 窮舉:selftest 執行得到的產品碼上**每一個**突變點都測。沒有亂數,結果只取決
+        # 於原始碼 —— 同一份程式碼跑幾次都一樣,修掉一個缺口只會讓逃逸數變少。
+        if reach_lines is None:
+            out["verdict"] = "NO_REACH_TRACE"
+            out["detail"] = [f"落點追蹤失敗({reach_why}),無法窮舉"]
+            return out
+        picks = [s["idx"] for s in product]
+    else:
+        # 種子必須穩定:2026-09-08 原本用 `hash(name)`,PYTHONHASHSEED 讓它每個行程都
+        # 不同;之後改成 md5(name) 固定種子,卻仍以**編號**抽樣,檔案一變整組重洗
+        # (見 list_sites)。現在以穩定鍵雜湊挑選,`--seed` 仍可刻意換一組。
+        picks = stable_picks(name, sites, tries, seed)
+    by_idx = {s["idx"]: s for s in sites}
     reachable_attempted = reachable_caught = 0
     root_before = _root_entries()
     try:
@@ -576,12 +672,15 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
                 caught += 1
                 if in_product:
                     reachable_caught += 1
+                    caught_keys.add(by_idx[idx]["key"])
                 if len(examples) < 3:
                     examples.append(what)
             elif in_product:
                 # 逃掉的、而且 selftest 明明執行得到的突變——這才是真正該修的線索,
                 # 也是唯一能區分「selftest 不夠力」與「樣本沒落到可測範圍」的證據。
-                escapes.append(f"L{at_line}: {what}")
+                s = by_idx[idx]
+                escapes.append({"line": at_line, "what": what, "func": s["func"],
+                                "text": s["text"], "key": s["key"]})
     finally:
         path.write_bytes(original)
         out["side_effects"] = quarantine_side_effects(root_before)
@@ -595,11 +694,24 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
                 f"FATAL: {name} 未能還原到原始內容,已中止。"
                 f"備份留在 {_backup_path(path).name}")
 
+    # 等價突變登錄表:已證明任何 selftest 都不可能抓到的突變,從逃逸清單扣除 —— 否則
+    # 窮舉的逃逸數永遠歸不了零,也就不會再有人讀它。登錄表本身同樣要被檢查:登錄為
+    # 等價卻被抓到 = 登錄錯了;窮舉時找不到該突變點 = 條目過期(原始碼已改)。
+    registered = (equivalents or {}).get(name, {})
+    real = [e for e in escapes if e["key"] not in registered]
     out.update(mutations_attempted=attempted, mutations_caught=caught,
                examples=examples,
                reachable_attempted=reachable_attempted,
                reachable_caught=reachable_caught,
-               reachable_escapes=escapes[:5])
+               # 2026-09-11:原本截成前 5 個(`escapes[:5]`),`verify_truncation_robustness`
+               # 報 0/6 卻只列得出 3 個 —— 總數與明細對不上。現在全列。
+               reachable_escapes=[f"L{e['line']}: {e['what']}" for e in real],
+               reachable_escape_details=real,
+               equivalent_escapes=[e["key"] for e in escapes if e["key"] in registered],
+               registry_contradicted=sorted(k for k in registered if k in caught_keys),
+               registry_stale=(sorted(set(registered) - {s["key"] for s in product})
+                               if exhaustive else []),
+               exhaustive=exhaustive)
     # 一個突變都沒落在 selftest 執行得到的產品碼上時,這一輪對 selftest 的品質
     # **沒有提供任何證據**,報成 WEAK 會把力氣導向錯的地方。判定邏輯見 verdict_for。
     out["verdict"] = verdict_for(attempted, caught,
@@ -788,14 +900,165 @@ def selftest() -> int:
     if not ok4c:
         fails.append("落點資訊沒有帶來新的區分力")
 
+    print("\n(5) 穩定鍵:開頭插入不相干的突變點,其餘的鍵不變,樣本只會被擠掉、不會重洗")
+    body = "".join(f"def f{i}(x):\n    return x + {i} if x > {i * 3} else x - {i}\n"
+                   for i in range(1, 13))
+    extra = "def unrelated(y):\n    return y * 7 + 11 if y != 5 else 2\n"
+    s_old, s_new = list_sites(body), list_sites(extra + body)
+    key_old = {s["idx"]: s["key"] for s in s_old}
+    key_new = {s["idx"]: s["key"] for s in s_new}
+    idx_of_old = {s["key"]: s["idx"] for s in s_old}
+    old_keys = set(idx_of_old)
+    # 前提:插入真的讓編號位移了,否則這題測不到舊版的問題。
+    shifted = any(idx_of_old[s["key"]] != s["idx"] for s in s_new if s["key"] in idx_of_old)
+    pick_old = {key_old[i] for i in stable_picks("p.py", s_old, 8)}
+    pick_new = {key_new[i] for i in stable_picks("p.py", s_new, 8)}
+    # 對照:舊的「依編號抽樣」在同樣的編輯下會重洗 —— 證明下面的判準有能力說不。
+    import random as _rnd
+    by_index_old = {key_old[i] for i in _rnd.Random(1).sample(range(len(s_old)), 8)}
+    by_index_new = {key_new[i] for i in _rnd.Random(1).sample(range(len(s_new)), 8)}
+    ok5 = (old_keys <= set(key_new.values()) and shifted
+           and (pick_new & old_keys) <= pick_old
+           and stable_picks("p.py", s_new, 8) == stable_picks("p.py", s_new, 8)
+           and not (by_index_new & old_keys) <= by_index_old)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 編號位移={shifted}、舊鍵全數保留="
+          f"{old_keys <= set(key_new.values())}、穩定鍵樣本只被擠掉="
+          f"{(pick_new & old_keys) <= pick_old}、對照(依編號)確實重洗="
+          f"{not (by_index_new & old_keys) <= by_index_old}")
+    if not ok5:
+        fails.append("穩定鍵抽樣在不相干的編輯下仍重洗了樣本")
+
+    print("\n(6) 窮舉:可重現,登錄表的扣除/登錄錯誤/過期三種情形分得開")
+    # 前提:add 裡恰好 3 個可達產品碼突變點 —— `>` 反轉與 `-1` 改 `-2` 會被抓到,
+    # `100 -> 101` 不會(selftest 用 150,兩個門檻都擋得住),所以恰好 1 個逃逸。
+    exh = TOOLS / "_mutscore_exh_probe.py"
+    exh.write_text(
+        "import sys\n"
+        "def add(a, b):\n"
+        "    if a > 100:\n"
+        "        return -1\n"
+        "    return a + b\n"
+        "def selftest():\n"
+        "    return 0 if add(2, 2) == 4 and add(150, 0) == -1 else 1\n"
+        "if __name__ == '__main__':\n"
+        "    sys.exit(selftest())\n", encoding="utf-8")
+    INVOKE[exh.name] = ([], "offline")
+    esc_key = "add|if a > 100:|int 100->101#0"
+    caught_key = "add|if a > 100:|compare Gt->LtE#0"
+    bogus_key = "add|return a + b|int 9->10#0"
+    try:
+        r1 = test_tool(exh.name, tries=0, timeout=60, exhaustive=True)
+        r2 = test_tool(exh.name, tries=0, timeout=60, exhaustive=True)
+        reg = {exh.name: {k: {} for k in (esc_key, caught_key, bogus_key)}}
+        r3 = test_tool(exh.name, tries=0, timeout=60, exhaustive=True, equivalents=reg)
+    finally:
+        exh.unlink(missing_ok=True)
+        _backup_path(exh).unlink(missing_ok=True)
+        del INVOKE[exh.name]
+    det1 = [e["key"] for e in r1.get("reachable_escape_details", [])]
+    det2 = [e["key"] for e in r2.get("reachable_escape_details", [])]
+    ok6 = (det1 == det2 == [esc_key]
+           and r1.get("reachable_attempted") == 3 and r1.get("reachable_caught") == 2
+           and r3.get("reachable_escapes") == [] and r3.get("equivalent_escapes") == [esc_key]
+           and r3.get("registry_contradicted") == [caught_key]
+           and r3.get("registry_stale") == [bogus_key])
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 兩次窮舉逃逸 {det1} / {det2}(應相同且只有 100->101)、"
+          f"可達 {r1.get('reachable_caught')}/{r1.get('reachable_attempted')}(應 2/3);"
+          f"登錄後逃逸={r3.get('reachable_escapes')}、等價={r3.get('equivalent_escapes')}、"
+          f"登錄錯誤={r3.get('registry_contradicted')}、過期={r3.get('registry_stale')}")
+    if not ok6:
+        fails.append(f"窮舉或登錄表判定不對:{det1} {det2} {r3}")
+
+    print("\n(6b) 登錄表格式:缺理由、重複鍵必須丟例外,不能被當成空登錄表")
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as td:
+        eq_path = Path(td) / "eq.json"
+
+        def _load(entries):
+            eq_path.write_text(json.dumps({"entries": entries}), encoding="utf-8")
+            try:
+                return load_equivalents(eq_path)
+            except ValueError:
+                return "ValueError"
+        good = {"tool": "t.py", "key": "k", "reason": "r", "evidence": "e"}
+        ok6b = (_load([good]) == {"t.py": {"k": good}}
+                and _load([dict(good, reason="")]) == "ValueError"
+                and _load([good, dict(good)]) == "ValueError"
+                and load_equivalents(Path(td) / "missing.json") == {})
+    print(f"    {'PASS' if ok6b else 'FAIL'}: 正常條目可讀、缺理由/重複鍵丟例外、檔案不存在=空")
+    if not ok6b:
+        fails.append("等價突變登錄表的格式驗證不對")
+
+    print("\n(7) 落點追蹤:需要命令列參數的 selftest 要追得到;從未被呼叫要回報錯誤")
+    # 2026-09-11 前,`encode_text.py`/`decode_story_text.py` 的追蹤每次都失敗
+    # (selftest 需要參數),落點永遠未知。這題用同形狀的探針釘住修法。
+    tp = TOOLS / "_trace_probe.py"
+    tp.write_text("import sys\n"
+                  "def selftest(src):\n"
+                  "    return 0 if len(src) == 1 else 1\n"
+                  "if __name__ == '__main__':\n"
+                  "    sys.exit(selftest(sys.argv[1]))\n", encoding="utf-8")
+    INVOKE[tp.name] = (["x"], "offline")
+    try:
+        with_arg, _ = executed_lines(tp.name, 60)
+        tp.write_text("import sys\n"
+                      "def check():\n"
+                      "    return 0\n"
+                      "if __name__ == '__main__':\n"
+                      "    sys.exit(check())\n", encoding="utf-8")
+        never, never_why = executed_lines(tp.name, 60)
+        r7 = test_tool(tp.name, tries=0, timeout=60, exhaustive=True)
+        # safe_output / realesrgan_* 的進入點叫 `_selftest`,也要追得到。
+        tp.write_text("import sys\n"
+                      "def _selftest():\n"
+                      "    return 0 if 1 + 1 == 2 else 1\n"
+                      "if __name__ == '__main__':\n"
+                      "    sys.exit(_selftest())\n", encoding="utf-8")
+        underscored, _ = executed_lines(tp.name, 60)
+    finally:
+        tp.unlink(missing_ok=True)
+        _backup_path(tp).unlink(missing_ok=True)
+        del INVOKE[tp.name]
+    ok7 = (with_arg == {3} and underscored == {3} and never is None
+           and r7.get("verdict") == "NO_REACH_TRACE")
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 帶參數的 selftest 追到 {with_arg}(應 {{3}})、"
+          f"`_selftest` 追到 {underscored}(應 {{3}})、"
+          f"從未呼叫 -> {never_why!r}、窮舉判定 {r7.get('verdict')}(應 NO_REACH_TRACE)")
+    if not ok7:
+        fails.append(f"落點追蹤不對:{with_arg} / {never_why} / {r7.get('verdict')}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(正向控制 + 負向控制(含『0 分的原因』檢定)+ "
-          "還原驗證 + 落點分類的成對案例與非平凡性控制)。")
+          "還原驗證 + 落點分類的成對案例與非平凡性控制 + 穩定鍵抽樣(含依編號的對照)+ "
+          "窮舉可重現與登錄表三態 + 帶參數/未呼叫的落點追蹤)。")
     return 0
+
+
+EQUIVALENTS = ROOT / "docs" / "data" / "equivalent_mutants.json"
+
+
+def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
+    """讀等價突變登錄表,回傳 {工具: {穩定鍵: 條目}}。
+
+    檔案不存在 = 空登錄表;格式錯、缺理由、重複鍵一律丟例外 —— 讀不懂的登錄表
+    不能被當成「沒有等價突變」,那會把錯誤變成安靜的全部重報。
+    """
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    out: dict[str, dict[str, dict]] = {}
+    for e in data["entries"]:
+        if not (e.get("tool") and e.get("key") and e.get("reason") and e.get("evidence")):
+            raise ValueError(f"等價突變條目缺欄位(tool/key/reason/evidence 皆必填):{e}")
+        slot = out.setdefault(e["tool"], {})
+        if e["key"] in slot:
+            raise ValueError(f"等價突變條目重複:{e['tool']} {e['key']}")
+        slot[e["key"]] = e
+    return out
 
 
 def main() -> int:
@@ -814,6 +1077,11 @@ def main() -> int:
                     help="位移取樣。同一支工具不同 seed 會抽到不同的突變集合")
     ap.add_argument("--passes", type=int, default=1,
                     help="連續跑 N 輪、每輪換一個 seed,累積涵蓋率(回答「多跑幾次會不會找到別的問題」)")
+    ap.add_argument("--exhaustive", action="store_true",
+                    help="不抽樣:selftest 執行得到的產品碼上每個突變點都測。結果只取決於"
+                         "原始碼、可重現、可歸零;有未登錄的逃逸、登錄表錯誤或過期時 exit 1")
+    ap.add_argument("--equivalents", default=str(EQUIVALENTS),
+                    help="等價突變登錄表(預設 docs/data/equivalent_mutants.json)")
     ap.add_argument("--json")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--selftest", action="store_true")
@@ -825,10 +1093,12 @@ def main() -> int:
             print(f"  {k:<40} {needs:<8} {' '.join(argv)}")
         return 0
 
+    equivalents = load_equivalents(Path(a.equivalents))
     names = [a.tool] if a.tool else [
         k for k, (_, needs) in sorted(INVOKE.items())
         if needs == "offline" or (needs == "ghidra" and (a.include_ghidra and not a.offline))]
     rows = []
+    passes = 1 if a.exhaustive else a.passes
     for n in names:
         if not (TOOLS / n).exists():
             print(f"  {n:<40} 檔案不存在,跳過")
@@ -836,12 +1106,18 @@ def main() -> int:
         best = None
         caught_total = attempted_total = 0
         reach_caught_total = reach_attempted_total = 0
-        for k in range(a.passes):
-            r = test_tool(n, a.tries, a.timeout, seed=a.seed + k)
+        escapes_all: dict[str, dict] = {}
+        contradicted: set[str] = set()
+        for k in range(passes):
+            r = test_tool(n, a.tries, a.timeout, seed=a.seed + k,
+                          exhaustive=a.exhaustive, equivalents=equivalents)
             caught_total += r.get("mutations_caught", 0)
             attempted_total += r.get("mutations_attempted", 0)
             reach_caught_total += r.get("reachable_caught", 0)
             reach_attempted_total += r.get("reachable_attempted", 0)
+            for e in r.get("reachable_escape_details", []):
+                escapes_all.setdefault(e["key"], e)
+            contradicted.update(r.get("registry_contradicted", []))
             # 跨輪取最好的判定:任何一輪抓到就是有鑑別力(WEAK 只在全部輪都 0 時成立)
             if best is None or (r["verdict"] == "DISCRIMINATING" and best["verdict"] != "DISCRIMINATING"):
                 best = r
@@ -851,7 +1127,11 @@ def main() -> int:
         # 的口徑不一致。既然要把它升成標題數字,口徑就必須對齊。
         best["reachable_caught"] = reach_caught_total
         best["reachable_attempted"] = reach_attempted_total
-        best["passes"] = a.passes
+        # 逃逸同理:原本只留「最好那一輪」的,其他輪找到的線索被丟掉。依穩定鍵跨輪去重。
+        best["reachable_escape_details"] = list(escapes_all.values())
+        best["reachable_escapes"] = [f"L{e['line']}: {e['what']}" for e in escapes_all.values()]
+        best["registry_contradicted"] = sorted(contradicted)
+        best["passes"] = passes
         rows.append(best)
         v = best["verdict"]
         reach = best.get("reachable_attempted") or 0
@@ -873,14 +1153,22 @@ def main() -> int:
         else:
             extra = best.get("detail", "")
         print(f"  {n:<40} {v:<16} {extra}")
-        for e in best.get("reachable_escapes", [])[:3]:
+        for e in best.get("reachable_escapes", []):
             print(f"      逃掉但執行得到:{e}")
+        if best.get("equivalent_escapes"):
+            print(f"      已登錄的等價突變 {len(best['equivalent_escapes'])} 個(不計入逃逸)")
+        for key in best.get("registry_contradicted", []):
+            print(f"      ** 登錄為等價卻被抓到(登錄表錯誤):{key}")
+        for key in best.get("registry_stale", []):
+            print(f"      ** 登錄表條目在窮舉時找不到(已過期):{key}")
     weak = [r["tool"] for r in rows if r["verdict"] == "WEAK"]
     unreach = [r["tool"] for r in rows if r["verdict"] == "UNREACHABLE_SAMPLE"]
     bad = [r["tool"] for r in rows if r["verdict"] == "BASELINE_FAIL"]
+    noreach = [r["tool"] for r in rows if r["verdict"] == "NO_REACH_TRACE"]
     good = sum(1 for r in rows if r["verdict"] == "DISCRIMINATING")
     print(f"\n共 {len(rows)} 個工具:有鑑別力 {good} / 弱 {len(weak)} / "
-          f"樣本沒落到可測範圍 {len(unreach)} / 基準就失敗 {len(bad)}")
+          f"樣本沒落到可測範圍 {len(unreach)} / 基準就失敗 {len(bad)}"
+          + (f" / 落點無法追蹤 {len(noreach)}" if noreach else ""))
     # 「67 支全部有鑑別力」是真的,但它與「有 24 支存在逃掉的可達突變」可以同時為真。
     # 只印前者會讓後者消失 —— 那正是本專案反覆踩到的形狀,所以兩個數字並列,
     # 而且把可達逃逸總數印出來:它是**可以歸零**的,不像判定欄位永遠好看。
@@ -908,10 +1196,23 @@ def main() -> int:
         print(f"  弱(值得人工檢視,不等於壞):{weak}")
     if bad:
         print(f"  基準就失敗(必須先修):{bad}")
+    if noreach:
+        print(f"  落點無法追蹤(不知道 ≠ 沒有可達突變,先修追蹤):{noreach}")
+    contra_total = sum(len(r.get("registry_contradicted") or []) for r in rows)
+    stale_total = sum(len(r.get("registry_stale") or []) for r in rows)
+    if contra_total or stale_total:
+        print(f"  等價突變登錄表有問題:登錄錯誤 {contra_total}、過期 {stale_total}(明細見上方 **)")
     if a.json:
         Path(a.json).write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"  JSON -> {a.json}")
-    return 1 if bad else 0
+    if a.exhaustive:
+        failed = bool(bad or noreach or esc_total or contra_total or stale_total)
+        print(f"  窮舉結論:{'未歸零' if failed else '歸零'}(未登錄的可達逃逸 {esc_total}、"
+              f"登錄錯誤 {contra_total}、過期 {stale_total}、落點無法追蹤 {len(noreach)}、"
+              f"基準失敗 {len(bad)})")
+        return 1 if failed else 0
+    # 登錄為等價卻被抓到,代表登錄表的主張是錯的,抽樣模式碰到也要失敗。
+    return 1 if (bad or contra_total) else 0
 
 
 if __name__ == "__main__":

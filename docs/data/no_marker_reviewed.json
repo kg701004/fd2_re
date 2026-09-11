@@ -34208,6 +34208,86 @@
    "excerpt": "本輪沒做。第三輪剩下的 15 個可達逃逸中,5 個已修、其餘全部是上表已證明的等價突變。",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:總結第三輪突變掃描逃逸的處理結果(已修/等價),證據是同節的注入結果與掃描輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4495,
+   "excerpt_sha1": "6a8d950a21d5c3639944af40cab6405fc44aae45",
+   "excerpt": "但固定種子擋不住「母體變了」。實測續六只補了 selftest 題目、產品碼沒動的三支,",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述 verify_selftest_discrimination.py 抽樣機制的不穩定來源與實測,證據是同節的可重跑腳本結果,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4523,
+   "excerpt_sha1": "d57d3ba90ba567de053274dd0fabb753a7c9d4ec",
+   "excerpt": "selftest 從未被呼叫時回報錯誤,不當成「0 行可達」。驗證:舊方法原本追得到的 6 支,新舊",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述突變測試落點追蹤的修法與新舊行集合比對,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4531,
+   "excerpt_sha1": "4f28b664bedfbaac8b037fcb2f8e2d8e0c0f30f5",
+   "excerpt": "已證明的等價突變登錄在 `docs/data/equivalent_mutants.json`(穩定鍵 + 理由 + 證據,缺一即",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述 --exhaustive 與等價突變登錄表的語意,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4540,
+   "excerpt_sha1": "72ee893470faf1f932a2a4ce7cc623037b691037",
+   "excerpt": "成本實測(舊追蹤器,新增可追的 5 支未計):69 支、1212 個可達產品碼突變點,約 58 分鐘;",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述窮舉模式的成本量測,證據是同節的量測腳本輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4590,
+   "excerpt_sha1": "7a2485d6f2f8c60218e6a149a7b8715ca26bfde7",
+   "excerpt": "工具 rc=1、印出「窮舉結論:未歸零」—— `main` 的 exit code 在真實跑法上驗證。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述窮舉跑法的 exit code 實測結果。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4608,
+   "excerpt_sha1": "02ea23ed3f431c9c64237b05a9c82a284408acba",
+   "excerpt": "22/22 實測)、`verify_generated_artifacts` 與 `realesrgan_batch` 的 `text=True`(同一條函式庫",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:列出等價突變登錄表首批條目及其證明來源(函式庫行為、原始碼呼叫形狀實測)。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4609,
+   "excerpt_sha1": "b01f76317112a939fa376c7653f684afb1ccc46d",
+   "excerpt": "行為)、`verify_truncation_robustness` 的 decode_lmi `576` 與 `filler * 64`(續三逐位元組實測)。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:列出等價突變登錄表首批條目及其證明來源(工具正常執行輸出逐位元組比對)。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4612,
+   "excerpt_sha1": "17459b80cc2b9b497510bde5854429c63e0a3960",
+   "excerpt": "- `dump_chapter_beats` 的 `indent=1` / `ensure_ascii`:由 artifacts 軸逐位元組比對覆蓋,但",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:說明某個突變為何不登錄為等價(由 artifacts 軸覆蓋但 selftest 抓得到)。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4620,
+   "excerpt_sha1": "a4b2fcf336e56176982850f943c098156346e7b4",
+   "excerpt": "登錄表在真實資料上的驗證:對有條目的 6 支重跑窮舉,逃逸 audit 15→14、derive_ail 2→1、",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:登錄表在真實工具上重跑窮舉的扣除結果,證據是同節的可重跑指令。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4629,
+   "excerpt_sha1": "21f2d74b22c402c547feda54ac2656604ea9c469",
+   "excerpt": "真缺口與等價突變。建議先把續三用過的判準(突變後對工具做一次正常執行、輸出逐位元組相同",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:對後續工作的建議與誠實範圍,不涉及原版 EXE/實機。"
   }
  ]
 }

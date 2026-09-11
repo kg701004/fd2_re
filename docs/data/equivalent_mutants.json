@@ -1,0 +1,54 @@
+{
+ "schema": 1,
+ "note": "verify_selftest_discrimination.py 的等價突變登錄表。每一筆都是「已證明任何 selftest 都不可能抓到」的突變,必須附 reason 與 evidence。key 是穩定鍵(所在函式|該行文字|突變種類#同鍵序號),不含行號。--exhaustive 會回報:登錄為等價卻被抓到(登錄錯誤)、窮舉時找不到該突變點(條目過期)。「由其他驗證軸覆蓋」不是等價(selftest 其實抓得到),不得登錄於此。",
+ "entries": [
+  {
+   "tool": "audit_evidence_provenance.py",
+   "key": "parse_diff_claims|cur_file = Path(raw[6:]).name|int 6->7#0",
+   "reason": "`+++ b/` 恰 6 字元;多切 1 字元只吃掉路徑首字,`Path(...).name` 取 basename,對任何含目錄的路徑結果相同。--diff 的 git diff 以 pathspec 限定 docs 底下的巢狀路徑,不會出現根目錄檔名。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-09-11 續三「本輪四支的最終狀態」表(偽警報,不補:pathspec 保證巢狀路徑)"
+  },
+  {
+   "tool": "derive_ail_entry_points.py",
+   "key": "trace_strings|out[base + m.start()] = text.split(\"(\", 1)[0]|int 1->2#0",
+   "reason": "數學:`s.split(sep, n)[0]` 對任何 n>=1 都是第一個分隔符之前的子字串,與 n 無關。",
+   "evidence": "tools/derive_ail_entry_points.py 該行上方註解(REPL 對 5 個含巢狀/無括號案例逐一驗證);98 文件 2026-09-11 續六等價突變表"
+  },
+  {
+   "tool": "fd2_crash_ladder.py",
+   "key": "stage_actions.walk|if name == \"press\" and len(sub.args) >= 2 and isinstance(sub.args[1], ast.Constant):|int 1->2#0",
+   "reason": "本檔 22/22 個真實 `press()` 呼叫都恰好 3 個引數且皆為常數,檢查 args[1] 或 args[2] 對現有呼叫形狀給出同一個真假值;真正取值的那行未被動到。",
+   "evidence": "tools/fd2_crash_ladder.py 該行上方註解;98 文件 2026-09-11 續六等價突變表(實測 22/22)"
+  },
+  {
+   "tool": "fd2_crash_ladder.py",
+   "key": "stage_actions.walk|if name == \"press\" and len(sub.args) >= 2 and isinstance(sub.args[1], ast.Constant):|int 2->3#0",
+   "reason": "同上一筆的同一個實測:全部 22 個 `press()` 呼叫都恰好 3 個引數,`len(sub.args) >= 2` 與 `>= 3` 對每一個都為真。",
+   "evidence": "98 文件 2026-09-11 續六等價突變表(實測 22/22 個呼叫皆 3 引數)"
+  },
+  {
+   "tool": "verify_generated_artifacts.py",
+   "key": "check_one|capture_output=True, text=True, encoding=\"utf-8\",|bool True->False#1",
+   "reason": "函式庫行為:`subprocess.run` 給了 `encoding=` 就強制文字模式,`text=` 的值不再有作用(實測 `text=False, encoding=\"utf-8\"` 仍回傳 str)。同行的 #0(capture_output)不是等價,已由 (4c) 題釘住,不登錄。",
+   "evidence": "tools/verify_generated_artifacts.py 該行上方註解;98 文件 2026-09-11 續六等價突變表"
+  },
+  {
+   "tool": "realesrgan_batch.py",
+   "key": "subprocess_rc|return subprocess.run(cmd, capture_output=True, text=True,|bool True->False#1",
+   "reason": "與 verify_generated_artifacts 同一條函式庫行為:同一呼叫有 `encoding=\"utf-8\"`,`text=` 的值不再有作用;且 subprocess_rc 只回傳 returncode。同行 #0(capture_output)不登錄:改掉會讓子行程輸出洩漏到主控台,外部觀察得到。",
+   "evidence": "Python subprocess 文件:指定 encoding/errors 即以文字模式開啟;98 文件 2026-09-11 續七"
+  },
+  {
+   "tool": "verify_truncation_robustness.py",
+   "key": "<module>|lambda: _sample(\"FDOTHER\"), lambda b: ((b, 576), {}), ()),|int 576->577#0",
+   "reason": "decode_lmi 的 fixture 參數;突變後該工具正常執行的輸出與基準逐位元組相同,行為不變。",
+   "evidence": "98 文件 2026-09-11 續三「verify_truncation_robustness.py 可達 0/6 —— 全部是等價突變」表(decode_lmi 576->577)"
+  },
+  {
+   "tool": "verify_truncation_robustness.py",
+   "key": "probe|run(filler * 64)|int 64->65#0",
+   "reason": "全 0xC0/0xFF/0x00 填充的長度;突變後該工具正常執行的輸出與基準逐位元組相同,行為不變。",
+   "evidence": "98 文件 2026-09-11 續三「verify_truncation_robustness.py 可達 0/6 —— 全部是等價突變」表(run(filler * 64) -> 65)"
+  }
+ ]
+}

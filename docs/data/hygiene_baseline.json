@@ -342,6 +342,12 @@
    "rule": "regenerable",
    "reason": "工具自身的狀態檔(由 tools/verify_address_citations.py 的 --mark-correction 維護)。內容是人工宣告「這行寫了訂正,但被訂正的不是位址本身」,本質上沒有產生器;把它登錄進重生比對是套套邏輯。它的放行範圍由同一支工具的 --diff 源頭閘門管。與 no_marker_reviewed.json 同一設計(key 為 file+excerpt_sha1)。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/equivalent_mutants.json",
+   "rule": "regenerable",
+   "reason": "人工維護的等價突變登錄表(tools/verify_selftest_discrimination.py 只讀不寫)。內容是「已證明任何 selftest 都抓不到」的突變,每筆附理由與證據,本質上沒有產生器。它的正確性由同一支工具的 --exhaustive 管:登錄為等價卻被抓到(登錄錯誤)、窮舉時找不到該突變點(過期)都會失敗;缺理由或重複鍵在載入時就丟例外。與 no_marker_reviewed.json、correction_line_reviews.json 同類。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
+   "permanent": "no_generator"
   }
  ]
 }
