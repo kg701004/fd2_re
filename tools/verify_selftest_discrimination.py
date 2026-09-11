@@ -890,6 +890,13 @@ def main() -> int:
         worst = sorted(esc_rows, key=lambda r: -len(r["reachable_escapes"]))[:5]
         print("    最多的幾支:"
               + "、".join(f"{r['tool']}×{len(r['reachable_escapes'])}" for r in worst))
+        # 「執行得到」不等於「改了看得出來」。實測 verify_truncation_robustness.py 的
+        # 6 個可達突變全部是**等價突變**:把 DECODERS 登錄表裡的 576->577、24->25、
+        # filler*64->65 改掉之後,該工具正常執行的輸出**逐位元組相同** —— 沒有任何
+        # selftest 能抓到一個不改變行為的改動。把這種當成待辦會重演 2026-09-10 那次
+        # 為了一個不可能動的分數白寫一小時測試的事。
+        print("    注意:逃掉不一定等於缺口。先確認它是不是**等價突變** —— 對該工具做一次"
+              "正常執行,突變前後輸出若逐位元組相同,就沒有任何 selftest 抓得到它。")
     else:
         print("  沒有任何「逃掉但確實被執行到」的突變。")
     if unreach:

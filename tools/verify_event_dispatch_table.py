@@ -274,13 +274,43 @@ def selftest() -> int:
         if not ok7:
             fails.append(f"兩套判準分歧(代表其中一套漂移了):{disagree[:3]}")
 
+    print("\n(8) 合成案例:**往回呼叫**的序頭也必須判成入口(真實資料到不了這條路徑)")
+    # 2026-09-11,突變測試發現的缺口:把 L105 的 `signed=True` 改成 `False`,七題全過。
+    # 原因不是檢查太鬆,是**真實資料碰不到**——本映像所有 handler(0x35854..0x3644e)
+    # 都在 stack probe `0x3702f` **之前**,所以每一個 rel32 都是正數,有號/無號無差別。
+    # 但 `signed=True` 在一般情況下是對的且必要的:任何位於 probe 之後的入口,rel 為負,
+    # 無號解讀會得到 +2^32 的垃圾目標而被誤判成 MID_BODY。所以這裡自己造一段程式碼,
+    # 讓入口落在 probe **之後**,把那條路徑逼出來。
+    base = CODE_BASE
+    probe_off = STACK_PROBE - base
+    synth = bytearray(probe_off + 0x100)
+    fwd = base + 0x20                                  # probe 之前:rel 為正
+    back = STACK_PROBE + 0x40                           # probe 之後:rel 為負
+    for entry in (fwd, back):
+        o = entry - base
+        synth[o] = PUSH_IMM32
+        synth[o + 1:o + 5] = (0x1234).to_bytes(4, "little")
+        synth[o + 5] = CALL_REL32
+        synth[o + 6:o + 10] = (STACK_PROBE - (entry + 10)).to_bytes(4, "little", signed=True)
+    v_fwd = classify(bytes(synth), base, fwd)[0]
+    v_back = classify(bytes(synth), base, back)[0]
+    rel_back = int.from_bytes(synth[back - base + 6:back - base + 10], "little", signed=True)
+    ok8 = v_fwd == "CLEAN_PROLOGUE" and v_back == "CLEAN_PROLOGUE" and rel_back < 0
+    print(f"    {'PASS' if ok8 else 'FAIL'}: 往前呼叫({fwd:#x})={v_fwd}、"
+          f"往回呼叫({back:#x},rel={rel_back})={v_back}")
+    if rel_back >= 0:
+        fails.append("合成的『往回呼叫』rel 不是負數 —— 這題沒有測到有號解讀")
+    elif not ok8:
+        fails.append(f"往回呼叫的序頭被誤判:{v_back}(有號/無號解讀出錯)")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(獨立路徑真值重現 + 32 格全為入口 + 嚴格遞增 + "
-          "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制 + 與 verify_findings 的逐格一致)。")
+          "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制 + 與 verify_findings 的逐格一致 + "
+          "往回呼叫的合成案例)。")
     return 0
 
 

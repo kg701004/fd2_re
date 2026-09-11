@@ -34016,6 +34016,46 @@
    "excerpt": "* **`known_address_errata.json` 本身的內容沒有被重新驗證過**。本工具驗的是「引用有沒有帶訂正」,",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 tools/verify_address_citations.py 與 known_address_errata.json 的機制,證據是同節列出的 selftest/注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4084,
+   "excerpt_sha1": "17e54a0cc976bb96a0bc5b7caf2cecd7fed61d2b",
+   "excerpt": "### 2026-09-11 續三:再兩支,以及一個「逃掉 ≠ 缺口」的實測界線",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4089,
+   "excerpt_sha1": "80e8f4eb4e7aceaa675b18718d765db4b99cc8b6",
+   "excerpt": "**七題全過**。實際跑一次確認它真的逃掉,不是取樣沒打到。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4107,
+   "excerpt_sha1": "0004501faf9fbed14538e4819a7b0159b057da14",
+   "excerpt": "六個逃逸全部落在 `DECODERS` **登錄表的 fixture 參數**上(`576`、`24`、`64`)。實測用該工具",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4123,
+   "excerpt_sha1": "3e6019fe0acdaffbd02ffede561a019f17a9d624",
+   "excerpt": "輸出,逐位元組相同就是等價突變。沒有把它自動化 —— 大多數工具沒有登錄「正常執行」的參數,",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4134,
+   "excerpt_sha1": "b8ba4c738c0b9b5135cbf7fe8bae44c5c8324662",
+   "excerpt": "| `verify_truncation_robustness.py` | 0/6 | **等價突變,不補**(已實測) |",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
   }
  ]
 }
