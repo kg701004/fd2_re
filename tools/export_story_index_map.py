@@ -252,8 +252,13 @@ def selftest() -> int:
             got6 = parse_fdtxt_strings(p6)
         except (ValueError, IndexError) as exc:
             got6 = f"{type(exc).__name__}: {exc}"
+    # 2026-09-12:單獨的 [7, 『] 太弱 —— 門檻改成 3 時 starts 歸零,落到「整條字串算一句」
+    # 的 fallback,一樣回 1。所以再加一個兩句的案例:第一句 3 碼、第二句恰好 2 碼,
+    # 正確是 2,門檻 3 只會數到第一句而回 1(starts 非零,不走 fallback)。
     b6 = {"第 0 條停在下一條的起點": got6 == [[1], [2]],
-          "[說話者, 『] 算一句": count_logical_utterances([7, OPEN_GLYPH]) == 1}
+          "[說話者, 『] 算一句": count_logical_utterances([7, OPEN_GLYPH]) == 1,
+          "兩句、第二句恰好 2 碼 -> 2":
+              count_logical_utterances([7, OPEN_GLYPH, 5, CONTROL_MIN, 8, OPEN_GLYPH]) == 2}
     ok6 = all(b6.values())
     print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items())
           + ("" if b6["第 0 條停在下一條的起點"] else f";實得 {got6}"))

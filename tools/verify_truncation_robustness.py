@@ -317,6 +317,17 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"太多登錄項目找不到取樣資料:{skipped}")
 
+    print("\n(4b) 回歸:已登錄的真實解碼器現在全部 OK(不是 CRASH / DEGENERATE)")
+    # 2026-09-12 突變窮舉發現:把 decode_ani 那一列的呼叫引數寫錯(dpos 0->1、
+    # total 576->577),正常執行會判 CRASH,selftest 卻全過——(4) 只數 SKIP。
+    # 呼叫引數寫錯也是這張表的錯,而截斷前綴是窮舉的(與 steps 無關),
+    # 所以 12 步的取樣就足以讓它現形。
+    broken = [(r["tool"], r["verdict"]) for r in rows if r["verdict"] in ("CRASH", "DEGENERATE")]
+    ok4b = not broken
+    print(f"    {'PASS' if ok4b else 'FAIL'}: 非 OK 的列 {broken or '無'}")
+    if not ok4b:
+        fails.append(f"已登錄解碼器不再全部安全:{broken}")
+
     print("\n(5) 交叉驗證:三支已修好的解碼器,其自己的 selftest 也要通過")
     import subprocess
     agree = []

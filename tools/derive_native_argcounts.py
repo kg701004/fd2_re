@@ -319,6 +319,15 @@ def derive(sites: list[dict]) -> dict:
     }
 
 
+def known_op_name(target: int, prim: dict[int, tuple[str, int]]) -> str | None:
+    """PRIM 表裡該位址的 op 名稱(不是參數個數);不在表裡就是 None。
+
+    抽出來是為了能單獨測:`report()` 預設只報 27 個**不在** PRIM 裡的目標,
+    取錯欄位(名稱 vs 參數個數)在那條路徑上兩邊都是 None,看不出來。
+    """
+    return prim.get(target, (None, None))[0]
+
+
 def report(exe: str, only_unknown: bool = True, wide: bool = False) -> dict:
     import dump_chapter_beats as DC
     cg, order = build_graph(exe)
@@ -327,7 +336,7 @@ def report(exe: str, only_unknown: bool = True, wide: bool = False) -> dict:
     out = {}
     for t in targets:
         d = derive(collect_wide(cg, t) if wide else sites.get(t, []))
-        d["known_op"] = DC.PRIM.get(t, (None, None))[0]
+        d["known_op"] = known_op_name(t, DC.PRIM)
         # 名稱與參數個數是兩種主張,所以分開存:`known_op` 來自原生位址表,
         # `doc_op_name` 來自 repo 文件裡可逐字定位的反組譯記載(見 DOC_OP_NAMES)。
         d["doc_op_name"] = doc_op_name(t)
@@ -775,6 +784,69 @@ def selftest() -> int:
     print(f"    {'PASS' if ok11 else 'FAIL'}: {art.name} {detail}")
     if not ok11:
         fails.append(f"已登錄產物漂移:{detail}")
+
+    print("\n(12) 純函式邊界:掃描、push 計數、多數決、錨點行號")
+    # 2026-09-12 突變窮舉:下面每一條都有突變逃過 (1)~(11),因為真實 image 上
+    # 碰不到這些邊界(沒有呼叫端落在 order[0]、image 結尾不是 E8、PRIM 目標
+    # 不在預設報告範圍內)。所以改用合成輸入,每一條都寫明它的前提。
+    bnd = []
+
+    class _Ins:
+        def __init__(self, m: str) -> None:
+            self.mnemonic = m
+
+    class _FakeCG:
+        def __init__(self, code: bytes = b"", base: int = 0, insns=None) -> None:
+            self.code, self.base, self._m = code, base, insns or {}
+
+        def _insn(self, a: int):
+            m = self._m.get(a)
+            return None if m is None else _Ins(m)
+
+    # (a) pushes_before:唯一的 push 在 order[0](j == 0),必須算到。
+    fcg = _FakeCG(insns={0x10: "push", 0x11: "call"})
+    order12 = [0x10, 0x11]
+    got_pb = pushes_before(fcg, order12, {a: i for i, a in enumerate(order12)}, 0x11)
+    if got_pb != 1:
+        bnd.append(f"order[0] 的 push 沒算到:{got_pb}(應 1)")
+    # (b) _scan:`E8 E8 00 00 00 00` —— 位置 0 與位置 1 各是一個 E8 rel32,
+    #     後者正好是 image 最後一個完整的呼叫(i == len-5),且與前者重疊。
+    #     前提:兩個 E8 都在 0 <= i <= len-5 內,所以逐位元組掃描必須兩個都收。
+    base = 0x1000
+    blob = b"\xE8\xE8\x00\x00\x00\x00"
+    idx12, _e = _scan(_FakeCG(code=blob, base=base))
+    got_sites = sorted(s for v in idx12.values() for s in v)
+    if got_sites != [base, base + 1]:
+        bnd.append(f"_scan 呼叫端 {[hex(s) for s in got_sites]}(應 [{base:#x}, {base + 1:#x}])")
+    elif idx12.get(base + 6) != (base + 1,):
+        bnd.append(f"_scan 目標計算錯:{ {hex(k): v for k, v in idx12.items()} }")
+    # (c) derive([]):沒有呼叫端時 sites 必須是 0(不是只看 verdict)。
+    if derive([])["sites"] != 0:
+        bnd.append(f"derive([]) sites={derive([])['sites']}(應 0)")
+    # (d) 分布的鍵順序:依清理位元組數由小到大、None 最後——不是依出現次數。
+    #     前提:4 出現 3 次、8 出現 1 次,依次數排會變成 8 在前。
+    mk = lambda c: {"site": 0, "cleanup_bytes": c, "after_mnemonic": "add", "pushes": 1}
+    dist12 = list(derive([mk(4), mk(4), mk(4), mk(8), mk(None)])["cleanup_distribution"])
+    if dist12 != ["4", "8", "None"]:
+        bnd.append(f"分布鍵順序 {dist12}(應 ['4', '8', 'None'])")
+    # (e) known_op_name:取的是名稱不是參數個數;不在表裡回 None。
+    kn = (known_op_name(0x1f525, DC.PRIM), known_op_name(0xDEAD, DC.PRIM))
+    if kn != (DC.PRIM[0x1f525][0], None) or not isinstance(kn[0], str):
+        bnd.append(f"known_op_name 取錯欄位:{kn}")
+    # (f) anchor_lines:位址只寫在第 1 行、引文在第 2 行 -> 回傳 [2](1-based,
+    #     且視窗下界是第 0 個索引,不是 1)。
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "anchor.md"
+        p.write_text("0x12cea 在這裡\n引文 QQ\n", encoding="utf-8")
+        got_al = anchor_lines(str(p), "引文 QQ", 0x12cea)
+    if got_al != [2]:
+        bnd.append(f"anchor_lines={got_al}(應 [2])")
+    ok12 = not bnd
+    print(f"    {'PASS' if ok12 else 'FAIL'}: 六個合成邊界"
+          + ("全部如預期" if ok12 else f",問題 {bnd}"))
+    if not ok12:
+        fails.append(f"純函式邊界:{bnd}")
 
     if fails:
         print("\nSELFTEST FAILED:")

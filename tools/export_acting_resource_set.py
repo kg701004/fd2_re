@@ -183,6 +183,15 @@ def selftest() -> int:
     if not ok5:
         fails.append("合法轉錄解不出資源")
 
+    print("\n(6) bit7 旗標:bit7=1 的 frame 必須帶 special=True,bit7=0 的不得帶這個鍵")
+    # 2026-09-12 突變窮舉:`if bit7 == "1"` 與 `item["special"] = True` 改掉都逃掉 ——
+    # (1) 只核對 units,沒看旗標。前提:good 的 frame[0] 是 bit7=0、frame[1] 是 bit7=1。
+    fr = run(good)["26"]
+    ok6 = "special" not in fr[0] and fr[1].get("special") is True
+    print(f"    {'PASS' if ok6 else 'FAIL'}: frame[0] {sorted(fr[0])}、frame[1] special={fr[1].get('special')!r}")
+    if not ok6:
+        fails.append(f"bit7 旗標對應錯誤:{fr}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

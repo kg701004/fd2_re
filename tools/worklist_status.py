@@ -459,14 +459,16 @@ def selftest() -> int:
     import tempfile as _tf
     with _tf.TemporaryDirectory() as _td:
         wl = Path(_td) / "wl.md"
-        # 項目 1 有內容且後面跟兩行空白;項目 3 只有表頭、後面全是空白(釘住 `end > i + 1`)
-        wl.write_text("1 - A - 第一項\n  * a\n\n\n2 - B - 第二項\n  * b\n"
+        # 項目 1 有內容且後面跟**三**行空白(奇數:一次退 2 行會越過內容行,釘住 `end -= 1`;
+        # 2026-09-12 窮舉時兩行空白讓 -=1 與 -=2 停在同一處);
+        # 項目 3 只有表頭、後面全是空白(釘住 `end > i + 1`)
+        wl.write_text("1 - A - 第一項\n  * a\n\n\n\n2 - B - 第二項\n  * b\n"
                       "3 - C - 空項目\n\n\n4 - D - 末項\n", encoding="utf-8")
         rc1 = cmd_append("1", "  * NEW1", wl)
         rc3 = cmd_append("3", "  * NEW3", wl)
         rc_missing = cmd_append("99", "x", wl)
         got_wl = wl.read_text(encoding="utf-8")
-    want_wl = ("1 - A - 第一項\n  * a\n  * NEW1\n\n\n2 - B - 第二項\n  * b\n"
+    want_wl = ("1 - A - 第一項\n  * a\n  * NEW1\n\n\n\n2 - B - 第二項\n  * b\n"
                "3 - C - 空項目\n  * NEW3\n\n\n4 - D - 末項\n")
     b9.update({"附加在正確位置": got_wl == want_wl,
                "成功回 0、找不到回 1": (rc1, rc3, rc_missing) == (0, 0, 1)})

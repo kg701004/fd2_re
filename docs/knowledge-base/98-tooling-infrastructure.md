@@ -4727,3 +4727,83 @@ PRIM 註解說它以序章 handler 反組譯逐一核對過;推導那邊是兩�
 `export_story_index_map`、`font_grid`、`worklist_status` 各 1。三支大工具需要各自深入(辨識器的
 否定案例、fuzz 參數逐一以正常執行實測、掃描器邊界),下一輪處理。WEAK 1 支是 `realesrgan_batch`
 (可達的只有 `subprocess_rc` 那一行,已登錄後剩 0 —— 判定欄位看的是 selftest 本身抓到幾個)。
+## 2026-09-12 續九:清完剩下的 90 個 —— 三支大工具與五個小逃逸
+
+續八檢查點留下 90 個未登錄的可達逃逸(8 支)。本輪逐支處理,每支改完都以 `--exhaustive`
+單支窮舉複驗到歸零;其餘工具本輪沒有改動,沿用續八檢查點的結果。
+
+### `verify_truncation_robustness`(24 → 0):先量正常執行,再決定是補題還是登錄
+
+這支的逃逸幾乎都是**探針的輸入參數**(取樣尺寸、fuzz 常數),「補題」會變成把任意常數
+釘死。所以先逐一突變後跑**正常執行**,依輸出分三層:
+
+| 層級 | 定義 | 個數 | 處置 |
+|---|---|---|---|
+| FULL_SAME | 整份 stdout + rc 逐位元組相同 | 17 | tuning(探針參數) |
+| VERDICT_SAME | 判定行與 rc 相同,只有明細的次數不同 | 5 | cosmetic |
+| VERDICT_DIFF | 判定行或 rc 改變 | **2** | 真缺口,補題 |
+
+那 2 個是 `decode_ani` 那一列的呼叫引數(dpos 0→1、total 576→577):正常執行會判 **CRASH**
+(寫入越過 576 bytes 的緩衝區),selftest 卻全過 —— 第 (4) 題只數 SKIP,不看其餘列的判定。
+新增 (4b):已登錄的真實解碼器必須全部 OK。截斷前綴是窮舉的(與 `steps` 無關),所以
+selftest 用的 12 步就足以讓它現形。
+
+### `derive_native_argcounts`(9 → 0):真實 image 碰不到的邊界
+
+新增 (12),六個合成邊界,每一條寫明前提:`pushes_before` 的 push 落在 `order[0]`;
+`_scan` 對 `E8 E8 00 00 00 00`(兩個重疊的 E8,後者正好是 image 最後一個完整呼叫);
+`derive([])` 的 `sites`;分布鍵的順序(依位元組數,不是依次數 —— 前提是次數排序會顛倒);
+`known_op_name`(抽出的純函式:預設報告只含**不在** PRIM 裡的目標,名稱與參數個數兩欄
+取錯在那條路徑上都是 None);`anchor_lines` 的 1-based 行號與視窗下界。
+
+### 五個小逃逸
+
+- `export_acting_resource_set`:`bit7 == "1"` 與 `special = True` —— (1) 只核對 units。新增 (6)。
+- `export_story_index_map` 的 `len(chunk) >= 2`:原本的 `[說話者, 『]` 案例**太弱**,門檻改成
+  3 時會落到「整條字串算一句」的 fallback,一樣回 1。加一個兩句、第二句恰好 2 碼的案例。
+- `worklist_status` 的 `end -= 1`:fixture 的尾端空行是兩行(偶數),一次退 1 與一次退 2 停在
+  同一處。改成三行。
+- `font_grid` 的 `px = 255 -> 256`:**真等價** —— "L" 模式是 8-bit,PIL 12.3.0 實測寫入 256
+  讀回 255。登錄 equivalent。
+- `decode_story_text` 的 `[:60]`:`fd2_speaker_capture` 用 `confirm_text in text_snippet`
+  核對,保留幾個字是政策值。登錄 tuning。
+
+### `dump_chapter_beats`(36 → 0)
+
+**PRIM 的 18 個參數個數**:+1 全部逃掉,原因續八已記(每次 call 後 pushes 清空,多算時
+`pushes[-nargs:]` 切到同樣幾個)。對照改用**不讀 PRIM 的來源**:`derive_native_argcounts`
+從呼叫端的 `add esp,N` 與緊鄰 push 推導。實測 24 個有呼叫端的項目 19 個相符,不符的 5 個
+恰好是 `PRIM_DIVERGENT` 記錄的那 5 個;沒有呼叫端的只有 `EDITION_MOVED` 的 2 個舊版位址,
+改以「與新版位址同值」釘住。新增 (7)。
+
+**辨識器與邊界**:新增 (8),合成指令流逐條釘住事件旗標索引(0/0x1f 採信、0x20 不採信)、
+`find_loop_hint` 的 cmp/jl 緊接 call、單格 diamond 的 push 在第 0 條 / slot 0 / test 緊接
+call / test 兩運算元不同、計數迴圈的累加器從未設 1 / 累加器先設 / 起點 0 / false 臂 jmp
+緊接 jne、`unknown_ranking`(抽出:現行 unknown = 0,報表迴圈從不執行)、CLI 的引數個數。
+
+**順手修掉的真 bug**:`resolvable()` 用 `range(len(blob) - 5)`,漏掉 image 最後一個完整的
+`E8 rel32`;`derive_native_argcounts._scan` 用 `i <= len-5`,兩支邊界不一致。現行 EXE 結尾
+不是 E8,所以沒有可見差異 —— 突變 `5->6` 逃掉正是因為這一格本來就沒被掃到。改成 `len-4`,
+並以合成 image 與「stack-check 呼叫數 = DA 函式入口數 541」兩條對照釘住。
+
+**登錄 2 個可證明的等價**:第二段迴圈的 `range(2, …)` 與視窗上界 `i - 1`。前者:i = 2 時
+視窗只有 j = 0,而 `insns[0]` 必然是判準要求的 movzx,不可能是 xor 起點;後者:少掃的
+`insns[i-2]` 必然是 movzx,視窗分支只比對 xor/mov/cmp/test。兩者都對**任何輸入**成立,
+不是「真實資料碰不到」。
+
+**登錄錯誤 1 筆,當場被抓到並刪除**:`structure_control_flow` 往 call 前找 slot push 的視窗
+起點 `max(0, call_idx - 3)` 的 `0->1`,續八登錄為 tuning(「只在 call 位於前 3 條指令內時
+才有差別」)。那句話本身沒錯,錯在把它當成不重要:push 落在指令流第 0 條時,改成 1 會讓
+slot 找不到、整個 diamond 退回扁平 —— 那是辨識結果的改變,不是政策值。(8) 的
+「push 在第 0 條」案例一上線就把它抓出來。同一個視窗的**大小** `3->4` 仍是 tuning。
+
+**CLI 題帶出的 2 個 cosmetic**:(8) 呼叫 `ch0` 之後 `cmd_ch0` 才變得可達,它的 `call_beats`
+計數與 `ensure_ascii` 只影響印到主控台的除錯輸出,登錄 cosmetic。
+
+### 數字
+
+| | 續八檢查點 | 本輪 |
+|---|---|---|
+| 未登錄的可達逃逸 | 90(8 支) | **0**(8 支全數歸零) |
+| 登錄表 | 62 | 104(equivalent / cosmetic / tuning) |
+| 登錄錯誤 / 過期 | 2 / 0 | 0 / 0 |

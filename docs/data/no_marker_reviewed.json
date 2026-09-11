@@ -34344,6 +34344,30 @@
    "excerpt": "否定案例、fuzz 參數逐一以正常執行實測、掃描器邊界),下一輪處理。WEAK 1 支是 `realesrgan_batch`",
    "verdict": "benign",
    "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4742,
+   "excerpt_sha1": "4bf654c2490b4bdec66d3e9903155f7064a10c66",
+   "excerpt": "| FULL_SAME | 整份 stdout + rc 逐位元組相同 | 17 | tuning(探針參數) |",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness 窮舉結果、selftest 補題的前提與 PRIM 跨工具對照),非遊戲事實主張;依據為本 commit 內 tools/*.py 的 selftest 與 verify_selftest_discrimination --exhaustive 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4766,
+   "excerpt_sha1": "01e560c0cf09c88b2fc44d308044a35b3b8a8782",
+   "excerpt": "- `font_grid` 的 `px = 255 -> 256`:**真等價** —— \"L\" 模式是 8-bit,PIL 12.3.0 實測寫入 256",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness 窮舉結果、selftest 補題的前提與 PRIM 跨工具對照),非遊戲事實主張;依據為本 commit 內 tools/*.py 的 selftest 與 verify_selftest_discrimination --exhaustive 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4775,
+   "excerpt_sha1": "7ec6a16c538720d11b4c3e8e1a8854a0bc4ece63",
+   "excerpt": "從呼叫端的 `add esp,N` 與緊鄰 push 推導。實測 24 個有呼叫端的項目 19 個相符,不符的 5 個",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness 窮舉結果、selftest 補題的前提與 PRIM 跨工具對照),非遊戲事實主張;依據為本 commit 內 tools/*.py 的 selftest 與 verify_selftest_discrimination --exhaustive 輸出。"
   }
  ]
 }

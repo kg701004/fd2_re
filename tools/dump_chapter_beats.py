@@ -756,9 +756,17 @@ def cmd_all(cg, fx, outdir, quiet=False):
     if not quiet:
         print(f"寫出 {len(stats)} 個 chNN_{{pre,post}}.json 到 {outdir}")
         print(f"unknown 原語(位址→出現次數,依次數排序):")
-        for addr, cnt in sorted(all_unknown.items(), key=lambda kv: -kv[1]):
+        for addr, cnt in unknown_ranking(all_unknown):
             print(f"  {addr}: {cnt}")
     return stats, all_unknown
+
+
+def unknown_ranking(all_unknown):
+    """unknown 原語依出現次數由多到少(報表用)。
+
+    抽出來是為了能單獨測:現行 unknown = 0,`cmd_all` 的報表迴圈在真實資料上從不執行。
+    """
+    return sorted(all_unknown.items(), key=lambda kv: -kv[1])
 
 
 DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -787,7 +795,10 @@ def resolvable(cg, addr):
     """
     n = 0
     for lo, blob in ((cg.base, cg.code),):
-        for i in range(len(blob) - 5):
+        # 2026-09-12:原本是 `range(len(blob) - 5)`,漏掉 image 最後一個完整的
+        # `E8 rel32`(位置 len-5,rel32 正好佔滿最後 4 bytes)。derive_native_argcounts._scan
+        # 用的是 `i <= len-5`,兩支的邊界不一致;現行 EXE 結尾不是 E8 所以沒有可見差異。
+        for i in range(len(blob) - 4):
             if blob[i] != 0xE8:
                 continue
             rel = int.from_bytes(blob[i + 1:i + 5], 'little', signed=True)
@@ -1131,6 +1142,116 @@ def selftest():
               f"相異 {len(drift)}{'' if ok6 else ' -> ' + str(drift[:5])}")
         if not ok6:
             fails.append(f"重生結果與已提交檔不同:{drift[:5]}")
+
+    print("\n(7) 跨工具對照:PRIM 的參數個數 vs 呼叫端推導(add esp,N 與緊鄰 push)")
+    # 2026-09-12 突變窮舉:PRIM 表 18 個參數個數改成 +1 全部逃掉 —— 每次 call 後 pushes
+    # 清空,多算時 `pushes[-nargs:]` 切到的仍是同樣幾個,(6) 的重生逐位元組相同。
+    # 所以換一個不讀 PRIM 的來源:derive_native_argcounts 從**呼叫端**推導。實測 24 個
+    # 有呼叫端的項目中 19 個相符;不符的 5 個各有記錄理由(DA.PRIM_DIVERGENT),集合
+    # 必須恰好相同。現行 EXE 沒有呼叫端的只能是 EDITION_MOVED 的舊版位址,而且必須與
+    # 新版位址同一個值(同一個函式)。
+    import derive_native_argcounts as DA7
+    cg7, order7 = DA7.build_graph(DEFAULT_EXE)
+    sites7 = DA7.collect(cg7, order7)
+    old_to_new = {old: new for old, new in EDITION_MOVED.values()}
+    div7, orphan7 = {}, []
+    for a, (_op, n) in PRIM.items():
+        got = DA7.derive(sites7.get(a, []))["argc"]
+        if got is None:
+            new = old_to_new.get(a)
+            if new is None or PRIM[new][1] != n:
+                orphan7.append(hex(a))
+        elif got != n:
+            div7[a] = (n, got)
+    ok7 = div7 == DA7.PRIM_DIVERGENT and not orphan7
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 不符 {len(div7)} 個"
+          f"{'(與記錄一致)' if div7 == DA7.PRIM_DIVERGENT else ':' + str({hex(k): v for k, v in div7.items()})}、"
+          f"無呼叫端且對不上新版位址的 {orphan7 or '無'}")
+    if not ok7:
+        fails.append(f"PRIM 參數個數與呼叫端推導的對照漂移:{ {hex(k): v for k, v in div7.items()} } / {orphan7}")
+
+    print("\n(8) 純函式邊界:事件旗標索引、迴圈提示、單格 diamond、計數迴圈、resolvable、報表、CLI")
+    # 2026-09-12 突變窮舉:以下每一條都有突變逃過 (1)~(7) —— 真實 30 章碰不到這些邊界
+    # (旗標索引恰為 0/0x1f/0x20、jl 緊接在 call 後、push 在指令流第 0 條、slot 0、
+    # image 結尾的 E8、unknown 非空)。用合成輸入逐條釘住,每條的前提寫在旁邊。
+    b8: dict[str, bool] = {}
+
+    def _esp(n):                        # [0x3ad5] + n == 1 的四條指令,jne 在索引 3
+        return [_I(0x0e0, 'mov', 'eax, dword ptr [0x3ad5]'),
+                _I(0x0e4, 'movzx', f'eax, byte ptr [eax + {n:#x}]'),
+                _I(0x0e8, 'cmp', 'eax, 1'), _I(0x0ec, 'jne', '0x120')]
+    b8['旗標索引 0、0x1f 採信,0x20 不採信'] = (
+        _event_state_predicate(_esp(0), 3) is not None
+        and _event_state_predicate(_esp(0x1f), 3) is not None
+        and _event_state_predicate(_esp(0x20), 3) is None)
+
+    # 前提:第一組 cmp 緊接 call(取上限的掃描必須從 call 下一條開始);
+    #       第二組 jl 緊接 call(找回跳的掃描也必須從 call 下一條開始)。
+    lh1 = find_loop_hint([_I(0x10, 'nop'), _I(0x11, 'call', '0x13185'),
+                          _I(0x12, 'cmp', 'ecx, 0xf'), _I(0x13, 'jl', '0x10')], 1, 0x11)
+    lh2 = find_loop_hint([_I(0x10, 'nop'), _I(0x11, 'call', '0x13185'),
+                          _I(0x12, 'jl', '0x10')], 1, 0x11)
+    b8['迴圈提示:cmp/jl 緊接 call 都認得'] = (
+        lh1 == {'loop_back_to': '0x10', 'limit': 15}
+        and lh2 == {'loop_back_to': '0x10', 'limit': None})
+
+    def _ifs(st):
+        return [b for b in structure_control_flow(st, extract_beats(st)) if b['op'] == 'if']
+    # 以 (2b) 的 plain 為基準:push 移到第 0 條、slot 改成 0、拿掉 call 後的 add esp
+    # (test 緊接 call)都必須仍然認得;test 的兩個運算元不同則不是「測回傳值」,不得認。
+    zero_slot = [(_I(x.address, 'push', '0') if x.address == 0x101 else x) for x in plain]
+    no_add = [x for x in plain if x.address != 0x103]
+    bad_test = [(_I(x.address, 'test', 'eax, ebx') if x.address == 0x104 else x) for x in plain]
+    zs = _ifs(zero_slot)
+    b8['單格 diamond:push 在第 0 條、slot 0、test 緊接 call 都認得'] = (
+        bool(_ifs(plain[1:])) and bool(zs) and zs[0]['condition'].get('unit_slots') == [0]
+        and bool(_ifs(no_add)))
+    b8['單格 diamond:test 兩運算元不同不得認'] = not _ifs(bad_test)
+
+    def _loop(pre):
+        return pre + [_I(0x00c, 'cmp', 'ecx, 9'), _I(0x010, 'test', 'byte ptr [eax + 5], 1'),
+                      _I(0x014, 'inc', 'ecx'), _I(0x018, 'movzx', 'eax, edi'),
+                      _I(0x01c, 'test', 'eax, eax'), _I(0x020, 'jne', '0x040'),
+                      _I(0x024, 'call', '0x88888'), _I(0x028, 'jmp', '0x060'),
+                      _I(0x040, 'call', '0x99999'), _I(0x060, 'push', '3')]
+    xor8 = _I(0x000, 'xor', 'edi, edi')
+    base_l = _loop([xor8, _I(0x004, 'mov', 'ecx, 5'), _I(0x008, 'mov', 'edi, 1')])
+    no_set = _loop([xor8, _I(0x004, 'mov', 'ecx, 5')])                 # 累加器從未設成 1
+    set_first = _loop([xor8, _I(0x004, 'mov', 'edi, 1'), _I(0x008, 'mov', 'ecx, 5')])
+    from0 = _loop([xor8, _I(0x004, 'mov', 'ecx, 0'), _I(0x008, 'mov', 'edi, 1')])
+    # false 臂的 jmp 緊接在 jne 之後(掃描必須從 jne 下一條開始)
+    jmp_first = base_l[:9] + [_I(0x024, 'jmp', '0x060'), _I(0x028, 'call', '0x88888')] + base_l[11:]
+    slots = lambda st: [b['condition']['unit_slots'] for b in _ifs(st)]   # noqa: E731
+    b8['計數迴圈:基準 5..8、起點 0、累加器先設也認得'] = (
+        slots(base_l) == [[5, 6, 7, 8]] and slots(from0) == [list(range(0, 9))]
+        and slots(set_first) == [[5, 6, 7, 8]] and slots(jmp_first) == [[5, 6, 7, 8]])
+    b8['計數迴圈:累加器從未設成 1 不得認'] = not _ifs(no_set)
+
+    class _Blob:
+        def __init__(self, code, base):
+            self.code, self.base = code, base
+    # E8 在位置 len-5:rel32 = 0 正好佔滿最後 4 bytes,目標 = base + 1 + 5。
+    b8['resolvable:結尾的 E8 算到且只算一次;stack-check 呼叫數 = DA 函式入口數'] = (
+        resolvable(_Blob(b'\x90\xE8\x00\x00\x00\x00', 0x1000), 0x1006) == 1
+        and resolvable(cg, 0x3702f) == DA7.FUNCTION_ENTRIES)
+
+    try:
+        rk = unknown_ranking({'0x1': 1, '0x2': 3, '0x3': 2})
+    except Exception as exc:                                  # noqa: BLE001
+        rk = repr(exc)
+    b8['unknown 報表依次數由多到少'] = rk == [('0x2', 3), ('0x3', 2), ('0x1', 1)]
+
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):
+        rc_ch0 = main(['dump_chapter_beats.py', DEFAULT_EXE, 'ch0'])
+        rc_short = main(['dump_chapter_beats.py', DEFAULT_EXE])
+    b8['CLI:3 個引數就能執行子指令、2 個印用法回 1'] = (rc_ch0, rc_short) == (0, 1)
+
+    ok8 = all(b8.values())
+    print(f"    {'PASS' if ok8 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b8.items()))
+    if not ok8:
+        fails.append(f"純函式邊界:{[k for k, v in b8.items() if not v]}")
 
     if fails:
         print("\nSELFTEST FAILED:")
