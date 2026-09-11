@@ -116,15 +116,47 @@ def read(addr: int, n: int) -> bytes:
     return bytes(c.fetch_bytes(addr, n, quiet=True))
 
 
-def pointer_table_len(base: int, probe: int = 24) -> int:
-    """How many leading dwords at `base` are real function entries.
+def is_tail_merged_stub(addr: int) -> bool:
+    """`push <frame> ; jmp <某個真入口的 __STK 呼叫>` —— 編譯器把數個**內容相同**的
+    函式尾段合併之後留下的 7/10-byte 殘樁。
 
-    Stops at the first non-entry, which is what a jump table's end looks like.
+    2026-09-11 加入。它與 `is_function_entry` 是兩件事,**不可合併**:後者的計數
+    (541)是已登記的結論 `584-entries`。但對**跳表**而言殘樁同樣是合法的 handler
+    入口——`0x51b91` 的 index 5/34/86..89 與 `0x51d01` 的 43/46..48 都是這種,
+    先前 `pointer_table_len` 會在第一個殘樁就當成「表結束」,把 90 格的表報成 5 格。
+    """
+    # 先擋邊界:跳表結尾之後的 dword 是任意垃圾值(例如 0x13140101),若直接丟給
+    # `read()` 會落到 Ghidra 後端去抓一段不存在的記憶體,錯誤訊息看起來像工具壞了。
+    if not any(lo <= addr and addr + 12 <= lo + len(d) for lo, d in segments()):
+        return False
+    b = read(addr, 12)
+    if b[0] != 0x68:
+        return False
+    if b[5] == 0xEB:
+        tgt = addr + 7 + struct.unpack_from("<b", b, 6)[0]
+    elif b[5] == 0xE9:
+        tgt = addr + 10 + struct.unpack_from("<i", b, 6)[0]
+    else:
+        return False
+    return is_function_entry(tgt - 5)        # 跳到某個真入口的 `call __STK`
+
+
+def is_handler_entry(addr: int) -> bool:
+    """跳表槽位該用的判準:真入口**或**共用尾段的殘樁。"""
+    return is_function_entry(addr) or is_tail_merged_stub(addr)
+
+
+def pointer_table_len(base: int, probe: int = 24, predicate=is_function_entry) -> int:
+    """How many leading dwords at `base` satisfy `predicate`.
+
+    Stops at the first one that does not, which is what a jump table's end looks
+    like. 預設仍是嚴格的 `is_function_entry`(`0x524c6` 的 10 因此不變);含共用
+    尾段殘樁的跳表要傳 `is_handler_entry`。
     """
     raw = read(base, 4 * probe)
     n = 0
     for i in range(probe):
-        if not is_function_entry(struct.unpack_from("<I", raw, i * 4)[0]):
+        if not predicate(struct.unpack_from("<I", raw, i * 4)[0]):
             break
         n += 1
     return n
@@ -153,6 +185,14 @@ FINDINGS = [
      lambda: pointer_table_len(0x524C6)),
     ("584-spell-table", "0x51d01 法術 handler 表前 12 筆皆為函式", 12,
      lambda: pointer_table_len(0x51D01, probe=12)),
+    # 2026-09-11(doc25 §20):上面那筆的 `probe=12` 是呼叫端設的上限,不是表的結尾。
+    # 兩張表的**完整**格數改由下面兩筆涵蓋,判準用 `is_handler_entry`(含共用尾段殘樁)。
+    # 這正是 `findings` 軸每輪報「15/15 相符」卻沒能擋下 doc25 §10 那個 0x356 偏移的原因:
+    # 表本身從來沒有整張被登記過。
+    ("212-event-table", "0x51b91 全域事件跳表格數(含共用尾段殘樁)", 90,
+     lambda: pointer_table_len(0x51B91, probe=120, predicate=is_handler_entry)),
+    ("212-command-table", "0x51d01 指令/法術跳表格數(含共用尾段殘樁)", 88,
+     lambda: pointer_table_len(0x51D01, probe=120, predicate=is_handler_entry)),
     ("248-class-151", "FDTXT_000[151] = 劍士", "劍士", lambda: _names()[151]),
     ("248-class-159", "class 9 + 0x96 -> 劍聖", "劍聖", lambda: _names()[159]),
     ("248-class-count", "職業名區段 151..178 非空數", 28,

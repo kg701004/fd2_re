@@ -246,13 +246,41 @@ def selftest() -> int:
     if not ok6:
         fails.append("分界的兩個 dword 也被判成入口,兩張表的界線因此沒有依據")
 
+    print("\n(7) 與 `verify_findings` 的判準必須逐格一致(兩套獨立實作,不是兩份複本)")
+    # 為什麼不是直接 import 它的 `is_function_entry`:那條路徑的位元組來源是
+    # `capstone_probe.fetch_bytes`,走 Ghidra headless(要 JVM,且在 WSL 下不可用),
+    # 而本工具刻意保持「只讀 EXE、免 capstone/免 JVM」,才能待在 verify_everything 的
+    # wsl 軸裡。所以改成**斷言兩套實作一致**——這比只留一份更強,也正是
+    # `verify_findings` 自己對 `image_ref_scan.py` 用的做法(「不要讓同一條程式碼被信兩次」)。
+    # 兩者的位元組來源不同(原始檔 + 0x10000 vs Ghidra 的已重定位映像),所以這是真的交叉核對。
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import verify_findings as VF
+        VF.segments()                       # WSL 無 capstone 時在這裡就會拋
+    except Exception as exc:                # noqa: BLE001
+        print(f"    SKIP:取不到 verify_findings 的位元組來源({str(exc)[:50]})")
+    else:
+        tb = all_tables(exe)
+        disagree = []
+        for name in TABLES:
+            for idx, row in tb[name]["slots"].items():
+                mine = row["verdict"] != "MID_BODY"
+                theirs = VF.is_handler_entry(int(row["entry"], 16))
+                if mine != theirs:
+                    disagree.append(f"{name}[{idx}] {row['entry']} 本工具={mine} VF={theirs}")
+        ok7 = not disagree
+        print(f"    {'PASS' if ok7 else 'FAIL'}: 逐格比對 "
+              f"{sum(t['count'] for t in (tb[k] for k in TABLES))} 格;分歧 {disagree[:3] or '無'}")
+        if not ok7:
+            fails.append(f"兩套判準分歧(代表其中一套漂移了):{disagree[:3]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(獨立路徑真值重現 + 32 格全為入口 + 嚴格遞增 + "
-          "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制)。")
+          "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制 + 與 verify_findings 的逐格一致)。")
     return 0
 
 
