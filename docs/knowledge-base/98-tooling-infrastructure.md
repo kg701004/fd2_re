@@ -4404,3 +4404,82 @@ WSL:`text_proximity --selftest`=0、`citations --selftest`=0、`citations --diff
 再一併處理;claim_coverage.py **沒有**接上這個共用模組 —— 它那次的判準從未成為
 程式碼,沒有東西要遷移,但未來若要把「已標訂正未登記」做成可重生工具,應該直接用
 `text_proximity.py` 而不是第四次重寫。
+
+## 2026-09-11 續六:「工具缺陷請修正」—— 全量突變掃描留下的 19 支工具,與三輪複掃
+
+### 起點
+
+當天的全量掃描(`verify_selftest_discrimination.py --offline --tries 12`,69 支)印出
+「逃掉但執行得到」26 個、分佈在 19 支工具。逐一判讀,不預設「逃掉 = 缺口」:每一個都要
+嘛補上能分辨的題目、再用**真的把突變寫進原始檔**的注入覆核,要嘛證明它是等價突變。
+
+### 第一輪:19 支的處理
+
+| 工具 | 缺口 | 修法 |
+|---|---|---|
+| `decode_fdicon.py` | 檔頭長度 `< 6`、tile 尺寸 `<= 256` 的邊界 | 成對邊界;`guard_fires` 以例外訊息字樣分辨「被哪一道守衛擋下」 |
+| `export_acting_resources.py` | `read_u32` 正邊界、`special` 遮罩 | 恰好 `len-4`;`0x01`(bit0 有、bit7 無)判別 `0x80`/`0x81` |
+| `export_story_index_map.py` | `len < 2`、glyph 181 排除邊界 | 成對長度 + 181/182 配對 |
+| `sync_native_field_events.py` | terrain 索引 `×4`、段起點 `3+16*3` | 抽出 `tile_in_terrain`;段起點以獨立算出的絕對 byte 反查 |
+| `sync_native_join_constructor.py` | 32 列門檻 | 31/32 列成對 |
+| `unpack_dat.py` | **既有題目標錯**:「目錄非單調遞增」其實被更早的對齊守衛擋下,從沒走到單調檢查 | 改用滿足對齊前提的目錄 `[14, 10]` |
+| `callgraph_le.py` | fixup 物件編號範圍 | 抽出 `fixup_target_base`;實測 7959 筆真實 fixup 中 0 筆編號無效 |
+| `dump_chapter_beats.py` | `any_unit_inactive` 迴圈辨識、budget 保險絲內外兩層條件 | 合成指令流 + fake cg(fixture 自己算錯過一次:第一鏈 4095 條 nop 會吃光 budget,把外層條件整個遮住;改成 4094+ret) |
+| `decode_figani.py` | RLE 游標前進量 | 兩個連續 token(單一 token 看不出游標超前) |
+| `derive_item_row_fields.py` | `range_min`/`range_max` | 直接斷言 |
+| `dosbox_exec_trace_analyze.py` | `native == 0` 不可被 `< 0` 過濾 | 邊界案例 |
+| `extract_all.py` | `stage_verdict` 缺鍵的預設值 | 斷言訊息裡真的是預設 0 |
+| `fd2_floodfill_stack_probe.py` | `levels`/`hit_edge` 的 `+1` | high=5;high=10、want=12 |
+| `sync_native_treasures.py` | 寶箱值的 offset | 以獨立絕對 offset 反查 |
+| `verify_generated_artifacts.py` | `check_one` 錯誤路徑 | 不存在的工具名,斷言 detail 是真的捕捉訊息而非 `rc=N` |
+| `verify_tool_hygiene.py` | `_encodable`、`_proves_ida_embedded` 的 detail | 直接測 + 獨立重算 stderr 末行 |
+| `worklist_status.py` | **既有題目被遮蔽**:`--append` 讓標記同時落在 head/tail 兩段,`>=`/`<` 突變看不出來 | 合成 `Item`,兩段保證不重疊 |
+
+等價突變(只加註解,不補裝飾性測試),各自用不同方式**證明**而非推定:
+
+| 位置 | 突變 | 證明方式 |
+|---|---|---|
+| `derive_ail_entry_points.py` L116 | `split("(", 1)` → `2` | 數學:`s.split(sep, n)[0]` 對任何 n≥1 相同 |
+| `fd2_crash_ladder.py` L271 | isinstance 檢查的 `args[1]` → `[2]` | 實測:22/22 個真實 `press()` 呼叫都恰好 3 個常數引數 |
+| `verify_generated_artifacts.py` L257 | `text=True` → `False` | 函式庫行為:給了 `encoding=` 就強制文字模式 |
+| `verify_event_dispatch_table.py` | TAIL_MERGED 下限 `0` → `1` | 對整個判別範圍 t∈[-5,-1] 全掃,全部 MID_BODY |
+| `dump_chapter_beats.py` L742 | `indent=1` → `2` | 由 artifacts 軸逐位元組比對覆蓋,實測判 DRIFT |
+| `audit_evidence_provenance.py` L654、`verify_truncation_robustness.py` ×3 | — | 已記於本日續三 |
+
+### 第二、三輪複掃
+
+| 輪次 | 可達逃逸 | 其中新的真缺口 |
+|---|---|---|
+| 第一輪(起點) | 19 支 / 26 個 | 16 |
+| 第二輪 | 11 支 / 17 個 | 2:`decode_fdicon` 的 tw 那一半;`verify_event_dispatch_table` 的 `t+5` 上限 `5→6`(新增第 (9) 題) |
+| 第三輪 | 10 支 / 15 個(69/69 有鑑別力) | 5,外加 1 個我自己引入的 bug |
+
+第三輪的 5 個:`decode_fdicon` offset 表守衛 `6→7`(長度剛好 = 檔頭 + cnt×4 必須放行);
+`export_acting_resources` 的 `beats` 遮罩 `0x7F`(第 (5) 題從沒斷言 beats,新增 (5b));
+`sync_native_field_events` 的 `len(terrain) % 4`(真實長度同時是 4 與 5 的倍數,抽出
+`terrain_len_aligned`,8/10 方向相反);`sync_native_join_constructor` 的 growth 那個 32;
+`dump_chapter_beats` 的外部區塊位址下限 `0 <= a`(fake cg 放一條 `jmp 0x0`)。
+
+### 第三輪挖到的:我自己引入的 NameError,以及它讓注入「通過」的方式
+
+第二輪把 `decode_fdicon` (3b) 的 `ok3b_size` 拆成 `_th`/`_tw`,失敗分支卻還留著
+`{ok3b_size}`。正常路徑不走那行,selftest 綠燈;而第二輪注入 tw `256→257` 時 EXIT=1 ——
+**那是 NameError 崩潰,不是乾淨的 FAIL 報告**。只看 exit code 分不出來。
+
+改正:注入腳本改成要求「輸出含 `SELFTEST FAILED` 且沒有 `Traceback`」,第三輪 6 個注入
+(含 tw 回歸案例)全部乾淨失敗、還原後 EXIT=0、位元組相同。另外對 20 支改過的工具做一次
+AST 掃描(讀取但從未被綁定的名稱;pyflakes 未安裝,不新增套件),掃描器先對一段必須被抓到
+的對照片段驗證會說「不」→ 20 支 0 個。
+
+### 反覆出現的兩個形狀
+
+1. **同一行的兄弟門檻**:`tw`/`th`(第二輪才發現)、`default_rows`/`growth_rows`(第三輪才
+   發現)。只測其中一個,另一個的同類突變照樣逃。一行有 N 個同構門檻,就要 N 組成對案例。
+2. **既有題目沒走到它宣稱測的程式**:`unpack_dat`、`worklist_status`。題目名稱不是證據,
+   要追到那一行真的被執行、而且被執行的方式能分辨突變。
+
+### 誠實範圍
+
+`--tries 12` 是隨機取樣,每一輪都會抽到新的突變;三輪的新真缺口 16 → 2 → 5,**不是單調
+收斂到零**,不能據此宣稱「已無缺口」。要下那個結論需要窮舉模式(每個常數各突變一次),
+本輪沒做。第三輪剩下的 15 個可達逃逸中,5 個已修、其餘全部是上表已證明的等價突變。

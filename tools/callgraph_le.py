@@ -47,6 +47,16 @@ def page_base_linear(meta, pg):
     return None
 
 
+def fixup_target_base(objs, objn):
+    """`objn`(1-based)這個 object 的 base;超出範圍回 0(防禦性後備值)。
+
+    2026-09-11 從 `fixup_map` 抽出來:全 7959 筆真實 fixup 記錄的 objn 都落在
+    1..len(objs) 內,這條 `else` 後備分支在真實資料上是死碼 —— 直接測 fixup_map
+    測不到它,得靠合成的 objn 值。
+    """
+    return objs[objn - 1]['base'] if 1 <= objn <= len(objs) else 0
+
+
 def fixup_map(d, meta):
     """{linear: target_abs}(32-bit offset fixups);涵蓋全部 object(code+data)。"""
     fixpage, fixrec = meta['fixpage'], meta['fixrec']
@@ -68,7 +78,7 @@ def fixup_map(d, meta):
                 trg = struct.unpack_from('<I', d, p)[0]; p += 4
             else:
                 trg = struct.unpack_from('<H', d, p)[0]; p += 2
-            base = meta['objs'][objn - 1]['base'] if 1 <= objn <= len(meta['objs']) else 0
+            base = fixup_target_base(meta['objs'], objn)
             fx[page_lin + srcoff] = base + trg
     return fx
 
@@ -268,13 +278,27 @@ def selftest():
     if not ok5:
         fails.append(f"fixup 表只有 {len(mine)} 筆,對照題等於空跑")
 
+    print("\n(6) fixup_target_base 的後備分支(合成輸入,真實資料量過是死碼)")
+    # 量過:全 7959 筆真實 fixup 記錄的 objn 都落在 1..len(objs) 內,這條 else
+    # 後備分支在真實資料上永遠不會被走到 —— 用合成 objn 直接測邊界本身。
+    objs = meta["objs"]
+    n = len(objs)
+    ok6 = (fixup_target_base(objs, 1) == objs[0]["base"]
+          and fixup_target_base(objs, n) == objs[n - 1]["base"]
+          and fixup_target_base(objs, 0) == 0
+          and fixup_target_base(objs, n + 1) == 0)
+    print(f"    {'PASS' if ok6 else 'FAIL'}: objn=1/{n} 回真實 base,"
+          f"objn=0/{n + 1}(超出範圍)回後備值 0")
+    if not ok6:
+        fails.append("fixup_target_base 的邊界不對")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(不變量 + 跨工具獨立實作對照 + 已知錨點 + "
-          "故障注入 + 非空控制)。")
+          "故障注入 + 非空控制 + fixup 後備分支邊界)。")
     return 0
 
 

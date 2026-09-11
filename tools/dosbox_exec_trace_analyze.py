@@ -112,6 +112,16 @@ def selftest() -> int:
     if not ok3:
         fails.append(f"壞行處理不正確:{sorted(nat3)}")
 
+    print("\n(3b) native == 0 是合法值,不能被當成負值濾掉")
+    # (3) 只測過負值會被濾掉,證明不了門檻是 `< 0` 而不是 `< 1` —— 兩者對真正的
+    # 負值案例(0x10)結果一樣。EIP 恰好等於 delta 時 native=0,必須保留。
+    nat3b, _ = run("0170:0019C000\n0170:001AC000\n")
+    ok3b = 0x0 in nat3b and 0x10000 in nat3b
+    print(f"    {'PASS' if ok3b else 'FAIL'}: natives={sorted(hex(n) for n in nat3b)}"
+          f"(應含 0x0 與 0x10000)")
+    if not ok3b:
+        fails.append(f"native==0 被誤濾掉:{sorted(nat3b)}")
+
     print("\n(4) 預設常數必須與 live harness 的既有記錄一致")
     ok4 = DEFAULT_DELTA == 0x19C000 and DEFAULT_CS == "0170"
     print(f"    {'PASS' if ok4 else 'FAIL'}: delta={DEFAULT_DELTA:#x}(應 0x19C000)、"

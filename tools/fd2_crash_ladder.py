@@ -261,6 +261,13 @@ def stage_actions() -> dict[str, list[str]]:
                     continue
                 f = sub.func
                 name = f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", "")
+                # 2026-09-11:突變測試把這裡的 sub.args[1] 改成 sub.args[2] 逃掉了。
+                # 查過:本檔全部 22 個 `.press(...)` 呼叫都恰好是 3 個引數
+                # (inst, key名稱, 計時 float),而 args[2] 同樣是 ast.Constant——
+                # 所以這個檢查改看哪一個引數,對現有呼叫形狀給出同一個真假值,
+                # 是量出來的等價突變,不是取樣沒打到。真正取值的那行(下面
+                # `out += [sub.args[1].value] * mult`)沒被動到,值本身仍然對 ——
+                # 這正是被 (5) 題(stage_e 的逐元素斷言)驗過的部分。
                 if name == "press" and len(sub.args) >= 2 and isinstance(sub.args[1], ast.Constant):
                     out += [sub.args[1].value] * mult
                 elif name == "select_ring":

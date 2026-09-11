@@ -34176,6 +34176,38 @@
    "excerpt": "`hygiene --cross-check`=0  `docs_cli`=0(126 支,無 docstring 仍是那 6 支",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 text_proximity.py 重構與 citations.py 的行為/測試,證據是同節的注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4426,
+   "excerpt_sha1": "2775e41efa1e32d90448db5b18e92fcc872cf2b0",
+   "excerpt": "| `callgraph_le.py` | fixup 物件編號範圍 | 抽出 `fixup_target_base`;實測 7959 筆真實 fixup 中 0 筆編號無效 |",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述 callgraph_le.py selftest 的突變缺口與修法;7959 筆是該工具對 LE fixup 表輸入的量測,用來判定邊界路徑能否被真實資料走到,證據是同節的注入結果與可重跑指令。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4443,
+   "excerpt_sha1": "820b5823f8630f9753a259814ed2d67be09145f7",
+   "excerpt": "| `fd2_crash_ladder.py` L271 | isinstance 檢查的 `args[1]` → `[2]` | 實測:22/22 個真實 `press()` 呼叫都恰好 3 個常數引數 |",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述 fd2_crash_ladder.py 原始碼內 press() 呼叫形狀的量測,用來證明一個突變是等價突變,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4446,
+   "excerpt_sha1": "165e1dd92348a109dd697375355be0923339744f",
+   "excerpt": "| `dump_chapter_beats.py` L742 | `indent=1` → `2` | 由 artifacts 軸逐位元組比對覆蓋,實測判 DRIFT |",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:描述 dump_chapter_beats.py 輸出的 indent 突變由 artifacts 軸覆蓋,證據是 verify_generated_artifacts.py 的逐位元組比對。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4485,
+   "excerpt_sha1": "d1e392ae05684ed43745f62b3ceefb397130729d",
+   "excerpt": "本輪沒做。第三輪剩下的 15 個可達逃逸中,5 個已修、其餘全部是上表已證明的等價突變。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:總結第三輪突變掃描逃逸的處理結果(已修/等價),證據是同節的注入結果與掃描輸出。"
   }
  ]
 }

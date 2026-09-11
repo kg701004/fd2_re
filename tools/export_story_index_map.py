@@ -176,6 +176,44 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"計數沒有鑑別力或有 0:{counts}")
 
+    print("\n(4b) `parse_fdtxt_strings` 開頭的長度守衛必須**恰好**是 2,不能是 3")
+    # 上面 (2) 的「只有 1 byte」只證明「太短會擋」,證明不了門檻剛好是 2 ——
+    # 突變測試把 `len(data) < 2` 改成 `< 3` 之後那個案例照樣通過。用訊息字樣分辨
+    # 是不是被*這一道*守衛擋下,而不是隨便哪個例外。
+    import tempfile as _tmp
+    with _tmp.TemporaryDirectory() as td:
+        p1 = Path(td) / "one.bin"
+        p1.write_bytes(b"\x00")
+        p2 = Path(td) / "two.bin"
+        p2.write_bytes(struct.pack("<H", 2))          # first_offset=2 == len(data),自洽的最小合法檔
+        blocked_at_1 = False
+        try:
+            parse_fdtxt_strings(p1)
+        except ValueError as exc:
+            blocked_at_1 = "shorter than the first offset" in str(exc)
+        blocked_at_2 = False
+        try:
+            parse_fdtxt_strings(p2)
+        except ValueError as exc:
+            blocked_at_2 = "shorter than the first offset" in str(exc)
+    ok4b = blocked_at_1 and not blocked_at_2
+    print(f"    {'PASS' if ok4b else 'FAIL'}: 1 byte 被這道守衛擋下={blocked_at_1}、"
+          f"2 bytes(自洽最小檔)不被這道守衛擋下={not blocked_at_2}")
+    if not ok4b:
+        fails.append(f"長度守衛邊界不對:1 byte 擋下={blocked_at_1}, 2 bytes 擋下={blocked_at_2}")
+
+    print("\n(4c) glyph 181(0x00B5)的排除必須**恰好是** 181,不能是 182")
+    # count_logical_utterances 的 fallback 路徑排除 (0x00B5, OPEN_GLYPH) 兩個特定字。
+    # 目前只透過真實 FDTXT 檔間接測到,若那些檔案剛好沒有踩中 181 這個邊界值,
+    # 突變(181->182)不會被任何既有題目發現。直接構造判別案例。
+    excluded = count_logical_utterances([0x00B5])
+    included = count_logical_utterances([182])
+    ok4c = excluded == 0 and included == 1
+    print(f"    {'PASS' if ok4c else 'FAIL'}: [0x00B5] 不算發話 -> {excluded}(應 0);"
+          f"[182] 算一則發話 -> {included}(應 1)")
+    if not ok4c:
+        fails.append(f"glyph 181 排除不對:excluded={excluded}, included={included}")
+
     print("\n(5) 對照:OPEN_GLYPH 是承重的常數,換成舊的 557 三個回歸值必須全變")
     def count_with(words, og):
         starts, chunk = 0, []
@@ -206,8 +244,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(ch00 歸屬計數回歸 + 嚴格驗證 4 種 + 終止符不變量 + "
-          "非恆真控制 + OPEN_GLYPH 承重對照)。")
+    print("\n--selftest passed(ch00 歸屬計數回歸 + 嚴格驗證 4 種 + 長度守衛邊界 + "
+          "glyph 181 排除判別 + 終止符不變量 + 非恆真控制 + OPEN_GLYPH 承重對照)。")
     return 0
 
 

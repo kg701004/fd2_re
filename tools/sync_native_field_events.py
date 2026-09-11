@@ -47,6 +47,26 @@ def resource_index(path):
     return int(os.path.basename(path).split("_")[1].split(".")[0])
 
 
+def tile_in_terrain(tile, terrain_len):
+    """`tile` 這個 terrain 索引(每筆 4 bytes)是否落在 `terrain_len` bytes 範圍內。
+
+    2026-09-11 從 `expected()` 的行內判準抽出來:原本的邊界(`tile * 4 >= terrain_len`)
+    只被既有 selftest 用全 0 的合成 `tiles` 陣列間接測到,`tile` 恆為 0,乘 4 或乘 5
+    結果都是 0,突變測不出差異。抽成函式後才能直接餵邊界值進來,不必先算出一份
+    真實地圖裡剛好卡在門檻上的 tile 索引。
+    """
+    return not (tile < 0 or tile * 4 >= terrain_len)
+
+
+def terrain_len_aligned(terrain_len: int) -> bool:
+    """terrain 表是否由整數筆 4-byte 記錄組成。
+
+    2026-09-11 從 `expected()` 的行內判準(`len(terrain) % 4`)抽出來:真實 terrain
+    長度剛好同時是 4 與 5 的倍數,突變成 `% 5` 時真實資料測不出差異,只能直接餵值。
+    """
+    return terrain_len % 4 == 0
+
+
 def expected(raw, map_index, map_data):
     fields = sorted(
         glob.glob(os.path.join(raw, "FDFIELD", "*.bin")),
@@ -63,12 +83,12 @@ def expected(raw, map_index, map_data):
     if map_data.get("w") != w or map_data.get("h") != h:
         raise ValueError(f"map{map_index}: dimensions differ")
     tiles = map_data.get("tiles")
-    if len(tiles or []) != w * h or len(terrain or []) % 4:
+    if len(tiles or []) != w * h or not terrain_len_aligned(len(terrain or [])):
         raise ValueError(f"map{map_index}: raw terrain provenance invalid")
 
     slots = []
     for cell, tile in enumerate(tiles):
-        if tile < 0 or tile * 4 >= len(terrain):
+        if not tile_in_terrain(tile, len(terrain)):
             slots.append(-1)
             continue
         event_word = struct.unpack_from("<H", comp, 6 + cell * 4)[0]
@@ -173,13 +193,48 @@ def selftest():
     except ImportError as exc:
         print(f"    SKIP: 無法 import sync_native_treasures({exc})")
 
+    print("\n(6) tile_in_terrain 的邊界必須**恰好是** ×4,不能是 ×5")
+    # 突變測試發現:原本的判準只被全 0 的合成 tiles 間接測到,tile 恆為 0,
+    # ×4 與 ×5 算出同一個結果(都是 0),測不出差異。直接餵邊界值。
+    ok6 = (tile_in_terrain(24, 100) and not tile_in_terrain(25, 100)
+          and not tile_in_terrain(-1, 100))
+    print(f"    {'PASS' if ok6 else 'FAIL'}: terrain_len=100 時,"
+          f"tile=24(24*4=96<100)在範圍內={tile_in_terrain(24, 100)}、"
+          f"tile=25(25*4=100>=100)不在範圍內={not tile_in_terrain(25, 100)}")
+    if not ok6:
+        fails.append("tile_in_terrain 的邊界不是 ×4")
+
+    print("\n(6b) terrain 長度對齊判準必須**恰好是** % 4,不能是 % 5")
+    # 突變測試量到 `len(terrain) % 4` 改成 `% 5` 逃掉:真實 terrain 長度同時是 4 與 5
+    # 的倍數,兩者都判合法。8(%4=0、%5=3)與 10(%4=2、%5=0)正好方向相反。
+    ok6b = terrain_len_aligned(8) and not terrain_len_aligned(10)
+    print(f"    {'PASS' if ok6b else 'FAIL'}: 8 bytes 合法={terrain_len_aligned(8)}、"
+          f"10 bytes 不合法={not terrain_len_aligned(10)}")
+    if not ok6b:
+        fails.append("terrain 長度對齊判準不是 % 4")
+
+    print("\n(7) 指令/選擇器段的起點 offset 必須**恰好是** 3+16*3=51,"
+          "用獨立算出的絕對位置反查同一份 control bytes")
+    # 突變測試發現:`offset = 3 + 16 * 3`裡任一個 3 或 16 被改掉,既有題目都測不到——
+    # events[]/selector 從來沒有跟獨立算出的絕對 byte 位置對照過。
+    control_bytes = open(fields[1], "rb").read()
+    want_offset = 3 + 16 * 3
+    ok7 = (want_offset == 51
+          and events[0]["event_id"] == control_bytes[want_offset]
+          and events[0]["selector"] == control_bytes[want_offset + 1]
+          and events[15]["event_id"] == control_bytes[want_offset + 15 * 2])
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 手算 offset={want_offset},"
+          f"events[0]/[15] 與獨立讀出的 bytes 逐一相符={ok7}")
+    if not ok7:
+        fails.append(f"events[] 讀到的內容與獨立算出的 offset={want_offset} 對不上")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(16 筆控制段不變量 + 來源自我標示 + 維度檢查 + "
-          "非恆真控制 + 跨工具對照)。")
+          "非恆真控制 + 跨工具對照 + terrain 邊界 + offset 絕對位置反查)。")
     return 0
 
 

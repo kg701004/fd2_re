@@ -690,6 +690,17 @@ def selftest() -> int:
         fails.append(f"lazy_import 規則失衡:漏抓={not okA}、"
                      f"try 形式偽陽性={bool(tryform)}、函式內偽陽性={bool(local)}")
 
+    print("\n(2c2) `_encodable` 必須真的分辨得出「可編」與「不可編」,不能恆為同一個答案")
+    # 現有的 (2d) 只驗 docstring_console_risk 的 is-None/is-not-None,兩種情況都
+    # 至少有一個字元判定 True 或至少一個判定 False,不管 _encodable 內部答案對不對
+    # 都能通過 —— 因為它只在「整份 docstring 編不出來」時才被呼叫,這時不論每個
+    # 字元各自真假,`bad` 集合是否為空的結論不變。直接測 _encodable 本身。
+    ok2c2 = _encodable("a", "cp950") is True and _encodable("↔", "cp950") is False
+    print(f"    {'PASS' if ok2c2 else 'FAIL'}: ASCII 'a' 可編={_encodable('a', 'cp950')}(應 True)、"
+          f"'↔' 可編={_encodable(chr(0x2194), 'cp950')}(應 False)")
+    if not ok2c2:
+        fails.append("_encodable 對可編/不可編字元給出同一個答案")
+
     print("\n(2d) docstring 編碼風險:print(__doc__) 這條路徑的配對控制")
     # verify_docs_match_cli 只看 print 的字面字串,看不到 print(__doc__)。
     # disasm_le.py / le_xref.py 的 docstring 都含 `↔`,兩支無參數執行時都會崩,
@@ -737,6 +748,28 @@ def selftest() -> int:
           f"無法驗證 {unproven or '無'},驗證不成立 {disproven or '無'}")
     if unproven or disproven:
         fails.append(f"永久豁免的宣稱站不住:{(unproven + disproven)[:3]}")
+
+    print("\n(3b2) `_proves_ida_embedded` 的診斷訊息必須真的是**最後一行**,不是倒數第二行")
+    # (3b) 只驗 prover(...) 的布林值,detail 字串從沒被比對過 —— 該函式的
+    # ok 判定(returncode/ModuleNotFoundError/ida 三個條件)根本不依賴 tail,
+    # 所以 tail[-1] 改成 tail[-2] 不會讓 (3b) 有任何感覺。直接對真實 ida_* 檔案
+    # 跑一次,拿 detail 與獨立重算的最後一行交叉比對。
+    ida_names = [e["name"] for e in perm if e.get("permanent") == "ida_embedded"]
+    if ida_names:
+        name = ida_names[0]
+        ok3c_ok, detail = _proves_ida_embedded(name)
+        import subprocess as _sp
+        rp = _sp.run([sys.executable, str(TOOLS / name)], capture_output=True, text=True,
+                     encoding="utf-8", errors="replace", timeout=120)
+        err_lines = [l for l in (rp.stderr or "").strip().splitlines() if l.strip()]
+        want_last = err_lines[-1][:70] if err_lines else f"rc={rp.returncode}"
+        ok3c = ok3c_ok and detail == want_last
+        print(f"    {'PASS' if ok3c else 'FAIL'}: {name} 的 detail={detail!r},"
+              f"獨立重算的最後一行={want_last!r}")
+        if not ok3c:
+            fails.append(f"_proves_ida_embedded 的 detail 不是最後一行:{detail!r} != {want_last!r}")
+    else:
+        print("    SKIP: 基準線裡沒有 ida_embedded 條目")
 
     print("\n(3c) lost_input 的配對控制:三種不成立的情況都必須被擋下")
     # 正例只證明它會說 True。這三個反例來自 repo 裡真的存在的產物,分別對應

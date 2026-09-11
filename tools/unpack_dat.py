@@ -119,7 +119,11 @@ def selftest():
         ("magic 不對", _make_container([14, 17], [b"abc", b"defgh"], magic=b"XXXXXX")),
         ("目錄起點 < 6", MAGIC + struct.pack("<I", 4) + b"junkjunk"),
         ("目錄起點未對齊 4", MAGIC + struct.pack("<I", 15) + b"j" * 20),
-        ("目錄非單調遞增", _make_container([20, 14], [b"abcdefgh", b"ij"])),
+        # 2026-09-11:原本寫 `_make_container([20, 14], ...)`——offs[0]=20 在
+        # 走到單調遞增檢查**之前**就先被「目錄起點未對齊 4」那條規則擋下了
+        # ((20-6)%4=2≠0),這一題其實從未測到 `range(n-1)` 那段迴圈。n=2 時
+        # offs[0] 必須恰好等於 `6+4*len(offsets)`=14,才會真的走到單調遞增檢查。
+        ("目錄非單調遞增", _make_container([14, 10], [b"", b""])),
         # n=1 時最後一筆就是 first,而 first<=len 前面已檢查過,那條規則永遠不會觸發
         # —— 必須用 n=2 才測得到。第一版寫成 n=1,這題白過了一次。
         ("最後一筆超出檔尾",

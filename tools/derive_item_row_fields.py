@@ -252,6 +252,17 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"放寬門檻沒有造成誤配,(3) 因此是平凡的:{loose}")
 
+    print("\n(4b) `range_min`/`range_max` 必須讀**不同**的索引(0 與 1),不能兩個都讀 [1]")
+    # 現有題目都用真實 items,range 陣列裡剛好沒有 min==max 的案例來分辨兩個 lambda
+    # 讀到的到底是哪個索引。用最小合成 items(不依賴真實檔案)直接釘住。
+    synth_fields = scalar_fields([{"range": [5, 9]}])
+    got_min, got_max = synth_fields["range_min"]({"range": [5, 9]}), synth_fields["range_max"]({"range": [5, 9]})
+    ok4b = got_min == 5 and got_max == 9
+    print(f"    {'PASS' if ok4b else 'FAIL'}: range=[5,9] 時 range_min={got_min}(應 5)、"
+          f"range_max={got_max}(應 9)")
+    if not ok4b:
+        fails.append(f"range_min/range_max 索引不對:min={got_min}, max={got_max}")
+
     print("\n(5) 鏡像與常數欄位的機械偵測必須非空且可解釋")
     mir, const = mirrored_offsets(rows), constant_offsets(rows)
     ok5 = (0x11, 0x15) in mir and 0x16 in const

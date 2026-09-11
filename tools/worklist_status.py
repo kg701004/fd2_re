@@ -353,6 +353,24 @@ def selftest() -> int:
     if not ok5:
         fails.append("587 的逆序子項目規則不成立")
 
+    print("\n(5b) newest_segment 的 head/tail 日期比較必須**恰好是** >=,不能是 <")
+    # 下面 (6) 用真實 --append 測往返,但附加的新 bullet 恰好落在 head_seg 收集的
+    # 那段「前綴 run」範圍內,兩個判準(>= 與 <)在那個具體案例上剛好殊途同歸——
+    # 突變測試量到 >=/< 這個比較本身沒有被單獨釘住。這裡繞開檔案讀寫,直接構造
+    # 一個 head/tail 明確不重疊的 Item:tail 的日期比 head 新,且 tail 的內容
+    # 被 head 的前綴收集規則(遇到不是 `*` 開頭的行就停)擋在外面。
+    synth = Item(num="999", cls="A", start=0, lines=[
+        "1 - A - 舊標題 **2020-01-01** 內容",
+        "  * head bullet",
+        "not a bullet line",
+        "  * **2099-01-01 TAIL-MARK**",
+    ])
+    ok5b = "TAIL-MARK" in synth.newest_segment and "head bullet" not in synth.newest_segment
+    print(f"    {'PASS' if ok5b else 'FAIL'}: tail 日期較新 -> 選到 tail(含 TAIL-MARK,"
+          f"不含 head bullet)={ok5b}")
+    if not ok5b:
+        fails.append(f"head/tail 日期比較不對:{synth.newest_segment[:80]!r}")
+
     print("\n(6) 往返:--append 後該項最新一段須含新文字,且其他項目逐字元不變")
     import tempfile
     import shutil
@@ -437,7 +455,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(5 正向 + 1 故障注入 + 1 往返 + 1 負向控制 "
+    print("\n--selftest passed(5 正向 + 1 故障注入 + head/tail 日期比較的孤立配對 + "
+          "1 往返 + 1 負向控制 "
           "+ 嚴格/候選兩層判準的四個成對案例與非平凡性)。")
     return 0
 

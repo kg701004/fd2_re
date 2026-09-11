@@ -137,6 +137,37 @@ def selftest() -> int:
                 print(f"    FAIL: 「{label}」丟出 {type(exc).__name__}")
                 fails.append(f"{label} 丟出 {type(exc).__name__}")
 
+    print("\n(3b) 32 列門檻必須**恰好是** 32,不能是 33")
+    # (3) 的「表不足 32 列」案例只給 10 列,證明不了門檻剛好是 32 —— 突變把它
+    # 改成 33 之後,10 列還是照樣被擋,題目看不出差異。用剛好 31/32 列配對。
+    with tempfile.TemporaryDirectory() as td:
+        d31 = Path(td) / "d31.json"
+        d31.write_text(json.dumps(defaults[:31], ensure_ascii=False), encoding="utf-8")
+        d32 = Path(td) / "d32.json"
+        d32.write_text(json.dumps(defaults[:32], ensure_ascii=False), encoding="utf-8")
+        # 同一行有兩個 32(defaults 與 growth 各一):突變測試量到只測 defaults 那一半,
+        # growth 那一半的 32->33 會逃掉 —— 兩個門檻各自成對測,不能共用一組案例。
+        g31 = Path(td) / "g31.json"
+        g31.write_text(json.dumps(growth[:31], ensure_ascii=False), encoding="utf-8")
+        g32 = Path(td) / "g32.json"
+        g32.write_text(json.dumps(growth[:32], ensure_ascii=False), encoding="utf-8")
+
+        def blocked(d, g):
+            try:
+                build(ref, d, g)
+            except ValueError:
+                return True
+            return False
+
+        blocked_31, blocked_32 = blocked(d31, grw), blocked(d32, grw)
+        g_blocked_31, g_blocked_32 = blocked(dfl, g31), blocked(dfl, g32)
+    ok3b = blocked_31 and not blocked_32 and g_blocked_31 and not g_blocked_32
+    print(f"    {'PASS' if ok3b else 'FAIL'}: defaults 31 列被擋={blocked_31}、32 列不被擋="
+          f"{not blocked_32};growth 31 列被擋={g_blocked_31}、32 列不被擋={not g_blocked_32}")
+    if not ok3b:
+        fails.append(f"32 列門檻不對:defaults 31/32 擋={blocked_31}/{blocked_32}, "
+                     f"growth 31/32 擋={g_blocked_31}/{g_blocked_32}")
+
     print("\n(4) 非恆真控制:上面全都丟錯也會通過,所以確認正向那半仍建得出來")
     ok4 = len(build(ref, dfl, grw)["rows"]) == 32
     print(f"    {'PASS' if ok4 else 'FAIL'}: 真實輸入仍建出 32 列")
@@ -149,7 +180,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(stride 跨工具對照 + 正向 + 四條驗證的故障注入 + "
-          "非恆真控制)。")
+          "32 列門檻配對 + 非恆真控制)。")
     return 0
 
 

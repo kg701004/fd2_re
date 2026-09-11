@@ -120,6 +120,16 @@ def selftest():
     if not ok2:
         fails.append(f"截斷仍不安全:{bad}")
 
+    print("\n(2b) 模式 0/1 讀值後的游標必須**恰好前進 1**,不能是 2")
+    # (1) 的案例都只有單一 token(讀完值,串流剛好結束),游標多跳 1 byte 不會被
+    # 後面任何東西讀到,測不出差異。用兩個連續 token 才能讓第二個控制位元組
+    # 被錯誤位移的游標讀歪。
+    two_tokens = decode_rle(b"\x00\xAA\x00\xBB", 2, 1)     # 兩個「c=0(色彩run,cnt=1)」token
+    ok2b = two_tokens == b"\xAA\xBB"
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 兩個連續 token -> {two_tokens.hex()}(應 aabb)")
+    if not ok2b:
+        fails.append(f"模式 0 讀值後的游標位移不對:{two_tokens.hex()} != aabb")
+
     print("\n(3) 跨工具對照:同族文法的獨立實作(decode_sprite)必須一致")
     _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
     try:

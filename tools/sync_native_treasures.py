@@ -200,6 +200,20 @@ def selftest():
         fails.append(f"寶箱表看起來沒被真的讀到:chests={len(chests)}、"
                      f"相異列={len(row_bytes)}")
 
+    print("\n(2c2) 寶箱 value 的位元組位置必須**恰好是** native_type 之後 1 byte")
+    # (2c) 只證明表格有被讀到、逐列不全一樣,證明不了 value 讀的是哪個位移。
+    # 直接用獨立算出的絕對位置(CHEST_TABLE_OFFSET + slot*CHEST_STRIDE + 1)
+    # 反查同一份 control bytes,逐筆比對。
+    mism = [(c["slot"], c["value"],
+            struct.unpack_from("<H", control, CHEST_TABLE_OFFSET + c["slot"] * CHEST_STRIDE + 1)[0])
+           for c in chests]
+    ok2c2 = bool(mism) and all(v == ref for _, v, ref in mism)
+    print(f"    {'PASS' if ok2c2 else 'FAIL'}: {len(mism)} 個寶箱,"
+          f"value 與獨立算出的絕對位置逐筆相符={all(v == ref for _, v, ref in mism)}")
+    if not ok2c2:
+        bad2 = [(s, v, ref) for s, v, ref in mism if v != ref]
+        fails.append(f"寶箱 value 的位移不對(slot,實得,應得):{bad2[:3] or '沒有任何寶箱可比對'}")
+
     print("\n(2d) 地形旗標判定:用合成地形釘住遮罩、stride 與哨兵值")
     # 2026-09-11:突變測試指出 `0x60`、地形 stride `4`、`-1` 三者「可達但無人看管」——
     # 原本只斷言 slots/hidden 的**長度**。前提不是我推的:doc25 §785 記載原版

@@ -116,6 +116,13 @@ def classify(code: bytes, code_base: int, addr: int) -> tuple[str, str]:
             tgt = addr + 10 + rel
         # 跳到的地方必須就是某個 CLEAN_PROLOGUE 的 `call __STK`,否則不算共用尾段。
         t = tgt - code_base
+        # 2026-09-11:突變測試把開頭的 0 改成 1 逃掉了。查過是可證明的等價突變:
+        # 這個下界只在 t∈[-5,-1] 時與 `1<=t+5` 給出不同的布林值,而掃過整個範圍
+        # 實測 —— 對這五個 t 值,不論在 wraparound 命中的位置放什麼陷阱位元組,
+        # `classify()` 都回傳 MID_BODY,原因是下一行 `code[t+1:t+5]` 這個 slice
+        # 對負的 t 不會像單一索引那樣做 wraparound(`code[-4:0]` 這類切片在
+        # start>stop 時直接是空切片),導致 r2 算不出配對值。上界(t+5<=len(code))
+        # 才是真正承重的那一半,已由 selftest (9) 釘住。
         if 0 <= t + 5 <= len(code) and code[t] == CALL_REL32:
             r2 = int.from_bytes(code[t + 1:t + 5], "little", signed=True)
             if tgt + 5 + r2 == STACK_PROBE:
@@ -303,6 +310,36 @@ def selftest() -> int:
     elif not ok8:
         fails.append(f"往回呼叫的序頭被誤判:{v_back}(有號/無號解讀出錯)")
 
+    print("\n(9) TAIL_MERGED_STUB 的越界防呆必須**恰好貼齊** len(code),不能多容忍 1 byte")
+    # 突變測試發現:`0 <= t + 5 <= len(code)` 的 `5` 改成 `6` 逃掉。真實跳表格從不
+    # 落在 code object 最尾端,所以邊界從沒被真的踩過。合成一段程式碼,讓 jmp
+    # 目標恰好落在 code 陣列的最後 5 個 byte(合法、應判成 TAIL_MERGED_STUB)與
+    # 再往後 1 byte(不合法,code[t+1:t+5] 會讀出陣列外,應判成 MID_BODY)。
+    tail_len = 20
+    tail_code_base = 0
+
+    def make_tail(t: int) -> bytes:
+        buf = bytearray(tail_len)
+        buf[0] = PUSH_IMM32
+        buf[1:5] = (0x1234).to_bytes(4, "little")
+        buf[5] = JMP_REL32
+        tgt = t                                     # tail_code_base = 0,故 tgt == t
+        rel = tgt - 10
+        buf[6:10] = rel.to_bytes(4, "little", signed=True)
+        if 0 <= t and t + 5 <= tail_len:
+            buf[t] = CALL_REL32
+            r2 = STACK_PROBE - (tgt + 5)
+            buf[t + 1:t + 5] = r2.to_bytes(4, "little", signed=True)
+        return bytes(buf)
+
+    v_ok = classify(make_tail(tail_len - 5), tail_code_base, 0)[0]     # t+5 == len(code),應通過
+    v_over = classify(make_tail(tail_len - 4), tail_code_base, 0)[0]   # t+5 == len(code)+1,應拒絕
+    ok9 = v_ok == "TAIL_MERGED_STUB" and v_over == "MID_BODY"
+    print(f"    {'PASS' if ok9 else 'FAIL'}: 恰好貼齊 len(code) -> {v_ok}(應 TAIL_MERGED_STUB)、"
+          f"多 1 byte -> {v_over}(應 MID_BODY)")
+    if not ok9:
+        fails.append(f"TAIL_MERGED_STUB 的越界邊界不對:{v_ok}/{v_over}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -310,7 +347,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(獨立路徑真值重現 + 32 格全為入口 + 嚴格遞增 + "
           "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制 + 與 verify_findings 的逐格一致 + "
-          "往回呼叫的合成案例)。")
+          "往回呼叫的合成案例 + TAIL_MERGED_STUB 越界邊界)。")
     return 0
 
 

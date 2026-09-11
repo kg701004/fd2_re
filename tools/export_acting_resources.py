@@ -105,6 +105,19 @@ def selftest() -> int:
         except ValueError:
             print(f"    PASS: 「{label}」-> ValueError")
 
+    print("\n(3b) read_u32 的邊界必須**恰好**在 len(data)-4,不能是 len(data)-5")
+    # 上面全是「越界要擋」的案例,證明不了門檻剛好是 `offset + 4 > len(data)`。
+    # 突變測試把 4 改成 5,(3) 的三個案例照樣全過。這裡補「剛好貼齊檔尾」的正向配對。
+    try:
+        v = read_u32(data, len(data) - 4, "probe")
+        ok3b = True
+    except ValueError:
+        v = None
+        ok3b = False
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 恰好 len(data)-4 = {v}")
+    if not ok3b:
+        fails.append("read_u32 在 offset=len(data)-4 這個合法邊界被誤擋")
+
     print("\n(4) parse_resource 的起點越界與 frame_count=0 必須被擋下")
     try:
         parse_resource(data, len(data) + 1, 0)
@@ -120,13 +133,39 @@ def selftest() -> int:
     except ValueError:
         print("    PASS: frame_count=0 -> ValueError")
 
+    print("\n(5) `special` 旗標的位元遮罩必須**恰好是** 0x80,不能是 0x81")
+    # 突變測試把 `duration_raw & 0x80` 改成 `& 0x81`:上面所有真實/合成資料剛好都
+    # 沒有 bit0=1、bit7=0 的 duration_raw,兩種遮罩算出同樣的真假值,逃得掉。
+    # 遮罩 0x80 與 0x81 只在「bit0=1 且 bit7=0」時給出不同答案,所以直接構造這個
+    # duration_raw 值(0x01)當判別案例,另配一個 bit7=1 的正向案例。
+    no_special = parse_resource(bytes([1, 0x01, 0]), 0, 0)[0]
+    has_special = parse_resource(bytes([1, 0x80, 0]), 0, 0)[0]
+    ok5 = "special" not in no_special and has_special.get("special") is True
+    print(f"    {'PASS' if ok5 else 'FAIL'}: duration_raw=0x01(bit0 set,bit7 clear) -> "
+          f"{no_special};duration_raw=0x80(bit7 set) -> {has_special}")
+    if not ok5:
+        fails.append(f"special 旗標的遮罩不對:0x01->{no_special}, 0x80->{has_special}")
+
+    print("\n(5b) `beats` 的位元遮罩必須**恰好是** 0x7F")
+    # 突變測試量到 `duration_raw & 0x7F` 改成 `& 0x80` 逃掉:(5) 只斷言 special,
+    # 從沒斷言過 beats 的值。0x01 -> 1 拍、0x80 -> 0 拍、0x85 -> 5 拍且 special,
+    # 三個案例把低 7 位與 bit7 分開釘住。
+    beats_85 = parse_resource(bytes([1, 0x85, 0]), 0, 0)[0]
+    ok5b = (no_special.get("beats") == 1 and has_special.get("beats") == 0
+            and beats_85.get("beats") == 5 and beats_85.get("special") is True)
+    print(f"    {'PASS' if ok5b else 'FAIL'}: 0x01 -> {no_special.get('beats')} 拍、"
+          f"0x80 -> {has_special.get('beats')} 拍、0x85 -> {beats_85}")
+    if not ok5b:
+        fails.append(f"beats 的遮罩不對:0x01->{no_special}, 0x80->{has_special}, "
+                     f"0x85->{beats_85}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(現行常數 106/106 + 舊常數對照 + read_u32 邊界 ×3 + "
-          "parse_resource 兩條拒絕路徑)。")
+          "邊界正向配對 + parse_resource 兩條拒絕路徑 + special 遮罩判別)。")
     return 0
 
 

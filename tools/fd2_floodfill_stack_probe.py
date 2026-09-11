@@ -235,6 +235,23 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"高度換算不正確:{r}")
 
+    print("\n(4b) `levels`/`hit_edge` 的 +1 必須**恰好是** +1,不能是 +2")
+    # (4) 的 high=20 剛好讓 `(high+1)//7` 與 `(high+2)//7` 樓地板除法算出同一個
+    # 商(21//7=22//7=3),`hit_edge` 的兩個門檻也都離邊界太遠——突變測試量到
+    # 這兩個字面值單獨逃掉。用會分岔的數字直接配對釘住。
+    levels_before = bytearray(64); levels_before[5] = 1                 # high=5
+    r_levels = analyse_diff(bytes(64), bytes(levels_before), 64)
+    ok4b_levels = r_levels["levels"] == 0          # (5+1)//7=0;改 +2 會變成 1
+    edge_buf = bytearray(64); edge_buf[10] = 1                          # high=10
+    r_edge2 = analyse_diff(bytes(64), bytes(edge_buf), want=12)
+    ok4b_edge = not r_edge2["hit_edge"]             # 10+1=11<12;改 +2 會變成 12>=12=True
+    ok4b = ok4b_levels and ok4b_edge
+    print(f"    {'PASS' if ok4b else 'FAIL'}: high=5 -> levels={r_levels['levels']}(應 0);"
+          f"high=10,want=12 -> hit_edge={r_edge2['hit_edge']}(應 False)")
+    if not ok4b:
+        fails.append(f"levels/hit_edge 的 +1 不對:levels={r_levels['levels']}, "
+                     f"hit_edge={r_edge2['hit_edge']}")
+
     print("\n(5) 短讀必須獨立成一類,且鄰近全域都在軟堆疊下方")
     short = analyse_diff(bytes(10), bytes(64), 64)
     above = {hex(a): v for a, v in NEIGHBOURS.items() if a >= SOFT_STACK_GHIDRA}

@@ -226,6 +226,20 @@ def selftest() -> int:
     if not ok2:
         fails.append(f"單階段失敗未被擋下:{one_problems}")
 
+    print("\n(2b) 訊息裡回報的計數必須是**真的讀到的值**,不是後備預設值")
+    # 目前唯一的呼叫端(main())一定會完整給滿 4 個 key,所以 `.get(name, 0)` 的
+    # 後備值在實際使用中從未被走到 —— 但函式簽章沒有禁止呼叫端漏給某個 key,
+    # 這是型別提示允許、也值得單獨驗證的防禦性行為:缺鍵時訊息要老實顯示 0,
+    # 不能被之後任何字面值竄改影響。
+    missing_key_ok, missing_key_problems = stage_verdict({"raw": 1006, "images": 40}, [])
+    ok2b = (not missing_key_ok
+           and any("animations/ 產出 0 個" in p for p in missing_key_problems)
+           and any("music/ 產出 0 個" in p for p in missing_key_problems))
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 缺 animations/music 兩個 key -> "
+          f"{missing_key_problems}")
+    if not ok2b:
+        fails.append(f"缺 key 時的回報計數不對:{missing_key_problems}")
+
     print("\n(3) 被例外略過的階段必須進入判斷,而不是只留一行日誌")
     # portraits/ 與 maps/ 是 try/except 包起來的,原本例外只變成一行
     # 「略過(...)」寫進 INDEX.md,整體照樣 rc=0。

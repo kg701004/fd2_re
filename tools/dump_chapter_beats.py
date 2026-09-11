@@ -735,6 +735,10 @@ def cmd_all(cg, fx, outdir, quiet=False):
             path = os.path.join(outdir, f'ch{ch:02d}_{tag}.json')
             attach_notes(f'ch{ch:02d}_{tag}.json', data['beats'], notes)
             with open(path, 'w', encoding='utf-8') as f:
+                # `indent=1` 沒有在本檔自己的 selftest 裡另外釘住(突變測試量到的
+                # 逃逸):這份輸出登記在 verify_generated_artifacts.py 的 REGISTRY
+                # (mode="dir"),artifacts 軸每輪重跑並逐位元組比對,已實測 indent
+                # 改成 2 會被那一軸判 DRIFT。不在這裡重複同一件事。
                 json.dump(data, f, ensure_ascii=False, indent=1)
             ops = {}
             for b in walk_beats(data['beats']):
@@ -881,6 +885,94 @@ def selftest():
           f"認不出來退回扁平={ok2c2}")
     if not ok2c:
         fails.append(f"短路 AND 的兩極不成立:合成={ok2c1}、退回扁平={ok2c2}")
+
+    print("\n(2d) `any_unit_inactive` 迴圈辨識:缺了那條 `test` 指令就不該辨識出來")
+    # 這是與 (2b)/(2c) 不同的另一個辨識器(555 行起的迴圈形狀:xor 起點/mov 計數器/
+    # cmp 終點/inc/最後一個 test byte ptr[x+5],1 才算「真的測過 inactive」)。
+    # artifacts 軸重跑全部真實章節 beats 逐位元組比對(61 個資源,0 個非確定性產出)
+    # 確認過這個形狀在真實資料裡從未被觸發到與否無關 —— 這裡直接用合成指令流測。
+    def _loop_stream(with_test):
+        ins = [_I(0x000, 'xor', 'edi, edi'), _I(0x004, 'mov', 'ecx, 5'),
+              _I(0x008, 'mov', 'edi, 1'), _I(0x00c, 'cmp', 'ecx, 9')]
+        if with_test:
+            ins.append(_I(0x010, 'test', 'byte ptr [eax + 5], 1'))
+        ins += [_I(0x014, 'inc', 'ecx'), _I(0x018, 'movzx', 'eax, edi'),
+                _I(0x01c, 'test', 'eax, eax'), _I(0x020, 'jne', '0x040'),
+                _I(0x024, 'call', '0x88888'), _I(0x028, 'jmp', '0x060'),
+                _I(0x040, 'call', '0x99999'), _I(0x060, 'push', '3')]
+        return ins
+    with_test = _loop_stream(True)
+    without_test = _loop_stream(False)
+    ops_with = [b['op'] for b in
+               structure_control_flow(with_test, extract_beats(with_test))]
+    ops_without = [b['op'] for b in
+                  structure_control_flow(without_test, extract_beats(without_test))]
+    ok2d = ops_with == ['if'] and 'if' not in ops_without
+    print(f"    {'PASS' if ok2d else 'FAIL'}: 有 test 指令 -> {ops_with}、"
+          f"缺 test 指令 -> {ops_without}")
+    if not ok2d:
+        fails.append(f"any_unit_inactive 迴圈辨識的 test 判準不對:{ops_with}/{ops_without}")
+
+    print("\n(2e) `dump_range` 的 4096 指令 budget 保險絲:兩個迴圈條件都要**恰好**是 budget>0")
+    # 212 行起的註解說這是「刻意寬裕的保險絲」,防止畸形跳表目標把匯出流程拖進
+    # 無限迴圈。但它從沒被任何測試真的餵過無限鏈 —— 也用 artifacts 軸量過
+    # (61 個真實章節資源逐位元組相同、0 個非確定性產出),真實資料從未踩中
+    # 這條保險絲,所以只能用合成的 fake cg 直接構造。
+    class _FakeCG:
+        """`_insn(addr)` 回傳假指令:一段外部區塊是無限直線鏈(從不 ret/jmp/命中
+        已訪問位址),用來把 budget 用到見底,藉此把兩個迴圈條件(內、外)分開釘住。
+        """
+        def __init__(self, plan):
+            self.plan = plan
+
+        def _insn(self, a):
+            return self.plan.get(a)
+
+    fake_start, fake_end = 0x1000, 0x1010
+    ext_infinite = 0x5000
+
+    def infinite_plan():
+        plan = {fake_start: _I(fake_start, 'jmp', hex(ext_infinite), 2)}
+        for k in range(9000):
+            plan[ext_infinite + k] = _I(ext_infinite + k, 'nop', '', 1)
+        return plan
+
+    result_inf = dump_range(_FakeCG(infinite_plan()), fake_start, fake_end, obj_end=100000)
+    ext_count_inf = len(result_inf) - 1               # 扣掉 local 的那條 jmp
+    ok2e_inner = ext_count_inf == 4096
+
+    ext1, ext2 = 0x5000, 0x9000
+    two_chain_plan = {
+        fake_start: _I(fake_start, 'jne', hex(ext1), 2),
+        fake_start + 2: _I(fake_start + 2, 'jmp', hex(ext2), 2),
+    }
+    for k in range(4094):
+        two_chain_plan[ext1 + k] = _I(ext1 + k, 'nop', '', 1)
+    two_chain_plan[ext1 + 4094] = _I(ext1 + 4094, 'ret', '', 1)   # 4095 步,自然 ret,剩 budget=1
+    two_chain_plan[ext2] = _I(ext2, 'ret', '', 1)                 # 只需要 1 個 budget 單位
+    result_two = dump_range(_FakeCG(two_chain_plan), fake_start, fake_end, obj_end=100000)
+    ext_count_two = len(result_two) - 2                # 扣掉 local 的 jne+jmp 兩條
+    ok2e_outer = ext_count_two == 4096
+
+    ok2e = ok2e_inner and ok2e_outer
+    print(f"    {'PASS' if ok2e else 'FAIL'}: 單一無限鏈耗盡 budget -> {ext_count_inf} 條"
+          f"(應 4096,釘住內層 `budget>0`);第一鏈自然終止剩 1 個 budget、"
+          f"第二鏈需要那 1 個單位 -> {ext_count_two} 條(應 4096,釘住外層 `budget>0`)")
+    if not ok2e:
+        fails.append(f"budget 保險絲邊界不對:單鏈={ext_count_inf}(應 4096),"
+                     f"雙鏈={ext_count_two}(應 4096)")
+
+    print("\n(2f) 外部區塊的位址下限必須**恰好是** 0(含),不能是 1")
+    # 突變測試量到 `0 <= a` 改成 `1 <= a` 逃掉。真實 LE 物件的基底 >= 0x10000,
+    # 真實資料永遠碰不到位址 0;但判準的意思是「非負位址都算合法」,用 fake cg
+    # 放一條指向 0x0 的 jmp 直接釘住含等號的那一側。
+    zero_plan = {fake_start: _I(fake_start, 'jmp', hex(0), 2), 0: _I(0, 'ret', '', 1)}
+    result_zero = dump_range(_FakeCG(zero_plan), fake_start, fake_end, obj_end=100000)
+    ok2f = len(result_zero) == 2 and any(i.address == 0 for i in result_zero)
+    print(f"    {'PASS' if ok2f else 'FAIL'}: jmp 0x0 -> 走到位址 0 的指令="
+          f"{any(i.address == 0 for i in result_zero)}(共 {len(result_zero)} 條,應 2)")
+    if not ok2f:
+        fails.append(f"位址 0 的外部區塊沒被走到:{len(result_zero)} 條")
 
     print("\n(3) 故障注入:把某個 op 的所有位址換成解不開的,第 (1) 項必須失敗")
     keep = dict(PRIM)
@@ -1045,7 +1137,8 @@ def selftest():
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + 故障注入 + 未收錄原語的"
+    print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + diamond/短路 AND 辨識 + "
+          "any_unit_inactive 迴圈辨識 + budget 保險絲兩側邊界 + 故障注入 + 未收錄原語的"
           "參數個數與 WEAK 不採信 + unknown 天花板 + doc 錨定名稱的命中率與獨立性控制 + "
           "非空控制 + 全 30 章重生逐檔比對)。")
     return 0

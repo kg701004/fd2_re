@@ -117,6 +117,46 @@ def selftest():
                 print(f"    FAIL: 「{label}」丟出 {type(exc).__name__}")
                 fails.append(f"{label} 丟出 {type(exc).__name__} 而非 NotFDICON")
 
+    print("\n(3b) 檔頭長度/tile 尺寸/offset 表三道守衛的**兩側邊界**,不能只測「太短/太大會擋」")
+    # 突變測試發現的缺口:`len(d) < 6` 改成 `< 7`、`th <= 256` 改成 `<= 257`,
+    # 上面 (3) 的案例全部照樣通過 —— 因為那些案例離邊界很遠(5 bytes、9999)。
+    # 只測「太短會擋」證明不了門檻剛好是 6;只測「過大會擋」證明不了上限剛好是 256。
+    # 用例外訊息裡的字樣分辨「被哪一道守衛擋下」,而不是只看有沒有丟例外。
+    boundary_bad = []
+
+    def guard_fires(blob, needle):
+        """回傳這個輸入是不是被**含 needle 字樣**的那道守衛擋下(不是隨便哪個)。"""
+        try:
+            load_bytes(blob)
+            return False
+        except NotFDICON as exc:
+            return needle in str(exc)
+        except Exception:                                       # noqa: BLE001
+            return False
+
+    ok3b_len = (guard_fires(b"\x00" * 5, "6-byte 檔頭")
+               and not guard_fires(b"\x00" * 6, "6-byte 檔頭"))
+    # tw/th 各自有獨立的 `<= 256` 邊界,突變測試量到只測 th 那一半會讓 tw 那一半
+    # 的同類突變(256->257)逃掉 —— 兩個都要各自成對測,不能共用一組案例。
+    ok3b_size_th = (guard_fires(struct.pack("<HHH", 24, 257, 4) + b"\x00" * 16, "尺寸不合理")
+                   and not guard_fires(struct.pack("<HHH", 24, 256, 4) + b"\x00" * 16, "尺寸不合理"))
+    ok3b_size_tw = (guard_fires(struct.pack("<HHH", 257, 24, 4) + b"\x00" * 16, "尺寸不合理")
+                   and not guard_fires(struct.pack("<HHH", 256, 24, 4) + b"\x00" * 16, "尺寸不合理"))
+    # offset 表守衛(`6 + cnt * 4 > len(d)`)同樣要成對測:長度剛好等於檔頭 + cnt 筆
+    # offset 時必須放行,少 1 byte 必須擋下。突變測試量到 6->7 逃掉 —— 上面沒有任何
+    # 案例的長度剛好卡在這個門檻上。
+    hdr_cnt1 = struct.pack("<HHH", 24, 24, 1)
+    ok3b_cnt = (guard_fires(hdr_cnt1 + b"\x00" * 3, "offset 表宣稱")
+                and not guard_fires(hdr_cnt1 + b"\x00" * 4, "offset 表宣稱"))
+    ok3b = ok3b_len and ok3b_size_th and ok3b_size_tw and ok3b_cnt
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 長度守衛(5 擋/6 不擋此守衛)={ok3b_len}、"
+          f"th 尺寸守衛={ok3b_size_th}、tw 尺寸守衛={ok3b_size_tw}、"
+          f"offset 表守衛(9 擋/10 不擋)={ok3b_cnt}")
+    if not ok3b:
+        boundary_bad.append(f"len={ok3b_len} size_th={ok3b_size_th} "
+                            f"size_tw={ok3b_size_tw} cnt={ok3b_cnt}")
+        fails.append(f"長度/尺寸守衛的邊界不對:{boundary_bad}")
+
     print("\n(4) 非恆真控制:合法容器必須通過,證明上面的守衛沒有把正常路徑也擋掉")
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "ok.bin")
@@ -135,7 +175,7 @@ def selftest():
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(真實檔頭 + 合成容器手算 + 6 種壞輸入 + 非恆真控制)。")
+    print("\n--selftest passed(真實檔頭 + 合成容器手算 + 6 種壞輸入 + 兩道守衛的邊界 + 非恆真控制)。")
     return 0
 
 

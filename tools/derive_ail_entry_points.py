@@ -110,6 +110,9 @@ def trace_strings(data: bytes, meta: dict) -> dict[int, str]:
     out = {}
     for m in TRACE_STRING.finditer(blob):
         text = m.group().rstrip(b"\x00\n").decode("latin1")
+        # 2026-09-11:突變測試把這裡的 1 改成 2 逃掉了 —— 查過是可證明的等價突變,
+        # 不是取樣沒打到:`s.split(sep, n)[0]` 對任何 n>=1 都是「第一個分隔符之前的
+        # 子字串」,與 n 無關(REPL 對 5 個含巢狀/無括號的案例逐一驗證過)。不補裝飾性測試。
         out[base + m.start()] = text.split("(", 1)[0]
     return out
 

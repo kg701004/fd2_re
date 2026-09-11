@@ -247,6 +247,12 @@ def check_one(art: str, tool: str, argv: list[str], kind: str, timeout: int) -> 
     with tempfile.TemporaryDirectory(prefix="regen_") as td:
         out = Path(td) / ("regen.json" if kind == "file" else "regen_dir")
         real = [a.replace("{out}", str(out)) for a in argv]
+        # 2026-09-11:突變測試把 `text=True` 改成 `False` 逃掉了 —— 查過是可證明的
+        # 等價突變(不是取樣沒打到):Python 文件明記 subprocess.run 只要給了
+        # `encoding=`(這裡固定給),就會強制文字模式,`text=`/`universal_newlines=`
+        # 的值本身不再有作用(實測 `text=False, encoding="utf-8"` 仍回傳 str)。
+        # 這裡刻意兩個都寫,是給讀者看意圖;`capture_output=` 才是真的承重的旗標,
+        # 已由 (4c) 題(強迫走錯誤路徑,對照 r.stdout/r.stderr 有沒有被真的捕捉)釘住。
         r = subprocess.run([sys.executable, str(ROOT / "tools" / tool), *real],
                            capture_output=True, text=True, encoding="utf-8",
                            errors="replace", cwd=str(ROOT), timeout=timeout)
@@ -332,6 +338,22 @@ def selftest() -> int:
               f"{r2['verdict']} {r2.get('unexpected')}")
         if not ok4b:
             fails.append(f"overrides 模式漏掉未指名的改動:{r2}")
+
+    print("\n(4c) check_one 的錯誤路徑必須真的捕捉到子行程輸出,不能退化成只有 rc")
+    # (5) 只在**現有 92 個登錄項目全部成功**的前提下跑 run_all,從沒真的踩過
+    # `not out.exists()` 這條錯誤分支 —— subprocess.run 的 capture_output/text
+    # 兩個旗標只在這條路徑上才觀察得到差異(成功案例完全不讀 r.stdout/r.stderr)。
+    # 直接指一個不存在的工具檔案,強迫 check_one 走錯誤路徑。
+    err = check_one("docs/data/known_address_errata.json", "does_not_exist_xyz.py",
+                    ["{out}"], "file", 30)
+    ok4c = (err["verdict"] == "ERROR"
+           and "detail" in err
+           and "rc=" not in err["detail"]
+           and ("cannot open" in err["detail"].lower() or "can't open" in err["detail"].lower()
+                or "no such file" in err["detail"].lower()))
+    print(f"    {'PASS' if ok4c else 'FAIL'}: detail={err.get('detail', '')[:70]!r}")
+    if not ok4c:
+        fails.append(f"check_one 的錯誤路徑沒有捕捉到真正的子行程輸出:{err}")
 
     print("\n(5) 安全性:實際跑一輪後,所有已提交產物的雜湊必須完全不變")
     before = snapshot()
