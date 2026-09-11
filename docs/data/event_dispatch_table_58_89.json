@@ -203,5 +203,915 @@
    "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)",
    "doc25_recorded": "0x360f8"
   }
+ },
+ "tables": {
+  "event": {
+   "base": "0x51b91",
+   "count": 90,
+   "all_entries": true,
+   "slots": {
+    "0": {
+     "entry": "0x34531",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "1": {
+     "entry": "0x3460b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "2": {
+     "entry": "0x34673",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "3": {
+     "entry": "0x346cd",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "4": {
+     "entry": "0x34738",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "5": {
+     "entry": "0x350be",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x34f3d(共用 __STK 尾段)"
+    },
+    "6": {
+     "entry": "0x34778",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "7": {
+     "entry": "0x350c8",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "8": {
+     "entry": "0x35123",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "9": {
+     "entry": "0x34818",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "10": {
+     "entry": "0x35191",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "11": {
+     "entry": "0x348bb",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "12": {
+     "entry": "0x348ea",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "13": {
+     "entry": "0x351e6",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "14": {
+     "entry": "0x34940",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "15": {
+     "entry": "0x34984",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "16": {
+     "entry": "0x349ec",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "17": {
+     "entry": "0x34a1e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "18": {
+     "entry": "0x35258",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "19": {
+     "entry": "0x34a6c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x30 ; call __STK(0x3702f)"
+    },
+    "20": {
+     "entry": "0x34b07",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "21": {
+     "entry": "0x34b2f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "22": {
+     "entry": "0x34b6f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "23": {
+     "entry": "0x34b9a",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "24": {
+     "entry": "0x34c52",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "25": {
+     "entry": "0x34c7a",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "26": {
+     "entry": "0x34cf1",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "27": {
+     "entry": "0x34d2f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0xc ; call __STK(0x3702f)"
+    },
+    "28": {
+     "entry": "0x34d64",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x8 ; call __STK(0x3702f)"
+    },
+    "29": {
+     "entry": "0x34d92",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "30": {
+     "entry": "0x34dd0",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "31": {
+     "entry": "0x34eb3",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0xc ; call __STK(0x3702f)"
+    },
+    "32": {
+     "entry": "0x34f38",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "33": {
+     "entry": "0x34f74",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "34": {
+     "entry": "0x34fc2",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x34c57(共用 __STK 尾段)"
+    },
+    "35": {
+     "entry": "0x34fcc",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0xc ; call __STK(0x3702f)"
+    },
+    "36": {
+     "entry": "0x35009",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "37": {
+     "entry": "0x35022",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "38": {
+     "entry": "0x35298",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "39": {
+     "entry": "0x352ca",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x34 ; call __STK(0x3702f)"
+    },
+    "40": {
+     "entry": "0x35321",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "41": {
+     "entry": "0x35346",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x34 ; call __STK(0x3702f)"
+    },
+    "42": {
+     "entry": "0x353b5",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "43": {
+     "entry": "0x353e7",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "44": {
+     "entry": "0x353fa",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "45": {
+     "entry": "0x3540f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "46": {
+     "entry": "0x35422",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "47": {
+     "entry": "0x35468",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "48": {
+     "entry": "0x3551c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "49": {
+     "entry": "0x3553f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "50": {
+     "entry": "0x355b7",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "51": {
+     "entry": "0x355f0",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x34 ; call __STK(0x3702f)"
+    },
+    "52": {
+     "entry": "0x35638",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "53": {
+     "entry": "0x35677",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "54": {
+     "entry": "0x356b3",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0xc ; call __STK(0x3702f)"
+    },
+    "55": {
+     "entry": "0x35730",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x34 ; call __STK(0x3702f)"
+    },
+    "56": {
+     "entry": "0x357dd",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "57": {
+     "entry": "0x35833",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0xc ; call __STK(0x3702f)"
+    },
+    "58": {
+     "entry": "0x35854",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x44 ; call __STK(0x3702f)"
+    },
+    "59": {
+     "entry": "0x35997",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "60": {
+     "entry": "0x359cb",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "61": {
+     "entry": "0x35a0d",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x30 ; call __STK(0x3702f)"
+    },
+    "62": {
+     "entry": "0x35bee",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "63": {
+     "entry": "0x35c1d",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "64": {
+     "entry": "0x35c40",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "65": {
+     "entry": "0x35cf1",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "66": {
+     "entry": "0x35d1e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "67": {
+     "entry": "0x35d85",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "68": {
+     "entry": "0x35d9e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "69": {
+     "entry": "0x35e0e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "70": {
+     "entry": "0x35e5b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "71": {
+     "entry": "0x35ec1",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "72": {
+     "entry": "0x35f48",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "73": {
+     "entry": "0x35f79",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "74": {
+     "entry": "0x35f88",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "75": {
+     "entry": "0x35fcf",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "76": {
+     "entry": "0x360b6",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x30 ; call __STK(0x3702f)"
+    },
+    "77": {
+     "entry": "0x36214",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "78": {
+     "entry": "0x36228",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "79": {
+     "entry": "0x3623c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "80": {
+     "entry": "0x362b0",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "81": {
+     "entry": "0x362c5",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "82": {
+     "entry": "0x362e8",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "83": {
+     "entry": "0x363de",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "84": {
+     "entry": "0x36416",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "85": {
+     "entry": "0x3642e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4 ; call __STK(0x3702f)"
+    },
+    "86": {
+     "entry": "0x36439",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)"
+    },
+    "87": {
+     "entry": "0x36440",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)"
+    },
+    "88": {
+     "entry": "0x36447",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)"
+    },
+    "89": {
+     "entry": "0x3644e",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x4 ; jmp 0x36433(共用 __STK 尾段)"
+    }
+   }
+  },
+  "command": {
+   "base": "0x51d01",
+   "count": 88,
+   "all_entries": true,
+   "slots": {
+    "0": {
+     "entry": "0x21206",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "1": {
+     "entry": "0x2134b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "2": {
+     "entry": "0x21364",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "3": {
+     "entry": "0x2137d",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "4": {
+     "entry": "0x21396",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "5": {
+     "entry": "0x21449",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "6": {
+     "entry": "0x21462",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "7": {
+     "entry": "0x2147b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "8": {
+     "entry": "0x21494",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "9": {
+     "entry": "0x214ad",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "10": {
+     "entry": "0x21527",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "11": {
+     "entry": "0x2185f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "12": {
+     "entry": "0x21a9e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "13": {
+     "entry": "0x21ad9",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "14": {
+     "entry": "0x21b99",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "15": {
+     "entry": "0x2211c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "16": {
+     "entry": "0x22153",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "17": {
+     "entry": "0x226ea",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "18": {
+     "entry": "0x2282f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "19": {
+     "entry": "0x22960",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x10 ; call __STK(0x3702f)"
+    },
+    "20": {
+     "entry": "0x22a85",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "21": {
+     "entry": "0x22bc6",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "22": {
+     "entry": "0x22be1",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "23": {
+     "entry": "0x2218a",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x1c ; call __STK(0x3702f)"
+    },
+    "24": {
+     "entry": "0x22153",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x14 ; call __STK(0x3702f)"
+    },
+    "25": {
+     "entry": "0x22c04",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x20 ; call __STK(0x3702f)"
+    },
+    "26": {
+     "entry": "0x22cbf",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "27": {
+     "entry": "0x22e41",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x18 ; call __STK(0x3702f)"
+    },
+    "28": {
+     "entry": "0x3231b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "29": {
+     "entry": "0x32d18",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "30": {
+     "entry": "0x32e8c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "31": {
+     "entry": "0x32fb2",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "32": {
+     "entry": "0x33049",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "33": {
+     "entry": "0x3314b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "34": {
+     "entry": "0x33169",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "35": {
+     "entry": "0x33219",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "36": {
+     "entry": "0x3327d",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "37": {
+     "entry": "0x3332b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "38": {
+     "entry": "0x33367",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "39": {
+     "entry": "0x333f5",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "40": {
+     "entry": "0x3346b",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "41": {
+     "entry": "0x3347c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "42": {
+     "entry": "0x334d9",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "43": {
+     "entry": "0x335a0",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x33470(共用 __STK 尾段)"
+    },
+    "44": {
+     "entry": "0x335aa",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "45": {
+     "entry": "0x335da",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "46": {
+     "entry": "0x33674",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x33470(共用 __STK 尾段)"
+    },
+    "47": {
+     "entry": "0x33674",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x33470(共用 __STK 尾段)"
+    },
+    "48": {
+     "entry": "0x33674",
+     "verdict": "TAIL_MERGED_STUB",
+     "detail": "push 0x28 ; jmp 0x33470(共用 __STK 尾段)"
+    },
+    "49": {
+     "entry": "0x3367e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "50": {
+     "entry": "0x336a0",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "51": {
+     "entry": "0x338c4",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "52": {
+     "entry": "0x3396a",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "53": {
+     "entry": "0x33aae",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "54": {
+     "entry": "0x33af1",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "55": {
+     "entry": "0x33c9d",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "56": {
+     "entry": "0x33dba",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "57": {
+     "entry": "0x33e3c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "58": {
+     "entry": "0x22ef6",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "59": {
+     "entry": "0x22f37",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "60": {
+     "entry": "0x230f2",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x50 ; call __STK(0x3702f)"
+    },
+    "61": {
+     "entry": "0x231bc",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "62": {
+     "entry": "0x231f9",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x50 ; call __STK(0x3702f)"
+    },
+    "63": {
+     "entry": "0x23296",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "64": {
+     "entry": "0x232e8",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x5c ; call __STK(0x3702f)"
+    },
+    "65": {
+     "entry": "0x234bb",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x50 ; call __STK(0x3702f)"
+    },
+    "66": {
+     "entry": "0x235bc",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "67": {
+     "entry": "0x235f9",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x4c ; call __STK(0x3702f)"
+    },
+    "68": {
+     "entry": "0x23790",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "69": {
+     "entry": "0x237d5",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x68 ; call __STK(0x3702f)"
+    },
+    "70": {
+     "entry": "0x2389f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "71": {
+     "entry": "0x238dc",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x68 ; call __STK(0x3702f)"
+    },
+    "72": {
+     "entry": "0x239bd",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "73": {
+     "entry": "0x23a0a",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x64 ; call __STK(0x3702f)"
+    },
+    "74": {
+     "entry": "0x23b5f",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x58 ; call __STK(0x3702f)"
+    },
+    "75": {
+     "entry": "0x23cd5",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x74 ; call __STK(0x3702f)"
+    },
+    "76": {
+     "entry": "0x23e39",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "77": {
+     "entry": "0x23e74",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x6c ; call __STK(0x3702f)"
+    },
+    "78": {
+     "entry": "0x240fa",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x98 ; call __STK(0x3702f)"
+    },
+    "79": {
+     "entry": "0x244b6",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x68 ; call __STK(0x3702f)"
+    },
+    "80": {
+     "entry": "0x24754",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x78 ; call __STK(0x3702f)"
+    },
+    "81": {
+     "entry": "0x24c1e",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x34 ; call __STK(0x3702f)"
+    },
+    "82": {
+     "entry": "0x24df2",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "83": {
+     "entry": "0x24e80",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x6c ; call __STK(0x3702f)"
+    },
+    "84": {
+     "entry": "0x250cc",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x60 ; call __STK(0x3702f)"
+    },
+    "85": {
+     "entry": "0x25464",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x28 ; call __STK(0x3702f)"
+    },
+    "86": {
+     "entry": "0x2548c",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x2c ; call __STK(0x3702f)"
+    },
+    "87": {
+     "entry": "0x25757",
+     "verdict": "CLEAN_PROLOGUE",
+     "detail": "push 0x78 ; call __STK(0x3702f)"
+    }
+   }
+  },
+  "between_tables": {
+   "0x51cf9": "起始位元組 0x00 不是 push imm32",
+   "0x51cfd": "起始位元組 0x00 不是 push imm32"
+  }
  }
 }

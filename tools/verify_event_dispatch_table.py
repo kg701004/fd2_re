@@ -50,6 +50,20 @@ DEFAULT_EXE = ROOT / "org_game" / "炎龍騎士團" / "FLAME2" / "FD2.EXE"
 
 TABLE_BASE = 0x51B91        # doc25 §11.7 定出的跳表基底,本工具以真值檢查間接複驗
 FIRST_INDEX, LAST_INDEX = 58, 89
+
+# 2026-09-11 續:追 `0x25089`/`0x361b0` 的呼叫端時發現這一帶其實有**兩張**表。
+#   A `0x51b91` 90 格(0..89)   —— 全域事件,dispatch 見 `0x1d890` 等 8 處
+#   兩個 dword 變數 `0x51cf9`/`0x51cfd` —— **不是表格**,是游標 x/y 備份
+#                                    (寫入端 `0x1be07`/`0x1be11`,各 5 個程式端參照)
+#   B `0x51d01` 88 格(0..87)   —— 指令/行動,只有 2 個 dispatch 點:
+#                                  `0x1541f`(AI 路徑)與 `0x1d479`(玩家 command ring),
+#                                  兩者都是 `call [eax*4+0x51d01]` 且都接 `call 0x1d4f6`
+TABLES = {
+    "event":   (0x51B91, 90),
+    "command": (0x51D01, 88),
+}
+# 兩張表之間那兩格:必須**通不過**序頭判定,否則「兩張表」的分界就是我畫出來的而非資料決定的。
+BETWEEN_TABLES = (0x51CF9, 0x51CFD)
 CODE_BASE = 0x10000         # 跳表存的是相對 obj1 的位移
 STACK_PROBE = 0x3702F       # Watcom __STK;每個 handler 序頭都先呼叫它
 DOC25_SHIFT = 0x356         # doc25 §10 位址欄的系統性偏差(未重定位值)
@@ -64,12 +78,18 @@ JMP_REL32 = 0xE9
 GROUND_TRUTH = {58: 0x35854, 76: 0x360B6, 78: 0x36228}
 
 
-def read_table(data: bytes, meta: dict) -> dict[int, int]:
-    """{event_id: 重定位後的 handler 入口}。"""
-    n = LAST_INDEX - FIRST_INDEX + 1
-    raw = object_bytes(data, meta, TABLE_BASE + FIRST_INDEX * 4, n * 4)
-    return {FIRST_INDEX + i: int.from_bytes(raw[i * 4:i * 4 + 4], "little") + CODE_BASE
+def read_table(data: bytes, meta: dict, base: int = TABLE_BASE,
+               first: int = FIRST_INDEX, count: int | None = None) -> dict[int, int]:
+    """{index: 重定位後的 handler 入口}。"""
+    n = count if count is not None else LAST_INDEX - FIRST_INDEX + 1
+    raw = object_bytes(data, meta, base + first * 4, n * 4)
+    return {first + i: int.from_bytes(raw[i * 4:i * 4 + 4], "little") + CODE_BASE
             for i in range(n)}
+
+
+def read_slot(data: bytes, meta: dict, addr: int) -> int:
+    """單一 dword 槽位的重定位後值(供分界的負向控制用)。"""
+    return int.from_bytes(object_bytes(data, meta, addr, 4), "little") + CODE_BASE
 
 
 def classify(code: bytes, code_base: int, addr: int) -> tuple[str, str]:
@@ -137,7 +157,31 @@ def build(exe: str | Path) -> dict:
                             "detail": r["detail"],
                             "doc25_recorded": hex(r["entry"] - DOC25_SHIFT)}
                   for ev, r in sorted(res.items())},
+        "tables": all_tables(exe),
     }
+
+
+def all_tables(exe: str | Path) -> dict:
+    """兩張表的全表判定,外加中間那兩個 dword 的分界控制。"""
+    data = Path(exe).read_bytes()
+    meta = parse_le(data)
+    code, code_base = load_code(data, meta)
+    out = {}
+    for name, (base, count) in TABLES.items():
+        rows = {}
+        for idx, addr in read_table(data, meta, base, 0, count).items():
+            v, why = classify(code, code_base, addr)
+            rows[str(idx)] = {"entry": hex(addr), "verdict": v, "detail": why}
+        out[name] = {
+            "base": hex(base), "count": count,
+            "all_entries": all(r["verdict"] != "MID_BODY" for r in rows.values()),
+            "slots": rows,
+        }
+    out["between_tables"] = {
+        hex(a): classify(code, code_base, read_slot(data, meta, a))[1]
+        for a in BETWEEN_TABLES
+    }
+    return out
 
 
 def selftest() -> int:
@@ -181,13 +225,34 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"偏移後仍有 {len(shifted) - n_mid} 格被判為入口,分類器缺乏鑑別力")
 
+    print("\n(5) 兩張表(0x51b91 90 格 / 0x51d01 88 格)必須每一格都是入口")
+    tb = all_tables(exe)
+    bad5 = {k: [i for i, r in tb[k]["slots"].items() if r["verdict"] == "MID_BODY"]
+            for k in TABLES if not tb[k]["all_entries"]}
+    ok5 = not bad5
+    print(f"    {'PASS' if ok5 else 'FAIL'}: "
+          + " / ".join(f"{k} {tb[k]['count']} 格" for k in TABLES)
+          + f";非入口 {bad5 or '無'}")
+    if not ok5:
+        fails.append(f"表內有非入口的槽位:{bad5}")
+
+    print("\n(6) 分界控制:兩張表之間的 0x51cf9/0x51cfd 必須**通不過**入口判定")
+    # 沒有這一項,「這是兩張表」就是我畫的界線而不是資料決定的——把它們併成一張
+    # 178 格的大表也不會有任何檢查失敗。實際上那兩格是游標 x/y 備份變數
+    # (寫入端 0x1be07/0x1be11,各有 5 個程式端參照)。
+    ok6 = all(("不是 push imm32" in why) or ("不在程式段" in why)
+              for why in tb["between_tables"].values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: {tb['between_tables']}")
+    if not ok6:
+        fails.append("分界的兩個 dword 也被判成入口,兩張表的界線因此沒有依據")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(獨立路徑真值重現 + 32 格全為入口 + 嚴格遞增 + "
-          "doc25 偏移的負向控制)。")
+          "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制)。")
     return 0
 
 
