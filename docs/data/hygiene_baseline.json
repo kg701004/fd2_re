@@ -336,6 +336,12 @@
    "rule": "regenerable",
    "reason": "工具自身的狀態檔(由 tools/verify_address_claim_coverage.py 的 --write-baseline 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同;它的漂移由 claim_coverage 軸的**雙向棘輪**管(超標與已還未更新都失敗),不是由重生比對管。與 hygiene_baseline.json、no_marker_reviewed.json 同類。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/correction_line_reviews.json",
+   "rule": "regenerable",
+   "reason": "工具自身的狀態檔(由 tools/verify_address_citations.py 的 --mark-correction 維護)。內容是人工宣告「這行寫了訂正,但被訂正的不是位址本身」,本質上沒有產生器;把它登錄進重生比對是套套邏輯。它的放行範圍由同一支工具的 --diff 源頭閘門管。與 no_marker_reviewed.json 同一設計(key 為 file+excerpt_sha1)。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
+   "permanent": "no_generator"
   }
  ]
 }

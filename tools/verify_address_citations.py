@@ -72,7 +72,18 @@ mode=edge 為什麼還要看距離
     python tools/verify_address_citations.py --report       # 列出每一筆 ARGUED
     python tools/verify_address_citations.py --report --file 91-worklist.md
     python tools/verify_address_citations.py --write-baseline
+    python tools/verify_address_citations.py --diff              # 源頭閘門(pre-commit)
+    python tools/verify_address_citations.py --mark-correction <檔> <行> <verdict> <理由>
     python tools/verify_address_citations.py --selftest
+
+源頭閘門 `--diff`
+-----------------
+上面的棘輪管的是**已登記**勘誤的引用。但知識庫裡「同時含訂正措辭與位址」的行有
+110 行、涉及 250 個相異位址,登記表只登記了 22 個(**約 8%**)—— 絕大多數位址訂正
+從來只以散文存在,因為流程裡沒有「發現位址錯了就登記」那一步。`--diff` 補的就是
+那一步:新增一行訂正措辭 + 位址,就必須同時登記,或用 `--mark-correction` 明確宣告
+被訂正的不是位址本身(例如「handler export 的 PUSH 順序」)。它不處理存量,只讓
+存量停止增長。
 """
 
 from __future__ import annotations
@@ -379,6 +390,180 @@ def gate() -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# 位址訂正的「源頭閘門」:讓訂正在寫下的當下就變成資料,而不是事後考古
+# ---------------------------------------------------------------------------
+#
+# 2026-09-11 量到的根本問題:知識庫裡「同時含訂正措辭與位址」的行有 **110 行、
+# 分佈 20 份文件、涉及 250 個相異位址**,而 `known_address_errata.json` 只登記了
+# 15 筆條目 / 22 個位址 —— **約 8%**。
+#
+# 這不是有人偷懶,是**流程裡沒有那一步**:發現位址錯了的人,就在當下正在編輯的那份
+# 文件裡寫一句話。登記表是專案開始兩個月後才補建的,所以要補完就只能對散文做考古。
+# 而對散文做考古,正是本檔開頭那段說明裡診斷過的、`wrong_address` 欄位不可機器消費
+# 的同一件事 —— 同一個錯誤換個對象再做一次。
+#
+# 所以這道閘門**不處理存量**(110 行是一次性的考古債,可以慢慢還),它只做一件事:
+# **讓存量停止增長**。新增一行訂正措辭 + 位址,就必須同時登記,或明確宣告它不是位址勘誤。
+#
+# 為什麼需要「宣告不是位址勘誤」這條路:實測 `0x35822` 那行寫著「**已證實的勘誤**:
+# `0x35822` 的 handler export 保存來源 `PUSH` 順序」—— 訂正措辭確實指向這個位址,
+# 但被訂正的是**PUSH 順序**不是位址值。分辨這兩者要讀懂主張,不是讀懂用了哪些詞,
+# 任何詞彙層的工具都做不到,所以留一條可審查的人工出口。
+
+CORRECTION_WORDS = re.compile(
+    r"位址勘誤|位址更正|位址訂正|原標|原記|誤植|誤記|應為|實際(?:是|應)|改為")
+
+REVIEWS = ROOT / "docs" / "data" / "correction_line_reviews.json"
+VERDICTS = ("not_address_erratum", "restates_existing")
+
+
+def _audit_mod():
+    """借用 `audit_evidence_provenance` 的未追蹤檔案處理與摘要雜湊。
+
+    刻意不自己重寫:那支工具已經踩過「`git diff` 完全不含未追蹤檔案,一份全新的
+    文件會整份繞過閘門」這個洞(2026-09-10)。兩邊各寫一份必然漂移。
+    """
+    import audit_evidence_provenance as A
+    return A
+
+
+def added_kb_lines(base: str = "HEAD") -> list[tuple[str, int, str]]:
+    """`git diff <base>` 裡**新增**的 knowledge-base 行 -> (檔名, 行號, 原文)。
+
+    行號必須靠 `@@ ... +start,count @@` 追蹤,不能用序號累加 —— 一個 hunk 不一定
+    從檔案開頭起算。selftest 第 (10) 題用一個起點非 1 的合成 diff 釘住這件事。
+    """
+    import subprocess
+    A = _audit_mod()
+    r = subprocess.run(["git", "diff", "--unified=0", base, "--",
+                        "docs/knowledge-base/*.md"],
+                       cwd=str(ROOT), capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    return parse_added(((r.stdout or "") + A._untracked_as_diff()))
+
+
+def parse_added(diff_text: str) -> list[tuple[str, int, str]]:
+    out: list[tuple[str, int, str]] = []
+    cur_file, cur_line = None, None
+    for raw in diff_text.splitlines():
+        if raw.startswith("+++ b/"):
+            cur_file = Path(raw[6:]).name
+            continue
+        m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", raw)
+        if m:
+            cur_line = int(m.group(1))
+            continue
+        if raw.startswith("+++") or raw.startswith("---"):
+            continue
+        if raw.startswith("+"):
+            if cur_file is not None and cur_line is not None:
+                out.append((cur_file, cur_line, raw[1:]))
+                cur_line += 1
+    return out
+
+
+def load_reviews() -> set[tuple[str, str]]:
+    try:
+        with open(REVIEWS, encoding="utf-8") as f:
+            return {(e["file"], e["excerpt_sha1"]) for e in json.load(f)["entries"]}
+    except (OSError, ValueError, KeyError):
+        return set()
+
+
+def correction_debt(base: str = "HEAD") -> list[dict]:
+    """新增的、含訂正措辭與位址、卻既沒登記也沒宣告的行。"""
+    A = _audit_mod()
+    flagged = set()
+    for e in load_errata().get("errata", []):
+        for a in (e.get("citation_check") or {}).get("flag", []):
+            n = normalize(a)
+            if n:
+                flagged.add(n)
+    reviewed = load_reviews()
+    out = []
+    for name, lineno, text in added_kb_lines(base):
+        if not CORRECTION_WORDS.search(text):
+            continue
+        addrs = {normalize(a) for a in re.findall(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])", text)}
+        addrs.discard(None)
+        if not addrs:
+            continue
+        if addrs & flagged:
+            continue                       # 該行提到的位址已在登記表裡 -> 已覆蓋
+        if (name, A._sha(text.strip()[:200])) in reviewed:
+            continue                       # 已明確宣告「不是位址勘誤」
+        out.append({"file": name, "line": lineno, "text": text.strip()[:160],
+                    "addrs": sorted(a for a in addrs if a)})
+    return out
+
+
+def gate_diff(base: str = "HEAD") -> int:
+    debt = correction_debt(base)
+    if not debt:
+        print("diff 檢查通過:沒有新增「寫了訂正卻沒登記」的行。")
+        return 0
+    print(f"FAIL 新增 {len(debt)} 行寫下了位址訂正,但既沒登記進 "
+          f"known_address_errata.json,也沒宣告它不是位址勘誤:\n")
+    for d in debt[:15]:
+        print(f"  {d['file']}:{d['line']}  {d['addrs']}")
+        print(f"      {d['text']}")
+    print("\n處置二選一:")
+    print("  (a) 在 known_address_errata.json 新增一筆(含 citation_check),再跑 "
+          "--write-baseline;")
+    print("  (b) 若被訂正的不是位址本身(例如『PUSH 順序』),用 "
+          "--mark-correction <檔> <行> <verdict> <理由> 宣告,"
+          f"verdict ∈ {VERDICTS}。")
+    return 1
+
+
+def mark_correction(name: str, lineno: str, verdict: str, note: str) -> int:
+    A = _audit_mod()
+    if verdict not in VERDICTS:
+        print(f"verdict 必須是 {VERDICTS} 之一,收到 {verdict!r}")
+        return 1
+    if not note.strip():
+        print("必須寫理由 —— 沒有理由的豁免等於沒有這道閘門")
+        return 1
+    try:
+        ln = int(lineno)
+    except ValueError:
+        print(f"行號無法解析:{lineno!r}")
+        return 1
+    path = KB / name
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        print(f"讀不到 {path}")
+        return 1
+    if not 1 <= ln <= len(lines):
+        print(f"{name} 只有 {len(lines)} 行,給了 {ln}")
+        return 1
+    text = lines[ln - 1].strip()
+    if not CORRECTION_WORDS.search(text):
+        print(f"{name}:{ln} 不含訂正措辭,不需要宣告")
+        return 1
+    try:
+        with open(REVIEWS, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        data = {"_meta": {
+            "purpose": "被 tools/verify_address_citations.py --diff 用來放行的『這行寫了訂正,"
+                       "但被訂正的不是位址本身』宣告。key 是 (file, excerpt_sha1) —— "
+                       "內容導向,行號漂移不影響。",
+            "schema_version": 1}, "entries": []}
+    key = (name, A._sha(text[:200]))
+    if any((e["file"], e["excerpt_sha1"]) == key for e in data["entries"]):
+        print("這一行已經登錄過了")
+        return 0
+    data["entries"].append({"file": name, "excerpt_sha1": A._sha(text[:200]),
+                            "excerpt": text[:120], "verdict": verdict, "note": note})
+    with open(REVIEWS, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+    print(f"已登錄 {name}:{ln}({verdict})")
+    return 0
+
+
 def selftest() -> int:
     fails: list[str] = []
 
@@ -485,6 +670,99 @@ def selftest() -> int:
     if not ok:
         fails.append("棘輪不是雙向的")
 
+    print("\n(10) 源頭閘門的 diff 解析:行號必須靠 @@ 標頭,不能用序號累加")
+    # 一個 hunk 不一定從檔案開頭起算。這裡的合成 diff 起點是 207,若改用序號累加
+    # 會得到 1/2,這題就會失敗。
+    synth = ("+++ b/docs/knowledge-base/zz.md\n"
+             "@@ -0,0 +207,2 @@\n"
+             "+第一行 誤植 `0x11111`\n"
+             "+第二行 應為 `0x22222`\n")
+    got = parse_added(synth)
+    ok10 = got == [("zz.md", 207, "第一行 誤植 `0x11111`"),
+                   ("zz.md", 208, "第二行 應為 `0x22222`")]
+    print(f"    {'PASS' if ok10 else 'FAIL'}: {got}")
+    if not ok10:
+        fails.append(f"diff 加號行的行號解析不對:{got}")
+
+    print("\n(11) 源頭閘門的三條路:未登記要擋、已登記要放、已宣告要放")
+    # 這三題用同一行文字、只換條件,所以差異只能來自判定本身。
+    flagged = {"0x2a6bd"}          # 已登記的(errata 實際有這一筆)
+    def would_block(text, reviewed_keys=frozenset(), flag=flagged):
+        if not CORRECTION_WORDS.search(text):
+            return False
+        ad = {normalize(a) for a in re.findall(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])", text)}
+        ad.discard(None)
+        if not ad:
+            return False
+        if ad & flag:
+            return False
+        return ("x.md", _audit_mod()._sha(text.strip()[:200])) not in reviewed_keys
+    unreg = "本節原標 handler `0x9abcd`,誤植"
+    reg = "本節原標 handler `0x2a6bd`,誤植"
+    noaddr = "這裡原標的順序誤植了,與位址無關"
+    key = {("x.md", _audit_mod()._sha(unreg[:200]))}
+    a11 = would_block(unreg)
+    b11 = would_block(reg)
+    c11 = would_block(unreg, reviewed_keys=key)
+    d11 = would_block(noaddr)
+    ok11 = a11 and not b11 and not c11 and not d11
+    print(f"    {'PASS' if ok11 else 'FAIL'}: 未登記擋={a11}、已登記放={not b11}、"
+          f"已宣告放={not c11}、無位址不管={not d11}")
+    if not ok11:
+        fails.append(f"源頭閘門三條路不對:{a11}/{b11}/{c11}/{d11}")
+
+    print("\n(13) 距離門檻的**兩側**:恰好 EDGE_MAX_GAP 要過、多一個字元就不過")
+    # 突變測試發現:`max(x[0], y[0]) - min(x[1], y[1])` 裡的索引被改掉也逃得掉,
+    # 因為地面真相的兩個案例(相距 30 與 123)離門檻 80 太遠,位移幾個字元不會翻轉。
+    # 這裡直接造出恰好落在門檻兩側的案例,把算術本身釘住。
+    A_, B_ = "0x2545d", "0x2bce5"
+    # 不加反引號:這樣 A 的 span 是 (0,7)、B 的起點是 7+g,實際 gap 恰好等於 g。
+    # (第一版用 `` `0x2545d` `` 包起來,反引號讓實際 gap 多了 2,兩側都變成 False ——
+    #  夾具自己算錯,不是程式碼錯。所以下面順便把實測 gap 印出來驗夾具。)
+    def line_with_gap(g):
+        return A_ + ("-" * g) + B_
+    probe_line = line_with_gap(EDGE_MAX_GAP)
+    real_gap = spans(probe_line, B_)[0][0] - spans(probe_line, A_)[0][1]
+    at = near(probe_line, A_, B_)
+    over = near(line_with_gap(EDGE_MAX_GAP + 1), A_, B_)
+    ok13 = at and not over and real_gap == EDGE_MAX_GAP
+    print(f"    {'PASS' if ok13 else 'FAIL'}: 夾具實測 gap={real_gap}(應={EDGE_MAX_GAP});"
+          f"恰好命中={at}、多一個字元命中={over}(應為 True / False)")
+    # **順序對稱性**:B 寫在 A 前面時,距離必須算出同一個值。突變測試顯示
+    # `max(x[0], y[0])` 的索引被改掉,在「A 在前」的案例裡完全等價(兩邊都取到後者的
+    # 起點),只有**反序**才分得出來 —— 會差一個 token 的長度(7 字元)。
+    rev_at = near(B_ + ("-" * EDGE_MAX_GAP) + A_, A_, B_)
+    rev_over = near(B_ + ("-" * (EDGE_MAX_GAP + 1)) + A_, A_, B_)
+    ok13 = ok13 and rev_at and not rev_over
+    print(f"           反序(B 在前):恰好命中={rev_at}、多一個字元命中={rev_over}")
+    if real_gap != EDGE_MAX_GAP:
+        fails.append(f"夾具本身算錯:實測 gap={real_gap} != {EDGE_MAX_GAP}")
+    elif not ok13:
+        fails.append(f"距離門檻兩側不對:正序 {at}/{over}、反序 {rev_at}/{rev_over}")
+
+    print("\n(14) **真正的 scan() 路徑**必須對每一種 mode 都產出命中")
+    # 突變測試發現:`elif spec.mode == "edge"` 改成 `!=`,edge 模式在真正的 scan()
+    # 裡整個失效,而第 (5) 題走的是 scan_text()(手寫 spec),完全感覺不到。
+    modes_present = {s.mode for s in specs if s.mode != "none"}
+    hit_modes = {next(s.mode for s in specs if s.index == c.spec_index) for c in full}
+    missing = modes_present - hit_modes
+    ok14 = not missing and "edge" in hit_modes
+    print(f"    {'PASS' if ok14 else 'FAIL'}: 登記的 mode {sorted(modes_present)}、"
+          f"實掃命中的 mode {sorted(hit_modes)}")
+    if not ok14:
+        fails.append(f"真正的 scan() 對這些 mode 沒有任何命中:{sorted(missing)}")
+
+    print("\n(12) 非恆真:訂正措辭必須真的能在知識庫裡命中")
+    hits = 0
+    for p in kb_files():
+        for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+            if CORRECTION_WORDS.search(line) and re.search(r"0x[0-9a-fA-F]{4,6}", line):
+                hits += 1
+    ok12 = hits > 20
+    print(f"    {'PASS' if ok12 else 'FAIL'}: 全庫命中 {hits} 行(2026-09-11 實測 110)")
+    if not ok12:
+        fails.append(f"訂正措辭幾乎命中不到東西({hits} 行)—— 這道閘門會是裝飾")
+
     print("\n(9) 未登錄條目必須壓掉通過訊息(不能兩句真話並排)")
     src = Path(__file__).read_text(encoding="utf-8")
     gate_src = src[src.index("def gate("):src.index("def selftest(")]
@@ -498,8 +776,9 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(9 項:正規化 + 右邊界 + 完整性 + 地面真相 + edge 控制 + "
-          "負向控制 + 非恆真 + 雙向棘輪 + 總數壓制)。")
+    print("\n--selftest passed(14 項:正規化 + 右邊界 + 完整性 + 地面真相 + edge 控制 + "
+          "負向控制 + 非恆真 + 雙向棘輪 + 總數壓制 + diff 行號 + 源頭閘門三條路 + "
+          "訂正措辭非恆真 + 距離門檻兩側 + scan 對每種 mode 都有命中)。")
     return 0
 
 
@@ -521,11 +800,20 @@ def main() -> int:
     ap.add_argument("--report", action="store_true", help="列出每一筆 ARGUED 引用")
     ap.add_argument("--file", help="--report 時只看這一份文件")
     ap.add_argument("--write-baseline", action="store_true", help="把目前存量寫回 errata 檔")
+    ap.add_argument("--diff", nargs="?", const="HEAD", metavar="BASE",
+                    help="源頭閘門:新增的訂正行必須已登記或已宣告(預設對 HEAD)")
+    ap.add_argument("--mark-correction", nargs=4,
+                    metavar=("FILE", "LINE", "VERDICT", "NOTE"),
+                    help=f"宣告某行的訂正對象不是位址本身;VERDICT ∈ {VERDICTS}")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
     if args.selftest:
         return selftest()
+    if args.mark_correction:
+        return mark_correction(*args.mark_correction)
+    if args.diff:
+        return gate_diff(args.diff)
     if args.write_baseline:
         return write_baseline()
     if args.report:

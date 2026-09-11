@@ -231,5 +231,10 @@
 - 提交身分使用 `Codex <codex@openai.com>`。
 - 提交前執行相關真實回歸、檢查整理過的圖片與連結、執行
   `git diff --check`，並審查 `git status` 與最終差異。
+- 新增或修改知識庫中的位址訂正（「原標／誤植／應為／位址更正」等措辭搭配位址）時，
+  提交前執行 `python tools/verify_address_citations.py --diff`：該行提到的位址必須
+  已登記於 `docs/data/known_address_errata.json`，或以 `--mark-correction` 宣告被訂正
+  的不是位址本身。（2026-09-11：知識庫約九成的位址訂正只以散文存在、從未登記；
+  這道閘門不處理存量，只讓存量停止增長。）
 - 重大且驗證成功的批次推送至 `origin/main`，再驗證本機 HEAD 與遠端相同。
   玩家可見成果有實質改變時，同步更新 GitHub 的 README 與截圖。

@@ -34136,6 +34136,14 @@
    "excerpt": "拿未逐筆驗證的前提去餵一個會擋人的機制,錯誤會帶著權威擴散。",
    "verdict": "benign",
    "note": "方法論陳述(為什麼不批次登記),所述對象是登記流程,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4325,
+   "excerpt_sha1": "8df1cb051d03cbe2c2b598ea86b8e31852331830",
+   "excerpt": "False。現在該題會先印出**夾具實測 gap** 並斷言它等於門檻,夾具錯了會先報夾具錯。",
+   "verdict": "benign",
+   "note": "工具行為陳述:描述 selftest 第 (13) 題的夾具如何自我驗證,不是對原版 EXE 的主張。"
   }
  ]
 }
