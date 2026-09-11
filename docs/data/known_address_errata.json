@@ -425,6 +425,43 @@
           "SESSION-HANDOFF-2026-07-06.md": 6
         }
       }
+    },
+    {
+      "wrong_address": "0x4e893",
+      "correct_address": "0x4ebe3",
+      "wrong_semantic_claimed": "「RNG%100<threshold 的通用命中率檢查函式,被 0x1c7ed 呼叫」——登記於 docs/data/verified_addresses.json(2026-08-19,confidence=verified),並被 doc27 表第 8 項/§6.1、doc56、SESSION-HANDOFF-2026-07-06 等 7 份文件引用共 20 次。",
+      "discovered_date": "2026-09-11",
+      "discovery_method": "由 tools/verify_address_claim_coverage.py 的涵蓋率量測發現:0x4e893 被文件宣稱為函式,但三個獨立的位元組訊號(Watcom 序頭 / 直接 E8 CALL 目標 / fixup 目標)**全部沒有**。逐位元組覆核呼叫端:0x1c7ed 的 bytes 是 `e8 f1 23 03 00`,disp32=0x323f1,0x1c7ed+5+0x323f1 = **0x4ebe3**。0x4ebe3 有 40 個直接呼叫端、起頭 `33 c0`(xor eax,eax);0x4e893 有 0 個呼叫端、起頭 `08 ba 07 00 00 00` 落在指令中段。差 0x350。",
+      "root_cause": "與 0x2a6bd/0x276ec 同一批(2026-08-19)手動反組譯階段的個別位址誤記,不是系統性平移。功能性結論本身正確。",
+      "affected_docs": [
+        "docs/data/verified_addresses.json",
+        "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/14-text-control-codes.md",
+        "docs/knowledge-base/13-battle-menu-system.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "correction_section": "§6.9",
+      "still_pending": "**兩個順帶訂正,都不影響功能性結論**:(1) 0x4ebe3 是 PRNG 本身(`seed = rol(seed + 0x9014, 3)`,種子 word `[0x627b8]`),**不是**「%100<threshold 的檢查函式」——取模與比較內聯在 0x1c7f4..0x1c802;(2) doc56 L2568 記的「共用狀態是 word 0x627b8」正確,只是掛在錯的位址上。**doc13 L509/L511 其實早就寫對了**(`CALL 0x4EBE3`),與本勘誤的錯誤形式在知識庫裡並存且從未被接起來。20 次字面引用尚未逐一改寫,由 verify_address_citations 的棘輪管控。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e893"
+        ],
+        "note": "doc13 已使用正確的 0x4ebe3,不在旗標內;只掃錯誤的 0x4e893。",
+        "baseline": {
+          "13-battle-menu-system.md": 1,
+          "14-text-control-codes.md": 1,
+          "27-combat-rules-and-validation-checklist.md": 7,
+          "35-battle-animation-rendering.md": 3,
+          "56-fd2-remake-sdd.md": 5,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
     }
   ]
 }

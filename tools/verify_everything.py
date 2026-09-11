@@ -47,6 +47,16 @@ The axes, and what each exists to catch
                existed since 2026-08-20 and no axis read it, so 263 uncorrected
                citations of 26 disproven addresses sat in the knowledge base with
                nothing able to notice. Both-directions ratchet, like `hygiene`.
+  claim_coverage
+               `verify_address_claim_coverage.py` -- the denominator `findings`
+               never had. `findings` reports 17/17, but 17 counts hand-registered
+               conclusions, not claims: 1368 addresses are asserted in the docs to
+               be function entries and only 405 carry any byte-level evidence. It
+               unions three independent JVM-free signals (Watcom prologue / direct
+               E8 target / fixup target) because the 541-entry prologue set is
+               "functions needing a stack probe", not all functions -- 0x4ebe3 has
+               40 callers and no prologue. Measurement with a ratchet on the
+               unreviewed remainder, not a gate on the whole backlog.
   tests        every `tools/test_*.py`.
   wsl          the same offline selftests under the OTHER interpreter. This axis
                alone found the PIL import that made two tools unusable in the
@@ -234,6 +244,8 @@ AXES = {
     "truncation": lambda r, t: axis_truncation(t),
     "worklist": lambda r, t: axis_simple("worklist", ["tools/worklist_status.py", "--selftest"], t),
     "citations": lambda r, t: axis_simple("citations", ["tools/verify_address_citations.py"], t),
+    "claim_coverage": lambda r, t: axis_simple(
+        "claim_coverage", ["tools/verify_address_claim_coverage.py"], t),
     "tests": lambda r, t: axis_tests(t),
     "wsl": lambda r, t: axis_wsl(t),
 }
@@ -260,7 +272,8 @@ def selftest() -> int:
     fails = []
     print("(1) 每個軸都必須真的被呼叫到,且名稱與 AXES 表一致")
     ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "findings",
-                        "hygiene", "truncation", "worklist", "citations", "tests", "wsl"}
+                        "hygiene", "truncation", "worklist", "citations",
+                        "claim_coverage", "tests", "wsl"}
     print(f"    {'PASS' if ok1 else 'FAIL'}: {sorted(AXES)}")
     if not ok1:
         fails.append("AXES 表與預期不符")

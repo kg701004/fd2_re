@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "purpose": "知識庫宣稱為函式入口、但三個位元組訊號都拿不出來、且尚未登記為勘誤的位址存量。由 tools/verify_address_claim_coverage.py 產生,雙向棘輪:超標與已還未更新都會失敗。",
+    "criterion": "訊號 = Watcom 序頭(push imm32; call 0x3702f)｜直接 E8 CALL 目標｜fixup 目標",
+    "note": "『無訊號』不等於『錯』——見工具 docstring 列出的三類合理來源。"
+  },
+  "unreviewed_by_file": {
+    "06-animation-format.md": 4,
+    "10-sprite-rendering-camp-and-state.md": 31,
+    "11-enemy-ai.md": 34,
+    "12-music-playback-and-scene.md": 26,
+    "13-battle-menu-system.md": 59,
+    "14-text-control-codes.md": 3,
+    "23-boot-title-and-scenario-flow.md": 12,
+    "24-callgraph-analysis-log.md": 5,
+    "25-battle-event-system.md": 89,
+    "26-per-chapter-event-handlers.md": 10,
+    "27-combat-rules-and-validation-checklist.md": 35,
+    "28-chapter-objectives-and-recruits.md": 3,
+    "30-remake-work-breakdown.md": 1,
+    "32-item-combat-stats-re.md": 28,
+    "35-battle-animation-rendering.md": 167,
+    "36-sfx-audio-data.md": 23,
+    "37-spell-effect-figani.md": 5,
+    "39-ani-afm-format.md": 10,
+    "40-speaker-portrait-mapping.md": 1,
+    "42-re-vs-remake-gap-audit.md": 10,
+    "47-intro-handler-full-transcript.md": 10,
+    "48-dosbox-x-debugger-build.md": 3,
+    "50-cutscene-script-system-design.md": 10,
+    "53-start-to-ch1-turn1-re-source-table.md": 1,
+    "56-fd2-remake-sdd.md": 45,
+    "57-ui-evidence-matrix.md": 31,
+    "58-remake-live-verification-log.md": 126,
+    "91-worklist.md": 366,
+    "92-m5-normal-playthrough-log.md": 21,
+    "98-tooling-infrastructure.md": 3,
+    "99-chapter-sweep-results.md": 59,
+    "99-reflections-log.md": 7,
+    "SESSION-HANDOFF-2026-07-06.md": 72,
+    "SESSION-HANDOFF-2026-09-04.md": 1
+  }
+}

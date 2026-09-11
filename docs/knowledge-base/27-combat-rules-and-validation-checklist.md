@@ -669,3 +669,76 @@ arm 長度 `0x1f-0x10 = 15`,即一條貫穿全圖的十字。名稱與形狀互�
 所以它會隨文件編輯而漂移且無人察覺——這正是 `verify_findings.py` 當初要消滅的東西
 (「a throwaway criterion was weaker than the reasoning it replaced」)。本輪依指示**只記錄、
 不動那 275 次引用**,也不建阻擋機制;要動之前應先把這個掃描做成可重生的登記表。
+
+## 6.9 `0x4e893` 是誤植,真正的 PRNG 是 `0x4ebe3` —— 由「入口主張涵蓋率」量測機械發現(2026-09-11)
+
+### 6.9.1 怎麼被找到的
+
+不是靠讀文件。新的 `tools/verify_address_claim_coverage.py` 問了一個先前沒人問過的問題:
+**知識庫裡被宣稱為「函式入口/handler」的位址,有幾個拿得出位元組層級的證據?**
+判準是三個互相獨立的訊號 —— Watcom 序頭(`push imm32 ; call __STK`)、直接 `E8` CALL 目標、
+fixup 目標。`0x4e893` 三個**全部沒有**,而它在 `verified_addresses.json` 裡的
+`0x4e893` 在 `verified_addresses.json` 的 `confidence` 欄是 **`verified`**。
+
+### 6.9.2 逐位元組覆核
+
+```
+0x1c7ed  e8 f1 23 03 00        call   <disp32 = 0x323f1>
+         0x1c7ed + 5 + 0x323f1 = 0x4ebe3        <- 真正的被呼叫者
+```
+
+| | `0x4e893`(原記載) | `0x4ebe3`(實際) |
+|---|---|---|
+| 直接呼叫端數 | **0** | **40** |
+| 起始位元組 | `08 ba 07 00 00 00`(指令中段) | `33 c0`(`xor eax,eax`,乾淨入口) |
+| 三個入口訊號 | 全無 | 直接 CALL 目標 |
+
+差 `0x350`。與 `0x2a6bd`/`0x276ec` 同屬 **2026-08-19 那一批**手動反組譯的個別誤記,
+不是系統性平移(對照組:同批的其他位址都命中有效邊界)。
+
+### 6.9.3 順帶訂正兩處語意 —— `0x4ebe3` 是 PRNG 本身,不是「命中率檢查函式」
+
+```
+0x4ebe3  xor  eax, eax
+0x4ebe5  mov  ax, word ptr [0x627b8]     ; 種子
+0x4ebeb  add  ax, 0x9014
+0x4ebef  rol  ax, 1                       ; ×3
+0x4ebf8  mov  word ptr [0x627b8], ax      ; 寫回種子
+0x4ebfe  ret
+```
+
+也就是 `seed = rol(seed + 0x9014, 3)`,新種子由 `eax` 回傳。**取模與比較不在這裡**,
+是**內聯在呼叫端**:
+
+```
+0x1c7f4  mov  ebx, 0x64                   ; 100
+0x1c7fc  idiv ebx                         ; edx = rand % 100
+0x1c7fe  cmp  edx, dword ptr [esp + 0x70] ; 與 threshold 比
+0x1c802  jge  0x1c816                     ; >= threshold -> 未命中(eax = 0)
+```
+
+所以命中條件是 `rand() % 100 < threshold`,未命中回 `eax = 0`。原本
+`verified_addresses.json` 對 `0x4ebe3` 寫的「RNG%100<threshold 的**通用命中率檢查函式**」把
+PRNG 與內聯的判定併成了一個不存在的函式。兩處都已訂正。
+
+### 6.9.4 這一筆最值得記的不是位址,是**正確答案早就在知識庫裡**
+
+`docs/knowledge-base/13-battle-menu-system.md` L509/L511 寫的是
+「`rand()%100`(`CALL 0x4EBE3`)」—— **正確**。而同一個知識庫的 doc27 表第 8 項、doc56、
+`verified_addresses.json` 一路用著 `0x4e893`,共 **20 次字面引用、跨 7 份文件**。
+
+**兩種形式並存,從未被接起來。** 這與 2026-09-11 稍早記下的
+`91-worklist.md` L1833(勘誤)vs L441(仍以錯誤位址立論)是**同一個形狀**,
+而且這次是機械掃出來的,不是讀到的。
+
+另一個佐證同方向:doc56 L2568 寫「The shared state used by `0x4e893` is word `0x627b8`」——
+**共用狀態的結論正確**(`0x627b8` 確實是種子),只是掛在錯的位址上。
+這正是本專案勘誤史反覆出現的那句話:**功能性結論對,位址標籤錯**。
+
+### 6.9.5 誠實範圍
+
+* 只訂正了 `verified_addresses.json` 的兩筆(`0x4e893`→`0x4ebe3`、`0x1c7ed`)與本節;**`0x4e893` 的 20 次字面引用尚未逐一改寫**,
+  改由 `verify_address_citations.py` 的雙向棘輪管控(該筆已登記 `citation_check`)。
+* `0x4ebe3` 的 40 個呼叫端**沒有逐一查過語意** —— 本節只證明它是 `0x1c7ed` 的被呼叫者、
+  且是一個合法入口。
+* 種子 `[0x627b8]` 的初始化時機與是否有其他寫入點,本輪未追。

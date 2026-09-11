@@ -121,22 +121,22 @@
     {
       "address": "0x1c7ed",
       "linear_or_file_offset": "linear",
-      "semantic": "法術/道具命中率判定:呼叫 0x4e893 做 RNG%100<record[+2] 檢查。與物理 HIT-EV 完全獨立。",
+      "semantic": "法術/道具命中率判定:`call 0x4ebe3`(PRNG)後**內聯**做 `idiv 100` 取餘數,`cmp edx,[esp+0x70]` / `jge` —— 餘數 < threshold 才算命中,未命中回 `eax=0`。與物理 HIT-EV 完全獨立。",
       "confidence": "verified",
       "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
       "source_section": "表第 8 項 / §6.1",
       "verified_date": "2026-08-19",
-      "notes": "record[+2] 逐 ID 實際數值尚未 dump 出來跟 spell.json 的 hit 欄比對——remake magic.go 的「hit=0 視為必中」特例是否等價於 record[+2]=100 仍未確認(表第 8 項標記 ◐ 部分一致)。"
+      "notes": "record[+2] 逐 ID 實際數值尚未 dump 出來跟 spell.json 的 hit 欄比對——remake magic.go 的「hit=0 視為必中」特例是否等價於 record[+2]=100 仍未確認(表第 8 項標記 ◐ 部分一致)。 **2026-09-11**:原文寫「呼叫 `0x4e893`」,真正的被呼叫者是 `0x4ebe3`(逐位元組覆核 `0x1c7ed` 的 `E8` disp32=0x323f1 -> 0x4ebe3);且 `%100 < threshold` 是**內聯在 0x1c7f4..0x1c802**,不是一個獨立函式。"
     },
     {
-      "address": "0x4e893",
+      "address": "0x4ebe3",
       "linear_or_file_offset": "linear",
-      "semantic": "RNG%100<threshold 的通用命中率檢查函式,被 0x1c7ed 呼叫。",
+      "semantic": "16-bit PRNG:`seed = rol(seed + 0x9014, 3)`,種子是 word `[0x627b8]`,新種子由 eax 回傳。**不是**「RNG%100<threshold 的檢查函式」——取模與比較是呼叫端內聯的(見 0x1c7ed 條目)。",
       "confidence": "verified",
       "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
       "source_section": "表第 8 項",
-      "verified_date": "2026-08-19",
-      "notes": null
+      "verified_date": "2026-09-11",
+      "notes": "**2026-09-11 位址訂正**:原記 `0x4e893`,實測該位址有 0 個呼叫端、起頭 `08 ba 07 00 00 00` 落在指令中段。`0x1c7ed` 的 `E8` disp32 算出的真正目標是 `0x4ebe3`(40 個直接呼叫端,起頭 `33 c0` = `xor eax,eax`)。差 `0x350`,與 `0x2a6bd`/`0x276ec` 同屬 2026-08-19 那批手動反組譯的個別誤記。**功能性結論未受影響**:doc56 L2568 記的「共用狀態是 word `0x627b8`」正確,只是掛在錯的位址上;doc13 L509/L511 早已寫對(`CALL 0x4EBE3`),但兩者從未被接起來。語意也一併修正(見 semantic)。"
     },
     {
       "address": "0x2f7b6",

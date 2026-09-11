@@ -192,6 +192,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "verify_address_citations.py": (["--selftest"], "offline"),
+    "verify_address_claim_coverage.py": (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
     "verify_findings.py":        (["--selftest"], "ghidra"),
     "find_enclosing_function.py": (["--selftest"], "ghidra"),

@@ -34056,6 +34056,46 @@
    "excerpt": "| `verify_truncation_robustness.py` | 0/6 | **等價突變,不補**(已實測) |",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:所述對象是突變測試工具與各 selftest 的行為,證據是同節列出的注入結果與可重跑指令(python tools/<工具>.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4166,
+   "excerpt_sha1": "89677b3f66977cfb827bae36c92934761a07a251",
+   "excerpt": "實測有 **491 個位址只有「直接 CALL」這一個訊號** —— 只用序頭判準會把它們全部誤報。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4169,
+   "excerpt_sha1": "54ffc186abcc8590dca8736f304e9783cda03e39",
+   "excerpt": "### 雙向控制(selftest 第 3、4 題,都是實測不是構造)",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4182,
+   "excerpt_sha1": "d408a85e143d2d2cdd7609949661c6a7afe7d6e9",
+   "excerpt": "### 上線第一天就抓到一筆 `confidence: verified` 的錯",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4201,
+   "excerpt_sha1": "1dd704a69efe29d39693d7f8ae4dc20770497cb5",
+   "excerpt": "改成純附加 + 逐位元組符合原格式後,diff 變成 **6 insertions / 0 deletions**。",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4206,
+   "excerpt_sha1": "095363098574046f0fa0a2b4f22d16e32a5a6600",
+   "excerpt": "是其中之一)/ 正向控制 13/13 / 實測配對負向控制 / 非恆真(不可全落同一桶)/",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
   }
  ]
 }

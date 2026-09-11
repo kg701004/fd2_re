@@ -330,6 +330,12 @@
    "rule": "regenerable",
    "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/address_claim_coverage_baseline.json",
+   "rule": "regenerable",
+   "reason": "工具自身的狀態檔(由 tools/verify_address_claim_coverage.py 的 --write-baseline 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同;它的漂移由 claim_coverage 軸的**雙向棘輪**管(超標與已還未更新都失敗),不是由重生比對管。與 hygiene_baseline.json、no_marker_reviewed.json 同類。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
+   "permanent": "no_generator"
   }
  ]
 }
