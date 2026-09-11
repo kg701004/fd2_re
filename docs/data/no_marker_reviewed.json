@@ -34144,6 +34144,38 @@
    "excerpt": "False。現在該題會先印出**夾具實測 gap** 並斷言它等於門檻,夾具錯了會先報夾具錯。",
    "verdict": "benign",
    "note": "工具行為陳述:描述 selftest 第 (13) 題的夾具如何自我驗證,不是對原版 EXE 的主張。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4336,
+   "excerpt_sha1": "e45064ba42023b7fe5e026c51d35641f491b646a",
+   "excerpt": "會有其他問題嗎」。診斷(見上文)確認三次是**三套各自獨立的實作**:citations 的",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 text_proximity.py 重構與 citations.py 的行為/測試,證據是同節的注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4361,
+   "excerpt_sha1": "7bda3d84fa763f9da949b3cb4f03a846d6622a47",
+   "excerpt": "原文、直接呼叫純函式確認。**刻意保留這筆宣告**,不追加刪除:它描述的事實依然成立",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 text_proximity.py 重構與 citations.py 的行為/測試,證據是同節的注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4381,
+   "excerpt_sha1": "2f6b1284df168dba93da176b02af63ed211d2fd4",
+   "excerpt": "| 真實 worklist:446 原文(逐字複製) | `--diff` EXIT=0 | **EXIT=0** |",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 text_proximity.py 重構與 citations.py 的行為/測試,證據是同節的注入結果與可重跑指令,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4397,
+   "excerpt_sha1": "71384e5545d66bbb5b6fe6ca7a496cd3d7a018a6",
+   "excerpt": "`hygiene --cross-check`=0  `docs_cli`=0(126 支,無 docstring 仍是那 6 支",
+   "verdict": "benign",
+   "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 text_proximity.py 重構與 citations.py 的行為/測試,證據是同節的注入結果與可重跑指令,不涉及原版 EXE/實機。"
   }
  ]
 }

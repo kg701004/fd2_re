@@ -4329,3 +4329,78 @@ False。現在該題會先印出**夾具實測 gap** 並斷言它等於門檻,�
 原有 9 項 + (10) diff 行號必須靠 `@@` 標頭(起點 207 的合成 diff)+ (11) 源頭閘門三條路
 (同一行文字只換條件,差異只能來自判定本身)+ (12) 訂正措辭非恆真(全庫命中 107 行)
 + (13) 距離門檻兩側與反序 + (14) 真正的 scan() 對每種 mode 都有命中。
+
+### 2026-09-11 續五:三次各自實作的判準,收斂成 `tools/text_proximity.py`
+
+使用者問「行粒度問題今天已咬三次,共用的分句輔助函式還沒抽」是為什麼、以及「這樣改法
+會有其他問題嗎」。診斷(見上文)確認三次是**三套各自獨立的實作**:citations 的
+`near()`/`EDGE_MAX_GAP` 進了程式碼、claim_coverage 那次的分析只在對話裡手算過從未
+進工具、correction gate 的 `CORRECTION_WORDS` 又是第三套規則且**完全沒有距離判準**。
+
+#### 改法本身不是「搬移」,是「重新設計介面」
+
+現有 `spans()` 吃的是「一個已知位址」,要通用到「一個位址 vs 一段 regex」,簽章必須
+改成吃**兩組已算好的 span 清單**,而不是「兩個字串」。`tools/text_proximity.py` 的
+核心因此是 `near(spans_a, spans_b, max_gap)` 這個最底層函式,`address_spans()` /
+`regex_spans()` 是產生 span 清單的兩種方式,`addresses_near()` 只是給位址-位址這種
+最常見情境的便利包裝。
+
+#### 查證後發現:這個改法會改變一個已經 push 過的閘門的行為 —— 而且是該改的方向
+
+`correction_debt()` 原本的判準是「同一行**同時**有訂正措辭與位址就算」,完全沒有
+距離 —— 這是 `mode=edge` 那個 628 筆偽陽性問題的**同一個洞換了個對象**。用真實資料
+驗證(不是造案例):
+
+| 案例 | 位址↔措辭實際距離 | 舊判準 | 新判準(距離 ≤ 80) |
+|---|---|---|---|
+| `91-worklist.md:446`(今天真的觸發過,需要 `--mark-correction` 才放行) | 98~260 字元 | 擋下 | **放行,不需要宣告** |
+| 注入測試的真陽性形狀 | 2~3 字元 | 擋下 | 擋下 |
+
+改完之後,`correction_line_reviews.json` 裡那筆為 `91-worklist.md:446` 登記的宣告
+**變成多餘的**(空 `reviewed` 集合下,新邏輯已經不會擋這一行)—— 用查證過的雜湊反查
+原文、直接呼叫純函式確認。**刻意保留這筆宣告**,不追加刪除:它描述的事實依然成立
+(那行確實不是位址勘誤),移除它是與本輪無關的清理,不是必要動作。
+
+#### 重構同時修掉一個測試反模式
+
+`selftest` 第 (11) 題原本手寫了一份 `would_block()` 複製判定邏輯 —— 與今天稍早在
+`verify_address_claim_coverage.py` 踩到的 `containing_entry` 是**同一個模式**:
+測試打到的是重寫的那份,正式邏輯真的改了,測試不會叫。`correction_debt()` 拆成
+`correction_debt_from_lines()`(純函式,只吃已解析的行)之後,selftest 直接呼叫
+它,不再自己重寫一次規則。
+
+#### 真實案例的端對端注入(不是只跑 selftest)
+
+第一次嘗試遠距離注入用手造文字,結果兩個位址裡有一個**意外靠近**標記(填充字數算錯,
+與今天稍早 gap 夾具那次同一種失誤)——只有一個位址被正確排除,另一個因為真的距離近
+而被抓,系統behavior其實是對的,是我的夾具沒對齊「兩個位址都要遠」這個條件。改成
+**直接複製 `91-worklist.md:446` 的真實原文**注入,不再手算距離:
+
+| 注入 | 期望 | 實測 |
+|---|---|---|
+| 真實 worklist:446 原文(逐字複製) | `--diff` EXIT=0 | **EXIT=0** |
+| 注入測試的真陽性(`0x9abcd`→`0x9dcba`,相距 2~3 字元) | `--diff` EXIT=1 | **EXIT=1** |
+
+#### 突變測試
+
+`text_proximity.py` 第一輪可達 1/2,逃逸落在 `address_variants` 的 `zfill(len+1)`
+被改成 `+2`(與今天上午 `verify_address_citations.py` 修過的同一類前導零缺口)——
+新增(2b)題,同時斷言「補 1 位要中」與「補 2 位不該誤命中」(只測前者兩個突變值都
+會過),補上後可達 **2/2**,零逃逸。`verify_address_citations.py` 這輪可達突變
+**0 個**(12 個突變全部落在測試打不到的行,本輪對品質未提供證據,不是缺口 ——
+這正是 2026-09-10 就記過的「無處可突變不等於弱」)。
+
+#### 閘門(明確 exit code,無管線)
+
+`git diff --check`=0  `audit --diff`=0  `audit --gate`=0(25/25 已列管)
+`citations --diff`=0  `citations` 棘輪=0(ARGUED 286,EXEMPT 276)
+`hygiene --cross-check`=0  `docs_cli`=0(126 支,無 docstring 仍是那 6 支
+`test_*.py`,`text_proximity.py` 本身有 docstring 未新增缺口)
+`verify_everything --selftest`=0  `artifacts`=0(0 筆尚待處理)
+WSL:`text_proximity --selftest`=0、`citations --selftest`=0、`citations --diff`=0
+
+誠實範圍:110 行存量依然沒處理(本輪只是把判準做對,沒有回頭清存量);
+`correction_line_reviews.json` 的既有宣告沒有清理,留著等下次真的動到那個檔案時
+再一併處理;claim_coverage.py **沒有**接上這個共用模組 —— 它那次的判準從未成為
+程式碼,沒有東西要遷移,但未來若要把「已標訂正未登記」做成可重生工具,應該直接用
+`text_proximity.py` 而不是第四次重寫。

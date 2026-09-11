@@ -81,9 +81,11 @@ mode=edge 為什麼還要看距離
 上面的棘輪管的是**已登記**勘誤的引用。但知識庫裡「同時含訂正措辭與位址」的行有
 110 行、涉及 250 個相異位址,登記表只登記了 22 個(**約 8%**)—— 絕大多數位址訂正
 從來只以散文存在,因為流程裡沒有「發現位址錯了就登記」那一步。`--diff` 補的就是
-那一步:新增一行訂正措辭 + 位址,就必須同時登記,或用 `--mark-correction` 明確宣告
-被訂正的不是位址本身(例如「handler export 的 PUSH 順序」)。它不處理存量,只讓
-存量停止增長。
+那一步:新增一行訂正措辭 + **與之相鄰**的位址,就必須同時登記,或用 `--mark-correction`
+明確宣告被訂正的不是位址本身(例如「handler export 的 PUSH 順序」)。它不處理存量,
+只讓存量停止增長。判準要求相鄰而非「同一行」的理由與 edge 模式相同,見
+`text_proximity.py`——這個共用模組同時消掉了本檔 edge 模式與這道閘門原本各自獨立
+實作的同一種偽陽性。
 """
 
 from __future__ import annotations
@@ -99,6 +101,9 @@ from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import text_proximity as TP                                       # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 ERRATA = ROOT / "docs" / "data" / "known_address_errata.json"
@@ -142,47 +147,24 @@ class Citation:
     text: str
 
 
+# normalize/spans/cites/near 是薄包裝,實際邏輯在 `text_proximity.py`(2026-09-11 抽出
+# 共用 —— 同一天這個判準被獨立寫了三次,見該模組的說明)。名字保留、簽章保留,
+# 本檔其餘部分與 selftest 完全不必改。
 def normalize(s: str) -> str | None:
-    """`0x027fc9` / `0x27FC9` / `27fc9` 都收斂成 `0x27fc9`;壞輸入回 None。
-
-    這個函式是整支工具的比對鍵。它一錯,掃描會**靜默少算**而不是報錯 —— 實測
-    errata 檔裡同一個位址同時以 `0x027fc9` 和 `0x27fc9` 兩種寫法出現過。
-    """
-    s = (s or "").strip()
-    if s.lower().startswith("0x"):
-        s = s[2:]
-    if not s or not re.fullmatch(r"[0-9a-fA-F]+", s):
-        return None
-    return "0x" + format(int(s, 16), "x")
-
-
-def _variants(addr: str) -> list[str]:
-    """一個正規化位址在文件裡可能的字面寫法(含前導零與大小寫)。"""
-    body = addr[2:]
-    out = {body, body.upper(), body.zfill(len(body) + 1), body.upper().zfill(len(body) + 1)}
-    return ["0x" + v for v in sorted(out)]
+    return TP.normalize_addr(s)
 
 
 def spans(text: str, addr: str) -> list[tuple[int, int]]:
-    """`addr` 在這一行的所有出現位置。右邊界必須擋掉 `0x2a6bdf` 這種更長的位址。"""
-    out: list[tuple[int, int]] = []
-    for v in _variants(addr):
-        for m in re.finditer(re.escape(v) + r"(?![0-9a-fA-F])", text, re.IGNORECASE):
-            out.append((m.start(), m.end()))
-    return sorted(set(out))
+    return TP.address_spans(text, addr)
 
 
 def cites(text: str, addr: str) -> bool:
-    """這一行是否引用了 `addr`。"""
     return bool(spans(text, addr))
 
 
 def near(text: str, a: str, b: str, max_gap: int = EDGE_MAX_GAP) -> bool:
     """`a` 與 `b` 是否在同一行且相距不超過 `max_gap` 字元(見模組說明的 edge 模式)。"""
-    sa, sb = spans(text, a), spans(text, b)
-    if not sa or not sb:
-        return False
-    return any(max(x[0], y[0]) - min(x[1], y[1]) <= max_gap for x in sa for y in sb)
+    return TP.addresses_near(text, a, b, max_gap)
 
 
 def exempt_reason(text: str, spec: Spec, use_markers: bool = True,
@@ -404,12 +386,21 @@ def gate() -> int:
 # 的同一件事 —— 同一個錯誤換個對象再做一次。
 #
 # 所以這道閘門**不處理存量**(110 行是一次性的考古債,可以慢慢還),它只做一件事:
-# **讓存量停止增長**。新增一行訂正措辭 + 位址,就必須同時登記,或明確宣告它不是位址勘誤。
+# **讓存量停止增長**。新增一行訂正措辭 + **與之相鄰**的位址,就必須同時登記,
+# 或明確宣告它不是位址勘誤。
 #
 # 為什麼需要「宣告不是位址勘誤」這條路:實測 `0x35822` 那行寫著「**已證實的勘誤**:
 # `0x35822` 的 handler export 保存來源 `PUSH` 順序」—— 訂正措辭確實指向這個位址,
 # 但被訂正的是**PUSH 順序**不是位址值。分辨這兩者要讀懂主張,不是讀懂用了哪些詞,
 # 任何詞彙層的工具都做不到,所以留一條可審查的人工出口。
+#
+# 2026-09-11 續:第一版只檢查「同一行同時有訂正措辭與位址」,**這是 mode=edge 那個
+# 628 筆偽陽性問題的同一個洞換了個對象** —— 真實觸發過:`91-worklist.md:446` 提到
+# 三個位址,但它們與最近的訂正措辭實測相距 **98~260 字元**,遠超 `EDGE_MAX_GAP`,
+# 卻被舊版擋下,逼著跑一次 `--mark-correction`。改成只認**與訂正措辭相鄰**的位址
+# (透過 `text_proximity.py`,見該模組說明)之後,這一行不需要宣告也不會再被攔;
+# 注入測試的真陽性形狀(位址與措辭相距 2~3 字元)仍然抓得到 —— 兩者都釘在
+# selftest (11b) 題,用的是今天實測的原文,不是造出來的案例。
 
 CORRECTION_WORDS = re.compile(
     r"位址勘誤|位址更正|位址訂正|原標|原記|誤植|誤記|應為|實際(?:是|應)|改為")
@@ -471,31 +462,51 @@ def load_reviews() -> set[tuple[str, str]]:
         return set()
 
 
-def correction_debt(base: str = "HEAD") -> list[dict]:
-    """新增的、含訂正措辭與位址、卻既沒登記也沒宣告的行。"""
+def correction_debt_from_lines(lines: list[tuple[str, int, str]], flagged: set[str],
+                               reviewed: set[tuple[str, str]],
+                               max_gap: int = EDGE_MAX_GAP) -> list[dict]:
+    """`correction_debt` 的純函式核心 —— 只吃已解析好的行,不碰 git/檔案系統。
+
+    抽出來讓 selftest 能直接打到**真正在跑的判定邏輯**,而不是像第 (11) 題舊版那樣
+    在測試裡重寫一份 `would_block()`(那正是今天稍早在 claim_coverage.py 踩過的同一
+    個模式 —— 重寫的那份可能跟正式邏輯早就分岔)。
+
+    2026-09-11 加上距離判準:原本「同一行同時有訂正措辭與位址」就算數,實測是
+    `mode=edge` 那個 628 筆偽陽性問題的同一個洞換了個對象 —— `91-worklist.md:446`
+    三個位址與最近的訂正措辭相距 98~260 字元,遠超 `max_gap`,卻曾被這道閘門擋下
+    (需要 `--mark-correction` 才放行)。改成只認**與訂正措辭相鄰**的位址之後,
+    這一行不會再被攔:見 `text_proximity.py` selftest (6) 的同一組真實案例。
+    """
     A = _audit_mod()
+    out = []
+    for name, lineno, text in lines:
+        marker_spans = TP.regex_spans(text, CORRECTION_WORDS)
+        if not marker_spans:
+            continue
+        all_addrs = {normalize(a) for a in TP.ADDR_RE.findall(text)}
+        all_addrs.discard(None)
+        near_addrs = {a for a in all_addrs
+                     if TP.near(TP.address_spans(text, a), marker_spans, max_gap)}
+        if not near_addrs:
+            continue
+        if near_addrs & flagged:
+            continue                       # 相鄰的位址已在登記表裡 -> 已覆蓋
+        if (name, A._sha(text.strip()[:200])) in reviewed:
+            continue                       # 已明確宣告「不是位址勘誤」
+        out.append({"file": name, "line": lineno, "text": text.strip()[:160],
+                    "addrs": sorted(near_addrs)})
+    return out
+
+
+def correction_debt(base: str = "HEAD") -> list[dict]:
+    """新增的、含訂正措辭且**與位址相鄰**、卻既沒登記也沒宣告的行。"""
     flagged = set()
     for e in load_errata().get("errata", []):
         for a in (e.get("citation_check") or {}).get("flag", []):
             n = normalize(a)
             if n:
                 flagged.add(n)
-    reviewed = load_reviews()
-    out = []
-    for name, lineno, text in added_kb_lines(base):
-        if not CORRECTION_WORDS.search(text):
-            continue
-        addrs = {normalize(a) for a in re.findall(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])", text)}
-        addrs.discard(None)
-        if not addrs:
-            continue
-        if addrs & flagged:
-            continue                       # 該行提到的位址已在登記表裡 -> 已覆蓋
-        if (name, A._sha(text.strip()[:200])) in reviewed:
-            continue                       # 已明確宣告「不是位址勘誤」
-        out.append({"file": name, "line": lineno, "text": text.strip()[:160],
-                    "addrs": sorted(a for a in addrs if a)})
-    return out
+    return correction_debt_from_lines(added_kb_lines(base), flagged, load_reviews())
 
 
 def gate_diff(base: str = "HEAD") -> int:
@@ -684,32 +695,48 @@ def selftest() -> int:
     if not ok10:
         fails.append(f"diff 加號行的行號解析不對:{got}")
 
-    print("\n(11) 源頭閘門的三條路:未登記要擋、已登記要放、已宣告要放")
-    # 這三題用同一行文字、只換條件,所以差異只能來自判定本身。
-    flagged = {"0x2a6bd"}          # 已登記的(errata 實際有這一筆)
-    def would_block(text, reviewed_keys=frozenset(), flag=flagged):
-        if not CORRECTION_WORDS.search(text):
-            return False
-        ad = {normalize(a) for a in re.findall(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])", text)}
-        ad.discard(None)
-        if not ad:
-            return False
-        if ad & flag:
-            return False
-        return ("x.md", _audit_mod()._sha(text.strip()[:200])) not in reviewed_keys
+    print("\n(11) 源頭閘門的三條路:未登記要擋、已登記要放、已宣告要放"
+          "(直接呼叫 correction_debt_from_lines,不是重寫一份判定邏輯)")
+    # 2026-09-11:舊版在這裡手寫了一份 would_block(),與真正在跑的
+    # correction_debt_from_lines() 是兩份獨立程式碼——正是今天稍早在
+    # claim_coverage.py 的 containing_entry 踩過的同一個模式:測試打到的是
+    # 重寫的那份,邏輯真的改了測試也不會叫。改成直接呼叫真正的函式。
+    flagged11 = {"0x2a6bd"}        # 已登記的(errata 實際有這一筆)
     unreg = "本節原標 handler `0x9abcd`,誤植"
     reg = "本節原標 handler `0x2a6bd`,誤植"
     noaddr = "這裡原標的順序誤植了,與位址無關"
     key = {("x.md", _audit_mod()._sha(unreg[:200]))}
-    a11 = would_block(unreg)
-    b11 = would_block(reg)
-    c11 = would_block(unreg, reviewed_keys=key)
-    d11 = would_block(noaddr)
+    a11 = bool(correction_debt_from_lines([("x.md", 1, unreg)], flagged11, set()))
+    b11 = bool(correction_debt_from_lines([("x.md", 1, reg)], flagged11, set()))
+    c11 = bool(correction_debt_from_lines([("x.md", 1, unreg)], flagged11, key))
+    d11 = bool(correction_debt_from_lines([("x.md", 1, noaddr)], flagged11, set()))
     ok11 = a11 and not b11 and not c11 and not d11
     print(f"    {'PASS' if ok11 else 'FAIL'}: 未登記擋={a11}、已登記放={not b11}、"
           f"已宣告放={not c11}、無位址不管={not d11}")
     if not ok11:
         fails.append(f"源頭閘門三條路不對:{a11}/{b11}/{c11}/{d11}")
+
+    print("\n(11b) 距離判準的真實案例:今天真的觸發過的假陽性,今天真的驗證過的真陽性")
+    # 91-worklist.md:446 是今天被舊版邏輯誤擋、需要 --mark-correction 才放行的
+    # 真實行;三個位址與最近的訂正措辭實測相距 98~260 字元,遠超 max_gap。改成
+    # 看距離之後,這一行不必宣告也不會再被擋。真陽性(注入測試的形狀)仍要抓到。
+    worklist_text = None
+    wp = KB / "91-worklist.md"
+    if wp.is_file():
+        lines91 = wp.read_text(encoding="utf-8", errors="replace").splitlines()
+        if len(lines91) >= 446:
+            worklist_text = lines91[445]
+    if worklist_text is None:
+        print("    SKIP:讀不到 91-worklist.md:446")
+    else:
+        fp = bool(correction_debt_from_lines([("91-worklist.md", 446, worklist_text)],
+                                             set(), set()))
+        tp_ = bool(correction_debt_from_lines([("x.md", 1, unreg)], set(), set()))
+        ok11b = (not fp) and tp_
+        print(f"    {'PASS' if ok11b else 'FAIL'}: worklist:446(真實假陽性)"
+              f"擋下={fp}(應 False)、注入真陽性擋下={tp_}(應 True)")
+        if not ok11b:
+            fails.append(f"距離判準對真實案例不對:worklist446={fp}, 真陽性={tp_}")
 
     print("\n(13) 距離門檻的**兩側**:恰好 EDGE_MAX_GAP 要過、多一個字元就不過")
     # 突變測試發現:`max(x[0], y[0]) - min(x[1], y[1])` 裡的索引被改掉也逃得掉,
@@ -776,9 +803,9 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(14 項:正規化 + 右邊界 + 完整性 + 地面真相 + edge 控制 + "
-          "負向控制 + 非恆真 + 雙向棘輪 + 總數壓制 + diff 行號 + 源頭閘門三條路 + "
-          "訂正措辭非恆真 + 距離門檻兩側 + scan 對每種 mode 都有命中)。")
+    print("\n--selftest passed(15 項:正規化 + 右邊界 + 完整性 + 地面真相 + edge 控制 + "
+          "負向控制 + 非恆真 + 雙向棘輪 + 總數壓制 + diff 行號 + 源頭閘門三條路(真函式) + "
+          "距離判準真實案例配對 + 訂正措辭非恆真 + 距離門檻兩側 + scan 對每種 mode 都有命中)。")
     return 0
 
 
