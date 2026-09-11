@@ -239,6 +239,27 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"OPEN_GLYPH 對照不成立:{OPEN_GLYPH} / {got557}")
 
+    print("\n(6) 字串邊界以位移表為準(不靠結尾符號);恰好 2 碼的語句也算一句")
+    # 2026-09-11 窮舉突變測試:`offsets[index + 1] if index + 1 < count` 與
+    # `len(chunk) >= 2` 改掉逃掉 —— 真實 FDTXT 每條字串都有 0xFFFF 結尾,邊界算錯也會在
+    # 結尾符號停下;也沒有剛好 [說話者, 『] 兩碼的語句。第 0 條刻意不帶結尾符號。
+    import tempfile as _tf
+    blob6 = struct.pack("<HH", 4, 6) + struct.pack("<H", 1) + struct.pack("<HH", 2, 0xFFFF)
+    with _tf.TemporaryDirectory() as _d:
+        p6 = Path(_d) / "t.bin"
+        p6.write_bytes(blob6)
+        try:
+            got6 = parse_fdtxt_strings(p6)
+        except (ValueError, IndexError) as exc:
+            got6 = f"{type(exc).__name__}: {exc}"
+    b6 = {"第 0 條停在下一條的起點": got6 == [[1], [2]],
+          "[說話者, 『] 算一句": count_logical_utterances([7, OPEN_GLYPH]) == 1}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items())
+          + ("" if b6["第 0 條停在下一條的起點"] else f";實得 {got6}"))
+    if not ok6:
+        fails.append(f"字串邊界/語句計數不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

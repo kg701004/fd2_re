@@ -290,6 +290,18 @@ def selftest() -> int:
         fails.append(f"選擇器值域約束不成立(可達={in_range} / 負向控制={bool(control)}),"
                      f"鏡像的機制解釋因此失去依據")
 
+    print("\n(7) mirrored_offsets 必須含**相鄰**的欄位對(b 從 a + 1 起算)")
+    # 2026-09-11 窮舉突變測試:`range(a + 1, STRIDE)` 改成 a + 2 逃掉 —— 真實資料的鏡像
+    # 欄位對(+0x11/+0x15)不相鄰,artifacts 也看不出來。合成兩列,只有第 0、1 欄在每列
+    # 都相等,其餘欄位兩兩不同。
+    syn_rows = [bytes([7, 7] + list(range(10, 10 + STRIDE - 2))),
+                bytes([9, 9] + list(range(60, 60 + STRIDE - 2)))]
+    mir7 = mirrored_offsets(syn_rows)
+    ok7 = mir7 == [(0, 1)]
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 合成列的鏡像對 = {mir7}(應 [(0, 1)])")
+    if not ok7:
+        fails.append(f"相鄰的鏡像欄位對沒被找到:{mir7}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

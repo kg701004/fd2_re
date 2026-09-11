@@ -239,6 +239,26 @@ def selftest() -> int:
     if not ok6:
         fails.append("表頭範圍檢查失效")
 
+    print("\n(6b) 表頭範圍的兩側邊界:長度 4、w/h 的 1 與 199/200")
+    # 2026-09-11 窮舉突變測試:(6) 只用 w=0 與 w=300,`0 <`、`< 200`、`len < 4` 的常數
+    # 改 ±1 全部逃掉。四個邊界各自成對測,w 與 h 分開(同一行兩個同構門檻)。
+    def accepted(blob):
+        with tempfile.TemporaryDirectory() as td2:
+            p = os.path.join(td2, "X.bin")
+            open(p, "wb").write(blob)
+            return read_field_header(p)[0] is not None
+    wh = lambda w, h: struct.pack("<HH", w, h)          # noqa: E731
+    b6 = {
+        "3 bytes 拒、4 bytes 收": not accepted(b"\x01\x00\x01") and accepted(wh(1, 1)),
+        "w=1 收": accepted(wh(1, 5)), "h=1 收": accepted(wh(5, 1)),
+        "w 199 收、200 拒": accepted(wh(199, 5)) and not accepted(wh(200, 5)),
+        "h 199 收、200 拒": accepted(wh(5, 199)) and not accepted(wh(5, 200)),
+    }
+    ok6b = all(b6.values())
+    print(f"    {'PASS' if ok6b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6b:
+        fails.append(f"表頭範圍邊界不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

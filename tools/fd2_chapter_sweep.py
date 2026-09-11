@@ -3554,6 +3554,48 @@ def selftest() -> int:
 
     fails += _selftest_screen_predicates()
 
+    print("\n(6) 藍色比例恰好卡在兩個門檻;natural_join_order 從 ch00 起算、不含本章自己的戰後")
+    # 2026-09-11 窮舉突變測試:兩個 `sum(1 for ...)` 改成 2(比例翻倍)、`range(0, chapter_n - 1)`
+    # 的 0 與 1 改掉都逃掉 —— 真實截圖不會剛好卡在門檻上;ch00_post 沒有任何 join,
+    # 起點 0 或 1 在真實資料上一樣。起點用合成的章節目錄測,上界用文件記載的兩個事實測。
+    from PIL import Image as _Img
+    n6 = 100
+    blue, other = (10, 10, 150), (0, 0, 0)
+
+    def strip_img(box_blue, strip_blue):
+        im = _Img.new("RGB", (n6, 2), other)
+        for x in range(box_blue):
+            im.putpixel((x, 0), blue)
+        for x in range(strip_blue):
+            im.putpixel((x, 1), blue)
+        return im
+    k_box = int(BATTLE_HUD_BLUE_FRAC_THRESHOLD * n6)            # 比例恰好等於門檻(不 > 門檻)
+    k_strip = int(BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC * n6 / 2)  # 比例 < 上限,翻倍則 >= 上限
+    premise6 = (_is_hud_blue(blue) and not _is_hud_blue(other)
+                and k_box / n6 <= BATTLE_HUD_BLUE_FRAC_THRESHOLD < 2 * k_box / n6
+                and k_strip / n6 < BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC <= 2 * k_strip / n6)
+    box_r, strip_r = (0, 0, n6, 1), (0, 1, n6, 2)
+    import tempfile as _tf
+    keep_dir = globals()["CHAPTER_BEATS_DIR"]
+    try:
+        with _tf.TemporaryDirectory() as _d:
+            (Path(_d) / "ch00_post.json").write_text(
+                json.dumps({"beats": [{"op": "join", "args": [5]}]}), encoding="utf-8")
+            globals()["CHAPTER_BEATS_DIR"] = Path(_d)
+            nj_synthetic = natural_join_order(2)
+    finally:
+        globals()["CHAPTER_BEATS_DIR"] = keep_dir
+    b6 = {"前提": premise6,
+          "box 比例恰等於門檻 -> 不通過": not _box_and_strip_pass(strip_img(k_box, 0), box_r, strip_r),
+          "strip 比例低於上限 -> 通過": _box_and_strip_pass(strip_img(n6, k_strip), box_r, strip_r),
+          "ch00 的 join 要算進去": nj_synthetic == [5],
+          # doc 記載:23 號是 ch20_post(= 遊戲 ch21 自己的戰後)才加入的
+          "不含本章自己的戰後 join": 23 not in natural_join_order(21) and 23 in natural_join_order(22)}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6:
+        fails.append(f"HUD 門檻/加入順序不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

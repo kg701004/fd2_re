@@ -190,6 +190,23 @@ def selftest():
         print("    FAIL: 沒有任何檔案解出非空 LUT")
         fails.append("合法檔案沒有解出 LUT")
 
+    print("\n(5) 目錄長度守衛的恰好邊界:長度 = 6 + 4n 放行,少 1 byte 擋")
+    # 2026-09-11 窮舉突變測試:`6 + n * 4` 的 4 改 5 逃掉 —— 案例離邊界很遠。
+    exact = b"LMI1" + struct.pack("<H", 1) + struct.pack("<I", 10)
+    try:
+        ok_exact = parse_lmi_bytes(exact) == [b""]
+    except ValueError:
+        ok_exact = False
+    try:
+        parse_lmi_bytes(exact[:-1])
+        short_rejected = False
+    except ValueError as exc:
+        short_rejected = "超出檔案大小" in str(exc)
+    ok5 = ok_exact and short_rejected
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 恰好 10 bytes 放行={ok_exact}、9 bytes 被目錄守衛擋={short_rejected}")
+    if not ok5:
+        fails.append(f"目錄長度邊界不對:{ok_exact}/{short_rejected}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

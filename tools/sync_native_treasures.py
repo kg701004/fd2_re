@@ -72,6 +72,37 @@ def classify_cell(terrain, tile, event_word):
     return NO_EVENT_SLOT, False
 
 
+def source_paths(fields: list, shapes: list, map_index: int) -> tuple:
+    """第 map_index 張圖的(構成, 控制, 地形)來源路徑。
+
+    FDFIELD 每張圖 3 個資源、FDSHAP 每張 2 個(第 2 個是地形)。2026-09-11 抽出來:
+    selftest 一直只用 map0,`map_index * 3` 與 `* 4`、`* 2 + 1` 與 `* 3 + 1` 對 0 算出
+    同一個檔,選錯檔完全看不出來。
+    """
+    return fields[map_index * 3], fields[map_index * 3 + 1], shapes[map_index * 2 + 1]
+
+
+def parse_chest_rows(control: bytes) -> list[dict]:
+    """控制段寶箱表 -> [{slot, type, native_type, value}];native_type 0xFF 或 value 0 為空列。
+
+    2026-09-11 從 expected() 抽出:空列規則(0xFF / 0)只被真實 map0 間接跑到,
+    `== 0xFF`、`== 0` 的突變都逃掉,只能用合成控制段直接測。
+    """
+    chests = []
+    # 這裡原本重寫一次 `range(16)` 與 `slot * 3` 的字面值,與上面的具名常數各自為政:
+    # 突變測試把這兩個字面值改掉時,(2b) 的版面斷言完全看不到(它管的是常數)。
+    # 改用同一組常數,版面就只有一個來源。
+    for slot in range(CHEST_ROWS):
+        base = CHEST_TABLE_OFFSET + slot * CHEST_STRIDE
+        native_type = control[base]
+        value = struct.unpack_from("<H", control, base + 1)[0]
+        if native_type == 0xFF or value == 0:
+            continue
+        chests.append({"slot": slot, "type": parse_field.native_reward_kind(native_type),
+                       "native_type": native_type, "value": value})
+    return chests
+
+
 def expected(raw, map_index, map_data):
     fields = sorted(
         glob.glob(os.path.join(raw, "FDFIELD", "*.bin")), key=resource_index
@@ -79,48 +110,30 @@ def expected(raw, map_index, map_data):
     shapes = sorted(
         glob.glob(os.path.join(raw, "FDSHAP", "*.bin")), key=resource_index
     )
-    composition = open(fields[map_index * 3], "rb").read()
-    control = open(fields[map_index * 3 + 1], "rb").read()
-    terrain = open(shapes[map_index * 2 + 1], "rb").read()
+    comp_path, control_path, terrain_path = source_paths(fields, shapes, map_index)
+    composition = open(comp_path, "rb").read()
+    control = open(control_path, "rb").read()
+    terrain = open(terrain_path, "rb").read()
     w, h = struct.unpack_from("<HH", composition, 0)
     tiles = map_data.get("tiles")
     if (
         map_data.get("w") != w
         or map_data.get("h") != h
         or len(tiles or []) != w * h
-        or len(terrain) % 4
+        or len(terrain) % TERRAIN_STRIDE
     ):
         raise ValueError(f"map{map_index}: source dimensions/provenance invalid")
 
+    # 事件字依格子(cell)索引,對合法構成檔永遠在範圍內。原本讀之前還重複檢查一次
+    # 地形範圍,但 classify_cell 對超出範圍的 tile 本來就忽略事件字 —— 那份檢查是冗餘的。
     slots = []
     hidden = []
     for cell, tile in enumerate(tiles):
-        event_word = (struct.unpack_from("<H", composition, 6 + cell * EVENT_WORD_STRIDE)[0]
-                      if 0 <= tile and tile * TERRAIN_STRIDE < len(terrain) else 0)
+        event_word = struct.unpack_from("<H", composition, 6 + cell * EVENT_WORD_STRIDE)[0]
         slot, is_hidden = classify_cell(terrain, tile, event_word)
         slots.append(slot)
         hidden.append(is_hidden)
-
-    offset = CHEST_TABLE_OFFSET
-    chests = []
-    # 這裡原本重寫一次 `range(16)` 與 `slot * 3` 的字面值,與上面的具名常數各自為政:
-    # 突變測試把這兩個字面值改掉時,(2b) 的版面斷言完全看不到(它管的是常數)。
-    # 改用同一組常數,版面就只有一個來源。
-    for slot in range(CHEST_ROWS):
-        native_type = control[offset + slot * CHEST_STRIDE]
-        value = struct.unpack_from("<H", control, offset + slot * CHEST_STRIDE + 1)[0]
-        if native_type == 0xFF or value == 0:
-            continue
-        kind = parse_field.native_reward_kind(native_type)
-        chests.append(
-            {
-                "slot": slot,
-                "type": kind,
-                "native_type": native_type,
-                "value": value,
-            }
-        )
-    return slots, hidden, chests
+    return slots, hidden, parse_chest_rows(control)
 
 
 def selftest():
@@ -236,6 +249,29 @@ def selftest():
           + ("全部正確" if ok2d else f",不符 {bad}"))
     if not ok2d:
         fails.append(f"地形旗標判定不符:{bad}")
+
+    print("\n(2d2) 來源檔選擇、寶箱空列規則、tile 0 帶寶物旗標的正向案例")
+    # 2026-09-11 窮舉突變測試:selftest 只用 map0,來源檔的 `map_index * 3` 等算式對 0
+    # 無從分辨;空列規則只被真實 map0 間接跑到;classify_cell 的 `tile < 0` 沒有「tile 0
+    # 且帶寶物旗標」的案例((2d) 的 tile0 無事件,`< 0` 與 `< 1` 都回 -1)。
+    ctrl = bytearray(CHEST_TABLE_OFFSET + CHEST_ROWS * CHEST_STRIDE)
+    rows_in = [(0x00, 7), (0xFF, 9), (0x01, 0), (0x02, 1), (0xFE, 4)]
+    for s, (t, v) in enumerate(rows_in + [(0xFF, 0)] * (CHEST_ROWS - len(rows_in))):
+        ctrl[CHEST_TABLE_OFFSET + s * CHEST_STRIDE] = t
+        struct.pack_into("<H", ctrl, CHEST_TABLE_OFFSET + s * CHEST_STRIDE + 1, v)
+    got_rows = [(c["slot"], c["native_type"], c["value"]) for c in parse_chest_rows(bytes(ctrl))]
+    b2d2 = {
+        "source_paths map2": (source_paths(list("abcdefghij"), list("ABCDEFGH"), 2)
+                              == ("g", "h", "F")),
+        # slot1 型態 0xFF、slot2 值 0 為空列;slot3 值 1 與 slot4 型態 0xFE 必須保留
+        "空列規則": got_rows == [(0, 0x00, 7), (3, 0x02, 1), (4, 0xFE, 4)],
+        "tile 0 帶寶物旗標": classify_cell(bytes([0x20, 0, 0, 0]), 0, 0x05) == (5, False),
+    }
+    ok2d2 = all(b2d2.values())
+    print(f"    {'PASS' if ok2d2 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b2d2.items())
+          + ("" if b2d2["空列規則"] else f";實得 {got_rows}"))
+    if not ok2d2:
+        fails.append(f"來源檔/空列/tile 0 判定不對:{[k for k, v in b2d2.items() if not v]}")
 
     print("\n(2e) 非平凡性:三個常數各自被擾動時,上面至少一個案例必須改變")
     # 沒有這一題,(2d) 可能只是碰巧全過。這裡直接證明每個常數都是承重的。

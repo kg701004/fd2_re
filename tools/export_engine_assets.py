@@ -134,6 +134,22 @@ def selftest():
     if not ok5:
         fails.append("不同 move code 算出相同成本 —— 對照表沒有鑑別力")
 
+    print("\n(6) 未列在對照表的 move code:步行成本預設 1")
+    # 2026-09-11 窮舉突變測試:`.get(code, 1)` 的預設值改掉逃掉 —— 真實地形的 move code
+    # 全在對照表裡。前提:挑到的 code 真的不在表內。
+    import os as _os
+    import tempfile as _tf
+    unknown_code = next(c for c in range(256) if c not in MOVE_CODE_TO_WALK_COST)
+    with _tf.TemporaryDirectory() as _d:
+        tp = _os.path.join(_d, "t.bin")
+        with open(tp, "wb") as fh:
+            fh.write(bytes([0x00, unknown_code, 0, 0]))
+        _flags6, costs6, _raw6 = load_terrain_records(tp)
+    ok6 = unknown_code not in MOVE_CODE_TO_WALK_COST and costs6 == [1]
+    print(f"    {'PASS' if ok6 else 'FAIL'}: move code {unknown_code}(不在表內)-> 成本 {costs6}(應 [1])")
+    if not ok6:
+        fails.append(f"未知 move code 的預設成本不是 1:{costs6}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

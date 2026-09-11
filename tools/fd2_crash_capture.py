@@ -236,6 +236,18 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"選取結果不隨輸入變化:{picks}")
 
+    print("\n(6) HP=1 的單位算存活;距離用游標的 x 對 x、y 對 y")
+    # 2026-09-11 窮舉突變測試:`hp > 0` 與 `cursor[0]` 改掉逃掉 —— 既有案例的游標 x == y,
+    # 也沒有 HP=1 的單位。游標 (0,10):A 在 (0,9) 距離 1、B 在 (10,0) 距離 20;
+    # x/y 對調時 A 變 11、B 變 10,就會選到 B。
+    u_a = {"camp": OURS, "hp": 1, "acted": 0, "x": 0, "y": 9}
+    u_b = {"camp": OURS, "hp": 5, "acted": 0, "x": 10, "y": 0}
+    got6 = pick_unit((0, 10), [u_a, u_b])
+    ok6 = got6 is u_a
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 選到 {'A' if got6 is u_a else 'B' if got6 is u_b else got6}(應 A)")
+    if not ok6:
+        fails.append("HP=1 被當成死亡,或游標 x/y 對應錯誤")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

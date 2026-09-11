@@ -450,6 +450,32 @@ def selftest() -> int:
     if bad7:
         fails.append(f"兩層判準的分工不成立:{bad7}")
 
+    print("\n(9) newest_segment 的 tail 搜尋、cmd_append 的項目邊界/空行修剪/回傳碼")
+    # 2026-09-11 窮舉突變測試:tail 搜尋跳過表頭的 `lines[1:]`、cmd_append 找下一個項目
+    # 的 `k + 1`、往回修剪空行的 `end > i + 1` / `lines[end - 1]`、成功時的 `return 0`,
+    # 改掉都逃掉 —— (5)(5b) 的案例沒有卡在這些邊界上。
+    tail_only = Item("Y", "C", 0, ["Y - C - 標題沒有日期", "  * **2099-01-01 只有這一行有日期**"])
+    b9 = {"只有第 2 行有日期時取它": tail_only.newest_segment == "  * **2099-01-01 只有這一行有日期**"}
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as _td:
+        wl = Path(_td) / "wl.md"
+        # 項目 1 有內容且後面跟兩行空白;項目 3 只有表頭、後面全是空白(釘住 `end > i + 1`)
+        wl.write_text("1 - A - 第一項\n  * a\n\n\n2 - B - 第二項\n  * b\n"
+                      "3 - C - 空項目\n\n\n4 - D - 末項\n", encoding="utf-8")
+        rc1 = cmd_append("1", "  * NEW1", wl)
+        rc3 = cmd_append("3", "  * NEW3", wl)
+        rc_missing = cmd_append("99", "x", wl)
+        got_wl = wl.read_text(encoding="utf-8")
+    want_wl = ("1 - A - 第一項\n  * a\n  * NEW1\n\n\n2 - B - 第二項\n  * b\n"
+               "3 - C - 空項目\n  * NEW3\n\n\n4 - D - 末項\n")
+    b9.update({"附加在正確位置": got_wl == want_wl,
+               "成功回 0、找不到回 1": (rc1, rc3, rc_missing) == (0, 0, 1)})
+    ok9 = all(b9.values())
+    print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b9.items())
+          + ("" if b9["附加在正確位置"] else f";實得 {got_wl!r}"))
+    if not ok9:
+        fails.append(f"tail 搜尋/附加位置/回傳碼不對:{[k for k, v in b9.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

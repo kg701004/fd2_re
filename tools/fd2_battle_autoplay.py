@@ -656,6 +656,14 @@ def selftest() -> int:
     if not ok5:
         fails.append("空輸入或非平凡性不成立")
 
+    print("\n(6) HP=1 的敵人仍可攻擊(下界是 > 0)")
+    # 2026-09-11 窮舉突變測試:`v["hp"] > 0` 改成 `> 1` 逃掉 —— 沒有 HP=1 的案例。
+    ok6 = (is_attackable_foe({"camp": 0x00, "acted": 0, "hp": 1})
+           and not is_attackable_foe({"camp": 0x00, "acted": 0, "hp": 0}))
+    print(f"    {'PASS' if ok6 else 'FAIL'}: HP=1 可攻擊、HP=0 不可")
+    if not ok6:
+        fails.append("HP=1 的敵人被排除")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

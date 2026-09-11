@@ -268,6 +268,23 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"狀態恆定或空輸入不正確:{states} / {empty_st}")
 
+    print("\n(6) camp 列舉含 0x01、hp_max 的兩個界(1 與 0xFFFF)")
+    # 2026-09-11 窮舉突變測試:`{0x00, 0x01, 0x02}` 的 0x01、`0 < hp_max`、`<= 0xFFFF`
+    # 改掉都逃掉 —— 既有案例沒有 camp 0x01,也沒有卡在 hp_max 的兩個界上。
+    def rec(i, camp, cur, mx):
+        return {"index": i, "camp": camp, "hp_cur": cur, "hp_max": mx}
+    both = [rec(0, 0x00, 10, 10), rec(1, 0x02, 10, 10)]
+    ok_state = GameState.IN_BATTLE_NOT_PLAYABLE
+    b6 = {"camp 0x01 合法": classify_units([rec(0, 0x00, 10, 10), rec(1, 0x01, 10, 10)])[0] is ok_state,
+          "hp_max=1 合法": classify_units(both + [rec(2, 0x02, 1, 1)])[0] is ok_state,
+          "hp_max=0xFFFF 合法": classify_units(both + [rec(2, 0x02, 5, 0xFFFF)])[0] is ok_state,
+          "hp_max=0x10000 超界": (classify_units(both + [rec(2, 0x02, 5, 0x10000)])[0]
+                                 is GameState.NOT_IN_BATTLE)}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6:
+        fails.append(f"camp 列舉/hp_max 界線不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

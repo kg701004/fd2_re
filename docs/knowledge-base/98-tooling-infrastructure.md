@@ -4630,3 +4630,100 @@ crash_ladder 4→2、truncation 26→24、realesrgan_batch 2→1、generated_art
   即等價)做成自動的等價探針,先篩掉 fixture 參數類的候選,其餘再人工判讀。
 - 窮舉約 1 小時,是定期跑的完整判定,**不是**提交閘門;`verify_everything` 的 discrim 軸仍是
   抽樣(已改穩定鍵)。
+
+## 2026-09-12 續八:清存量 —— artifacts 探針併入窮舉、登錄表三類、逐支補題
+
+續七的建議是「先做等價探針篩掉 fixture 參數,其餘人工判讀」。實際動手後把判準修正得更誠實:
+**「突變後拿真實資料正常執行、輸出相同」只證明真實資料分辨不出這個突變,不證明等價** ——
+續六修掉的 `tile_in_terrain` 邊界,正是真實資料永遠碰不到、卻確實存在的缺口。所以探針只拿來
+分類,不拿來裁決。
+
+### artifacts 探針併入 `--exhaustive`
+
+有登錄產生器的工具(`verify_generated_artifacts.REGISTRY`),selftest 逃掉的突變會在**突變狀態下
+重生該工具的產物**,與已提交版本比對;漂移或無法執行即計為「由 artifacts 軸覆蓋」。artifacts 軸
+每輪都跑,它抓得到的突變在整個驗證體系裡並沒有漏 —— 這不是等價,也不需要人工登錄,每次窮舉
+重新實證。三個防呆:
+
+- **對照組**:未突變時重生必須逐位元組相同,否則該工具不啟用探針(否則每個突變都「被抓到」)。
+- **載入時機**:vg 模組必須在任何突變之前載入 —— 窮舉輪到 `verify_generated_artifacts.py`
+  本身時,磁碟上的它是突變過的。
+- **推翻登錄**:登錄為等價的突變若在探針下漂移,代表它改變了行為,計為登錄錯誤。
+
+實例:`dump_chapter_beats` 的 `indent=1 -> 2`(L742/L754)與 `__main__` 反轉(產生器什麼都不做)
+被探針判覆蓋;同一行的 `ensure_ascii` 則重生逐位元組相同(內容全是 ASCII),歸 cosmetic。
+`derive_item_row_fields` 另有 2 個被探針覆蓋。harness selftest 新增第 (8) 題:探針工具恰好 4 個
+可達點,分別落在「selftest 抓到 / artifacts 抓到 / 真逃逸」,並附對照組不啟用的案例。
+
+### 登錄表三類(`kind`)
+
+| kind | 定義 |
+|---|---|
+| `equivalent` | 任何輸入下行為都不變(數學、函式庫行為、呼叫形狀或資料分佈的實測) |
+| `cosmetic` | 行為有變,但只變在給人看的診斷文字或檔案排版(json 的 indent/ensure_ascii 讀回資料相同) |
+| `tuning` | 政策性數值(逾時秒數、健全性下限、啟發式視窗大小),±1 只在極端情形不同,沒有正確值 |
+
+後兩類**不是等價**,所以分開標記;三類一樣受檢(被抓到即登錄錯誤,找不到即過期)。判讀時不能
+只看「是不是訊息」:`text_snippet` 看起來是顯示欄位,實際是 `fd2_speaker_capture` 的安全閘門
+(`--confirm-text` 必須出現在其中才准對活體畫面動作),所以 `runtime_todo_snippet` 的 `maxsplit`
+是真缺口、`[:60]` 是 tuning;`audit` 的 `s[:200]` 是雜湊鍵,不是訊息截斷。
+
+### 逐支補題的共同形狀
+
+補了四十餘支。反覆出現的缺口類型:
+
+- **邊界只測遠端**:守衛的案例是空檔、9999 筆、w=300,從沒卡在 `< 6`、`<= 256`、`6 + 4n` 的
+  恰好位置(render_map、decode_lmi、dump_remap、unpack_dat、extract_maps、gtl2wopl、decode_fdicon
+  的下界 1)。
+- **編解碼游標**:單一 run 之後已無資料,`i += 1` 改成 2 看不出來 —— 一律加連續兩個 run 的案例
+  (decode_sprite、decode_image、decode_ani、render_map 的 mode0/mode1)。
+- **只驗「不崩潰」,沒驗輸出**:`xmi2mid.iter_chunks` 只被截斷掃描跑過,產出的 chunk 序列從未斷言;
+  `fd2_in_battle_check.parse_rows` 從未吃過任何一行真實格式的輸出。
+- **自己跟自己比**:`verify_generated_artifacts` 的 (1)(2)(3) 在測試裡自己寫 `a.read_bytes() ==
+  b.read_bytes()`,從不經過 `check_one` —— 比對器的 `==` 反轉整組照過。新增 (4d) 用探針產生器
+  真的走 `check_one` 的 bytes / curated / dir 三條路。
+- **map0 讓算式退化**:`map_index * 3` 與 `* 4` 對 0 相同。抽出 `source_paths()`,用 map2 驗。
+- **CLI 從不經過 selftest**:`export_sprites` 的調色盤參數、`extract_all` 的參數個數,抽成純函式測。
+
+每一題都先驗前提(例如 30/29 字的兩行都會被判成主張、code 放在 probe 之後 r2 真的為負、挑到的
+move code 真的不在表內)。這一輪前提檢查當場擋下三次我自己寫錯的測資:`unpack_dat` 少了
+`LLLLLL` magic、以及起點 6 其實由後一道守衛擋下;`verify_address_citations` 的訂正措辭不在
+`CORRECTION_WORDS` 內。三次都是前提那一項 FAIL,而不是「測到了、通過了」。
+
+### 任務外發現(只記錄,未處理):PRIM 參數個數與推導值有 3 處不一致
+
+為了讓 `dump_chapter_beats` 的 PRIM 表有獨立的對照來源,拿 `derive_native_argcounts` 的推導
+(呼叫端清理 + 緊鄰 push 兩訊號)逐一比對 26 個 PRIM 目標:18 個 CONFIRMED 中 15 個一致、
+**3 個不一致**:
+
+| 目標 | op | PRIM | 推導(CONFIRMED) | 呼叫端數 |
+|---|---|---|---|---|
+| `0x1088d` | loadch | 0 | 1 | 3 |
+| `0x15f84` | dialog | 2 | **9** | 296 |
+| `0x25a96` | play_sfx | 1 | 3 | 111 |
+
+PRIM 註解說它以序章 handler 反組譯逐一核對過;推導那邊是兩個獨立訊號一致才判 CONFIRMED。至少
+一邊在這三個目標上是錯的,需要回到反組譯判斷,不在本輪範圍。PRIM 參數個數**多算**時,
+`pushes[-nargs:]` 仍切到同樣幾個 push(每次 call 後 pushes 清空),所以 artifacts 看不出來;
+少算才會。
+
+### 檢查點(全量窮舉,2026-09-12)
+
+| | 續七首次窮舉 | 本輪檢查點 |
+|---|---|---|
+| 可達產品碼突變點 | 1311 | 1308 |
+| selftest 抓到 | 990 | **1149** |
+| artifacts 軸覆蓋(自動實證) | — | 7 |
+| 登錄表扣除 | 8 | 62(equivalent / cosmetic / tuning) |
+| 未登錄的可達逃逸 | 321(51 支) | **90(8 支)** |
+| 登錄錯誤 / 過期 | 0 / 0 | **2** / 0 |
+
+登錄錯誤那 2 筆是 `verify_event_dispatch_table.classify` 的 `imm`(我登錄為 cosmetic:「只出現在
+說明字串」),被本輪的 selftest 抓到 —— 主張不成立,已從登錄表刪除。這正是登錄表自我檢查存在
+的理由:一筆錯的登錄不會安靜地一直扣掉一個真缺口。
+
+剩下的 90 個:`dump_chapter_beats`×49、`verify_truncation_robustness`×24、
+`derive_native_argcounts`×11,以及 `export_acting_resource_set`×2、`decode_story_text`、
+`export_story_index_map`、`font_grid`、`worklist_status` 各 1。三支大工具需要各自深入(辨識器的
+否定案例、fuzz 參數逐一以正常執行實測、掃描器邊界),下一輪處理。WEAK 1 支是 `realesrgan_batch`
+(可達的只有 `subprocess_rc` 那一行,已登錄後剩 0 —— 判定欄位看的是 selftest 本身抓到幾個)。

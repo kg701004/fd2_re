@@ -197,10 +197,21 @@ def find_runtime_todo(path):
             continue
         m = _RUNTIME_SPK_RE.match(ln[4:].split("**：", 1)[0])
         if m:
-            snippet = ln.split("：", 1)[1] if "：" in ln else ln
             todo.append({"box_index": idx, "operand": int(m.group(1)),
-                        "text_snippet": snippet[:60]})
+                        "text_snippet": runtime_todo_snippet(ln)})
     return todo
+
+
+def runtime_todo_snippet(line: str) -> str:
+    """render_chapter 的一行 -> 給 `--runtime-todo` 的 text_snippet(第一個全形冒號之後、前 60 字)。
+
+    **這不是純顯示欄位**:`fd2_speaker_capture.py` 用它當安全閘門,`--confirm-text` 必須
+    出現在 text_snippet 裡才准對活體畫面動作。所以「只切第一個冒號」是承重的 —— 內文
+    本身常含全形冒號,切到第二個就會把後半截丟掉,閘門跟著誤擋。2026-09-11 從
+    find_runtime_todo 抽出來,因為真實 FDTXT 裡的不可解框內文剛好都沒有第二個冒號,
+    `maxsplit` 改掉逃掉了。
+    """
+    return (line.split("：", 1)[1] if "：" in line else line)[:60]
 
 
 def render_chapter(path):
@@ -331,6 +342,28 @@ def selftest(src, _break_kind=False):
             print("    FAIL: 注入後仍通過")
         else:
             print("    PASS: 注入後如預期失敗")
+
+    print("\n(4) decode_string 合成案例:開框判定、說話者/內文切片、0xFF00 是控制碼")
+    # 2026-09-11 窮舉突變測試:(1)(2) 只比對兩條路徑彼此一致,`seg[1] == OPEN`、
+    # `len(seg) >= 2`、`seg[0]`/`seg[2:]` 與控制碼下界 0xFF00 改掉都逃掉 —— 兩條路徑
+    # 共用同一個 decode_string,一起錯就一起對。這裡直接對答案。
+    def unboxed(name):
+        return f"?#{name}(開框碼 None)"
+    b4 = {
+        "開框:說話者 + 內文": (decode_string([7, OPEN, 100, 101, CLOSE])
+                           == [(unboxed(7), [g2s([100, 101])])]),
+        "恰好 2 碼的開框(內文為空)": decode_string([7, OPEN]) == [(unboxed(7), [""])],
+        "第 2 碼不是『就不是開框": decode_string([7, 100]) == [(None, [g2s([7, 100])])],
+        "0xFF00 是控制碼(不開框)": (decode_string([0xFF00, 7, OPEN, 100])
+                               == [(None, [g2s([7, 100])])]),
+        # text_snippet 是 fd2_speaker_capture 的安全閘門:只能切第一個全形冒號
+        "snippet 保留第一個冒號之後的全部": (runtime_todo_snippet("- **unit#3(執行期決定)**：甲：乙：丙")
+                                         == "甲：乙：丙"),
+    }
+    ok4 = all(b4.values())
+    print(f"    {'PASS' if ok4 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b4.items()))
+    if not ok4:
+        fails.append(f"decode_string 合成案例不對:{[k for k, v in b4.items() if not v]}")
 
     if fails:
         print("\nSELFTEST FAILED:")

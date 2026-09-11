@@ -272,6 +272,14 @@ def selftest():
     if not ok5:
         fails.append(f"不認得的 op 被丟掉或改寫:{kept}")
 
+    print("\n(6) as_int:十六進位與十進位字串都要轉成整數,非數字原樣保留")
+    # 2026-09-11 窮舉突變測試:`int(value, 0)` 的基底改成 1 逃掉(會 ValueError 然後
+    # 原樣回傳字串)—— 既有案例的 addr 沒有被斷言成整數。
+    ok6 = as_int("0x10") == 16 and as_int("12") == 12 and as_int("eax") == "eax" and as_int(5) == 5
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 0x10->{as_int('0x10')!r}、12->{as_int('12')!r}、eax->{as_int('eax')!r}")
+    if not ok6:
+        fails.append("as_int 沒有把數字字串轉成整數")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

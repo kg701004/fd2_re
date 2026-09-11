@@ -340,6 +340,31 @@ def selftest() -> int:
     if not ok9:
         fails.append(f"TAIL_MERGED_STUB 的越界邊界不對:{v_ok}/{v_over}")
 
+    print("\n(10) 序頭恰好剩 10 bytes 的邊界 + 共用尾段往回呼叫 __STK(r2 為負)")
+    # 2026-09-11 窮舉突變測試:`off + 10 > len(code)` 的 10 改 11 逃掉(真實跳表格
+    # 從不落在 code 最尾端);共用尾段那個 call 的 `signed=True` 改 False 也逃掉 ——
+    # 真實 handler 全在 stack probe 之前,r2 永遠為正。這裡把 code 放在 probe **之後**,
+    # 逼出負的 r2,並斷言它真的是負的(否則這題會安靜地退化成正數情況)。
+    base10 = 0x20000
+    clean10 = bytearray(10)
+    clean10[0], clean10[5] = PUSH_IMM32, CALL_REL32
+    clean10[6:10] = (STACK_PROBE - (base10 + 10)).to_bytes(4, "little", signed=True)
+    after = STACK_PROBE + 0x100                    # 位於 probe 之後
+    tail10 = bytearray(20)
+    t10 = 12
+    tail10[0], tail10[5] = PUSH_IMM32, JMP_REL8
+    tail10[6] = t10 - 7                            # addr + 7 + rel8 == after + t10
+    r2_10 = STACK_PROBE - (after + t10 + 5)
+    tail10[t10] = CALL_REL32
+    tail10[t10 + 1:t10 + 5] = r2_10.to_bytes(4, "little", signed=True)
+    v10a = classify(bytes(clean10), base10, base10)[0]
+    v10b = classify(bytes(tail10), after, after)[0]
+    ok10 = v10a == "CLEAN_PROLOGUE" and r2_10 < 0 and v10b == "TAIL_MERGED_STUB"
+    print(f"    {'PASS' if ok10 else 'FAIL'}: 恰好 10 bytes 的序頭 -> {v10a}(應 CLEAN_PROLOGUE)、"
+          f"probe 之後的共用尾段(r2={r2_10},前提 <0)-> {v10b}(應 TAIL_MERGED_STUB)")
+    if not ok10:
+        fails.append(f"序頭尾端邊界或尾段的有號位移不對:{v10a}/{v10b}/r2={r2_10}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

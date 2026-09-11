@@ -171,6 +171,34 @@ def selftest():
     if not ok5:
         fails.append("合法檔案解不出樂器")
 
+    print("\n(6) 索引掃描恰好 6 bytes、fileOffset 的 +2 邊界、transpose 取 body[0]")
+    # 2026-09-11 窮舉突變測試:`off + 6 <= len`、`foff + 2 > len`、`body[0]` 改掉都逃掉 ——
+    # 真實 SAMPLE.AD 沒有卡在這些邊界上,transpose 值也從沒被斷言。以錯誤訊息分辨
+    # 是哪一道守衛擋下。
+    import tempfile as _tf
+
+    def gtl(blob):
+        with _tf.NamedTemporaryFile(suffix=".ad", delete=False) as f:
+            f.write(blob)
+        try:
+            return parse_gtl(f.name)
+        except (ValueError, NotImplementedError) as exc:
+            return str(exc)
+        finally:
+            os.unlink(f.name)
+    end_mark = struct.pack("<BBI", 0xFF, 0xFF, 0)
+    inst = struct.pack("<H", 0x0E) + bytes([7]) + bytes(range(11))
+    good = gtl(struct.pack("<BBI", 1, 0, 12) + end_mark + inst)
+    one_head = gtl(struct.pack("<BBI", 1, 0, 99))                      # 恰好 6 bytes 一筆
+    size_edge = gtl(struct.pack("<BBI", 1, 0, 12) + end_mark + struct.pack("<H", 0x0E))
+    b6 = {"transpose 與 raw": good == {(0, 1): {"transpose": 7, "raw": bytes(range(11))}},
+          "恰好 6 bytes 的索引也要讀": isinstance(one_head, str) and "fileOffset" in one_head,
+          "size 欄恰好在檔尾": isinstance(size_edge, str) and "宣稱 size" in size_edge}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6:
+        fails.append(f"GTL 索引/邊界/transpose 不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

@@ -128,6 +128,14 @@ def selftest():
     if not ok4:
         fails.append("合法輸入沒有解出預期結果")
 
+    print("\n(5) 連續兩個 run:run 之後游標只前進 1(值位元組)")
+    # 2026-09-11 窮舉突變測試:run 分支的 `i += 1` 改成 2 逃掉 —— 單一 run 之後已無資料。
+    got5 = decode_rle(b"\x01\xAA\x01\xBB", 4)
+    ok5 = got5 == b"\xAA\xAA\xBB\xBB"
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 01 AA 01 BB -> {got5.hex() if got5 else None}(應 aaaabbbb)")
+    if not ok5:
+        fails.append(f"連續 run 解錯:{got5}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

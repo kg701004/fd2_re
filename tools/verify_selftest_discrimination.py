@@ -601,8 +601,36 @@ def recover_orphaned_backups(root: Path = TOOLS) -> list[str]:
     return restored
 
 
+_VG = None
+
+
+def _vg():
+    """verify_generated_artifacts 模組。必須在任何突變**之前**載入(main 會先呼叫):
+    窮舉輪到 verify_generated_artifacts.py 本身時,磁碟上的它是突變過的,那時才 import
+    就會拿到突變版的比對邏輯。"""
+    global _VG
+    if _VG is None:
+        import verify_generated_artifacts as mod
+        _VG = mod
+    return _VG
+
+
+def _artifacts_notice(rows: list, timeout: int) -> bool:
+    """在突變狀態下重生該工具登錄的產物;任一項漂移或無法執行,即 artifacts 軸會抓到
+    這個突變。逾時也算抓到 —— 那一軸會失敗,不會安靜通過。"""
+    for row in rows:
+        try:
+            verdict = _vg().check_one(*row, timeout)["verdict"]
+        except subprocess.TimeoutExpired:
+            return True
+        if verdict in ("DRIFT", "ERROR"):
+            return True
+    return False
+
+
 def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
-              exhaustive: bool = False, equivalents: dict | None = None) -> dict:
+              exhaustive: bool = False, equivalents: dict | None = None,
+              artifact_rows: list | None = None) -> dict:
     path = TOOLS / name
     recover_orphaned_backups()
     original = path.read_bytes()
@@ -642,6 +670,21 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
         # (見 list_sites)。現在以穩定鍵雜湊挑選,`--seed` 仍可刻意換一組。
         picks = stable_picks(name, sites, tries, seed)
     by_idx = {s["idx"]: s for s in sites}
+    # 2026-09-11:selftest 逃掉、但該工具有登錄產生器時,在突變狀態下重生產物比對。
+    # artifacts 軸每輪都跑,它抓得到的突變在整個驗證體系裡並沒有漏 —— 這不是等價,
+    # 是「由另一軸覆蓋」,而且每次窮舉都重新實證,不靠人工登錄。前提:未突變時重生
+    # 必須逐位元組相同,否則每個突變都會看起來「被抓到」。
+    probe_rows: list = []
+    if exhaustive:
+        rows = (artifact_rows if artifact_rows is not None
+                else [r for r in _vg().REGISTRY if r[1] == name])
+        if rows:
+            base = [_vg().check_one(*r, timeout)["verdict"] for r in rows]
+            if all(v == "IDENTICAL" for v in base):
+                probe_rows = rows
+            else:
+                out["artifact_probe"] = f"未突變時重生就不相同({base}),本工具不啟用"
+    covered: list[str] = []
     reachable_attempted = reachable_caught = 0
     root_before = _root_entries()
     try:
@@ -679,8 +722,11 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                 # 逃掉的、而且 selftest 明明執行得到的突變——這才是真正該修的線索,
                 # 也是唯一能區分「selftest 不夠力」與「樣本沒落到可測範圍」的證據。
                 s = by_idx[idx]
-                escapes.append({"line": at_line, "what": what, "func": s["func"],
-                                "text": s["text"], "key": s["key"]})
+                if probe_rows and _artifacts_notice(probe_rows, timeout):
+                    covered.append(s["key"])
+                else:
+                    escapes.append({"line": at_line, "what": what, "func": s["func"],
+                                    "text": s["text"], "key": s["key"]})
     finally:
         path.write_bytes(original)
         out["side_effects"] = quarantine_side_effects(root_before)
@@ -708,7 +754,10 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                reachable_escapes=[f"L{e['line']}: {e['what']}" for e in real],
                reachable_escape_details=real,
                equivalent_escapes=[e["key"] for e in escapes if e["key"] in registered],
-               registry_contradicted=sorted(k for k in registered if k in caught_keys),
+               covered_by_artifacts=covered,
+               # 被 artifacts 軸抓到 = 突變改變了產物 = 行為變了,同樣推翻「等價」的主張。
+               registry_contradicted=sorted(k for k in registered
+                                            if k in caught_keys or k in covered),
                registry_stale=(sorted(set(registered) - {s["key"] for s in product})
                                if exhaustive else []),
                exhaustive=exhaustive)
@@ -1027,6 +1076,50 @@ def selftest() -> int:
     if not ok7:
         fails.append(f"落點追蹤不對:{with_arg} / {never_why} / {r7.get('verdict')}")
 
+    print("\n(8) artifacts 探針:selftest 逃掉但產物漂移 -> 由 artifacts 軸覆蓋;對照組不同就不啟用")
+    # 前提:f 裡恰好 4 個可達產品碼突變點。`>` 反轉讓 selftest 失敗(抓到);`3 -> 4` 讓
+    # selftest 照過、產物卻由 15 變 20(artifacts 抓到);`1 -> 2` 與 `else 0 -> 1` 對 f(5)
+    # 沒有影響(真逃逸)。三種結果各至少一個,判準才分得出來。
+    ap_tool = TOOLS / "_art_probe.py"
+    art = TOOLS / "_art_probe.json"
+    ap_tool.write_text(
+        "import json, sys\n"
+        "def f(a):\n"
+        "    return a * 3 if a > 1 else 0\n"
+        "def selftest():\n"
+        "    return 0 if f(5) > 0 else 1\n"
+        "if __name__ == '__main__':\n"
+        "    if sys.argv[1:] == ['--selftest']:\n"
+        "        sys.exit(selftest())\n"
+        "    open(sys.argv[1], 'w').write(json.dumps(f(5)))\n", encoding="utf-8")
+    INVOKE[ap_tool.name] = (["--selftest"], "offline")
+    rows8 = [(art.relative_to(ROOT).as_posix(), ap_tool.name, ["{out}"], "bytes")]
+    try:
+        art.write_text("15", encoding="utf-8")
+        r8 = test_tool(ap_tool.name, tries=0, timeout=60, exhaustive=True, artifact_rows=rows8)
+        art.write_text("999", encoding="utf-8")     # 對照組:未突變時就不相同
+        r8b = test_tool(ap_tool.name, tries=0, timeout=60, exhaustive=True, artifact_rows=rows8)
+    finally:
+        for p in (ap_tool, art, _backup_path(ap_tool)):
+            p.unlink(missing_ok=True)
+        del INVOKE[ap_tool.name]
+    line8 = "f|return a * 3 if a > 1 else 0|"
+    esc8 = sorted(e["key"] for e in r8.get("reachable_escape_details", []))
+    esc8b = [e["key"] for e in r8b.get("reachable_escape_details", [])]
+    ok8 = (r8.get("covered_by_artifacts") == [line8 + "int 3->4#0"]
+           and esc8 == sorted([line8 + "int 1->2#0", line8 + "int 0->1#0"])
+           and r8.get("reachable_attempted") == 4 and r8.get("reachable_caught") == 1
+           and not r8b.get("covered_by_artifacts")
+           and "不啟用" in (r8b.get("artifact_probe") or "")
+           and line8 + "int 3->4#0" in esc8b)
+    print(f"    {'PASS' if ok8 else 'FAIL'}: 覆蓋 {r8.get('covered_by_artifacts')}(應只有 3->4)、"
+          f"逃逸 {len(esc8)}(應 2)、selftest 抓到 {r8.get('reachable_caught')}/"
+          f"{r8.get('reachable_attempted')}(應 1/4);對照組:覆蓋 {r8b.get('covered_by_artifacts')}"
+          f"(應空)、3->4 回到逃逸={line8 + 'int 3->4#0' in esc8b}")
+    if not ok8:
+        fails.append(f"artifacts 探針判定不對:{r8.get('covered_by_artifacts')} / {esc8} / "
+                     f"{r8b.get('artifact_probe')}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -1046,6 +1139,15 @@ def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
 
     檔案不存在 = 空登錄表;格式錯、缺理由、重複鍵一律丟例外 —— 讀不懂的登錄表
     不能被當成「沒有等價突變」,那會把錯誤變成安靜的全部重報。
+
+    `kind`(預設 equivalent):
+      equivalent  任何輸入下行為都不變(數學、函式庫行為、呼叫形狀實測)。
+      cosmetic    行為**有變**,但只變在給人看的診斷文字(訊息截斷長度、顯示格式),
+                  不影響資料、exit code 或任何被程式讀取的輸出。刻意不釘:為它寫斷言
+                  就是釘一個不承重的常數。它不是等價,所以必須分開標記。
+      tuning      政策性數值(逾時秒數、健全性下限這類),±1 只在極端情形行為才不同,
+                  而且沒有「正確值」可言,只有「夠寬鬆」。同樣不是等價,分開標記。
+    三者一樣受檢:被 selftest 或 artifacts 軸抓到即登錄錯誤,找不到即過期。
     """
     if not path.exists():
         return {}
@@ -1054,6 +1156,8 @@ def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
     for e in data["entries"]:
         if not (e.get("tool") and e.get("key") and e.get("reason") and e.get("evidence")):
             raise ValueError(f"等價突變條目缺欄位(tool/key/reason/evidence 皆必填):{e}")
+        if e.get("kind", "equivalent") not in ("equivalent", "cosmetic", "tuning"):
+            raise ValueError(f"等價突變條目的 kind 只能是 equivalent、cosmetic 或 tuning:{e}")
         slot = out.setdefault(e["tool"], {})
         if e["key"] in slot:
             raise ValueError(f"等價突變條目重複:{e['tool']} {e['key']}")
@@ -1094,6 +1198,8 @@ def main() -> int:
         return 0
 
     equivalents = load_equivalents(Path(a.equivalents))
+    if a.exhaustive:
+        _vg()   # 在任何突變之前載入 artifacts 比對邏輯(見 _vg 的說明)
     names = [a.tool] if a.tool else [
         k for k, (_, needs) in sorted(INVOKE.items())
         if needs == "offline" or (needs == "ghidra" and (a.include_ghidra and not a.offline))]
@@ -1108,6 +1214,7 @@ def main() -> int:
         reach_caught_total = reach_attempted_total = 0
         escapes_all: dict[str, dict] = {}
         contradicted: set[str] = set()
+        covered_all: set[str] = set()
         for k in range(passes):
             r = test_tool(n, a.tries, a.timeout, seed=a.seed + k,
                           exhaustive=a.exhaustive, equivalents=equivalents)
@@ -1118,6 +1225,7 @@ def main() -> int:
             for e in r.get("reachable_escape_details", []):
                 escapes_all.setdefault(e["key"], e)
             contradicted.update(r.get("registry_contradicted", []))
+            covered_all.update(r.get("covered_by_artifacts", []))
             # 跨輪取最好的判定:任何一輪抓到就是有鑑別力(WEAK 只在全部輪都 0 時成立)
             if best is None or (r["verdict"] == "DISCRIMINATING" and best["verdict"] != "DISCRIMINATING"):
                 best = r
@@ -1131,6 +1239,7 @@ def main() -> int:
         best["reachable_escape_details"] = list(escapes_all.values())
         best["reachable_escapes"] = [f"L{e['line']}: {e['what']}" for e in escapes_all.values()]
         best["registry_contradicted"] = sorted(contradicted)
+        best["covered_by_artifacts"] = sorted(covered_all)
         best["passes"] = passes
         rows.append(best)
         v = best["verdict"]
@@ -1157,6 +1266,11 @@ def main() -> int:
             print(f"      逃掉但執行得到:{e}")
         if best.get("equivalent_escapes"):
             print(f"      已登錄的等價突變 {len(best['equivalent_escapes'])} 個(不計入逃逸)")
+        if best.get("covered_by_artifacts"):
+            print(f"      selftest 逃掉、但 artifacts 軸抓到 {len(best['covered_by_artifacts'])} 個"
+                  f"(突變狀態下重生產物漂移或無法執行)")
+        if best.get("artifact_probe"):
+            print(f"      ** {best['artifact_probe']}")
         for key in best.get("registry_contradicted", []):
             print(f"      ** 登錄為等價卻被抓到(登錄表錯誤):{key}")
         for key in best.get("registry_stale", []):
@@ -1174,6 +1288,10 @@ def main() -> int:
     # 而且把可達逃逸總數印出來:它是**可以歸零**的,不像判定欄位永遠好看。
     esc_rows = [r for r in rows if r.get("reachable_escapes")]
     esc_total = sum(len(r.get("reachable_escapes") or []) for r in rows)
+    cov_total = sum(len(r.get("covered_by_artifacts") or []) for r in rows)
+    if cov_total:
+        print(f"  selftest 逃掉、但 artifacts 軸在突變狀態下抓到:共 {cov_total} 個"
+              f"(不計入逃逸;每次窮舉重新實證,不靠登錄)")
     if esc_rows:
         print(f"  仍有**逃掉但確實被執行到**的突變:{len(esc_rows)} 支工具、共 {esc_total} 個"
               f"(判定欄位看不到這個;逐支明細見上方「逃掉但執行得到」)")

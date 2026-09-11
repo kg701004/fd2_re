@@ -307,7 +307,7 @@ def violations() -> list[dict]:
     for p in tool_files():
         raw = p.read_bytes()
         src = raw.decode("utf-8", errors="replace")
-        if raw.startswith(b"#!") and b"\r\n" in raw.split(b"\n", 1)[0] + b"\n":
+        if _shebang_crlf(raw):
             out.append({"kind": "tool", "name": p.name, "rule": "shebang",
                         "detail": "shebang 行是 CRLF,WSL 下無法執行"})
         for detail in discarded_exit_code(src):
@@ -343,6 +343,15 @@ def violations() -> list[dict]:
         out.append({"kind": "artifact", "name": m, "rule": "regenerable",
                     "detail": "沒有 verify_generated_artifacts 登錄項目"})
     return out
+
+
+def _shebang_crlf(raw: bytes) -> bool:
+    """shebang 那一行是否以 CRLF 結尾(WSL 下 kernel 會去找 `python3\\r`)。只看第一行。
+
+    2026-09-11 從 violations() 抽出:判準原本只被真實工具檔間接跑到,取第一行的
+    `split(...)[0]` 改成 `[1]`(改看檔案其餘部分)也逃掉,只能直接餵位元組測。
+    """
+    return raw.startswith(b"#!") and b"\r\n" in raw.split(b"\n", 1)[0] + b"\n"
 
 
 def key(v: dict) -> tuple[str, str]:
@@ -652,6 +661,28 @@ def selftest() -> int:
           f"(漏抓的 {missed or '無'})")
     if not ok2b:
         fails.append(f"correctness 放寬失衡:漏放 {leaked}、漏抓 {missed}")
+
+    print("\n(2c) shebang CRLF 判準只看第一行 + remake 豁免證明在只有一個自述時不崩")
+    # 2026-09-11 窮舉突變測試:shebang 判準只被真實工具檔間接跑到(全都是 LF),
+    # 取第一行的 `[0]` 改成 `[1]` 逃掉;_proves_remake_derived 的訊息取 `marks[0]`,
+    # 真實產物都有 2 個以上的自述,改成 `[1]` 也逃掉 —— 但只有 1 個自述時會 IndexError。
+    b2c = {"shebang 行 CRLF 要抓": _shebang_crlf(b"#!/usr/bin/env python3\r\nx = 1\n"),
+           "只有後面的行是 CRLF 不算": not _shebang_crlf(b"#!/usr/bin/env python3\nx = 1\r\ny\r\n"),
+           "沒有 shebang 不算": not _shebang_crlf(b"x = 1\r\n")}
+    one_mark = ROOT / ".wsl_build" / "_hygiene_remake_probe.json"
+    try:
+        one_mark.parent.mkdir(parents=True, exist_ok=True)
+        one_mark.write_text(json.dumps({"source_campaign": "remake/only-mark"}), encoding="utf-8")
+        ok_r, why_r = _proves_remake_derived(one_mark.relative_to(ROOT).as_posix())
+        b2c["單一 remake 自述可證明且訊息帶出它"] = ok_r and "remake/only-mark" in why_r
+    except Exception as exc:                                     # noqa: BLE001
+        b2c[f"單一 remake 自述丟出 {type(exc).__name__}"] = False
+    finally:
+        one_mark.unlink(missing_ok=True)
+    ok2c = all(b2c.values())
+    print(f"    {'PASS' if ok2c else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b2c.items()))
+    if not ok2c:
+        fails.append(f"shebang/remake 豁免判定不對:{[k for k, v in b2c.items() if not v]}")
 
     print("\n(3) 棘輪必須雙向:未登錄的違規要失敗,已修好的登錄項目也要失敗")
     cur = [{"kind": "tool", "name": "a.py", "rule": "docstring", "detail": ""}]

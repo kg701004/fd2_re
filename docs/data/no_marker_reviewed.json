@@ -34288,6 +34288,62 @@
    "excerpt": "真缺口與等價突變。建議先把續三用過的判準(突變後對工具做一次正常執行、輸出逐位元組相同",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:對後續工作的建議與誠實範圍,不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4645,
+   "excerpt_sha1": "70148ce6e8d5b9285f3205ff2b0d380003dd910f",
+   "excerpt": "每輪都跑,它抓得到的突變在整個驗證體系裡並沒有漏 —— 這不是等價,也不需要人工登錄,每次窮舉",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4648,
+   "excerpt_sha1": "49084bb7be9f4490555c4fd4bff44371498a2dfd",
+   "excerpt": "- **對照組**:未突變時重生必須逐位元組相同,否則該工具不啟用探針(否則每個突變都「被抓到」)。",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4654,
+   "excerpt_sha1": "e696f63dc4a43ec7a19e39fbcdc3ecf9f974deea",
+   "excerpt": "被探針判覆蓋;同一行的 `ensure_ascii` 則重生逐位元組相同(內容全是 ASCII),歸 cosmetic。",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4662,
+   "excerpt_sha1": "681688f5580569b8ee367b05db8ffa91a17d1acb",
+   "excerpt": "| `equivalent` | 任何輸入下行為都不變(數學、函式庫行為、呼叫形狀或資料分佈的實測) |",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4696,
+   "excerpt_sha1": "f0f8120531fd206baa1951a1454f1960cfbe7d6b",
+   "excerpt": "(呼叫端清理 + 緊鄰 push 兩訊號)逐一比對 26 個 PRIM 目標:18 個 CONFIRMED 中 15 個一致、",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4699,
+   "excerpt_sha1": "be59bc69bc7af20e194f65354369f80861251887",
+   "excerpt": "| 目標 | op | PRIM | 推導(CONFIRMED) | 呼叫端數 |",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4728,
+   "excerpt_sha1": "076218b930396bf872a64564b5259fca015ba41d",
+   "excerpt": "否定案例、fuzz 參數逐一以正常執行實測、掃描器邊界),下一輪處理。WEAK 1 支是 `realesrgan_batch`",
+   "verdict": "benign",
+   "note": "工具行為陳述(突變 harness/artifacts 探針/登錄表/PRIM 比對的機制與實測數字),非遊戲事實主張;依據為本 commit 內 tools/verify_selftest_discrimination.py 與其 selftest 及窮舉輸出。"
   }
  ]
 }

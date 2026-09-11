@@ -116,6 +116,14 @@ def selftest():
     if not ok4:
         fails.append(f"輸出長度不等於 total:{bad[:3]}")
 
+    print("\n(5) 門檻 0xC0 的另一側:0xC1 是 1 次 run,不是 literal")
+    # 2026-09-11 窮舉突變測試:`b <= 0xC0` 改成 `<= 0xC1` 逃掉 —— 沒有案例用到 0xC1。
+    got5 = rle(b"\xC1\x77", 2)
+    ok5 = got5 == b"\x77\x00"
+    print(f"    {'PASS' if ok5 else 'FAIL'}: C1 77 -> {got5.hex()}(應 7700)")
+    if not ok5:
+        fails.append(f"0xC1 沒有被當成 run:{got5.hex()}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

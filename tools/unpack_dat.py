@@ -181,6 +181,28 @@ def selftest():
     if not ok4:
         fails.append(f"單筆目錄邊界錯誤:{got4}")
 
+    print("\n(5) 兩道守衛的恰好邊界:10 bytes 可讀目錄第一格、目錄起點恰為 6(0 筆)合法")
+    # 2026-09-11 窮舉突變測試:`len(data) < 10` 與 `first < 6` 改 ±1 逃掉。
+    # 前提:容器必須以 6 bytes 的 `LLLLLL` magic 開頭(第一版用全 0,被 magic 檢查先擋下,
+    # 兩道要測的守衛根本沒走到 —— 由本題自己的 FAIL 當場抓到)。
+    # 起點恰為 6 必須**通過** `first < 6` 這道,改由後面的「目錄是空的」擋下 —— 以訊息
+    # 分辨是哪一道擋的:`< 6` 若被改成 `< 7`,擋下它的會變成「目錄起點不合理」。
+    try:
+        zero = parse_directory(b"LLLLLL" + struct.pack("<I", 6))
+        ok_zero = False
+    except NotAContainer as exc:
+        zero = str(exc)
+        ok_zero = "目錄是空的" in zero and "起點不合理" not in zero
+    try:
+        parse_directory(b"LLLLLL" + b"\x00" * 3)
+        short_ok = False
+    except NotAContainer as exc:
+        short_ok = "不足以讀出" in str(exc)
+    ok5 = ok_zero and short_ok
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 起點 6(0 筆)-> {zero!r}(應 [])、9 bytes 被長度守衛擋={short_ok}")
+    if not ok5:
+        fails.append(f"守衛邊界不對:{zero!r} / {short_ok}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

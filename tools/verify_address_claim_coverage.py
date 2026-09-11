@@ -520,6 +520,31 @@ def selftest() -> int:
         if not ok11:
             fails.append(f"所在函式選錯:{len(badpick)}/100")
 
+    print("\n(12) 掃描尾端邊界、呼叫計數、第一個入口、compare 的預設值")
+    # 2026-09-11 窮舉突變測試:兩個掃描迴圈的上界 `len - 10` / `len - 5`、呼叫計數的
+    # `+= 1`、containing_entry 的 `i >= 0`、compare 的兩個 `get(f, 0)` 改掉全部逃掉 ——
+    # 真實映像裡沒有剛好卡在尾端的序頭/CALL,也沒有剛好等於第一個入口的查詢。
+    base12 = 0x10000
+    code_p = bytearray(32)
+    i_p = len(code_p) - 11                      # 迴圈能走到的最後一個位移
+    code_p[i_p], code_p[i_p + 5] = 0x68, 0xE8
+    struct.pack_into("<i", code_p, i_p + 6, STACK_PROBE - (base12 + i_p) - 10)
+    code_c = bytearray(16)
+    for at in (0, len(code_c) - 6):             # 兩次 CALL 到同一目標,後者在最後可掃位移
+        code_c[at] = 0xE8
+        struct.pack_into("<i", code_c, at + 1, (base12 + 2) - (base12 + at + 5))
+    sig12 = {"plausible": {100, 200}}
+    b12 = {"尾端的序頭": prologue_entries(bytes(code_p), base12) == {base12 + i_p},
+           "尾端的 CALL 與計數": call_targets(bytes(code_c), base12, base12 + 16) == Counter({base12 + 2: 2}),
+           "恰好是第一個入口": containing_entry(sig12, 100, {}) == 100,
+           "第一個入口之前沒有所在函式": containing_entry(sig12, 99, {}) is None,
+           "compare 缺鍵視為 0": compare({"new.md": 1}, {"old.md": 1})
+           == (["new.md: 0 -> 1(+1)"], ["old.md: 1 -> 0(-1)"])}
+    ok12 = all(b12.values())
+    print(f"    {'PASS' if ok12 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b12.items()))
+    if not ok12:
+        fails.append(f"掃描邊界/計數/入口/compare 不對:{[k for k, v in b12.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

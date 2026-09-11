@@ -166,6 +166,16 @@ def selftest():
     if not ok5:
         fails.append(f"合法 run 只寫入 {written}/15 —— 守衛加得太嚴,把正常路徑也擋掉了")
 
+    print("\n(6) 長度 1 的 run 之後必須繼續解(只有長度 0 才當成資料結束)")
+    # 2026-09-11 窮舉突變測試:`n == 0` 改成 `n == 1` 逃掉 —— 沒有任何案例在長度 1 的
+    # run 之後還有資料。
+    d6 = bytearray(2)
+    pos6 = rle_2mode(bytes([0xC1, 0x55, 0x07]), 0, d6, 0, 2)
+    ok6 = bytes(d6) == b"\x55\x07" and pos6 == 3
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 寫出 {bytes(d6).hex()}(應 5507)、pos={pos6}(應 3)")
+    if not ok6:
+        fails.append(f"長度 1 的 run 之後就停了:{bytes(d6).hex()} / {pos6}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

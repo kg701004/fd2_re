@@ -798,6 +798,33 @@ def selftest() -> int:
     if not ok:
         fails.append("completeness 缺口沒有擋在通過訊息前面")
 
+    print("\n(13) scan 的行號、compare 的預設值、超過 200 字的已審閱訂正行")
+    # 2026-09-11 窮舉突變測試:`enumerate(lines, 1)`、compare 的兩個 `get(f, 0)`、
+    # correction_debt 審閱鍵的 `[:200]` 改掉都逃掉。最後一題的前提(該行本身會被判為
+    # 訂正債)先驗:前提不成立時這題必須失敗,而不是安靜地什麼都沒測到。
+    import tempfile as _tf
+    addr13 = normalize("0x2ab3c")
+    spec13 = Spec(index=0, mode="address", flags=[addr13], edges=[], correct=[],
+                  reason="", baseline={"old.md": 1}, label="t")
+    with _tf.TemporaryDirectory() as _kd:
+        (Path(_kd) / "t.md").write_text("第一行沒有位址\n引用 0x2ab3c 的那一行\n", encoding="utf-8")
+        cits13 = scan([spec13], kb=Path(_kd))
+    # 措辭必須是 CORRECTION_WORDS 真的認得的(第一版寫「訂正/已更正」,兩個都不在表內,
+    # 由下面的前提檢查當場擋下),且位址要緊鄰措辭(EDGE_MAX_GAP 內)。
+    long13 = "位址訂正:0x2ab3c 誤植,應為另一處。" + "補充說明" * 60
+    debt_open = correction_debt_from_lines([("x.md", 1, long13)], set(), set())
+    debt_rev = correction_debt_from_lines([("x.md", 1, long13)], set(),
+                                          {("x.md", _audit_mod()._sha(long13.strip()[:200]))})
+    b13 = {"scan 行號": [c.line for c in cits13] == [2],
+           "compare 缺鍵視為 0": compare({"0": {"new.md": 1}}, [spec13])
+           == (["errata#0 new.md: 0 -> 1(+1)"], ["errata#0 old.md: 1 -> 0(-1)"]),
+           "前提:長行本身是訂正債": len(long13) > 201 and bool(debt_open),
+           "已審閱的長行被跳過": not debt_rev}
+    ok13 = all(b13.values())
+    print(f"    {'PASS' if ok13 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b13.items()))
+    if not ok13:
+        fails.append(f"行號/compare/審閱鍵不對:{[k for k, v in b13.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

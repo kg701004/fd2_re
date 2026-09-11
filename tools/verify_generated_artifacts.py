@@ -245,7 +245,10 @@ def check_one(art: str, tool: str, argv: list[str], kind: str, timeout: int) -> 
     if not p.exists():
         return {"artifact": art, "tool": tool, "verdict": "MISSING_ARTIFACT"}
     with tempfile.TemporaryDirectory(prefix="regen_") as td:
-        out = Path(td) / ("regen.json" if kind == "file" else "regen_dir")
+        # 檔案型與目錄型共用同一個暫存名,產生器不看名字。原本寫成
+        # `"regen.json" if kind == "file" else "regen_dir"`,但登錄表沒有任何一項的 kind
+        # 是 "file",那個分支從來不成立(2026-09-11 突變測試指出反轉它毫無影響)。
+        out = Path(td) / "regen_dir"
         real = [a.replace("{out}", str(out)) for a in argv]
         # 2026-09-11:突變測試把 `text=True` 改成 `False` 逃掉了 —— 查過是可證明的
         # 等價突變(不是取樣沒打到):Python 文件明記 subprocess.run 只要給了
@@ -354,6 +357,59 @@ def selftest() -> int:
     print(f"    {'PASS' if ok4c else 'FAIL'}: detail={err.get('detail', '')[:70]!r}")
     if not ok4c:
         fails.append(f"check_one 的錯誤路徑沒有捕捉到真正的子行程輸出:{err}")
+
+    print("\n(4d) check_one 本身的判定:bytes / curated / dir 三條路,各自對上真產生器的輸出")
+    # 2026-09-11 窮舉突變測試:(1)(2)(3) 是在**測試裡自己**比 `a.read_bytes() ==
+    # b.read_bytes()`,從沒經過 check_one;(5) 實跑一輪卻只斷言「沒改動已提交產物」,
+    # 不看判定。於是 check_one 的 `==` 反轉、`kind` 分派改掉全部逃掉。這裡用一支探針
+    # 產生器直接走 check_one,每條路都有「應相同」與「應漂移」兩側。
+    tdir = ROOT / "tools"
+    probe = tdir / "_vg_probe.py"
+    art_f, art_c, art_d = tdir / "_vg_probe_art.json", tdir / "_vg_probe_cur.json", tdir / "_vg_probe_dir"
+    probe_src = (
+        "import json, os, sys\n"
+        "mode, out = sys.argv[1], sys.argv[2]\n"
+        "if mode.startswith('dir'):\n"
+        "    os.makedirs(out, exist_ok=True)\n"
+        "    json.dump({'a': 1}, open(os.path.join(out, 'a.json'), 'w'))\n"
+        "    json.dump({'b': 2 if mode == 'dir_same' else 3}, open(os.path.join(out, 'b.json'), 'w'))\n"
+        "elif mode == 'reformat':\n"
+        "    open(out, 'w').write(json.dumps({'x': 1}, separators=(',', ':')))\n"
+        "else:\n"
+        "    json.dump({'x': 1 if mode == 'same' else 2}, open(out, 'w'))\n")
+    got4d: dict[str, bool] = {}
+    try:
+        probe.write_text(probe_src, encoding="utf-8")
+        art_f.write_text('{"x": 1}', encoding="utf-8")
+        art_c.write_text('{"x": 1, "extra": 5}', encoding="utf-8")
+        art_d.mkdir(exist_ok=True)
+        (art_d / "a.json").write_text('{"a": 1}', encoding="utf-8")
+        (art_d / "b.json").write_text('{"b": 2}', encoding="utf-8")
+
+        def judge(art: Path, mode: str, kind: str) -> dict:
+            return check_one(art.relative_to(ROOT).as_posix(), probe.name, [mode, "{out}"], kind, 60)
+        d_diff = judge(art_d, "dir_diff", "dir")
+        got4d = {
+            "bytes 相同": judge(art_f, "same", "bytes")["verdict"] == "IDENTICAL",
+            "bytes 同大小不同": judge(art_f, "diff", "bytes")["verdict"] == "DRIFT",
+            # 內容同一份 JSON、只差空白:bytes 模式必須判漂移(curated 模式才會放過)
+            "bytes 下格式不同即漂移": judge(art_f, "reformat", "bytes")["verdict"] == "DRIFT",
+            "gen_keys 下多出的鍵不算漂移": judge(art_c, "same", "gen_keys")["verdict"] == "IDENTICAL",
+            "同一檔改用 bytes 則漂移": judge(art_c, "same", "bytes")["verdict"] == "DRIFT",
+            "dir 相同": judge(art_d, "dir_same", "dir")["verdict"] == "IDENTICAL",
+            "dir 只指出不同的那個檔": (d_diff["verdict"] == "DRIFT"
+                                  and d_diff.get("drifted") == ["b.json"]),
+            "snapshot 含 dir 模式的檔": any(k.startswith("docs/data/chapter_beats/")
+                                          for k in snapshot()),
+        }
+    finally:
+        for p in (probe, art_f, art_c):
+            p.unlink(missing_ok=True)
+        shutil.rmtree(art_d, ignore_errors=True)
+    ok4d = bool(got4d) and all(got4d.values())
+    print(f"    {'PASS' if ok4d else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in got4d.items()))
+    if not ok4d:
+        fails.append(f"check_one 判定不對:{[k for k, v in got4d.items() if not v]}")
 
     print("\n(5) 安全性:實際跑一輪後,所有已提交產物的雜湊必須完全不變")
     before = snapshot()

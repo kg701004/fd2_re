@@ -210,6 +210,19 @@ def selftest() -> int:
     if not ok4:
         fails.append("換掉錨點結果不變,(2) 因此是平凡的")
 
+    print("\n(5) 往回跨過 push 的下界:push 恰好是 code 的第 0 個 byte 時也要跨過去")
+    # 2026-09-11 窮舉突變測試:`entry - 1 >= code_base` 改成 `entry - 2` 逃掉 —— 真實的
+    # AIL 進入點離 code 開頭很遠。合成:錨點在 base+3,退 MOV_DISP_BACKSTEP 得 base+1,
+    # code[0] 是 push ebx,應再退一格到 base。
+    base5 = 0x1000
+    got5 = entry_for_reference(bytes([0x53, 0x90, 0x90, 0x90]), base5,
+                               {base5 + 1 + MOV_DISP_BACKSTEP: NEST_DEPTH_GLOBAL}, base5 + 0x10)
+    ok5 = 0x53 in PUSH_OPCODES and got5 == base5
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 進入點 = {got5:#x}(應 {base5:#x})" if got5 is not None
+          else "    FAIL: 找不到錨點")
+    if not ok5:
+        fails.append(f"code 開頭的 push 沒有被跨過:{got5}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

@@ -166,6 +166,17 @@ def selftest():
     else:
         print("    SKIP: 找不到 extracted/raw/FIGANI")
 
+    print("\n(6) run 長度 = 低 6 位 + 1、連續 run 的游標、透明 skip 模式")
+    # 2026-09-11 窮舉突變測試:`(c & 0x3F) + 1`、色彩 run 取值後的 `i += 1`、`mode == 3`
+    # 改掉都逃掉 —— 既有案例的輸出剛好被 total 截斷或補齊,看不出差別。
+    b6 = {"色彩 run 長度": decode_rle_sprite(b"\x02\xAA", 4, 1) == b"\xAA\xAA\xAA\x00",
+          "連續兩個色彩 run": decode_rle_sprite(b"\x00\xAA\x00\xBB", 2, 1) == b"\xAA\xBB",
+          "透明 skip 後接色彩 run": decode_rle_sprite(b"\xC1\x05\x06", 4, 1, trans=9) == b"\x09\x09\x06\x06"}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6:
+        fails.append(f"run 長度/游標/透明模式不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

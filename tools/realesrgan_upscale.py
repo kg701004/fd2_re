@@ -275,6 +275,33 @@ def _selftest():
               f"TILE_OVERLAP={keep_ov}")
         if not ok5:
             fails.append(f"constants drifted: {SCALE}/{keep_tile}/{keep_ov}")
+
+        print("\n(6) 輸出夾在 [0,1];單塊捷徑只給兩邊都不超過 TILE 的圖")
+        # 2026-09-11 窮舉突變測試:`clamp(0, 1)` 的上界改 2 逃掉 —— 假模型的輸出本來就在
+        # [0,1],但真的 RRDBNet 會超出。兩個 `<= TILE` 反轉也逃掉 —— 移位不變的假模型下
+        # 單塊與分塊結果相同,只能看呼叫次數:高或寬超過 TILE 1 格都必須切成 2 塊。
+        TILE, TILE_OVERLAP = keep_tile, keep_ov
+        hot = _run_tile(lambda t: t * 3.0, dev, np.full((2, 2, 3), 0.5, dtype=np.float32))
+        calls = []
+        real_run_tile = globals()["_run_tile"]
+
+        def counting(*a, **k):
+            calls.append(1)
+            return real_run_tile(*a, **k)
+        globals()["_run_tile"] = counting
+        try:
+            def n_calls(h, w):
+                calls.clear()
+                upscale(model, dev, Image.fromarray(np.zeros((h, w, 3), dtype=np.uint8), "RGB"))
+                return len(calls)
+            counts6 = {"小圖": n_calls(3, 3), "高圖": n_calls(TILE + 1, 1), "寬圖": n_calls(1, TILE + 1)}
+        finally:
+            globals()["_run_tile"] = real_run_tile
+        ok6 = float(hot.max()) == 1.0 and counts6 == {"小圖": 1, "高圖": 2, "寬圖": 2}
+        print(f"    {'PASS' if ok6 else 'FAIL'}: 模型輸出 1.5 夾到 {float(hot.max())}(應 1.0)、"
+              f"_run_tile 呼叫次數 {counts6}(應 1/2/2)")
+        if not ok6:
+            fails.append(f"clamp 或單塊捷徑的條件不對:{float(hot.max())} / {counts6}")
     finally:
         TILE, TILE_OVERLAP = keep_tile, keep_ov
 

@@ -127,6 +127,28 @@ def selftest():
         except NotLMI:
             print(f"    PASS: 「{label}」-> NotLMI")
 
+    print("\n(3b) 兩道長度守衛的兩側邊界 + codec 門檻 0xC0 的另一側")
+    # 2026-09-11 窮舉突變測試:`< 6`、`6 + n*4` 的常數改 ±1 都逃掉 —— (3) 的案例離
+    # 門檻很遠(9999 筆)。以例外訊息分辨是哪一道守衛擋下。
+    def guard(blob, needle):
+        try:
+            lmi_offsets(blob)
+            return False
+        except NotLMI as exc:
+            return needle in str(exc)
+    b3 = {
+        "長度 5 擋、6 不擋": (guard(b"LMI1\x00", "不足以讀出")
+                            and not guard(b"LMI1\x00\x00", "不足以讀出")),
+        "長度恰 6+4n 放行、少 1 擋": (not guard(b"LMI1" + struct.pack("<H", 1) + b"\x00" * 4, "超出檔案大小")
+                                   and guard(b"LMI1" + struct.pack("<H", 1) + b"\x00" * 3, "超出檔案大小")),
+        # (1) 只測到 0xC0 是 literal,沒有 0xC1 —— 門檻改成 0xC1 時 0xC1 會被當成 literal。
+        "0xC1 是 1 次 run": decode_pixels(b"\xC1\x77", 2) == b"\x77\x00",
+    }
+    ok3b = all(b3.values())
+    print(f"    {'PASS' if ok3b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b3.items()))
+    if not ok3b:
+        fails.append(f"長度守衛或 codec 門檻不對:{[k for k, v in b3.items() if not v]}")
+
     print("\n(4) 回歸:改用真例外而非 assert —— 在 -O 模式下也必須擋得住")
     import subprocess
     src = ("import sys; sys.path.insert(0, r'%s')\n"

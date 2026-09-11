@@ -157,6 +157,23 @@ def selftest() -> int:
     if not ok3:
         fails.append(f"兩支工具判斷方向不一致:{disagree}")
 
+    print("\n(3b) parse_rows 的欄位對應 + maxHP/HP 的下界")
+    # 2026-09-11 窮舉突變測試:parse_rows 從來沒被任何一行 helper 輸出測過,群組索引
+    # g[5]/g[6]/g[8]/g[9]/g[10] 改成相鄰欄位全部逃掉。這行每一欄都放不同的數字,
+    # 取錯欄一定看得出來。另兩個下界:maxHP=1 是合法值、HP=1 的我方單位算存活。
+    line = "  3 0x02 0x10 0x20 11/22 33/44 55 66 77 88"
+    got = parse_rows(line)
+    want = [{"idx": 3, "camp": 2, "hp": 11, "mhp": 22, "mp": 33, "ap": 55, "dp": 66, "hit": 77}]
+    alive = [_rec(i, 0x02, 1, 1) for i in range(max(MIN_OUR_UNITS, 1))] + [_rec(9, 0x00, 5, 5)]
+    b3 = {"欄位對應": got == want,
+          "maxHP=1 合法": why(_rec(0, 0x02, 1, 1)) is None,
+          "HP=1 算存活": verdict(alive)[0] == 0}
+    ok3b = all(b3.values())
+    print(f"    {'PASS' if ok3b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b3.items())
+          + ("" if b3["欄位對應"] else f";實得 {got}"))
+    if not ok3b:
+        fails.append(f"parse_rows/下界不對:{[k for k, v in b3.items() if not v]}")
+
     print("\n(4) 非平凡性 + 負向控制")
     rcs = {verdict(rows)[0] for rows in cases.values()}
     empty_rc, empty_msg = verdict([])

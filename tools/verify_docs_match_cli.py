@@ -114,6 +114,16 @@ def check(path: Path) -> dict:
             "undocumented": sorted(f for f in i if f.startswith("--") and f not in d)}
 
 
+def _encodable(c: str, enc: str) -> bool:
+    """`c` 能否以 `enc` 編碼。2026-09-11 從 console_encoding_risks 的巢狀函式抽出:
+    巢狀時 selftest 打不到它,`return True` 改成 False(每個字元都判成編不出)逃掉。"""
+    try:
+        c.encode(enc)
+        return True
+    except Exception:                                             # noqa: BLE001
+        return False
+
+
 def console_encoding_risks() -> list[tuple[str, str]]:
     """Tools that print characters the local console cannot encode.
 
@@ -142,11 +152,7 @@ def console_encoding_risks() -> list[tuple[str, str]]:
     probe = "✓✗✔✘→←↑↓─│┌┐└┘█▓░●○★☆⚠✅❌"
 
     def encodable(c: str) -> bool:
-        try:
-            c.encode(enc)
-            return True
-        except Exception:
-            return False
+        return _encodable(c, enc)
 
     risky = {c for c in probe if not encodable(c)}
     out = []
@@ -278,6 +284,13 @@ def selftest() -> int:
     finally:
         tmp.unlink(missing_ok=True)
         (TOOLS / "zz_encoding_probe.py").unlink(missing_ok=True)
+
+    print("\n(6) _encodable 兩側:cp950 編得出 'a'、編不出 '✓'")
+    # 2026-09-11 窮舉突變測試:巢狀的 encodable 打不到,`return True` 改 False 逃掉。
+    ok6 = _encodable("a", "cp950") and not _encodable("✓", "cp950")
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 'a'={_encodable('a', 'cp950')}、'✓'={_encodable('✓', 'cp950')}")
+    if not ok6:
+        fails.append("_encodable 判斷不對")
 
     if fails:
         print("\nSELFTEST FAILED:")

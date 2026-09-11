@@ -159,6 +159,16 @@ def selftest() -> int:
         fails.append(f"beats 的遮罩不對:0x01->{no_special}, 0x80->{has_special}, "
                      f"0x85->{beats_85}")
 
+    print("\n(5c) read_u32 在 offset 0 必須可讀(下界是 >= 0)")
+    # 2026-09-11 窮舉突變測試:`offset < 0` 改成 `< 1` 逃掉 —— 沒有從 0 讀的案例。
+    try:
+        ok5c = read_u32(b"\x01\x02\x03\x04", 0, "t") == 0x04030201
+    except ValueError:
+        ok5c = False
+    print(f"    {'PASS' if ok5c else 'FAIL'}: offset 0 讀出 0x04030201={ok5c}")
+    if not ok5c:
+        fails.append("read_u32 拒絕了 offset 0")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

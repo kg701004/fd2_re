@@ -154,6 +154,51 @@ def selftest():
     if not ok4:
         fails.append(f"截斷處理有問題:{bad}")
 
+    print("\n(4b) decode_tileset_bytes 三道守衛的兩側邊界 + 多 tile 切片 + 連續 run 的游標")
+    # 2026-09-11 窮舉突變測試:下面每個常數改 ±1 都逃掉 —— (5) 的案例離邊界太遠
+    # (空檔、尺寸 0、9999 筆),證明不了門檻剛好在哪。與 decode_fdicon.load_bytes 同形狀,
+    # 以例外訊息字樣分辨「被哪一道守衛擋下」,而不是只看有沒有丟例外。
+    def guard(blob, needle):
+        try:
+            decode_tileset_bytes(blob)
+            return False
+        except ValueError as exc:
+            return needle in str(exc)
+
+    def hdr(tw, th, cnt):
+        return struct.pack("<HHH", tw, th, cnt)
+    b4 = {
+        "長度 5 擋、6 不擋": (guard(b"\x00" * 5, "檔頭都不足")
+                            and not guard(b"\x00" * 6, "檔頭都不足")),
+        "tw 0 擋、1 不擋": (guard(hdr(0, 24, 1) + b"\x00" * 4, "尺寸不合理")
+                          and not guard(hdr(1, 24, 1) + b"\x00" * 4, "尺寸不合理")),
+        "th 0 擋、1 不擋": (guard(hdr(24, 0, 1) + b"\x00" * 4, "尺寸不合理")
+                          and not guard(hdr(24, 1, 1) + b"\x00" * 4, "尺寸不合理")),
+        "tw 257 擋、256 不擋": (guard(hdr(257, 24, 1) + b"\x00" * 4, "尺寸不合理")
+                              and not guard(hdr(256, 24, 1) + b"\x00" * 4, "尺寸不合理")),
+        "th 257 擋、256 不擋": (guard(hdr(24, 257, 1) + b"\x00" * 4, "尺寸不合理")
+                              and not guard(hdr(24, 256, 1) + b"\x00" * 4, "尺寸不合理")),
+        "cnt 0 擋、1 不擋": (guard(hdr(24, 24, 0) + b"\x00" * 4, "offset 表宣稱")
+                           and not guard(hdr(24, 24, 1) + b"\x00" * 4, "offset 表宣稱")),
+        "長度恰 6+4×cnt 放行、少 1 byte 擋": (
+            not guard(hdr(24, 24, 2) + b"\x00" * 8, "offset 表宣稱")
+            and guard(hdr(24, 24, 2) + b"\x00" * 7, "offset 表宣稱")),
+    }
+    # 兩個 tile、每個只有第一列的資料:offset 表讀錯位或 tile 結尾算錯(把下一個 tile
+    # 的位元組吃進來當第二列),輸出都會變。th=2 是前提 —— 只有一列時多吃的位元組
+    # 會被寬度截掉,看不出差別。
+    multi = hdr(2, 2, 2) + struct.pack("<II", 14, 16) + b"\x01\xAA" + b"\x01\xBB"
+    _, _, mtiles = decode_tileset_bytes(multi)
+    b4["兩個 tile 各自切片"] = mtiles == [b"\xAA\xAA\x00\x00", b"\xBB\xBB\x00\x00"]
+    # 連續兩個 run:單一 run 看不出 payload 游標多走一格(之後已無資料)。
+    b4["mode0 連續 run 的游標"] = _tile_rle(b"\x00\xAA\x00\xBB", 2, 1)[0] == b"\xAA\xBB"
+    b4["mode1 連續 dither 的游標"] = (_tile_rle(b"\x40\x55\x40\x66", 4, 1)[0]
+                                   == b"\x00\x55\x00\x66")
+    ok4b = all(b4.values())
+    print(f"    {'PASS' if ok4b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b4.items()))
+    if not ok4b:
+        fails.append(f"decode_tileset_bytes 邊界/切片/游標不對:{[k for k, v in b4.items() if not v]}")
+
     print("\n(5) decode_tileset 的檔頭守衛(同輪新增)+ 真實 FDSHAP")
     import tempfile
     with tempfile.TemporaryDirectory() as td:

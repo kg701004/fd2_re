@@ -137,6 +137,22 @@ def selftest() -> int:
     if not ok5:
         fails.append("delta 沒有真的參與運算")
 
+    print("\n(6) 一行有兩個冒號:只切第一個,EIP 解不出就跳過,不得整支崩潰")
+    # 2026-09-11 窮舉突變測試:`split(":", 1)` 改成 2 逃掉 —— 案例全是合法的 CS:EIP 行。
+    # 改成 2 之後,兩個冒號的行會在拆包時丟 ValueError,把整份 trace 的分析弄崩。
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as _d:
+        p6 = Path(_d) / "t.txt"
+        p6.write_text("0180:0001:0002\n0180:00012345\n", encoding="utf-8")
+        try:
+            nat6, cs6 = parse_trace(p6, "0180", 0x10000)
+            ok6 = nat6 == {0x2345} and cs6["0180"] == 2
+        except ValueError as exc:
+            ok6, nat6, cs6 = False, f"ValueError: {exc}", {}
+    print(f"    {'PASS' if ok6 else 'FAIL'}: natives={nat6}(應 {{0x2345}})、CS 0180 計數={cs6.get('0180') if isinstance(cs6, dict) else cs6}(應 2)")
+    if not ok6:
+        fails.append(f"兩個冒號的行處理錯誤:{nat6}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

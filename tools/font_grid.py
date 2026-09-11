@@ -99,6 +99,19 @@ def selftest():
     else:
         print("    SKIP: 找不到 FDOTHER_004.bin")
 
+    print("\n(5) 位元遮罩逐欄對應:只有最低位時只有最右一欄亮,且值為 255")
+    # 2026-09-11 窮舉突變測試:`0x8000 >> c` 與 `= 255` 改掉逃掉 —— 真實字模的比對只看
+    # 「非空」與自比,沒有逐欄對過單一位元。
+    font5 = bytearray(GB)
+    font5[0], font5[1] = 0x00, 0x01
+    im5 = render_glyph(bytes(font5), 0, 1)
+    ok5 = (im5.getpixel((GW - 1, 0)) == 255 and im5.getpixel((0, 0)) == 0
+           and sum(im5.getdata()) == 255)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 最右欄={im5.getpixel((GW - 1, 0))}(應 255)、"
+          f"最左欄={im5.getpixel((0, 0))}(應 0)、總和={sum(im5.getdata())}(應 255)")
+    if not ok5:
+        fails.append("字模位元與欄位的對應不對")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

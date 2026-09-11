@@ -57,10 +57,20 @@ def stage_verdict(counts: dict[str, int], skipped: list[str]) -> tuple[bool, lis
     return (not problems), problems
 
 
+def enough_args(argv: list[str]) -> bool:
+    """CLI 至少要有 `<GAME目錄> <輸出目錄>` 兩個位置參數。
+
+    2026-09-11 從 main() 抽出:selftest 只驗了「一個參數 -> rc=1」,`< 3` 改成 `< 4`
+    (剛好兩個參數的正常用法也被當成用法錯誤)逃掉;而直接以兩個參數跑 main 會真的
+    解包整個遊戲,不適合放進 selftest。
+    """
+    return len(argv) >= 3
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "--selftest":
         return selftest()
-    if len(argv) < 3:
+    if not enough_args(argv):
         print(__doc__); return 1
     G = argv[1]
     OUT = argv[2]
@@ -264,7 +274,9 @@ def selftest() -> int:
     # 判斷函式必須真的看計數,而不是永遠回同一個答案。
     verdicts = {stage_verdict({"raw": r, "images": 1, "animations": 1, "music": 1}, [])[0]
                 for r in (0, 1, 999)}
-    ok5 = verdicts == {False, True} and main(["extract_all"]) == 1
+    # enough_args 兩側:剛好兩個位置參數必須放行(`< 3` 改成 `< 4` 會把正常用法擋掉)。
+    ok5 = (verdicts == {False, True} and main(["extract_all"]) == 1
+           and enough_args(["extract_all", "GAME", "out"]) and not enough_args(["extract_all", "GAME"]))
     print(f"    {'PASS' if ok5 else 'FAIL'}: 不同計數給出不同判斷={verdicts}、"
           f"參數不足 -> rc=1")
     if not ok5:

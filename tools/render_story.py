@@ -232,6 +232,15 @@ def selftest() -> int:
     if not ok5:
         fails.append(f"非平凡性/負向控制不符:{counts} / {empty}")
 
+    print("\n(6) 說話者控制碼的 operand 恰好是字串最後一個碼時,也必須被跳過")
+    # 2026-09-11 窮舉突變測試:`i + 1 < n` 改成 `i + 2 < n` 逃掉 —— 真實字串裡 operand
+    # 後面總還有字。前提:SPEAKER_LO 本身是控制碼(否則這題走不到那個分支)。
+    rows6 = lay_out([[SPEAKER_LO, 5]])
+    ok6 = SPEAKER_LO >= CONTROL_MIN and rows6 == ["sep"]
+    print(f"    {'PASS' if ok6 else 'FAIL'}: [說話者碼, 5] -> {rows6}(應 ['sep'],operand 不得變成字模)")
+    if not ok6:
+        fails.append(f"字串尾端的說話者 operand 洩漏成字模:{rows6}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

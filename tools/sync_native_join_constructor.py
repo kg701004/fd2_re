@@ -168,9 +168,12 @@ def selftest() -> int:
         fails.append(f"32 列門檻不對:defaults 31/32 擋={blocked_31}/{blocked_32}, "
                      f"growth 31/32 擋={g_blocked_31}/{g_blocked_32}")
 
-    print("\n(4) 非恆真控制:上面全都丟錯也會通過,所以確認正向那半仍建得出來")
-    ok4 = len(build(ref, dfl, grw)["rows"]) == 32
-    print(f"    {'PASS' if ok4 else 'FAIL'}: 真實輸入仍建出 32 列")
+    print("\n(4) 非恆真控制 + 輸出的 schema_version(消費端據此判斷資產格式)")
+    # 2026-09-11 窮舉突變測試:`"schema_version": 1` 改掉逃掉 —— 它是被程式讀取的欄位。
+    built = build(ref, dfl, grw)
+    ok4 = len(built["rows"]) == 32 and built["schema_version"] == 1
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 真實輸入建出 {len(built['rows'])} 列、"
+          f"schema_version={built['schema_version']}(應 32、1)")
     if not ok4:
         fails.append("正向建構失效")
 

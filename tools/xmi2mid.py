@@ -111,6 +111,28 @@ def selftest():
     if not ok2:
         fails.append(f"無前置 TIMB 的處理錯誤:{[len(t) for t, _o, _l in got2]}")
 
+    print("\n(2b) iter_chunks 的輸出本身 + find_evnt_timb 的位移、步長與尾端邊界")
+    # 2026-09-11 窮舉突變測試:iter_chunks 只被 (3) 以「不崩潰」測過,**它產出的 chunk
+    # 序列從來沒被斷言**;find_evnt_timb 也沒驗過 EVNT 的 body 位移。手算:
+    #   FORM(4) @0 -> body 8;TIMB(3,奇數補 1) @12 -> body 20;EVNT(2) @24 -> body 32;
+    #   ZERO(0) @34 -> body 42 = 檔尾(header 恰好占滿最後 8 bytes,釘住 `i + 8 <= end`)。
+    ic = chunk(b"FORM", b"XMID") + chunk(b"TIMB", b"\x01\x02\x03") + chunk(b"EVNT", b"\xAA\xBB") \
+        + chunk(b"ZERO", b"")
+    got_ic = list(iter_chunks(ic, 0, len(ic)))
+    want_ic = [(b"FORM", 8, 4), (b"TIMB", 20, 3), (b"EVNT", 32, 2), (b"ZERO", 42, 0)]
+    b2 = {"iter_chunks 序列": got_ic == want_ic,
+          # TIMB(4 bytes) 占 12 bytes,EVNT 的 body 在 12+8=20
+          "EVNT body 位移": got[0][1] == 20,
+          # 前面墊 1 byte 讓 tag 落在奇數位移:掃描步長若不是 1 就會整個跳過
+          "奇數位移的 EVNT": [s[1] for s in find_evnt_timb(b"\x00" + chunk(b"EVNT", b"\xAA" * 4))] == [9],
+          # 長度 0 的 EVNT 恰好是整個輸入:header 8 bytes 占滿,`i + 8 <= n` 的邊界
+          "尾端恰 8 bytes 的 EVNT": len(find_evnt_timb(chunk(b"EVNT", b""))) == 1}
+    ok2b = all(b2.values())
+    print(f"    {'PASS' if ok2b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b2.items())
+          + ("" if b2["iter_chunks 序列"] else f";實得 {got_ic}"))
+    if not ok2b:
+        fails.append(f"chunk 走訪/掃描不對:{[k for k, v in b2.items() if not v]}")
+
     print("\n(3) 截斷不得崩潰:逐一掃過每個前綴長度")
     bad = {}
     for cut in range(len(blob) + 1):

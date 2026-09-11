@@ -148,7 +148,13 @@ def selftest():
     hdr_cnt1 = struct.pack("<HHH", 24, 24, 1)
     ok3b_cnt = (guard_fires(hdr_cnt1 + b"\x00" * 3, "offset 表宣稱")
                 and not guard_fires(hdr_cnt1 + b"\x00" * 4, "offset 表宣稱"))
-    ok3b = ok3b_len and ok3b_size_th and ok3b_size_tw and ok3b_cnt
+    # tw/th 的**下界**(`0 <`)同樣要成對:0 擋、1 放。2026-09-11 窮舉突變測試量到
+    # `0 < tw` / `0 < th` 改成 `1 <` 逃掉 —— 上面只測了上界 256/257。
+    ok3b_low = (guard_fires(struct.pack("<HHH", 0, 24, 4) + b"\x00" * 16, "尺寸不合理")
+                and not guard_fires(struct.pack("<HHH", 1, 24, 4) + b"\x00" * 16, "尺寸不合理")
+                and guard_fires(struct.pack("<HHH", 24, 0, 4) + b"\x00" * 16, "尺寸不合理")
+                and not guard_fires(struct.pack("<HHH", 24, 1, 4) + b"\x00" * 16, "尺寸不合理"))
+    ok3b = ok3b_len and ok3b_size_th and ok3b_size_tw and ok3b_cnt and ok3b_low
     print(f"    {'PASS' if ok3b else 'FAIL'}: 長度守衛(5 擋/6 不擋此守衛)={ok3b_len}、"
           f"th 尺寸守衛={ok3b_size_th}、tw 尺寸守衛={ok3b_size_tw}、"
           f"offset 表守衛(9 擋/10 不擋)={ok3b_cnt}")

@@ -334,6 +334,32 @@ def selftest(src, g2c, c2g):
     except SystemExit as ex:
         print(f"    PASS: 已拒絕({str(ex)[:40]}…)")
 
+    print("\n(6) 多字元代號最長優先、split_runs 的起點與步長、次目錄上限的恰好邊界")
+    # 2026-09-11 窮舉突變測試:(1)(2) 用真實 FDTXT,但沒有任何一段需要「多字元代號最長
+    # 優先」,也沒有卡在 uint16 上限的恰好位置;split_runs 從沒被直接對答案。
+    toy = {"A": 1, "B": 2, "C": 3, "AB": 10, "ABC": 20}
+    # 兩條字串:第 1 條 32764 碼 -> 第 2 條的位移恰好 65534(仍可定址);多 1 碼就是 65536。
+    try:
+        serialize([[1] * 32764, []])
+        edge_ok = True
+    except SystemExit:
+        edge_ok = False
+    try:
+        serialize([[1] * 32765, []])
+        over_rejected = False
+    except SystemExit:
+        over_rejected = True
+    b6 = {"最長優先": encode("ABC", toy)[0] == [20],
+          "兩字元代號": encode("AB", toy)[0] == [10],
+          "代號後接單字": encode("ABA", toy)[0] == [10, 1],
+          "split_runs": split_runs([5, 6, 0xFF00, 7, 8, 9, 0xFFFE]) == [(0, 2), (3, 6)],
+          "控制碼開頭": split_runs([0xFF00, 5, 6]) == [(1, 3)],
+          "位移恰 65534 可定址": edge_ok, "位移 65536 拒絕": over_rejected}
+    ok6 = all(b6.values())
+    print(f"    {'PASS' if ok6 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b6.items()))
+    if not ok6:
+        fails.append(f"代號/段落/上限邊界不對:{[k for k, v in b6.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:

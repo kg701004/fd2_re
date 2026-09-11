@@ -1015,6 +1015,44 @@ def selftest() -> int:
                      f"應為 0),未登錄應抓到(實得 {len(_caught)} 筆,應 >0)——"
                      "單邊通過代表這個放寬其實是把檢查關掉了")
 
+    # --- 2026-09-11 窮舉突變測試補的邊界(每一題都成對,前提先驗)---
+    # (a) 30 字元門檻:全庫掃描(scan)與 --diff(parse_diff_claims)各一道,`< 30`/`>= 30`
+    #     改成 31 都逃掉;scan 的行號從 1 起算(`start=1` 改 2 也逃掉)。前提:30 與 29
+    #     字的兩行本身都會被判成主張,否則門檻改了也看不出來。
+    checks += 1
+    _base = "這條結論已經確認無誤,完全沒有寫出任何來源標記"
+    _s30 = _base + "。" * (30 - len(_base))
+    _s29 = _s30[:-1]
+    _premise = (len(_s30) == 30 and make_claim("x.md", 1, _s30) is not None
+                and make_claim("x.md", 1, _s29) is not None)
+
+    def _diff_one(s):
+        return parse_diff_claims(_hdr + "+" + s, reviewed=set())
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as _kd:
+        (Path(_kd) / "t.md").write_text("短行不是主張\n" + _s30 + "\n" + _s29 + "\n",
+                                        encoding="utf-8")
+        _scanned = scan(Path(_kd))
+    if not (_premise and len(_diff_one(_s30)) == 1 and not _diff_one(_s29)
+            and [c.line for c in _scanned] == [2]):
+        fails.append(f"30 字元門檻/行號不對:前提={_premise}、diff 30/29 字="
+                     f"{len(_diff_one(_s30))}/{len(_diff_one(_s29))}(應 1/0)、"
+                     f"scan 行號={[c.line for c in _scanned]}(應 [2])")
+    # (b) 已審閱行的鍵是 `s[:200]` 的雜湊(與 make_claim 存的 excerpt 同長):上面那題的行
+    #     只有 44 字,`[:200]` 與 `[:201]` 對它一樣。這裡用超過 200 字的行。
+    checks += 1
+    _long = _line + "補充說明" * 60
+    _skip_long = parse_diff_claims(_hdr + "+" + _long, reviewed={("99-fake.md", _sha(_long[:200]))})
+    _catch_long = parse_diff_claims(_hdr + "+" + _long, reviewed=set())
+    if not (len(_long) > 201 and not _skip_long and _catch_long):
+        fails.append(f"超過 200 字的已審閱行沒被跳過:跳過後剩 {len(_skip_long)} 筆(應 0)、"
+                     f"未登錄 {len(_catch_long)} 筆(應 >0)")
+    # (c) flip_decision 裡「另一份統計缺這個檔」的預設值是 0:預設參數下 0 與 1 都 <= 8,
+    #     看不出來;非預設的 ratio 才分得出(函式簽名本來就允許)。
+    checks += 1
+    if flip_decision({"a.md": 40}, {}, 40, 0.01) != [("a.md", 40, 0)]:
+        fails.append(f"flip_decision 缺鍵預設值不對:{flip_decision({'a.md': 40}, {}, 40, 0.01)}")
+
     # --- stratify_no_marker:負對照,原版知識文件裡的 NO_MARKER 必須落在「要處理」---
     checks += 1
     _nm_fake_review = Claim("11-enemy-ai.md", 1, "NO_MARKER", [], [], "測試用")
@@ -1081,8 +1119,10 @@ def selftest() -> int:
             # --- 負對照:file:line 對不上任何 NO_MARKER 主張(行號漂移/打錯)必須拒絕 ---
             checks += 1
             rc4 = mark_reviewed(_target.file, 999999, "benign", "x", real, registry=tmp_reg)
-            if rc4 == 0:
-                fails.append("mark_reviewed 負對照失敗:對不到主張的行號竟然被接受")
+            # 回傳碼要**恰好是 2**:它直接變成 CLI 的 exit code,與批次的部分失敗(1)
+            # 是兩種不同的結果。只驗「非 0」時,2 被改成 3 也照過(2026-09-11 突變測試)。
+            if rc4 != 2:
+                fails.append(f"mark_reviewed 負對照失敗:對不到主張的行號應回傳 2,實得 {rc4}")
 
         # --- mark_reviewed_batch:正對照,混合成功+失敗的一批,成功的要真的寫入、
         #     失敗的不能拖累成功的那些(部分失敗不是全部作廢) ---
@@ -1103,9 +1143,18 @@ def selftest() -> int:
                  "verdict": "benign", "note": "batch selftest ok #2"},
             ]
             rc5 = mark_reviewed_batch(batch, real, registry=tmp_reg2)
-            if rc5 == 0:
-                fails.append("mark_reviewed_batch 負對照失敗:批次裡混了一筆對不到的"
-                             "項目,整體回傳碼卻是 0(該回報有失敗)")
+            # 部分失敗要**恰好是 1**(與單筆錯誤的 2 不同);全部合法的批次必須回 0 ——
+            # 原本只有「混了失敗 -> 非 0」一側,`0 if not fails else 1` 的兩個常數都逃掉。
+            if rc5 != 1:
+                fails.append(f"mark_reviewed_batch 負對照失敗:批次裡混了一筆對不到的"
+                             f"項目,回傳碼應為 1,實得 {rc5}")
+            tmp_reg_ok = Path(tmpdir) / "no_marker_reviewed_batch_ok.json"
+            tmp_reg_ok.write_text(json.dumps({"_policy": "test", "reviews": []}), encoding="utf-8")
+            rc_ok = mark_reviewed_batch([{"file": _others[0].file, "line": _others[0].line,
+                                          "verdict": "benign", "note": "全部合法"}],
+                                        real, registry=tmp_reg_ok)
+            if rc_ok != 0:
+                fails.append(f"mark_reviewed_batch 正對照失敗:全部合法的批次應回傳 0,實得 {rc_ok}")
             written = load_no_marker_reviews(tmp_reg2)
             written_keys = {(r["file"], r["line"]) for r in written}
             if (_others[0].file, _others[0].line) not in written_keys:

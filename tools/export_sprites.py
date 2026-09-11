@@ -36,6 +36,15 @@ def frame_index(group: int, direction: int = 0, frame: int = 0) -> int:
     return group * GROUP_STRIDE + direction * DIR_STRIDE + frame
 
 
+def palette_arg(argv: list[str]) -> str:
+    """第 3 個位置參數是選用的調色盤路徑,沒給就用預設。
+
+    2026-09-11 從 main() 抽出:selftest 從不經過 CLI,`argv[3]` / `len(argv) > 3`
+    改掉(使用者給的調色盤被默默忽略、或 IndexError)都逃掉。
+    """
+    return argv[3] if len(argv) > 3 else DEFAULT_PAL
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "--selftest":
         return selftest()
@@ -43,7 +52,7 @@ def main(argv):
         print(__doc__); return 1
     out = argv[1]
     grps = [int(x) for x in argv[2].split(",") if x.strip()]
-    palp = argv[3] if len(argv) > 3 else DEFAULT_PAL
+    palp = palette_arg(argv)
     os.makedirs(out, exist_ok=True)
     d, tw, th, cnt, offs = load(ICON)
     pal = load_palette(palp)
@@ -149,6 +158,16 @@ def selftest() -> int:
           f"({overlap}/4)—— 像素差異確實分不開方向")
     if not ok5:
         fails.append(f"方向可分性假設變了:{overlap}/4 組重疊")
+
+    print("\n(6) CLI 的選用調色盤參數:給了就用它,沒給才用預設")
+    # 2026-09-11 窮舉突變測試:selftest 從不經過 CLI,`argv[3]` / `len(argv) > 3` 改掉
+    # (使用者給的調色盤被默默忽略)都逃掉。
+    ok6 = (palette_arg(["export_sprites.py", "out", "0", "my.pal"]) == "my.pal"
+           and palette_arg(["export_sprites.py", "out", "0"]) == DEFAULT_PAL)
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 給了 my.pal -> {palette_arg(['p', 'o', '0', 'my.pal'])}、"
+          f"沒給 -> 預設")
+    if not ok6:
+        fails.append("調色盤參數沒有被正確採用")
 
     if fails:
         print("\nSELFTEST FAILED:")

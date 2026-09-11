@@ -67,6 +67,30 @@ def terrain_len_aligned(terrain_len: int) -> bool:
     return terrain_len % 4 == 0
 
 
+def source_paths(fields: list, shapes: list, map_index: int) -> tuple:
+    """第 map_index 張圖的(構成, 控制, 地形)來源路徑。
+
+    FDFIELD 每張圖 3 個資源、FDSHAP 每張 2 個(第 2 個是地形)。2026-09-11 抽出來:
+    selftest 一直只用 map0,`map_index * 3` 與 `* 4`、`* 2 + 1` 與 `* 3 + 1` 對 0 算出
+    同一個檔,選錯檔完全看不出來。
+    """
+    return fields[map_index * 3], fields[map_index * 3 + 1], shapes[map_index * 2 + 1]
+
+
+def field_event_slot(terrain: bytes, tile: int, event_word: int) -> int:
+    """單一格的場上事件 slot(-1 = 無)。
+
+    事件字低 5 位是 1-based slot;帶寶物旗標(0x60)的格子歸 sync_native_treasures,
+    不算場上事件。2026-09-11 從迴圈裡抽出:selftest 的 tiles 全是 0,遮罩、`- 1`、
+    stride 都沒被任何案例打到,只能用合成地形直接測。
+    """
+    if not tile_in_terrain(tile, len(terrain)):
+        return -1
+    raw_slot = event_word & 0x1F
+    flags = terrain[tile * 4]
+    return raw_slot - 1 if raw_slot and flags & 0x60 == 0 else -1
+
+
 def expected(raw, map_index, map_data):
     fields = sorted(
         glob.glob(os.path.join(raw, "FDFIELD", "*.bin")),
@@ -76,9 +100,10 @@ def expected(raw, map_index, map_data):
         glob.glob(os.path.join(raw, "FDSHAP", "*.bin")),
         key=resource_index,
     )
-    comp = open(fields[map_index * 3], "rb").read()
-    control = open(fields[map_index * 3 + 1], "rb").read()
-    terrain = open(shapes[map_index * 2 + 1], "rb").read()
+    comp_path, control_path, terrain_path = source_paths(fields, shapes, map_index)
+    comp = open(comp_path, "rb").read()
+    control = open(control_path, "rb").read()
+    terrain = open(terrain_path, "rb").read()
     w, h = struct.unpack_from("<HH", comp, 0)
     if map_data.get("w") != w or map_data.get("h") != h:
         raise ValueError(f"map{map_index}: dimensions differ")
@@ -86,15 +111,10 @@ def expected(raw, map_index, map_data):
     if len(tiles or []) != w * h or not terrain_len_aligned(len(terrain or [])):
         raise ValueError(f"map{map_index}: raw terrain provenance invalid")
 
-    slots = []
-    for cell, tile in enumerate(tiles):
-        if not tile_in_terrain(tile, len(terrain)):
-            slots.append(-1)
-            continue
-        event_word = struct.unpack_from("<H", comp, 6 + cell * 4)[0]
-        raw_slot = event_word & 0x1F
-        flags = terrain[tile * 4]
-        slots.append(raw_slot - 1 if raw_slot and flags & 0x60 == 0 else -1)
+    # 事件字依格子(cell)索引,構成檔每格 4 bytes,對合法檔永遠在範圍內;地形範圍的
+    # 判定只在 field_event_slot 做一次(原本在這裡重複檢查,那份是冗餘的)。
+    slots = [field_event_slot(terrain, tile, struct.unpack_from("<H", comp, 6 + cell * 4)[0])
+             for cell, tile in enumerate(tiles)]
 
     turn_controls = [
         {
@@ -116,7 +136,7 @@ def expected(raw, map_index, map_data):
         turn_controls,
         slots,
         events,
-        os.path.basename(fields[map_index * 3 + 1]),
+        os.path.basename(control_path),
         hashlib.sha256(control).hexdigest(),
     )
 
@@ -227,6 +247,58 @@ def selftest():
           f"events[0]/[15] 與獨立讀出的 bytes 逐一相符={ok7}")
     if not ok7:
         fails.append(f"events[] 讀到的內容與獨立算出的 offset={want_offset} 對不上")
+
+    print("\n(7b) turn_controls 三欄與 16 個 selector/event_id,逐筆對獨立算出的絕對位移")
+    # 2026-09-11 窮舉突變測試:turn_controls 的 `3 + slot * 3 (+1/+2)` 與 selector 的
+    # `+ 1` 從來沒被對照過((7) 只看 events[0]/[15] 的 event_id 與 events[0] 的 selector,
+    # slot 0 時 `slot * 3` 與 `slot * 4` 同值)。前提:各列位元組不全相同,否則位移算錯
+    # 也可能碰巧相等 —— 一併印出並斷言。
+    fields7 = ("turn", "event_id", "raw_camp")
+    tc_bad = [(k, f) for k in range(16) for j, f in enumerate(fields7)
+              if controls[k][f] != control_bytes[3 + 3 * k + j]]
+    ev_bad = [k for k in range(16)
+              if (events[k]["event_id"], events[k]["selector"])
+              != (control_bytes[want_offset + 2 * k], control_bytes[want_offset + 2 * k + 1])]
+    distinct = len({bytes(control_bytes[3 + 3 * k:6 + 3 * k]) for k in range(16)})
+    ok7b = (len(controls) == 16 and len(events) == 16 and not tc_bad and not ev_bad
+            and distinct > 1)
+    print(f"    {'PASS' if ok7b else 'FAIL'}: 16 列 × 3 欄不符 {tc_bad[:4]}、16 筆事件不符 "
+          f"{ev_bad[:4]}、控制列相異值 {distinct} 種(前提 >1)、筆數 {len(controls)}/{len(events)}")
+    if not ok7b:
+        fails.append(f"turn_controls/events 位移不對:{tc_bad[:4]} / {ev_bad[:4]} / 相異 {distinct}")
+
+    print("\n(8) 來源檔選擇:非 0 的 map 才分辨得出 `map_index * 3` 等算式")
+    comp1 = open(fields[3], "rb").read()
+    w1, h1 = struct.unpack_from("<HH", comp1, 0)
+    _c1, _s1, _e1, src1, dig1 = expected(raw, 1, {"w": w1, "h": h1, "tiles": [0] * (w1 * h1)})
+    b8 = {"source_paths map2": (source_paths(list("abcdefghij"), list("ABCDEFGH"), 2)
+                                == ("g", "h", "F")),
+          "真實 map1 的控制檔": (src1 == os.path.basename(fields[4]) and dig1
+                              == hashlib.sha256(open(fields[4], "rb").read()).hexdigest())}
+    ok8 = all(b8.values())
+    print(f"    {'PASS' if ok8 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b8.items()))
+    if not ok8:
+        fails.append(f"來源檔選擇不對:{[k for k, v in b8.items() if not v]}")
+
+    print("\n(9) field_event_slot:遮罩、1-based、寶物旗標、stride、tile 0 與越界")
+    # tile0 旗標 0、tile1 帶寶物旗標、tile2 只有 bit0(遮罩不得放寬成 0x61)。
+    # tile0 的第 1 個 byte 放 0x20:不影響 tile0,但 stride 若被改成 5,tile1 會讀到別處。
+    terrain9 = bytes([0x00, 0x20, 0, 0,
+                      0x20, 0x00, 0, 0,
+                      0x01, 0x00, 0, 0])
+    cases9 = [(0, 0x25, 4, "低 5 位 = 5 -> slot 4,bit5 必須被遮掉"),
+              (0, 0x20, -1, "低 5 位 = 0 -> 無事件"),
+              (1, 0x05, -1, "寶物格不算場上事件"),
+              (2, 0x03, 2, "只有 bit0 的地形仍可放事件"),
+              (3, 0x05, -1, "tile 超出地形表"),
+              (-1, 0x05, -1, "負的 tile")]
+    bad9 = [(t, ew, field_event_slot(terrain9, t, ew), want, why)
+            for t, ew, want, why in cases9 if field_event_slot(terrain9, t, ew) != want]
+    ok9 = not bad9
+    print(f"    {'PASS' if ok9 else 'FAIL'}: {len(cases9)} 個合成案例"
+          + ("全部正確" if ok9 else f",不符 {bad9}"))
+    if not ok9:
+        fails.append(f"field_event_slot 判定不對:{bad9}")
 
     if fails:
         print("\nSELFTEST FAILED:")

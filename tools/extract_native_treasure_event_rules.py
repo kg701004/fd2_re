@@ -220,7 +220,9 @@ def selftest():
     votes = neighbour_prologue_votes(data, meta, fixups)
     total_votes = sum(votes.values())
     common = max(votes, key=votes.get) if votes else None
-    ok4b = (common == 0x3702F and votes[common] >= 6 and total_votes >= 6)
+    # 2026-09-11:原本只要求「>= 6 票」,鄰居範圍(`- 4` / `+ 5`)與計票(`get(t, 0) + 1`)
+    # 改掉都逃掉。實測 8 個鄰居全是乾淨序頭、8 票全投給 stack probe,所以釘確切值。
+    ok4b = votes == {0x3702F: 8}
     print(f"    {'PASS' if ok4b else 'FAIL'}: 8 個鄰居投出 {total_votes} 票,"
           f"多數 = {common:#x} × {votes.get(common, 0)}(stack probe 應為 0x3702f)"
           if votes else "    FAIL: 一票都沒有 —— 投票邏輯沒有在做事")
