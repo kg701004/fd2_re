@@ -314,7 +314,12 @@ def write_baseline(path: Path = ERRATA) -> int:
     for s in specs:
         errata["errata"][s.index].setdefault("citation_check", {})["baseline"] = \
             cur.get(str(s.index), {})
-    path.write_text(json.dumps(errata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # newline="\n" 是刻意的:`write_text` 在 Windows 會把 \n 換成 \r\n,寫進工作區的
+    # 副本就變成 CRLF。git 提交時會正規化所以看不出來,但**工作區那份才是 WSL 實際執行
+    # 的檔案** —— 2026-09-11 就是這樣讓兩支工具的 shebang 變成 CRLF、被 hygiene 的
+    # shebang 規則擋下。寫 repo 內檔案的工具不要依賴平台預設。
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(errata, ensure_ascii=False, indent=2) + "\n")
     total = sum(sum(v.values()) for v in cur.values())
     print(f"已寫入基準線:{len(specs)} 筆勘誤,ARGUED 存量共 {total} 筆。")
     return 0

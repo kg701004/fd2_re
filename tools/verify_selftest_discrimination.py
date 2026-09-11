@@ -833,24 +833,43 @@ def main() -> int:
             continue
         best = None
         caught_total = attempted_total = 0
+        reach_caught_total = reach_attempted_total = 0
         for k in range(a.passes):
             r = test_tool(n, a.tries, a.timeout, seed=a.seed + k)
             caught_total += r.get("mutations_caught", 0)
             attempted_total += r.get("mutations_attempted", 0)
+            reach_caught_total += r.get("reachable_caught", 0)
+            reach_attempted_total += r.get("reachable_attempted", 0)
             # 跨輪取最好的判定:任何一輪抓到就是有鑑別力(WEAK 只在全部輪都 0 時成立)
             if best is None or (r["verdict"] == "DISCRIMINATING" and best["verdict"] != "DISCRIMINATING"):
                 best = r
         best["mutations_caught"], best["mutations_attempted"] = caught_total, attempted_total
+        # 2026-09-11:`reachable_*` 先前只累加在單輪的 r 裡,跨輪沒有合併,所以
+        # `--passes>1` 時報表引用的是**最後留下那一輪**的可達數,與 caught_total
+        # 的口徑不一致。既然要把它升成標題數字,口徑就必須對齊。
+        best["reachable_caught"] = reach_caught_total
+        best["reachable_attempted"] = reach_attempted_total
         best["passes"] = a.passes
         rows.append(best)
         v = best["verdict"]
-        reach = best.get("reachable_attempted")
-        extra = (f"{caught_total}/{attempted_total} 被抓到"
-                 + (f" ({a.passes} 輪累計)" if a.passes > 1 else "")
-                 if attempted_total else best.get("detail", ""))
-        if attempted_total and reach is not None:
-            # 分母比分子重要:12 個突變裡有幾個 selftest 根本執行不到?
-            extra += f"(其中 {reach} 個是 selftest 執行得到的**產品碼**)"
+        reach = best.get("reachable_attempted") or 0
+        reach_ok = best.get("reachable_caught") or 0
+        # 2026-09-11:標題數字改成**可達比例**。原本印的是 `caught/tries`(例如 4/12),
+        # 但那個分母是「亂數突變落在哪」,不是「selftest 該負責的範圍」—— 實測
+        # `verify_address_citations.py` 的 4/12 看起來很差,真相是 12 個突變裡只有 3 個
+        # 落在 selftest 執行得到的行,而那 3 個**全部被抓到**(3/3)。
+        # 把 artifact 的形狀當成品質分數,是本專案已經踩過的形狀
+        # (見 feedback_score_can_measure_the_artifacts_shape)。原始數字沒有拿掉,
+        # 降級成次要資訊。
+        if attempted_total:
+            head = (f"可達突變 {reach_ok}/{reach} 抓到" if reach
+                    else "可達突變 0 個(本輪對品質未提供證據)")
+            tail = (f"全部 {caught_total}/{attempted_total}"
+                    + (f",{a.passes} 輪累計" if a.passes > 1 else "")
+                    + f";其餘 {attempted_total - reach} 個落在 selftest 執行不到的行")
+            extra = f"{head}({tail})"
+        else:
+            extra = best.get("detail", "")
         print(f"  {n:<40} {v:<16} {extra}")
         for e in best.get("reachable_escapes", [])[:3]:
             print(f"      逃掉但執行得到:{e}")
@@ -860,6 +879,19 @@ def main() -> int:
     good = sum(1 for r in rows if r["verdict"] == "DISCRIMINATING")
     print(f"\n共 {len(rows)} 個工具:有鑑別力 {good} / 弱 {len(weak)} / "
           f"樣本沒落到可測範圍 {len(unreach)} / 基準就失敗 {len(bad)}")
+    # 「67 支全部有鑑別力」是真的,但它與「有 24 支存在逃掉的可達突變」可以同時為真。
+    # 只印前者會讓後者消失 —— 那正是本專案反覆踩到的形狀,所以兩個數字並列,
+    # 而且把可達逃逸總數印出來:它是**可以歸零**的,不像判定欄位永遠好看。
+    esc_rows = [r for r in rows if r.get("reachable_escapes")]
+    esc_total = sum(len(r.get("reachable_escapes") or []) for r in rows)
+    if esc_rows:
+        print(f"  仍有**逃掉但確實被執行到**的突變:{len(esc_rows)} 支工具、共 {esc_total} 個"
+              f"(判定欄位看不到這個;逐支明細見上方「逃掉但執行得到」)")
+        worst = sorted(esc_rows, key=lambda r: -len(r["reachable_escapes"]))[:5]
+        print("    最多的幾支:"
+              + "、".join(f"{r['tool']}×{len(r['reachable_escapes'])}" for r in worst))
+    else:
+        print("  沒有任何「逃掉但確實被執行到」的突變。")
     if unreach:
         print(f"  樣本沒落到可測範圍(這一輪對 selftest 品質未提供證據,"
               f"不是「弱」):{unreach}")

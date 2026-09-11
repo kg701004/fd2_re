@@ -96,6 +96,33 @@ def jump_table_entry(data, meta, event_id, fixups=None):
     return target
 
 
+def neighbour_prologue_votes(data, meta, fixups):
+    """同一張跳表裡 event 58 前後各 4 格,各自序頭 `call` 的目標 -> 票數。
+
+    2026-09-11 從 `assert_function_entry` 裡抽出來,原因是突變測試量到的一個實質缺口:
+    這段投票邏輯**整段沒有被任何檢查約束**。把 `other < 0` 改成 `other >= 0`(每一格都
+    被跳過、votes 變空)、或把 `h[0] == 0x68` 改成 `!=`(選到完全不同的一批格子),
+    突變都逃掉 —— 因為 votes 一旦為空,下面的多數決就整段跳過,`assert_function_entry`
+    直接回傳 target,而 selftest 的其他題全是被**序頭形狀**那一關擋下的,測不到這裡。
+
+    抽成獨立函式之後 selftest 才打得到它本身(多數必須是 stack probe、票數必須夠),
+    行為與原本內嵌時完全相同。
+    """
+    votes = {}
+    for other in range(TREASURE_EVENT_ID - 4, TREASURE_EVENT_ID + 5):
+        if other == TREASURE_EVENT_ID or other < 0:
+            continue
+        try:
+            neighbour = jump_table_entry(data, meta, other, fixups)
+            h = linear_bytes(data, meta, neighbour, 10)
+            if h[0] == 0x68 and h[5] == 0xE8:
+                t = neighbour + 10 + struct.unpack_from("<i", h, 6)[0]
+                votes[t] = votes.get(t, 0) + 1
+        except (StopIteration, struct.error, SystemExit):
+            continue
+    return votes
+
+
 def assert_function_entry(data, meta, address, what, fixups=None):
     """要求 address 是 Watcom 函式入口:`push imm32; call rel32`。
 
@@ -114,18 +141,7 @@ def assert_function_entry(data, meta, address, what, fixups=None):
     target = address + 10 + struct.unpack_from("<i", head, 6)[0]
     if fixups is None:
         fixups = parse_fixups(data, meta)
-    votes = {}
-    for other in range(TREASURE_EVENT_ID - 4, TREASURE_EVENT_ID + 5):
-        if other == TREASURE_EVENT_ID or other < 0:
-            continue
-        try:
-            neighbour = jump_table_entry(data, meta, other, fixups)
-            h = linear_bytes(data, meta, neighbour, 10)
-            if h[0] == 0x68 and h[5] == 0xE8:
-                t = neighbour + 10 + struct.unpack_from("<i", h, 6)[0]
-                votes[t] = votes.get(t, 0) + 1
-        except (StopIteration, struct.error, SystemExit):
-            continue
+    votes = neighbour_prologue_votes(data, meta, fixups)
     if votes:
         common = max(votes, key=votes.get)
         if target != common:
@@ -195,6 +211,40 @@ def selftest():
         fails.append("故障注入沒有生效,本題不成立")
     if not ok4:
         fails.append("注入的壞位址沒有被擋下")
+
+    print("\n(4b) 鄰居投票**本身**必須成立 —— 這段先前完全沒有被任何檢查約束")
+    # 突變測試量到的實質缺口:把 `other < 0` 改成 `>= 0`(votes 變空)或把
+    # `h[0] == 0x68` 改成 `!=`(選到另一批格子),突變全部逃掉 —— 因為 votes 一空,
+    # 多數決整段跳過、直接回傳 target,而 (3)/(4) 是被**序頭形狀**那一關擋下的,
+    # 根本走不到這裡。所以要分別釘住:票是真的投出來的,而且多數就是 stack probe。
+    votes = neighbour_prologue_votes(data, meta, fixups)
+    total_votes = sum(votes.values())
+    common = max(votes, key=votes.get) if votes else None
+    ok4b = (common == 0x3702F and votes[common] >= 6 and total_votes >= 6)
+    print(f"    {'PASS' if ok4b else 'FAIL'}: 8 個鄰居投出 {total_votes} 票,"
+          f"多數 = {common:#x} × {votes.get(common, 0)}(stack probe 應為 0x3702f)"
+          if votes else "    FAIL: 一票都沒有 —— 投票邏輯沒有在做事")
+    if not ok4b:
+        fails.append(f"鄰居投票不成立:votes={ {hex(k): v for k, v in votes.items()} }")
+
+    print("\n(4c) 把投票關與序頭關**分離**:序頭合法但 callee 不是 stack probe,仍須拒絕")
+    # 前面每一題的壞位址都是連序頭形狀都不對,所以只證明了第一關有效。
+    # 0x10131 的序頭是合法的 `68 imm32; E8`,但它 call 的是 0x111ba 而非 stack probe
+    # —— 只有投票那一關能擋下它。這是全檔唯一一題真正走到多數決的案例。
+    head_ok = False
+    try:
+        h = linear_bytes(data, meta, 0x10131, 10)
+        head_ok = h[0] == 0x68 and h[5] == 0xE8
+        callee = 0x10131 + 10 + struct.unpack_from("<i", h, 6)[0]
+        assert_function_entry(data, meta, 0x10131, "序頭合法但 callee 不符", fixups)
+        ok4c = False
+    except SystemExit:
+        ok4c = True
+    ok4c = ok4c and head_ok and callee != 0x3702F
+    print(f"    {'PASS' if ok4c else 'FAIL'}: 0x10131 序頭合法={head_ok}、"
+          f"callee={callee:#x}≠stack probe、被投票關擋下={ok4c}")
+    if not ok4c:
+        fails.append("序頭合法但 callee 不符的位址沒有被投票關擋下 —— 那一關是裝飾用的")
 
     print("\n(5) 配對控制:寶物表是純資料、不走 fixup,原始位元組即為正解")
     items = list(linear_bytes(data, meta, ITEM_TABLE, 5))

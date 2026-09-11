@@ -69,16 +69,23 @@ def selftest():
     _sys.path.insert(0, here)
     root = os.path.dirname(here)
 
-    print("(1) 跨工具對照:真實 LMI1 檔的 sub-resource 筆數必須與 decode_lmi 一致")
+    print("(1) 跨工具對照:真實 LMI1 檔的每一段 LUT 位元組都必須與 decode_lmi 的目錄相符")
+    # 2026-09-11:這題原本只比對**筆數**(`len(a) == len(b)`)。突變測試證明那太弱 ——
+    # 把 `struct.unpack_from("<I", d, 6 + 4 * i)` 的 6 改成 7(目錄整個讀歪)、或把
+    # `offs[i + 1]` 改成 `offs[i + 2]`(每段的結尾取錯),筆數都**完全不變**,兩個突變
+    # 因此都逃掉。改成拿 decode_lmi 算出的 offsets 去預測每一段的位元組內容,再與本檔
+    # 實際切出來的逐段比對 —— 預測方來自另一支獨立實作,不是本檔自己算給自己看。
     from decode_lmi import lmi_offsets, NotLMI
     d = os.path.join(root, "extracted", "raw", "FDOTHER")
     same = diff = 0
+    checked_luts = 0
     bad = []
     if os.path.isdir(d):
         for fn in sorted(os.listdir(d)):
             fp = os.path.join(d, fn)
             try:
-                a = lmi_offsets(open(fp, "rb").read())
+                blob = open(fp, "rb").read()
+                a = lmi_offsets(blob)
             except (NotLMI, OSError, struct.error):
                 continue
             try:
@@ -87,16 +94,28 @@ def selftest():
                 diff += 1
                 bad.append((fn, type(exc).__name__))
                 continue
-            if len(a) == len(b):
+            if len(a) != len(b):
+                diff += 1
+                bad.append((fn, f"筆數 {len(a)} vs {len(b)}"))
+                continue
+            # 用 decode_lmi 的 offsets 獨立預測每一段的內容
+            mism = next(
+                (i for i in range(len(a))
+                 if b[i] != blob[a[i]:(a[i + 1] if i + 1 < len(a) else len(blob))][:256]),
+                None)
+            if mism is None:
                 same += 1
+                checked_luts += len(a)
             else:
                 diff += 1
-                bad.append((fn, f"{len(a)} vs {len(b)}"))
-    ok1 = same > 0 and diff == 0
-    print(f"    {'PASS' if ok1 else 'FAIL'}: 一致 {same} / 不一致 {diff}"
-          + (f" {bad[:3]}" if bad else ""))
+                bad.append((fn, f"第 {mism} 段位元組不符"))
+    ok1 = same > 0 and diff == 0 and checked_luts > 0
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 一致 {same} 檔 / 不一致 {diff};"
+          f"逐段比對過 {checked_luts} 段 LUT" + (f" {bad[:3]}" if bad else ""))
     if same == 0:
         fails.append("找不到任何真實 LMI1 檔 —— 這題是空的,不算通過")
+    elif checked_luts == 0:
+        fails.append("一段 LUT 都沒有真的比對到 —— 這題退化成只比筆數")
     elif diff:
         fails.append(f"與 decode_lmi 不一致:{bad[:3]}")
 
@@ -115,6 +134,29 @@ def selftest():
     print(f"    {'PASS' if ok2 else 'FAIL'}: {why}")
     if not ok2:
         fails.append(f"壞目錄的錯誤型別不對:{why}")
+
+    print("\n(2b) `len(d) < 6` 這道守衛的**兩側**邊界:5 bytes 必須擋、6 bytes 必須放行")
+    # 只測「太短會擋」證明不了常數是 6 —— 把它改成 7 也照樣擋得住 5 bytes。
+    # 成對測兩側才釘得住這個數字本身(突變測試實測 6->7 逃掉,就是因為缺放行側)。
+    edge = []
+    try:
+        parse_lmi_bytes(b"LMI1\x00")
+        edge.append("5 bytes 沒有被擋下")
+    except ValueError:
+        pass
+    except Exception as exc:                                  # noqa: BLE001
+        edge.append(f"5 bytes 丟出 {type(exc).__name__} 而非 ValueError")
+    try:
+        got = parse_lmi_bytes(b"LMI1" + struct.pack("<H", 0))
+        if got != []:
+            edge.append(f"6 bytes(n=0)應解出 0 個 LUT,實得 {len(got)}")
+    except Exception as exc:                                  # noqa: BLE001
+        edge.append(f"6 bytes(n=0)被誤擋:{type(exc).__name__}")
+    ok2b = not edge
+    print(f"    {'PASS' if ok2b else 'FAIL'}: "
+          + ("5 bytes 擋下、6 bytes(n=0)放行並解出 0 個 LUT" if ok2b else str(edge)))
+    if edge:
+        fails.append(f"長度守衛的邊界不對:{edge}")
 
     print("\n(3) 非 LMI1 檔必須被擋下")
     with tempfile.TemporaryDirectory() as td:
