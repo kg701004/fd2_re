@@ -34096,6 +34096,46 @@
    "excerpt": "是其中之一)/ 正向控制 13/13 / 實測配對負向控制 / 非恆真(不可全落同一桶)/",
    "verdict": "benign",
    "note": "工具行為陳述,不是原版側 RE 主張:所述對象是 verify_address_claim_coverage.py 的判準與計數,證據是同節的量測數字與可重跑指令(python tools/verify_address_claim_coverage.py --selftest),不涉及原版 EXE/實機。"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 777,
+   "excerpt_sha1": "e781b8e8d63336403c99d9c102bbce14df5d1a62",
+   "excerpt": "### 6.10.4 三個確認為真、且從未登記進 `known_address_errata.json` 的位址",
+   "verdict": "benign",
+   "note": "章節標題,不是驗證主張;該節的逐筆證據在下方表格與 §6.10.1 的判準說明。"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 779,
+   "excerpt_sha1": "2df41d0e5a598434b046df9ca005396dd5795d8f",
+   "excerpt": "| 位址 | 現存引用 | 已有的訂正出處 | 本輪的獨立確認 |",
+   "verdict": "benign",
+   "note": "表格標頭,不是驗證主張;資料列本身帶位址與反組譯依據。"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 795,
+   "excerpt_sha1": "6e89acf5e0a0b5d55bad09d9160ec72cf3e8118d",
+   "excerpt": "* **拿未逐筆驗證的前提去餵一個會擋人的機制,錯誤會帶著權威擴散** —— 這是使用者在本日稍早",
+   "verdict": "benign",
+   "note": "方法論/流程陳述(為什麼不批次登記),不是對原版 EXE 的主張。"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 796,
+   "excerpt_sha1": "883049e7b3e04687fb3157d3ac99b586bc72633d",
+   "excerpt": "明確制止過的做法(「doc27 §6.3 當年說的先不使用,另外重新驗證」),同樣適用於此。",
+   "verdict": "benign",
+   "note": "同上,引用的是使用者的指示而非 RE 證據。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4253,
+   "excerpt_sha1": "22b03520b071d42bbdd3a4b78c01267a583d7639",
+   "excerpt": "拿未逐筆驗證的前提去餵一個會擋人的機制,錯誤會帶著權威擴散。",
+   "verdict": "benign",
+   "note": "方法論陳述(為什麼不批次登記),所述對象是登記流程,不涉及原版 EXE/實機。"
   }
  ]
 }

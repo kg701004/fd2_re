@@ -139,6 +139,85 @@ def signals_for(sig: dict, addr: int) -> list[str]:
     return out
 
 
+def _capstone():
+    """延遲匯入:`--triage` 才需要,`--selftest`/閘門在沒有 capstone 的 WSL 下仍可用。"""
+    import capstone
+    return capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+
+
+def containing_entry(sig: dict, addr: int, cache: dict) -> int | None:
+    """`addr` 所在函式的入口 = 不大於它的最後一個可信入口候選;沒有則 None。
+
+    2026-09-11 從 `boundary_from_entry` 裡抽出來,理由是突變測試:把
+    `bisect_right(...) - 1` 改成 `- 2`(選到**前一個**函式)整組 selftest 照樣通過,
+    因為從前一個函式線性反組譯通常也掃得到目標位址。抽成函式之後 selftest 第 (11) 題
+    才打得到**真正在跑的這一份**,而不是在測試裡重寫一次同樣的邏輯。
+    """
+    import bisect
+    ent = cache.setdefault("_ent", sorted(sig["plausible"]))
+    i = bisect.bisect_right(ent, addr) - 1
+    return ent[i] if i >= 0 else None
+
+
+def boundary_from_entry(sig: dict, addr: int, _cache: dict | None = None) -> bool | None:
+    """`addr` 是否落在合法指令邊界 —— **只從所在函式的入口單一起點**線性反組譯。
+
+    回傳 True/False,無法判定(找不到所在函式或距離過遠)回 None。
+
+    **為什麼不是多起點收斂**:那個做法試過,被自己的負向控制打掉。從 `addr` 之前
+    k 個 byte 各起一次反組譯,看起來比較穩健,實測卻讓 14 個已知錯誤位址裡的 **5 個**
+    被判成「是邊界」—— 短視窗從任意偏移起算會湊出自洽但錯誤的解碼,這是線性反組譯的
+    經典偽陽性。單一起點(與 Ghidra 同源)反而乾淨:150 個已知正確入口 **0 誤報**。
+
+    **已知上限**:對已知錯誤位址的召回率是 **10/14 = 71%**。抓不到的 4 個
+    (`0x27fc9`/`0x320fc`/`0x3453e`/`0x36d98`)是錯位址但**剛好落在合法邊界上** ——
+    「是邊界」不等於「是入口」。這個比率由 selftest 第 (8)(9) 題釘住。
+    """
+    cache = _cache if _cache is not None else {}
+    entry = containing_entry(sig, addr, cache)
+    if entry is None or addr - entry > 6000:
+        return None
+    if entry not in cache:
+        md = cache.get("_md")
+        if md is None:
+            md = cache["_md"] = _capstone()
+        off = entry - sig["base"]
+        cache[entry] = {x.address for x in md.disasm(bytes(sig["code"][off:off + 6200]), entry)}
+    return addr in cache[entry]
+
+
+def triage() -> int:
+    """把 UNREVIEWED 依「是否落在合法指令邊界」分流,非邊界者依引用次數排序印出。
+
+    這是 `--report` 的下一層:`--report` 說「這些沒有證據」,本模式說
+    「這些之中,**哪些連指令邊界都不是**」—— 後者才是候選的位址誤記。
+    """
+    try:
+        _capstone()
+    except ImportError:
+        print("SKIP:本模式需要 capstone(閘門與 --selftest 不需要)")
+        return 0
+    r = classify_all()
+    sig, un = r["sig"], r["unreviewed"]
+    cache: dict = {}
+    rows = [(a, len(un[a]), boundary_from_entry(sig, a, cache)) for a in un]
+    nb = [x for x in rows if x[2] is False]
+    tb = [x for x in rows if x[2] is True]
+    nn = [x for x in rows if x[2] is None]
+    print(f"UNREVIEWED {len(rows)} 個 -> 合法指令邊界 {len(tb)} / "
+          f"**不在指令邊界 {len(nb)}** / 無法判定 {len(nn)}")
+    print("(判準:誤報率 0/150 已知正確入口;對已知錯誤召回 10/14。"
+          "「是邊界」不等於「是入口」,所以 tb 那一欄不代表正確。)\n")
+    print(f"{'位址':>9} {'引用':>4}  所在函式")
+    for a, n, _ in sorted(nb, key=lambda x: -x[1])[:40]:
+        import bisect
+        ent = cache["_ent"]
+        i = bisect.bisect_right(ent, a) - 1
+        e = ent[i] if i >= 0 else None
+        print(f"{a:#09x} {n:4d}  {format(e, '#09x') if e else '?'}  (+{a - e if e else 0:#x})")
+    return 0
+
+
 def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
     """被入口語言同行提及、且落在 obj1 的相異位址 -> [(檔名, 行號), ...]。"""
     out: dict[int, list[tuple[str, int]]] = {}
@@ -370,19 +449,93 @@ def selftest() -> int:
     if not ok7:
         fails.append("棘輪不是雙向的")
 
+    try:
+        _capstone()
+    except ImportError:
+        print("\n(8)(9) SKIP:沒有 capstone,指令邊界判準的兩題跳過(閘門不需要它)")
+    else:
+        cache: dict = {}
+        print("\n(8) 邊界判準的**誤報率**:150 個已知正確入口不得有任何一個被判成「不是邊界」")
+        import random as _rnd
+        _rnd.seed(7)
+        samp = _rnd.sample(sorted(sig["prologue"]), 150)
+        wrong = [a for a in samp if boundary_from_entry(sig, a, cache) is False]
+        ok8 = not wrong
+        print(f"    {'PASS' if ok8 else 'FAIL'}: 誤報 {len(wrong)}/150 "
+              f"{[hex(a) for a in wrong[:5]]}")
+        if not ok8:
+            fails.append(f"邊界判準對已知正確入口有 {len(wrong)} 個誤報")
+
+        print("\n(9) 邊界判準的**召回率**必須落在已量測的區間(釘住它,也釘住它的上限)")
+        # 10/14 是 2026-09-11 的實測值。抓不到的 4 個是「錯位址但剛好落在合法邊界上」,
+        # 這是判準的結構性上限,不是 bug —— 所以這裡不要求 14/14,但要求它不得**退步**。
+        bad_o1 = sorted(a for a in known_bad() if sig["base"] <= a < sig["hi"])
+        caught = [a for a in bad_o1 if boundary_from_entry(sig, a, cache) is False]
+        ok9 = len(bad_o1) >= 14 and len(caught) >= 10
+        print(f"    {'PASS' if ok9 else 'FAIL'}: {len(caught)}/{len(bad_o1)} 被判為不是邊界"
+              f"(2026-09-11 實測 10/14;抓不到的是落在合法邊界上的錯位址)")
+        if not ok9:
+            fails.append(f"邊界判準召回退步:{len(caught)}/{len(bad_o1)}")
+
+    print("\n(10) 行號必須是真的行號 —— 掃描回報的 (檔, 行) 要能對回原文")
+    # 突變測試發現的缺口:`enumerate(f, 1)` 改成 `enumerate(f, 2)`,每一個回報的行號
+    # 全部偏一,而基準線只存**每檔筆數**、完全不受影響,所以整個 selftest 都沒感覺。
+    # 這裡用獨立的讀法(直接讀檔案、自己數行)反查一筆,把行號釘住。
+    claims = kb_entry_claims(sig["base"], sig["hi"])
+    mismatch = None
+    probe = next(((a, s) for a, s in claims.items() for s in [s] if s), None)
+    if probe:
+        addr, sites = probe
+        name, lineno = sites[0]
+        lines = open(os.path.join(KB, name), encoding="utf-8", errors="replace").read().splitlines()
+        if not (1 <= lineno <= len(lines)) or not ADDR.findall(lines[lineno - 1]):
+            mismatch = f"{name}:{lineno} 對不回原文"
+        else:
+            got = {int(m, 16) for m in ADDR.findall(lines[lineno - 1])}
+            if addr not in got:
+                mismatch = f"{name}:{lineno} 該行沒有 {addr:#x}(實際有 {[hex(g) for g in got][:4]})"
+    ok10 = probe is not None and mismatch is None
+    print(f"    {'PASS' if ok10 else 'FAIL'}: "
+          + (f"{probe[1][0][0]}:{probe[1][0][1]} 該行確實含 {probe[0]:#x}" if ok10
+             else str(mismatch or "沒有任何主張可抽驗")))
+    if not ok10:
+        fails.append(f"回報的行號對不回原文:{mismatch}")
+
+    print("\n(11) 所在函式的選擇必須是**正確那一個**:已知入口的所在函式就是它自己")
+    # 同一批突變發現:`bisect_right(ent, addr) - 1` 改成 `- 2` 會選到前一個函式,
+    # 而 (8)(9) 兩題照樣通過 —— 因為從前一個函式反組譯通常也能掃到目標位址。
+    try:
+        _capstone()
+    except ImportError:
+        print("    SKIP:沒有 capstone")
+    else:
+        import random as _r
+        _r.seed(13)
+        s3 = _r.sample(sorted(sig["prologue"]), 100)
+        pick_cache: dict = {}
+        badpick = [a for a in s3 if containing_entry(sig, a, pick_cache) != a]
+        ok11 = not badpick
+        print(f"    {'PASS' if ok11 else 'FAIL'}: 100 個已知入口中,"
+              f"所在函式被選成別人的 {len(badpick)} 個 {[hex(x) for x in badpick[:3]]}")
+        if not ok11:
+            fails.append(f"所在函式選錯:{len(badpick)}/100")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(7 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
-          "非恆真 + 宣稱語言有在篩選 + 雙向棘輪)。")
+    print("\n--selftest passed(11 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
+          "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
+          "行號可對回原文 + 所在函式選擇正確)。")
     return 0
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="知識庫入口主張的位元組證據涵蓋率")
     ap.add_argument("--report", action="store_true", help="列出 UNREVIEWED 位址")
+    ap.add_argument("--triage", action="store_true",
+                    help="把 UNREVIEWED 依『是否落在合法指令邊界』分流(需要 capstone)")
     ap.add_argument("--addr", help="查單一位址的三個訊號")
     ap.add_argument("--write-baseline", action="store_true")
     ap.add_argument("--selftest", action="store_true")
@@ -391,6 +544,8 @@ def main() -> int:
         return selftest()
     if a.addr:
         return one(a.addr)
+    if a.triage:
+        return triage()
     if a.write_baseline:
         return write_baseline()
     if a.report:
