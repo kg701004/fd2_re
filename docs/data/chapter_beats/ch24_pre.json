@@ -11,7 +11,11 @@
    "op": "load_res",
    "addr": "0x3398c",
    "target": "0x111ba",
-   "args": []
+   "args": [
+    6733,
+    0,
+    88
+   ]
   },
   {
    "op": "pan",

@@ -5,7 +5,19 @@
    "op": "layout_units",
    "addr": "0x23a5e",
    "target": "0x233c6",
-   "args": []
+   "args": [
+    "eax",
+    "eax",
+    0,
+    0,
+    15,
+    65,
+    28,
+    30,
+    2,
+    22,
+    25
+   ]
   },
   {
    "op": "unit_inactive",

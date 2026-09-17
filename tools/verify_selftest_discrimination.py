@@ -114,6 +114,7 @@ Usage
     python tools/verify_selftest_discrimination.py --tool decode_image.py --tries 20 --seed 3 --passes 2 --timeout 300 --json out.json
     python tools/verify_selftest_discrimination.py --include-ghidra
     python tools/verify_selftest_discrimination.py --selftest
+    python tools/verify_selftest_discrimination.py --check-registry   # 登錄表過期偵測(秒級,commit 前閘門)
 """
 
 from __future__ import annotations
@@ -1165,6 +1166,28 @@ def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
     return out
 
 
+def check_registry(path: Path) -> int:
+    """登錄表的鍵是否都還對得上突變點。全量 --exhaustive 要 1 小時 40 分,不能當 commit 閘門;
+    但「登錄的那一行被改掉了」這件事只需要 list_sites,秒級就能知道,所以拆出來單獨當閘門。
+    抓的是過期,不是登錄錯誤(那要真的跑突變才知道)。"""
+    reg = load_equivalents(path)
+    stale, total = [], 0
+    for tool, keys in sorted(reg.items()):
+        src_path = TOOLS / tool
+        if not src_path.exists():
+            stale.extend(f"{tool}: 工具不存在 ({k})" for k in keys)
+            continue
+        live = {s["key"] for s in list_sites(src_path.read_text(encoding="utf-8"))}
+        for k in keys:
+            total += 1
+            if k not in live:
+                stale.append(f"{tool}: {k}")
+    for s in stale:
+        print(f"  過期 {s}")
+    print(f"登錄表 {total} 筆,過期 {len(stale)} 筆" + ("" if not stale else " —— 該行已改動,請重跑該工具的 --exhaustive 後更新登錄"))
+    return 1 if stale else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1188,10 +1211,15 @@ def main() -> int:
                     help="等價突變登錄表(預設 docs/data/equivalent_mutants.json)")
     ap.add_argument("--json")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--check-registry", action="store_true",
+                    help="只驗登錄表:每一筆的 key 必須對得上該工具現在的突變點(過期偵測),"
+                         "不跑任何突變,秒級,放進 commit 前閘門")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.check_registry:
+        return check_registry(Path(a.equivalents))
     if a.list:
         for k, (argv, needs) in sorted(INVOKE.items()):
             print(f"  {k:<40} {needs:<8} {' '.join(argv)}")

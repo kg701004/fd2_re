@@ -46,7 +46,19 @@
    "op": "layout_units",
    "addr": "0x23c04",
    "target": "0x233c6",
-   "args": []
+   "args": [
+    "eax",
+    "eax",
+    "eax",
+    "eax",
+    15,
+    52,
+    23,
+    23,
+    2,
+    17,
+    17
+   ]
   },
   {
    "op": "dialog",

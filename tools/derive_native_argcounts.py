@@ -30,6 +30,11 @@ cdecl 的呼叫端同時要做兩件事,兩者都編碼了參數個數,而且是
 
 單一呼叫端的「100% 一致」是恆真的,不算證據,一律降級。
 
+  C. 被呼叫端(2026-09-17 加入,`callee_argc`):本體從堆疊讀到第幾個參數。與 A、B 都
+     獨立(它們看呼叫端,這條看被呼叫端),是裁決 A、B 打架或 PRIM 與推導不一致時的第三
+     方。它是下界(函式可以不讀最後一個參數):讀到的比傳的多是矛盾,相等是確認。
+     沒有 Watcom 序頭的函式回 None,不是 0。
+
 呼叫端從哪裡來也有兩種獨立機制:CFG 可達走訪(從 chapter handler 跳表出發)
 與全 image 位元組掃描(直接找 `E8 rel32`)。兩者對「哪些位址是呼叫端」的認定
 完全獨立,而實測 27 個目標的參數個數在兩種機制下**沒有一個改變**,儘管呼叫端
@@ -110,6 +115,7 @@ import collections
 import functools
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -257,6 +263,73 @@ def collect_wide(cg, target: int) -> list[dict]:
     return out
 
 
+_CALLEE_ESP = re.compile(r"\[esp \+ (0x[0-9a-f]+|\d+)\]")
+
+
+def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
+    """第三條訊號:**被呼叫端本體**讀到第幾個參數。回傳 (最大參數序號, 說明);不支援的序頭回 (None, 原因)。
+
+    與 A(清理)、B(緊鄰 push)完全獨立:那兩條看的是呼叫端,這條看被呼叫端自己從堆疊
+    讀了什麼。2026-09-17 用它裁決 PRIM 的三筆不一致(loadch 0→1、play_sfx 1→3、dialog 的 2
+    是投影);先在 14 個有文件簽名的目標上驗證,全部命中、沒有一個過讀。
+
+    Watcom 序頭固定是 `push <frame>; call 0x3702f`,之後保存暫存器的 push 與 `sub esp,N`
+    和本體其他 push/pop/sub/add esp 一樣,都只是 ESP 位移;從 stack-check 之後起算位移,
+    把每個 `[esp+X]` 換算回「位移 0」座標,回傳位址就在 0,第 k 個參數在 4k。
+
+    誠實邊界:
+      * 沒有 stack-check 序頭(小型 leaf,如 `delay` 0x3790a、0x4df4c)或改用 ebp 框架的
+        函式回 None —— **None 不是 0**,0 表示本體確實一個參數都沒讀。
+      * 這是**下界**:函式可以不讀最後一個參數。所以判準是「本體讀到的 > 呼叫端傳的」為
+        矛盾、相等為確認、較小只算不反對。
+      * 本體範圍取到下一個 Watcom 函式入口為止;中間若夾著沒有序頭的小函式,它們讀的
+        `[esp+X]` 會被算進來 —— 但那些函式的 ESP 位移從 0 起算,只會低估不會高估參數序號,
+        方向與「下界」一致。
+    """
+    ins = cg._insn(target)
+    if ins is None or ins.mnemonic != "push":
+        return None, "no prologue push"
+    nxt = cg._insn(target + ins.size)
+    if nxt is None or nxt.mnemonic != "call" or not nxt.op_str.startswith("0x") \
+            or int(nxt.op_str, 16) != STACK_CHECK:
+        return None, "no stack-check call"
+    # 從 stack-check 之後開始,ESP 位移從 0 起算:保存暫存器的 push 與 `sub esp,N` 都由
+    # 下面的位移追蹤吃掉,不另外解析序頭 —— 2026-09-17 突變窮舉指出「先解析序頭再追蹤」
+    # 是冗餘的(序頭怎麼解,結果都一樣),冗餘的判準就是測不到的判準。
+    # 座標:回傳位址在位移 0,第 k 個參數在 `[esp + 4k]`(位移歸零後)。
+    a = nxt.address + nxt.size
+    later = [e for e in entries if e > target]
+    end = min(later) if later else target + 0x4000
+    delta = 0
+    top = 0
+    while a < end:
+        i = cg._insn(a)
+        if i is None:
+            break
+        m, op = i.mnemonic, i.op_str
+        if m == "mov" and op == "ebp, esp":
+            return None, "ebp frame"
+        for mm in _CALLEE_ESP.finditer(op):
+            off = int(mm.group(1), 0) - delta
+            # 位移 0..3 是回傳位址本身,不是參數;第 k 個參數佔位移 4k..4k+3,所以非對齊的
+            # byte 讀取(取 dword 參數的某個 byte)歸入 off // 4。2026-09-17 突變窮舉抓到我先寫成
+            # `off > 0` 配 ceil —— 那會把回傳位址的 byte 算成第 1 個參數、把 [esp+5] 算成第 2 個。
+            if off >= 4:
+                top = max(top, off // 4)
+        if m == "push":
+            delta += 4
+        elif m == "pop":
+            delta -= 4
+        elif m == "sub" and op.startswith("esp,"):
+            delta += int(op.split(",")[1], 0)
+        elif m == "add" and op.startswith("esp,"):
+            delta -= int(op.split(",")[1], 0)
+        elif m == "call" and op.startswith("0x") and int(op, 16) == STACK_CHECK:
+            delta -= 4          # 0x3702f 以 ret 4 彈掉呼叫端 push 的那個 frame 大小
+        a += i.size
+    return top, f"span={end - target:#x}"
+
+
 def collect(cg, order: list[int]) -> dict[int, list[dict]]:
     """目標位址 -> 每個呼叫端的兩個訊號(CFG 可達走訪找到的呼叫端)。"""
     index = {a: i for i, a in enumerate(order)}
@@ -332,6 +405,7 @@ def report(exe: str, only_unknown: bool = True, wide: bool = False) -> dict:
     import dump_chapter_beats as DC
     cg, order = build_graph(exe)
     sites = collect(cg, order)
+    ents = sorted(_scan(cg)[1])
     targets = sorted(UNKNOWN_TARGETS) if only_unknown else sorted(sites)
     out = {}
     for t in targets:
@@ -340,6 +414,8 @@ def report(exe: str, only_unknown: bool = True, wide: bool = False) -> dict:
         # 名稱與參數個數是兩種主張,所以分開存:`known_op` 來自原生位址表,
         # `doc_op_name` 來自 repo 文件裡可逐字定位的反組譯記載(見 DOC_OP_NAMES)。
         d["doc_op_name"] = doc_op_name(t)
+        # 第三訊號另外存,不併進 argc:它是下界,只用來裁決,不用來取代 A/B 的多數決。
+        d["callee_argc"] = callee_argc(cg, t, ents)[0]
         out[hex(t)] = d
     return out
 
@@ -355,17 +431,15 @@ UNKNOWN_TARGETS = [
 ]
 
 # --- selftest 的回歸釘子(全部是實測值,不是設計值)---------------------------
-# 拿 dump_chapter_beats.PRIM 當正對照:24 個有呼叫端的項目中 21 個相符(2026-09-17 前是 19)。
-PRIM_AGREE = 21
+# 拿 dump_chapter_beats.PRIM 當正對照:24 個有呼叫端的項目中 23 個相符(2026-09-17 前是 19)。
+PRIM_AGREE = 23
 PRIM_TOTAL_WITH_SITES = 24
-# 不相符的 3 個,以及各自的原因。這些**不是**本工具的錯:
+# 不相符的只剩 1 個,而且**不是**錯:
 #   dialog       PRIM 註解自己就寫「9 個 push,只取最近 2 個」= 刻意的投影(本體讀到 [esp+0x58] 確認 ABI 是 9)
-#   load_res     PRIM 註解:「參數個數未逐一核對」
-#   layout_units PRIM 記 0,與「依 call-site 陣列佈置」的描述不合
-# 2026-09-17 收掉兩筆:loadch(0→1)與 play_sfx(1→3)是 PRIM 錯,由被呼叫端本體讀參數的
-# 位置(第三條獨立訊號)裁決後改正 PRIM,見 doc98 續九。
+# 2026-09-17 收掉四筆:loadch(0→1)、play_sfx(1→3)、load_res(0→3)、layout_units(0→11)都是
+# PRIM 錯,由第三訊號(callee_argc,被呼叫端本體讀參數的位置)裁決後改正 PRIM,見 doc98 續十/續十一。
 PRIM_DIVERGENT = {
-    0x111ba: (0, 3), 0x15f84: (2, 9), 0x233c6: (0, 11),
+    0x15f84: (2, 9),
 }
 # 兩個訊號在 27 個未知目標上一致 26 個;唯一的例外是 0x24618,
 # 而 doc56 的獨立反組譯記載它有 4 個參數,與 cleanup 訊號相同、與 push 訊號不同。
@@ -846,6 +920,93 @@ def selftest() -> int:
           + ("全部如預期" if ok12 else f",問題 {bnd}"))
     if not ok12:
         fails.append(f"純函式邊界:{bnd}")
+
+    print("\n(13) 第三訊號:被呼叫端本體讀到的參數序號,對文件簽名不得過讀、對 PRIM 只剩投影那一筆不同")
+    # 這條訊號的價值在於它與 A/B 無關;所以它的驗證也不能拿 A/B 當標準,而是拿 (9) 那組
+    # 別人寫進文件的簽名:序頭支援的目標必須逐一相等(不只是不過讀 —— 一個永遠回 0 的實作
+    # 也「不過讀」)。PRIM 那邊,過讀集合必須恰好是 dialog(投影),其餘全部相等。
+    ents13 = sorted(_scan(cg)[1])
+    sig_mismatch, supported = [], 0
+    for addr, (want, _w) in sorted(DOC_SIGNATURES.items()):
+        got, why = callee_argc(cg, addr, ents13)
+        if got is None:
+            continue
+        supported += 1
+        if got != want:
+            sig_mismatch.append(f"{addr:#07x}: 文件 {want}、本體讀到 {got}")
+    over, prim_bad = {}, []
+    for addr, (op, n) in sorted(DC.PRIM.items()):
+        got, _why = callee_argc(cg, addr, ents13)
+        if got is None:
+            continue
+        if got > n:
+            over[addr] = got
+        elif got != n:
+            prim_bad.append(f"{addr:#07x} {op}: PRIM {n}、本體讀到 {got}")
+    # 不支援 ≠ 0:0x4df4c 沒有 stack-check 序頭,必須回 None 而不是 0。
+    unsup = callee_argc(cg, 0x4df4c, ents13)
+    # 合成邊界(真實 image 碰不到,2026-09-17 突變窮舉指出):
+    class _CI:
+        def __init__(self, a, m, o="", sz=1):
+            self.address, self.mnemonic, self.op_str, self.size = a, m, o, sz
+
+    class _CCG:
+        def __init__(self, insns):
+            a = 0
+            # 依序給位址(size 累加),讓 `a += i.size` 走得到每一條
+            for i in insns:
+                i.address = a
+                a += i.size
+            self._m = {i.address: i for i in insns}
+
+        def _insn(self, a):
+            return self._m.get(a)
+
+    def _cg(body, prologue=True):
+        head = [_CI(0, "push", "0x28", 5), _CI(0, "call", hex(STACK_CHECK), 5)] if prologue else []
+        return _CCG(head + body)
+
+    syn = {}
+    # (a) 2 個保存暫存器 + sub esp,0xc 之後:[esp+0x18] 是第 1 個、push 後 [esp+0x20] 是第 2 個
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "push", "esi"), _CI(0, "sub", "esp, 0xc", 3),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x18]", 4), _CI(0, "push", "eax"),
+             _CI(0, "mov", "edx, dword ptr [esp + 0x20]", 4), _CI(0, "ret")])
+    syn["位移換算(暫存器+區域變數+本體 push)"] = callee_argc(g, 0, [])[0] == 2
+    # (a2) pop 必須把位移退回**恰好** 4:push/pop 之後讀 [esp+0x7](第 1 個參數的最後一個 byte)
+    #      算 1;位移少退 1 會變成 [esp+0x8] = 第 2 個。對齊的 dword 讀取看不出差 1,所以用 byte 讀取。
+    g = _cg([_CI(0, "push", "eax"), _CI(0, "pop", "eax"), _CI(0, "movzx", "eax, byte ptr [esp + 0x7]", 5), _CI(0, "ret")])
+    syn["pop 退回恰好 4"] = callee_argc(g, 0, [])[0] == 1
+    # (b) ebp 框架 -> None(不是 0,也不是亂算)
+    g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
+    syn["ebp 框架 -> None"] = callee_argc(g, 0, [])[0] is None
+    # (c) 本體內再出現一次 stack-check(push frame; call 0x3702f)必須把那 4 bytes 彈回來:
+    #     之後的 [esp+0x8] 才是第 2 個參數(不彈會算成第 1 個,彈 5 會算成第 3 個)。
+    g = _cg([_CI(0, "push", "0x10", 5), _CI(0, "call", hex(STACK_CHECK), 5),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4),
+             _CI(0, "movzx", "edx, byte ptr [esp + 0xb]", 5), _CI(0, "ret")])   # 0xb 是第 2 個的最後 byte:彈掉 5 會算成第 3 個
+    syn["本體內 stack-check 的位移"] = callee_argc(g, 0, [])[0] == 2
+    # (d) 沒有後續入口時上限是 target+0x4000:剛好落在 0x4000 的那條不算、0x3ffc 的算。
+    far = [_CI(0, "nop", "", 0x3ff0), _CI(0, "mov", "eax, dword ptr [esp + 0x4]", 6),
+           _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")]
+    g = _cg(far)
+    syn["無後續入口的掃描上限恰為 0x4000"] = callee_argc(g, 0, [])[0] == 1
+    # (e) 非對齊的 byte 讀取歸入所在的 dword:[esp+0x5] 是第 1 個參數的第 2 個 byte,不是第 2 個參數
+    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x5]", 5), _CI(0, "ret")])
+    syn["非對齊讀取歸入所在 dword"] = callee_argc(g, 0, [])[0] == 1
+    # (f) 成對:只讀 [esp+0x4](第 1 個參數的起點)必須算 1;只讀 [esp+0x3](回傳位址的 byte)必須算 0
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret")])
+    syn["參數起點 [esp+4] 算第 1 個"] = callee_argc(g, 0, [])[0] == 1
+    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x3]", 5), _CI(0, "ret")])
+    syn["回傳位址的 byte 不算參數"] = callee_argc(g, 0, [])[0] == 0
+    ok13 = (not sig_mismatch and supported >= 12 and over == {0x15f84: 9}
+            and not prim_bad and unsup[0] is None and all(syn.values()))
+    print(f"    {'PASS' if ok13 else 'FAIL'}: 文件簽名 {supported} 個可讀、不符 {sig_mismatch or '無'};"
+          f"PRIM 過讀 { {hex(k): v for k, v in over.items()} }(應只有 0x15f84: 9)、其餘不符 {prim_bad or '無'};"
+          f"無序頭的 0x4df4c -> {unsup[0]}(應 None);合成邊界 "
+          + "、".join(f"{k}={v}" for k, v in syn.items()))
+    if not ok13:
+        fails.append(f"第三訊號:{sig_mismatch} / over={over} / {prim_bad} / unsup={unsup} / "
+                     f"{[k for k, v in syn.items() if not v]}")
 
     if fails:
         print("\nSELFTEST FAILED:")

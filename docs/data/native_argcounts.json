@@ -11,7 +11,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "palette_brightness_ramp"
+    "doc_op_name": "palette_brightness_ramp",
+    "callee_argc": 3
   },
   "0x11df2": {
     "argc": 3,
@@ -25,7 +26,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "palette_delta_ramp"
+    "doc_op_name": "palette_delta_ramp",
+    "callee_argc": 3
   },
   "0x12cea": {
     "argc": 2,
@@ -39,7 +41,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "camera_step_to"
+    "doc_op_name": "camera_step_to",
+    "callee_argc": 2
   },
   "0x13536": {
     "argc": 0,
@@ -53,7 +56,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "clear_acted_flags"
+    "doc_op_name": "clear_acted_flags",
+    "callee_argc": 0
   },
   "0x17aa9": {
     "argc": 1,
@@ -67,7 +71,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "wait_ticks"
+    "doc_op_name": "wait_ticks",
+    "callee_argc": 1
   },
   "0x1b8e7": {
     "argc": 2,
@@ -84,7 +89,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "remove_inventory_slot"
+    "doc_op_name": "remove_inventory_slot",
+    "callee_argc": 2
   },
   "0x1c2da": {
     "argc": 4,
@@ -98,7 +104,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "present_effect_on_targets"
+    "doc_op_name": "present_effect_on_targets",
+    "callee_argc": 4
   },
   "0x1f882": {
     "argc": 0,
@@ -119,7 +126,8 @@
       "0x3403b"
     ],
     "known_op": null,
-    "doc_op_name": "palfade_in"
+    "doc_op_name": "palfade_in",
+    "callee_argc": 0
   },
   "0x2189a": {
     "argc": 3,
@@ -133,7 +141,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "sprite_walk_on"
+    "doc_op_name": "sprite_walk_on",
+    "callee_argc": 3
   },
   "0x22253": {
     "argc": 5,
@@ -149,7 +158,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "unit_present"
+    "doc_op_name": "unit_present",
+    "callee_argc": 5
   },
   "0x24336": {
     "argc": 0,
@@ -165,7 +175,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "play_fullscreen_animation"
+    "doc_op_name": "play_fullscreen_animation",
+    "callee_argc": 0
   },
   "0x24618": {
     "argc": 4,
@@ -181,7 +192,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "palette_transition_loop"
+    "doc_op_name": "palette_transition_loop",
+    "callee_argc": 4
   },
   "0x24b14": {
     "argc": 1,
@@ -195,7 +207,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "party_has_item"
+    "doc_op_name": "party_has_item",
+    "callee_argc": 1
   },
   "0x24b4d": {
     "argc": 1,
@@ -209,7 +222,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "buffer_flicker"
+    "doc_op_name": "buffer_flicker",
+    "callee_argc": 1
   },
   "0x24bde": {
     "argc": 1,
@@ -225,7 +239,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "roster_has"
+    "doc_op_name": "roster_has",
+    "callee_argc": 1
   },
   "0x24d22": {
     "argc": 1,
@@ -239,7 +254,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "reveal_wipe"
+    "doc_op_name": "reveal_wipe",
+    "callee_argc": 1
   },
   "0x25052": {
     "argc": 2,
@@ -253,7 +269,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "palette_ramp_down"
+    "doc_op_name": "palette_ramp_down",
+    "callee_argc": 2
   },
   "0x25089": {
     "argc": 0,
@@ -271,7 +288,8 @@
       "0x25458"
     ],
     "known_op": null,
-    "doc_op_name": "restore_roster_full"
+    "doc_op_name": "restore_roster_full",
+    "callee_argc": 0
   },
   "0x2aedb": {
     "argc": 2,
@@ -285,7 +303,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "find_item_slot"
+    "doc_op_name": "find_item_slot",
+    "callee_argc": 2
   },
   "0x31529": {
     "argc": 0,
@@ -299,7 +318,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "scene_charcard_orchestrator"
+    "doc_op_name": "scene_charcard_orchestrator",
+    "callee_argc": 0
   },
   "0x33f78": {
     "argc": 3,
@@ -316,7 +336,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "camera_step_then_present"
+    "doc_op_name": "camera_step_then_present",
+    "callee_argc": 3
   },
   "0x35b78": {
     "argc": 3,
@@ -330,7 +351,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "give_item_to_group"
+    "doc_op_name": "give_item_to_group",
+    "callee_argc": 3
   },
   "0x35f10": {
     "argc": 1,
@@ -344,7 +366,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "zero_hp_from"
+    "doc_op_name": "zero_hp_from",
+    "callee_argc": 1
   },
   "0x361b0": {
     "argc": 0,
@@ -358,7 +381,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "palette_fade_in_hold_out"
+    "doc_op_name": "palette_fade_in_hold_out",
+    "callee_argc": 0
   },
   "0x3776e": {
     "argc": 1,
@@ -375,7 +399,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "heap_free"
+    "doc_op_name": "heap_free",
+    "callee_argc": null
   },
   "0x37910": {
     "argc": 3,
@@ -392,7 +417,8 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "memset"
+    "doc_op_name": "memset",
+    "callee_argc": null
   },
   "0x4df4c": {
     "argc": 1,
@@ -406,6 +432,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "reset_field_cell_bytes"
+    "doc_op_name": "reset_field_cell_bytes",
+    "callee_argc": null
   }
 }

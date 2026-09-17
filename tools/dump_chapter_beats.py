@@ -66,13 +66,13 @@ PRIM = {
     0x12d7b: ('focus_unit', 1),    # (unit_idx)讀 unit X/Y，呼叫 0x12cea 捲到該格
     0x11506: ('sync_party', 0),    # 戰後 runtime unit→persistent roster，同 charID copy/清暫態/恢復資源
     0x1c220: ('grant_item', 1),    # (item_id) 掃 camp=2 runtime units，放入首個未滿的 8-slot inventory
-    0x233c6: ('layout_units', 0),  # 依 call-site 的 X/Y/pose 陣列佈置單位；由 address-keyed binding script 化
+    0x233c6: ('layout_units', 11), # 依 call-site 的 X/Y/pose 陣列佈置單位；由 address-keyed binding script 化。2026-09-17:15 個呼叫端全部 add esp,0x2c、本體讀到第 11 個參數,ABI 是 11;先前記 0 是把「參數由暫存器算出來」誤讀成「沒有參數」。push 之間夾著 lea,所以緊鄰 push 訊號只看到 1;args 會是暫存器名與立即值混合,消費端本來就不讀它的 args
     0x205da: ('loadch_call', 0),  # 章節載入呼叫本身 0 參數;章節號由前面 mov [0x3c03] 設定,見 loadch_var
     # 本輪(2026-07-04)unknown×既有原語表交叉補上(event_handler_dump.py PRIM/VAR + doc25/26):
     0x3453e: ('unit_inactive', 1), # (idx) 查 [0x53a45]+idx*0x50+5 bit0；1=死亡／隱藏，0=有效存活 **舊版位址**
     0x34894: ('unit_inactive', 1), # 同一函式在現行參考版的位址(見 EDITION_MOVED)
     0x33499: ('roster_has', 1),   # (char_id) 查我方名冊 [0x53bf7](doc26 已知)
-    0x111ba: ('load_res', 0),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知,參數個數未逐一核對)
+    0x111ba: ('load_res', 3),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知)。2026-09-17 核對:112/132 個呼叫端 add esp,12、其餘是延後清理(call 後接 mov reg,eax);本體讀到第 3 個參數
     0x25a96: ('play_sfx', 3),     # (table_ptr,index,priority) — 2026-09-17 由本體核對:讀 [esp+0x10]/[esp+0x14]/[esp+0x18],80 個呼叫端 3 push + add esp,0xc(doc27 早已記「固定 3-push 慣例」);先前記 1 讓 beat 丟掉索引與優先權
     0x1088d: ('loadch', 1),      # (chapter) 完整章節 loader：FDTXT + FDFIELD/roster/map，不是文字-only。2026-09-17 由本體核對:0x108ab/0x10ae1 讀 [esp+0x1c](4 個保存暫存器 + sub esp,8 之後的第 1 個參數),呼叫端 push [0x53c03]; add esp,4;先前記 0 是把 0x205da loadch_call 的「章節號由 mov [0x3c03] 設定」誤套到本體
     # 先釋放兩個全域輔助圖形緩衝區，再只對 raw chapter
@@ -297,6 +297,11 @@ def extract_beats(insns):
                 args = pushes[-nargs:] if nargs > 0 else []
                 args = list(reversed(args))  # cdecl push 順序反過來才是函式簽名順序
                 beat = {'op': name, 'addr': hex(ins.address), 'target': hex(t), 'args': args}
+                if len(args) < nargs:
+                    # 2026-09-17:PRIM 改記真實 ABI 之後,呼叫端若不是逐一 push(參數在暫存器裡
+                    # 算好、或前面的 push 被 call 清掉),args 只會有前幾個。標出來,不讓「少了
+                    # 幾個」看起來像「簽名就這麼短」。
+                    beat['args_incomplete'] = nargs - len(args)
                 if name in ('spawn', 'spawn_intro'):
                     beat['raw_placement_gate'] = (
                         1 if ins.address in RAW_PLACEMENT_GATE_ONE_CALLS else 0
@@ -1240,6 +1245,14 @@ def selftest():
     except Exception as exc:                                  # noqa: BLE001
         rk = repr(exc)
     b8['unknown 報表依次數由多到少'] = rk == [('0x2', 3), ('0x3', 2), ('0x1', 1)]
+
+    # 前提:bgm 的 ABI 是 2,而這個呼叫端只 push 了 1 個(另一個在暫存器裡算好)。真實 30 章
+    # 每個呼叫端的 push 都夠(實測 0 條 args_incomplete),所以只能用合成指令流釘住。
+    short = extract_beats([_I(0x10, 'push', '7'), _I(0x11, 'call', '0x25977')])
+    b8['push 不足 ABI 時 args 只留前幾個並標 args_incomplete'] = (
+        short[0]['args'] == [7] and short[0].get('args_incomplete') == 1)
+    full = extract_beats([_I(0x10, 'push', '8'), _I(0x11, 'push', '7'), _I(0x12, 'call', '0x25977')])
+    b8['push 足夠時不標'] = full[0]['args'] == [7, 8] and 'args_incomplete' not in full[0]
 
     import contextlib
     import io
