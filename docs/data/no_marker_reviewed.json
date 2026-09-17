@@ -34456,6 +34456,14 @@
    "excerpt": "全部的差額;「約 1 小時」是估錯,實測 87 分鐘。逾時的 4 筆用完整上限重跑仍不通過 —— 續十三擔心的",
    "verdict": "benign",
    "note": "工具行為陳述(全量窮舉檢查點數字),非遊戲事實主張;依據為 verify_selftest_discrimination --exhaustive --confirm-timeouts 的 JSON 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5058,
+   "excerpt_sha1": "52d628c5713bda571fda1ec2570e224ad62b60b7",
+   "excerpt": "`--triage` 實測:955 個無訊號位址裡 **770 個落在合法指令邊界、且在某個有訊號函式內部**,184 個不在",
+   "verdict": "benign",
+   "note": "工具行為陳述(claim_coverage 分母修正的實測數字),非遊戲事實主張;依據為 verify_address_claim_coverage 的 selftest、--triage 與閘門輸出。"
   }
  ]
 }

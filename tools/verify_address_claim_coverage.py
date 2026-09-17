@@ -10,11 +10,22 @@
 這支工具補的是那個分母:知識庫裡被宣稱為入口/handler/函式的位址,**有幾個拿得出
 位元組層級的證據**。
 
-判準:三個互相獨立的入口訊號(全部只讀 EXE 位元組,免 capstone、免 JVM)
+判準:四個互相獨立的入口訊號(全部只讀 EXE 位元組,免 capstone、免 JVM)
 --------------------------------------------------------------------
 1. **Watcom 序頭**:`push imm32 ; call __STK(0x3702f)` —— 本專案既有的嚴格判準,541 個。
 2. **直接 CALL 目標**:全 obj1 掃 `E8 rel32`,目標落在 obj1 內。
 3. **fixup 目標**:被重定位表指向的 obj1 位址(間接跳表就是靠這個)。
+4. **JMP 目標**(2026-09-17):全 obj1 掃 `E9 rel32`。thunk 的本體只由 jmp 抵達(`delay`
+   `0x3790a` = `jmp 0x3e01d`),前三個訊號都看不到,卻是真實函式。
+
+INNER:函式內部引用,不是入口主張(2026-09-17)
+------------------------------------------
+宣稱語言是「同一行有『函式/handler/入口』字樣」,於是文件講某函式時順帶提到的呼叫點、分支點
+(`0x2c469` = `0x2c441 +0x28`)全部被算成「宣稱為入口」。2026-09-17 實測 955 個無訊號位址裡
+770 個落在某個有訊號函式**內部**的合法指令邊界上 —— 它們不是入口主張,是內部引用。有 capstone
+時把這一類分出來(INNER),不進棘輪分母;沒有 capstone(WSL)時閘門只印摘要、不比基準線。
+已知上限:錯的位址若剛好落在別的函式內部的合法邊界上,也會被歸成 INNER(與邊界判準的 10/14 召回
+同一個結構性上限);已登記為勘誤的位址在 INNER 之前就被分到 KNOWN_ERRATUM,不受影響。
 
 **為什麼一定要三個**:541 那個集合是「需要堆疊探測的函式」,**不是全部函式**。小型
 葉函式沒有序頭。實測 `0x4ebe3` 有 **40 個直接呼叫端**、起頭是乾淨的 `33 c0`
@@ -42,7 +53,7 @@
 ----
     python tools/verify_address_claim_coverage.py                # 閘門
     python tools/verify_address_claim_coverage.py --report       # 依引用次數列出 UNREVIEWED
-    python tools/verify_address_claim_coverage.py --addr 0x4e893 # 單一位址的三個訊號
+    python tools/verify_address_claim_coverage.py --addr 0x4e893 # 單一位址的四個訊號與分類
     python tools/verify_address_claim_coverage.py --write-baseline
     python tools/verify_address_claim_coverage.py --selftest
 """
@@ -112,6 +123,17 @@ def call_targets(code: bytes, base: int, hi: int) -> Counter:
     return out
 
 
+def jmp_targets(code: bytes, base: int, hi: int) -> set[int]:
+    """訊號 4:直接 `E9 rel32` 的目標(thunk 本體)。與 E8 掃描同樣接受資料位元組的偶然命中。"""
+    out = set()
+    for i in range(len(code) - 5):
+        if code[i] == 0xE9:
+            t = base + i + 5 + struct.unpack_from("<i", code, i + 1)[0]
+            if base <= t < hi:
+                out.add(t)
+    return out
+
+
 def fixup_targets(data: bytes, meta: dict, base: int, hi: int) -> set[int]:
     """訊號 3:重定位表指向 obj1 的位址(間接跳表靠這個)。"""
     import disasm_le as D
@@ -123,9 +145,10 @@ def signals() -> dict:
     pro = prologue_entries(code, base)
     cal = call_targets(code, base, hi)
     fix = fixup_targets(data, meta, base, hi)
+    jmp = jmp_targets(code, base, hi)
     return {"base": base, "hi": hi, "code": code,
-            "prologue": pro, "calls": cal, "fixups": fix,
-            "plausible": pro | set(cal) | fix}
+            "prologue": pro, "calls": cal, "fixups": fix, "jmps": jmp,
+            "plausible": pro | set(cal) | fix | jmp}
 
 
 def signals_for(sig: dict, addr: int) -> list[str]:
@@ -136,6 +159,8 @@ def signals_for(sig: dict, addr: int) -> list[str]:
         out.append(f"直接 CALL×{sig['calls'][addr]}")
     if addr in sig["fixups"]:
         out.append("fixup 目標")
+    if addr in sig.get("jmps", ()):
+        out.append("JMP 目標(thunk)")
     return out
 
 
@@ -251,20 +276,36 @@ def known_bad() -> set[int]:
     return out
 
 
+def is_inner(sig: dict, addr: int, cache: dict) -> bool:
+    """落在某個有訊號函式**內部**(偏移 > 0)的合法指令邊界 = 內部引用,不是入口主張。"""
+    entry = containing_entry(sig, addr, cache)
+    if entry is None or entry == addr:
+        return False
+    return boundary_from_entry(sig, addr, cache) is True
+
+
 def classify_all() -> dict:
     sig = signals()
     claims = kb_entry_claims(sig["base"], sig["hi"])
     bad = known_bad()
-    covered, erratum, unreviewed = {}, {}, {}
+    covered, erratum, inner, unreviewed = {}, {}, {}, {}
+    try:
+        _capstone()
+        inner_ok = True
+    except ImportError:
+        inner_ok = False
+    cache: dict = {}
     for addr, sites in claims.items():
         if addr in sig["plausible"]:
             covered[addr] = sites
         elif addr in bad:
             erratum[addr] = sites
+        elif inner_ok and is_inner(sig, addr, cache):
+            inner[addr] = sites
         else:
             unreviewed[addr] = sites
-    return {"sig": sig, "claims": claims, "covered": covered,
-            "erratum": erratum, "unreviewed": unreviewed}
+    return {"sig": sig, "claims": claims, "covered": covered, "erratum": erratum,
+            "inner": inner, "inner_available": inner_ok, "unreviewed": unreviewed}
 
 
 def unreviewed_by_file(unreviewed: dict) -> dict[str, int]:
@@ -303,7 +344,8 @@ def write_baseline() -> int:
             "purpose": "知識庫宣稱為函式入口、但三個位元組訊號都拿不出來、且尚未登記為"
                        "勘誤的位址存量。由 tools/verify_address_claim_coverage.py 產生,"
                        "雙向棘輪:超標與已還未更新都會失敗。",
-            "criterion": "訊號 = Watcom 序頭(push imm32; call 0x3702f)｜直接 E8 CALL 目標｜fixup 目標",
+            "criterion": "訊號 = Watcom 序頭(push imm32; call 0x3702f)｜直接 E8 CALL 目標｜fixup 目標｜直接 E9 JMP 目標;"
+                         "落在有訊號函式內部合法指令邊界的位址歸 INNER(內部引用),不計入",
             "note": "『無訊號』不等於『錯』——見工具 docstring 列出的三類合理來源。",
         },
         "unreviewed_by_file": cur,
@@ -322,7 +364,7 @@ def report() -> int:
         sites = un[addr]
         where = ", ".join(f"{n}:{l}" for n, l in sites[:2])
         print(f"  {addr:#08x}  引用 {len(sites):3d} 次  {where}")
-    print(f"\n(另有 {len(r['erratum'])} 個已登記為勘誤,不列入待處理。)")
+    print(f"\n(另有 {len(r['erratum'])} 個已登記為勘誤、{len(r['inner'])} 個是函式內部引用,不列入待處理。)")
     return 0
 
 
@@ -341,6 +383,15 @@ def one(addr_s: str) -> int:
     print(f"{addr:#08x}  起始位元組 {sig['code'][off:off + 12].hex(' ')}")
     print(f"  入口訊號:{'、'.join(s) if s else '**無**'}")
     print(f"  已登記為勘誤:{addr in known_bad()}")
+    try:
+        _capstone()
+    except ImportError:
+        print("  函式內部引用:(需要 capstone)")
+    else:
+        cache: dict = {}
+        ent = containing_entry(sig, addr, cache)
+        print(f"  函式內部引用:{is_inner(sig, addr, cache)}"
+              + (f"(所在函式 {ent:#x} +{addr - ent:#x})" if ent is not None and ent != addr else ""))
     return 0
 
 
@@ -354,7 +405,11 @@ def gate() -> int:
     print(f"知識庫宣稱為入口的相異 obj1 位址:{total}")
     print(f"  有位元組訊號   {len(covered):4d}({100 * len(covered) // max(1, total)}%)")
     print(f"  已登記為勘誤   {len(erratum):4d}")
+    print(f"  函式內部引用   {len(r['inner']):4d}  (落在有訊號函式內部的合法指令邊界,不是入口主張)")
     print(f"  無訊號未登記   {len(un):4d}  <- 這個數字才是 findings 軸看不見的部分")
+    if not r["inner_available"]:
+        print("\nSKIP:本環境沒有 capstone,分不出函式內部引用,不比基準線(閘門在 Windows 跑)。")
+        return 0
     print(f"\n對照:verify_findings 報的是「已登記結論」的滿分,分母 17;"
           f"本工具的分母是 {total}。")
 
@@ -422,7 +477,7 @@ def selftest() -> int:
     total = len(r["claims"])
     ok5 = total > 100 and len(r["covered"]) > 100 and len(r["unreviewed"]) < total
     print(f"    {'PASS' if ok5 else 'FAIL'}: 宣稱 {total} 個;有訊號 {len(r['covered'])}、"
-          f"勘誤 {len(r['erratum'])}、無訊號未登記 {len(r['unreviewed'])}")
+          f"勘誤 {len(r['erratum'])}、內部引用 {len(r['inner'])}、無訊號未登記 {len(r['unreviewed'])}")
     if not ok5:
         fails.append("分類退化(全部落在同一桶)")
 
@@ -533,9 +588,13 @@ def selftest() -> int:
     for at in (0, len(code_c) - 6):             # 兩次 CALL 到同一目標,後者在最後可掃位移
         code_c[at] = 0xE8
         struct.pack_into("<i", code_c, at + 1, (base12 + 2) - (base12 + at + 5))
+    code_j = bytearray(16)                     # E9 在最後可掃位移(與 E8 同一個尾端邊界)
+    code_j[len(code_j) - 6] = 0xE9
+    struct.pack_into("<i", code_j, len(code_j) - 5, (base12 + 3) - (base12 + len(code_j) - 6 + 5))
     sig12 = {"plausible": {100, 200}}
     b12 = {"尾端的序頭": prologue_entries(bytes(code_p), base12) == {base12 + i_p},
            "尾端的 CALL 與計數": call_targets(bytes(code_c), base12, base12 + 16) == Counter({base12 + 2: 2}),
+           "尾端的 JMP": jmp_targets(bytes(code_j), base12, base12 + 16) == {base12 + 3},
            "恰好是第一個入口": containing_entry(sig12, 100, {}) == 100,
            "第一個入口之前沒有所在函式": containing_entry(sig12, 99, {}) is None,
            "compare 缺鍵視為 0": compare({"new.md": 1}, {"old.md": 1})
@@ -545,14 +604,38 @@ def selftest() -> int:
     if not ok12:
         fails.append(f"掃描邊界/計數/入口/compare 不對:{[k for k, v in b12.items() if not v]}")
 
+    print("\n(13) 第四訊號與 INNER 分類:thunk 本體有 JMP 訊號;函式內部位址是 INNER;非邊界位址不是;入口不是 INNER")
+    # 2026-09-17:0x3e01d 是 delay 的本體(0x3790a jmp 0x3e01d),前三個訊號都看不到;
+    # 0x2332a 是 ch06_post handler(0x232e8,fixup 目標)內的 `jne`,在合法邊界上 → INNER;
+    # 0x2c469 / 0x117e6 是 triage 列出的「不在指令邊界」位址,不得成為 INNER。
+    b13 = {"0x3e01d 有 JMP 訊號": "JMP 目標(thunk)" in signals_for(sig, 0x3E01D),
+           "已知錯誤位址加了第四訊號後仍全部無訊號": not [a for a in known_bad()
+                                                    if sig["base"] <= a < sig["hi"] and a in sig["plausible"]],
+           "0x4e893(負向配對)沒有 JMP 訊號": 0x4E893 not in sig["jmps"]}
+    try:
+        _capstone()
+    except ImportError:
+        print("    (INNER 三題 SKIP:沒有 capstone)")
+    else:
+        c13: dict = {}
+        b13["0x2332a(handler 內的 jne)是內部引用"] = is_inner(sig, 0x2332A, c13)
+        b13["0x2c469 / 0x117e6(非邊界)不是內部引用"] = not is_inner(sig, 0x2C469, c13) and not is_inner(sig, 0x117E6, c13)
+        b13["已知入口 0x2c441 不是內部引用"] = not is_inner(sig, 0x2C441, c13)
+        r13 = classify_all()
+        b13["INNER 與 UNREVIEWED 互斥且 INNER 非空"] = bool(r13["inner"]) and not (set(r13["inner"]) & set(r13["unreviewed"]))
+    ok13 = all(b13.values())
+    print(f"    {'PASS' if ok13 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b13.items()))
+    if not ok13:
+        fails.append(f"第四訊號/INNER:{[k for k, v in b13.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(11 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
+    print("\n--selftest passed(12 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
           "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
-          "行號可對回原文 + 所在函式選擇正確)。")
+          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類)。")
     return 0
 
 
@@ -561,7 +644,7 @@ def main() -> int:
     ap.add_argument("--report", action="store_true", help="列出 UNREVIEWED 位址")
     ap.add_argument("--triage", action="store_true",
                     help="把 UNREVIEWED 依『是否落在合法指令邊界』分流(需要 capstone)")
-    ap.add_argument("--addr", help="查單一位址的三個訊號")
+    ap.add_argument("--addr", help="查單一位址的四個訊號與分類")
     ap.add_argument("--write-baseline", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
