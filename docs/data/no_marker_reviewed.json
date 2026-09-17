@@ -34440,6 +34440,22 @@
    "excerpt": "它把人審換成一次實測,不是換成證明。理由欄仍然要寫(它是主張本身),但不再需要有人定期回頭讀它。",
    "verdict": "benign",
    "note": "工具行為陳述(登錄表探針機制與第一次重驗結果),非遊戲事實主張;依據為 verify_selftest_discrimination --revalidate-registry 輸出與 selftest (10)。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5037,
+   "excerpt_sha1": "a8555cfaa753aa2f8c377f7567232aa2fe11b53f",
+   "excerpt": "### 檢查點(全量窮舉 + 逾時確認,2026-09-17 19:01–20:28)",
+   "verdict": "benign",
+   "note": "工具行為陳述(全量窮舉檢查點數字),非遊戲事實主張;依據為 verify_selftest_discrimination --exhaustive --confirm-timeouts 的 JSON 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5052,
+   "excerpt_sha1": "e2e41f97220fd69793c1454cb0397d719699e457",
+   "excerpt": "全部的差額;「約 1 小時」是估錯,實測 87 分鐘。逾時的 4 筆用完整上限重跑仍不通過 —— 續十三擔心的",
+   "verdict": "benign",
+   "note": "工具行為陳述(全量窮舉檢查點數字),非遊戲事實主張;依據為 verify_selftest_discrimination --exhaustive --confirm-timeouts 的 JSON 輸出。"
   }
  ]
 }
