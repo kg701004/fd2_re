@@ -1578,6 +1578,447 @@
           "35-battle-animation-rendering.md": 1
         }
       }
+    },
+    {
+      "wrong_address": "0x26777",
+      "correct_address": "0x25977",
+      "wrong_semantic_claimed": "play_bgm(doc36 L299)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "91-worklist L615 自述:doc36 記 play_bgm = 0x26777 落在 FUN_0002670e 體內,改由 FDMUS.DAT 字串的唯一引用 0x259f6 所屬函式得 play_bgm = FUN_00025977(= PRIM bgm)。",
+      "root_cause": "舊版 EXE 位址。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/91-worklist.md",
+      "correction_section": "L615",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x26777"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "15-how-fd2-was-made-1995.md": 1,
+          "36-sfx-audio-data.md": 1,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "91-worklist.md": 2,
+          "99-reflections-log.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x16f40",
+      "correct_address": "0x16f55",
+      "wrong_semantic_claimed": "0xFFEF 控制碼的開框函式(doc14 舊斷言)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "doc14 L55 自述:「0x16F40 反組譯為 data/錯位指令,真正函式起點是 0x16F55」。",
+      "root_cause": "位址標籤落在函式起點前 0x15 bytes(舊斷言)。",
+      "affected_docs": [
+        "docs/knowledge-base/14-text-control-codes.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "L55",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x16f40"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "14-text-control-codes.md": 1,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d093",
+      "correct_address": "0x2670e",
+      "wrong_semantic_claimed": "城鎮:進戰場確認/小名冊略過選人/取消回城(91-worklist L2997)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 語意相符:doc99 稱 FUN_0002670e 為 town-hub selection-confirm dispatcher,本體呼叫 play_bgm/對白/選單。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d093"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 5,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 6,
+          "SESSION-HANDOFF-2026-09-04.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d098",
+      "correct_address": "0x2670e",
+      "wrong_semantic_claimed": "場景轉場邏輯函式(doc12 L293/L295「函式 0x2d098–0x2d316」)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x2d098 = 0x2d093 + 5,即舊版序頭 push imm 之後;同一函式的第二個舊標籤。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/12-music-playback-and-scene.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d098"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2cf71",
+      "correct_address": "0x265ec",
+      "wrong_semantic_claimed": "UI-08 town 相關函式(doc57 L108)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2cf71"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 3,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3072f",
+      "correct_address": "0x29daa",
+      "wrong_semantic_claimed": "子場景載入函式之一(doc12 L297)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x29daa 本體依序呼叫 0x111ba(load_res)、palfade、0x1956b、blit —— 與「子場景載入」相符。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/12-music-playback-and-scene.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3072f"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 1,
+          "32-item-combat-stats-re.md": 1,
+          "50-cutscene-script-system-design.md": 2,
+          "56-fd2-remake-sdd.md": 6,
+          "57-ui-evidence-matrix.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 5,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2fc85",
+      "correct_address": "0x29300",
+      "wrong_semantic_claimed": "子場景載入函式之一(doc12 L297)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x29300 本體依序呼叫 0x111ba(load_res)、palfade、0x1956b、dialog —— 與「子場景載入」相符。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/12-music-playback-and-scene.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2fc85"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 1,
+          "25-battle-event-system.md": 2,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2f883",
+      "correct_address": "0x28efe",
+      "wrong_semantic_claimed": "角色相關入口(99-reflections L518)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/99-reflections-log.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2f883"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 1,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 3,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x309ff",
+      "correct_address": "0x2a07a",
+      "wrong_semantic_claimed": "教會復活服務流程(91-worklist L1707)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x309ff"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30a47",
+      "correct_address": "0x2a0c2",
+      "wrong_semantic_claimed": "教會復活服務流程(91-worklist L1707)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30a47"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30c22",
+      "correct_address": "0x2a29d",
+      "wrong_semantic_claimed": "教會流程(91-worklist L1707)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x2a29d 是 doc32 稱轉職重算入口 0x2a2e8 的所在函式。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30c22"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30dc3",
+      "correct_address": "0x2a43e",
+      "wrong_semantic_claimed": "教會流程(91-worklist L1707)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30dc3"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 1,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31019",
+      "correct_address": "0x2a694",
+      "wrong_semantic_claimed": "class-change UI bridge 相關(91-worklist L3036)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x2a694 是勘誤 #0 記載的 451-byte 調色盤/貼圖特效函式。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31019"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d31b",
+      "correct_address": "0x26996",
+      "wrong_semantic_claimed": "class-change UI bridge 相關(91-worklist L3036)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。 0x26996 有 42 個直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d31b"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 4,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d516",
+      "correct_address": "0x26b91",
+      "wrong_semantic_claimed": "(91-worklist L96 列為落在 FUN_0002cf30 內的舊位址)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d516"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 2,
+          "91-worklist.md": 4,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d7bd",
+      "correct_address": "0x26e38",
+      "wrong_semantic_claimed": "(91-worklist L97 列為落在 FUN_0002cf30 內的舊位址)",
+      "discovered_date": "2026-09-18",
+      "discovery_method": "dossier -0x6985 候選:舊版 0x2c000–0x31000 家族(91-worklist L95「在現行 EXE 對映到不相關的函式」)在新版整體低 0x6985,由三對獨立確認的勘誤釘住兩端與中段:0x2cad7→0x26152(呼叫點同址、目標不同)、0x31385→0x2aa00、0x31602→0x2ac7d(doc32 自述);本筆候選有 Watcom 序頭與直接呼叫端。",
+      "root_cause": "舊版 EXE 位址;0x2cxxx–0x31xxx(城鎮/教會/商店/子場景)家族在新版整體低 0x6985。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-18 續二十一",
+      "still_pending": "語意未在新版本體逐一重驗,只核對了家族位移與序頭/呼叫端訊號。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d7bd"
+        ],
+        "note": "2026-09-18 dossier 第四批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "57-ui-evidence-matrix.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 3
+        }
+      }
     }
   ]
 }

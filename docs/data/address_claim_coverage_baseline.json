@@ -4,20 +4,5 @@
     "criterion": "訊號 = Watcom 序頭(push imm32; call 0x3702f)｜直接 E8 CALL 目標｜fixup 目標｜直接 E9 JMP 目標;落在有訊號函式內部合法指令邊界的位址歸 INNER(內部引用),不計入",
     "note": "『無訊號』不等於『錯』——見工具 docstring 列出的三類合理來源。"
   },
-  "unreviewed_by_file": {
-    "11-enemy-ai.md": 3,
-    "12-music-playback-and-scene.md": 6,
-    "13-battle-menu-system.md": 1,
-    "14-text-control-codes.md": 1,
-    "25-battle-event-system.md": 8,
-    "35-battle-animation-rendering.md": 16,
-    "36-sfx-audio-data.md": 1,
-    "56-fd2-remake-sdd.md": 1,
-    "57-ui-evidence-matrix.md": 2,
-    "58-remake-live-verification-log.md": 2,
-    "91-worklist.md": 29,
-    "99-chapter-sweep-results.md": 2,
-    "99-reflections-log.md": 1,
-    "SESSION-HANDOFF-2026-07-06.md": 6
-  }
+  "unreviewed_by_file": {}
 }

@@ -105,7 +105,7 @@ RANGE_END = re.compile(r"(?:\.\.|–|—|~|-|到|至)\s*`?(0x[0-9a-fA-F]{4,6})(?
 NEGATED = re.compile(r"不是(?:任何)?(?:函式)?(?:的)?(?:真正)?(?:的)?入口|不能當[^,。;]{0,12}入口|不是入口|非入口|"
                      r"不是序頭|誤當[^,。;]{0,12}入口|判讀已撤回")
 RANGE_START = re.compile(r"(0x[0-9a-fA-F]{4,6})`?\s*(?:\.\.|–|—|~|-)\s*`?0x[0-9a-fA-F]{4,6}")
-BRACKET_END = re.compile(r"\[\s*`?0x[0-9a-fA-F]{4,6}`?\s*,\s*`?(0x[0-9a-fA-F]{4,6})`?\s*\]")
+BRACKET_END = re.compile(r"\[\s*`?(0x[0-9a-fA-F]{4,6})`?\s*,\s*`?(0x[0-9a-fA-F]{4,6})`?\s*[\]\)]")
 
 
 def load_image() -> tuple[bytes, dict, bytes, int, int]:
@@ -470,7 +470,7 @@ def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
                     continue
                 # 範圍兩端都不算:終點是函式結束;起點若真是入口本來就有訊號、無訊號的起點是區段標籤
                 ends = ({int(m, 16) for m in RANGE_END.findall(plain)} | {int(m, 16) for m in RANGE_START.findall(plain)}
-                        | {int(m, 16) for m in BRACKET_END.findall(plain)})
+                        | {int(x, 16) for pair in BRACKET_END.findall(plain) for x in pair})
                 for m in ADDR.findall(text):
                     n = int(m, 16)
                     if n in ends:
@@ -787,14 +787,15 @@ def selftest() -> int:
                 "`0x10600` **不是**任何函式的真正入口\n"       # 否定(含粗體標記)
                 "handler 入口 `0x10700`\n"                    # 肯定
                 "函式群位於 `0x10800`–`0x10900`\n"            # 兩端都是區段標籤
-                "函式體是 [0x10a00, 0x10b00] 的 handler\n"    # 括號範圍:起點算、終點不算
+                "函式體是 [0x10a00, 0x10b00] 的 handler\n"    # 括號範圍:兩端都不算
+                "跳入保證區間 [0x10f00, 0x10f80) 的 handler 分支\n"   # 半開區間同樣兩端不算
                 "`0x10c00` 與 `0x10d00` 都不是序頭,handler 另在\n"   # 否定
                 "先前把 `0x10e00` 誤當施法入口的判讀已撤回,handler 另在\n")   # 否定
             got6 = set(kb_entry_claims(0x10000, 0x20000))
         finally:
             globals()["KB"] = kb6
-    ok6b = got6 == {0x10700, 0x10a00}
-    print(f"    {'PASS' if ok6b else 'FAIL'}: 收進 {sorted(hex(x) for x in got6)}(應只有 0x10700 與括號範圍起點 0x10a00)")
+    ok6b = got6 == {0x10700}
+    print(f"    {'PASS' if ok6b else 'FAIL'}: 收進 {sorted(hex(x) for x in got6)}(應只有 0x10700;括號範圍兩端都不算)")
     if not ok6b:
         fails.append(f"範圍終點/否定句排除不對:{sorted(hex(x) for x in got6)}")
 

@@ -164,6 +164,300 @@
    "verdict": "old_edition_unresolved",
    "note": "doc35 L432 引用的位址;+0x350 候選 0x4ebff 是 blit(dest,src,stride),與該行語意對不上,對應未定",
    "date": "2026-09-17"
+  },
+  {
+   "address": "0x2c405",
+   "verdict": "old_edition_unresolved",
+   "note": "doc35 §9 表 idx4 舊候選;-0x6985 家族候選無訊號,doc58 記 FD2Analysis3 查無對應",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2c172",
+   "verdict": "old_edition_unresolved",
+   "note": "doc35 §9 表 idx3 舊候選;-0x6985 候選無訊號",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2c773",
+   "verdict": "old_edition_unresolved",
+   "note": "doc35 §9 表 idx6 舊候選;91-worklist L4380 記 FD2Analysis3 非有效邊界",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2ccb6",
+   "verdict": "old_edition_unresolved",
+   "note": "doc25 L1428 舊函式清單;91-worklist L211 記為現行 EXE 死位址;-0x6985 候選無訊號",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2cd16",
+   "verdict": "old_edition_unresolved",
+   "note": "doc57 UI-08 town 舊位址;91-worklist L95 記為對映到不相關函式;-0x6985 候選無訊號",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2bcea",
+   "verdict": "old_edition_unresolved",
+   "note": "doc12 L202 片頭/標題函式舊位址;-0x6985 候選無訊號",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x259f6",
+   "verdict": "other",
+   "note": "91-worklist L615:FDMUS.DAT 字串的唯一引用位置(運算元/fixup 位置),所屬函式 0x25977 才是入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x154d1",
+   "verdict": "refuted_claim",
+   "note": "doc11 L1119/L1367、SESSION-HANDOFF L372 自述:0x1548E 才是入口,0x154D1 位於其本體;施法入口判讀已撤回",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d96c",
+   "verdict": "other",
+   "note": "doc99 L5086:C handler 的 dispatch 點(呼叫點/參照位置),非入口主張",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d9fc",
+   "verdict": "other",
+   "note": "doc99 L5086:dispatch 點,非入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d8a3",
+   "verdict": "other",
+   "note": "doc25 L17:跳表 0x51b19 的參照位置(運算元位置),非入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d96f",
+   "verdict": "other",
+   "note": "doc25 L17:跳表參照位置,非入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d9ff",
+   "verdict": "other",
+   "note": "doc25 L17:跳表參照位置,非入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1a950",
+   "verdict": "other",
+   "note": "doc25 L17:跳表參照位置,非入口",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d988",
+   "verdict": "other",
+   "note": "SESSION-HANDOFF L2540 自述「只是後者內的第二遍」,函式內部",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x25214",
+   "verdict": "file_offset",
+   "note": "doc11 L192:「第一個被呼叫函式位移 0x25214」,模組內位移,文中明說不可當位址",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x32a00",
+   "verdict": "other",
+   "note": "91-worklist L248:0x32a00 = 207360 是緩衝區大小常數,不是位址",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x4270a",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L648 法術鏈 jump-table 函式(2026-08-14 補充偵察那批,位址空間可疑)",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x42d79",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L648 法術鏈函式,同批",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x12c30",
+   "verdict": "old_edition_inner",
+   "note": "SESSION-HANDOFF L464(2026-07-20)finale phase-0 內部位址,舊版",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x13407",
+   "verdict": "approximate",
+   "note": "doc35 L4376:由 live 位址換算回 native,自述落在 FUN_00013315 內部",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2abdc",
+   "verdict": "approximate",
+   "note": "doc35 L3902:由 live 換算,自述落在 FUN_0002aa00 內部",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x18ed0",
+   "verdict": "old_edition_unresolved",
+   "note": "doc13 L71:EXE 洩漏的函式名 Get_EasyMagic 的位置(舊文件),新版不在指令邊界",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1be07",
+   "verdict": "other",
+   "note": "91-worklist L229:備份變數的寫入端參照位置(refs 掃描回報運算元位置)",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x1be11",
+   "verdict": "other",
+   "note": "91-worklist L229:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x25854",
+   "verdict": "disp32_value",
+   "note": "91-worklist L206:跳表 0x51b91 index 58 的原始 dword(未加 0x10000 重定位)",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x260b6",
+   "verdict": "disp32_value",
+   "note": "91-worklist L206:index 76 的原始 dword",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x26228",
+   "verdict": "disp32_value",
+   "note": "91-worklist L206:index 78 的原始 dword",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x25ac0",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L35:[0x540ff] 的舊版寫入點,新版落在 play_sfx_a 內部非邊界",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x25b6f",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L35:同上,新版落在 play_sfx_b 內部",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x28ae8",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L35:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x26f30",
+   "verdict": "old_edition_inner",
+   "note": "91-worklist L3283(2026-07)cutscene→戰場控制流的舊版內部位址",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x287b5",
+   "verdict": "refuted_claim",
+   "note": "doc35 L19 自述:既有錨點把 0x287b5 當入口,實際在單圖 0x28784 內;而 0x28784 本身已被 doc27 推翻",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2a560",
+   "verdict": "other",
+   "note": "91-worklist L1707(2026-09-07 live):流程追蹤裡的內部位址,新版非指令邊界",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2aba3",
+   "verdict": "other",
+   "note": "91-worklist L1707:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2ae88",
+   "verdict": "other",
+   "note": "91-worklist L1707:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2d2f9",
+   "verdict": "old_edition_inner",
+   "note": "doc12 L295 自述「在函式 0x2d098–0x2d316 尾端」,舊版內部",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x2f4a6",
+   "verdict": "old_edition_inner",
+   "note": "SESSION-HANDOFF L2003:舊版呼叫點,新版落在 push [esp+0xb4] 中段",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x35435",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L426:攻守演出的呼叫端之一(舊版),新版落在 0x35422 入口後 0x13",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x356bc",
+   "verdict": "old_edition_inner",
+   "note": "doc56 L1083/SESSION-HANDOFF L631:Docker Capstone 舊版區間起點,新版落在 0x356b3 序頭中段",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x358e5",
+   "verdict": "old_edition_inner",
+   "note": "doc58 L6534:與 0x358c7(已登勘誤)同批的舊版相關位址",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x32261",
+   "verdict": "other",
+   "note": "doc35 L4977:refs 掃描回報的運算元位置,自述全部落在 0x32230 函式體內",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x322ac",
+   "verdict": "other",
+   "note": "doc35 L4977:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x322d3",
+   "verdict": "other",
+   "note": "doc35 L4977:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x322e4",
+   "verdict": "other",
+   "note": "doc35 L4977:同上",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x358c0",
+   "verdict": "other",
+   "note": "doc25 L2297:逐 byte dump 的起點,不是入口主張",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x3c964",
+   "verdict": "other",
+   "note": "doc12 L164:DOS/4GW LE 進入點,由載入器進入,不在四個入口訊號之內",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x3d000",
+   "verdict": "region_label",
+   "note": "doc35 L2047:「0x3d000-」區段標籤",
+   "date": "2026-09-18"
+  },
+  {
+   "address": "0x4e000",
+   "verdict": "region_label",
+   "note": "doc35 L2048/99-reflections L82:「0x4E000–0x4F800」區段標籤",
+   "date": "2026-09-18"
   }
  ]
 }
