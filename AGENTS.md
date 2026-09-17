@@ -242,7 +242,7 @@
   已登記於 `docs/data/known_address_errata.json`，或以 `--mark-correction` 宣告被訂正
   的不是位址本身。（2026-09-11：知識庫約九成的位址訂正只以散文存在、從未登記；
   這道閘門不處理存量，只讓存量停止增長。）
-- 修改 `tools/*.py` 時，提交前執行 `python tools/verify_selftest_discrimination.py --check-registry`：`docs/data/equivalent_mutants.json` 登錄的每個突變點必須仍對得上工具現在的原始碼；被改掉的行要重跑該工具的 `--exhaustive` 再更新登錄。（秒級；全量窮舉要 1 小時 40 分，只在一批工具改動後當檢查點跑。）
+- 修改 `tools/*.py` 時，提交前執行兩道：`python tools/verify_selftest_discrimination.py --check-registry`（秒級：`docs/data/equivalent_mutants.json` 登錄的每個突變點必須仍對得上工具現在的原始碼）與 `python tools/verify_selftest_discrimination.py --exhaustive --changed`（只窮舉相對於 HEAD 改動的工具，通常幾分鐘；有未登錄的逃逸或登錄錯誤時 exit 1，補題或更新登錄後重跑）。全量窮舉只在一批工具改動後當檢查點跑，2026-09-17 起突變逾時依各工具基準時間縮放，約 1 小時。
 - 提交後只推送至 `fork remaster-local`（`git push fork remaster-local`），再驗證本機 HEAD 與
   `fork/remaster-local` 相同。**不得推送至 `origin`**（wicanr2 的上游倉庫）：這是使用者的常設
   指示（2026-09-17 改寫；原文寫「推送至 `origin/main`」，與實際作法衝突已久）。要把成果送回

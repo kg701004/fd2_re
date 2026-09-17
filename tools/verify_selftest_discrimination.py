@@ -115,6 +115,8 @@ Usage
     python tools/verify_selftest_discrimination.py --include-ghidra
     python tools/verify_selftest_discrimination.py --selftest
     python tools/verify_selftest_discrimination.py --check-registry   # 登錄表過期偵測(秒級,commit 前閘門)
+    python tools/verify_selftest_discrimination.py --exhaustive --changed   # 只窮舉這次改動的工具(commit 前閘門)
+    python tools/verify_selftest_discrimination.py --exhaustive --tool a.py --tool b.py
 """
 
 from __future__ import annotations
@@ -537,6 +539,19 @@ def executed_lines(name: str, timeout: int) -> tuple[set[int] | None, str]:
 
 
 BACKUP_SUFFIX = ".premutation"
+MUTATION_TIMEOUT_FLOOR = 30      # 秒;再快的 selftest 也給這麼多,避免機器抖動被算成「抓到」
+MUTATION_TIMEOUT_FACTOR = 10     # 突變後的 selftest 最多允許基準的幾倍
+
+
+def mutation_timeout(base_sec: float, cap: int) -> int:
+    """突變後每次 selftest 的逾時:基準的 10 倍 + 5 秒,下限 30 秒,上限 --timeout。
+
+    2026-09-17 全量窮舉 1 小時 40 分,其中 `encode_text` 一支近 50 分鐘:幾個突變把迴圈改成不
+    前進,每個都要等滿 300 秒逾時才算抓到 —— 而那支的 selftest 基準只要 0.1 秒。逾時是「抓到」
+    的一種,等 300 秒和等 30 秒結論相同。倍數取 10 是刻意寬鬆:一個把迴圈上界 +1 的突變只會
+    多做一點工作,不會慢 10 倍;真的慢到 10 倍以上的突變,被算成抓到也不冤(它已經改變行為)。
+    """
+    return int(min(cap, max(MUTATION_TIMEOUT_FLOOR, base_sec * MUTATION_TIMEOUT_FACTOR + 5)))
 
 
 def _root_entries() -> set[str]:
@@ -639,8 +654,13 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
     src = original.decode("utf-8")
     out: dict = {"tool": name, "needs": INVOKE[name][1]}
 
+    t0 = time.perf_counter()
     ok, tail = run_selftest(name, timeout)
+    base_sec = time.perf_counter() - t0
     out["baseline_pass"] = ok
+    out["baseline_sec"] = round(base_sec, 2)
+    mut_timeout = mutation_timeout(base_sec, timeout)
+    out["mutation_timeout"] = mut_timeout
     if not ok:
         out["verdict"] = "BASELINE_FAIL"
         out["detail"] = tail.strip().splitlines()[-1:] or [""]
@@ -709,7 +729,7 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                 bak.write_bytes(original)
             path.write_text(mutated, encoding="utf-8")
             try:
-                passed, _ = run_selftest(name, timeout)
+                passed, _ = run_selftest(name, mut_timeout)
             except subprocess.TimeoutExpired:
                 passed = False
             if not passed:
@@ -1121,6 +1141,22 @@ def selftest() -> int:
         fails.append(f"artifacts 探針判定不對:{r8.get('covered_by_artifacts')} / {esc8} / "
                      f"{r8b.get('artifact_probe')}")
 
+    print("\n(9) 逾時縮放與改動工具的解析:純函式")
+    b9 = {
+        "0.1 秒基準 -> 下限 30": mutation_timeout(0.1, 300) == 30,
+        "4 秒基準 -> 45": mutation_timeout(4.0, 300) == 45,
+        "100 秒基準 -> 封頂 300": mutation_timeout(100.0, 300) == 300,
+        "上限低於下限時以上限為準": mutation_timeout(0.1, 20) == 20,
+        "路徑過濾:只收 tools/ 直下、.py、INVOKE 認得的": _tools_from_paths(
+            ["tools/encode_text.py", "tools/nope.py", "docs/x.py", "tools/sub/encode_text.py",
+             "tools\\encode_text.py", "tools/encode_text.txt"]) == {"encode_text.py"},
+        "上一輪基準時間有寫進結果": "mutation_timeout" in sharp and sharp["mutation_timeout"] == 30,
+    }
+    ok9 = all(b9.values())
+    print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b9.items()))
+    if not ok9:
+        fails.append(f"逾時縮放/改動解析:{[k for k, v in b9.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -1166,6 +1202,31 @@ def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
     return out
 
 
+def _tools_from_paths(paths) -> set[str]:
+    """git 路徑清單 -> 本 harness 認得的工具檔名(只收 tools/*.py 且在 INVOKE 裡的)。"""
+    out = set()
+    for raw in paths:
+        p = raw.strip().replace("\\", "/")
+        if p.startswith("tools/") and p.endswith(".py") and p.count("/") == 1 and p[6:] in INVOKE:
+            out.add(p[6:])
+    return out
+
+
+def changed_tools() -> list[str]:
+    """相對於 HEAD 有改動(工作樹或暫存區)以及尚未追蹤的 tools/*.py。
+
+    給 `--exhaustive --changed` 用:全量窮舉太慢,不能當 commit 閘門;但「這次改到的幾支」
+    各跑一次通常只要幾分鐘,而且正是登錄錯誤(需要真的跑突變才抓得到)會出現的地方。
+    """
+    names: set[str] = set()
+    for args in (["diff", "--name-only", "HEAD", "--", "tools"],
+                 ["ls-files", "--others", "--exclude-standard", "--", "tools"]):
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+        names |= _tools_from_paths(r.stdout.splitlines())
+    return sorted(names)
+
+
 def check_registry(path: Path) -> int:
     """登錄表的鍵是否都還對得上突變點。全量 --exhaustive 要 1 小時 40 分,不能當 commit 閘門;
     但「登錄的那一行被改掉了」這件事只需要 list_sites,秒級就能知道,所以拆出來單獨當閘門。
@@ -1191,7 +1252,10 @@ def check_registry(path: Path) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tool")
+    ap.add_argument("--tool", action="append",
+                    help="只跑這一支;可重複給(2026-09-17 前只收最後一個,前面的被安靜蓋掉)")
+    ap.add_argument("--changed", action="store_true",
+                    help="只跑相對於 HEAD 有改動或尚未追蹤的 tools/*.py(commit 前配 --exhaustive 用)")
     ap.add_argument("--offline", action="store_true", help="只跑不需 Ghidra/DOSBox 的工具")
     ap.add_argument("--include-ghidra", action="store_true")
     # 2026-09-08:預設一度用 5,結果 `decode_story_text.py` 被判 WEAK(0/5),
@@ -1228,9 +1292,18 @@ def main() -> int:
     equivalents = load_equivalents(Path(a.equivalents))
     if a.exhaustive:
         _vg()   # 在任何突變之前載入 artifacts 比對邏輯(見 _vg 的說明)
-    names = [a.tool] if a.tool else [
-        k for k, (_, needs) in sorted(INVOKE.items())
-        if needs == "offline" or (needs == "ghidra" and (a.include_ghidra and not a.offline))]
+    if a.changed:
+        names = changed_tools()
+        if not names:
+            print("相對於 HEAD 沒有改動的工具,沒有東西要跑。")
+            return 0
+        print(f"改動的工具:{', '.join(names)}")
+    elif a.tool:
+        names = list(dict.fromkeys(a.tool))
+    else:
+        names = [
+            k for k, (_, needs) in sorted(INVOKE.items())
+            if needs == "offline" or (needs == "ghidra" and (a.include_ghidra and not a.offline))]
     rows = []
     passes = 1 if a.exhaustive else a.passes
     for n in names:

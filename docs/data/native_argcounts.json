@@ -400,7 +400,7 @@
     "merged_cleanup_sites": [],
     "known_op": null,
     "doc_op_name": "heap_free",
-    "callee_argc": null
+    "callee_argc": 1
   },
   "0x37910": {
     "argc": 3,
@@ -418,7 +418,7 @@
     "merged_cleanup_sites": [],
     "known_op": null,
     "doc_op_name": "memset",
-    "callee_argc": null
+    "callee_argc": 3
   },
   "0x4df4c": {
     "argc": 1,
@@ -433,6 +433,6 @@
     "merged_cleanup_sites": [],
     "known_op": null,
     "doc_op_name": "reset_field_cell_bytes",
-    "callee_argc": null
+    "callee_argc": 1
   }
 }

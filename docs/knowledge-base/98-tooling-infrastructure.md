@@ -4942,3 +4942,36 @@ call 彈掉 4),把每個 `[esp+X]` 換算回序頭座標,超過回傳位址的�
 三支加進 `verify_everything` 的 `wsl` 軸(10 → 13 支),當棘輪用:純函式一旦長出 capstone / Pillow
 硬相依,那一軸當場失敗。Windows 側 selftest 題數不變(拆分只搬程式碼,`_selftest_*` 命名讓突變
 harness 仍把它們當 selftest、不當產品碼)。
+## 2026-09-17 續十三:`callee_argc` 支援無序頭 leaf;突變逾時依基準縮放;`--exhaustive --changed` 進閘門
+
+### callee_argc:三個 None 收掉
+
+續十一的第三訊號對沒有 Watcom 堆疊探測序頭的函式回 None(`0x3776e` heap_free、`0x37910` memset、
+`0x4df4c`,以及 PRIM 的 `delay`)。實測這些 leaf 有三種形狀,全部支援後 27 個未知目標 **0 個 None**、
+與雙訊號全部相等,15 個文件簽名全中:
+
+| 形狀 | 例子 | 處理 |
+|---|---|---|
+| `push ebp; mov ebp, esp` 框架 | `0x4df4c`、`0x3776e` | 記下 `mov ebp,esp` 當時的位移當 ebp 基底,`[ebp+X]` 同樣換算 |
+| 純 `[esp+X]` 的 leaf | `0x37910` memset | 從入口位移 0 起算 |
+| thunk | `delay 0x3790a` = `jmp 0x3e01d` | 入口是 `jmp <imm>` 就跟過去 |
+
+邊界:leaf 掃到第一個位移為 0 的 `ret` 或下一個 Watcom 序頭為止;找不到乾淨的 ret 回 None ——
+`EDITION_MOVED` 裡 `unit_inactive` 的舊版位址在新版 EXE 裡落在函式中段,就是這樣被擋下的,selftest 改用它當「None 不是 0」的
+控制。`leave` 要退回 ebp 基底再 pop,否則 ret 時位移不是 0、整個 leaf 會被誤判 None。四種 leaf
+形狀各有合成案例;兩個舊案例的前提因此過時(「ebp 框架 → None」、上限從本體起點算),改寫。
+
+### 突變逾時依基準縮放
+
+`mutation_timeout(base, cap) = min(cap, max(30, base×10 + 5))`。續十的全量窮舉 1 小時 40 分,
+`encode_text` 一支近 50 分:幾個突變讓迴圈不前進,每個等滿 300 秒;而它的 selftest 基準 0.1 秒。
+逾時是「抓到」的一種,等 300 秒和等 30 秒結論相同。倍數 10 刻意寬鬆:迴圈上界 +1 的突變不會慢
+10 倍;慢到 10 倍以上的突變已經改變行為,算抓到不冤。結果寫進 `baseline_sec` / `mutation_timeout`
+欄。本輪 `derive_native_argcounts`:基準 2.94 秒 → 逾時 34 秒,93/95 歸零。
+
+### `--exhaustive --changed`
+
+`--check-registry` 只抓過期,登錄錯誤要真的跑突變。新增 `--changed`:相對於 HEAD 有改動(工作樹、
+暫存區)或尚未追蹤的 `tools/*.py`,過濾成 harness 認得的工具後逐一窮舉;沒有改動就直接回 0。
+寫進 AGENTS.md:修改 `tools/*.py` 時提交前兩道都跑。順帶修掉 `--tool` 只收最後一個值的坑
+(續十一時給兩次只跑了一支,前一個被安靜蓋掉),改成可重複給。
