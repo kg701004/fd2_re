@@ -34424,6 +34424,22 @@
    "excerpt": "本輪 `--changed` 實測連帶找出三支:`dump_chapter_beats`(延遲 import `derive_native_argcounts`)、",
    "verdict": "benign",
    "note": "工具行為陳述(閘門與 harness 的機制變更、實測連帶結果),非遊戲事實主張;依據為本 commit 內三支工具的 selftest。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5028,
+   "excerpt_sha1": "e1dc92b87f9e3c7c362cde1038ae40736e18dc46",
+   "excerpt": "`--precommit` 現在的順序:改動與相依工具的登錄探針重驗 → 過期/雜湊檢查 → 窮舉改動與相依 → 逾時確認。",
+   "verdict": "benign",
+   "note": "工具行為陳述(登錄表探針機制與第一次重驗結果),非遊戲事實主張;依據為 verify_selftest_discrimination --revalidate-registry 輸出與 selftest (10)。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5036,
+   "excerpt_sha1": "4511fb572fd175c39228fe194f23c5fe77ef3ca5",
+   "excerpt": "它把人審換成一次實測,不是換成證明。理由欄仍然要寫(它是主張本身),但不再需要有人定期回頭讀它。",
+   "verdict": "benign",
+   "note": "工具行為陳述(登錄表探針機制與第一次重驗結果),非遊戲事實主張;依據為 verify_selftest_discrimination --revalidate-registry 輸出與 selftest (10)。"
   }
  ]
 }

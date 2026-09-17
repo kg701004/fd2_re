@@ -115,7 +115,8 @@ Usage
     python tools/verify_selftest_discrimination.py --include-ghidra
     python tools/verify_selftest_discrimination.py --selftest
     python tools/verify_selftest_discrimination.py --check-registry   # 登錄表過期偵測(秒級,commit 前閘門)
-    python tools/verify_selftest_discrimination.py --precommit   # commit 前一道:登錄表過期 + 窮舉改動與相依的工具 + 逾時確認
+    python tools/verify_selftest_discrimination.py --precommit   # commit 前一道:登錄探針重驗 + 過期/雜湊檢查 + 窮舉改動與相依 + 逾時確認
+    python tools/verify_selftest_discrimination.py --revalidate-registry [--tool X]   # 登錄表理由的機器驗證
     python tools/verify_selftest_discrimination.py --exhaustive --changed   # 只窮舉這次改動(含相依)的工具
     python tools/verify_selftest_discrimination.py --exhaustive --confirm-timeouts   # 逾時抓到的用完整上限重跑確認
     python tools/verify_selftest_discrimination.py --exhaustive --tool a.py --tool b.py
@@ -1195,6 +1196,71 @@ def selftest() -> int:
     if not ok9:
         fails.append(f"逾時縮放/改動解析:{[k for k, v in b9.items() if not v]}")
 
+    print("\n(10) 登錄表探針:理由成立 / 不成立 / 上下文變了,三種都要分得出來")
+    import tempfile as _tf
+    rp = TOOLS / "_regprobe_tool.py"
+    rp_src = (
+        "import sys\n"
+        "def clamp(n):\n    return n if n < 30 else 30\n"
+        "def label(n):\n    return 'v=' + str(n + 0)\n"
+        "def main(argv):\n    if '--selftest' in argv:\n        return 0 if clamp(3) == 3 else 1\n"
+        "    print(clamp(3)); print(label(2)); return 0\n"
+        "if __name__ == '__main__':\n    sys.exit(main(sys.argv))\n")
+    rp.write_text(rp_src, encoding="utf-8", newline="\n")
+    b10 = {}
+    NORMAL_RUN[rp.name] = []
+    INVOKE[rp.name] = (["--selftest"], "offline")
+    # 第三筆與第二筆同鍵會被 load_equivalents 擋(重複鍵),所以拆成兩份登錄表分別驗
+    try:
+        keys10 = {st["key"]: st for st in list_sites(rp_src)}
+        k_true = next(k for k in keys10 if k.startswith("clamp|") and "30->31" in k)    # 正常執行 clamp(3) 不碰 30:理由成立
+        k_false = next(k for k in keys10 if k.startswith("label|") and "0->1" in k)     # 改變 stdout:登錄為 equivalent 是錯的
+        reg10 = {"schema": 1, "entries": [
+            {"tool": rp.name, "key": k_true, "kind": "equivalent", "reason": "r", "evidence": "e"},
+            {"tool": rp.name, "key": k_false, "kind": "equivalent", "reason": "r", "evidence": "e"},
+            {"tool": rp.name, "key": k_false, "kind": "cosmetic", "reason": "r", "evidence": "e"},
+        ]}
+        with _tf.TemporaryDirectory() as td10:
+            r1 = Path(td10) / "r1.json"
+            r1.write_text(json.dumps({"schema": 1, "entries": reg10["entries"][:2]}), encoding="utf-8")
+            import contextlib, io
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_a = revalidate_registry(r1, tools=[rp.name], timeout=60, update=True)
+            txt_a = buf.getvalue()
+            b10["equivalent:成立的 OK、改 stdout 的 FAIL"] = rc_a == 1 and "OK 1 / FAIL 1" in txt_a
+            saved = json.loads(r1.read_text(encoding="utf-8"))["entries"]
+            b10["雜湊寫回登錄表"] = all(len(e.get("scope_hash", "")) == 12 for e in saved)
+            r2 = Path(td10) / "r2.json"
+            r2.write_text(json.dumps({"schema": 1, "entries": [reg10["entries"][2]]}), encoding="utf-8")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_b = revalidate_registry(r2, tools=[rp.name], timeout=60, update=False)
+            b10["同一個突變登錄為 cosmetic 就成立(只看 rc 與產出檔)"] = rc_b == 0 and "OK 1 / FAIL 0" in buf.getvalue()
+            # 上下文:改 clamp 的本體(那一行沒變)-> check_registry 必須報「所在函式已改」
+            rp.write_text(rp_src.replace("    return n if n < 30 else 30\n", "    n = n + 0\n    return n if n < 30 else 30\n"),
+                          encoding="utf-8", newline="\n")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_c = check_registry(r1)
+            b10["所在函式改了、行沒改 -> check_registry 報上下文變了"] = rc_c == 1 and "所在函式已改" in buf.getvalue()
+            # 不支援探針的工具 -> UNVERIFIABLE,不算 OK 也不算 FAIL
+            del NORMAL_RUN[rp.name]
+            rp.write_text(rp_src, encoding="utf-8", newline="\n")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_d = revalidate_registry(r1, tools=[rp.name], timeout=60, update=False)
+            b10["沒有探針 -> UNVERIFIABLE 且不算失敗"] = rc_d == 0 and "UNVERIFIABLE 2" in buf.getvalue()
+    finally:
+        NORMAL_RUN.pop(rp.name, None)
+        INVOKE.pop(rp.name, None)
+        rp.unlink(missing_ok=True)
+        _backup_path(rp).unlink(missing_ok=True)
+    ok10 = all(b10.values())
+    print(f"    {'PASS' if ok10 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b10.items()))
+    if not ok10:
+        fails.append(f"登錄表探針:{[k for k, v in b10.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -1238,6 +1304,207 @@ def load_equivalents(path: Path = EQUIVALENTS) -> dict[str, dict[str, dict]]:
             raise ValueError(f"等價突變條目重複:{e['tool']} {e['key']}")
         slot[e["key"]] = e
     return out
+
+
+
+# --------------------------------------------------------------------------- #
+# 登錄表的機器驗證(2026-09-17):理由不靠人審,靠探針
+# --------------------------------------------------------------------------- #
+# 每支有登錄的工具給一個「正常執行」的引數:在突變狀態下跑一次,依 kind 比對 ——
+#   equivalent  rc、stdout(若可重現)、產出檔、artifacts 全部相同
+#   cosmetic    rc、產出檔、artifacts 相同(stdout 可以不同:它本來就只改給人看的文字)
+#   tuning      rc、artifacts 相同(政策值,輸出可以不同,但不能崩、不能改產物)
+# 這正是續九手工量 verify_truncation_robustness 那 24 個逃逸時做的事,只是做成工具。
+# `{out}` = 每次新開的暫存目錄(產出檔比對用),`{exe}` = 參考版 EXE。
+# 以 "-c" 開頭的是 Python 片段(給沒有離線 CLI 路徑、但登錄的函式本身可以離線呼叫的工具)。
+NORMAL_RUN: dict[str, list[str]] = {
+    "audit_evidence_provenance.py": ["--json", "{out}/audit.json"],
+    "callgraph_le.py": ["{exe}", "reach", "0x25bf4"],
+    "decode_story_text.py": ["--runtime-todo", "extracted/raw/FDTXT", "{out}/todo.json"],
+    "encode_text.py": ["encode", "炎龍騎士團"],
+    "export_sprites.py": ["{out}", "0"],
+    "font_grid.py": ["extracted/raw/FDOTHER/FDOTHER_004.bin", "0", "24", "{out}/g.png"],
+    "hash_fd2_reference.py": ["org_game/炎龍騎士團/FLAME2"],
+    "verify_address_citations.py": ["--report"],
+    "verify_address_claim_coverage.py": [],
+    "verify_docs_match_cli.py": [],
+    "verify_generated_artifacts.py": ["--only", "story_script"],
+    "verify_tool_hygiene.py": ["--cross-check"],
+    "verify_truncation_robustness.py": [],
+    "worklist_status.py": ["--summary"],
+    "fd2_crash_ladder.py": ["-c", "import fd2_crash_ladder as m, json; "
+                                  "print(json.dumps(m.stage_actions(), ensure_ascii=False, sort_keys=True))"],
+    "fd2_in_battle_check.py": ["-c", "import fd2_in_battle_check as m; "
+                                     "rows = [m._rec(i, 2, 1, 1) for i in range(max(m.MIN_OUR_UNITS, 1))] + [m._rec(9, 0, 5, 5)]; "
+                                     "print(m.verdict(rows))"],
+    "realesrgan_batch.py": ["-c", "import realesrgan_batch as m, sys; "
+                                  "print(m.subprocess_rc([sys.executable, '-c', 'print(1)']))"],
+}
+PROBE_EXE = ROOT / "org_game" / "炎龍騎士團" / "FLAME2" / "FD2.EXE"
+
+
+def _hash_tree(d: Path) -> dict[str, str]:
+    out = {}
+    for f in sorted(d.rglob("*")):
+        if f.is_file():
+            out[f.relative_to(d).as_posix()] = hashlib.sha1(f.read_bytes()).hexdigest()
+    return out
+
+
+def run_probe(tool: str, timeout: int) -> dict | None:
+    """跑一次 NORMAL_RUN,回傳 {rc, stdout, files};沒有登記的工具回 None。"""
+    argv = NORMAL_RUN.get(tool)
+    if argv is None:
+        return None
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        sub = [a.replace("{out}", td).replace("{exe}", str(PROBE_EXE)) for a in argv]
+        if sub and sub[0] == "-c":
+            cmd = [sys.executable, "-c", f"import sys; sys.path.insert(0, {str(TOOLS)!r}); " + sub[1]]
+        else:
+            cmd = [sys.executable, str(TOOLS / tool), *sub]
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8",
+                               errors="replace", cwd=str(ROOT), timeout=timeout)
+            rc, out = r.returncode, r.stdout or ""
+        except subprocess.TimeoutExpired:
+            rc, out = -9, "<timeout>"
+        return {"rc": rc, "stdout": out, "files": _hash_tree(Path(td))}
+
+
+def probe_baseline(tool: str, timeout: int) -> tuple[dict | None, bool]:
+    """未突變跑兩次:(基準, stdout 是否可重現)。stdout 不可重現(時間戳、耗時)就不拿它比。"""
+    a = run_probe(tool, timeout)
+    if a is None:
+        return None, False
+    b = run_probe(tool, timeout)
+    return a, (b is not None and a["stdout"] == b["stdout"] and a["files"] == b["files"])
+
+
+def compare_probe(kind: str, base: dict, got: dict, stdout_ok: bool) -> list[str]:
+    """依 kind 回傳不一致的項目;空 = 理由成立。"""
+    diffs = []
+    if got["rc"] != base["rc"]:
+        diffs.append(f"rc {base['rc']} -> {got['rc']}")
+    if kind in ("equivalent", "cosmetic") and got["files"] != base["files"]:
+        diffs.append("產出檔不同")
+    if kind == "equivalent" and stdout_ok and got["stdout"] != base["stdout"]:
+        diffs.append("stdout 不同")
+    return diffs
+
+
+def scope_hash(src: str, line: int) -> str:
+    """突變點所在的頂層 def/class 的正規化雜湊(ast.unparse,註解不算)。
+
+    登錄的那一行文字沒變、但周圍函式改了,鍵仍對得上而理由可能已不成立 —— 這是人審才看得到的
+    盲點。記下雜湊,函式一改就要求重新驗證(探針)。找不到所在函式就雜湊那一行本身。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return "syntax-error"
+    # 任何頂層敘述都算「所在範圍」:def/class 之外,像 DECODERS = [...] 這種模組層的表也是一個
+    # 整體,鄰行改了同樣該重驗。真的找不到(理論上不會)才退回雜湊那一行。
+    for node in tree.body:
+        if node.lineno <= line <= (node.end_lineno or node.lineno):
+            return hashlib.sha1(ast.unparse(node).encode("utf-8")).hexdigest()[:12]
+    lines = src.splitlines()
+    text = lines[line - 1] if 0 < line <= len(lines) else ""
+    return "line:" + hashlib.sha1(text.strip().encode("utf-8")).hexdigest()[:12]
+
+
+def revalidate_registry(path: Path, tools: list[str] | None = None, timeout: int = 300,
+                        update: bool = True) -> int:
+    """對登錄表的每一筆(或只對 tools 裡的工具)套用突變、跑探針、依 kind 比對;同時更新上下文雜湊。
+
+    結果三種:OK(理由成立)、FAIL(突變改變了行為 —— 登錄錯誤)、UNVERIFIABLE(該工具沒有
+    NORMAL_RUN 也沒有 artifacts 產生器)。FAIL 或找不到突變點 → exit 1。UNVERIFIABLE 會印出來,
+    不算通過,也不算失敗 —— 它是「還沒有機器檢查」的明細,不能安靜地消失在總數裡。
+    """
+    recover_orphaned_backups()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entries = data["entries"]
+    by_tool: dict[str, list[dict]] = {}
+    for e in entries:
+        if tools is None or e["tool"] in tools:
+            by_tool.setdefault(e["tool"], []).append(e)
+    n_ok = n_fail = n_unver = n_missing = 0
+    changed_hash = 0
+    try:
+        vg_rows_all = {r[1] for r in _vg().REGISTRY}
+    except Exception:                                          # noqa: BLE001
+        vg_rows_all = set()
+    for tool, group in sorted(by_tool.items()):
+        tp = TOOLS / tool
+        if not tp.exists():
+            for e in group:
+                print(f"  MISSING     {tool} 工具不存在  {e['key'][:80]}")
+            n_missing += len(group)
+            continue
+        original = tp.read_bytes()
+        src = original.decode("utf-8")
+        sites = {st["key"]: st for st in list_sites(src)}
+        has_probe = tool in NORMAL_RUN
+        rows = [r for r in _vg().REGISTRY if r[1] == tool] if tool in vg_rows_all else []
+        base = None
+        stdout_ok = False
+        art_ok = False
+        if has_probe:
+            base, stdout_ok = probe_baseline(tool, timeout)
+        if rows:
+            try:
+                art_ok = all(_vg().check_one(*r, timeout)["verdict"] == "IDENTICAL" for r in rows)
+            except Exception:                                  # noqa: BLE001
+                art_ok = False
+        bak = _backup_path(tp)
+        try:
+            for e in group:
+                st = sites.get(e["key"])
+                if st is None:
+                    print(f"  MISSING     {tool}  {e['key'][:90]}  (突變點不存在,條目過期)")
+                    n_missing += 1
+                    continue
+                h = scope_hash(src, st["line"])
+                if e.get("scope_hash") != h:
+                    changed_hash += 1
+                    if update:
+                        e["scope_hash"] = h
+                kind = e.get("kind", "equivalent")
+                if not has_probe and not art_ok:
+                    print(f"  UNVERIFIABLE {tool}  {e['key'][:90]}  (沒有 NORMAL_RUN 也沒有 artifacts 產生器)")
+                    n_unver += 1
+                    continue
+                mutated, _what, _line = mutate_at(src, st["idx"])
+                if mutated is None:
+                    print(f"  MISSING     {tool}  {e['key'][:90]}  (突變套不上)")
+                    n_missing += 1
+                    continue
+                if not bak.exists():
+                    bak.write_bytes(original)
+                tp.write_text(mutated, encoding="utf-8")
+                diffs: list[str] = []
+                if has_probe and base is not None:
+                    got = run_probe(tool, timeout)
+                    diffs += compare_probe(kind, base, got, stdout_ok)
+                if art_ok and _artifacts_notice(rows, timeout):
+                    diffs.append("artifacts 漂移")
+                tp.write_bytes(original)
+                if diffs:
+                    n_fail += 1
+                    print(f"  FAIL        {tool} [{kind}]  {e['key'][:90]}  -> {'; '.join(diffs)}")
+                else:
+                    n_ok += 1
+        finally:
+            tp.write_bytes(original)
+            if hashlib.sha256(tp.read_bytes()).hexdigest() == hashlib.sha256(original).hexdigest():
+                bak.unlink(missing_ok=True)
+            else:
+                raise SystemExit(f"FATAL: {tool} 未能還原,備份留在 {bak.name}")
+    if update and changed_hash:
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"登錄表探針:OK {n_ok} / FAIL {n_fail} / UNVERIFIABLE {n_unver} / 過期 {n_missing}"
+          f";上下文雜湊{'更新' if update else '不同'} {changed_hash} 筆")
+    return 1 if (n_fail or n_missing) else 0
 
 
 def _tools_from_paths(paths) -> set[str]:
@@ -1327,20 +1594,29 @@ def check_registry(path: Path) -> int:
     抓的是過期,不是登錄錯誤(那要真的跑突變才知道)。"""
     reg = load_equivalents(path)
     stale, total = [], 0
+    ctx: list[str] = []
     for tool, keys in sorted(reg.items()):
         src_path = TOOLS / tool
         if not src_path.exists():
             stale.extend(f"{tool}: 工具不存在 ({k})" for k in keys)
             continue
-        live = {s["key"] for s in list_sites(src_path.read_text(encoding="utf-8"))}
-        for k in keys:
+        src = src_path.read_text(encoding="utf-8")
+        live = {s["key"]: s for s in list_sites(src)}
+        for k, e in keys.items():
             total += 1
             if k not in live:
                 stale.append(f"{tool}: {k}")
+                continue
+            h = scope_hash(src, live[k]["line"])
+            if e.get("scope_hash") != h:
+                ctx.append(f"{tool}: {k[:80]}  ({'未登記雜湊' if not e.get('scope_hash') else '所在函式已改'})")
     for s in stale:
         print(f"  過期 {s}")
-    print(f"登錄表 {total} 筆,過期 {len(stale)} 筆" + ("" if not stale else " —— 該行已改動,請重跑該工具的 --exhaustive 後更新登錄"))
-    return 1 if stale else 0
+    for c in ctx:
+        print(f"  上下文變了 {c}")
+    print(f"登錄表 {total} 筆,過期 {len(stale)} 筆,所在函式已改/未登記雜湊 {len(ctx)} 筆"
+          + ("" if not (stale or ctx) else " —— 請跑 --revalidate-registry(探針重驗並更新雜湊)"))
+    return 1 if (stale or ctx) else 0
 
 
 def main() -> int:
@@ -1354,7 +1630,11 @@ def main() -> int:
     ap.add_argument("--confirm-timeouts", action="store_true",
                     help="逾時抓到的突變用完整 --timeout 重跑一次;給足時間就通過的算逃逸,不算抓到")
     ap.add_argument("--precommit", action="store_true",
-                    help="commit 前的一道:= --check-registry,再 --exhaustive --changed --confirm-timeouts")
+                    help="commit 前的一道:改動與相依工具的登錄探針重驗 -> --check-registry -> "
+                         "--exhaustive --changed --confirm-timeouts")
+    ap.add_argument("--revalidate-registry", action="store_true",
+                    help="登錄表理由的機器驗證:每筆在突變狀態下跑 NORMAL_RUN / artifacts,依 kind 比對;"
+                         "並更新上下文雜湊。配 --tool 只驗那幾支")
     ap.add_argument("--offline", action="store_true", help="只跑不需 Ghidra/DOSBox 的工具")
     ap.add_argument("--include-ghidra", action="store_true")
     # 2026-09-08:預設一度用 5,結果 `decode_story_text.py` 被判 WEAK(0/5),
@@ -1381,7 +1661,17 @@ def main() -> int:
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.revalidate_registry:
+        _vg()
+        return revalidate_registry(Path(a.equivalents), tools=a.tool, timeout=a.timeout)
     if a.precommit:
+        _vg()
+        changed0, deps0 = changed_with_dependents()
+        scope = sorted(set(changed0) | set(deps0))
+        if scope:
+            rc_r = revalidate_registry(Path(a.equivalents), tools=scope, timeout=a.timeout)
+            if rc_r:
+                return rc_r
         rc0 = check_registry(Path(a.equivalents))
         if rc0:
             return rc0

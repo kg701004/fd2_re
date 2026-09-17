@@ -4994,3 +4994,43 @@ wsl 軸的判準第一版寫成「至少 1 個 PASS」,實跑立刻誤判三支(
 (`pass=0 skip=0` 不算失敗、`pass=1 skip=9` 不算失敗、格式錯的行算失敗)釘住。順帶:這一段的 patch
 腳本第一次走 heredoc,正規式的 `\S` 被 shell 吃掉、第二次切函式終點切錯把 `AXES` 一起刪了 ——
 兩次都被 selftest 當場擋下,最後從 HEAD 重做。
+## 2026-09-17 續十五:登錄表理由不再靠人審 —— 每筆登錄都有機器探針與上下文雜湊
+
+### 問題
+
+`equivalent_mutants.json` 104 筆的 `reason` 是人判的主張。既有的機器檢查只有兩道:鍵還對不對得上
+突變點(過期)、selftest 或 artifacts 抓不抓得到(登錄錯誤)。「那一行沒變、但周圍改到讓理由不成立」
+兩道都看不見,只能人工複審 —— 續十三列的盲點裡唯一沒有工具化的一項。
+
+### 做法:把續九的手工量測做成 harness 的一部分
+
+續九驗 `verify_truncation_robustness` 的 24 個逃逸時,做的是「逐一突變後跑正常執行,比對輸出」。
+現在每支有登錄的工具在 harness 裡登記一個正常執行(`NORMAL_RUN`),`--revalidate-registry` 對每筆登錄:
+套用突變 → 跑正常執行(與 artifacts 產生器,若有)→ 依 kind 比對 → 還原:
+
+| kind | 必須相同 | 可以不同 |
+|---|---|---|
+| equivalent | rc、stdout(未突變跑兩次相同才拿它比)、產出檔、artifacts | — |
+| cosmetic | rc、產出檔、artifacts | stdout(它本來就只改給人看的文字) |
+| tuning | rc、artifacts | stdout、產出檔(政策值可以改輸出,但不能崩、不能改已提交的產物) |
+
+沒有離線 CLI 路徑的三支 live 工具(`fd2_crash_ladder`、`fd2_in_battle_check`、`realesrgan_batch`)
+用 Python 片段當探針,直接呼叫登錄所在的那個函式(它們的登錄本來就落在可離線呼叫的純函式上)。
+沒有探針也沒有產生器的工具會列為 UNVERIFIABLE —— 印出來、不算過、不算失敗,不能安靜消失在總數裡。
+第一次跑:**OK 104 / FAIL 0 / UNVERIFIABLE 0**。
+
+### 上下文雜湊
+
+每筆登錄記下突變點所在的頂層敘述(def/class,或像 `DECODERS = [...]` 這種模組層的表)經
+`ast.unparse` 正規化後的雜湊。`--check-registry` 除了過期,還報「所在函式已改」;`--revalidate-registry`
+通過後自動更新雜湊。於是人審的那一項變成:函式一改 → 閘門要求重驗 → 探針說了算。
+
+`--precommit` 現在的順序:改動與相依工具的登錄探針重驗 → 過期/雜湊檢查 → 窮舉改動與相依 → 逾時確認。
+harness selftest (10) 用合成工具釘住三種結果:理由成立(OK)、改變 stdout 卻登錄為 equivalent(FAIL)、
+同一個突變登錄為 cosmetic 則成立;以及「函式改了、行沒改」被 `--check-registry` 抓到、沒有探針時列為
+UNVERIFIABLE。
+
+### 誠實範圍
+
+探針只跑**一組**正常執行的輸入。equivalent 的主張是「任何輸入」,探針證明的是「這組輸入下相同」——
+它把人審換成一次實測,不是換成證明。理由欄仍然要寫(它是主張本身),但不再需要有人定期回頭讀它。
