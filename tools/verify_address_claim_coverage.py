@@ -259,10 +259,21 @@ DATA_WINDOW = 0x2000
 TYPO_WINDOW = 16
 WORD_DATA = re.compile(r"表|table|資料|陣列|array|欄位|record|record|struct|offset|偏移")
 WORD_OLD = re.compile(r"舊版|old edition|357074|勘誤|誤植|原標|應為")
+WORD_CORR = re.compile(r"位址更正|位址已撤回|應為|新版對應|真正的?(函式)?入口|真正起於|落在[^|]{0,30}byte|勘誤|誤植|誤記|原標")
+
+
+# 被文件自己的更正否決過的位移:+0x5844 對 0x2a2e8 提出 0x2fb2c(party montage 迴圈),而 doc32 L747 明寫
+# 新版對應是 0x2ac7d。兩對 +0x5844 勘誤的 root_cause 也都寫「個別誤記、非系統性」。
+DELTA_DENY = {0x5844: "0x2a2e8 的文件更正(0x2ac7d)否決;兩對來源勘誤自述為個別誤記"}
+DELTA_MIN_SUPPORT = 2
 
 
 def edition_deltas(sig: dict) -> dict[int, str]:
-    """已知的舊→新位址位移 -> 來源。勘誤表裡兩邊都在 obj1 的配對,加上 dump_chapter_beats.EDITION_MOVED。"""
+    """已知的舊→新位址位移 -> 來源。只採**至少兩對**獨立配對支持的(EDITION_MOVED 的實測配對算兩對),
+    且不在 DELTA_DENY 裡。一對就採會把個別誤記(0x2a2e8 的 +0x395、0x2cad7 的 -0x6985)當成系統性位移,
+    2026-09-17 實測那樣會讓已知入口的誤提率從 2/100 升到 4/100。
+    """
+    support: dict[int, list[str]] = {}
     out: dict[int, str] = {}
     try:
         with open(ERRATA, encoding="utf-8") as f:
@@ -272,15 +283,21 @@ def edition_deltas(sig: dict) -> dict[int, str]:
                 except (KeyError, ValueError, TypeError):
                     continue
                 if sig["base"] <= w < sig["hi"] and sig["base"] <= c < sig["hi"] and c != w:
-                    out.setdefault(c - w, f"errata {w:#x}->{c:#x}")
+                    support.setdefault(c - w, []).append(f"errata {w:#x}->{c:#x}")
     except (OSError, ValueError):
         pass
     try:
         import dump_chapter_beats as DC
         for op, (old, new) in DC.EDITION_MOVED.items():
-            out.setdefault(new - old, f"EDITION_MOVED {op}")
+            # 實測過的版本差(同一呼叫點在兩版分別呼叫的位址),不套支持數門檻
+            out[new - old] = f"EDITION_MOVED {op}"
     except Exception:                                          # noqa: BLE001
         pass
+    for delta, srcs in support.items():
+        if delta in out or delta in DELTA_DENY:
+            continue
+        if len(srcs) >= DELTA_MIN_SUPPORT:
+            out[delta] = f"{len(srcs)} 對:" + ", ".join(srcs)
     return out
 
 
@@ -315,10 +332,12 @@ def propose(sig: dict, addr: int, cache: dict, deltas: dict[int, str]) -> dict:
             near.append(ent_sorted[j])
         j += 1
     d["typo"] = [f"{e:#x}({e - addr:+d})" for e in near]
+    d["doc"] = []                      # 由 dossier() 以 wording() 的結果填:引用行自帶的更正位址
     # 假說排序:唯一的舊版位移命中 > 資料表(基底不是程式碼) > 多個位移命中 > 打字錯 > 不明。
     # 實測(selftest 14):EDITION 對 100 個已知入口只誤提 2 個;TYPO 誤提 14 個(小型 leaf 函式本來
     # 就相鄰),所以 TYPO 只當旁證,排最後。四種已知位移裡 +0x5844 與 +0x350 各出現在兩對勘誤上,
     # 勘誤表的 root_cause 寫「個別誤記、非系統性」—— 同一個位移出現兩次不像巧合,保留但由人判。
+    # DOC 假說由 dossier() 在拿到引用行之後覆蓋(propose 不看文件)
     if len(d["edition"]) == 1:
         d["hypothesis"] = "EDITION"
     elif d["data"] and not d["data"]["base_is_code"]:
@@ -330,6 +349,28 @@ def propose(sig: dict, addr: int, cache: dict, deltas: dict[int, str]) -> dict:
     else:
         d["hypothesis"] = "UNKNOWN"
     return d
+
+
+def doc_corrections(sites: list[tuple[str, int]], addr: int, sig: dict) -> list[str]:
+    """引用行若帶更正措辭(位址更正/應為/新版對應/真正入口/落在…byte),同一行的**其他**有訊號位址就是文件自己給的答案。
+
+    第一批審閱(2026-09-17)10 個裡 6 個文件早就寫了正確位址,只是沒登錄勘誤表;這條假說讓它們直接浮出來,
+    而且優先於位移推論 —— 0x2a2e8 的 +0x5844 位移候選就是被文件自己的更正(0x2ac7d)否決的。
+    """
+    out: list[str] = []
+    for name, lineno in sites:
+        try:
+            lines = open(os.path.join(KB, name), encoding="utf-8", errors="replace").read().splitlines()
+            text = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
+        except OSError:
+            continue
+        if not WORD_CORR.search(text):
+            continue
+        for m in ADDR.findall(text):
+            n = int(m, 16)
+            if n != addr and sig["base"] < n < sig["hi"] and n in sig["plausible"] and f"{n:#x}" not in out:
+                out.append(f"{n:#x}")
+    return out
 
 
 def wording(sites: list[tuple[str, int]], limit: int = 4) -> list[dict]:
@@ -368,18 +409,23 @@ def dossier(limit: int | None, json_out: str | None) -> int:
     rows = []
     for addr in order:
         d = propose(sig, addr, cache, deltas)
+        d["doc"] = doc_corrections(un[addr], addr, sig)
+        if len(d["doc"]) == 1:
+            d["hypothesis"] = "DOC"
+        elif d["doc"] and d["hypothesis"] != "EDITION":
+            d["hypothesis"] = "DOC?"
         d["refs"] = len(un[addr])
         d["cites"] = wording(un[addr])
         rows.append(d)
     print(f"殘餘無訊號位址 {len(un)} 個,列出 {len(rows)} 個;已知舊→新位移 {len(deltas)} 種 "
           f"{[f'{k:+#x}' for k in sorted(deltas)]}\n")
-    print(f"{'位址':>9} {'引用':>4} {'假說':9} {'所在函式':>16} {'資料基底':>18}  舊版候選 / 鄰近入口")
+    print(f"{'位址':>9} {'引用':>4} {'假說':9} {'所在函式':>16} {'資料基底':>18}  文件更正 / 舊版候選 / 鄰近入口")
     for d in rows:
         c = d["containing"]; dt = d["data"]
         print(f"{d['addr']:>9} {d['refs']:4d} {d['hypothesis']:9} "
               f"{(c['entry'] + '+' + hex(c['offset'])) if c else '?':>16} "
               f"{(dt['base'] + '+' + hex(dt['offset']) + ('(code)' if dt['base_is_code'] else '')) if dt else '-':>18}  "
-              f"{', '.join(e['cand'] + e['delta'] for e in d['edition']) or '-'} / {', '.join(d['typo']) or '-'}")
+              f"{', '.join(d['doc']) or '-'} / {', '.join(e['cand'] + e['delta'] for e in d['edition']) or '-'} / {', '.join(d['typo']) or '-'}")
     from collections import Counter as _C
     print("\n假說分佈:", dict(_C(d["hypothesis"] for d in rows)))
     if json_out:
@@ -401,7 +447,8 @@ def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
                     continue
                 for m in ADDR.findall(text):
                     n = int(m, 16)
-                    if base <= n < hi:
+                    # obj1 基底本身(`stored + 0x10000` 這種寫法)不是入口主張
+                    if base < n < hi:
                         out.setdefault(n, []).append((name, lineno))
     return out
 
@@ -756,6 +803,7 @@ def selftest() -> int:
     # 0x2332a 是 ch06_post handler(0x232e8,fixup 目標)內的 `jne`,在合法邊界上 → INNER;
     # 0x2c469 / 0x117e6 是 triage 列出的「不在指令邊界」位址,不得成為 INNER。
     b13 = {"0x3e01d 有 JMP 訊號": "JMP 目標(thunk)" in signals_for(sig, 0x3E01D),
+           "obj1 基底 0x10000 不算入口主張": sig["base"] not in kb_entry_claims(sig["base"], sig["hi"]),
            "已知錯誤位址加了第四訊號後仍全部無訊號": not [a for a in known_bad()
                                                     if sig["base"] <= a < sig["hi"] and a in sig["plausible"]],
            "0x4e893(負向配對)沒有 JMP 訊號": 0x4E893 not in sig["jmps"]}
@@ -795,7 +843,8 @@ def selftest() -> int:
     except (OSError, ValueError):
         pass
     hit = 0
-    for w, c in pairs:
+    in_scope = [(w, c) for w, c in pairs if (c - w) in deltas14]      # 位移被採用的配對才要求命中
+    for w, c in in_scope:
         d = propose(sig, w, c14, deltas14)
         cands = {int(x["cand"], 16) for x in d["edition"]} | {int(t.split("(")[0], 16) for t in d["typo"]}
         hit += c in cands
@@ -803,9 +852,13 @@ def selftest() -> int:
     _r14.seed(21)
     good14 = _r14.sample(sorted(sig["prologue"]), 100)
     noisy = [a for a in good14 if propose(sig, a, c14, deltas14)["hypothesis"] == "EDITION"]
-    ok14 = bool(pairs) and hit == len(pairs) and len(noisy) <= 3 and len(deltas14) >= 2
-    print(f"    {'PASS' if ok14 else 'FAIL'}: 勘誤配對 {len(pairs)} 對、候選含正確位址 {hit} 對(應全部);"
-          f"已知入口被提 EDITION 假說 {len(noisy)}/100(容許 ≤3);位移種類 {len(deltas14)}")
+    from_errata_only = [dl for dl in deltas14 if "errata" in deltas14[dl]]        # 不靠 EDITION_MOVED 的位移
+    ok14 = (bool(pairs) and len(in_scope) >= 5 and hit == len(in_scope) and len(noisy) <= 3
+            and len(deltas14) >= 2 and 0x5844 not in deltas14
+            and 0x350 in deltas14 and deltas14[0x350].startswith("2 對:")   # 勘誤表配對解析 + 支持數門檻
+            and 0x358 in deltas14)                                              # EDITION_MOVED 的位移不受門檻影響
+    print(f"    {'PASS' if ok14 else 'FAIL'}: 勘誤配對 {len(pairs)} 對,位移被採用的 {len(in_scope)} 對中候選含正確位址 {hit} 對(應全部);"
+          f"已知入口被提 EDITION 假說 {len(noisy)}/100(容許 ≤3);採用的位移 {[f'{k:+#x}' for k in sorted(deltas14)]}(不得含 +0x5844)")
     if not ok14:
         fails.append(f"dossier 假說:命中 {hit}/{len(pairs)}、誤提 {len(noisy)}、位移 {len(deltas14)}")
 
@@ -840,6 +893,22 @@ def selftest() -> int:
     # 排序:DATA(基底非程式碼)高於 TYPO;唯一 EDITION 高於 DATA
     b15["DATA 高於 TYPO"] = propose(_sig(pro=[A + 3], fix=[A - 8]), A, {}, {})["hypothesis"] == "DATA"
     b15["EDITION 高於 DATA"] = propose(_sig(pro=[A + 0x356], fix=[A - 8]), A, {}, {0x356: "x"})["hypothesis"] == "EDITION"
+    # DOC:引用行帶更正措辭且含另一個有訊號位址 -> 該位址;沒有更正措辭 -> 不採;無訊號的不採
+    import tempfile as _tf15
+    with _tf15.TemporaryDirectory() as td15:
+        kb_bak = globals()["KB"]
+        globals()["KB"] = td15
+        try:
+            open(os.path.join(td15, "x.md"), "w", encoding="utf-8").write(
+                f"handler {A:#x} 位址更正:應為 {A + 0x356:#x}\n"
+                f"handler {A:#x} 與 {A + 0x358:#x} 相鄰\n"
+                f"handler {A:#x} 應為 {A + 0x999:#x}\n")
+            sg = _sig(pro=[A + 0x356, A + 0x358])
+            b15["DOC:更正行的有訊號位址"] = doc_corrections([("x.md", 1)], A, sg) == [f"{A + 0x356:#x}"]
+            b15["DOC:沒有更正措辭不採"] = doc_corrections([("x.md", 2)], A, sg) == []
+            b15["DOC:無訊號的位址不採"] = doc_corrections([("x.md", 3)], A, sg) == []
+        finally:
+            globals()["KB"] = kb_bak
     ok15 = all(b15.values())
     print(f"    {'PASS' if ok15 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b15.items()))
     if not ok15:
