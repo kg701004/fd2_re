@@ -351,7 +351,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "give_item_to_group",
+    "doc_op_name": "pan_spawn_group",
     "callee_argc": 3
   },
   "0x35f10": {

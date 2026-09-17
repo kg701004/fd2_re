@@ -34,7 +34,7 @@
    ]
   },
   {
-   "op": "give_item_to_group",
+   "op": "pan_spawn_group",
    "addr": "0x33e16",
    "target": "0x35b78",
    "args": [

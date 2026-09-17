@@ -622,8 +622,12 @@ DOC_OP_NAMES = {
               "一個「換場+角色卡」的 orchestrator"),
     # doc25 §11 明寫這是**訂正**先前 §10.2/§10.4.2/§10.4.3 的讀法,3 個引數與推導相符。
     # 名稱刻意不叫 `grant_item`(PRIM 的 0x1c220 是 1 引數的另一個函式)。
-    0x35b78: ("give_item_to_group", 3, "25-battle-event-system.md",
-              "func_0x35B78(group_id, item_id, count?)"),
+    # 2026-09-18:原名 give_item_to_group 取自 doc25 §11 的標題「func_0x35B78(group_id, item_id, count?)」,
+    # 但同一節緊接著**修正**了那個推測:「實際反組譯顯示這是一個『spawn_group + 兩段調色盤淡入 +
+    # 全螢幕重繪』的複合原語,不是純粹的給予道具函式」。本體(pan(x,y) → spawn(group) → delay → 兩次
+    # palette_delta_ramp → redraw)與 doc56 記的 PUSH (group,y,x) 一致。名稱改成描述本體,錨在修正句上。
+    0x35b78: ("pan_spawn_group", 3, "25-battle-event-system.md",
+              "兩段調色盤淡入 + 全螢幕重繪"),   # doc25 那句跨行,引文取單行可逐字定位的後半
     # 這一筆是**先被本規則擋下、回頭查證後才成立**的:doc31 §9.5 寫「`0x33f78` wrapper
     # 的 5 引數」,而兩個訊號都得出 3(9/10 個呼叫端 `add esp,12`)。反組譯本體發現那個
     # 5 屬於它呼叫的 `0x22253`——wrapper 收 3 個引數,先用兩個呼叫 `0x12cea` 做鏡頭步進,

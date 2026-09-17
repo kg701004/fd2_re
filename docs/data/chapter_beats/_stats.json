@@ -820,7 +820,7 @@
     "act": 3,
     "reset_pose": 1,
     "dialog": 1,
-    "give_item_to_group": 2,
+    "pan_spawn_group": 2,
     "focus_unit": 1
    }
   },
@@ -845,7 +845,7 @@
     "pan": 1,
     "act": 1,
     "dialog": 2,
-    "give_item_to_group": 1,
+    "pan_spawn_group": 1,
     "reset_pose": 1,
     "focus_unit": 1
    }
