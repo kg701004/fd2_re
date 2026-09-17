@@ -355,18 +355,17 @@ UNKNOWN_TARGETS = [
 ]
 
 # --- selftest 的回歸釘子(全部是實測值,不是設計值)---------------------------
-# 拿 dump_chapter_beats.PRIM 當正對照:24 個有呼叫端的項目中 19 個相符。
-PRIM_AGREE = 19
+# 拿 dump_chapter_beats.PRIM 當正對照:24 個有呼叫端的項目中 21 個相符(2026-09-17 前是 19)。
+PRIM_AGREE = 21
 PRIM_TOTAL_WITH_SITES = 24
-# 不相符的 5 個,以及各自的原因。這些**不是**本工具的錯:
-#   dialog       PRIM 註解自己就寫「9 個 push,只取最近 2 個」= 刻意的投影
+# 不相符的 3 個,以及各自的原因。這些**不是**本工具的錯:
+#   dialog       PRIM 註解自己就寫「9 個 push,只取最近 2 個」= 刻意的投影(本體讀到 [esp+0x58] 確認 ABI 是 9)
 #   load_res     PRIM 註解:「參數個數未逐一核對」
-#   play_sfx     同上
 #   layout_units PRIM 記 0,與「依 call-site 陣列佈置」的描述不合
-#   loadch       PRIM 記 0,但 3/3 呼叫端一致為 add esp,4
+# 2026-09-17 收掉兩筆:loadch(0→1)與 play_sfx(1→3)是 PRIM 錯,由被呼叫端本體讀參數的
+# 位置(第三條獨立訊號)裁決後改正 PRIM,見 doc98 續九。
 PRIM_DIVERGENT = {
-    0x1088d: (0, 1), 0x111ba: (0, 3), 0x15f84: (2, 9),
-    0x233c6: (0, 11), 0x25a96: (1, 3),
+    0x111ba: (0, 3), 0x15f84: (2, 9), 0x233c6: (0, 11),
 }
 # 兩個訊號在 27 個未知目標上一致 26 個;唯一的例外是 0x24618,
 # 而 doc56 的獨立反組譯記載它有 4 個參數,與 cleanup 訊號相同、與 push 訊號不同。

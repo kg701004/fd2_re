@@ -89,7 +89,9 @@
    "op": "loadch",
    "addr": "0x25870",
    "target": "0x1088d",
-   "args": []
+   "args": [
+    "dword ptr [0x3c03]"
+   ]
   },
   {
    "op": "redraw",

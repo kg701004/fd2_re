@@ -51,7 +51,7 @@ OBJ1_END = 0x4EBD9    # obj1(code)結尾,handler 範圍上限保底(見 le meta 
 # {call target linear: (op名, 參數個數)}。參數個數見上方檔頭說明。
 PRIM = {
     0x135dd: ('pan', 2),       # (col,row) — 序章驗證:push(0x22,3)->reversed(3,0x22)=doc47 "(3,0x22)" ✓
-    0x15f84: ('dialog', 2),    # (txtptr,idx) — 9 個 push,只取最近 2 個(前 7 個是固定視窗參數,見檔尾附註)
+    0x15f84: ('dialog', 2),    # (txtptr,idx) — **投影不是 ABI**:本體讀到 [esp+0x58] = 9 個參數,87 個呼叫端 9 push + add esp,0x24;這裡刻意只取最近 2 個(前 7 個是固定視窗參數,見檔尾附註)
     0x1366a: ('act', 1),       # (id) — doc47 "0x1366a(0x63)" ✓
     0x10b4e: ('spawn', 1),     # (group) — doc47 "0x10b4e(1)" ✓
     0x112a5: ('join', 1),      # (char_id) — 序章尾 0/9/4/0x1e 四連呼 ✓
@@ -73,8 +73,8 @@ PRIM = {
     0x34894: ('unit_inactive', 1), # 同一函式在現行參考版的位址(見 EDITION_MOVED)
     0x33499: ('roster_has', 1),   # (char_id) 查我方名冊 [0x53bf7](doc26 已知)
     0x111ba: ('load_res', 0),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知,參數個數未逐一核對)
-    0x25a96: ('play_sfx', 1),     # 播音效(event_handler_dump.py 已知,參數個數未逐一核對)
-    0x1088d: ('loadch', 0),      # 完整章節 loader：FDTXT + FDFIELD/roster/map，不是文字-only
+    0x25a96: ('play_sfx', 3),     # (table_ptr,index,priority) — 2026-09-17 由本體核對:讀 [esp+0x10]/[esp+0x14]/[esp+0x18],80 個呼叫端 3 push + add esp,0xc(doc27 早已記「固定 3-push 慣例」);先前記 1 讓 beat 丟掉索引與優先權
+    0x1088d: ('loadch', 1),      # (chapter) 完整章節 loader：FDTXT + FDFIELD/roster/map，不是文字-only。2026-09-17 由本體核對:0x108ab/0x10ae1 讀 [esp+0x1c](4 個保存暫存器 + sub esp,8 之後的第 1 個參數),呼叫端 push [0x53c03]; add esp,4;先前記 0 是把 0x205da loadch_call 的「章節號由 mov [0x3c03] 設定」誤套到本體
     # 先釋放兩個全域輔助圖形緩衝區，再只對 raw chapter
     # 9/17/21–25/27–29 載入或展開章節專用 FDOTHER 資源。它不是完整
     # FDFIELD/FDSHAP 背景 loader；未知 runtime lowering 必須繼續阻擋。

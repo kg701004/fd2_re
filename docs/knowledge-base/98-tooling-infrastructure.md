@@ -4807,3 +4807,45 @@ slot 找不到、整個 diamond 退回扁平 —— 那是辨識結果的改變,
 | 未登錄的可達逃逸 | 90(8 支) | **0**(8 支全數歸零) |
 | 登錄表 | 62 | 104(equivalent / cosmetic / tuning) |
 | 登錄錯誤 / 過期 | 2 / 0 | 0 / 0 |
+## 2026-09-17 續十:全量窮舉檢查點歸零,與 PRIM 三處不一致的裁決
+
+續九的「歸零」是 8 支逐支重跑的結果。本輪以獨立行程(`Start-Process`,不隨 session 結束)跑
+全量 `--exhaustive`,69 支、約 1 小時 40 分,期間不動 repo。
+
+| | 續八檢查點 | 本輪全量 |
+|---|---|---|
+| 可達產品碼突變點 | 1308 | 1313 |
+| selftest 抓到 | 1149 | **1202** |
+| artifacts 軸覆蓋(自動實證) | 7 | 7 |
+| 登錄表扣除 | 62 | 104(equivalent / cosmetic / tuning) |
+| 未登錄的可達逃逸 | 90(8 支) | **0** |
+| 登錄錯誤 / 過期 | 2 / 0 | 0 / 0 |
+
+可達點 +5 來自續九抽出的純函式與新增的判定行。WEAK 仍是 `realesrgan_batch`(可達只有 2 個、皆已
+登錄)。`encode_text` 一支跑了近 50 分鐘:幾個突變(如 `codes[j] < CTRL_MIN` 改成 `>=`)讓迴圈不再
+前進,每個要等 300 秒逾時才算抓到 —— 逾時是「抓到」的一種,不是缺口。順帶:突變過的
+`export_sprites` 又在 repo 根目錄寫出 `0/`,harness 的隔離機制把它搬到 repo 外並印出警告,
+該機制第二次真的派上用場。
+
+### PRIM 三處不一致:回到反組譯判斷(2026-09-17)
+
+續八記錄了 PRIM 與呼叫端推導在 3 個目標上不一致,本輪用 Ghidra 靜態匯出(`FD2_disasm_full.txt`,
+新版 EXE)看**被呼叫端本體**怎麼讀參數 —— 這是與「呼叫端清理」「緊鄰 push」都獨立的第三條訊號。
+Watcom 序頭固定是 `push <frame>; call 0x3702f; push 保存暫存器; sub esp,N`,所以第 k 個參數
+在 `[esp + N + 4×保存暫存器數 + 4 + 4k]`。
+
+| 目標 | 序頭 | 本體讀到的參數 | 呼叫端 | 結論 |
+|---|---|---|---|---|
+| `0x1088d` loadch | 4 個暫存器 + `sub esp,8` → arg1 = `[esp+0x1c]` | `0x108ab mov eax,[esp+0x1c]`、`0x10ae1 cmp [esp+0x1c],0xd`(章節號) | `0x205f9 push [0x53c03]; call; add esp,4`,doc58 記載 `push 0x1e; call 0x1088d` | **PRIM 錯**:1 個參數(章節號),不是 0 |
+| `0x25a96` play_sfx | `push ebx; sub esp,8` → arg1 = `[esp+0x10]` | `[esp+0x10]` 表指標、`[esp+0x14]` 索引(與 -1 比較)、`0x25b20 push [esp+0x18]` 第三個 | 80 個呼叫端全部 3 push + `add esp,0xc`;doc27 早已記「固定 3-push 慣例(table_ptr/index/priority)」 | **PRIM 錯**:3 個參數,不是 1 |
+| `0x15f84` dialog | 4 個暫存器 + `sub esp,0x24` → arg1 = `[esp+0x38]` | 讀到 `[esp+0x58]` = 第 9 個 | 87 個呼叫端 9 push + `add esp,0x24` | ABI 是 9 個;PRIM 的 2 是**刻意的投影**(只取 txtptr/idx),註解本來就這樣寫。不改值,改註解說明它不是 ABI |
+
+PRIM 那兩筆錯的註解自己寫著「參數個數未逐一核對」(play_sfx)與「章節號由前面 mov 設定」(loadch
+—— 那句話描述的是 `0x205da` loadch_call,不是 `0x1088d` 本身)。少算的後果是 beat 的 `args`
+**丟掉參數**:ch24_pre 的 5 條 play_sfx 只留表指標、丟了音效索引與優先權;ch29_post 的 loadch
+`args: []`,丟了章節號。這正是 artifacts 軸抓得到「少算」而抓不到「多算」的那一半。
+
+修正:PRIM `loadch` 0→1、`play_sfx` 1→3;`derive_native_argcounts.PRIM_DIVERGENT` 拿掉這兩筆
+(19/24 相符 → 21/24),`dump_chapter_beats` 第 (7) 題跟著收緊;重生 chapter_beats(實測只
+ch24_pre、ch29_post 兩檔改變),`verify_generated_artifacts` 逐位元組比對。`event_handler_dump.py`
+的同名表只記名稱不記個數,不受影響。

@@ -34368,6 +34368,22 @@
    "excerpt": "從呼叫端的 `add esp,N` 與緊鄰 push 推導。實測 24 個有呼叫端的項目 19 個相符,不符的 5 個",
    "verdict": "benign",
    "note": "工具行為陳述(突變 harness 窮舉結果、selftest 補題的前提與 PRIM 跨工具對照),非遊戲事實主張;依據為本 commit 內 tools/*.py 的 selftest 與 verify_selftest_discrimination --exhaustive 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4849,
+   "excerpt_sha1": "8cdb8f4efbc895df844f44f06521be4f3cdf5cda",
+   "excerpt": "(19/24 相符 → 21/24),`dump_chapter_beats` 第 (7) 題跟著收緊;重生 chapter_beats(實測只",
+   "verdict": "benign",
+   "note": "工具行為陳述(PRIM 修正後的 selftest 對照數字與重生比對結果),非遊戲事實主張;依據為本 commit 內 derive_native_argcounts/dump_chapter_beats 的 selftest 與 verify_generated_artifacts 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4850,
+   "excerpt_sha1": "e51b682c73441f9a72f860a7886017651a3d2aaa",
+   "excerpt": "ch24_pre、ch29_post 兩檔改變),`verify_generated_artifacts` 逐位元組比對。`event_handler_dump.py`",
+   "verdict": "benign",
+   "note": "工具行為陳述(PRIM 修正後的 selftest 對照數字與重生比對結果),非遊戲事實主張;依據為本 commit 內 derive_native_argcounts/dump_chapter_beats 的 selftest 與 verify_generated_artifacts 輸出。"
   }
  ]
 }
