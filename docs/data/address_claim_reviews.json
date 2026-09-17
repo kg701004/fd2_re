@@ -1,0 +1,169 @@
+{
+ "_meta": {
+  "purpose": "verify_address_claim_coverage 的審閱登錄:無訊號、但審過後結論是「不是入口主張」的位址。勘誤(錯了、正確是 X)不在這裡,在 known_address_errata.json。",
+  "verdicts": [
+   "file_offset",
+   "live_address",
+   "approximate",
+   "disp32_value",
+   "old_edition_inner",
+   "old_edition_unresolved",
+   "refuted_claim",
+   "region_label",
+   "data_table",
+   "other"
+  ]
+ },
+ "reviews": [
+  {
+   "address": "0x4a62c",
+   "verdict": "file_offset",
+   "note": "doc58 L3032:509158-byte EXE 的檔案 offset(byte-signature 定位用),不是線性位址",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x4a636",
+   "verdict": "file_offset",
+   "note": "doc58 L3032:同上,檔案 offset",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x25114",
+   "verdict": "file_offset",
+   "note": "doc11 L192:「進入點位移 0x25114」是模組內位移,文中明說位移非常數、不可當位址",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x4aa00",
+   "verdict": "live_address",
+   "note": "doc35 L4039:「0x2aa00 → live 0x4AA00」,DOSBox 執行期線性位址(靜態 +0x20000)",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x4e2f5",
+   "verdict": "approximate",
+   "note": "doc58 L3956:由 live EIP 以 delta 反推「約 0x4E2F5」,文中即標為近似",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x117e6",
+   "verdict": "approximate",
+   "note": "doc13 L1264:「FUN_000115b6 的 RET(0x117e6 附近)」,近似定位,不是入口主張",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x323f1",
+   "verdict": "disp32_value",
+   "note": "91-worklist L450:「E8 disp32=0x323f1」是 rel32 位移值,真正目標 0x4ebe3;不是位址",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x28784",
+   "verdict": "refuted_claim",
+   "note": "doc27 L235:doc37 §0 引用的「0x15195: push ebp; call 0x28784」,doc27 即時反組譯該處指令不是 call —— 主張已被 doc27 推翻,無新版對應",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x28f49",
+   "verdict": "refuted_claim",
+   "note": "doc36 L161:第 8 輪誤記的載入點,已由 doc36 以區間 0x028110–0x028156 取代;取代的是區間不是入口,故不登勘誤",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x26a70",
+   "verdict": "old_edition_inner",
+   "note": "doc36 L66:舊版呼叫點「0x026a70 call 0x11fba」(0x11fba 本身已登勘誤 → 0x111ba);新版此處落在 0x26a0d 函式中段",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x35d56",
+   "verdict": "old_edition_inner",
+   "note": "doc25 §11.4 row 77 視窗內的舊版 helper 內部位址;新版落在 0x35d55 入口後 1 byte,非入口",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x2884c",
+   "verdict": "old_edition_inner",
+   "note": "99-reflections L272(2026-07-26):舊版 FIGANI = unit+7×3 的計算位址;新版不在指令邊界,對應處未定位",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x2f4c6",
+   "verdict": "old_edition_inner",
+   "note": "SESSION-HANDOFF L2003:「0x2f4a6 call 0x2f4c6」,新版 0x2f4a6 落在 push [esp+0xb4] 中段,整段是舊版位址",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x28ce6",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L234:「0x288a9 / 0x28ce6 call 0x2a289」,新版 0x288a9 是 mov [0x3ae1],eax、0x28ce9 是 cmp,呼叫點在舊版",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x28ef1",
+   "verdict": "old_edition_inner",
+   "note": "doc35 L35:[0x540ff] 的寫入點 0x28ef1(設 1),新版 0x28ee0..0x28f10 沒有對 [0xff] 的寫入,舊版位址",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x2c548",
+   "verdict": "old_edition_inner",
+   "note": "doc35 §9 表 idx5 的舊候選:新版落在 0x2c546 jmp 中段;doc58 L6464 記 FD2Analysis3 查無對應",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x2c5e3",
+   "verdict": "old_edition_inner",
+   "note": "doc35 §9 表 idx5 的舊候選(L1851 稱 handler 內部分支片段),新版不在指令邊界",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x2c469",
+   "verdict": "old_edition_inner",
+   "note": "doc35 §9 表 idx5 的舊候選,新版落在 0x2c441 +0x28 非邊界",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x375c0",
+   "verdict": "old_edition_inner",
+   "note": "dump_chapter_beats SKIP 表保留的舊版 helper 位址(現行 0 呼叫端);+0x350 落到 memset 但同區段 delay 是 +0x358,兩者不能同時成立,不登勘誤",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x40867",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L628(2026-08-14 補充偵察)法術鏈位址,同段另引 0x73A7A 超出 obj1,位址空間可疑;新版不在指令邊界",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x408cb",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L648 法術鏈 jump-table 函式,同批;新版不在指令邊界",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x40964",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L688「既有裝備 recalc 函式 0x40964」,同批;新版裝備重算是 0x1b750,對應未證",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x39a2c",
+   "verdict": "old_edition_unresolved",
+   "note": "doc11 L628 同批法術鏈位址;新版不在指令邊界",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x4de56",
+   "verdict": "old_edition_unresolved",
+   "note": "doc56 L2463:FDICON opaque-index 變換的 blit;+0x350 候選 0x4e1a6 是 doc11 的尋路函式,語意不合,對應未定",
+   "date": "2026-09-17"
+  },
+  {
+   "address": "0x4e8af",
+   "verdict": "old_edition_unresolved",
+   "note": "doc35 L432 引用的位址;+0x350 候選 0x4ebff 是 blit(dest,src,stride),與該行語意對不上,對應未定",
+   "date": "2026-09-17"
+  }
+ ]
+}

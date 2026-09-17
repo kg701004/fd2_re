@@ -56,6 +56,7 @@ INNER:函式內部引用,不是入口主張(2026-09-17)
     python tools/verify_address_claim_coverage.py --addr 0x4e893 # 單一位址的四個訊號與分類
     python tools/verify_address_claim_coverage.py --triage       # 殘餘依『是否落在指令邊界』分流
     python tools/verify_address_claim_coverage.py --dossier 20 --json out.json   # 殘餘的判讀資料(四個假說)
+    python tools/verify_address_claim_coverage.py --mark-reviewed 0x4a62c file_offset "doc58:EXE 檔案 offset"   # 審過的非主張
     python tools/verify_address_claim_coverage.py --write-baseline
     python tools/verify_address_claim_coverage.py --selftest
 """
@@ -83,6 +84,12 @@ EXE = os.path.join(ROOT, "org_game", "炎龍騎士團", "FLAME2", "FD2.EXE")
 KB = os.path.join(ROOT, "docs", "knowledge-base")
 BASELINE = os.path.join(ROOT, "docs", "data", "address_claim_coverage_baseline.json")
 ERRATA = os.path.join(ROOT, "docs", "data", "known_address_errata.json")
+# 審過、結論是「不是入口主張」的位址(2026-09-17 第三批起)。勘誤表收「錯了、正確是 X」;這裡收
+# 「不是錯,是別種東西」:檔案 offset、live 位址、近似值、rel32 位移值、舊版函式內部位址、被文件自己
+# 推翻的主張。每筆要 verdict + note;--mark-reviewed 只收目前仍是 UNREVIEWED 的位址。
+REVIEWS = os.path.join(ROOT, "docs", "data", "address_claim_reviews.json")
+REVIEW_VERDICTS = ("file_offset", "live_address", "approximate", "disp32_value", "old_edition_inner",
+                   "old_edition_unresolved", "refuted_claim", "region_label", "data_table", "other")
 
 STACK_PROBE = 0x3702F
 
@@ -95,7 +102,10 @@ ADDR = re.compile(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])")
 # * 範圍終點:`0x2670e..0x26995`、`0x1b750–0x1b83c` 的右端是函式結束(下一個函式的起點或末指令之後),不是入口。
 # * 否定句:「0x154D1 只是 …中段,不能當施法入口」「不是任何函式的真正入口」是在說它**不是**入口。
 RANGE_END = re.compile(r"(?:\.\.|–|—|~|-|到|至)\s*`?(0x[0-9a-fA-F]{4,6})(?![0-9a-fA-F])")
-NEGATED = re.compile(r"不是(?:任何)?(?:函式)?(?:的)?(?:真正)?(?:的)?入口|不能當[^,。;]{0,12}入口|不是入口|非入口")
+NEGATED = re.compile(r"不是(?:任何)?(?:函式)?(?:的)?(?:真正)?(?:的)?入口|不能當[^,。;]{0,12}入口|不是入口|非入口|"
+                     r"不是序頭|誤當[^,。;]{0,12}入口|判讀已撤回")
+RANGE_START = re.compile(r"(0x[0-9a-fA-F]{4,6})`?\s*(?:\.\.|–|—|~|-)\s*`?0x[0-9a-fA-F]{4,6}")
+BRACKET_END = re.compile(r"\[\s*`?0x[0-9a-fA-F]{4,6}`?\s*,\s*`?(0x[0-9a-fA-F]{4,6})`?\s*\]")
 
 
 def load_image() -> tuple[bytes, dict, bytes, int, int]:
@@ -455,9 +465,12 @@ def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
             for lineno, text in enumerate(f, 1):
                 if not CLAIM_WORDS.search(text):
                     continue
-                if NEGATED.search(text):
+                plain = text.replace("**", "")
+                if NEGATED.search(plain):
                     continue
-                ends = {int(m, 16) for m in RANGE_END.findall(text)}
+                # 範圍兩端都不算:終點是函式結束;起點若真是入口本來就有訊號、無訊號的起點是區段標籤
+                ends = ({int(m, 16) for m in RANGE_END.findall(plain)} | {int(m, 16) for m in RANGE_START.findall(plain)}
+                        | {int(m, 16) for m in BRACKET_END.findall(plain)})
                 for m in ADDR.findall(text):
                     n = int(m, 16)
                     if n in ends:
@@ -493,11 +506,31 @@ def is_inner(sig: dict, addr: int, cache: dict) -> bool:
     return boundary_from_entry(sig, addr, cache) is True
 
 
+def load_reviews(path: str | None = None) -> dict[int, dict]:
+    """{位址: {verdict, note, date}};格式錯就丟例外(讀不懂的登錄不能當成空的)。
+    路徑在呼叫時才取 REVIEWS(不是 def 時綁定),selftest 才能換成暫存檔。"""
+    path = path or REVIEWS
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    out: dict[int, dict] = {}
+    for r in data.get("reviews", []):
+        a = int(r["address"], 16)
+        if r.get("verdict") not in REVIEW_VERDICTS or not (r.get("note") or "").strip():
+            raise ValueError(f"address_claim_reviews 條目缺 verdict/note 或 verdict 不合法:{r}")
+        if a in out:
+            raise ValueError(f"address_claim_reviews 重複:{r['address']}")
+        out[a] = r
+    return out
+
+
 def classify_all() -> dict:
     sig = signals()
     claims = kb_entry_claims(sig["base"], sig["hi"])
     bad = known_bad()
-    covered, erratum, inner, unreviewed = {}, {}, {}, {}
+    reviews = load_reviews()
+    covered, erratum, reviewed, inner, unreviewed = {}, {}, {}, {}, {}
     try:
         _capstone()
         inner_ok = True
@@ -509,11 +542,13 @@ def classify_all() -> dict:
             covered[addr] = sites
         elif addr in bad:
             erratum[addr] = sites
+        elif addr in reviews:
+            reviewed[addr] = sites
         elif inner_ok and is_inner(sig, addr, cache):
             inner[addr] = sites
         else:
             unreviewed[addr] = sites
-    return {"sig": sig, "claims": claims, "covered": covered, "erratum": erratum,
+    return {"sig": sig, "claims": claims, "covered": covered, "erratum": erratum, "reviewed": reviewed,
             "inner": inner, "inner_available": inner_ok, "unreviewed": unreviewed}
 
 
@@ -562,6 +597,40 @@ def write_baseline() -> int:
     with open(BASELINE, "w", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     print(f"已寫入基準線:{sum(cur.values())} 筆(相異位址×檔案),分佈 {len(cur)} 份文件。")
+    return 0
+
+
+def mark_reviewed(addr_s: str, verdict: str, note: str) -> int:
+    """把一個目前仍是 UNREVIEWED 的位址登進 reviews。不是 UNREVIEWED(有訊號/勘誤/INNER/已審)一律拒絕:
+    這個檔只能收「審過的無訊號位址」,不能變成第二本豁免清單。"""
+    try:
+        addr = int(addr_s, 16)
+    except ValueError:
+        print(f"無法解析位址:{addr_s!r}")
+        return 1
+    if verdict not in REVIEW_VERDICTS:
+        print(f"verdict 必須是 {REVIEW_VERDICTS} 之一")
+        return 1
+    if not note.strip():
+        print("note 不得為空")
+        return 1
+    r = classify_all()
+    if addr not in r["unreviewed"]:
+        where = next((k for k in ("covered", "erratum", "reviewed", "inner") if addr in r[k]), "不在主張清單")
+        print(f"{addr:#x} 不是 UNREVIEWED(目前分類:{where}),不登錄")
+        return 1
+    data = {"_meta": {"purpose": "verify_address_claim_coverage 的審閱登錄:無訊號、但審過後結論是「不是入口主張」的位址。"
+                       "勘誤(錯了、正確是 X)不在這裡,在 known_address_errata.json。",
+                       "verdicts": list(REVIEW_VERDICTS)}, "reviews": []}
+    if os.path.exists(REVIEWS):
+        with open(REVIEWS, encoding="utf-8") as f:
+            data = json.load(f)
+    import datetime
+    data.setdefault("reviews", []).append({"address": f"{addr:#x}", "verdict": verdict, "note": note.strip(),
+                                           "date": datetime.date.today().isoformat()})
+    with open(REVIEWS, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+    print(f"已登錄 {addr:#x}({verdict});請在同一個 commit 跑 --write-baseline")
     return 0
 
 
@@ -615,6 +684,7 @@ def gate() -> int:
     print(f"  有位元組訊號   {len(covered):4d}({100 * len(covered) // max(1, total)}%)")
     print(f"  已登記為勘誤   {len(erratum):4d}")
     print(f"  函式內部引用   {len(r['inner']):4d}  (落在有訊號函式內部的合法指令邊界,不是入口主張)")
+    print(f"  審過非主張     {len(r['reviewed']):4d}  (address_claim_reviews.json:offset/live/近似/舊版內部/被推翻)")
     print(f"  無訊號未登記   {len(un):4d}  <- 這個數字才是 findings 軸看不見的部分")
     if not r["inner_available"]:
         print("\nSKIP:本環境沒有 capstone,分不出函式內部引用,不比基準線(閘門在 Windows 跑)。")
@@ -714,15 +784,55 @@ def selftest() -> int:
                 "函式 `0x10100..0x10200` 的本體\n"            # 0x10200 是終點
                 "handler `0x10300`–`0x10400` 範圍\n"           # 0x10400 是終點
                 "`0x10500` 只是中段,不能當施法入口\n"          # 否定
-                "`0x10600` 不是任何函式的真正入口\n"           # 否定
-                "handler 入口 `0x10700`\n")                   # 肯定
+                "`0x10600` **不是**任何函式的真正入口\n"       # 否定(含粗體標記)
+                "handler 入口 `0x10700`\n"                    # 肯定
+                "函式群位於 `0x10800`–`0x10900`\n"            # 兩端都是區段標籤
+                "函式體是 [0x10a00, 0x10b00] 的 handler\n"    # 括號範圍:起點算、終點不算
+                "`0x10c00` 與 `0x10d00` 都不是序頭,handler 另在\n"   # 否定
+                "先前把 `0x10e00` 誤當施法入口的判讀已撤回,handler 另在\n")   # 否定
             got6 = set(kb_entry_claims(0x10000, 0x20000))
         finally:
             globals()["KB"] = kb6
-    ok6b = got6 == {0x10100, 0x10300, 0x10700}
-    print(f"    {'PASS' if ok6b else 'FAIL'}: 收進 {sorted(hex(x) for x in got6)}(應 0x10100/0x10300/0x10700)")
+    ok6b = got6 == {0x10700, 0x10a00}
+    print(f"    {'PASS' if ok6b else 'FAIL'}: 收進 {sorted(hex(x) for x in got6)}(應只有 0x10700 與括號範圍起點 0x10a00)")
     if not ok6b:
         fails.append(f"範圍終點/否定句排除不對:{sorted(hex(x) for x in got6)}")
+
+    print("\n(6c) reviews:登錄的無訊號位址進 REVIEWED、不進 UNREVIEWED;缺 note/壞 verdict 丟例外;非 UNREVIEWED 拒登")
+    import tempfile as _tf6c
+    r6 = classify_all()
+    pick = next(iter(sorted(r6["unreviewed"])), None)
+    with _tf6c.TemporaryDirectory() as td6c:
+        rv = os.path.join(td6c, "reviews.json")
+        rev_bak = globals()["REVIEWS"]
+        globals()["REVIEWS"] = rv
+        try:
+            b6c = {}
+            if pick is not None:
+                import contextlib as _cl, io as _io
+                with _cl.redirect_stdout(_io.StringIO()):
+                    rc_ok = mark_reviewed(f"{pick:#x}", "approximate", "自檢用")
+                    rc_dup = mark_reviewed(f"{pick:#x}", "approximate", "selftest")     # 已登 -> 拒
+                    rc_cov = mark_reviewed(f"{0x4EBE3:#x}", "approximate", "selftest")   # 有訊號 -> 拒
+                    rc_bad = mark_reviewed(f"{pick:#x}", "nonsense", "x")                # 壞 verdict -> 拒
+                r6b = classify_all()
+                b6c["登錄後進 REVIEWED、離開 UNREVIEWED"] = rc_ok == 0 and pick in r6b["reviewed"] and pick not in r6b["unreviewed"]
+                b6c["已登/有訊號/壞 verdict 都拒登"] = (rc_dup, rc_cov, rc_bad) == (1, 1, 1)
+                raw6 = open(rv, encoding="utf-8").read()
+                # 手動維護的檔要能讀:中文原樣(不是 u 跳脫)、單層縮排一鍵一行(diff 才看得出改了哪筆)
+                b6c["寫出的檔中文原樣且縮排 1"] = "自檢用" in raw6 and "\n \"reviews\"" in raw6
+            open(rv, "w", encoding="utf-8").write(json.dumps({"reviews": [{"address": "0x10000", "verdict": "other", "note": ""}]}))
+            try:
+                load_reviews(rv)
+                b6c["缺 note 丟例外"] = False
+            except ValueError:
+                b6c["缺 note 丟例外"] = True
+        finally:
+            globals()["REVIEWS"] = rev_bak
+    ok6c = bool(b6c) and all(b6c.values())
+    print(f"    {'PASS' if ok6c else 'FAIL'}: " + ("、".join(f"{k}={v}" for k, v in b6c.items()) or "沒有 UNREVIEWED 可測"))
+    if not ok6c:
+        fails.append(f"reviews:{[k for k, v in b6c.items() if not v]}")
 
     print("\n(7) 雙向棘輪")
     w1, b1 = compare({"a.md": 6}, {"a.md": 5})
@@ -957,7 +1067,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(14 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
           "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
-          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界 + 範圍終點/否定句排除)。")
+          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界 + 範圍/否定句排除 + reviews 登錄)。")
     return 0
 
 
@@ -970,6 +1080,8 @@ def main() -> int:
     ap.add_argument("--dossier", nargs="?", const=0, type=int, metavar="N",
                     help="殘餘無訊號位址的判讀資料(資料表/舊版位移/打字錯/措辭);N = 只列引用最多的前 N 個")
     ap.add_argument("--json", help="--dossier 的 JSON 輸出路徑")
+    ap.add_argument("--mark-reviewed", nargs=3, metavar=("ADDR", "VERDICT", "NOTE"),
+                    help="把一個審過的無訊號位址登進 address_claim_reviews.json(不是入口主張:offset/live/近似/舊版內部/被推翻)")
     ap.add_argument("--write-baseline", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
@@ -977,6 +1089,8 @@ def main() -> int:
         return selftest()
     if a.addr:
         return one(a.addr)
+    if a.mark_reviewed:
+        return mark_reviewed(*a.mark_reviewed)
     if a.dossier is not None:
         return dossier(a.dossier or None, a.json)
     if a.triage:

@@ -1419,6 +1419,165 @@
           "35-battle-animation-rendering.md": 7
         }
       }
+    },
+    {
+      "wrong_address": "0x31385",
+      "correct_address": "0x2aa00",
+      "wrong_semantic_claimed": "轉職服務入口(doc32 L663:呼叫 0x31793 建候選 → 無候選顯示 FDTXT 0x24f)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc32 L748 明寫「FUN_0002aa00(church 轉職確認/target 寫回——舊文件 0x31385/0x31571/0x3151a 鏈的新版對應)」,靠 xref_to 0x2ac7d 找到;dossier:0x31385 不在指令邊界。",
+      "root_cause": "舊版 EXE 位址;轉職鏈在新版重新定位,位移不是常數(doc32 §「新版 EXE 轉職鏈路」)。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "L748",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31385"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 3,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31571",
+      "correct_address": "0x2aa00",
+      "wrong_semantic_claimed": "轉職確認/target 寫回(doc32 舊鏈)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "同 0x31385:doc32 L748/L762 明寫「只是位址從舊版 0x31571(等)平移到新版 0x2aa00」。",
+      "root_cause": "舊版 EXE 位址。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "L748/L762",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31571"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 5,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "92-m5-normal-playthrough-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3151a",
+      "correct_address": "0x2aa00",
+      "wrong_semantic_claimed": "轉職鏈的一段(doc32 舊鏈)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "同 0x31385:doc32 L748;L732 另記「0x3151a 當時甚至沒有已反組譯的指令」。",
+      "root_cause": "舊版 EXE 位址。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "L748",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3151a"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 5,
+          "50-cutscene-script-system-design.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31602",
+      "correct_address": "0x2ac7d",
+      "wrong_semantic_claimed": "轉職合成函式(doc32 L1062 舊版位址)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc32 L1062 明寫「FUN_0002ac7d(0x2ac7d)就是新版的轉職合成函式(舊版位址 0x31602)」,行為逐條吻合;與 0x2a2e8 → 0x2ac7d 是同一個新版函式的兩個舊標籤(doc32 L747 稱轉職重算)。",
+      "root_cause": "舊版 EXE 位址。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "L1062",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31602"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31c50",
+      "correct_address": "0x31c49",
+      "wrong_semantic_claimed": "獨立函式的序言起點(doc58 L4098:「0x31c50 起是 PUSH EBX/ESI/EDI/EBP; SUB ESP,0x24 的標準函式序言」)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "capstone:0x31c49 `push 0x5c; call 0x3702f`(Watcom 堆疊探測)才是入口,0x31c53 才是 `push ebx`;0x31c50 落在 call 指令中段。doc58 少算了 10 bytes 的探測序頭。",
+      "root_cause": "把保存暫存器那組 push 當成函式起點,漏掉前面的 Watcom 序頭(0x31c49);位址標籤差 7。",
+      "affected_docs": [
+        "docs/knowledge-base/58-remake-live-verification-log.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續二十",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31c50"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "58-remake-live-verification-log.md": 1,
+          "98-tooling-infrastructure.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x32311",
+      "correct_address": "0x3230f",
+      "wrong_semantic_claimed": "相位計數全域的寫入點(doc35 L4978:「0x32311 寫」)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "capstone:`0x3230f inc byte ptr [0x4132]`(6 bytes,0x3230f..0x32314)才是寫入指令,0x32311 落在它的位移欄位中段。",
+      "root_cause": "位址標籤落在指令中段(差 2)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續二十",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x32311"
+        ],
+        "note": "2026-09-17 dossier 第三批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 1
+        }
+      }
     }
   ]
 }
