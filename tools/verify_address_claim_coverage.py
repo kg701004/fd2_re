@@ -91,6 +91,11 @@ STACK_PROBE = 0x3702F
 CLAIM_WORDS = re.compile(
     r"入口|handler|函式|函數|entry\s*point|序頭|FUN_[0-9a-fA-F]|呼叫目標|dispatcher")
 ADDR = re.compile(r"0x[0-9a-fA-F]{4,6}(?![0-9a-fA-F])")
+# 2026-09-17 第二批審閱後加的兩條排除(都是「同一行有入口字樣」抓進來的非主張):
+# * 範圍終點:`0x2670e..0x26995`、`0x1b750–0x1b83c` 的右端是函式結束(下一個函式的起點或末指令之後),不是入口。
+# * 否定句:「0x154D1 只是 …中段,不能當施法入口」「不是任何函式的真正入口」是在說它**不是**入口。
+RANGE_END = re.compile(r"(?:\.\.|–|—|~|-|到|至)\s*`?(0x[0-9a-fA-F]{4,6})(?![0-9a-fA-F])")
+NEGATED = re.compile(r"不是(?:任何)?(?:函式)?(?:的)?(?:真正)?(?:的)?入口|不能當[^,。;]{0,12}入口|不是入口|非入口")
 
 
 def load_image() -> tuple[bytes, dict, bytes, int, int]:
@@ -264,7 +269,12 @@ WORD_CORR = re.compile(r"位址更正|位址已撤回|應為|新版對應|真正
 
 # 被文件自己的更正否決過的位移:+0x5844 對 0x2a2e8 提出 0x2fb2c(party montage 迴圈),而 doc32 L747 明寫
 # 新版對應是 0x2ac7d。兩對 +0x5844 勘誤的 root_cause 也都寫「個別誤記、非系統性」。
-DELTA_DENY = {0x5844: "0x2a2e8 的文件更正(0x2ac7d)否決;兩對來源勘誤自述為個別誤記"}
+DELTA_DENY = {
+    0x5844: "0x2a2e8 的文件更正(0x2ac7d)否決;兩對來源勘誤自述為個別誤記",
+    # 0x26896/0x26945 → 0x25a96/0x25b45 是同一批(doc36 第 8 輪)手動誤記,兩對同位移純屬同批;
+    # 若 0x26xxx 真的整段移了 -0xe00,doc36 自己記的 FUN_0002670e 就不會還在 0x2670e。
+    -0xe00: "doc36 第 8 輪同批誤記,不是區段位移(FUN_0002670e 兩版同址)",
+}
 DELTA_MIN_SUPPORT = 2
 
 
@@ -445,8 +455,13 @@ def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
             for lineno, text in enumerate(f, 1):
                 if not CLAIM_WORDS.search(text):
                     continue
+                if NEGATED.search(text):
+                    continue
+                ends = {int(m, 16) for m in RANGE_END.findall(text)}
                 for m in ADDR.findall(text):
                     n = int(m, 16)
+                    if n in ends:
+                        continue
                     # obj1 基底本身(`stored + 0x10000` 這種寫法)不是入口主張
                     if base < n < hi:
                         out.setdefault(n, []).append((name, lineno))
@@ -689,6 +704,26 @@ def selftest() -> int:
     if not ok6:
         fails.append("宣稱語言沒有在篩選 —— 分母等於『有人提過的位址』")
 
+    print("\n(6b) 範圍終點與否定句不算主張;範圍起點與肯定句照算(成對)")
+    import tempfile as _tf6
+    with _tf6.TemporaryDirectory() as td6:
+        kb6 = globals()["KB"]
+        globals()["KB"] = td6
+        try:
+            open(os.path.join(td6, "a.md"), "w", encoding="utf-8").write(
+                "函式 `0x10100..0x10200` 的本體\n"            # 0x10200 是終點
+                "handler `0x10300`–`0x10400` 範圍\n"           # 0x10400 是終點
+                "`0x10500` 只是中段,不能當施法入口\n"          # 否定
+                "`0x10600` 不是任何函式的真正入口\n"           # 否定
+                "handler 入口 `0x10700`\n")                   # 肯定
+            got6 = set(kb_entry_claims(0x10000, 0x20000))
+        finally:
+            globals()["KB"] = kb6
+    ok6b = got6 == {0x10100, 0x10300, 0x10700}
+    print(f"    {'PASS' if ok6b else 'FAIL'}: 收進 {sorted(hex(x) for x in got6)}(應 0x10100/0x10300/0x10700)")
+    if not ok6b:
+        fails.append(f"範圍終點/否定句排除不對:{sorted(hex(x) for x in got6)}")
+
     print("\n(7) 雙向棘輪")
     w1, b1 = compare({"a.md": 6}, {"a.md": 5})
     w2, b2 = compare({"a.md": 4}, {"a.md": 5})
@@ -855,7 +890,8 @@ def selftest() -> int:
     from_errata_only = [dl for dl in deltas14 if "errata" in deltas14[dl]]        # 不靠 EDITION_MOVED 的位移
     ok14 = (bool(pairs) and len(in_scope) >= 5 and hit == len(in_scope) and len(noisy) <= 3
             and len(deltas14) >= 2 and 0x5844 not in deltas14
-            and 0x350 in deltas14 and deltas14[0x350].startswith("2 對:")   # 勘誤表配對解析 + 支持數門檻
+            and 0x350 in deltas14 and int(deltas14[0x350].split(" 對:")[0]) >= 2   # 勘誤表配對解析 + 支持數門檻
+            and -0xe00 not in deltas14                                            # 否決名單生效
             and 0x358 in deltas14)                                              # EDITION_MOVED 的位移不受門檻影響
     print(f"    {'PASS' if ok14 else 'FAIL'}: 勘誤配對 {len(pairs)} 對,位移被採用的 {len(in_scope)} 對中候選含正確位址 {hit} 對(應全部);"
           f"已知入口被提 EDITION 假說 {len(noisy)}/100(容許 ≤3);採用的位移 {[f'{k:+#x}' for k in sorted(deltas14)]}(不得含 +0x5844)")
@@ -921,7 +957,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(14 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
           "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
-          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界)。")
+          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界 + 範圍終點/否定句排除)。")
     return 0
 
 

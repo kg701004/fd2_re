@@ -83,7 +83,7 @@
       "wrong_semantic_claimed": "range-overlay mode6 field-byte 清空函式(range_overlay.go ClearNativeRangeOverlayMode6FieldByte 註解)、ch23_post.json beat 34 native call 目標",
       "discovered_date": "2026-08-20",
       "discovery_method": "Ghidra headless 直接反組譯呼叫點 0x1097a 的 CALL 指令 bytes,證實真正目標是 0x4df4c;逐指令走訪 0x4df4c 迴圈本體(LOOP 跳回 0x4df65)確認其行為(byte+3 全部寫 0xff、byte+2 mask 0x1f、byte+1 mask 0x3)與 91-worklist.md:1193 原文描述完全吻合,反過來印證原分析對象就是這個函式,只是位址標籤打錯。",
-      "root_cause": "range_overlay.go 註解與 ch23_post.json exporter 的位址標籤誤植;0x4dbfc 本身落在一個無關函式(POP EBX/ECX/EDI/ESI/EBP;RET 尾端之後)的中段,不是任何函式的合法進入點。",
+      "root_cause": "range_overlay.go 註解與 ch23_post.json exporter 的位址標籤誤植;0x4dbfc 本身落在一個無關函式(POP EBX/ECX/EDI/ESI/EBP;RET 尾端之後)的中段,不是任何函式的合法進入點。【2026-09-17 加註】dossier 第二批在 0x37xxx/0x3axxx/0x3dxxx/0x4dxxx–0x4exxx 找到 12 筆同為 +0x350 的舊→新配對(含本筆),「不是系統性平移」這個判斷不再成立:這一段是版本差,只是位移與事件 handler 區段的 +0x356 不同。位址本身的訂正不變。",
       "affected_docs": [
         "remake/internal/fdother/range_overlay.go",
         "remake/assets/cutscenes/handlers/ch23_post.json",
@@ -432,7 +432,7 @@
       "wrong_semantic_claimed": "「RNG%100<threshold 的通用命中率檢查函式,被 0x1c7ed 呼叫」——登記於 docs/data/verified_addresses.json(2026-08-19,confidence=verified),並被 doc27 表第 8 項/§6.1、doc56、SESSION-HANDOFF-2026-07-06 等 7 份文件引用共 20 次。",
       "discovered_date": "2026-09-11",
       "discovery_method": "由 tools/verify_address_claim_coverage.py 的涵蓋率量測發現:0x4e893 被文件宣稱為函式,但三個獨立的位元組訊號(Watcom 序頭 / 直接 E8 CALL 目標 / fixup 目標)**全部沒有**。逐位元組覆核呼叫端:0x1c7ed 的 bytes 是 `e8 f1 23 03 00`,disp32=0x323f1,0x1c7ed+5+0x323f1 = **0x4ebe3**。0x4ebe3 有 40 個直接呼叫端、起頭 `33 c0`(xor eax,eax);0x4e893 有 0 個呼叫端、起頭 `08 ba 07 00 00 00` 落在指令中段。差 0x350。",
-      "root_cause": "與 0x2a6bd/0x276ec 同一批(2026-08-19)手動反組譯階段的個別位址誤記,不是系統性平移。功能性結論本身正確。",
+      "root_cause": "與 0x2a6bd/0x276ec 同一批(2026-08-19)手動反組譯階段的個別位址誤記,不是系統性平移。功能性結論本身正確。【2026-09-17 加註】dossier 第二批在 0x37xxx/0x3axxx/0x3dxxx/0x4dxxx–0x4exxx 找到 12 筆同為 +0x350 的舊→新配對(含本筆),「不是系統性平移」這個判斷不再成立:這一段是版本差,只是位移與事件 handler 區段的 +0x356 不同。位址本身的訂正不變。",
       "affected_docs": [
         "docs/data/verified_addresses.json",
         "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
@@ -697,6 +697,726 @@
           "58-remake-live-verification-log.md": 1,
           "91-worklist.md": 24,
           "SESSION-HANDOFF-2026-07-06.md": 18
+        }
+      }
+    },
+    {
+      "wrong_address": "0x358c7",
+      "correct_address": "0x35c1d",
+      "wrong_semantic_claimed": "event 63 handler(doc56 native_turn_events;doc58 增援 handler)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 63 的表值恰為 0x35c1d(Watcom 序頭、fixup 目標),與文件所稱的 event 63 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/58-remake-live-verification-log.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x358c7"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "58-remake-live-verification-log.md": 2,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3599b",
+      "correct_address": "0x35cf1",
+      "wrong_semantic_claimed": "event 65 註冊位址(doc25 §10 表)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 65 的表值恰為 0x35cf1(Watcom 序頭、fixup 目標),與文件所稱的 event 65 handler 對應。 doc25 對照表已寫 65 → 0x35cf1。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3599b"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35ebe",
+      "correct_address": "0x36214",
+      "wrong_semantic_claimed": "event 77 handler(doc25 §10 表)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 77 的表值恰為 0x36214(Watcom 序頭、fixup 目標),與文件所稱的 event 77 handler 對應。 doc25 2026-09-07 表已寫 77 → 0x36214,並證 0x35ebe 落在 JMP rel32 中段。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35ebe"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 3,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x36088",
+      "correct_address": "0x363de",
+      "wrong_semantic_claimed": "event 83 handler(doc25 對照表)/ doc11 函式邊界終點",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 83 的表值恰為 0x363de(Watcom 序頭、fixup 目標),與文件所稱的 event 83 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/11-enemy-ai.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x36088"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "11-enemy-ai.md": 1,
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x341db",
+      "correct_address": "0x34531",
+      "wrong_semantic_claimed": "event 0 handler(doc25 §6.1;哈諾 JOIN)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 0 的表值恰為 0x34531(Watcom 序頭、fixup 目標),與文件所稱的 event 0 handler 對應。 doc25 2026-09-08 表已寫 0 → 0x34531。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x341db"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 2,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x351e9",
+      "correct_address": "0x3553f",
+      "wrong_semantic_claimed": "event 49 handler(doc25 §x「event_id 49(0x351e9)」)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 49 的表值恰為 0x3553f(Watcom 序頭、fixup 目標),與文件所稱的 event 49 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x351e9"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x358ea",
+      "correct_address": "0x35c40",
+      "wrong_semantic_claimed": "event 64 handler(doc25 §11:event_id_groups.json 舊記錄 handler=0x358ea)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 64 的表值恰為 0x35c40(Watcom 序頭、fixup 目標),與文件所稱的 event 64 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x358ea"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "25-battle-event-system.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3462e",
+      "correct_address": "0x34984",
+      "wrong_semantic_claimed": "event 15 handler(doc99 map4 turn_events JSON)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 15 的表值恰為 0x34984(Watcom 序頭、fixup 目標),與文件所稱的 event 15 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3462e"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "99-chapter-sweep-results.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x34696",
+      "correct_address": "0x349ec",
+      "wrong_semantic_claimed": "event 16 handler(doc99 map4 turn_events JSON)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 16 的表值恰為 0x349ec(Watcom 序頭、fixup 目標),與文件所稱的 event 16 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x34696"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "99-chapter-sweep-results.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x346c8",
+      "correct_address": "0x34a1e",
+      "wrong_semantic_claimed": "event 17 handler(doc99 map4 turn_events JSON)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 17 的表值恰為 0x34a1e(Watcom 序頭、fixup 目標),與文件所稱的 event 17 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x346c8"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "99-chapter-sweep-results.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3499b",
+      "correct_address": "0x34cf1",
+      "wrong_semantic_claimed": "event 26 handler(91-worklist 4234:IDA 固定 event26=0x3499B)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 26 的表值恰為 0x34cf1(Watcom 序頭、fixup 目標),與文件所稱的 event 26 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3499b"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x34924",
+      "correct_address": "0x34c7a",
+      "wrong_semantic_claimed": "event 25 handler(91-worklist 4234:enemy turn10 event25=0x34924)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 25 的表值恰為 0x34c7a(Watcom 序頭、fixup 目標),與文件所稱的 event 25 handler 對應。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x34924"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x356b7",
+      "correct_address": "0x35a0d",
+      "wrong_semantic_claimed": "event 61 handler(渥德 JOIN;SESSION-HANDOFF-2026-07-06)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "tools/verify_address_claim_coverage.py --dossier(+0x356 候選)+ 以 LE fixup 讀戰鬥事件跳表 0x51b91:index 61 的表值恰為 0x35a0d(Watcom 序頭、fixup 目標),與文件所稱的 event 61 handler 對應。 91-worklist 1089 已寫 index 61 = 0x35a0d。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x356b7"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3419c",
+      "correct_address": "0x344f2",
+      "wrong_semantic_claimed": "3 引數的事件 helper(SESSION-HANDOFF:[0x53AD5]+0x10==4 → 0x3419C(20,20,11))",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "dossier +0x356 候選 0x344f2 有 Watcom 序頭、20 個直接呼叫端;doc25 2026-09-07 記錄的呼叫 `push 0,0x2c,0x27; call 0x344f2; add esp,0xc` 同為 3 引數。",
+      "root_cause": "舊版 EXE 位址(2026-08-14 換基準之前記錄);事件 handler 區段在新版整體高 0x356。文件語意未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "語意(三個引數的意義)未在 0x344f2 本體重驗,只核對了引數個數與位移。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3419c"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "11-enemy-ai.md": 2,
+          "25-battle-event-system.md": 3,
+          "56-fd2-remake-sdd.md": 3,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e040",
+      "correct_address": "0x4e390",
+      "wrong_semantic_claimed": "flood-fill reach mask 子函式(doc11/doc56/91-worklist)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc11 §「flood-fill reach mask」明寫 `FUN_0004e8a5(); FUN_0004e390(); // = 舊位址 0x4e555→0x4e040`;dossier +0x350 候選同為 0x4e390(6 個直接呼叫端)。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/11-enemy-ai.md",
+      "correction_section": "L1414",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e040"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "11-enemy-ai.md": 5,
+          "13-battle-menu-system.md": 2,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 5,
+          "57-ui-evidence-matrix.md": 3,
+          "91-worklist.md": 4,
+          "SESSION-HANDOFF-2026-07-06.md": 7
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e555",
+      "correct_address": "0x4e8a5",
+      "wrong_semantic_claimed": "移動地形成本 selector(doc11 0x14B78→0x4E555、doc42、doc32)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc11 L1414 明寫舊位址 0x4e555 → FUN_0004e8a5;dossier +0x350 候選同為 0x4e8a5(8 個直接呼叫端)。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/42-re-vs-remake-gap-audit.md"
+      ],
+      "correction_doc": "docs/knowledge-base/11-enemy-ai.md",
+      "correction_section": "L1414",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e555"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "11-enemy-ai.md": 3,
+          "13-battle-menu-system.md": 4,
+          "32-item-combat-stats-re.md": 6,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "57-ui-evidence-matrix.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e63d",
+      "correct_address": "0x4e98d",
+      "wrong_semantic_claimed": "four-mode blit(doc06;doc35 稱所在函式 FUN_0004e5cc)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc35 L2386 明寫 four-mode blit 其實是 `FUN_0004e98d`(0x4e98d..0x4eb47,442 bytes);dossier +0x350 候選同為 0x4e98d(39 個直接呼叫端)。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/06-animation-format.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "correction_section": "L2386",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e63d"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "06-animation-format.md": 1,
+          "23-boot-title-and-scenario-flow.md": 4,
+          "35-battle-animation-rendering.md": 28,
+          "56-fd2-remake-sdd.md": 4,
+          "58-remake-live-verification-log.md": 3,
+          "91-worklist.md": 7,
+          "SESSION-HANDOFF-2026-07-06.md": 8
+        }
+      }
+    },
+    {
+      "wrong_address": "0x375e2",
+      "correct_address": "0x37932",
+      "wrong_semantic_claimed": "|x-a4x|、|y-a4y| 距離 helper(doc11 L1418)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc11 L1418 明寫「呼叫 FUN_00037932,等價舊 0x375e2」;dossier +0x350 候選同為 0x37932(25 個直接呼叫端)。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md"
+      ],
+      "correction_doc": "docs/knowledge-base/11-enemy-ai.md",
+      "correction_section": "L1418",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x375e2"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "11-enemy-ai.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x36fcc",
+      "correct_address": "0x37324",
+      "wrong_semantic_claimed": "開檔函式(doc36 §「直接反組譯驗證」:0x111ba 內 call 0x36fcc 帶字串 id 0xde)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "現行版 0x111ba 本體 `0x111e1 call 0x37324`(capstone);doc25 L1731 另示 FD2.SAV 開檔為 CALL 0x37324;位移 +0x358 與 stack-check 0x36cd7→0x3702f 同區段同位移。",
+      "root_cause": "舊版 EXE 位址;0x36xxx–0x37xxx 前段在新版高 0x358(與 EDITION_MOVED 的 delay/stack-check 一致)。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x36fcc"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "36-sfx-audio-data.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x379ee",
+      "correct_address": "0x37d3e",
+      "wrong_semantic_claimed": "main 開頭的音效/檔案子系統 init 之一(doc23 L21)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "現行版 main 0x25bf4 前兩個 call 是 `0x25c01 call 0x37d3e`、`0x25c06 call 0x3aa72`(capstone),doc12 L160 亦如此記載;+0x350。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md"
+      ],
+      "correction_doc": "docs/knowledge-base/12-music-playback-and-scene.md",
+      "correction_section": "L160",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x379ee"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3a722",
+      "correct_address": "0x3aa72",
+      "wrong_semantic_claimed": "main 開頭的 init 之一(doc23 L21)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "同上:main 第二個 call 是 0x3aa72;+0x350。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md"
+      ],
+      "correction_doc": "docs/knowledge-base/12-music-playback-and-scene.md",
+      "correction_section": "L160",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3a722"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x38d3b",
+      "correct_address": "0x3908b",
+      "wrong_semantic_claimed": "main 開頭的 init 之一(doc23 L21)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "現行版 main `0x25c2b call 0x3908b`(capstone);+0x350,與同一句的另兩個 init 同位移。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x38d3b"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3dc9f",
+      "correct_address": "0x3dfef",
+      "wrong_semantic_claimed": "[0x541b0] 的寫入處(獨立校準函式,doc39 L228)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "現行版 0x3dfef 本體 `0x3e014 mov dword ptr [0x41b0], esi`(obj2 基底省略後的 [0x541b0]),`0x3e02b imul eax,[0x41b0]`;dossier +0x350 候選同為 0x3dfef(fixup 目標)。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段與 0x4dxxx–0x4exxx 區段在新版整體高 0x350(本批 10 筆同一位移,含既有兩筆勘誤 0x4dbfc/0x4e893 —— 那兩筆 root_cause 寫『個別誤記』應改為版本差)。",
+      "affected_docs": [
+        "docs/knowledge-base/39-ani-afm-format.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3dc9f"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "39-ani-afm-format.md": 1,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x11fba",
+      "correct_address": "0x111ba",
+      "wrong_semantic_claimed": "通用容器資源載入函式(doc36 L66 call 0x11fba)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc36 §「位址勘誤第二輪」自己已訂正為 0x111ba(PRIM 的 load_res);只是沒登錄勘誤表。",
+      "root_cause": "打字錯(0x11fba vs 0x111ba),doc36 第 10 輪已發現。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "correction_section": "位址勘誤第二輪",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x11fba"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 1,
+          "36-sfx-audio-data.md": 7,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35bba",
+      "correct_address": "0x35b78",
+      "wrong_semantic_claimed": "ch28 handler export 的 native call target(doc58 L2243)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc58 L2247 自己已寫「exported target 0x35bba 落在真正函式本體內部 0x42 bytes 處」;真正入口 0x35b78(dossier 所在函式 = 0x35b78 +0x42)。",
+      "root_cause": "exporter 位址標籤落在函式中段(與 0x4dbfc 同類),已修好。",
+      "affected_docs": [
+        "docs/knowledge-base/58-remake-live-verification-log.md"
+      ],
+      "correction_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "correction_section": "L2243-2247",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35bba"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "58-remake-live-verification-log.md": 8
+        }
+      }
+    },
+    {
+      "wrong_address": "0x26896",
+      "correct_address": "0x25a96",
+      "wrong_semantic_claimed": "播 SFX 函式 play_sfx_a(doc36 §1 第 8 輪)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc36 §「本輪用 Ghidra 獨立佐證」表:0x26896(第 8 輪誤記)不是函式入口,落在 FUN_0002670e 中間;0x25a96(第 9 輪更正)= play_sfx_a,81 個呼叫端。現行版 0x25a96 本體用 handle [0x53ee4]。",
+      "root_cause": "第 8 輪手動反組譯誤記(doc36 自述),第 9 輪更正但未登錄。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "correction_section": "Ghidra 獨立佐證表",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x26896"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "36-sfx-audio-data.md": 4,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-09-03.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x26945",
+      "correct_address": "0x25b45",
+      "wrong_semantic_claimed": "播 SFX 函式第二份拷貝、操作 handle [0x53ee8](doc36 §1)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "doc36 稱 0x26945 是同一函式的第二份拷貝、操作 [0x53ee8];現行版 play_sfx_b 0x25b45 本體 `0x25b76 push dword ptr [0x3ee8]`(capstone),與 0x25a96 用 [0x3ee4] 成對;與 0x26896→0x25a96 同一批誤記。",
+      "root_cause": "與 0x26896 同批第 8 輪誤記。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "correction_section": "§1 / Ghidra 獨立佐證表",
+      "still_pending": "0x26945 → 0x25b45 是由「第二份拷貝 + handle [0x53ee8]」推得,doc36 沒有明寫這一對。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x26945"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "36-sfx-audio-data.md": 3,
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x37795",
+      "correct_address": "0x37ae5",
+      "wrong_semantic_claimed": "VGA DAC 埠寫入原語(doc35 §「DAC 埠寫入原語」、doc50 L429:0x11df2 呼叫 0x37795 push 0x3c8/0x3c9)",
+      "discovered_date": "2026-09-17",
+      "discovery_method": "dossier +0x350 候選 0x37ae5(48 個直接呼叫端);capstone 反組譯 0x37ae5 本體:`0x37ae8 mov edx,[ebp+8]`、`0x37aee out dx, al` —— 以參數為埠號的 out 原語;doc58 L3590 亦記 0x11d40 迴圈呼叫 0x37ae5。",
+      "root_cause": "舊版 EXE 位址;0x37xxx 尾段在新版高 0x350(本批同位移 12 筆)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-17 續十九",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x37795"
+        ],
+        "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 7
         }
       }
     }
