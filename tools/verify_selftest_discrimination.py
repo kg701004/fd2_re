@@ -115,7 +115,9 @@ Usage
     python tools/verify_selftest_discrimination.py --include-ghidra
     python tools/verify_selftest_discrimination.py --selftest
     python tools/verify_selftest_discrimination.py --check-registry   # 登錄表過期偵測(秒級,commit 前閘門)
-    python tools/verify_selftest_discrimination.py --exhaustive --changed   # 只窮舉這次改動的工具(commit 前閘門)
+    python tools/verify_selftest_discrimination.py --precommit   # commit 前一道:登錄表過期 + 窮舉改動與相依的工具 + 逾時確認
+    python tools/verify_selftest_discrimination.py --exhaustive --changed   # 只窮舉這次改動(含相依)的工具
+    python tools/verify_selftest_discrimination.py --exhaustive --confirm-timeouts   # 逾時抓到的用完整上限重跑確認
     python tools/verify_selftest_discrimination.py --exhaustive --tool a.py --tool b.py
 """
 
@@ -646,7 +648,7 @@ def _artifacts_notice(rows: list, timeout: int) -> bool:
 
 def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
               exhaustive: bool = False, equivalents: dict | None = None,
-              artifact_rows: list | None = None) -> dict:
+              artifact_rows: list | None = None, confirm_timeouts: bool = False) -> dict:
     path = TOOLS / name
     recover_orphaned_backups()
     original = path.read_bytes()
@@ -707,6 +709,10 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                 out["artifact_probe"] = f"未突變時重生就不相同({base}),本工具不啟用"
     covered: list[str] = []
     reachable_attempted = reachable_caught = 0
+    # 2026-09-17:逾時算「抓到」,但以前不留痕。逾時縮放之後,一個慢 10 倍卻仍正確的突變會被算成
+    # 抓到而看不出來;所以每一筆逾時都記下,--confirm-timeouts 時用完整上限重跑確認。
+    timed: list[tuple] = []
+    false_catch: list[str] = []
     root_before = _root_entries()
     try:
         for idx in picks:
@@ -732,6 +738,7 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                 passed, _ = run_selftest(name, mut_timeout)
             except subprocess.TimeoutExpired:
                 passed = False
+                timed.append((idx, mutated, what, at_line, in_product))
             if not passed:
                 caught += 1
                 if in_product:
@@ -748,6 +755,27 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                 else:
                     escapes.append({"line": at_line, "what": what, "func": s["func"],
                                     "text": s["text"], "key": s["key"]})
+        if confirm_timeouts:
+            for idx, mutated, what, at_line, in_product in timed:
+                path.write_text(mutated, encoding="utf-8")
+                try:
+                    passed, _ = run_selftest(name, timeout)
+                except subprocess.TimeoutExpired:
+                    continue                    # 完整上限仍逾時:確認是真的抓到
+                if not passed:
+                    continue
+                # 給足時間就通過 = 逾時是假的抓到:把帳退回去,並依可達與否記成逃逸。
+                s = by_idx[idx]
+                false_catch.append(s["key"])
+                caught -= 1
+                if in_product:
+                    reachable_caught -= 1
+                    caught_keys.discard(s["key"])
+                    if probe_rows and _artifacts_notice(probe_rows, timeout):
+                        covered.append(s["key"])
+                    else:
+                        escapes.append({"line": at_line, "what": what, "func": s["func"],
+                                        "text": s["text"], "key": s["key"]})
     finally:
         path.write_bytes(original)
         out["side_effects"] = quarantine_side_effects(root_before)
@@ -776,6 +804,8 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0,
                reachable_escape_details=real,
                equivalent_escapes=[e["key"] for e in escapes if e["key"] in registered],
                covered_by_artifacts=covered,
+               timed_out=[by_idx[i]["key"] for i, *_ in timed],
+               timeout_false_catch=false_catch,
                # 被 artifacts 軸抓到 = 突變改變了產物 = 行為變了,同樣推翻「等價」的主張。
                registry_contradicted=sorted(k for k in registered
                                             if k in caught_keys or k in covered),
@@ -1151,6 +1181,14 @@ def selftest() -> int:
             ["tools/encode_text.py", "tools/nope.py", "docs/x.py", "tools/sub/encode_text.py",
              "tools\\encode_text.py", "tools/encode_text.txt"]) == {"encode_text.py"},
         "上一輪基準時間有寫進結果": "mutation_timeout" in sharp and sharp["mutation_timeout"] == 30,
+        "import 解析:頂層與函式內的 import/from 都算,相對 import 不算": _imports_of(
+            "import a.b, c\nfrom d import x\nfrom . import rel\ndef f():\n    import e\n    from f.g import h\n")
+            == {"a", "c", "d", "e", "f"},
+        "相依遞迴:改 A 連帶 B(import A)與 C(import B),不含 A 自己與無關的 D": dependents_of(
+            {"A.py"}, {"B.py": {"A.py"}, "C.py": {"B.py"}, "D.py": {"X.py"}, "A.py": set()}) == {"B.py", "C.py"},
+        "真實相依:dump_chapter_beats 連帶 derive_native_argcounts(它延遲 import 後者)":
+            "dump_chapter_beats.py" in dependents_of({"derive_native_argcounts.py"}, tool_imports()),
+        "逾時留痕欄位存在且本輪為空": sharp.get("timed_out") == [] and sharp.get("timeout_false_catch") == [],
     }
     ok9 = all(b9.values())
     print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b9.items()))
@@ -1212,6 +1250,45 @@ def _tools_from_paths(paths) -> set[str]:
     return out
 
 
+def _imports_of(src: str) -> set[str]:
+    """一份原始碼 import 的頂層模組名(含函式內的延遲 import —— 本 repo 大量使用)。"""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return set()
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(a.name.split(".")[0] for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names.add(node.module.split(".")[0])
+    return names
+
+
+def dependents_of(changed: set[str], imports: dict[str, set[str]]) -> set[str]:
+    """哪些工具(直接或間接)import 了 changed 裡的模組。imports: 工具檔名 -> 它 import 的工具檔名集合。
+
+    2026-09-17:`--changed` 原本只跑改到的檔案。改共用模組(`callgraph_le`)時,用它的
+    `dump_chapter_beats` / `derive_native_argcounts` 行為可能跟著變,卻一支都不會跑 —— 閘門最大的洞。
+    """
+    out: set[str] = set()
+    frontier = set(changed)
+    while frontier:
+        nxt = {t for t, deps in imports.items() if deps & frontier and t not in out and t not in changed}
+        out |= nxt
+        frontier = nxt
+    return out
+
+
+def tool_imports() -> dict[str, set[str]]:
+    """每支 tools/*.py -> 它 import 的、同樣位於 tools/ 的模組(以檔名表示)。"""
+    local = {p.stem: p.name for p in TOOLS.glob("*.py")}
+    out: dict[str, set[str]] = {}
+    for p in TOOLS.glob("*.py"):
+        out[p.name] = {local[m] for m in _imports_of(p.read_text(encoding="utf-8", errors="replace")) if m in local}
+    return out
+
+
 def changed_tools() -> list[str]:
     """相對於 HEAD 有改動(工作樹或暫存區)以及尚未追蹤的 tools/*.py。
 
@@ -1225,6 +1302,23 @@ def changed_tools() -> list[str]:
                            encoding="utf-8", errors="replace")
         names |= _tools_from_paths(r.stdout.splitlines())
     return sorted(names)
+
+
+def changed_with_dependents() -> tuple[list[str], list[str]]:
+    """(改動的工具, 連帶要跑的相依工具);相依只收 INVOKE 認得的。改動檔本身不在 INVOKE(例如共用模組
+    `callgraph_le` 有 selftest 所以在,但純函式庫 `le_xref` 不在)時,仍以它為起點找相依。"""
+    raw: set[str] = set()
+    for args in (["diff", "--name-only", "HEAD", "--", "tools"],
+                 ["ls-files", "--others", "--exclude-standard", "--", "tools"]):
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+        for line in r.stdout.splitlines():
+            p = line.strip().replace("\\", "/")
+            if p.startswith("tools/") and p.endswith(".py") and p.count("/") == 1:
+                raw.add(p[6:])
+    changed = sorted(n for n in raw if n in INVOKE)
+    deps = sorted(n for n in dependents_of(raw, tool_imports()) if n in INVOKE)
+    return changed, deps
 
 
 def check_registry(path: Path) -> int:
@@ -1255,7 +1349,12 @@ def main() -> int:
     ap.add_argument("--tool", action="append",
                     help="只跑這一支;可重複給(2026-09-17 前只收最後一個,前面的被安靜蓋掉)")
     ap.add_argument("--changed", action="store_true",
-                    help="只跑相對於 HEAD 有改動或尚未追蹤的 tools/*.py(commit 前配 --exhaustive 用)")
+                    help="只跑相對於 HEAD 有改動或尚未追蹤的 tools/*.py,**連同 import 它們的工具**"
+                         "(commit 前配 --exhaustive 用)")
+    ap.add_argument("--confirm-timeouts", action="store_true",
+                    help="逾時抓到的突變用完整 --timeout 重跑一次;給足時間就通過的算逃逸,不算抓到")
+    ap.add_argument("--precommit", action="store_true",
+                    help="commit 前的一道:= --check-registry,再 --exhaustive --changed --confirm-timeouts")
     ap.add_argument("--offline", action="store_true", help="只跑不需 Ghidra/DOSBox 的工具")
     ap.add_argument("--include-ghidra", action="store_true")
     # 2026-09-08:預設一度用 5,結果 `decode_story_text.py` 被判 WEAK(0/5),
@@ -1282,6 +1381,11 @@ def main() -> int:
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.precommit:
+        rc0 = check_registry(Path(a.equivalents))
+        if rc0:
+            return rc0
+        a.exhaustive = a.changed = a.confirm_timeouts = True
     if a.check_registry:
         return check_registry(Path(a.equivalents))
     if a.list:
@@ -1293,11 +1397,12 @@ def main() -> int:
     if a.exhaustive:
         _vg()   # 在任何突變之前載入 artifacts 比對邏輯(見 _vg 的說明)
     if a.changed:
-        names = changed_tools()
+        changed, deps = changed_with_dependents()
+        names = sorted(set(changed) | set(deps))
         if not names:
             print("相對於 HEAD 沒有改動的工具,沒有東西要跑。")
             return 0
-        print(f"改動的工具:{', '.join(names)}")
+        print(f"改動的工具:{', '.join(changed) or '(無;只有共用模組改動)'};連帶相依:{', '.join(deps) or '無'}")
     elif a.tool:
         names = list(dict.fromkeys(a.tool))
     else:
@@ -1318,7 +1423,8 @@ def main() -> int:
         covered_all: set[str] = set()
         for k in range(passes):
             r = test_tool(n, a.tries, a.timeout, seed=a.seed + k,
-                          exhaustive=a.exhaustive, equivalents=equivalents)
+                          exhaustive=a.exhaustive, equivalents=equivalents,
+                          confirm_timeouts=a.confirm_timeouts)
             caught_total += r.get("mutations_caught", 0)
             attempted_total += r.get("mutations_attempted", 0)
             reach_caught_total += r.get("reachable_caught", 0)

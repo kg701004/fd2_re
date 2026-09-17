@@ -102,6 +102,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 import time
@@ -223,18 +224,49 @@ def axis_wsl(timeout: int) -> dict:
              # 2026-09-17:三支需要 capstone / Pillow 的工具,selftest 拆出離線核心後在 WSL
              # 也能跑(缺套件的題目逐題 SKIP)。放進來是棘輪:純函式一旦長出硬相依,這裡當場失敗。
              "derive_native_argcounts", "dump_chapter_beats", "font_grid"]
+    # 2026-09-17:三支工具的 selftest 在缺套件時改成「離線核心 PASS + 逐題 SKIP」。只看 rc 會讓
+    # 「整份都 SKIP」也算綠;所以每支印 rc/PASS/SKIP 數,由 _wsl_verdict 判定。
     body = ["#!/bin/bash", "cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re || exit 1",
-            "fail=0", "for t in " + " ".join(tools) + "; do",
-            '  python3 "tools/$t.py" --selftest >/dev/null 2>&1 || { echo "FAIL $t"; fail=$((fail+1)); }',
-            "done", 'echo "wsl_fail=$fail"']
+            "for t in " + " ".join(tools) + "; do",
+            '  python3 "tools/$t.py" --selftest > /tmp/ve_$t.txt 2>&1; rc=$?',
+            '  echo "wsl_tool $t rc=$rc pass=$(grep -c PASS /tmp/ve_$t.txt) skip=$(grep -c SKIP /tmp/ve_$t.txt)"',
+            "done", 'echo "wsl_done"']
     script.write_text("\n".join(body) + "\n", encoding="utf-8", newline="\n")
     rc, out = run(["wsl", "-d", "Ubuntu", "bash",
                    "/mnt/c/Users/kg701/Desktop/GAME/fd2_re/.wsl_build/verify_everything_wsl.sh"],
                   timeout, cwd=ROOT)
-    n = next((l.split("=")[1].strip() for l in out.splitlines() if l.startswith("wsl_fail=")), None)
-    if n is None:
+    if "wsl_done" not in out:
         return {"ok": False, "detail": f"無法取得結果 rc={rc}: {out[-80:]}"}
-    return {"ok": n == "0", "detail": f"{len(tools)} 支中 {n} 支失敗"}
+    failed, skips, seen = _wsl_verdict(out.splitlines())
+    return {"ok": not failed and seen == len(tools),
+            "detail": f"{len(tools)} 支中 {len(failed)} 支失敗(rc≠0,或有 SKIP 卻 0 個 PASS);SKIP 共 {skips} 題",
+            "fails": failed[:5]}
+
+
+_WSL_LINE = re.compile(r"wsl_tool (\S+) rc=(\d+) pass=(\d+) skip=(\d+)$")
+
+
+def _wsl_verdict(lines: list[str]) -> tuple[list[str], int, int]:
+    """(失敗的工具, SKIP 總數, 看到幾支)。
+
+    失敗 = rc≠0,**或**有 SKIP 卻一個 PASS 都沒有(整份被跳過不算過)。只看「0 個 PASS」不行:
+    `audit_evidence_provenance` / `safe_output` / `fd2_env_healthcheck` 的 selftest 通過時本來就不印
+    PASS 字樣(2026-09-17 第一版就把它們誤判成失敗)。格式不對的 wsl_tool 行也算失敗,不猜。
+    """
+    failed, skips, seen = [], 0, 0
+    for l in lines:
+        if not l.startswith("wsl_tool "):
+            continue
+        seen += 1
+        m = _WSL_LINE.match(l.strip())
+        if m is None:
+            failed.append(l.strip())
+            continue
+        name, rc, npass, nskip = m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4))
+        skips += nskip
+        if rc != 0 or (npass == 0 and nskip > 0):
+            failed.append(name)
+    return failed, skips, seen
 
 
 AXES = {
@@ -317,6 +349,21 @@ def selftest() -> int:
           f",看內容={d_same}")
     if not ok3c:
         fails.append("內容漂移檢查是平凡的(只看布林值也偵測得到)")
+
+    print("\n(3d) wsl 軸:rc≠0 或「有 SKIP 卻 0 個 PASS」才算失敗;不印 PASS 的通過不算;SKIP 數要算出來")
+    f5, s5, n5 = _wsl_verdict(["wsl_tool a rc=0 pass=6 skip=1",      # 正常
+                               "wsl_tool b rc=0 pass=0 skip=9",      # 整份被跳過 -> 失敗
+                               "wsl_tool c rc=1 pass=3 skip=0",      # rc 非 0 -> 失敗
+                               "wsl_tool d rc=0 pass=0 skip=0",      # 通過但不印 PASS -> 不算失敗
+                               "wsl_tool e rc=0 pass=1 skip=9",      # 恰好 1 個 PASS -> 不算失敗(釘住 ==0 不是 <2)
+                               "wsl_tool f rc=0 pass=x",             # 格式不對 -> 失敗
+                               "wsl_tool g rc=0 pass=0 skip=1",      # 恰好 1 個 SKIP、0 個 PASS -> 失敗(釘住 >0 不是 >1)
+                               "wsl_tool h rc=2 pass=5 skip=0",      # rc=2 也是失敗(釘住 !=0 不是 !=1)
+                               "noise", "wsl_done"])
+    ok5 = f5 == ["b", "c", "wsl_tool f rc=0 pass=x", "g", "h"] and s5 == 20 and n5 == 8
+    print(f"    {'PASS' if ok5 else 'FAIL'}: failed={f5}(應 ['b', 'c', 格式錯的 f, 'g', 'h'])、skip={s5}(應 20)、seen={n5}(應 8)")
+    if not ok5:
+        fails.append("wsl 軸的 PASS/SKIP 判定不對")
 
     print("\n(4) 已知良性清單必須非空且附理由(避免它靜默腐爛成空殼)")
     ok4 = bool(KNOWN_BENIGN) and all(len(v) > 10 for v in KNOWN_BENIGN.values())

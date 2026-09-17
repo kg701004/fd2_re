@@ -4975,3 +4975,22 @@ harness 仍把它們當 selftest、不當產品碼)。
 暫存區)或尚未追蹤的 `tools/*.py`,過濾成 harness 認得的工具後逐一窮舉;沒有改動就直接回 0。
 寫進 AGENTS.md:修改 `tools/*.py` 時提交前兩道都跑。順帶修掉 `--tool` 只收最後一個值的坑
 (續十一時給兩次只跑了一支,前一個被安靜蓋掉),改成可重複給。
+## 2026-09-17 續十四:把盲點清單做掉 —— 相依連帶、逾時留痕、`--precommit`、掃描停點、wsl 軸 SKIP 可見
+
+續十三之後列出的風險,除了「登錄表理由過時」屬人工複審之外,其餘全部是既有工具的延伸,沒有新工具:
+
+| 盲點 | 改法 | 釘住它的題 |
+|---|---|---|
+| `--changed` 不跑相依工具 | AST 讀每支 `tools/*.py` 的 import(含函式內的延遲 import),反向遞迴找出 import 改動模組的工具一起跑;改動檔本身不在 harness 清單(純函式庫)時仍以它為起點 | harness (9):合成相依圖 A←B←C,以及真實的「改 `derive_native_argcounts` 連帶 `dump_chapter_beats`」 |
+| 逾時抓到沒留痕 | 每筆逾時記進 `timed_out`;`--confirm-timeouts` 用完整上限重跑,給足時間就通過的退回帳目、記 `timeout_false_catch` 並依可達與否列為逃逸 | harness (9):欄位存在;真實的假抓到案例要等它發生才有 |
+| 提交前兩道指令 | `--precommit` = 登錄表過期檢查 → 窮舉改動與相依的工具 → 逾時確認;AGENTS.md 改成一道 | — |
+| `callee_argc` 掃進填充位元組而高估 | 有序頭的函式在位移 0 的 `ret` 之後緊接 `int3`/`nop` 或下一個序頭就停;ret 後直接接指令(多出口)仍繼續 | (13b) 成對:`ret; int3; [esp+0x10]` → 1;`ret; [esp+8]` → 2 |
+| wsl 軸的 PASS 含 SKIP 看不見 | 腳本每支印 `rc/pass/skip`,`_wsl_verdict` 要求 rc=0 **且**至少 1 個 PASS,摘要印 SKIP 總數 | verify_everything (3d):`rc=0 pass=0` 必須算失敗 |
+
+本輪 `--changed` 實測連帶找出三支:`dump_chapter_beats`(延遲 import `derive_native_argcounts`)、
+`export_handler_scripts`、`verify_tool_hygiene`(import `verify_everything`)—— 前兩輪的閘門都沒跑到它們。
+wsl 軸的判準第一版寫成「至少 1 個 PASS」,實跑立刻誤判三支(`audit_evidence_provenance`、`safe_output`、
+`fd2_env_healthcheck` 通過時本來就不印 PASS 字樣);改成「rc≠0,或有 SKIP 卻 0 個 PASS」,成對案例
+(`pass=0 skip=0` 不算失敗、`pass=1 skip=9` 不算失敗、格式錯的行算失敗)釘住。順帶:這一段的 patch
+腳本第一次走 heredoc,正規式的 `\S` 被 shell 吃掉、第二次切函式終點切錯把 `AXES` 一起刪了 ——
+兩次都被 selftest 當場擋下,最後從 HEAD 重做。

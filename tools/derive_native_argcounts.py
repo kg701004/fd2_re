@@ -351,6 +351,13 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
             clean_ret = True
             if leaf:
                 break
+            # 有序頭的函式也可能多出口,ret 之後還有別的分支,所以繼續掃;但 ret 後面緊接
+            # 填充(int3 / nop)或下一個序頭就是函式結束 —— 再掃下去讀到的是填充位元組被
+            # 反組譯成的垃圾,可能長得像 [esp+N] 而**高估**(2026-09-17 盲點清單第 3 項)。
+            nxt = cg._insn(a + i.size)
+            if nxt is None or nxt.mnemonic in ("int3", "nop") or _is_stack_check_prologue(cg, a + i.size):
+                a += i.size
+                break
         a += i.size
     if leaf and not clean_ret:
         return None, "leaf without clean ret"
@@ -742,6 +749,14 @@ def _selftest_callee_cases() -> dict:
     g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "sub", "esp, 0x8", 3),
              _CI(0, "mov", "eax, dword ptr [ebp + 0x8]", 3), _CI(0, "leave"), _CI(0, "ret")], prologue=False)
     syn["leaf leave 後 ret 乾淨"] = callee_argc(g, 0, [])[0] == 1
+    # (k)(l) 成對:有序頭的函式在 ret 之後緊接 int3 填充 -> 停,後面的 [esp+0x10] 不算;
+    #        ret 之後直接接指令(多出口函式)-> 繼續,[esp+8] 算第 2 個。
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"), _CI(0, "int3"),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x10]", 4)])
+    syn["ret 後接 int3 填充就停"] = callee_argc(g, 0, [])[0] == 1
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
+    syn["ret 後接指令(多出口)就繼續"] = callee_argc(g, 0, [])[0] == 2
     return syn
 
 

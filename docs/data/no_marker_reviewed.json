@@ -34408,6 +34408,22 @@
    "excerpt": "不讓「少了幾個」看起來像「簽名就這麼短」。真實 30 章實測 0 條,所以用合成指令流釘進 (8)。",
    "verdict": "benign",
    "note": "工具行為陳述(callee_argc 第三訊號的驗證數字、PRIM 改正與重生比對、--check-registry 閘門),非遊戲事實主張;依據為本 commit 內 derive_native_argcounts/dump_chapter_beats/verify_selftest_discrimination 的 selftest 與 verify_generated_artifacts 輸出。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4986,
+   "excerpt_sha1": "180ac88cae8fe7db8caa46c910a1b193c9c484e2",
+   "excerpt": "| 提交前兩道指令 | `--precommit` = 登錄表過期檢查 → 窮舉改動與相依的工具 → 逾時確認;AGENTS.md 改成一道 | — |",
+   "verdict": "benign",
+   "note": "工具行為陳述(閘門與 harness 的機制變更、實測連帶結果),非遊戲事實主張;依據為本 commit 內三支工具的 selftest。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 4990,
+   "excerpt_sha1": "724e4f433bfec8a6a72dd0efc3df7d911878af51",
+   "excerpt": "本輪 `--changed` 實測連帶找出三支:`dump_chapter_beats`(延遲 import `derive_native_argcounts`)、",
+   "verdict": "benign",
+   "note": "工具行為陳述(閘門與 harness 的機制變更、實測連帶結果),非遊戲事實主張;依據為本 commit 內三支工具的 selftest。"
   }
  ]
 }
