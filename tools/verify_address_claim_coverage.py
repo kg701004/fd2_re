@@ -54,6 +54,8 @@ INNER:函式內部引用,不是入口主張(2026-09-17)
     python tools/verify_address_claim_coverage.py                # 閘門
     python tools/verify_address_claim_coverage.py --report       # 依引用次數列出 UNREVIEWED
     python tools/verify_address_claim_coverage.py --addr 0x4e893 # 單一位址的四個訊號與分類
+    python tools/verify_address_claim_coverage.py --triage       # 殘餘依『是否落在指令邊界』分流
+    python tools/verify_address_claim_coverage.py --dossier 20 --json out.json   # 殘餘的判讀資料(四個假說)
     python tools/verify_address_claim_coverage.py --write-baseline
     python tools/verify_address_claim_coverage.py --selftest
 """
@@ -240,6 +242,151 @@ def triage() -> int:
         i = bisect.bisect_right(ent, a) - 1
         e = ent[i] if i >= 0 else None
         print(f"{a:#09x} {n:4d}  {format(e, '#09x') if e else '?'}  (+{a - e if e else 0:#x})")
+    return 0
+
+
+# --------------------------------------------------------------------------- #
+# --dossier:殘餘無訊號位址的判讀資料(2026-09-17)
+# --------------------------------------------------------------------------- #
+# INNER 分掉之後剩下的每一個都「不在指令邊界」:不是資料就是錯位址。逐一開 Ghidra 每個要
+# 5–15 分鐘;這裡把能機械算的假說先算好,人只讀一份資料下結論。四個假說:
+#   DATA      往前最近的 fixup 目標當表基底,偏移小且基底不是程式碼 -> 表格內部
+#   EDITION   加上已知的舊→新位移(勘誤表與 EDITION_MOVED 實測的),落到有訊號入口/合法邊界
+#   TYPO      ±16 bytes 內有有訊號入口
+#   WORDING   引用行的措辭:表格/資料 vs 入口/函式 vs 舊版/勘誤
+# 假說是候選,不是結論:勘誤登錄仍要人看過 —— 錯登一筆比留著不審更糟。
+DATA_WINDOW = 0x2000
+TYPO_WINDOW = 16
+WORD_DATA = re.compile(r"表|table|資料|陣列|array|欄位|record|record|struct|offset|偏移")
+WORD_OLD = re.compile(r"舊版|old edition|357074|勘誤|誤植|原標|應為")
+
+
+def edition_deltas(sig: dict) -> dict[int, str]:
+    """已知的舊→新位址位移 -> 來源。勘誤表裡兩邊都在 obj1 的配對,加上 dump_chapter_beats.EDITION_MOVED。"""
+    out: dict[int, str] = {}
+    try:
+        with open(ERRATA, encoding="utf-8") as f:
+            for e in json.load(f).get("errata", []):
+                try:
+                    w, c = int(e["wrong_address"], 16), int(e["correct_address"], 16)
+                except (KeyError, ValueError, TypeError):
+                    continue
+                if sig["base"] <= w < sig["hi"] and sig["base"] <= c < sig["hi"] and c != w:
+                    out.setdefault(c - w, f"errata {w:#x}->{c:#x}")
+    except (OSError, ValueError):
+        pass
+    try:
+        import dump_chapter_beats as DC
+        for op, (old, new) in DC.EDITION_MOVED.items():
+            out.setdefault(new - old, f"EDITION_MOVED {op}")
+    except Exception:                                          # noqa: BLE001
+        pass
+    return out
+
+
+def propose(sig: dict, addr: int, cache: dict, deltas: dict[int, str]) -> dict:
+    """一個位址的四個假說(純機械,不看文件)。"""
+    import bisect
+    d: dict = {"addr": f"{addr:#07x}"}
+    off = addr - sig["base"]
+    d["bytes"] = sig["code"][off:off + 16].hex(" ")
+    ent = containing_entry(sig, addr, cache)
+    d["containing"] = None if ent is None else {"entry": f"{ent:#x}", "offset": addr - ent}
+    fx = cache.setdefault("_fix", sorted(sig["fixups"]))
+    i = bisect.bisect_right(fx, addr) - 1
+    d["data"] = None
+    if i >= 0 and addr - fx[i] <= DATA_WINDOW:
+        fb = fx[i]
+        d["data"] = {"base": f"{fb:#x}", "offset": addr - fb,
+                     "base_is_code": fb in sig["prologue"] or fb in sig["calls"]}
+    d["edition"] = []
+    for delta, src in sorted(deltas.items()):
+        cand = addr + delta
+        if not sig["base"] <= cand < sig["hi"]:
+            continue
+        sigs = signals_for(sig, cand)
+        if sigs:
+            d["edition"].append({"delta": f"{delta:+#x}", "cand": f"{cand:#x}", "signals": sigs, "from": src})
+    ent_sorted = cache.setdefault("_ent", sorted(sig["plausible"]))
+    j = bisect.bisect_left(ent_sorted, addr - TYPO_WINDOW)
+    near = []
+    while j < len(ent_sorted) and ent_sorted[j] <= addr + TYPO_WINDOW:
+        if ent_sorted[j] != addr:
+            near.append(ent_sorted[j])
+        j += 1
+    d["typo"] = [f"{e:#x}({e - addr:+d})" for e in near]
+    # 假說排序:唯一的舊版位移命中 > 資料表(基底不是程式碼) > 多個位移命中 > 打字錯 > 不明。
+    # 實測(selftest 14):EDITION 對 100 個已知入口只誤提 2 個;TYPO 誤提 14 個(小型 leaf 函式本來
+    # 就相鄰),所以 TYPO 只當旁證,排最後。四種已知位移裡 +0x5844 與 +0x350 各出現在兩對勘誤上,
+    # 勘誤表的 root_cause 寫「個別誤記、非系統性」—— 同一個位移出現兩次不像巧合,保留但由人判。
+    if len(d["edition"]) == 1:
+        d["hypothesis"] = "EDITION"
+    elif d["data"] and not d["data"]["base_is_code"]:
+        d["hypothesis"] = "DATA"
+    elif d["edition"]:
+        d["hypothesis"] = "EDITION?"
+    elif d["typo"]:
+        d["hypothesis"] = "TYPO"
+    else:
+        d["hypothesis"] = "UNKNOWN"
+    return d
+
+
+def wording(sites: list[tuple[str, int]], limit: int = 4) -> list[dict]:
+    """引用行的原文與措辭分類(只看文件,與 propose 獨立)。"""
+    out = []
+    for name, lineno in sites[:limit]:
+        try:
+            lines = open(os.path.join(KB, name), encoding="utf-8", errors="replace").read().splitlines()
+            text = lines[lineno - 1].strip() if 1 <= lineno <= len(lines) else ""
+        except OSError:
+            text = ""
+        tags = []
+        if WORD_OLD.search(text):
+            tags.append("old/erratum")
+        if WORD_DATA.search(text):
+            tags.append("data")
+        if CLAIM_WORDS.search(text):
+            tags.append("entry")
+        out.append({"where": f"{name}:{lineno}", "tags": tags, "text": text[:160]})
+    return out
+
+
+def dossier(limit: int | None, json_out: str | None) -> int:
+    try:
+        _capstone()
+    except ImportError:
+        print("SKIP:本模式需要 capstone")
+        return 0
+    r = classify_all()
+    sig, un = r["sig"], r["unreviewed"]
+    cache: dict = {}
+    deltas = edition_deltas(sig)
+    order = sorted(un, key=lambda a: (-len(un[a]), a))
+    if limit:
+        order = order[:limit]
+    rows = []
+    for addr in order:
+        d = propose(sig, addr, cache, deltas)
+        d["refs"] = len(un[addr])
+        d["cites"] = wording(un[addr])
+        rows.append(d)
+    print(f"殘餘無訊號位址 {len(un)} 個,列出 {len(rows)} 個;已知舊→新位移 {len(deltas)} 種 "
+          f"{[f'{k:+#x}' for k in sorted(deltas)]}\n")
+    print(f"{'位址':>9} {'引用':>4} {'假說':9} {'所在函式':>16} {'資料基底':>18}  舊版候選 / 鄰近入口")
+    for d in rows:
+        c = d["containing"]; dt = d["data"]
+        print(f"{d['addr']:>9} {d['refs']:4d} {d['hypothesis']:9} "
+              f"{(c['entry'] + '+' + hex(c['offset'])) if c else '?':>16} "
+              f"{(dt['base'] + '+' + hex(dt['offset']) + ('(code)' if dt['base_is_code'] else '')) if dt else '-':>18}  "
+              f"{', '.join(e['cand'] + e['delta'] for e in d['edition']) or '-'} / {', '.join(d['typo']) or '-'}")
+    from collections import Counter as _C
+    print("\n假說分佈:", dict(_C(d["hypothesis"] for d in rows)))
+    if json_out:
+        with open(json_out, "w", encoding="utf-8", newline="\n") as f:
+            json.dump({"deltas": {f"{k:+#x}": v for k, v in deltas.items()}, "rows": rows},
+                      f, ensure_ascii=False, indent=1)
+        print(f"-> {json_out}")
     return 0
 
 
@@ -628,14 +775,84 @@ def selftest() -> int:
     if not ok13:
         fails.append(f"第四訊號/INNER:{[k for k, v in b13.items() if not v]}")
 
+    print("\n(14) dossier 假說:對已知勘誤配對的命中率,以及對已知入口不得提出舊版/打字錯假說")
+    # 正向:勘誤表裡兩邊都在 obj1 的配對,拿 wrong 去問,候選裡必須含 correct(位移假說是從同一張表
+    # 學來的,所以這題只證明「機制接得通」,不證明泛化;泛化看實際審 188 個的命中率)。
+    # 負向:100 個已知入口,EDITION(唯一位移命中)的誤提率必須低 —— 它是唯一會被拿去登錄勘誤的假說。
+    # 實測 2/100(2026-09-17),容許 ≤3。TYPO 對已知入口誤提 14/100,所以它只是旁證,不在這裡釘。
+    deltas14 = edition_deltas(sig)
+    c14: dict = {}
+    pairs = []
+    try:
+        with open(ERRATA, encoding="utf-8") as f:
+            for e in json.load(f).get("errata", []):
+                try:
+                    w, c = int(e["wrong_address"], 16), int(e["correct_address"], 16)
+                except (KeyError, ValueError, TypeError):
+                    continue
+                if sig["base"] <= w < sig["hi"] and sig["base"] <= c < sig["hi"] and c != w:
+                    pairs.append((w, c))
+    except (OSError, ValueError):
+        pass
+    hit = 0
+    for w, c in pairs:
+        d = propose(sig, w, c14, deltas14)
+        cands = {int(x["cand"], 16) for x in d["edition"]} | {int(t.split("(")[0], 16) for t in d["typo"]}
+        hit += c in cands
+    import random as _r14
+    _r14.seed(21)
+    good14 = _r14.sample(sorted(sig["prologue"]), 100)
+    noisy = [a for a in good14 if propose(sig, a, c14, deltas14)["hypothesis"] == "EDITION"]
+    ok14 = bool(pairs) and hit == len(pairs) and len(noisy) <= 3 and len(deltas14) >= 2
+    print(f"    {'PASS' if ok14 else 'FAIL'}: 勘誤配對 {len(pairs)} 對、候選含正確位址 {hit} 對(應全部);"
+          f"已知入口被提 EDITION 假說 {len(noisy)}/100(容許 ≤3);位移種類 {len(deltas14)}")
+    if not ok14:
+        fails.append(f"dossier 假說:命中 {hit}/{len(pairs)}、誤提 {len(noisy)}、位移 {len(deltas14)}")
+
+    print("\n(15) propose 的邊界(合成訊號集):TYPO 視窗 ±16、資料基底取最近的、DATA 視窗 0x2000、EDITION 計數")
+    # 2026-09-17 --precommit 抓到 9 個逃逸,全在這幾個常數與比較上;(14) 只看總數,看不到邊界。
+    B = 0x10000
+    A = B + 0x1000
+    def _sig(pro=(), fix=(), jmp=()):
+        pro, fix, jmp = set(pro), set(fix), set(jmp)
+        return {"base": B, "hi": B + 0x8000, "code": bytes(0x8000), "prologue": pro,
+                "calls": Counter(), "fixups": fix, "jmps": jmp, "plausible": pro | fix | jmp}
+    b15 = {}
+    # TYPO:±16 含,±17 不含;位址本身(若是入口)不算鄰近
+    t = propose(_sig(pro=[A - 16, A - 15, A + 16, A - 17, A + 17, A]), A, {}, {})   # 相鄰兩個:一次跳兩格會漏掉 -15
+    b15["TYPO 視窗 ±16 含、±17 不含、自己不算、相鄰的不漏"] = t["typo"] == [f"{A - 16:#x}(-16)", f"{A - 15:#x}(-15)", f"{A + 16:#x}(+16)"]
+    b15["位元組摘要恰好 16 bytes"] = len(t["bytes"].split()) == 16
+    # 資料基底:兩個 fixup 都在下方時取最近的那個;位址下方沒有 fixup -> None
+    t = propose(_sig(fix=[A - 0x100, A - 8]), A, {}, {})
+    b15["資料基底取最近的下方 fixup"] = t["data"] == {"base": f"{A - 8:#x}", "offset": 8, "base_is_code": False}
+    b15["下方沒有 fixup -> 無資料假說"] = propose(_sig(fix=[A + 4]), A, {}, {})["data"] is None
+    # DATA 視窗:恰好 0x2000 算、0x2001 不算;基底是程式碼要標出來
+    b15["DATA 視窗恰好 0x2000 算"] = propose(_sig(fix=[A - 0x2000]), A, {}, {})["data"]["offset"] == 0x2000
+    b15["DATA 視窗 0x2001 不算"] = propose(_sig(fix=[A - 0x2001]), A, {}, {})["data"] is None
+    b15["基底是程式碼要標 base_is_code"] = propose(_sig(pro=[A - 8], fix=[A - 8]), A, {}, {})["data"]["base_is_code"] is True
+    # EDITION:恰好一個位移命中 -> EDITION;兩個都命中 -> EDITION?;沒有 -> 不是 EDITION
+    one = propose(_sig(pro=[A + 0x356]), A, {}, {0x356: "x", 0x358: "y"})
+    two = propose(_sig(pro=[A + 0x356, A + 0x358]), A, {}, {0x356: "x", 0x358: "y"})
+    none = propose(_sig(pro=[A + 0x357]), A, {}, {0x356: "x", 0x358: "y"})
+    b15["一個位移命中 -> EDITION"] = one["hypothesis"] == "EDITION" and one["edition"][0]["cand"] == f"{A + 0x356:#x}"
+    b15["兩個位移命中 -> EDITION?"] = two["hypothesis"] == "EDITION?" and len(two["edition"]) == 2
+    b15["沒有命中 -> 不是 EDITION"] = none["hypothesis"] not in ("EDITION", "EDITION?") and none["edition"] == []
+    # 排序:DATA(基底非程式碼)高於 TYPO;唯一 EDITION 高於 DATA
+    b15["DATA 高於 TYPO"] = propose(_sig(pro=[A + 3], fix=[A - 8]), A, {}, {})["hypothesis"] == "DATA"
+    b15["EDITION 高於 DATA"] = propose(_sig(pro=[A + 0x356], fix=[A - 8]), A, {}, {0x356: "x"})["hypothesis"] == "EDITION"
+    ok15 = all(b15.values())
+    print(f"    {'PASS' if ok15 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b15.items()))
+    if not ok15:
+        fails.append(f"propose 邊界:{[k for k, v in b15.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(12 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
+    print("\n--selftest passed(14 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
           "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
-          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類)。")
+          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界)。")
     return 0
 
 
@@ -645,6 +862,9 @@ def main() -> int:
     ap.add_argument("--triage", action="store_true",
                     help="把 UNREVIEWED 依『是否落在合法指令邊界』分流(需要 capstone)")
     ap.add_argument("--addr", help="查單一位址的四個訊號與分類")
+    ap.add_argument("--dossier", nargs="?", const=0, type=int, metavar="N",
+                    help="殘餘無訊號位址的判讀資料(資料表/舊版位移/打字錯/措辭);N = 只列引用最多的前 N 個")
+    ap.add_argument("--json", help="--dossier 的 JSON 輸出路徑")
     ap.add_argument("--write-baseline", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
@@ -652,6 +872,8 @@ def main() -> int:
         return selftest()
     if a.addr:
         return one(a.addr)
+    if a.dossier is not None:
+        return dossier(a.dossier or None, a.json)
     if a.triage:
         return triage()
     if a.write_baseline:
