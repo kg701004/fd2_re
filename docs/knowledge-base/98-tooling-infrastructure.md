@@ -4913,3 +4913,32 @@ call 彈掉 4),把每個 `[esp+X]` 換算回序頭座標,超過回傳位址的�
 
 `native_argcounts.json` 的 `callee_argc` 欄三輪數值都沒變 —— 這些錯在真實資料上全是隱性的,
 只有窮舉看得到。
+## 2026-09-17 續十二:三支 Windows 專用工具的 selftest 拆出離線核心,WSL 軸從 NOT TESTED 變成核心 PASS
+
+### 問題不是缺套件,是 hard import 把不需要套件的題目一起帶走
+
+`derive_native_argcounts`、`dump_chapter_beats`、`font_grid` 在 WSL python3 下整支 `ModuleNotFoundError`
+(capstone / Pillow)。但三支的 selftest 大半是合成輸入的純函式題:辨識器、`dump_range` 保險絲、
+`callee_argc`、錨點負向控制、位元解包 —— 沒有一題需要反組譯器或畫圖。整支死在 import,等於
+把可測的部分一起變成 NOT TESTED。不裝套件(裝了只是讓 NOT TESTED 變 PASS,抓不到新問題,
+還讓兩邊環境開始漂移),改成:
+
+* 純函式題拆成 `_selftest_*` 函式,缺套件時只跑這些,需要套件的題目**逐題列為 SKIP**(不是通過),
+  總結印「離線核心 PASS」而不是「passed」。
+* `font_grid` 把位元解包抽成 `unpack_rows`(純函式),(1)(2)(5) 改用它;Pillow 延遲到 `render_glyph`,
+  新增 (6) 釘住「像素 = unpack_rows × 255」,缺 Pillow 時 SKIP。
+* **真正的根因在 `callgraph_le`**:模組層 `except ImportError: sys.exit("need capstone")` —— 函式庫在
+  import 時直接結束行程,任何 import 它的工具連 `except ImportError` 都接不到(那是 SystemExit)。改成
+  建立 `CG` 時才丟 ImportError(訊息不變),CLI 由 `main` 接住印同一句。
+
+### 結果(WSL python3,無 capstone / Pillow)
+
+| 工具 | 以前 | 現在 |
+|---|---|---|
+| `font_grid` | 整支 ImportError | 6 PASS、1 SKIP(畫圖層) |
+| `derive_native_argcounts` | 整支 SystemExit | 3 PASS(10b/12/13b)、需 EXE 的題 SKIP |
+| `dump_chapter_beats` | 整支 SystemExit | 6 PASS(2b~2f/8)、需 EXE 的題 SKIP |
+
+三支加進 `verify_everything` 的 `wsl` 軸(10 → 13 支),當棘輪用:純函式一旦長出 capstone / Pillow
+硬相依,那一軸當場失敗。Windows 側 selftest 題數不變(拆分只搬程式碼,`_selftest_*` 命名讓突變
+harness 仍把它們當 selftest、不當產品碼)。

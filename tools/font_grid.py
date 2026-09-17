@@ -8,22 +8,34 @@
     python3 font_grid.py <FDOTHER_004.bin> <start> <count> <out.png> [scale] [cols]
 """
 import sys
-from PIL import Image, ImageDraw
+
+# Pillow 只在真的要畫圖時才載入:字模的位元解包是純函式,WSL 的 python3 沒有 Pillow,
+# 模組層 hard import 會讓連 selftest 的手算點陣題都跑不了(2026-09-17;與 decode_* 同一作法)。
 
 GW = GH = 16
 GB = 32
 
 
-def render_glyph(font, idx, scale):
+def unpack_rows(font, idx):
+    """第 idx 個字模展開成 16 列 × 16 個 0/1(高位在左)。越界或不足 32 bytes 回全 0。"""
     g = font[idx * GB: idx * GB + GB]
+    if len(g) < GB:
+        return [[0] * GW for _ in range(GH)]
+    rows = []
+    for r in range(GH):
+        bits = (g[r * 2] << 8) | g[r * 2 + 1]
+        rows.append([1 if bits & (0x8000 >> c) else 0 for c in range(GW)])
+    return rows
+
+
+def render_glyph(font, idx, scale):
+    from PIL import Image
     im = Image.new("L", (GW, GH), 0)
-    if len(g) >= GB:
-        px = im.load()
-        for r in range(GH):
-            bits = (g[r * 2] << 8) | g[r * 2 + 1]
-            for c in range(GW):
-                if bits & (0x8000 >> c):
-                    px[c, r] = 255
+    px = im.load()
+    for r, row in enumerate(unpack_rows(font, idx)):
+        for c, v in enumerate(row):
+            if v:
+                px[c, r] = 255
     return im.resize((GW * scale, GH * scale), Image.NEAREST)
 
 
@@ -50,12 +62,10 @@ def selftest():
     font = bytearray(32)
     font[0], font[1] = 0x80, 0x01
     font[2], font[3] = 0x01, 0x80
-    im = render_glyph(bytes(font), 0, 1)
-    px = im.load()
-    row0 = [px[c, 0] for c in range(GW)]
-    row1 = [px[c, 1] for c in range(GW)]
-    ok1 = (row0 == [255] + [0] * 14 + [255]
-           and row1 == [0] * 7 + [255, 255] + [0] * 7)
+    rows = unpack_rows(bytes(font), 0)
+    row0, row1 = rows[0], rows[1]
+    ok1 = (row0 == [1] + [0] * 14 + [1]
+           and row1 == [0] * 7 + [1, 1] + [0] * 7)
     print(f"    {'PASS' if ok1 else 'FAIL'}: 第0列 {''.join('#' if v else '.' for v in row0)}")
     print(f"    {'PASS' if ok1 else 'FAIL'}: 第1列 {''.join('#' if v else '.' for v in row1)}")
     if not ok1:
@@ -63,9 +73,8 @@ def selftest():
 
     print("\n(2) 越界字模必須回全黑,而不是崩或讀到鄰格")
     try:
-        im2 = render_glyph(b"\x00" * 32, 999, 1)
-        p2 = im2.load()
-        ok2 = all(p2[c, r] == 0 for r in range(GH) for c in range(GW))
+        rows2 = unpack_rows(b"\x00" * 32, 999)
+        ok2 = len(rows2) == GH and all(v == 0 for row in rows2 for v in row)
     except Exception as exc:                                  # noqa: BLE001
         ok2 = False
         print(f"    FAIL: 丟出 {type(exc).__name__}")
@@ -99,18 +108,32 @@ def selftest():
     else:
         print("    SKIP: 找不到 FDOTHER_004.bin")
 
-    print("\n(5) 位元遮罩逐欄對應:只有最低位時只有最右一欄亮,且值為 255")
+    print("\n(5) 位元遮罩逐欄對應:只有最低位時只有最右一欄亮")
     # 2026-09-11 窮舉突變測試:`0x8000 >> c` 與 `= 255` 改掉逃掉 —— 真實字模的比對只看
     # 「非空」與自比,沒有逐欄對過單一位元。
     font5 = bytearray(GB)
     font5[0], font5[1] = 0x00, 0x01
-    im5 = render_glyph(bytes(font5), 0, 1)
-    ok5 = (im5.getpixel((GW - 1, 0)) == 255 and im5.getpixel((0, 0)) == 0
-           and sum(im5.getdata()) == 255)
-    print(f"    {'PASS' if ok5 else 'FAIL'}: 最右欄={im5.getpixel((GW - 1, 0))}(應 255)、"
-          f"最左欄={im5.getpixel((0, 0))}(應 0)、總和={sum(im5.getdata())}(應 255)")
+    rows5 = unpack_rows(bytes(font5), 0)
+    ok5 = (rows5[0][GW - 1] == 1 and rows5[0][0] == 0
+           and sum(v for row in rows5 for v in row) == 1)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 最右欄={rows5[0][GW - 1]}(應 1)、"
+          f"最左欄={rows5[0][0]}(應 0)、總和={sum(v for row in rows5 for v in row)}(應 1)")
     if not ok5:
         fails.append("字模位元與欄位的對應不對")
+
+    print("\n(6) 畫圖層:render_glyph 的像素必須等於 unpack_rows × 255(有 Pillow 才能驗)")
+    # (1)(5) 改用純函式後,這一題是唯一還經過 Pillow 的路徑;缺 Pillow 時列為 SKIP,不是通過。
+    try:
+        im6 = render_glyph(bytes(font), 0, 1)
+    except ImportError as exc:
+        print(f"    SKIP: {exc}")
+    else:
+        got6 = [[im6.getpixel((c, r)) for c in range(GW)] for r in range(GH)]
+        want6 = [[255 * v for v in row] for row in unpack_rows(bytes(font), 0)]
+        ok6 = got6 == want6 and im6.size == (GW, GH)
+        print(f"    {'PASS' if ok6 else 'FAIL'}: 像素逐格相等={got6 == want6}、尺寸={im6.size}")
+        if not ok6:
+            fails.append("render_glyph 的像素與 unpack_rows 不一致")
 
     if fails:
         print("\nSELFTEST FAILED:")
@@ -130,6 +153,7 @@ def main(argv):
     if len(argv) < 5:
         print(__doc__)
         return 1
+    from PIL import Image, ImageDraw
     font = open(argv[1], "rb").read()
     start = int(argv[2]); count = int(argv[3]); out = argv[4]
     scale = int(argv[5]) if len(argv) > 5 else 3

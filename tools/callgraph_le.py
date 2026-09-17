@@ -22,10 +22,14 @@ import sys, struct
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from le_xref import parse_le
 
+# 2026-09-17:模組層不再 sys.exit —— 那會讓每個 import 本模組的工具(dump_chapter_beats、
+# derive_native_argcounts)在沒有 capstone 的 WSL python3 下連純函式題都跑不了。改成建立 CG
+# 時才丟 ImportError(訊息不變),CLI 端由 main() 接住印同一句。
 try:
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 except ImportError:
-    sys.exit("need capstone: docker fd2-cap")
+    Cs = None
+CAPSTONE_HINT = "need capstone: docker fd2-cap"
 
 CODE_BASE = 0x10000
 DEFAULT_SEEDS = [0x25bf4]  # 已驗證的真 main
@@ -85,6 +89,8 @@ def fixup_map(d, meta):
 
 class CG:
     def __init__(self, exe):
+        if Cs is None:
+            raise ImportError(CAPSTONE_HINT)
         self.d = open(exe, 'rb').read()
         self.meta = parse_le(self.d)
         self.code, self.base, self.vsize = load_code(self.d, self.meta)
@@ -361,4 +367,7 @@ def main(av):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    try:
+        sys.exit(main(sys.argv))
+    except ImportError as exc:
+        sys.exit(str(exc))

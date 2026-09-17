@@ -644,6 +644,190 @@ def doc_op_name(target: int) -> str | None:
         return None
 
 
+def _selftest_callee_cases() -> dict:
+    """callee_argc 的合成邊界(真實 image 碰不到,2026-09-17 突變窮舉指出),不需要反組譯器。"""
+    class _CI:
+        def __init__(self, a, m, o="", sz=1):
+            self.address, self.mnemonic, self.op_str, self.size = a, m, o, sz
+
+    class _CCG:
+        def __init__(self, insns):
+            a = 0
+            # 依序給位址(size 累加),讓 `a += i.size` 走得到每一條
+            for i in insns:
+                i.address = a
+                a += i.size
+            self._m = {i.address: i for i in insns}
+
+        def _insn(self, a):
+            return self._m.get(a)
+
+    def _cg(body, prologue=True):
+        head = [_CI(0, "push", "0x28", 5), _CI(0, "call", hex(STACK_CHECK), 5)] if prologue else []
+        return _CCG(head + body)
+
+    syn = {}
+    # (a) 2 個保存暫存器 + sub esp,0xc 之後:[esp+0x18] 是第 1 個、push 後 [esp+0x20] 是第 2 個
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "push", "esi"), _CI(0, "sub", "esp, 0xc", 3),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x18]", 4), _CI(0, "push", "eax"),
+             _CI(0, "mov", "edx, dword ptr [esp + 0x20]", 4), _CI(0, "ret")])
+    syn["位移換算(暫存器+區域變數+本體 push)"] = callee_argc(g, 0, [])[0] == 2
+    # (a2) pop 必須把位移退回**恰好** 4:push/pop 之後讀 [esp+0x7](第 1 個參數的最後一個 byte)
+    #      算 1;位移少退 1 會變成 [esp+0x8] = 第 2 個。對齊的 dword 讀取看不出差 1,所以用 byte 讀取。
+    g = _cg([_CI(0, "push", "eax"), _CI(0, "pop", "eax"), _CI(0, "movzx", "eax, byte ptr [esp + 0x7]", 5), _CI(0, "ret")])
+    syn["pop 退回恰好 4"] = callee_argc(g, 0, [])[0] == 1
+    # (b) ebp 框架 -> None(不是 0,也不是亂算)
+    g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
+    syn["ebp 框架 -> None"] = callee_argc(g, 0, [])[0] is None
+    # (c) 本體內再出現一次 stack-check(push frame; call 0x3702f)必須把那 4 bytes 彈回來:
+    #     之後的 [esp+0x8] 才是第 2 個參數(不彈會算成第 1 個,彈 5 會算成第 3 個)。
+    g = _cg([_CI(0, "push", "0x10", 5), _CI(0, "call", hex(STACK_CHECK), 5),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4),
+             _CI(0, "movzx", "edx, byte ptr [esp + 0xb]", 5), _CI(0, "ret")])   # 0xb 是第 2 個的最後 byte:彈掉 5 會算成第 3 個
+    syn["本體內 stack-check 的位移"] = callee_argc(g, 0, [])[0] == 2
+    # (d) 沒有後續入口時上限是 target+0x4000:剛好落在 0x4000 的那條不算、0x3ffc 的算。
+    far = [_CI(0, "nop", "", 0x3ff0), _CI(0, "mov", "eax, dword ptr [esp + 0x4]", 6),
+           _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")]
+    g = _cg(far)
+    syn["無後續入口的掃描上限恰為 0x4000"] = callee_argc(g, 0, [])[0] == 1
+    # (e) 非對齊的 byte 讀取歸入所在的 dword:[esp+0x5] 是第 1 個參數的第 2 個 byte,不是第 2 個參數
+    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x5]", 5), _CI(0, "ret")])
+    syn["非對齊讀取歸入所在 dword"] = callee_argc(g, 0, [])[0] == 1
+    # (f) 成對:只讀 [esp+0x4](第 1 個參數的起點)必須算 1;只讀 [esp+0x3](回傳位址的 byte)必須算 0
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret")])
+    syn["參數起點 [esp+4] 算第 1 個"] = callee_argc(g, 0, [])[0] == 1
+    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x3]", 5), _CI(0, "ret")])
+    syn["回傳位址的 byte 不算參數"] = callee_argc(g, 0, [])[0] == 0
+    return syn
+
+
+def _selftest_pure(fails) -> None:
+    """不需要反組譯器的題目:(10b) 錨點負向控制、(12) 純函式邊界、(13b) callee_argc 合成邊界。"""
+    import dump_chapter_beats as DC
+    print("\n(10b) 負向控制:錯配的引文與位址必須被同一條規則擋下")
+    # 沒有這一題,第 (10) 題對一個「永遠回傳有結果」的 anchor_lines 也會通過。
+    ctrl = []
+    # (a) 引文對、位址換成另一個目標 -> 必須落空(否則鄰近條件是裝飾)。
+    if anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x11d40):
+        ctrl.append("換位址仍然定位成功")
+    # (b) 引文不存在 -> 必須落空。
+    if anchor_lines("58-remake-live-verification-log.md", "這串字不存在於任何文件", 0x37910):
+        ctrl.append("不存在的引文仍然定位成功")
+    # (c) 真實的假陽性回歸:doc99 那句話出現兩次,只有一處旁邊有 0x2aedb。
+    #     這是建表時實際踩到的那一類——純比對引文會多收一處。
+    body = (DOCS / "99-chapter-sweep-results.md").read_text(encoding="utf-8")
+    raw_hits = sum(1 for l in body.split("\n") if "FUN_0002aedb(char_idx, item_id)" in l)
+    kept = anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x2aedb)
+    if not (raw_hits > len(kept) >= 1):
+        ctrl.append(f"假陽性回歸失效:純比對 {raw_hits} 處、加鄰近後 {len(kept)} 處")
+    # (d) 撞名規則的兩極,兩邊都走同一個 collision_ok:0x24bde 用它真正的引文必須
+    #     **放行**(引文自己說了「同一個 roster_has(id) 原語的第二個獨立編譯實例」),
+    #     同一個名字換成本表裡另一段沒提到它的真實引文則必須**擋下**。只驗放行那一邊,
+    #     一個永遠回 True 的實作也會通過。
+    prim_now = {n for n, _ in DC.PRIM.values()}
+    _n, _w, _d, q_bde = DOC_OP_NAMES[0x24bde]
+    other_quote = DOC_OP_NAMES[0x24618][3]
+    if not collision_ok(_n, q_bde, prim_now):
+        ctrl.append("0x24bde 用它真正的引文卻被擋下")
+    if collision_ok(_n, other_quote, prim_now):
+        ctrl.append("換成沒提到 roster_has 的引文仍然放行 —— 撞名規則是裝飾")
+    ok10b = not ctrl
+    print(f"    {'PASS' if ok10b else 'FAIL'}: 四個控制"
+          + (f"全部如預期(假陽性 {raw_hits} -> {len(kept)})" if ok10b else f",問題 {ctrl}"))
+    if not ok10b:
+        fails.append(f"op 名稱負向控制失效:{ctrl}")
+
+
+    print("\n(12) 純函式邊界:掃描、push 計數、多數決、錨點行號")
+    # 2026-09-12 突變窮舉:下面每一條都有突變逃過 (1)~(11),因為真實 image 上
+    # 碰不到這些邊界(沒有呼叫端落在 order[0]、image 結尾不是 E8、PRIM 目標
+    # 不在預設報告範圍內)。所以改用合成輸入,每一條都寫明它的前提。
+    bnd = []
+
+    class _Ins:
+        def __init__(self, m: str) -> None:
+            self.mnemonic = m
+
+    class _FakeCG:
+        def __init__(self, code: bytes = b"", base: int = 0, insns=None) -> None:
+            self.code, self.base, self._m = code, base, insns or {}
+
+        def _insn(self, a: int):
+            m = self._m.get(a)
+            return None if m is None else _Ins(m)
+
+    # (a) pushes_before:唯一的 push 在 order[0](j == 0),必須算到。
+    fcg = _FakeCG(insns={0x10: "push", 0x11: "call"})
+    order12 = [0x10, 0x11]
+    got_pb = pushes_before(fcg, order12, {a: i for i, a in enumerate(order12)}, 0x11)
+    if got_pb != 1:
+        bnd.append(f"order[0] 的 push 沒算到:{got_pb}(應 1)")
+    # (b) _scan:`E8 E8 00 00 00 00` —— 位置 0 與位置 1 各是一個 E8 rel32,
+    #     後者正好是 image 最後一個完整的呼叫(i == len-5),且與前者重疊。
+    #     前提:兩個 E8 都在 0 <= i <= len-5 內,所以逐位元組掃描必須兩個都收。
+    base = 0x1000
+    blob = b"\xE8\xE8\x00\x00\x00\x00"
+    idx12, _e = _scan(_FakeCG(code=blob, base=base))
+    got_sites = sorted(s for v in idx12.values() for s in v)
+    if got_sites != [base, base + 1]:
+        bnd.append(f"_scan 呼叫端 {[hex(s) for s in got_sites]}(應 [{base:#x}, {base + 1:#x}])")
+    elif idx12.get(base + 6) != (base + 1,):
+        bnd.append(f"_scan 目標計算錯:{ {hex(k): v for k, v in idx12.items()} }")
+    # (c) derive([]):沒有呼叫端時 sites 必須是 0(不是只看 verdict)。
+    if derive([])["sites"] != 0:
+        bnd.append(f"derive([]) sites={derive([])['sites']}(應 0)")
+    # (d) 分布的鍵順序:依清理位元組數由小到大、None 最後——不是依出現次數。
+    #     前提:4 出現 3 次、8 出現 1 次,依次數排會變成 8 在前。
+    mk = lambda c: {"site": 0, "cleanup_bytes": c, "after_mnemonic": "add", "pushes": 1}
+    dist12 = list(derive([mk(4), mk(4), mk(4), mk(8), mk(None)])["cleanup_distribution"])
+    if dist12 != ["4", "8", "None"]:
+        bnd.append(f"分布鍵順序 {dist12}(應 ['4', '8', 'None'])")
+    # (e) known_op_name:取的是名稱不是參數個數;不在表裡回 None。
+    kn = (known_op_name(0x1f525, DC.PRIM), known_op_name(0xDEAD, DC.PRIM))
+    if kn != (DC.PRIM[0x1f525][0], None) or not isinstance(kn[0], str):
+        bnd.append(f"known_op_name 取錯欄位:{kn}")
+    # (f) anchor_lines:位址只寫在第 1 行、引文在第 2 行 -> 回傳 [2](1-based,
+    #     且視窗下界是第 0 個索引,不是 1)。
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "anchor.md"
+        p.write_text("0x12cea 在這裡\n引文 QQ\n", encoding="utf-8")
+        got_al = anchor_lines(str(p), "引文 QQ", 0x12cea)
+    if got_al != [2]:
+        bnd.append(f"anchor_lines={got_al}(應 [2])")
+    ok12 = not bnd
+    print(f"    {'PASS' if ok12 else 'FAIL'}: 六個合成邊界"
+          + ("全部如預期" if ok12 else f",問題 {bnd}"))
+    if not ok12:
+        fails.append(f"純函式邊界:{bnd}")
+
+
+    print("\n(13b) 第三訊號的合成邊界(不需要 EXE)")
+    syn = _selftest_callee_cases()
+    ok13b = all(syn.values())
+    print(f"    {'PASS' if ok13b else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in syn.items()))
+    if not ok13b:
+        fails.append(f"callee_argc 合成邊界:{[k for k, v in syn.items() if not v]}")
+
+
+def _selftest_finish(fails, partial=False) -> int:
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    if partial:
+        print("\n--selftest passed(離線核心:op 名稱負向控制 + 純函式邊界 + callee_argc 合成邊界;"
+              "需要反組譯器的題目已列為 SKIP,不計為通過)。")
+        return 0
+    print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
+          "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
+          "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
+          f"+ {len(DOC_OP_NAMES)} 個 op 名稱的錨點複驗與四個負向控制 + "
+          "已登錄產物的即時漂移檢查 + 第三訊號)。")
+    return 0
+
+
 def selftest() -> int:
     fails = []
     exe = str(DEFAULT_EXE)
@@ -651,7 +835,14 @@ def selftest() -> int:
         print(f"缺少 {exe},無法自我驗證", file=sys.stderr)
         return 1
     import dump_chapter_beats as DC
-    cg, order = build_graph(exe)
+    # 2026-09-17:WSL 的 python3 沒有 capstone,以前整支在 build_graph 就死,連純函式題都
+    # 測不到。缺反組譯器時只跑離線核心,需要它的題目逐題列為 SKIP(不是通過)。
+    try:
+        cg, order = build_graph(exe)
+    except ImportError as exc:
+        print(f"SKIP: {exc} —— (1)~(11)(13) 需要反組譯器,本環境只跑 (10b)(12)(13b)")
+        _selftest_pure(fails)
+        return _selftest_finish(fails, partial=True)
     sites = collect(cg, order)
 
     print("(1) 正向控制:對照 dump_chapter_beats.PRIM 已記錄的參數個數")
@@ -808,39 +999,6 @@ def selftest() -> int:
     if not ok10:
         fails.append(f"op 名稱錨點失效:{name_bad}")
 
-    print("\n(10b) 負向控制:錯配的引文與位址必須被同一條規則擋下")
-    # 沒有這一題,第 (10) 題對一個「永遠回傳有結果」的 anchor_lines 也會通過。
-    ctrl = []
-    # (a) 引文對、位址換成另一個目標 -> 必須落空(否則鄰近條件是裝飾)。
-    if anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x11d40):
-        ctrl.append("換位址仍然定位成功")
-    # (b) 引文不存在 -> 必須落空。
-    if anchor_lines("58-remake-live-verification-log.md", "這串字不存在於任何文件", 0x37910):
-        ctrl.append("不存在的引文仍然定位成功")
-    # (c) 真實的假陽性回歸:doc99 那句話出現兩次,只有一處旁邊有 0x2aedb。
-    #     這是建表時實際踩到的那一類——純比對引文會多收一處。
-    body = (DOCS / "99-chapter-sweep-results.md").read_text(encoding="utf-8")
-    raw_hits = sum(1 for l in body.split("\n") if "FUN_0002aedb(char_idx, item_id)" in l)
-    kept = anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x2aedb)
-    if not (raw_hits > len(kept) >= 1):
-        ctrl.append(f"假陽性回歸失效:純比對 {raw_hits} 處、加鄰近後 {len(kept)} 處")
-    # (d) 撞名規則的兩極,兩邊都走同一個 collision_ok:0x24bde 用它真正的引文必須
-    #     **放行**(引文自己說了「同一個 roster_has(id) 原語的第二個獨立編譯實例」),
-    #     同一個名字換成本表裡另一段沒提到它的真實引文則必須**擋下**。只驗放行那一邊,
-    #     一個永遠回 True 的實作也會通過。
-    prim_now = {n for n, _ in DC.PRIM.values()}
-    _n, _w, _d, q_bde = DOC_OP_NAMES[0x24bde]
-    other_quote = DOC_OP_NAMES[0x24618][3]
-    if not collision_ok(_n, q_bde, prim_now):
-        ctrl.append("0x24bde 用它真正的引文卻被擋下")
-    if collision_ok(_n, other_quote, prim_now):
-        ctrl.append("換成沒提到 roster_has 的引文仍然放行 —— 撞名規則是裝飾")
-    ok10b = not ctrl
-    print(f"    {'PASS' if ok10b else 'FAIL'}: 四個控制"
-          + (f"全部如預期(假陽性 {raw_hits} -> {len(kept)})" if ok10b else f",問題 {ctrl}"))
-    if not ok10b:
-        fails.append(f"op 名稱負向控制失效:{ctrl}")
-
     print("\n(11) 已登錄的產物必須與本工具現在會產出的內容一致(把驗證往前搬)")
     # 2026-09-09 實際踩到:加了兩個 op 名稱、卻忘了重生 native_argcounts.json,
     # 一直到 10 軸驗證的 artifacts 軸(整輪 30 分鐘)才報出漂移。同一件事在這裡
@@ -858,68 +1016,7 @@ def selftest() -> int:
     if not ok11:
         fails.append(f"已登錄產物漂移:{detail}")
 
-    print("\n(12) 純函式邊界:掃描、push 計數、多數決、錨點行號")
-    # 2026-09-12 突變窮舉:下面每一條都有突變逃過 (1)~(11),因為真實 image 上
-    # 碰不到這些邊界(沒有呼叫端落在 order[0]、image 結尾不是 E8、PRIM 目標
-    # 不在預設報告範圍內)。所以改用合成輸入,每一條都寫明它的前提。
-    bnd = []
-
-    class _Ins:
-        def __init__(self, m: str) -> None:
-            self.mnemonic = m
-
-    class _FakeCG:
-        def __init__(self, code: bytes = b"", base: int = 0, insns=None) -> None:
-            self.code, self.base, self._m = code, base, insns or {}
-
-        def _insn(self, a: int):
-            m = self._m.get(a)
-            return None if m is None else _Ins(m)
-
-    # (a) pushes_before:唯一的 push 在 order[0](j == 0),必須算到。
-    fcg = _FakeCG(insns={0x10: "push", 0x11: "call"})
-    order12 = [0x10, 0x11]
-    got_pb = pushes_before(fcg, order12, {a: i for i, a in enumerate(order12)}, 0x11)
-    if got_pb != 1:
-        bnd.append(f"order[0] 的 push 沒算到:{got_pb}(應 1)")
-    # (b) _scan:`E8 E8 00 00 00 00` —— 位置 0 與位置 1 各是一個 E8 rel32,
-    #     後者正好是 image 最後一個完整的呼叫(i == len-5),且與前者重疊。
-    #     前提:兩個 E8 都在 0 <= i <= len-5 內,所以逐位元組掃描必須兩個都收。
-    base = 0x1000
-    blob = b"\xE8\xE8\x00\x00\x00\x00"
-    idx12, _e = _scan(_FakeCG(code=blob, base=base))
-    got_sites = sorted(s for v in idx12.values() for s in v)
-    if got_sites != [base, base + 1]:
-        bnd.append(f"_scan 呼叫端 {[hex(s) for s in got_sites]}(應 [{base:#x}, {base + 1:#x}])")
-    elif idx12.get(base + 6) != (base + 1,):
-        bnd.append(f"_scan 目標計算錯:{ {hex(k): v for k, v in idx12.items()} }")
-    # (c) derive([]):沒有呼叫端時 sites 必須是 0(不是只看 verdict)。
-    if derive([])["sites"] != 0:
-        bnd.append(f"derive([]) sites={derive([])['sites']}(應 0)")
-    # (d) 分布的鍵順序:依清理位元組數由小到大、None 最後——不是依出現次數。
-    #     前提:4 出現 3 次、8 出現 1 次,依次數排會變成 8 在前。
-    mk = lambda c: {"site": 0, "cleanup_bytes": c, "after_mnemonic": "add", "pushes": 1}
-    dist12 = list(derive([mk(4), mk(4), mk(4), mk(8), mk(None)])["cleanup_distribution"])
-    if dist12 != ["4", "8", "None"]:
-        bnd.append(f"分布鍵順序 {dist12}(應 ['4', '8', 'None'])")
-    # (e) known_op_name:取的是名稱不是參數個數;不在表裡回 None。
-    kn = (known_op_name(0x1f525, DC.PRIM), known_op_name(0xDEAD, DC.PRIM))
-    if kn != (DC.PRIM[0x1f525][0], None) or not isinstance(kn[0], str):
-        bnd.append(f"known_op_name 取錯欄位:{kn}")
-    # (f) anchor_lines:位址只寫在第 1 行、引文在第 2 行 -> 回傳 [2](1-based,
-    #     且視窗下界是第 0 個索引,不是 1)。
-    import tempfile
-    with tempfile.TemporaryDirectory() as td:
-        p = Path(td) / "anchor.md"
-        p.write_text("0x12cea 在這裡\n引文 QQ\n", encoding="utf-8")
-        got_al = anchor_lines(str(p), "引文 QQ", 0x12cea)
-    if got_al != [2]:
-        bnd.append(f"anchor_lines={got_al}(應 [2])")
-    ok12 = not bnd
-    print(f"    {'PASS' if ok12 else 'FAIL'}: 六個合成邊界"
-          + ("全部如預期" if ok12 else f",問題 {bnd}"))
-    if not ok12:
-        fails.append(f"純函式邊界:{bnd}")
+    _selftest_pure(fails)
 
     print("\n(13) 第三訊號:被呼叫端本體讀到的參數序號,對文件簽名不得過讀、對 PRIM 只剩投影那一筆不同")
     # 這條訊號的價值在於它與 A/B 無關;所以它的驗證也不能拿 A/B 當標準,而是拿 (9) 那組
@@ -945,80 +1042,17 @@ def selftest() -> int:
             prim_bad.append(f"{addr:#07x} {op}: PRIM {n}、本體讀到 {got}")
     # 不支援 ≠ 0:0x4df4c 沒有 stack-check 序頭,必須回 None 而不是 0。
     unsup = callee_argc(cg, 0x4df4c, ents13)
-    # 合成邊界(真實 image 碰不到,2026-09-17 突變窮舉指出):
-    class _CI:
-        def __init__(self, a, m, o="", sz=1):
-            self.address, self.mnemonic, self.op_str, self.size = a, m, o, sz
-
-    class _CCG:
-        def __init__(self, insns):
-            a = 0
-            # 依序給位址(size 累加),讓 `a += i.size` 走得到每一條
-            for i in insns:
-                i.address = a
-                a += i.size
-            self._m = {i.address: i for i in insns}
-
-        def _insn(self, a):
-            return self._m.get(a)
-
-    def _cg(body, prologue=True):
-        head = [_CI(0, "push", "0x28", 5), _CI(0, "call", hex(STACK_CHECK), 5)] if prologue else []
-        return _CCG(head + body)
-
-    syn = {}
-    # (a) 2 個保存暫存器 + sub esp,0xc 之後:[esp+0x18] 是第 1 個、push 後 [esp+0x20] 是第 2 個
-    g = _cg([_CI(0, "push", "ebx"), _CI(0, "push", "esi"), _CI(0, "sub", "esp, 0xc", 3),
-             _CI(0, "mov", "eax, dword ptr [esp + 0x18]", 4), _CI(0, "push", "eax"),
-             _CI(0, "mov", "edx, dword ptr [esp + 0x20]", 4), _CI(0, "ret")])
-    syn["位移換算(暫存器+區域變數+本體 push)"] = callee_argc(g, 0, [])[0] == 2
-    # (a2) pop 必須把位移退回**恰好** 4:push/pop 之後讀 [esp+0x7](第 1 個參數的最後一個 byte)
-    #      算 1;位移少退 1 會變成 [esp+0x8] = 第 2 個。對齊的 dword 讀取看不出差 1,所以用 byte 讀取。
-    g = _cg([_CI(0, "push", "eax"), _CI(0, "pop", "eax"), _CI(0, "movzx", "eax, byte ptr [esp + 0x7]", 5), _CI(0, "ret")])
-    syn["pop 退回恰好 4"] = callee_argc(g, 0, [])[0] == 1
-    # (b) ebp 框架 -> None(不是 0,也不是亂算)
-    g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
-    syn["ebp 框架 -> None"] = callee_argc(g, 0, [])[0] is None
-    # (c) 本體內再出現一次 stack-check(push frame; call 0x3702f)必須把那 4 bytes 彈回來:
-    #     之後的 [esp+0x8] 才是第 2 個參數(不彈會算成第 1 個,彈 5 會算成第 3 個)。
-    g = _cg([_CI(0, "push", "0x10", 5), _CI(0, "call", hex(STACK_CHECK), 5),
-             _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4),
-             _CI(0, "movzx", "edx, byte ptr [esp + 0xb]", 5), _CI(0, "ret")])   # 0xb 是第 2 個的最後 byte:彈掉 5 會算成第 3 個
-    syn["本體內 stack-check 的位移"] = callee_argc(g, 0, [])[0] == 2
-    # (d) 沒有後續入口時上限是 target+0x4000:剛好落在 0x4000 的那條不算、0x3ffc 的算。
-    far = [_CI(0, "nop", "", 0x3ff0), _CI(0, "mov", "eax, dword ptr [esp + 0x4]", 6),
-           _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")]
-    g = _cg(far)
-    syn["無後續入口的掃描上限恰為 0x4000"] = callee_argc(g, 0, [])[0] == 1
-    # (e) 非對齊的 byte 讀取歸入所在的 dword:[esp+0x5] 是第 1 個參數的第 2 個 byte,不是第 2 個參數
-    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x5]", 5), _CI(0, "ret")])
-    syn["非對齊讀取歸入所在 dword"] = callee_argc(g, 0, [])[0] == 1
-    # (f) 成對:只讀 [esp+0x4](第 1 個參數的起點)必須算 1;只讀 [esp+0x3](回傳位址的 byte)必須算 0
-    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret")])
-    syn["參數起點 [esp+4] 算第 1 個"] = callee_argc(g, 0, [])[0] == 1
-    g = _cg([_CI(0, "movzx", "eax, byte ptr [esp + 0x3]", 5), _CI(0, "ret")])
-    syn["回傳位址的 byte 不算參數"] = callee_argc(g, 0, [])[0] == 0
+    syn = _selftest_callee_cases()
     ok13 = (not sig_mismatch and supported >= 12 and over == {0x15f84: 9}
             and not prim_bad and unsup[0] is None and all(syn.values()))
     print(f"    {'PASS' if ok13 else 'FAIL'}: 文件簽名 {supported} 個可讀、不符 {sig_mismatch or '無'};"
           f"PRIM 過讀 { {hex(k): v for k, v in over.items()} }(應只有 0x15f84: 9)、其餘不符 {prim_bad or '無'};"
-          f"無序頭的 0x4df4c -> {unsup[0]}(應 None);合成邊界 "
-          + "、".join(f"{k}={v}" for k, v in syn.items()))
+          f"無序頭的 0x4df4c -> {unsup[0]}(應 None);合成邊界見 (13b)")
     if not ok13:
         fails.append(f"第三訊號:{sig_mismatch} / over={over} / {prim_bad} / unsup={unsup} / "
                      f"{[k for k, v in syn.items() if not v]}")
 
-    if fails:
-        print("\nSELFTEST FAILED:")
-        for f in fails:
-            print("  -", f)
-        return 1
-    print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
-          "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
-          "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
-          f"+ {len(DOC_OP_NAMES)} 個 op 名稱的錨點複驗與四個負向控制 + "
-          "已登錄產物的即時漂移檢查)。")
-    return 0
+    return _selftest_finish(fails)
 
 
 def main(argv: list[str]) -> int:
