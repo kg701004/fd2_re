@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 244,
+  "total": 249,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 177,
+   "wrapper": 182,
    "leaf_global": 11,
    "leaf_ptr": 13,
    "leaf_pure": 9
@@ -687,6 +687,13 @@
    "callers": 1,
    "argc": 2
   },
+  "0x2b439": {
+   "kind": "wrapper",
+   "name": "wrapper(open_dialog_box(0x4b), dialog(_, 0x291, 0xa951f, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), draw_dialog_cell(0), wait_key_with_marker(0), close_box_slide_down_no_redraw())",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
   "0x2b777": {
    "kind": "wrapper",
    "name": "wrapper(malloc(0xa00), memmove(_, _, 0xa00), memmove(_, _, 0x50), memmove(_, _, 0x50))",
@@ -1037,6 +1044,13 @@
    "callers": 0,
    "argc": 0
   },
+  "0x35123": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_item_count(_), unit_add_item(_, 0x59), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 1
+  },
   "0x35191": {
    "kind": "wrapper",
    "name": "wrapper(set_units_byte34_low_nibble(0x10, 0x47, _), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
@@ -1215,6 +1229,27 @@
   "0x35f88": {
    "kind": "wrapper",
    "name": "wrapper(pan_spawn_group(0xa, 0x1d, _))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35fcf": {
+   "kind": "wrapper",
+   "name": "wrapper(open_dialog_box(_), dialog(_, 0, 0xa951f, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), draw_dialog_cell(0), wait_key_with_marker(0), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 1
+  },
+  "0x360b6": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_set_flag5_bit7(1), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), palette_fade_in_hold_out(), delay(0x190), palette_fade_in_hold_out(), delay(0x190), palette_fade_in_hold_out(), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3623c": {
+   "kind": "wrapper",
+   "name": "wrapper(prng_next(), unit_set_flag5_bit7(_), unit_set_flag5_bit7(_))",
    "round": 1,
    "callers": 0,
    "argc": 0

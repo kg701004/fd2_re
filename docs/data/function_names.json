@@ -1056,6 +1056,231 @@
      "insn": "call 0x129ec"
     }
    ]
+  },
+  {
+   "addr": "0x1956b",
+   "name": "open_dialog_box",
+   "summary": "(res_idx):配置三塊 0xfa00 緩衝([0x53c5b] 工作、[0x53c5f] 存檔、[0x53c63] 樣板),把目前 VGA 畫面存進存檔並複製到樣板,以 0x168b6 在樣板畫框;依 res_idx 0x80..0x84 設繪製位置 [0x53c67](其他值 0x9017),以 load_res(res_idx, 0x51a70 的檔名, [0x53a85]) 載入並鏡像繪入樣板;最後由下往上滑入(present_box_at_row 由 i=5 遞減)。close_box_slide_down 是它的反向。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1957f",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x195fc",
+     "insn": "cmp ebx, 0x80"
+    },
+    {
+     "at": "0x19660",
+     "insn": "mov dword ptr [0x3c67], 0x9017"
+    },
+    {
+     "at": "0x1966a",
+     "insn": "push ebx"
+    },
+    {
+     "at": "0x19676",
+     "insn": "call 0x111ba"
+    },
+    {
+     "at": "0x1969a",
+     "insn": "call 0x4ec31"
+    }
+   ]
+  },
+  {
+   "addr": "0x14818",
+   "name": "collect_targets_in_range",
+   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x14834",
+     "insn": "cmp ebx, 0x10"
+    },
+    {
+     "at": "0x14854",
+     "insn": "call 0x4e8a5"
+    },
+    {
+     "at": "0x1485d",
+     "insn": "call 0x4e390"
+    }
+   ]
+  },
+  {
+   "addr": "0x115b6",
+   "name": "target_cursor_loop",
+   "summary": "verified_addresses 已記載:攻擊/道具/法術三條玩家路徑共用的目標游標與確認迴圈。方向鍵 0x48/0x50/0x4b/0x4d 移動游標;確認鍵 0x39/0x1c 先看地圖緩衝 byte(0xff 拒絕、targetCode 4 直接接受),否則呼叫 0x14742 做合法性判定。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x115d1",
+     "insn": "cmp edi, 6"
+    },
+    {
+     "at": "0x11629",
+     "insn": "cmp eax, 0x39"
+    },
+    {
+     "at": "0x1162e",
+     "insn": "cmp eax, 0x1c"
+    },
+    {
+     "at": "0x1173f",
+     "insn": "cmp ebx, 0xff"
+    },
+    {
+     "at": "0x1175f",
+     "insn": "call 0x14742"
+    },
+    {
+     "at": "0x1178d",
+     "insn": "cmp eax, 0x48"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b8a6",
+   "name": "unit_item_count",
+   "summary": "(unit):單位記錄(80 bytes,基底 [0x53a45])8 個道具欄(+0xa 起)中旗標不含 0x80(非空)的欄數。verified_addresses 記為 raw occupied item count。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1b8ce",
+     "insn": "cmp eax, 8"
+    },
+    {
+     "at": "0x1b8db",
+     "insn": "test byte ptr [edx], 0x80"
+    },
+    {
+     "at": "0x1b8e0",
+     "insn": "inc ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x13512",
+   "name": "unit_set_flag5_bit7",
+   "summary": "(unit):單位記錄(80 bytes,基底 [0x53a45])byte +5 設 0x80。知識庫的戰鬥輸入分派記載:行動環要求 record[+5] bit7 為 0,所以這很可能是「已行動」標記,名字只寫機制。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1352a",
+     "insn": "mov edx, dword ptr [0x3a45]"
+    },
+    {
+     "at": "0x13530",
+     "insn": "or byte ptr [edx + eax + 5], 0x80"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c269",
+   "name": "unit_list_bits_1a",
+   "summary": "(unit, out):單位記錄(80 bytes,基底 [0x53a45])+0x1a 起 5 bytes 共 40 個 bit;每個為 1 的 bit,out 非 0 時寫入其序號(byte*8 + bit),回傳個數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1c29e",
+     "insn": "cmp dword ptr [esp], 5"
+    },
+    {
+     "at": "0x1c2a7",
+     "insn": "movzx edi, byte ptr [edi + ebp + 0x1a]"
+    },
+    {
+     "at": "0x1c2c8",
+     "insn": "shl cl, 3"
+    },
+    {
+     "at": "0x1c2cd",
+     "insn": "mov byte ptr [esi + ebx], cl"
+    }
+   ]
+  },
+  {
+   "addr": "0x15e71",
+   "name": "draw_image_then_free",
+   "summary": "(img, dst, stride):以 0x4ec7c(img, dst, stride) 繪製,再 heap_free(img)。知識庫記載為回合數字跑馬燈的一環。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x15e88",
+     "insn": "call 0x4ec7c"
+    },
+    {
+     "at": "0x15e94",
+     "insn": "call 0x3776e"
+    }
+   ]
+  },
+  {
+   "addr": "0x2facd",
+   "name": "draw_unit_panel_by_side",
+   "summary": "(unit, dst):單位記錄(80 bytes,基底 [0x53a45])byte +6 為 0 時面板畫在 dst+0xc080(第 154 列),否則 dst+0x5ab(第 4 列、第 171 行);[0x53c03]==0x18 且 unit==0x11 時強制前者。以 0x18c6d(位置, 320, unit) 繪製。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x2faeb",
+     "insn": "movzx eax, byte ptr [edx + eax + 6]"
+    },
+    {
+     "at": "0x2faf4",
+     "insn": "mov eax, 0xc080"
+    },
+    {
+     "at": "0x2fafb",
+     "insn": "mov eax, 0x5ab"
+    },
+    {
+     "at": "0x2fb00",
+     "insn": "cmp dword ptr [0x3c03], 0x18"
+    },
+    {
+     "at": "0x2fb23",
+     "insn": "call 0x18c6d"
+    }
+   ]
+  },
+  {
+   "addr": "0x18c6d",
+   "name": "draw_unit_panel",
+   "summary": "(dst, stride, unit):讀單位記錄(80 bytes,基底 [0x53a45])+0x40/+0x42/+0x44/+0x46 四個 word,以 blit_rle_image 畫面板底圖([0x53a81] 資源 +0x5e),再以 0x18795 在固定欄位畫數字。四個 word 依知識庫是 HP/MP 的現值與上限(本筆只讀到位移)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x18c98",
+     "insn": "movsx ebp, word ptr [esi + 0x40]"
+    },
+    {
+     "at": "0x18cac",
+     "insn": "movsx eax, word ptr [esi + 0x46]"
+    },
+    {
+     "at": "0x18cb8",
+     "insn": "add eax, dword ptr [eax + 0x5e]"
+    },
+    {
+     "at": "0x18cc1",
+     "insn": "call 0x4ebff"
+    },
+    {
+     "at": "0x18cde",
+     "insn": "call 0x18795"
+    }
+   ]
   }
  ]
 }
