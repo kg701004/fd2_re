@@ -2,16 +2,16 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 251,
+  "total": 257,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 184,
+   "wrapper": 190,
    "leaf_global": 11,
    "leaf_ptr": 13,
    "leaf_pure": 9
   },
-  "wrapper_rounds": 2,
+  "wrapper_rounds": 4,
   "disasm_available": true
  },
  "names": {
@@ -154,6 +154,13 @@
    "round": 1,
    "callers": 3,
    "argc": 0
+  },
+  "0x179d5": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x12c0d(), blit_image_transparent(_, _, 0x1c8), draw_unit_sprite(_))",
+   "round": 2,
+   "callers": 1,
+   "argc": 2
   },
   "0x17d6f": {
    "kind": "wrapper",
@@ -512,6 +519,13 @@
    "callers": 0,
    "argc": 0
   },
+  "0x211a4": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, 0xd, _), present_effect_on_targets(_, 0xd, _, _), ~0x1c916(_, _), queue_unit_number_popup(_, 0x69, _))",
+   "round": 2,
+   "callers": 2,
+   "argc": 4
+  },
   "0x2185f": {
    "kind": "wrapper",
    "name": "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))",
@@ -526,6 +540,13 @@
    "callers": 0,
    "argc": 3
   },
+  "0x21b18": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), unit_spend_mp(_, _), ~0x1c8ed(_, _), queue_unit_number_popup(_, 0x69, _))",
+   "round": 3,
+   "callers": 1,
+   "argc": 4
+  },
   "0x2218a": {
    "kind": "wrapper",
    "name": "wrapper(focus_unit(_), unit_spend_mp(_, 0x17), unit_present(_, 0xff, 0xff, _, _), camera_step_to(_, _), unit_present(_, _, _, _, _))",
@@ -539,6 +560,27 @@
    "round": 2,
    "callers": 1,
    "argc": 3
+  },
+  "0x22a85": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x22aa8(_, 0x14, _, _, 0x25))",
+   "round": 4,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x22aa8": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_spend_mp(_, _), ~0x22af6(_, _, _, _, _))",
+   "round": 3,
+   "callers": 1,
+   "argc": 5
+  },
+  "0x22af6": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), queue_unit_fixed_popup(_), ~0x1c916(_, 0xa), queue_unit_number_popup(_, 0x69, _), redraw(0))",
+   "round": 2,
+   "callers": 2,
+   "argc": 5
   },
   "0x22e5c": {
    "kind": "wrapper",

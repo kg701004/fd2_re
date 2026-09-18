@@ -1568,6 +1568,297 @@
      "insn": "imul eax, ebx, 6"
     }
    ]
+  },
+  {
+   "addr": "0x1e0db",
+   "name": "queue_unit_number_popup",
+   "summary": "(?, value, unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,以 sprintf(0x501b6 的格式)把數值轉成字串,4 個字元依序寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位),水平位移 = i*5 + 2。知識庫記載以 0x69/0x5e 呼叫時顯示回復量/傷害。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1e0f2",
+     "insn": "mov esi, 0x2045"
+    },
+    {
+     "at": "0x1e17b",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x1e193",
+     "insn": "mov byte ptr [ebx + eax + 0x3d34], dl"
+    },
+    {
+     "at": "0x1e19e",
+     "insn": "mov byte ptr [ebx + eax + 0x3dfc], dl"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e1dc",
+   "name": "queue_unit_fixed_popup",
+   "summary": "(unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,把 0x5204a 的固定 4 個字形寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位)(第 2 個字位移多 1),筆數 +4。知識庫記載為「失敗」顯示。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1e1ee",
+     "insn": "mov eax, dword ptr [0x204a]"
+    },
+    {
+     "at": "0x1e24e",
+     "insn": "mov byte ptr [edx + eax + 0x3dfc], cl"
+    },
+    {
+     "at": "0x1e258",
+     "insn": "mov byte ptr [edx + eax + 0x3c6c], bl"
+    },
+    {
+     "at": "0x1e286",
+     "insn": "add dword ptr [0x3ec4], 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x127e0",
+   "name": "draw_unit_sprite",
+   "summary": "(unit):每個 BIOS tick 翻轉一次動畫影格旗標 [0x53a04];讀單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)與 +2..+5,在視窗內時依 +3 的方向加上半格位移(0:+0x720 = 下 4 列、1:-4、2:-0x720、3:+4)再畫出。draw_unit_layer 對每個存活單位呼叫它。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12801",
+     "insn": "xor byte ptr [0x3a04], 1"
+    },
+    {
+     "at": "0x1282a",
+     "insn": "movzx ebp, byte ptr [eax]"
+    },
+    {
+     "at": "0x12893",
+     "insn": "mov ecx, 0x720"
+    },
+    {
+     "at": "0x1289f",
+     "insn": "mov ecx, 0xfffffffc"
+    },
+    {
+     "at": "0x128ab",
+     "insn": "mov ecx, 0xfffff8e0"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b750",
+   "name": "recalc_equipped_stats",
+   "summary": "(unit):以單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)的基礎 AP(+0x37)、DP(+0x39)、DX(+0x3e,+0x24 非 0 再加 0xf)為起點,加上每個已裝備(旗標 0x40)道具在 item_effect_row_ptr 列的 +1/+5/+3/+7 四個 word;+0x22 非 0 時再以 0x5018d 的浮點係數乘上。verified_addresses 記載的 runtime 裝備重算(0x1B750..0x1B83D)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1b776",
+     "insn": "movsx eax, word ptr [edi + 0x37]"
+    },
+    {
+     "at": "0x1b796",
+     "insn": "add dword ptr [esp + 4], 0xf"
+    },
+    {
+     "at": "0x1b7b4",
+     "insn": "test byte ptr [eax], 0x40"
+    },
+    {
+     "at": "0x1b7be",
+     "insn": "call 0x4e8bc"
+    },
+    {
+     "at": "0x1b7c6",
+     "insn": "movsx edx, word ptr [eax + 1]"
+    },
+    {
+     "at": "0x1b7f3",
+     "insn": "fmul qword ptr [0x18d]"
+    }
+   ]
+  },
+  {
+   "addr": "0x11eee",
+   "name": "draw_terrain_layer",
+   "summary": "地圖地形層:依捲動位置把可見範圍的每一格以 blit_tile24_rle 畫進地圖緩衝(stride 456,每格 24 px),必要時經 reveal_wipe 與 copy_rect。redraw 的第二步(參數依 redraw 呼叫端:緩衝 + 0x8088、456、13、8、捲動 x、捲動 y)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x11fcf",
+     "insn": "imul eax, dword ptr [0x3af1], 0x1c8"
+    },
+    {
+     "at": "0x121be",
+     "insn": "imul eax, eax, 0x18"
+    },
+    {
+     "at": "0x1220c",
+     "insn": "call 0x4e22a"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c4cc",
+   "name": "play_map_effect_animation",
+   "summary": "(a1, a2, a3):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1c517",
+     "insn": "call 0x11cac"
+    },
+    {
+     "at": "0x1c524",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x1c60a",
+     "insn": "call 0x4ebab"
+    },
+    {
+     "at": "0x1c63b",
+     "insn": "call 0x11eb0"
+    },
+    {
+     "at": "0x1c65c",
+     "insn": "call 0x25a96"
+    },
+    {
+     "at": "0x1c666",
+     "insn": "call 0x17aa9"
+    },
+    {
+     "at": "0x1c744",
+     "insn": "call 0x3776e"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e88e",
+   "name": "class_equip_row_ptr",
+   "summary": "(class):回傳 0x6188a + class*7 —— 職業可裝備道具類型表的列指標(dump_exe_tables 的 class_equip_types)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e894",
+     "insn": "mov edx, 7"
+    },
+    {
+     "at": "0x4e89b",
+     "insn": "lea edx, [0x188a]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c1c3",
+   "name": "unit_can_equip_item",
+   "summary": "(unit, item):取單位記錄(80 bytes,基底 [0x53a45])+0x20 的職業列 class_equip_row_ptr,道具類型 = item_effect_row_ptr(item) 的 byte0;類型出現在職業列前 6 bytes 內回 1,否則 0。dump_exe_tables 記為 class×item.type 六欄白名單的使用端。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1c1e2",
+     "insn": "movzx eax, byte ptr [edx + eax + 0x20]"
+    },
+    {
+     "at": "0x1c1e8",
+     "insn": "call 0x4e88e"
+    },
+    {
+     "at": "0x1c1fe",
+     "insn": "movzx ebx, byte ptr [eax]"
+    },
+    {
+     "at": "0x1c206",
+     "insn": "cmp eax, 6"
+    },
+    {
+     "at": "0x1c20f",
+     "insn": "cmp ebx, edx"
+    }
+   ]
+  },
+  {
+   "addr": "0x146d1",
+   "name": "map_block_cells_of_side",
+   "summary": "(except, mode):對每個單位(數量 [0x53beb],略過 except 與 +5 bit0 已設者),mode==0 時挑 +6(陣營)==0 的、否則挑 +6!=0 的,把它所在地圖格的 byte3 設 0xff。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x146ff",
+     "insn": "cmp ebx, edi"
+    },
+    {
+     "at": "0x14721",
+     "insn": "test byte ptr [eax + 5], 1"
+    },
+    {
+     "at": "0x1472b",
+     "insn": "movzx ecx, byte ptr [eax + 6]"
+    },
+    {
+     "at": "0x14733",
+     "insn": "mov byte ptr [edx], 0xff"
+    }
+   ]
+  },
+  {
+   "addr": "0x12ac6",
+   "name": "redraw_map_cell",
+   "summary": "(buf, x, y):格子在視窗內(含上下各多一列)且 y >= 0 時,取該格 tile(低 10 bits);地形表 [0x53a69] 該 tile 的旗標含 8 時tile 再加 2*[0x53a40](動畫地形的目前影格),然後重畫這一格。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12b2e",
+     "insn": "imul eax, dword ptr [0x3ac1]"
+    },
+    {
+     "at": "0x12b4a",
+     "insn": "and ah, 3"
+    },
+    {
+     "at": "0x12b5c",
+     "insn": "test bl, 8"
+    },
+    {
+     "at": "0x12b61",
+     "insn": "mov ecx, dword ptr [0x3a40]"
+    }
+   ]
+  },
+  {
+   "addr": "0x129ec",
+   "name": "redraw_map_cells_at_units",
+   "summary": "對每個單位(略過 unit_uses_move_cost_row19 與 unit_inactive 為真者)以 redraw_map_cell 重畫它所在格與上一格,移動中(+4 非 0)再依方向多畫相鄰格。draw_unit_layer 的最後一步;用途(疊在單位上的前景地形)是推測,名字只寫機制。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12a3d",
+     "insn": "call 0x1f183"
+    },
+    {
+     "at": "0x12a4a",
+     "insn": "call 0x34894"
+    },
+    {
+     "at": "0x12a82",
+     "insn": "call 0x12ac6"
+    },
+    {
+     "at": "0x12a8a",
+     "insn": "lea eax, [ebx - 1]"
+    }
+   ]
   }
  ]
 }
