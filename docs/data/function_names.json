@@ -1859,6 +1859,96 @@
      "insn": "lea eax, [ebx - 1]"
     }
    ]
+  },
+  {
+   "addr": "0x26eda",
+   "name": "menu_read_key",
+   "summary": "(mode):城鎮/商店選單的等鍵迴圈。以 0x27079 畫選項圖示(0x52418 的 4 個位置、資源 [0x53f66]),mode==0 時目前選項 [0x53c57] 以 blit_image_transparent 標示;等待期間以 prng_next 取間隔交替 draw_dialog_cell 眨眼;有鍵時以 int386(0x16) 讀掃描碼到 [0x53a8e],0xE0/0x52 轉 0x1c、0x53 轉 1 後回傳(與 wait_key_with_marker 相同的轉換)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x26ef7",
+     "insn": "mov esi, 0x2418"
+    },
+    {
+     "at": "0x26f36",
+     "insn": "call 0x27079"
+    },
+    {
+     "at": "0x26f71",
+     "insn": "cmp esi, dword ptr [0x3c57]"
+    },
+    {
+     "at": "0x27015",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x27022",
+     "insn": "mov byte ptr [0x3a8e], 0x10"
+    },
+    {
+     "at": "0x27035",
+     "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x27050",
+     "insn": "mov byte ptr [0x3a8e], 0x1c"
+    },
+    {
+     "at": "0x27063",
+     "insn": "mov byte ptr [0x3a8e], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x27d33",
+   "name": "choice_box_left_right",
+   "summary": "左右切換的選擇框:配置三塊畫面緩衝並存下畫面,[0x53c57] 為目前選項(上限 [0x53bfb]),以 0x2810b 畫選項內容、滑入後進入迴圈;menu_read_key 回右鍵 0x4d 時 +1、左鍵 0x4b 時 -1(各播 play_sfx 並以 0x27816 做切換效果),Enter 0x1c 確認、1(Esc 轉換後)取消。呼叫端是商店買/賣、道具轉移與教會的服務函式(0x2872b/0x28cbd/0x28efe/0x28f65/0x29620)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x27d46",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x27dae",
+     "insn": "mov dword ptr [0x3c57], esi"
+    },
+    {
+     "at": "0x27de1",
+     "insn": "call 0x2810b"
+    },
+    {
+     "at": "0x27e12",
+     "insn": "call 0x26eda"
+    },
+    {
+     "at": "0x27e1a",
+     "insn": "cmp eax, 0x4d"
+    },
+    {
+     "at": "0x27e43",
+     "insn": "inc dword ptr [0x3c57]"
+    },
+    {
+     "at": "0x27e7d",
+     "insn": "cmp eax, 0x4b"
+    },
+    {
+     "at": "0x27ea1",
+     "insn": "dec dword ptr [0x3c57]"
+    },
+    {
+     "at": "0x27f22",
+     "insn": "cmp eax, 0x1c"
+    },
+    {
+     "at": "0x27f33",
+     "insn": "cmp eax, 1"
+    }
+   ]
   }
  ]
 }

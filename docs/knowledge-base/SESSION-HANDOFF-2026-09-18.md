@@ -278,6 +278,12 @@ AIL 的 105 個早已由 `ail_entry_points.json` 收錄。這條路沒有可收�
 - **第四批 +10(共 47 筆)**:EXE 資料表的列指標(`item_effect_row_ptr` = 0x602ad 每列 0x17、`move_cost_row_ptr` = 0x61646 每列 0x14、
   `row7_ptr_619fd`、`row31_ptr_6238d`)、`unit_spend_mp`、`unit_add_item`、`map_cell_info`、`tick_anim_counters`、`draw_unit_layer`、
   `close_box_slide_down_no_redraw`。有真名的 `strong` 入口 231 -> **267**;完全無描述的 **208**。
+- **第五~九批 +33(共 80 筆,commit `5ba9dfac`..)**:`open_dialog_box`、`yes_no_prompt`、`slide_in_choice_icons`、`menu_read_key`、
+  `choice_box_left_right`(城鎮/商店/教會的選單)、`draw_number`、浮字佇列兩個、`draw_unit_sprite`、`draw_terrain_layer`、`redraw_map_cell`、
+  `blit_tile24_rle`、`blit_image_transparent`、`recalc_equipped_stats`、`unit_can_equip_item`、`class_equip_row_ptr`、`fprintf`/`vfprintf`/`sprintf`、
+  `ail_debug_trace_prefix` 等。`verified_addresses` 已記載語意、但沒有名稱字串的(`0x14818`、`0x115b6`、`0x1b750`、`0x1b8a6`)一併收成名稱。
+  有真名的 `strong` 入口 **295**;完全無描述的 **189**,其中遊戲側(`__STK` 之前)約 100 個,剩下的多半是 200~1200 bytes 的流程函式。
+- 第七批起挑選改成「完全沒有描述」的遊戲側函式優先 —— 只替已有文件記載的函式補名稱,不會降低無描述數。
 - **自我訂正一筆**:讀 `map_cell_info`(`0x12e38`)時看出地圖格陣列的表頭是 4 bytes、每格 `{u16 tile, u8 旗標, u8 byte3}`;
   第二批把 `0x146a7`/`0x14b16` 寫成「6-byte 表頭的 byte0 / byte1」是錯的(位元組證據本身沒錯,錯的是我對版面的描述)。
   已改寫 summary,`map_collect_cells_byte1_set` 改名 `map_collect_cells_byte3_set`。位元組證據擋得住抄錯位址,擋不住解讀錯 ——
