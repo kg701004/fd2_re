@@ -801,10 +801,18 @@
   {
    "tool": "function_inventory.py",
    "kind": "equivalent",
-   "key": "build_structural.insn_at|for ins in md.disasm(code[a - base:a - base + 15], a):|int 15->16#0",
+   "key": "insn_decoder.insn_at|for ins in md.disasm(code[a - base:a - base + 15], a):|int 15->16#0",
    "reason": "解碼窗:x86 指令最長 15 bytes,insn_at 只取解出的第一條指令;窗多 1 byte 不會改變第一條指令的長度、助記符或運算元。",
    "evidence": "突變狀態下 --structural 的產物逐位元組相同(探針每次 --precommit 重驗);artifacts 軸也沒有報漂移。",
-   "scope_hash": "550188e0f9b7"
+   "scope_hash": "ff9ef0c28263"
+  },
+  {
+   "tool": "function_inventory.py",
+   "kind": "tuning",
+   "key": "run_check_names|inv = build(with_argc=False)|bool False->True#0",
+   "reason": "run_check_names 只用清單的 addr 與 span_upper;with_argc 只決定要不要另外算每個入口的 argc(約多 5 秒),算出來的值在這條路徑上沒有任何人讀。改成 True 只會變慢,檢查結果逐筆相同。",
+   "evidence": "check_names 的參數只有 spans_(由 addr/span_upper 組成)、命名表與解碼器,不含 argc。",
+   "scope_hash": "49bff8008157"
   }
  ]
 }

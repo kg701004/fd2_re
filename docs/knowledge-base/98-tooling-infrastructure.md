@@ -5414,3 +5414,29 @@ selftest 當場抓到,改用 Write 工具的腳本修掉。規則早就寫在記
 
 真實 EXE 檢查加到 18 項:`0x2185f` 釘成 `wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))` ——
 我原本憑名字猜 sprite_walk_on 在前,反組譯說 play_sfx 在前,以反組譯為準;`0x20707` 釘兩次 `unit_inactive` 的單位編號。
+
+## 2026-09-19 續二十八:人讀的名字也要錨在位元組上 —— `function_names.json` 與 `--check-names`
+
+機械方法到頂之後(續二十七,`strong` 裡 270 個完全無描述),剩下的要人讀反編譯碼。人讀的結論最容易變成「只存在散文裡的位址主張」——
+本專案 9 月清掉的 955 個就是那種東西。所以先做登錄表再開始讀:
+
+* `docs/data/function_names.json` 手動維護,`function_inventory.py` 只讀不寫(hygiene 的 `no_generator` 永久豁免,證明可證偽)。
+* 每筆必帶 `evidence`:`{"at": 位址, "insn": "助記符 運算元"}`。`--check-names` 在該位址反組譯、逐字比對,並要求位址落在
+  `[addr, addr + span_upper)`。沒有反組譯器時算**錯誤**,不是放行。其餘規則:addr 須是清單入口、snake_case、不重複、
+  不與 PRIM/`DOC_OP_NAMES`/AIL 撞名或重複命名、summary 不得空、confidence 只能是 `static_re`/`verified_dynamic`。
+  每條規則一筆違規一筆合格的成對案例;selftest 真實 EXE 段每次驗整張表。
+* `--card ADDR`:機械事實 + 呼叫端 + 帶名稱註記與 fixup 目標的反組譯。Ghidra 偽碼對這批函式幾乎沒用(參數推不出來,
+  `FUN_00016559(void)` 實際上讀 1 個參數),讀的是反組譯。
+
+前三批 37 筆全數一次通過位元組檢查。挑選順序改用「沒有真名的入口依直接呼叫端數排序」(含文件已記載者),因為名字會餵給結構性命名:
+`memmove` 一個名字解開 28 個 wrapper。`strong` 裡完全無描述的 270 -> 212。
+
+**回歸釘值要跟登錄表脫鉤。** 結構性命名的釘值第一次因為我登錄名字而失敗 —— 那是預期中的變動,不是回歸。釘值改用
+`build_structural(include_registry=False)`;含登錄表的版本由「已提交產物逐位元組相同」那一條管。
+
+**過期偵測抓到我的重構。** 把解碼器抽成 `insn_decoder` 之後,續二十七登錄的等價突變鍵(`build_structural.insn_at|…`)對不上新位置,
+`--precommit` 第一步就報過期。用 harness 自己的 `list_sites`/`scope_hash` 重算後通過。另登錄一筆 `tuning`:
+`run_check_names` 的 `build(with_argc=False)` 改 True 只會多算一份沒人讀的 argc。登錄表 105 -> 106。
+
+**callees 的假目標。** 第一張事實卡就看到 `0x16c57` 的 callees 裡有 `0x75c1f2d7`:E8 位元組掃描命中資料,目標落在 obj1 之外。
+`callees_by_owner` 現在只收 `[base, hi)` 內的目標(邊界成對案例:base 含、hi 不含)。這個修正單獨讓結構性命名多 15 筆。

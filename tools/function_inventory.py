@@ -53,6 +53,16 @@ AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為
 只對 `strong` 且沒有真名的入口命名。這些是**描述不是語意**:`wrapper(load_res)` 說的是「它只呼叫 load_res」,
 不是「它載入什麼」。產物 `docs/data/function_structural_names.json` 的每一筆都標 `kind`,不得當成 verified 引用。
 
+人讀出來的名稱(`docs/data/function_names.json`,`--check-names`)
+------------------------------------------------------------
+機械方法處理不了的函式要人讀反編譯碼。讀出來的名稱登錄在 `function_names.json`(手動維護,本工具只讀不寫),
+每筆必須帶**機器可驗證的證據**:`evidence` 是一串 `{"at": 位址, "insn": "助記符 運算元"}`,`--check-names` 會在該位址
+實際反組譯、逐字比對,並要求位址落在該函式的 `[addr, addr+span_upper)` 內。名稱因此錨在位元組上,不是錨在散文上:
+EXE 換版或位址抄錯,檢查就會失敗。其他規則:`addr` 必須是本清單的入口、名稱 snake_case 且不重複、不得與其他命名表
+(PRIM、`DOC_OP_NAMES`、AIL)撞名或重複命名同一位址、`summary` 不得空、`confidence` 只能是 `static_re` 或 `verified_dynamic`。
+登錄的名稱會進 `load_names()`,所以也會餵給結構性命名(新名字可能讓更多 wrapper 解得出來 —— 登錄後要重生
+`function_structural_names.json`)。`--card ADDR` 印出一個入口的機械事實、呼叫端與本體反組譯,給人讀的時候用。
+
 誠實邊界
 --------
 * 只經跳表/函式指標抵達、又沒有 Watcom 序頭的函式看不到(fixup 目標大多是函式內的 case 標籤,
@@ -66,6 +76,8 @@ AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為
     python tools/function_inventory.py --coverage                           # 命名/記載覆蓋率
     python tools/function_inventory.py --unnamed [--limit N]                # 無名的 strong 入口,依呼叫端數排序
     python tools/function_inventory.py --structural docs/data/function_structural_names.json
+    python tools/function_inventory.py --check-names                        # 驗 function_names.json 的每一筆證據
+    python tools/function_inventory.py --card 0x16c57                       # 一個入口的事實卡 + 反組譯
     python tools/function_inventory.py --ghidra-export PATH                 # 與 Ghidra 匯出對照
     python tools/function_inventory.py --selftest
 """
@@ -91,6 +103,9 @@ if hasattr(sys.stdout, "reconfigure"):
 AIL_JSON = ROOT / "docs" / "data" / "ail_entry_points.json"
 VERIFIED_JSON = ROOT / "docs" / "data" / "verified_addresses.json"
 ERRATA_JSON = ROOT / "docs" / "data" / "known_address_errata.json"
+FUNCTION_NAMES_JSON = ROOT / "docs" / "data" / "function_names.json"
+NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+CONFIDENCES = ("static_re", "verified_dynamic")
 JMP_REL32 = 0xE9
 STRONG_CALLERS = 2          # 只被 CALL 一次的位址可能是資料位元組的偶然命中
 WRAPPER_MAX_SPAN = 256      # 再大就不是「只是包裝」,本體有自己的邏輯
@@ -316,11 +331,15 @@ def owner(addrs: list[int], addr: int) -> int | None:
 
 
 def callees_by_owner(addrs: list[int], call_index: dict[int, tuple[int, ...]],
-                     skip: set[int]) -> dict[int, list[int]]:
-    """{入口: 本體範圍內直接 CALL 的目標(去重、排序、不含 skip)}。"""
+                     skip: set[int], base: int, hi: int) -> dict[int, list[int]]:
+    """{入口: 本體範圍內直接 CALL 的目標(去重、排序、不含 skip、只收 [base, hi) 內的)}。
+
+    E8 位元組掃描命中資料位元組時,算出來的目標多半落在 obj1 之外(實測 `0x16c57` 的 callees 裡有 `0x75c1f2d7`);
+    那不是呼叫,留著會讓「被呼叫者全部已知」的 wrapper 判定永遠不成立。
+    """
     out: dict[int, set[int]] = {}
     for target, sites in call_index.items():
-        if target in skip:
+        if target in skip or not base <= target < hi:
             continue
         for site in sites:
             o = owner(addrs, site)
@@ -351,7 +370,7 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
     sig = entry_signals(set(prologue), callers, set(ail), thunks)
     addrs = sorted(sig)
     span = spans(addrs, hi)
-    callee = callees_by_owner(addrs, call_index, {stack_probe})
+    callee = callees_by_owner(addrs, call_index, {stack_probe}, base, hi)
     glob = globals_by_owner(addrs, fixups, base, hi)
     entries = []
     for a in addrs:
@@ -369,6 +388,59 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
                                     for k in ("prologue", "call", "ail", "thunk_target")},
                       "argc_available": argc_of is not None},
             "entries": entries}
+
+
+def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int, str], insn_at) -> list[str]:
+    """驗 function_names.json 的每一筆;回傳錯誤訊息(空 = 全過)。`insn_at` 為 None 時證據無法驗,算錯誤。
+
+    `spans_` = {入口: span_upper};`other_names` = 其他命名表的 {位址: 名稱}。
+    """
+    errs: list[str] = []
+    seen_addr: set[int] = set()
+    seen_name: set[str] = set()
+    taken = set(other_names.values())
+    for it in items:
+        tag = f"{it.get('addr')} {it.get('name')}"
+        try:
+            a = int(str(it.get("addr")), 16)
+        except ValueError:
+            errs.append(f"{tag}: addr 不是十六進位")
+            continue
+        name = str(it.get("name", ""))
+        if a not in spans_:
+            errs.append(f"{tag}: addr 不是清單裡的入口")
+            continue
+        if a in seen_addr:
+            errs.append(f"{tag}: addr 重複登錄")
+        if a in other_names:
+            errs.append(f"{tag}: 其他命名表已命名為 {other_names[a]}")
+        if not NAME_RE.match(name):
+            errs.append(f"{tag}: 名稱須為 snake_case")
+        if name in seen_name or name in taken:
+            errs.append(f"{tag}: 名稱重複或與其他命名表撞名")
+        seen_addr.add(a)
+        seen_name.add(name)
+        if not str(it.get("summary", "")).strip():
+            errs.append(f"{tag}: summary 不得空")
+        if it.get("confidence") not in CONFIDENCES:
+            errs.append(f"{tag}: confidence 須為 {'/'.join(CONFIDENCES)}")
+        ev = it.get("evidence") or []
+        if not ev:
+            errs.append(f"{tag}: 沒有 evidence")
+        for e in ev:
+            try:
+                at = int(str(e.get("at")), 16)
+            except ValueError:
+                errs.append(f"{tag}: evidence.at 不是十六進位:{e.get('at')}")
+                continue
+            if not a <= at < a + spans_[a]:
+                errs.append(f"{tag}: evidence {at:#x} 不在函式範圍 [{a:#x}, {a + spans_[a]:#x}) 內")
+                continue
+            got = insn_at(at) if insn_at else None
+            text = f"{got[1]} {got[2]}".strip() if got else None
+            if text != e.get("insn"):
+                errs.append(f"{tag}: evidence {at:#x} 期望 {e.get('insn')!r},實際 {text!r}")
+    return errs
 
 
 def tier(addr: int, names: dict[int, dict], documented: set[int]) -> str:
@@ -442,7 +514,42 @@ def build(with_argc: bool = True) -> dict:
     return assemble(prologue, call_index, set(load_ail()), code, base, hi, fixups, CC.STACK_PROBE, argc_of)
 
 
-def load_names() -> dict[int, dict]:
+def load_function_names() -> list[dict]:
+    if not FUNCTION_NAMES_JSON.exists():
+        return []
+    return json.loads(FUNCTION_NAMES_JSON.read_text(encoding="utf-8"))["names"]
+
+
+def insn_decoder(code: bytes, base: int):
+    """`insn_at(addr) -> (長度, 助記符, 運算元) | None`;沒有 capstone 回 None。"""
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    except ImportError:
+        return None
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    def insn_at(a: int):
+        for ins in md.disasm(code[a - base:a - base + 15], a):
+            return ins.size, ins.mnemonic, ins.op_str
+        return None
+
+    return insn_at
+
+
+def other_real_names() -> dict[int, str]:
+    """function_names.json 以外、有名稱字串的命名表(PRIM、DOC_OP_NAMES、AIL)。"""
+    return {a: v["name"] for a, v in load_names(include_registry=False).items() if v["name"]}
+
+
+def run_check_names() -> list[str]:
+    import verify_address_claim_coverage as CC
+    inv = build(with_argc=False)
+    _, _, code, base, _ = CC.load_image()
+    spans_ = {int(e["addr"], 16): e["span_upper"] for e in inv["entries"]}
+    return check_names(load_function_names(), spans_, other_real_names(), insn_decoder(code, base))
+
+
+def load_names(include_registry: bool = True) -> dict[int, dict]:
     """{位址: {"name": 第一個可用名稱或 None, "sources": [...]}}。"""
     import dump_chapter_beats as DCB
     import event_handler_dump as EHD
@@ -463,6 +570,8 @@ def load_names() -> dict[int, dict]:
         add(a, "DOC_OP_NAMES", v[0])
     for a, v in load_ail().items():
         add(a, "AIL", v)
+    for it in load_function_names() if include_registry else []:
+        add(int(it["addr"], 16), "function_names", it["name"])
     for e in json.loads(VERIFIED_JSON.read_text(encoding="utf-8"))["entries"]:
         for h in HEX.findall(str(e.get("address", ""))):
             add(int(h, 16), "verified_addresses", None)
@@ -472,32 +581,23 @@ def load_names() -> dict[int, dict]:
     return out
 
 
-def real_names() -> dict[int, str]:
-    """只收有名稱字串的來源(PRIM、DOC_OP_NAMES、AIL)。"""
-    return {a: v["name"] for a, v in load_names().items() if v["name"]}
+def real_names(include_registry: bool = True) -> dict[int, str]:
+    """只收有名稱字串的來源(PRIM、DOC_OP_NAMES、AIL,以及 function_names.json)。"""
+    return {a: v["name"] for a, v in load_names(include_registry).items() if v["name"]}
 
 
-def build_structural() -> dict:
+def build_structural(include_registry: bool = True) -> dict:
     import disasm_le as D
     import verify_address_claim_coverage as CC
     inv = build(with_argc=True)
     data, meta, code, base, hi = CC.load_image()
     ents = {int(e["addr"], 16) for e in inv["entries"]}
     bodies = None
-    try:
-        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
-        md = Cs(CS_ARCH_X86, CS_MODE_32)
-
-        def insn_at(a: int):
-            for ins in md.disasm(code[a - base:a - base + 15], a):
-                return ins.size, ins.mnemonic, ins.op_str
-            return None
-
+    insn_at = insn_decoder(code, base)
+    if insn_at:
         bodies = {int(e["addr"], 16): body_insns(insn_at, int(e["addr"], 16), int(e["addr"], 16) + e["span_upper"])
                   for e in inv["entries"] if e["span_upper"] <= WRAPPER_MAX_SPAN}
-    except ImportError:
-        pass
-    named = structural(inv["entries"], real_names(), entry_thunks(ents, code, base, hi), set(load_ail()),
+    named = structural(inv["entries"], real_names(include_registry), entry_thunks(ents, code, base, hi), set(load_ail()),
                        bodies, D.build_fixups(data, meta), base, hi, frozenset({CC.STACK_PROBE}))
     doc = structural_doc(inv["entries"], named)
     doc["_meta"]["disasm_available"] = bodies is not None
@@ -547,6 +647,53 @@ def report_unnamed(limit: int | None) -> int:
         known = [names[int(t, 16)]["name"] or t for t in e["callees"] if int(t, 16) in names]
         print(f"  {e['addr']}  callers={e['callers']:<3} span<={e['span_upper']:<5} argc={e['argc']}  "
               f"callees={len(e['callees'])} globals={len(e['globals'])}  已命名被呼叫者:{known[:6]}")
+    return 0
+
+
+def report_card(addr_s: str) -> int:
+    import derive_native_argcounts as DNA
+    import verify_address_claim_coverage as CC
+    inv = build(with_argc=True)
+    addrs = [int(e["addr"], 16) for e in inv["entries"]]
+    by = {int(e["addr"], 16): e for e in inv["entries"]}
+    a = int(addr_s, 16)
+    if a not in by:
+        o = owner(addrs, a)
+        print(f"{a:#x} 不是入口;所屬入口 {o:#x}" if o is not None else f"{a:#x} 在第一個入口之前")
+        return 1
+    e = by[a]
+    names = load_names()
+    sd = build_structural()["names"]
+
+    def lab(t: int) -> str:
+        n = names.get(t, {}).get("name") or sd.get(hex(t), {}).get("name")
+        return f"{t:#x}" + (f"={n}" if n else "")
+
+    _, _, code, base, _ = CC.load_image()
+    idx, _ = DNA._scan(types.SimpleNamespace(code=code, base=base))
+    callers = sorted({owner(addrs, s) for s in idx.get(a, ()) if owner(addrs, s) is not None})
+    print(f"{lab(a)}  signals={e['signals']} grade={e['grade']} callers={e['callers']} span<={e['span_upper']} argc={e['argc']}")
+    print("  callees:", [lab(int(t, 16)) for t in e["callees"]])
+    print("  globals:", e["globals"])
+    print("  called from:", [lab(c) for c in callers])
+    insn_at = insn_decoder(code, base)
+    body = body_insns(insn_at, a, a + e["span_upper"]) if insn_at else None
+    fix = None
+    if body is None and insn_at:                      # 沒有乾淨結尾:照樣線性印到 span 為止
+        body, x = [], a
+        while x < a + e["span_upper"]:
+            got = insn_at(x)
+            if got is None:
+                break
+            body.append((x, *got))
+            x += got[0]
+    import disasm_le as D
+    data, meta = CC.load_image()[:2]
+    fix = D.build_fixups(data, meta)
+    for x, size, mn, op in body or []:
+        refs = [hex(fix[y]) for y in range(x, x + size) if y in fix]
+        tgt = f"   ; {lab(int(op, 16))}" if mn == "call" and op.startswith("0x") else ""
+        print(f"    {x:#x}  {mn} {op}{tgt}" + (f"   ; -> {', '.join(refs)}" if refs else ""))
     return 0
 
 
@@ -619,9 +766,10 @@ def _selftest_pure(fails: list[str]) -> None:
            owner([0x10, 0x18], 0x18), owner([0x10, 0x18], 0x999)], [None, 0x10, 0x10, 0x18, 0x18])
 
     print("(4) callees_by_owner / globals_by_owner")
-    idx = {0x500: (0x11, 0x12, 0x19), 0x600: (0x13,), 0x700: (0x5,), 0x3702f: (0x14,)}
-    check("呼叫端歸屬、去重排序、__STK 不算、第一個入口之前的呼叫端丟掉",
-          callees_by_owner([0x10, 0x18], idx, {0x3702f}), {0x10: [0x500, 0x600], 0x18: [0x500]})
+    idx = {0x500: (0x11, 0x12, 0x19), 0x600: (0x13,), 0x700: (0x5,), 0x3702f: (0x14,),
+           0xff: (0x15,), 0x100: (0x16,), 0x8ff: (0x17,), 0x900: (0x1a,)}
+    check("呼叫端歸屬、去重排序、__STK 不算、第一個入口之前的呼叫端丟掉;目標只收 [base, hi)(base 含、hi 不含)",
+          callees_by_owner([0x10, 0x18], idx, {0x3702f}, 0x100, 0x900), {0x10: [0x100, 0x500, 0x600, 0x8ff], 0x18: [0x500]})
     fx = {0x1011: 0x9000, 0x1012: 0x9000, 0x1013: 0x8000, 0x1019: base, 0x101a: hi, 0x101b: base - 1,
           0x101c: hi - 1, 0x0fff: 0x9000, hi: 0x9000, 0x1005: 0x9000}
     check("fixup:目標在 obj1 內不算(base 含、hi 不含)、來源在 obj1 外不算、第一個入口之前不算",
@@ -642,9 +790,9 @@ def _selftest_pure(fails: list[str]) -> None:
         "0x1010": (["call"], 1, "weak", 0x10, 0), "0x1020": (["call"], 2, "strong", 0x10, 0),
         "0x1030": (["thunk_target"], 0, "strong", 0x10, 0)})
     by = {e["addr"]: e for e in inv["entries"]}
-    check("callees(含指向 obj1 外與 hi 的目標,但不含 __STK)與 globals",
+    check("callees(不含 obj1 外的目標、不含 __STK)與 globals",
           (by["0x1000"]["callees"], by["0x1010"]["callees"], by["0x1000"]["globals"]),
-          (["0xfff", "0x1010", "0x1020", "0x1040", "0x9000"], ["0x1020"], ["0x9000"]))
+          (["0x1010", "0x1020"], ["0x1020"], ["0x9000"]))
     check("_meta 計數", {k: inv["_meta"][k] for k in ("entries", "strong", "weak", "by_signal", "argc_available")},
           {"entries": 5, "strong": 4, "weak": 1, "argc_available": True,
            "by_signal": {"prologue": 1, "call": 2, "ail": 1, "thunk_target": 1}})
@@ -815,6 +963,50 @@ def _selftest_structural(fails: list[str]) -> None:
     check("空輸入", (structural([], {}, {}, set()), structural_doc([], {})["_meta"]["wrapper_rounds"]), ({}, 0))
 
 
+def _selftest_names(fails: list[str]) -> None:
+    def check(label: str, got, want) -> None:
+        ok = got == want
+        print(f"    {'PASS' if ok else 'FAIL'}: {label}")
+        if not ok:
+            fails.append(f"{label}: got {got!r} want {want!r}")
+
+    print("(16) check_names:每一條規則各有一筆違規與一筆合格")
+    table = {0x1000: (1, "push", "esi"), 0x1001: (5, "call", "0x500"), 0x100f: (1, "ret", ""), 0x1010: (1, "nop", "")}
+    insn_at = table.get
+    spans_ = {0x1000: 0x10, 0x1010: 8}
+    ok = {"addr": "0x1000", "name": "draw_wait_marker", "summary": "畫等待標記", "confidence": "static_re",
+          "evidence": [{"at": "0x1001", "insn": "call 0x500"}, {"at": "0x100f", "insn": "ret"}]}
+    check("合格的一筆(含範圍內最後一個 byte 的證據、無運算元的指令)", check_names([ok], spans_, {0x500: "pan"}, insn_at), [])
+
+    def bad(**kw):
+        return check_names([{**ok, **kw}], spans_, {0x500: "pan", 0x1010: "spawn"}, insn_at)
+    check("addr 不是十六進位", bad(addr="zz"), ["zz draw_wait_marker: addr 不是十六進位"])
+    check("addr 不是入口", bad(addr="0x1004"), ["0x1004 draw_wait_marker: addr 不是清單裡的入口"])
+    check("其他命名表已命名(證據範圍也跟著換,所以只看這一條)",
+          [x for x in bad(addr="0x1010", evidence=[{"at": "0x1010", "insn": "nop"}])], ["0x1010 draw_wait_marker: 其他命名表已命名為 spawn"])
+    check("名稱格式", bad(name="DrawMarker"), ["0x1000 DrawMarker: 名稱須為 snake_case"])
+    check("與其他命名表撞名", bad(name="pan"), ["0x1000 pan: 名稱重複或與其他命名表撞名"])
+    check("summary 空白", bad(summary="  "), ["0x1000 draw_wait_marker: summary 不得空"])
+    check("confidence 不在清單", bad(confidence="guess"), ["0x1000 draw_wait_marker: confidence 須為 static_re/verified_dynamic"])
+    check("verified_dynamic 也合格", bad(confidence="verified_dynamic"), [])
+    check("沒有 evidence", bad(evidence=[]), ["0x1000 draw_wait_marker: 沒有 evidence"])
+    check("evidence.at 不是十六進位", bad(evidence=[{"at": "q", "insn": "ret"}]), ["0x1000 draw_wait_marker: evidence.at 不是十六進位:q"])
+    check("evidence 剛好落在範圍上界(下一個函式的第一個 byte)", bad(evidence=[{"at": "0x1010", "insn": "nop"}]),
+          ["0x1000 draw_wait_marker: evidence 0x1010 不在函式範圍 [0x1000, 0x1010) 內"])
+    check("evidence 在函式起點之前", bad(evidence=[{"at": "0xfff", "insn": "nop"}]),
+          ["0x1000 draw_wait_marker: evidence 0xfff 不在函式範圍 [0x1000, 0x1010) 內"])
+    check("evidence 在起點本身要算範圍內", bad(evidence=[{"at": "0x1000", "insn": "push esi"}]), [])
+    check("指令文字不符", bad(evidence=[{"at": "0x1001", "insn": "call 0x501"}]),
+          ["0x1000 draw_wait_marker: evidence 0x1001 期望 'call 0x501',實際 'call 0x500'"])
+    check("該位址解不出指令", bad(evidence=[{"at": "0x1002", "insn": "nop"}]),
+          ["0x1000 draw_wait_marker: evidence 0x1002 期望 'nop',實際 None"])
+    check("沒有反組譯器:證據無法驗,算錯誤而不是放行", check_names([ok], spans_, {}, None),
+          ["0x1000 draw_wait_marker: evidence 0x1001 期望 'call 0x500',實際 None", "0x1000 draw_wait_marker: evidence 0x100f 期望 'ret',實際 None"])
+    two = [ok, {**ok, "name": "other_name"}, {**ok, "addr": "0x1010", "evidence": [{"at": "0x1010", "insn": "nop"}]}]
+    check("同一 addr 登錄兩次 / 同一名稱用兩次", check_names(two, spans_, {}, insn_at),
+          ["0x1000 other_name: addr 重複登錄", "0x1010 draw_wait_marker: 名稱重複或與其他命名表撞名"])
+
+
 def _selftest_live(fails: list[str]) -> bool:
     """真實 EXE 上的回歸與交叉核對。沒有 EXE 回 False(SKIP)。"""
     import verify_address_claim_coverage as CC
@@ -846,9 +1038,11 @@ def _selftest_live(fails: list[str]) -> bool:
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
     check("重建兩次逐位元組相同", dump(inv) == dump(build(with_argc=False)))
     print("(15) 真實 EXE:結構性命名")
-    sd = build_structural()
-    check("回歸釘值:thunk 4 / ail_only 30 / wrapper 95 / leaf_global 14 / leaf_ptr 15 / leaf_pure 9",
-          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 95, "leaf_global": 14, "leaf_ptr": 15, "leaf_pure": 9},
+    # 釘值用「不含 function_names.json」的版本:登錄新名字會改變誰是 wrapper、誰已有真名,那是預期中的變動,
+    # 不該每登一批就來改釘值;含登錄表的版本由下面「已提交產物逐位元組相同」那一條管。
+    sd = build_structural(include_registry=False)
+    check("回歸釘值(不含登錄表):thunk 4 / ail_only 30 / wrapper 105 / leaf_global 16 / leaf_ptr 16 / leaf_pure 11",
+          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 105, "leaf_global": 16, "leaf_ptr": 16, "leaf_pure": 11},
           str(sd["_meta"]["by_kind"]))
     check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
           sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
@@ -859,12 +1053,15 @@ def _selftest_live(fails: list[str]) -> bool:
     check("退回不帶參數的 wrapper 只有 1 個(本體的 CALL 與 callees 不一致)", len(plain) == 1, str(plain))
     check("反組譯器可用時 _meta 如實標示", sd["_meta"]["disasm_available"] is True)
     check("0x364fb(解鎖後釋放的記憶體輔助,24 個呼叫端全在 AIL 內)= ail_only", sd["names"].get("0x364fb", {}).get("kind") == "ail_only")
+    full = build_structural()
     real = real_names()
-    check("有真名的入口一個都不會被結構性命名", not any(int(a, 16) in real for a in sd["names"]))
+    check("有真名的入口(含登錄表)一個都不會被結構性命名", not any(int(a, 16) in real for a in full["names"]))
     check("每一筆都是 strong 入口", all(by[int(a, 16)]["grade"] == "strong" for a in sd["names"]))
+    errs = run_check_names()
+    check(f"function_names.json 的 {len(load_function_names())} 筆全部通過位元組證據檢查", not errs, "; ".join(errs[:3]))
     sc = ROOT / "docs" / "data" / "function_structural_names.json"
     if sc.exists():
-        check("已提交的結構性命名產物與現算逐位元組相同", sc.read_text(encoding="utf-8") == dump(sd))
+        check("已提交的結構性命名產物與現算(含登錄表)逐位元組相同", sc.read_text(encoding="utf-8") == dump(full))
     committed = ROOT / "docs" / "data" / "function_inventory.json"
     if committed.exists():
         old = json.loads(committed.read_text(encoding="utf-8"))
@@ -877,14 +1074,15 @@ def selftest() -> int:
     fails: list[str] = []
     _selftest_pure(fails)
     _selftest_structural(fails)
+    _selftest_names(fails)
     live = _selftest_live(fails)
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式的成對案例"
-          + (" + 真實 EXE 的 18 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+    print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
+          + (" + 真實 EXE 的 19 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 
@@ -896,6 +1094,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--limit", type=int, default=None, help="--unnamed 的列數上限")
     ap.add_argument("--ghidra-export", metavar="PATH", help="與 Ghidra 的 FD2_disasm_full.txt 對照")
     ap.add_argument("--structural", metavar="OUT", help="寫出結構性自動命名 function_structural_names.json")
+    ap.add_argument("--check-names", action="store_true", help="驗 function_names.json 每一筆的位元組證據")
+    ap.add_argument("--card", metavar="ADDR", help="一個入口的事實卡與本體反組譯")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args(argv)
     if a.selftest:
@@ -906,6 +1106,14 @@ def main(argv: list[str]) -> int:
         return report_unnamed(a.limit)
     if a.ghidra_export:
         return report_ghidra(a.ghidra_export)
+    if a.check_names:
+        errs = run_check_names()
+        for x in errs:
+            print("  FAIL", x)
+        print(f"function_names.json:{len(load_function_names())} 筆," + (f"{len(errs)} 個錯誤" if errs else "全部通過"))
+        return 1 if errs else 0
+    if a.card:
+        return report_card(a.card)
     if a.structural:
         sd = build_structural()
         Path(a.structural).write_text(dump(sd), encoding="utf-8", newline="\n")

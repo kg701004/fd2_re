@@ -1,0 +1,843 @@
+{
+ "schema": 1,
+ "note": "人讀反編譯碼得出的函式名稱。手動維護;tools/function_inventory.py --check-names 會在每筆 evidence 的位址實際反組譯、逐字比對。confidence=static_re 表示只有靜態反組譯證據,未經原版實機驗證。",
+ "names": [
+  {
+   "addr": "0x10620",
+   "name": "kbd_buffer_has_key",
+   "summary": "BIOS 鍵盤緩衝區 head(0x41a) != tail(0x41c) 時回 1;不取走按鍵。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x1062f",
+     "insn": "mov eax, 0x41a"
+    },
+    {
+     "at": "0x1063a",
+     "insn": "mov eax, 0x41c"
+    },
+    {
+     "at": "0x10647",
+     "insn": "mov edx, 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e310",
+   "name": "bios_tick_word",
+   "summary": "讀 BIOS 計時器 0x46c 的低 16 bits(18.2 Hz tick)。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4e313",
+     "insn": "mov esi, 0x46c"
+    },
+    {
+     "at": "0x4e318",
+     "insn": "lodsw ax, word ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ec66",
+   "name": "rle_c0_fetch_pixel",
+   "summary": "PCX 式 RLE 取下一個像素:ah 是剩餘重複數;byte > 0xC0 表示「重複 byte-0xC0 次」後接像素值。暫存器呼叫慣例(esi=來源、ah=計數、al=回傳像素),不是 cdecl。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4ec6e",
+     "insn": "cmp al, 0xc0"
+    },
+    {
+     "at": "0x4ec77",
+     "insn": "sub ah, 0xc1"
+    },
+    {
+     "at": "0x4ec6a",
+     "insn": "dec ah"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ebff",
+   "name": "blit_rle_image",
+   "summary": "(dst, src, stride):src 開頭是 u16 寬、u16 高,之後是 PCX 式 RLE 像素;逐列由左到右寫入 dst,每列結束 dst += stride。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4ec0c",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4ec1f",
+     "insn": "call 0x4ec66"
+    },
+    {
+     "at": "0x4ec24",
+     "insn": "stosb byte ptr es:[edi], al"
+    },
+    {
+     "at": "0x4ec28",
+     "insn": "add edi, ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ec31",
+   "name": "blit_rle_image_mirrored",
+   "summary": "與 blit_rle_image 相同,但每列由右到左寫(寫完 dec edi)= 水平鏡像。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4ec51",
+     "insn": "call 0x4ec66"
+    },
+    {
+     "at": "0x4ec56",
+     "insn": "mov byte ptr [edi], al"
+    },
+    {
+     "at": "0x4ec58",
+     "insn": "dec edi"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ed0b",
+   "name": "blit_raw_image",
+   "summary": "(dst, src, stride):src 開頭 u16 寬、u16 高,之後是未壓縮像素;逐列 rep movsb,無透明色。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4ed18",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4ed28",
+     "insn": "rep movsb byte ptr es:[edi], byte ptr [esi]"
+    },
+    {
+     "at": "0x4ed2b",
+     "insn": "add edi, ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x1685c",
+   "name": "blit_raw_cell",
+   "summary": "(dst, stride, res, idx):res 的 offset 表在 +6,cell = res + dword[res + idx*4 + 6];以 blit_raw_image 畫到 dst。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x1686f",
+     "insn": "add edx, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x1687c",
+     "insn": "call 0x4ed0b"
+    }
+   ]
+  },
+  {
+   "addr": "0x16559",
+   "name": "draw_dialog_cell",
+   "summary": "(idx):資源指標 [0x53a85](開頭即 offset 表,cell = res + dword[res + idx*4])的第 idx 格,以 RLE blit 畫到 0xa0000 + [0x53c67](stride 320);位置為 0x9017 時改用水平鏡像版。知識庫記載該資源為 FDOTHER#5 對話框格。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x16564",
+     "insn": "mov ebx, 0xa0000"
+    },
+    {
+     "at": "0x16579",
+     "insn": "mov eax, dword ptr [edx + eax*4]"
+    },
+    {
+     "at": "0x1657e",
+     "insn": "cmp dword ptr [0x3c67], 0x9017"
+    },
+    {
+     "at": "0x16591",
+     "insn": "call 0x4ebff"
+    },
+    {
+     "at": "0x165a2",
+     "insn": "call 0x4ec31"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e31c",
+   "name": "palette_cycle_tick",
+   "summary": "距上次至少 2 tick 才動:把 0x60003 起的 16 組 RGB 表(環狀,步進索引在 0x60002)寫入 VGA DAC 0xE0..0xEF,形成調色盤循環動畫。無參數,保存所有暫存器。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4e32a",
+     "insn": "cmp ax, 2"
+    },
+    {
+     "at": "0x4e336",
+     "insn": "cmp byte ptr [2], 0x10"
+    },
+    {
+     "at": "0x4e35e",
+     "insn": "mov ah, 0xe0"
+    },
+    {
+     "at": "0x4e360",
+     "insn": "mov dx, 0x3c8"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ebe3",
+   "name": "prng_next",
+   "summary": "16-bit 亂數:seed = rol16(seed + 0x9014, 3),種子在 0x627b8;回傳新種子(eax 高 16 bits 為 0)。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x4ebe5",
+     "insn": "mov ax, word ptr [0x27b8]"
+    },
+    {
+     "at": "0x4ebeb",
+     "insn": "add ax, 0x9014"
+    },
+    {
+     "at": "0x4ebef",
+     "insn": "rol ax, 1"
+    },
+    {
+     "at": "0x4ebf8",
+     "insn": "mov word ptr [0x27b8], ax"
+    }
+   ]
+  },
+  {
+   "addr": "0x3da49",
+   "name": "segread",
+   "summary": "Watcom CRT segread(struct SREGS*):依序存 es/cs/ss/ds/fs/gs。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x3da50",
+     "insn": "mov eax, cs"
+    },
+    {
+     "at": "0x3da52",
+     "insn": "mov word ptr [ebx + 2], ax"
+    },
+    {
+     "at": "0x3da5e",
+     "insn": "mov word ptr [ebx], ax"
+    }
+   ]
+  },
+  {
+   "addr": "0x370f0",
+   "name": "int386",
+   "summary": "Watcom CRT int386(intno, in, out):先 segread 到區域變數,再呼叫 0x3da76(帶 SREGS 的版本)。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x370fa",
+     "insn": "call 0x3da49"
+    },
+    {
+     "at": "0x3710f",
+     "insn": "call 0x3da76"
+    }
+   ]
+  },
+  {
+   "addr": "0x365da",
+   "name": "dpmi_lock_region",
+   "summary": "(a, b):取 [min, max] 區間,長度 max-min+1,以 int 31h AX=0600h 鎖定線性記憶體;carry 清除時回 1。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x365f6",
+     "insn": "mov dword ptr [esp], 0x600"
+    },
+    {
+     "at": "0x3662c",
+     "insn": "push 0x31"
+    },
+    {
+     "at": "0x3662e",
+     "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x3663b",
+     "insn": "sete al"
+    }
+   ]
+  },
+  {
+   "addr": "0x3666c",
+   "name": "dpmi_lock_range",
+   "summary": "(start, len):dpmi_lock_region(start, start + len)。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x36670",
+     "insn": "add eax, dword ptr [esp + 8]"
+    },
+    {
+     "at": "0x3667a",
+     "insn": "call 0x365da"
+    }
+   ]
+  },
+  {
+   "addr": "0x16c57",
+   "name": "wait_key_with_marker",
+   "summary": "(mode):等到 BIOS 鍵盤緩衝區有鍵為止;等待期間每圈跑 palette_cycle_tick,每 2 tick 一步。mode==1 時在文字位置 +0x640 以 blit_raw_cell 輪播 cell 0x12/0x13(等待標記),結束時畫 cell 0xd;另以 prng_next 取間隔,交替畫 draw_dialog_cell(3) 與 (0)(眨眼)。取鍵用 int 16h AH=10h,掃描碼 0xE0/0x52 轉 0x1C、0x53 轉 1 後回傳。",
+   "confidence": "static_re",
+   "date": "2026-09-18",
+   "evidence": [
+    {
+     "at": "0x16cf3",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x16d00",
+     "insn": "call 0x4e31c"
+    },
+    {
+     "at": "0x16d2a",
+     "insn": "cmp esi, 0x14"
+    },
+    {
+     "at": "0x16dd0",
+     "insn": "mov byte ptr [0x3a8e], 0x10"
+    },
+    {
+     "at": "0x16de1",
+     "insn": "push 0x16"
+    },
+    {
+     "at": "0x16de3",
+     "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x16dfe",
+     "insn": "mov byte ptr [0x3a8e], 0x1c"
+    }
+   ]
+  },
+  {
+   "addr": "0x3771c",
+   "name": "memmove",
+   "summary": "Watcom CRT memmove(dst, src, n):src < dst 且重疊時設方向旗標由尾端往回搬,否則 rep movsd + 尾數 rep movsb。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3772a",
+     "insn": "cmp esi, eax"
+    },
+    {
+     "at": "0x37743",
+     "insn": "std"
+    },
+    {
+     "at": "0x37761",
+     "insn": "rep movsd dword ptr es:[edi], dword ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e381",
+   "name": "kbd_flush",
+   "summary": "清空 BIOS 鍵盤緩衝區:把 tail(0x41c)設成 head(0x41a)。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e382",
+     "insn": "mov esi, 0x41a"
+    },
+    {
+     "at": "0x4e38a",
+     "insn": "mov word ptr [esi + 2], ax"
+    }
+   ]
+  },
+  {
+   "addr": "0x13460",
+   "name": "wait_next_tick",
+   "summary": "忙等到 BIOS tick(0x46c 低 16 bits)與 [0x53a0c] 記的上一個值不同,再把新值存回。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1346a",
+     "insn": "mov eax, 0x46c"
+    },
+    {
+     "at": "0x13472",
+     "insn": "cmp eax, dword ptr [0x3a0c]"
+    },
+    {
+     "at": "0x13482",
+     "insn": "mov dword ptr [0x3a0c], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x1974c",
+   "name": "present_box_at_row",
+   "summary": "(row, work, tmpl):work <- 存檔畫面 [0x53c5f](0xfa00 bytes);再把 tmpl 第 112 列起(+0x8c05)的 86 列 × 310 px 複製到 work 的第 row 列(+5),超過第 200 列的部分裁掉;最後 work -> VGA 0xa0000。對話/確認框滑動動畫的單一影格。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1975d",
+     "insn": "mov esi, 0x56"
+    },
+    {
+     "at": "0x1977c",
+     "insn": "cmp eax, 0xc8"
+    },
+    {
+     "at": "0x1978e",
+     "insn": "push 0x136"
+    },
+    {
+     "at": "0x197a2",
+     "insn": "add eax, 0x8c05"
+    }
+   ]
+  },
+  {
+   "addr": "0x196cb",
+   "name": "close_box_slide_down",
+   "summary": "框往下滑出的收尾動畫:i=1..5 呼叫 present_box_at_row(0x70 + 13*i, [0x53c5b], [0x53c63]);之後把存檔畫面 [0x53c5f] 搬回 VGA、釋放三塊緩衝、redraw(0)。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x196e9",
+     "insn": "imul eax, ebx, 0xd"
+    },
+    {
+     "at": "0x196ec",
+     "insn": "add eax, 0x70"
+    },
+    {
+     "at": "0x196f9",
+     "insn": "cmp ebx, 6"
+    },
+    {
+     "at": "0x196f0",
+     "insn": "call 0x1974c"
+    },
+    {
+     "at": "0x19742",
+     "insn": "call 0x11cac"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b83d",
+   "name": "find_equipped_slot",
+   "summary": "(unit, kind):單位記錄(80 bytes,基底 [0x53a45])+0xa 起 8 個 2-byte 道具欄(旗標, 道具 id);回傳第一個旗標含 0x40(已裝備)且 id < 0x80(kind==0)或 id >= 0x80(kind!=0)的欄位序號,找不到回 -1。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1b868",
+     "insn": "cmp edx, 8"
+    },
+    {
+     "at": "0x1b875",
+     "insn": "test byte ptr [eax], 0x40"
+    },
+    {
+     "at": "0x1b882",
+     "insn": "cmp ebx, 0x80"
+    },
+    {
+     "at": "0x1b89e",
+     "insn": "mov eax, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x2eb9f",
+   "name": "blit_anim_frame",
+   "summary": "(anim, idx, a3, a4, a5):影格 = anim + dword[anim + idx*4 + 8];取影格開頭的 u16 寬、u16 高,以 0x4e98d(影格+9, 寬, 高, a3, a4, a5) 繪製。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x2ebb9",
+     "insn": "add edx, dword ptr [eax + 8]"
+    },
+    {
+     "at": "0x2ebbe",
+     "insn": "movzx edx, word ptr [edx]"
+    },
+    {
+     "at": "0x2ebd3",
+     "insn": "add eax, 9"
+    },
+    {
+     "at": "0x2ebd7",
+     "insn": "call 0x4e98d"
+    }
+   ]
+  },
+  {
+   "addr": "0x311e5",
+   "name": "anim_step_and_draw",
+   "summary": "(anim, enable, a3, a4):enable==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格,計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x31219",
+     "insn": "call 0x2eb9f"
+    },
+    {
+     "at": "0x3122c",
+     "insn": "movzx eax, byte ptr [ebx + eax + 6]"
+    },
+    {
+     "at": "0x31231",
+     "insn": "inc byte ptr [0x4130]"
+    },
+    {
+     "at": "0x31249",
+     "insn": "inc byte ptr [0x4131]"
+    }
+   ]
+  },
+  {
+   "addr": "0x31bdf",
+   "name": "charcard_say_and_wait",
+   "summary": "(box_arg, text_idx):角色卡場景的一句話:0x1956b(box_arg) 開框 → dialog(固定視窗參數,文字表 [0x53a79]) → draw_dialog_cell(0) → wait_key_with_marker(0) → 0x26996 關框;前後與中間各 kbd_flush 一次。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x31bf3",
+     "insn": "call 0x1956b"
+    },
+    {
+     "at": "0x31c21",
+     "insn": "call 0x15f84"
+    },
+    {
+     "at": "0x31c35",
+     "insn": "call 0x16c57"
+    },
+    {
+     "at": "0x31c3d",
+     "insn": "call 0x26996"
+    }
+   ]
+  },
+  {
+   "addr": "0x2860a",
+   "name": "compare_to_glyph",
+   "summary": "(a, b):a==b 回 0x1f、a<b 回 0x2a、a>b 回 0x77(三個字形碼;唯一呼叫端 0x2825b)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x2861e",
+     "insn": "mov eax, 0x1f"
+    },
+    {
+     "at": "0x28626",
+     "insn": "mov eax, 0x2a"
+    },
+    {
+     "at": "0x2862c",
+     "insn": "mov eax, 0x77"
+    }
+   ]
+  },
+  {
+   "addr": "0x146a7",
+   "name": "map_cell_set_bit7",
+   "summary": "(x, y):地圖格陣列 [0x53a51](6-byte 表頭後每格 4 bytes,寬 [0x53ac1])第 (x, y) 格的 byte0 設 0x80。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x146b5",
+     "insn": "imul edx, dword ptr [0x3ac1]"
+    },
+    {
+     "at": "0x146ca",
+     "insn": "add eax, 6"
+    },
+    {
+     "at": "0x146cd",
+     "insn": "or byte ptr [eax], 0x80"
+    }
+   ]
+  },
+  {
+   "addr": "0x14b16",
+   "name": "map_collect_cells_byte1_set",
+   "summary": "(out):掃整張地圖(寬 [0x53ac1]、高 [0x53ac5]),把 byte1 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x14b31",
+     "insn": "add edx, 7"
+    },
+    {
+     "at": "0x14b5a",
+     "insn": "cmp ecx, 0xff"
+    },
+    {
+     "at": "0x14b62",
+     "insn": "mov byte ptr [eax], bl"
+    },
+    {
+     "at": "0x14b67",
+     "insn": "mov byte ptr [eax + 1], cl"
+    }
+   ]
+  },
+  {
+   "addr": "0x344b4",
+   "name": "blit_res_cell_xy",
+   "summary": "(res, idx, x, stride, base, y):cell = res + dword[res + idx*4 + 6];dst = y*stride + x + base;以 0x4e22a(dst, cell, stride) 繪製(0x4e22a 的像素格式本筆未讀)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x344ce",
+     "insn": "add edx, dword ptr [eax + 6]"
+    },
+    {
+     "at": "0x344d5",
+     "insn": "imul eax, dword ptr [esp + 0x14]"
+    },
+    {
+     "at": "0x344e8",
+     "insn": "call 0x4e22a"
+    }
+   ]
+  },
+  {
+   "addr": "0x3707e",
+   "name": "nmalloc",
+   "summary": "Watcom CRT 近堆配置(size):size==0 回 0;向堆配置器 0x3d5c0 要一塊,失敗就先試擴堆(0x3d842)再試 0x3da42,成功後重試;結束時清 [0x5419c]。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3708e",
+     "insn": "test esi, esi"
+    },
+    {
+     "at": "0x370ab",
+     "insn": "call 0x3d5c0"
+    },
+    {
+     "at": "0x370bd",
+     "insn": "call 0x3d842"
+    },
+    {
+     "at": "0x370de",
+     "insn": "mov byte ptr [0x419c], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x3706e",
+   "name": "malloc",
+   "summary": "malloc(size):直接轉呼叫 nmalloc(127 個直接呼叫端)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37071",
+     "insn": "push dword ptr [ebp + 8]"
+    },
+    {
+     "at": "0x37074",
+     "insn": "call 0x3707e"
+    }
+   ]
+  },
+  {
+   "addr": "0x37ae5",
+   "name": "outp",
+   "summary": "Watcom CRT outp(port, value):dx = port、al = value、out dx, al。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37ae8",
+     "insn": "mov edx, dword ptr [ebp + 8]"
+    },
+    {
+     "at": "0x37aeb",
+     "insn": "mov al, byte ptr [ebp + 0xc]"
+    },
+    {
+     "at": "0x37aee",
+     "insn": "out dx, al"
+    }
+   ]
+  },
+  {
+   "addr": "0x37932",
+   "name": "abs",
+   "summary": "abs(x):負數取 neg。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37938",
+     "insn": "test eax, eax"
+    },
+    {
+     "at": "0x3793c",
+     "insn": "neg eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x11eb0",
+   "name": "copy_rect",
+   "summary": "逐列 memmove 的矩形複製,共 h 列、每列 w bytes,來源與目的各自加自己的 stride。參數順序依 redraw 的呼叫端:(dst=0xa0504, dst_stride=0x140, src, src_stride=0x1c8, w=0x138, h=0xc0)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x11ed4",
+     "insn": "call 0x3771c"
+    },
+    {
+     "at": "0x11edc",
+     "insn": "add esi, ebp"
+    },
+    {
+     "at": "0x11ede",
+     "insn": "add edi, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x11ee3",
+     "insn": "cmp ebx, dword ptr [esp + 0x28]"
+    }
+   ]
+  },
+  {
+   "addr": "0x16886",
+   "name": "blit_res_cell_sprite",
+   "summary": "(res, idx, a3, a4):cell = res + dword[res + idx*4 + 6];以 0x4e98d(cell, 0, 0, a3, a4, -1) 繪製(0x4e98d 第 6 個參數是繪製模式選擇器,見知識庫)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x16899",
+     "insn": "add edx, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x1689d",
+     "insn": "push -1"
+    },
+    {
+     "at": "0x168ac",
+     "insn": "call 0x4e98d"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b722",
+   "name": "unit_item_id",
+   "summary": "(unit, slot):回傳單位記錄(80 bytes,基底 [0x53a45])第 slot 個道具欄的道具 id = byte[unit + 0xb + slot*2]。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1b73a",
+     "insn": "mov eax, dword ptr [0x3a45]"
+    },
+    {
+     "at": "0x1b749",
+     "insn": "add eax, 0xb"
+    },
+    {
+     "at": "0x1b74c",
+     "insn": "movzx eax, byte ptr [eax]"
+    }
+   ]
+  },
+  {
+   "addr": "0x344f2",
+   "name": "set_units_byte34_low_nibble",
+   "summary": "(first, last, value):對單位 first..last(含)做 unit[+0x34] = (unit[+0x34] & 0xF0) | value。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3451e",
+     "insn": "mov bl, byte ptr [eax + 0x34]"
+    },
+    {
+     "at": "0x34521",
+     "insn": "and bl, 0xf0"
+    },
+    {
+     "at": "0x34524",
+     "insn": "or bl, cl"
+    },
+    {
+     "at": "0x3452c",
+     "insn": "jle 0x3450c"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f183",
+   "name": "unit_uses_move_cost_row19",
+   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1f1a7",
+     "insn": "cmp edx, 0x1c"
+    },
+    {
+     "at": "0x1f1b0",
+     "insn": "cmp edx, 0x13"
+    },
+    {
+     "at": "0x1f1b9",
+     "insn": "cmp eax, 4"
+    },
+    {
+     "at": "0x1f1be",
+     "insn": "cmp eax, 5"
+    }
+   ]
+  }
+ ]
+}

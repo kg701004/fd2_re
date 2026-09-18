@@ -2,20 +2,41 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 167,
+  "total": 238,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 95,
-   "leaf_global": 14,
-   "leaf_ptr": 15,
+   "wrapper": 167,
+   "leaf_global": 15,
+   "leaf_ptr": 13,
    "leaf_pure": 9
   },
-  "wrapper_rounds": 1,
+  "wrapper_rounds": 2,
   "disasm_available": true
  },
  "names": {
+  "0x11aa8": {
+   "kind": "wrapper",
+   "name": "wrapper(kbd_buffer_has_key(), palette_cycle_tick(), redraw(0), int386(0x16, 0x3a8d, 0x3a8d))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
+  },
   "0x11b48": {
+   "kind": "wrapper",
+   "name": "wrapper(redraw(0))",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x11b9b": {
+   "kind": "wrapper",
+   "name": "wrapper(redraw(0))",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x11bfa": {
    "kind": "wrapper",
    "name": "wrapper(redraw(0))",
    "round": 1,
@@ -43,6 +64,104 @@
    "callers": 4,
    "argc": 1
   },
+  "0x12dac": {
+   "kind": "wrapper",
+   "name": "wrapper(kbd_buffer_has_key(), palette_cycle_tick(), redraw(0), int386(0x16, 0x3a8d, 0x3a8d))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x145cd": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x14625(_, _))",
+   "round": 2,
+   "callers": 10,
+   "argc": 1
+  },
+  "0x14625": {
+   "kind": "wrapper",
+   "name": "wrapper(map_cell_set_bit7(_, _), map_cell_set_bit7(_, _), map_cell_set_bit7(_, _), map_cell_set_bit7(_, _))",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
+  },
+  "0x14742": {
+   "kind": "wrapper",
+   "name": "wrapper(abs(_), abs(_))",
+   "round": 1,
+   "callers": 1,
+   "argc": 5
+  },
+  "0x164e8": {
+   "kind": "wrapper",
+   "name": "wrapper(draw_dialog_cell(_), play_sfx(_, 2, 1), wait_ticks(1))",
+   "round": 1,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x16e24": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0xd0), memset(_, 0x4a, 0xd0), memmove(_, _, 0xd0), memset(_, 0x4a, 0xd0))",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x175a9": {
+   "kind": "wrapper",
+   "name": "wrapper(heap_free(_), malloc(0x1440), memmove(_, _, 0x48))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x17643": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x48))",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x17d6f": {
+   "kind": "wrapper",
+   "name": "wrapper(blit_raw_cell(_, _, _, _), blit_raw_cell(_, _, _, _), blit_raw_cell(_, _, _, 0x1d), blit_raw_cell(_, _, _, 0x1e))",
+   "round": 1,
+   "callers": 1,
+   "argc": 4
+  },
+  "0x182ad": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, _))",
+   "round": 1,
+   "callers": 4,
+   "argc": 3
+  },
+  "0x18312": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0xdf))",
+   "round": 1,
+   "callers": 4,
+   "argc": 3
+  },
+  "0x1839b": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x136))",
+   "round": 1,
+   "callers": 3,
+   "argc": 3
+  },
+  "0x18409": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0xfa00), ~0x182ad(5, _, _), ~0x18312(7, _, _), ~0x1839b(_, _, _), memmove(0xa0000, _, 0xfa00))",
+   "round": 2,
+   "callers": 8,
+   "argc": 4
+  },
+  "0x18795": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x17d6f(_, _, _, _))",
+   "round": 2,
+   "callers": 4,
+   "argc": 5
+  },
   "0x1a7bd": {
    "kind": "wrapper",
    "name": "wrapper(load_res(0x1a4d, 0, 0x40))",
@@ -57,12 +176,82 @@
    "callers": 2,
    "argc": 0
   },
+  "0x1af1e": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, _))",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
+  },
+  "0x1af99": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, _))",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
+  },
+  "0x1b019": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x66))",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
+  "0x1b0ad": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0xaa))",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
+  "0x1b14b": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x3f))",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
   "0x1b5f1": {
    "kind": "wrapper",
    "name": "wrapper(unit_inactive(_))",
    "round": 1,
    "callers": 3,
    "argc": 1
+  },
+  "0x1b653": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 3))",
+   "round": 1,
+   "callers": 1,
+   "argc": 1
+  },
+  "0x1b6b7": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 3))",
+   "round": 1,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x1c142": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_item_id(_, _))",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
+  "0x1c916": {
+   "kind": "wrapper",
+   "name": "wrapper(prng_next())",
+   "round": 1,
+   "callers": 3,
+   "argc": 2
+  },
+  "0x1c9dd": {
+   "kind": "wrapper",
+   "name": "wrapper(prng_next())",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
   },
   "0x1d4cb": {
    "kind": "wrapper",
@@ -78,12 +267,68 @@
    "callers": 4,
    "argc": 0
   },
+  "0x1d6c8": {
+   "kind": "wrapper",
+   "name": "wrapper(play_sfx(_, 0, 1), outp(0x3c8, 0), outp(0x3c9, _), outp(0x3c9, _), outp(0x3c9, _), wait_ticks(1), outp(0x3c8, 0), outp(0x3c9, 0), outp(0x3c9, 0), outp(0x3c9, 0), wait_ticks(1))",
+   "round": 1,
+   "callers": 1,
+   "argc": 1
+  },
+  "0x1e529": {
+   "kind": "wrapper",
+   "name": "wrapper(prng_next(), ~0x16e24(), kbd_flush(), dialog(_, _, _, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 2,
+   "callers": 10,
+   "argc": 4
+  },
+  "0x1e5c0": {
+   "kind": "wrapper",
+   "name": "wrapper(palette_cycle_tick(), kbd_buffer_has_key(), kbd_flush())",
+   "round": 1,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x1e739": {
+   "kind": "wrapper",
+   "name": "wrapper(blit_raw_cell(_, _, _, 0x17), blit_raw_cell(_, _, _, 0x18), blit_raw_cell(_, _, _, 0x19), blit_raw_cell(_, _, _, 0x1d), blit_raw_cell(_, _, _, 0x1d), blit_raw_cell(_, _, _, 0x1e))",
+   "round": 1,
+   "callers": 3,
+   "argc": 3
+  },
+  "0x1e7f6": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x1e739(_, _, _))",
+   "round": 2,
+   "callers": 4,
+   "argc": 4
+  },
+  "0x1f04a": {
+   "kind": "wrapper",
+   "name": "wrapper(abs(_), abs(_))",
+   "round": 1,
+   "callers": 6,
+   "argc": 2
+  },
   "0x1f6ef": {
    "kind": "wrapper",
    "name": "wrapper(memset(_, _, _))",
    "round": 1,
    "callers": 2,
    "argc": 4
+  },
+  "0x1ff79": {
+   "kind": "wrapper",
+   "name": "wrapper(blit_res_cell_sprite(0xacd81, 0x140, _, _), blit_res_cell_sprite(0xad8c1, 0x140, _, _), blit_res_cell_sprite(0xae401, 0x140, _, _))",
+   "round": 1,
+   "callers": 4,
+   "argc": 3
+  },
+  "0x203bd": {
+   "kind": "wrapper",
+   "name": "wrapper(outp(0x3c8, _), outp(0x3c9, _), outp(0x3c9, _), outp(0x3c9, _))",
+   "round": 1,
+   "callers": 2,
+   "argc": 3
   },
   "0x206c5": {
    "kind": "wrapper",
@@ -95,6 +340,13 @@
   "0x20707": {
    "kind": "wrapper",
    "name": "wrapper(raw_result_code_0_1_2(), unit_inactive(0x32), unit_inactive(0x33))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x2073d": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2(), unit_inactive(0xe))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -211,6 +463,13 @@
    "callers": 0,
    "argc": 3
   },
+  "0x22e5c": {
+   "kind": "wrapper",
+   "name": "wrapper(bgm(-1, 1), wait_ticks(1), palfade_in(), load_res(0x1a4d, 0, 0x4f), memset(0xa0000, 0, 0xfa00), blit_anim_frame(_, 0, 0xa0000, 0x140, -1), palfade(), wait_ticks(9), blit_anim_frame(_, 1, 0xa0000, 0x140, -1), wait_ticks(0x24))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
+  },
   "0x22ef6": {
    "kind": "wrapper",
    "name": "wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())",
@@ -246,6 +505,13 @@
    "callers": 0,
    "argc": 0
   },
+  "0x232e8": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party(), unit_inactive(0x2b), layout_units(_, _, _, _, 8, 0x2b, 0xc, 7, 2, 6, 2), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xc), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x235bc": {
    "kind": "wrapper",
    "name": "wrapper(pan(6, 1), spawn(4), act(0x24))",
@@ -274,6 +540,13 @@
    "callers": 0,
    "argc": 0
   },
+  "0x238dc": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn(1), layout_units(_, _, _, 0, 0xf, 0, 0, 0, 0, 0xc, 0xa), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2f), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x239bd": {
    "kind": "wrapper",
    "name": "wrapper(roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())",
@@ -286,6 +559,48 @@
    "name": "wrapper(sync_party(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
    "round": 1,
    "callers": 0,
+   "argc": 0
+  },
+  "0x24df2": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(4, 0x10), spawn(2), act(0x4b), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0x1a), sync_party())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x25b45": {
+   "kind": "wrapper",
+   "name": "wrapper(AIL_stop_sample(?), AIL_init_sample(?), AIL_set_sample_address(?), AIL_set_sample_loop_count(?), AIL_start_sample(?))",
+   "round": 1,
+   "callers": 11,
+   "argc": 3
+  },
+  "0x26996": {
+   "kind": "wrapper",
+   "name": "wrapper(present_box_at_row(_, _, _), memmove(0xa0000, _, 0xfa00), heap_free(_), heap_free(_), heap_free(_))",
+   "round": 1,
+   "callers": 42,
+   "argc": 0
+  },
+  "0x26c9b": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 6))",
+   "round": 1,
+   "callers": 2,
+   "argc": 3
+  },
+  "0x27816": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x11c), memset(_, 0x49, 0x11c), delay(0xa), memmove(_, _, 0x11c), memset(_, 0x49, 0x11c))",
+   "round": 1,
+   "callers": 5,
+   "argc": 0
+  },
+  "0x278e7": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x11c), memset(_, 0x49, 0x11c), delay(0xa), memmove(_, _, 0x11c), memset(_, 0x49, 0x11c))",
+   "round": 1,
+   "callers": 5,
    "argc": 0
   },
   "0x2921a": {
@@ -309,11 +624,39 @@
    "callers": 1,
    "argc": 2
   },
+  "0x2b777": {
+   "kind": "wrapper",
+   "name": "wrapper(malloc(0xa00), memmove(_, _, 0xa00), memmove(_, _, 0x50), memmove(_, _, 0x50))",
+   "round": 1,
+   "callers": 1,
+   "argc": 1
+  },
+  "0x2bf83": {
+   "kind": "wrapper",
+   "name": "wrapper(blit_anim_frame(_, _, _, _, -1))",
+   "round": 1,
+   "callers": 2,
+   "argc": 5
+  },
+  "0x2df01": {
+   "kind": "wrapper",
+   "name": "wrapper(outp(0x3c8, _), outp(0x3c9, _), outp(0x3c9, _), outp(0x3c9, _))",
+   "round": 1,
+   "callers": 5,
+   "argc": 6
+  },
   "0x314de": {
    "kind": "wrapper",
    "name": "wrapper(load_res(0x1a4d, _, _))",
    "round": 1,
    "callers": 4,
+   "argc": 1
+  },
+  "0x32230": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_uses_move_cost_row19(_), play_sfx(_, 0xb, 1))",
+   "round": 1,
+   "callers": 5,
    "argc": 1
   },
   "0x32fb2": {
@@ -326,6 +669,13 @@
   "0x3314b": {
    "kind": "wrapper",
    "name": "wrapper(loadch_call())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x33169": {
+   "kind": "wrapper",
+   "name": "wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(8, 1), act(0x1c), pan(8, 0), act(0x1d), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -428,6 +778,34 @@
    "callers": 0,
    "argc": 0
   },
+  "0x34531": {
+   "kind": "wrapper",
+   "name": "wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3460b": {
+   "kind": "wrapper",
+   "name": "wrapper(pan(0xb, 0x10), spawn_intro(4), kbd_flush(), redraw(1), act(3), reset_pose(), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34673": {
+   "kind": "wrapper",
+   "name": "wrapper(pan(0, 0x10), spawn_intro(5), kbd_flush(), redraw(1), act(4), reset_pose())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x346cd": {
+   "kind": "wrapper",
+   "name": "wrapper(pan(0xb, 0xb), spawn(6), redraw(1), act(6), reset_pose(), kbd_flush())",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x34738": {
    "kind": "wrapper",
    "name": "wrapper(dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
@@ -456,9 +834,44 @@
    "callers": 0,
    "argc": 0
   },
+  "0x348ea": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x18, 0x1b, 7), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34940": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x25, 0x28, 0), set_units_byte34_low_nibble(0xd, 0x18, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34984": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn(2), pan(0xe, 0), act(0x17), reset_pose(), set_units_byte34_low_nibble(7, 0xc, 0), set_units_byte34_low_nibble(0x21, 0x23, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x349ec": {
    "kind": "wrapper",
    "name": "wrapper(spawn(3))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34a1e": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x30, 0x33, 7), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x18))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34a6c": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(7, 0x24, 7), dialog(_, 8, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), unit_inactive(_), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, _))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -470,9 +883,37 @@
    "callers": 0,
    "argc": 0
   },
+  "0x34b6f": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive(8), spawn(1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34b9a": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(8, 0x1c, 0), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(2), pan(5, 0x11), act(0x19), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(5, 0x11), act(0x1a), deactivate_unit(0x21))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x34c7a": {
    "kind": "wrapper",
    "name": "wrapper(spawn(2), pan(0x10, 0xa), act(0x1e), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34cf1": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(9, 0x1b, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 1
+  },
+  "0x34d2f": {
+   "kind": "wrapper",
+   "name": "wrapper(pan(8, 2), delay(0x64), spawn(_))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -526,6 +967,27 @@
    "callers": 0,
    "argc": 0
   },
+  "0x35191": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x10, 0x47, _), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x351e6": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), set_units_byte34_low_nibble(0x40, 0x49, 3), set_units_byte34_low_nibble(0x23, 0x31, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35258": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog(_, 8, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), set_units_byte34_low_nibble(0x10, 0x22, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x35298": {
    "kind": "wrapper",
    "name": "wrapper(spawn(1))",
@@ -557,6 +1019,13 @@
   "0x35468": {
    "kind": "wrapper",
    "name": "wrapper(spawn(_), wait_ticks(1), pan(0, 0), wait_ticks(8), pan(0x1c, 0), wait_ticks(8), pan(0x1c, 0x20), wait_ticks(8), pan(0, 0x20), wait_ticks(8), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3551c": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x23, 0x2a, 3))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -610,6 +1079,20 @@
    "callers": 0,
    "argc": 0
   },
+  "0x35997": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x27, 0x2c, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 1
+  },
+  "0x359cb": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x17, 0x18, 0), set_units_byte34_low_nibble(0x35, 0x38, 0))",
+   "round": 1,
+   "callers": 0,
+   "argc": 1
+  },
   "0x35c1d": {
    "kind": "wrapper",
    "name": "wrapper(pan_spawn_group(3, 0x1b, 1))",
@@ -638,6 +1121,13 @@
    "callers": 0,
    "argc": 0
   },
+  "0x35e5b": {
+   "kind": "wrapper",
+   "name": "wrapper(set_units_byte34_low_nibble(0x29, 0x2d, 0), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(8, 7, 3), pan_spawn_group(4, 7, 4))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
   "0x35ec1": {
    "kind": "wrapper",
    "name": "wrapper(dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), zero_hp_from(0x14))",
@@ -655,6 +1145,13 @@
   "0x35f88": {
    "kind": "wrapper",
    "name": "wrapper(pan_spawn_group(0xa, 0x1d, _))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x362e8": {
+   "kind": "wrapper",
+   "name": "wrapper(pan(0x10, 1), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 0xe), camera_step_then_present(_, 0x16, 0x12), spawn(_), set_units_byte34_low_nibble(_, _, 0), camera_step_then_present(_, 0x15, 0x12), camera_step_then_present(_, 0x17, 0x12), set_units_byte34_low_nibble(0x14, 0x14, 0xb))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -729,20 +1226,6 @@
    "callers": 3,
    "argc": 1
   },
-  "0x37932": {
-   "kind": "leaf_pure",
-   "name": "leaf_pure",
-   "round": 0,
-   "callers": 25,
-   "argc": 1
-  },
-  "0x37ae5": {
-   "kind": "leaf_pure",
-   "name": "leaf_pure",
-   "round": 0,
-   "callers": 48,
-   "argc": 2
-  },
   "0x37af4": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
@@ -795,6 +1278,13 @@
   "0x3cba9": {
    "kind": "leaf_ptr",
    "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x3cc77": {
+   "kind": "leaf_global",
+   "name": "leaf_ref[0x527e8]",
    "round": 0,
    "callers": 2,
    "argc": 0
@@ -1002,6 +1492,13 @@
    "callers": 2,
    "argc": 2
   },
+  "0x4627f": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 2,
+   "argc": 0
+  },
   "0x463ba": {
    "kind": "leaf_global",
    "name": "leaf_rw[0x53730, 0x53776]",
@@ -1016,12 +1513,26 @@
    "callers": 3,
    "argc": 2
   },
+  "0x46f3a": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
   "0x47006": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 2,
    "argc": 3
+  },
+  "0x4728a": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 9,
+   "argc": 2
   },
   "0x4768d": {
    "kind": "leaf_pure",
@@ -1093,20 +1604,6 @@
    "callers": 9,
    "argc": 2
   },
-  "0x4e310": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_get",
-   "round": 0,
-   "callers": 2,
-   "argc": 0
-  },
-  "0x4e381": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_rw",
-   "round": 0,
-   "callers": 64,
-   "argc": 0
-  },
   "0x4e4be": {
    "kind": "leaf_global",
    "name": "leaf_get[0x60060]+ptr",
@@ -1120,6 +1617,13 @@
    "round": 0,
    "callers": 2,
    "argc": 0
+  },
+  "0x4e7dd": {
+   "kind": "leaf_global",
+   "name": "leaf_ref[0x615fe]",
+   "round": 0,
+   "callers": 3,
+   "argc": 1
   },
   "0x4e809": {
    "kind": "leaf_global",
@@ -1170,19 +1674,12 @@
    "callers": 23,
    "argc": 1
   },
-  "0x4ebe3": {
-   "kind": "leaf_global",
-   "name": "leaf_rw[0x627b8]",
-   "round": 0,
-   "callers": 40,
-   "argc": 0
-  },
-  "0x4ec66": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_get",
-   "round": 0,
-   "callers": 3,
-   "argc": 0
+  "0x4ebab": {
+   "kind": "wrapper",
+   "name": "wrapper(rle_c0_fetch_pixel())",
+   "round": 1,
+   "callers": 9,
+   "argc": 3
   }
  }
 }

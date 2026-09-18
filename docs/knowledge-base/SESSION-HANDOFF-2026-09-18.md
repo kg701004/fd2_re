@@ -257,6 +257,26 @@ AIL 的 105 個早已由 `ail_entry_points.json` 收錄。這條路沒有可收�
 這些仍然是結構描述不是語意。常數參數是機械讀出的事實(靜態 RE,Capstone),可以拿來當線索,例如
 「哪個函式以資源編號 0x1a4d 呼叫 load_res」;但 `_` 只表示「不是立即值」,不表示參數不重要。
 
+### 6.0f 開始人讀:函式名稱登錄表與前三批(2026-09-19)
+
+使用者指示「依照你的建議自動繼續進行」,採 §6.4 的「求可用」路線:機械方法處理不了的函式,由呼叫端數多的開始人讀。
+
+- **登錄表 `docs/data/function_names.json`**(手動維護,工具只讀):每筆必須帶位元組證據 —— 一串 `{"at", "insn"}`,
+  `function_inventory.py --check-names` 在該位址實際反組譯、逐字比對,且位址須落在該函式範圍內。名稱錨在位元組上,
+  不是錨在散文上;selftest 的真實 EXE 段每次都驗整張表。`--card ADDR` 印事實卡與反組譯供閱讀。
+- **前三批共 37 筆**(全部 `static_re`,靜態反組譯、未經實機):
+  BIOS/執行期(`kbd_buffer_has_key`、`kbd_flush`、`bios_tick_word`、`wait_next_tick`、`segread`、`int386`、`malloc`、`nmalloc`、
+  `memmove`、`outp`、`abs`、`dpmi_lock_region`/`_range`)、繪圖(`blit_rle_image` 與鏡像版 —— PCX 式 0xC0 RLE、`blit_raw_image`、
+  `blit_raw_cell`、`blit_res_cell_sprite`、`blit_res_cell_xy`、`copy_rect`、`blit_anim_frame`、`anim_step_and_draw`、`palette_cycle_tick`)、
+  介面流程(`draw_dialog_cell`、`wait_key_with_marker`、`present_box_at_row`、`close_box_slide_down`、`charcard_say_and_wait`、`compare_to_glyph`)、
+  遊戲資料(`prng_next`、`find_equipped_slot`、`unit_item_id`、`set_units_byte34_low_nibble`、`unit_uses_move_cost_row19`、
+  `map_cell_set_bit7`、`map_collect_cells_byte1_set`)。
+- **槓桿**:新名字會餵給結構性命名。光是 `memmove`(163 個呼叫端)就讓 wrapper 多解出 28 個。結構性名稱現在 238 筆,
+  `strong` 裡完全無描述的降到 **212**(今天開始時 377)。
+- 清單的 `callees` 現在只收落在 obj1 內的目標(E8 位元組掃描命中資料時會算出 `0x75c1f2d7` 這種假目標,讓 wrapper 判定永遠不成立)。
+
+命名時的取捨:讀得出機制但讀不出用途的,名字只寫機制(`map_cell_set_bit7`、`set_units_byte34_low_nibble`),用途留給之後的證據。
+
 ### 6.1 解析程度(三層)
 
 | 層 | 程度 | 依據 |

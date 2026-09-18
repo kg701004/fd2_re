@@ -354,6 +354,12 @@
    "rule": "regenerable",
    "reason": "人工維護的審閱登錄(tools/verify_address_claim_coverage.py 以 --mark-reviewed 寫入、閘門只讀)。內容是「無位元組訊號、審過後結論是不是入口主張」的位址(檔案 offset/live 位址/近似值/rel32 位移值/舊版函式內部/被文件推翻),每筆附 verdict 與 note;本質上沒有產生器。正確性由同一支工具管:只收目前仍是 UNREVIEWED 的位址、缺 note 或壞 verdict 載入即丟例外。與 equivalent_mutants.json、no_marker_reviewed.json 同類。**永久豁免**,但刻意留在清單裡而不是從分母消失。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/function_names.json",
+   "rule": "regenerable",
+   "reason": "人讀反編譯碼得出的函式名稱登錄表,手動維護(tools/function_inventory.py 只讀不寫)。內容是「這個入口是什麼」的人工判讀,機器上沒有來源可以重生;正確性改由同一支工具的 --check-names 保證:每筆 evidence 在該位址實際反組譯、逐字比對,且必須落在該函式範圍內(selftest 的真實 EXE 段每次都跑)。與 address_claim_reviews.json、equivalent_mutants.json 同類。**永久豁免**,條目刻意留在清單裡而不是從分母移除。",
+   "permanent": "no_generator"
   }
  ]
 }

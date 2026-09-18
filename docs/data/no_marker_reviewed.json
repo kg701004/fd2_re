@@ -34608,6 +34608,22 @@
    "excerpt": "並在 `NORMAL_RUN` 加 `function_inventory.py: --structural {out}`:探針在突變狀態下重生產物逐位元組比對,",
    "verdict": "benign",
    "note": "突變 harness 探針機制的說明(等價突變登錄如何被機器重驗),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5426,
+   "excerpt_sha1": "713439f87c0f6e9e45f1cb9a00aeab26156a9ddc",
+   "excerpt": "不與 PRIM/`DOC_OP_NAMES`/AIL 撞名或重複命名、summary 不得空、confidence 只能是 `static_re`/`verified_dynamic`。",
+   "verdict": "benign",
+   "note": "登錄表的欄位規則說明(confidence 的合法值是欄位名),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5435,
+   "excerpt_sha1": "8eac5af458a2b9be92726406793c247193df3dc4",
+   "excerpt": "`build_structural(include_registry=False)`;含登錄表的版本由「已提交產物逐位元組相同」那一條管。",
+   "verdict": "benign",
+   "note": "selftest 回歸釘值設計的說明,不是遊戲事實主張"
   }
  ]
 }
