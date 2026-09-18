@@ -39,9 +39,17 @@ AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為
   * `ail_only`      所有直接呼叫端都是 AIL 進入點或已判定的 ail_only(不動點;自己呼叫自己不算呼叫端)。
                     名稱只說工具能證明的事:它可能是 AIL 的內部輔助(實測 `0x364d4`/`0x364fb` 是配置後鎖定、
                     解鎖後釋放的記憶體輔助),也可能是只有 AIL 用到的 CRT 函式 —— 兩者都可以從遊戲邏輯的待辦扣掉。
-  * `wrapper`       有被呼叫者、全部已知、`span_upper` <= 256:`wrapper(a, b, …)`。已知 = 有真名,或前幾輪已被
-                    結構性命名(以 `~0x位址` 表示)。逐輪傳播到不動點,`round` 記第幾輪。
-  * `leaf_global`   沒有被呼叫者、恰好碰一個全域、`span_upper` <= 64:`leaf[0x全域]`(讀或寫要看反組譯,這裡不判)
+  * `wrapper`       有被呼叫者、全部已知、`span_upper` <= 256。已知 = 有真名,或前幾輪已被結構性命名(以 `~0x位址`
+                    表示)。逐輪傳播到不動點,`round` 記第幾輪。本體反組譯得出來、且本體裡的直接 CALL 目標與清單的
+                    callees 完全一致時,依**呼叫順序**列出每次呼叫與參數:`wrapper(load_res(0x1c8, _, 3), redraw())`
+                    —— 參數取 CALL 前最近的 N 個 push(N = 被呼叫者的 `argc`),立即值照寫、非立即值 `_`、
+                    push 不夠 `?`、`argc` 不明 `(?)`。不一致或反組譯不出來就退回 `wrapper(a, b)`(依位址排序)。
+  * `leaf_*`        沒有直接被呼叫者、`span_upper` <= 64,且本體反組譯到乾淨的結尾、裡面**沒有任何 call 或間接 jmp**
+                    (清單的 callees 只有直接 CALL,`call [ptr]` 要靠反組譯才看得到)。依本體的記憶體存取分:
+                    `leaf_global`  有帶 fixup 的指令(碰全域):`leaf_get[0x…]` / `leaf_set` / `leaf_rw` / `leaf_ref`
+                                   (只取位址);括號裡有暫存器加 `_idx`(查表);另外還經指標存取加 `+ptr`
+                    `leaf_ptr`     只經暫存器指標存取(多半是參數指標):`leaf_ptr_get` / `_set` / `_rw`
+                    `leaf_pure`    完全不碰記憶體(堆疊除外)
 只對 `strong` 且沒有真名的入口命名。這些是**描述不是語意**:`wrapper(load_res)` 說的是「它只呼叫 load_res」,
 不是「它載入什麼」。產物 `docs/data/function_structural_names.json` 的每一筆都標 `kind`,不得當成 verified 引用。
 
@@ -137,9 +145,103 @@ def closed_under_callers(entries: list[dict], seeds: set[int]) -> set[int]:
         inside |= new
 
 
-def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int], ail: set[int]) -> dict[int, dict]:
-    """{入口: {"kind", "name", "round"}}。判定順序與各 kind 的定義見模組 docstring。"""
+MEM = re.compile(r"\[([^\]]*)\]")
+STACK_BASED = re.compile(r"\b(?:esp|ebp)\b")
+ANY_REG = re.compile(r"\b(?:e?[abcd]x|e?[sd]i|[abcd][lh])\b")
+IMMEDIATE = re.compile(r"^-?(?:0x[0-9a-f]+|\d+)$")
+NO_ACCESS = {"lea", "nop"}
+
+
+def body_insns(insn_at, start: int, limit: int) -> list[tuple[int, int, str, str]] | None:
+    """從 start 線性解碼到函式結尾,回傳 [(位址, 長度, 助記符, 運算元)];解不出乾淨的結尾回 None。
+
+    `insn_at(addr) -> (長度, 助記符, 運算元) | None`。結尾 = `ret*` 或無條件 `jmp`,且在它之前沒有任何
+    往前跳、目標落在它之後(仍在 limit 內)的分支 —— 那表示後面還有本體。走到 limit 還沒結尾就是 None。
+    """
+    out = []
+    a = far = start
+    while a < limit:
+        got = insn_at(a)
+        if got is None:
+            return None
+        size, mn, op = got
+        out.append((a, size, mn, op))
+        if mn.startswith("j") and op.startswith("0x") and a < int(op, 16) < limit:
+            far = max(far, int(op, 16))
+        if (mn.startswith("ret") or mn == "jmp") and far <= a:
+            return out
+        a += size
+    return None
+
+
+def call_args(insns: list[tuple[int, int, str, str]], argc: dict[int, int | None],
+              skip: frozenset[int] = frozenset()) -> list[tuple[int, list[str] | None]]:
+    """本體裡每個直接 CALL(依出現順序)與它的參數:[(目標, 參數 | None)]。None = 被呼叫者的 argc 不明。
+
+    cdecl 由右至左 push,所以 CALL 前最後一個 push 是第 1 個參數。分支與 CALL 之後 push 清空。
+    `skip` 裡的目標(`__STK`)不列出 —— 清單的 callees 也不含它 —— 但它前面那個 `push <frame>` 照樣被它吃掉。
+    """
+    out: list[tuple[int, list[str] | None]] = []
+    pushed: list[str] = []
+    for _, _, mn, op in insns:
+        if mn == "push":
+            pushed.append(op if IMMEDIATE.match(op) else "_")
+        elif mn == "call":
+            if op.startswith("0x") and int(op, 16) not in skip:
+                n = argc.get(int(op, 16))
+                got = None if n is None else (pushed[::-1][:n] + ["?"] * n)[:n]
+                out.append((int(op, 16), got))
+            pushed = []
+        elif mn.startswith("j") or mn.startswith("ret"):
+            pushed = []
+    return out
+
+
+def leaf_kind(insns: list[tuple[int, int, str, str]], fixups: dict[int, int], base: int, hi: int) -> dict | None:
+    """無直接被呼叫者的小函式依本體分類;本體裡有任何 call 或間接 jmp 就不是 leaf(回 None)。"""
+    globals_: set[int] = set()
+    modes: set[str] = set()
+    ptr: set[str] = set()
+    indexed = False
+    for a, size, mn, op in insns:
+        if mn == "call" or (mn == "jmp" and not op.startswith("0x")):
+            return None
+        here = {fixups[x] for x in range(a, a + size) if x in fixups and not base <= fixups[x] < hi}
+        globals_ |= here
+        first, _, rest = op.partition(",")
+        access = set()
+        if mn not in NO_ACCESS:
+            if "[" in first and mn == "mov":
+                access.add("set")
+            elif "[" in first:
+                access |= {"get", "set"} if mn not in ("cmp", "test", "push") else {"get"}
+            if "[" in rest:
+                access.add("get")
+        mems = [m for m in MEM.findall(op) if not STACK_BASED.search(m)]
+        if here:
+            modes |= access or {"ref"}
+            indexed = indexed or any(ANY_REG.search(m) for m in mems)
+        elif mems and access:
+            ptr |= access
+    def mode(ms: set[str]) -> str:
+        return "rw" if {"get", "set"} <= ms else "get" if "get" in ms else "set" if "set" in ms else "ref"
+    if globals_:
+        name = f"leaf_{mode(modes)}{'_idx' if indexed else ''}[{', '.join(hex(g) for g in sorted(globals_))}]" + ("+ptr" if ptr else "")
+        return {"kind": "leaf_global", "name": name}
+    if ptr:
+        return {"kind": "leaf_ptr", "name": f"leaf_ptr_{mode(ptr)}"}
+    return {"kind": "leaf_pure", "name": "leaf_pure"}
+
+
+def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int], ail: set[int],
+               bodies: dict[int, list | None] | None = None, fixups: dict[int, int] | None = None,
+               base: int = 0, hi: int = 0, skip: frozenset[int] = frozenset()) -> dict[int, dict]:
+    """{入口: {"kind", "name", "round"}}。判定順序與各 kind 的定義見模組 docstring。
+
+    `bodies` = {入口: body_insns 的結果};不給(沒有反組譯器)就只出 thunk / ail_only / 不帶參數的 wrapper。
+    """
     todo = {int(e["addr"], 16): e for e in entries if e["grade"] == "strong" and int(e["addr"], 16) not in names}
+    argc = {int(e["addr"], 16): e["argc"] for e in entries}
     out: dict[int, dict] = {}
     for a in sorted(todo):
         if a in thunks:
@@ -154,21 +256,30 @@ def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int
         new = {}
         for a, e in sorted(todo.items()):
             cs = [int(t, 16) for t in e["callees"]]
-            if a not in out and cs and e["span_upper"] <= WRAPPER_MAX_SPAN and all(t in label for t in cs):
-                new[a] = {"kind": "wrapper", "name": "wrapper(" + ", ".join(label[t] for t in cs) + ")", "round": rnd}
+            if a in out or not cs or e["span_upper"] > WRAPPER_MAX_SPAN or not all(t in label for t in cs):
+                continue
+            calls = call_args(bodies[a], argc, skip) if bodies and bodies.get(a) else []
+            if {t for t, _ in calls} == set(cs):
+                inner = ", ".join(f"{label[t]}({'?' if args is None else ', '.join(args)})" for t, args in calls)
+            else:
+                inner = ", ".join(label[t] for t in cs)
+            new[a] = {"kind": "wrapper", "name": f"wrapper({inner})", "round": rnd}
         if not new:
             break
         out.update(new)
         label.update({a: f"~{a:#x}" for a in new})
     for a, e in sorted(todo.items()):
-        if a not in out and not e["callees"] and len(e["globals"]) == 1 and e["span_upper"] <= LEAF_MAX_SPAN:
-            out[a] = {"kind": "leaf_global", "name": f"leaf[{e['globals'][0]}]", "round": 0}
+        if a in out or e["callees"] or e["span_upper"] > LEAF_MAX_SPAN or not bodies or not bodies.get(a):
+            continue
+        got = leaf_kind(bodies[a], fixups or {}, base, hi)
+        if got:
+            out[a] = {**got, "round": 0}
     return out
 
 
 def structural_doc(entries: list[dict], named: dict[int, dict]) -> dict:
     by = {int(e["addr"], 16): e for e in entries}
-    kinds = ("thunk", "ail_only", "wrapper", "leaf_global")
+    kinds = ("thunk", "ail_only", "wrapper", "leaf_global", "leaf_ptr", "leaf_pure")
     return {"_meta": {"generator": "tools/function_inventory.py --structural",
                       "caution": "結構性描述,不是語意;不得當成 verified 引用",
                       "total": len(named), "by_kind": {k: sum(1 for v in named.values() if v["kind"] == k) for k in kinds},
@@ -367,12 +478,30 @@ def real_names() -> dict[int, str]:
 
 
 def build_structural() -> dict:
+    import disasm_le as D
     import verify_address_claim_coverage as CC
     inv = build(with_argc=True)
-    _, _, code, base, hi = CC.load_image()
+    data, meta, code, base, hi = CC.load_image()
     ents = {int(e["addr"], 16) for e in inv["entries"]}
-    named = structural(inv["entries"], real_names(), entry_thunks(ents, code, base, hi), set(load_ail()))
-    return structural_doc(inv["entries"], named)
+    bodies = None
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+        md = Cs(CS_ARCH_X86, CS_MODE_32)
+
+        def insn_at(a: int):
+            for ins in md.disasm(code[a - base:a - base + 15], a):
+                return ins.size, ins.mnemonic, ins.op_str
+            return None
+
+        bodies = {int(e["addr"], 16): body_insns(insn_at, int(e["addr"], 16), int(e["addr"], 16) + e["span_upper"])
+                  for e in inv["entries"] if e["span_upper"] <= WRAPPER_MAX_SPAN}
+    except ImportError:
+        pass
+    named = structural(inv["entries"], real_names(), entry_thunks(ents, code, base, hi), set(load_ail()),
+                       bodies, D.build_fixups(data, meta), base, hi, frozenset({CC.STACK_PROBE}))
+    doc = structural_doc(inv["entries"], named)
+    doc["_meta"]["disasm_available"] = bodies is not None
+    return doc
 
 
 def documented_entries() -> set[int]:
@@ -576,7 +705,68 @@ def _selftest_structural(fails: list[str]) -> None:
     check("把 0x50 也放進種子,0x30 與 0x40 才逐輪加入", closed_under_callers(es, {0x10, 0x50}), {0x20, 0x30, 0x40})
     check("種子本身不回傳", closed_under_callers(es, {0x10, 0x20}), set())
 
-    print("(11) structural:判定順序、邊界、傳播")
+    print("(11) body_insns:乾淨結尾、往前分支延後結尾、解不出來與走到 limit 都是 None")
+    def decoder(table):
+        return lambda a: table.get(a)
+    t1 = {0: (1, "push", "ebx"), 1: (2, "je", "0x6"), 3: (1, "ret", ""), 4: (2, "mov", "eax, 1"), 6: (1, "ret", ""), 7: (1, "nop", "")}
+    check("je 0x6 越過第一個 ret -> 本體到第二個 ret", [x[0] for x in body_insns(decoder(t1), 0, 0x10)], [0, 1, 3, 4, 6])
+    check("分支目標 == limit 不算本體內 -> 第一個 ret 就結尾", [x[0] for x in body_insns(decoder(t1), 0, 6)], [0, 1, 3])
+    check("往回跳不延後結尾", [x[0] for x in body_insns(decoder({0: (2, "jne", "0x0"), 2: (1, "ret", "")}), 0, 8)], [0, 2])
+    check("尾端無條件 jmp 也是結尾;retn 也算", ([x[0] for x in body_insns(decoder({0: (5, "jmp", "0x900")}), 0, 8)],
+                                       [x[0] for x in body_insns(decoder({0: (3, "retn", "4")}), 0, 8)]), ([0], [0]))
+    check("解不出來 -> None;走到 limit 沒結尾 -> None;start == limit -> None",
+          (body_insns(decoder({0: (1, "nop", "")}), 0, 8), body_insns(decoder({0: (4, "nop", ""), 4: (4, "nop", "")}), 0, 8),
+           body_insns(decoder(t1), 0, 0)), (None, None, None))
+
+    print("(12) call_args:最近 N 個 push 反序、立即值/非立即值/不足/argc 不明、分支與 CALL 清空")
+    ins = [(0, 1, "push", "ebx"), (1, 1, "push", "3"), (2, 1, "push", "eax"), (3, 1, "push", "0x1c8"), (4, 5, "call", "0x500"),
+           (9, 1, "push", "-1"), (10, 5, "call", "0x600"), (15, 1, "push", "1"), (16, 2, "je", "0x20"), (18, 5, "call", "0x500"),
+           (23, 1, "push", "2"), (24, 5, "call", "0x700"), (29, 2, "call", "eax"), (31, 5, "call", "0x800"), (36, 1, "ret", "")]
+    check("每次呼叫的參數", call_args(ins, {0x500: 3, 0x600: 2, 0x700: None, 0x800: 0}),
+          [(0x500, ["0x1c8", "_", "3"]), (0x600, ["-1", "?"]), (0x500, ["?", "?", "?"]), (0x700, None), (0x800, [])])
+    check("ret 也清空 push", call_args([(0, 1, "push", "1"), (1, 1, "ret", ""), (2, 5, "call", "0x500")], {0x500: 1}), [(0x500, ["?"])])
+    check("argc 表裡沒有的目標 = 不明", call_args([(0, 5, "call", "0x999")], {}), [(0x999, None)])
+    stk = [(0, 5, "push", "0x28"), (5, 5, "call", "0x3702f"), (10, 1, "push", "9"), (11, 5, "call", "0x500"), (16, 1, "ret", "")]
+    check("skip 的目標不列出,而且它前面的 push <frame> 不會漏給下一個呼叫",
+          (call_args(stk, {0x500: 2, 0x3702f: 0}, frozenset({0x3702f})), call_args(stk, {0x500: 2, 0x3702f: 0})),
+          ([(0x500, ["9", "?"])], [(0x3702f, []), (0x500, ["9", "?"])]))
+
+    print("(13) leaf_kind")
+    base, hi = 0x1000, 0x2000
+    fx = {0x1002: 0x53a45, 0x1012: 0x53a45, 0x1022: 0x53a45, 0x1032: 0x53a45, 0x1042: 0x1800, 0x1051: 0x53a45,
+          0x1061: 0x60000, 0x1071: 0x53a45, 0x1092: 0x53a45, 0x1099: 0x53b00, 0x1201: 0x1000, 0x1211: 0x2000}
+    def lk(*insns):
+        return leaf_kind(list(insns), fx, base, hi)
+    check("讀全域", lk((0x1000, 6, "mov", "eax, dword ptr [0x3a45]"), (0x1006, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_get[0x53a45]"})
+    check("寫全域", lk((0x1010, 6, "mov", "dword ptr [0x3a45], eax"), (0x1016, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_set[0x53a45]"})
+    check("add [g], 1 = 讀寫", lk((0x1020, 7, "add", "dword ptr [0x3a45], 1"), (0x1027, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_rw[0x53a45]"})
+    check("cmp [g], 0 只算讀", lk((0x1030, 7, "cmp", "dword ptr [0x3a45], 0"), (0x1037, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_get[0x53a45]"})
+    check("fixup 指向 obj1 內(跳表/程式碼位址)不算全域 -> 退到 ptr 判定", lk((0x1040, 6, "mov", "eax, dword ptr [0x800]"), (0x1046, 1, "ret", "")),
+          {"kind": "leaf_ptr", "name": "leaf_ptr_get"})
+    check("只取位址(無括號)= ref", lk((0x1050, 5, "mov", "eax, 0x3a45"), (0x1055, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_ref[0x53a45]"})
+    check("查表(括號裡有暫存器)= _idx;fixup 目標 == hi 之外也算全域",
+          lk((0x1060, 7, "mov", "al, byte ptr [eax + 0x10000]"), (0x1067, 1, "ret", "")), {"kind": "leaf_global", "name": "leaf_get_idx[0x60000]"})
+    check("全域 + 經指標寫 = +ptr", lk((0x1070, 6, "mov", "eax, dword ptr [0x3a45]"), (0x1076, 2, "mov", "dword ptr [ebx], eax"), (0x1078, 1, "ret", "")),
+          {"kind": "leaf_global", "name": "leaf_get[0x53a45]+ptr"})
+    check("兩個全域依位址排序、讀一個寫一個 = rw", lk((0x1090, 6, "mov", "eax, dword ptr [0x3a45]"), (0x1097, 6, "mov", "dword ptr [0x3b00], eax"), (0x109d, 1, "ret", "")),
+          {"kind": "leaf_global", "name": "leaf_rw[0x53a45, 0x53b00]"})
+    check("只經指標:讀 / 寫 / 讀寫", [lk((0x1100, 2, "mov", "eax, dword ptr [ebx]"), (0x1102, 1, "ret", ""))["name"],
+                              lk((0x1100, 2, "mov", "dword ptr [ebx + 4], eax"), (0x1102, 1, "ret", ""))["name"],
+                              lk((0x1100, 2, "inc", "dword ptr [ebx]"), (0x1102, 1, "ret", ""))["name"]],
+          ["leaf_ptr_get", "leaf_ptr_set", "leaf_ptr_rw"])
+    check("堆疊存取與 lea 不算 -> pure", lk((0x1100, 4, "mov", "eax, dword ptr [esp + 4]"), (0x1104, 3, "lea", "eax, [eax + eax*2]"),
+                                     (0x1107, 3, "mov", "dword ptr [ebp - 4], eax"), (0x110a, 1, "ret", "")), {"kind": "leaf_pure", "name": "leaf_pure"})
+    check("有間接 call / 間接 jmp 就不是 leaf;直接 jmp(尾端跳)不擋",
+          (lk((0x1100, 6, "call", "dword ptr [0x2758]"), (0x1106, 1, "ret", "")), lk((0x1100, 7, "jmp", "dword ptr [eax*4 + 0x100]")),
+           lk((0x1100, 5, "jmp", "0x1200"))), (None, None, {"kind": "leaf_pure", "name": "leaf_pure"}))
+    check("fixup 落在指令最後一個 byte 要算、落在下一條不算", (lk((0x105c, 6, "mov", "eax, dword ptr [0x10000]"), (0x1062, 1, "ret", ""))["name"],
+                                              lk((0x105b, 6, "mov", "eax, dword ptr [ebx]"), (0x1500, 1, "ret", ""))["name"]),
+          ("leaf_get[0x60000]", "leaf_ptr_get"))
+    check("fixup 目標 == base 算 obj1 內(不是全域)、== hi 算 obj1 外(是全域)",
+          (lk((0x1200, 6, "mov", "eax, dword ptr [0x0]"), (0x1500, 1, "ret", ""))["name"],
+           lk((0x1210, 6, "mov", "eax, dword ptr [0x1000]"), (0x1500, 1, "ret", ""))["name"]), ("leaf_ptr_get", "leaf_get[0x2000]"))
+
+    print("(14) structural:判定順序、邊界、傳播、帶參數的 wrapper")
     names = {0x100: "pan", 0x200: "spawn"}
     es = [
         ent(0x10, [0x100, 0x200], span=WRAPPER_MAX_SPAN),          # wrapper,span 恰為上限
@@ -586,34 +776,42 @@ def _selftest_structural(fails: list[str]) -> None:
         ent(0x14, [0x10, 0x200]),                                  # 第 2 輪:靠 0x10 的結構性名稱
         ent(0x15, [0x14]),                                         # 第 3 輪
         ent(0x16, [0x17]), ent(0x17, [0x16]),                      # 互相呼叫,永遠不會已知
-        ent(0x18, globals_=[0x5000], span=LEAF_MAX_SPAN),          # leaf_global,span 恰為上限
-        ent(0x19, globals_=[0x5000], span=LEAF_MAX_SPAN + 1),
-        ent(0x1a, globals_=[0x5000, 0x5004]),                      # 兩個全域
-        ent(0x1b),                                                 # 沒有被呼叫者也沒有全域
+        ent(0x18, span=LEAF_MAX_SPAN),                             # leaf,span 恰為上限
+        ent(0x19, span=LEAF_MAX_SPAN + 1),
+        ent(0x1a),                                                 # 本體解不出來(bodies 是 None)
+        ent(0x1b),                                                 # 本體裡有間接 call
         ent(0x1c, [0x100]),                                        # thunk 優先於 wrapper
         ent(0x1d, [0x100]),                                        # thunk 目標無名 -> 用位址
-        ent(0x100, [0x200]),                                       # 已有真名 -> 不命名
+        ent(0x100, [0x200]), ent(0x200),                           # 已有真名 -> 不命名
         ent(0x300, [0x1e]), ent(0x1e, [0x100]),                    # 只被 AIL 種子呼叫 -> ail_only 優先於 wrapper
-        ent(0x1f, [0x100], globals_=[0x5000]),                     # 有被呼叫者 -> wrapper,不是 leaf_global
+        ent(0x1f, [0x100]),                                        # 本體的 CALL 目標與 callees 不一致 -> 退回不帶參數
     ]
-    got = structural(es, names, {0x1c: 0x200, 0x1d: 0x777}, {0x300})
+    es[15]["argc"] = 1                                             # spawn(0x200)讀 1 個參數;pan(0x100)argc 不明
+    ret = (0x900, 1, "ret", "")
+    bodies = {0x10: [(0, 5, "push", "0x28"), (5, 5, "call", "0x3702f"), (10, 1, "push", "5"), (11, 5, "call", "0x200"), (16, 5, "call", "0x100"), ret],
+              0x14: [(0, 1, "push", "eax"), (1, 5, "call", "0x200"), (6, 5, "call", "0x10"), ret],
+              0x18: [ret], 0x19: [ret], 0x1a: None, 0x1b: [(0, 2, "call", "eax"), ret],
+              0x1f: [(0, 5, "call", "0x100"), (5, 5, "call", "0x200"), ret]}
+    got = structural(es, names, {0x1c: 0x200, 0x1d: 0x777}, {0x300}, bodies, {}, 0x1000, 0x2000, frozenset({0x3702f}))
+    check("不給 skip:本體多出 __STK,與 callees 不一致 -> 退回不帶參數",
+          structural(es, names, {}, set(), bodies, {}, 0x1000, 0x2000)[0x10]["name"], "wrapper(pan, spawn)")
     check("每一筆的 kind / name / round", got, {
-        0x10: {"kind": "wrapper", "name": "wrapper(pan, spawn)", "round": 1},
-        0x14: {"kind": "wrapper", "name": "wrapper(~0x10, spawn)", "round": 2},
+        0x10: {"kind": "wrapper", "name": "wrapper(spawn(5), pan(?))", "round": 1},
+        0x14: {"kind": "wrapper", "name": "wrapper(spawn(_), ~0x10(?))", "round": 2},
         0x15: {"kind": "wrapper", "name": "wrapper(~0x14)", "round": 3},
-        0x18: {"kind": "leaf_global", "name": "leaf[0x5000]", "round": 0},
+        0x18: {"kind": "leaf_pure", "name": "leaf_pure", "round": 0},
         0x1c: {"kind": "thunk", "name": "thunk->spawn", "round": 0},
         0x1d: {"kind": "thunk", "name": "thunk->0x777", "round": 0},
         0x1e: {"kind": "ail_only", "name": "ail_only", "round": 0},
         0x1f: {"kind": "wrapper", "name": "wrapper(pan)", "round": 1},
     })
-    check("AIL 種子本身(0x300,無真名時)不因為呼叫 ail_only 而變成 wrapper:ail_only 沒有進 label",
-          got.get(0x300), None)
+    nob = structural(es, names, {0x1c: 0x200, 0x1d: 0x777}, {0x300})
+    check("不給 bodies:wrapper 不帶參數、完全不出 leaf", (nob[0x10]["name"], nob[0x14]["name"], 0x18 in nob), ("wrapper(pan, spawn)", "wrapper(~0x10, spawn)", False))
     doc = structural_doc(es, got)
     check("structural_doc 的計數與每筆附帶 callers/argc",
           (doc["_meta"]["total"], doc["_meta"]["by_kind"], doc["_meta"]["wrapper_rounds"], doc["names"]["0x10"]),
-          (8, {"thunk": 2, "ail_only": 1, "wrapper": 4, "leaf_global": 1}, 3,
-           {"kind": "wrapper", "name": "wrapper(pan, spawn)", "round": 1, "callers": 0, "argc": None}))
+          (8, {"thunk": 2, "ail_only": 1, "wrapper": 4, "leaf_global": 0, "leaf_ptr": 0, "leaf_pure": 1}, 3,
+           {"kind": "wrapper", "name": "wrapper(spawn(5), pan(?))", "round": 1, "callers": 0, "argc": None}))
     check("空輸入", (structural([], {}, {}, set()), structural_doc([], {})["_meta"]["wrapper_rounds"]), ({}, 0))
 
 
@@ -647,11 +845,19 @@ def _selftest_live(fails: list[str]) -> bool:
           all(x["span_upper"] > 0 for x in inv["entries"])
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
     check("重建兩次逐位元組相同", dump(inv) == dump(build(with_argc=False)))
-    print("(12) 真實 EXE:結構性命名")
+    print("(15) 真實 EXE:結構性命名")
     sd = build_structural()
-    check("回歸釘值:thunk 4 / ail_only 30 / wrapper 95 / leaf_global 23",
-          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 95, "leaf_global": 23}, str(sd["_meta"]["by_kind"]))
-    check("0x2185f = wrapper(sprite_walk_on, play_sfx)", sd["names"].get("0x2185f", {}).get("name") == "wrapper(sprite_walk_on, play_sfx)")
+    check("回歸釘值:thunk 4 / ail_only 30 / wrapper 95 / leaf_global 14 / leaf_ptr 15 / leaf_pure 9",
+          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 95, "leaf_global": 14, "leaf_ptr": 15, "leaf_pure": 9},
+          str(sd["_meta"]["by_kind"]))
+    check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
+          sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
+    check("0x20707 的常數參數讀得出來(兩次 unit_inactive 的單位編號)",
+          sd["names"].get("0x20707", {}).get("name") == "wrapper(raw_result_code_0_1_2(), unit_inactive(0x32), unit_inactive(0x33))",
+          str(sd["names"].get("0x20707")))
+    plain = [a for a, v in sd["names"].items() if v["kind"] == "wrapper" and "(" not in v["name"][len("wrapper("):]]
+    check("退回不帶參數的 wrapper 只有 1 個(本體的 CALL 與 callees 不一致)", len(plain) == 1, str(plain))
+    check("反組譯器可用時 _meta 如實標示", sd["_meta"]["disasm_available"] is True)
     check("0x364fb(解鎖後釋放的記憶體輔助,24 個呼叫端全在 AIL 內)= ail_only", sd["names"].get("0x364fb", {}).get("kind") == "ail_only")
     real = real_names()
     check("有真名的入口一個都不會被結構性命名", not any(int(a, 16) in real for a in sd["names"]))
@@ -677,8 +883,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(7 組清單純函式 + 3 組結構性命名純函式的成對案例"
-          + (" + 真實 EXE 的 15 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+    print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式的成對案例"
+          + (" + 真實 EXE 的 18 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

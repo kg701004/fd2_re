@@ -242,6 +242,21 @@ AIL 的 105 個早已由 `ail_entry_points.json` 收錄。這條路沒有可收�
 - `ail_only` 的名字刻意只說工具能證明的事。抽查 `0x364d4`/`0x364fb`(24 個呼叫端全在 AIL 內):本體是
   「經函式指標配置 → 鎖定」與「解鎖 → 經函式指標釋放」,是 AIL 的記憶體輔助(靜態 RE,Capstone)。
 
+### 6.0e 結構性命名第二版:wrapper 帶呼叫參數、leaf 依反組譯本體分類(同日)
+
+§6.0d 的兩個弱點做掉了,產物由 152 筆變 **167 筆**,`strong` 裡完全無描述的由 286 降到 **270**。
+
+- **wrapper 帶參數**:反組譯本體,依**呼叫順序**列出每次呼叫與 CALL 前最近 N 個 push(N = 被呼叫者的 `argc`;
+  立即值照寫、非立即值 `_`、不足 `?`、`argc` 不明 `(?)`)。95 個 wrapper 有 94 個帶得出參數,例如
+  `wrapper(load_res(0x1a4d, 0, 0x50))`、`wrapper(raw_result_code_0_1_2(), unit_inactive(0x32), unit_inactive(0x33))`。
+  原本長得一樣的幾個 `wrapper(load_res)` 現在由資源編號區分。本體的 CALL 目標與清單 callees 不一致時退回不帶參數(1 個)。
+- **leaf 改由反組譯判定**(§6.0d 的 `leaf_global` 23 個只看清單,看不到 `call [函式指標]`,其中一部分不是 leaf):
+  本體須解到乾淨結尾、裡面沒有任何 call 或間接 jmp。38 個:`leaf_global` 14(`leaf_ref` 8、`leaf_get` 3、`leaf_rw` 3)、
+  `leaf_ptr` 15(`get` 9、`rw` 6)、`leaf_pure` 9。全域以**指令範圍內的 fixup**判定,不靠位移大小猜。
+
+這些仍然是結構描述不是語意。常數參數是機械讀出的事實(靜態 RE,Capstone),可以拿來當線索,例如
+「哪個函式以資源編號 0x1a4d 呼叫 load_res」;但 `_` 只表示「不是立即值」,不表示參數不重要。
+
 ### 6.1 解析程度(三層)
 
 | 層 | 程度 | 依據 |

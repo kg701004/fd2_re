@@ -1325,6 +1325,7 @@ NORMAL_RUN: dict[str, list[str]] = {
     "encode_text.py": ["encode", "炎龍騎士團"],
     "export_sprites.py": ["{out}", "0"],
     "font_grid.py": ["extracted/raw/FDOTHER/FDOTHER_004.bin", "0", "24", "{out}/g.png"],
+    "function_inventory.py": ["--structural", "{out}/structural.json"],
     "hash_fd2_reference.py": ["org_game/炎龍騎士團/FLAME2"],
     "verify_address_citations.py": ["--report"],
     "verify_address_claim_coverage.py": [],

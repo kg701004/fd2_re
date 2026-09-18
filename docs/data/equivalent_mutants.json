@@ -797,6 +797,14 @@
    "reason": "只決定成功訊息裡報告的行數;實際附加內容由上一行的 text.split(\"\\n\") 決定。",
    "evidence": "該值只出現在 print 內",
    "scope_hash": "7c8b639b1afc"
+  },
+  {
+   "tool": "function_inventory.py",
+   "kind": "equivalent",
+   "key": "build_structural.insn_at|for ins in md.disasm(code[a - base:a - base + 15], a):|int 15->16#0",
+   "reason": "解碼窗:x86 指令最長 15 bytes,insn_at 只取解出的第一條指令;窗多 1 byte 不會改變第一條指令的長度、助記符或運算元。",
+   "evidence": "突變狀態下 --structural 的產物逐位元組相同(探針每次 --precommit 重驗);artifacts 軸也沒有報漂移。",
+   "scope_hash": "550188e0f9b7"
   }
  ]
 }

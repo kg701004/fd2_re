@@ -34600,6 +34600,14 @@
    "excerpt": "`verified_addresses`/勘誤也算成「已知」,工具不算,因為那樣產生的名字是 `wrapper(0x…)`,沒有資訊量。",
    "verdict": "benign",
    "note": "估計與工具實測的差異說明,句中 verified_addresses 是檔名,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5408,
+   "excerpt_sha1": "1cabaacb64aded9f35808f64d26e4d0e6eff0f01",
+   "excerpt": "並在 `NORMAL_RUN` 加 `function_inventory.py: --structural {out}`:探針在突變狀態下重生產物逐位元組比對,",
+   "verdict": "benign",
+   "note": "突變 harness 探針機制的說明(等價突變登錄如何被機器重驗),不是遊戲事實主張"
   }
  ]
 }

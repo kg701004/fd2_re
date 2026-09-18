@@ -5385,3 +5385,32 @@ AIL 105 全在且 `strong`、`__STK` 本身不是入口、`0x3e01d` 以 thunk �
 selftest 新增三組純函式成對案例(`span` 恰為上限/超過 1、一個未知被呼叫者、weak、互相呼叫永不已知、thunk 優先於
 wrapper、`ail_only` 優先於 wrapper、有被呼叫者就不是 leaf、種子本身不回傳、有集合外呼叫端會連帶擋住下游)與六項
 真實 EXE 檢查(釘值、`0x2185f`、`0x364fb`、有真名的不命名、全是 strong、已提交產物逐位元組相同)。
+
+## 2026-09-18 續二十七:結構性命名第二版 —— wrapper 帶參數、leaf 靠反組譯
+
+續二十六留下兩個弱點:九個 `wrapper(load_res)` 長得一樣;`leaf_global` 只看清單的 callees,而清單只有直接 CALL,
+`call dword ptr [0x2758]` 這種經函式指標的呼叫看不到(續二十六抽查的 `0x364d4` 就有一個)。兩件都要反組譯本體,一起做。
+
+三個純函式,selftest 直接餵合成的指令序列,不需要反組譯器:
+
+* `body_insns`:線性解碼到乾淨結尾(`ret*` 或無條件 `jmp`,且之前沒有往前跳過它的分支);解不出來或走到上界回 None。
+* `call_args`:CALL 前最近 N 個 push 反序(cdecl 由右至左),分支、`ret`、CALL 之後清空。
+* `leaf_kind`:本體有任何 call 或間接 jmp 就不是 leaf;全域以**指令位元組範圍內的 fixup** 判定(指向 obj1 內的不算),
+  不靠「位移夠大」去猜 —— 反組譯文字裡的位移是重定位前的值(`[0x3a45]` 其實是 `0x53a45`),用猜的兩頭都會錯。
+
+**第一版 95 個 wrapper 有 94 個退回不帶參數。** 保護機制(本體的 CALL 目標集合必須等於清單的 callees,否則不採信
+反組譯結果)正常運作,但擋掉的是好結果:Watcom 序頭的 `call __STK` 在本體裡,而清單刻意排除它。`call_args` 加 `skip`
+之後 94 個帶得出參數。成對案例釘住兩面:skip 的目標不列出、它前面那個 `push <frame>` 也不會漏給下一個呼叫;
+不給 skip 時 structural 必須退回不帶參數。
+
+**一個等價突變,用探針登錄而不是用說的。** 窮舉 91 個可達突變抓到 90 個,逃掉的是解碼窗 `code[a-base : a-base+15]`
+的 15 改 16。x86 指令最長 15 bytes,`insn_at` 又只取第一條,多讀 1 byte 不可能改變結果。登錄為 `equivalent`,
+並在 `NORMAL_RUN` 加 `function_inventory.py: --structural {out}`:探針在突變狀態下重生產物逐位元組比對,
+每次 `--precommit` 重驗。鍵與 `scope_hash` 由 harness 自己的 `list_sites`/`scope_hash` 算,不手抄。重跑歸零。
+
+**又踩一次 heredoc。** 修 patch 腳本本身時順手用了 heredoc,正規表示式裡的 `\d` 被 shell 吃掉一層,`assert` 失敗、
+修正沒寫入,而下一步照樣套用了帶瑕疵的原版(自我參照的期望值 `X if False else Y` 也跟著進去)。
+selftest 當場抓到,改用 Write 工具的腳本修掉。規則早就寫在記憶裡;這次的教訓是「只是改一行」不是例外。
+
+真實 EXE 檢查加到 18 項:`0x2185f` 釘成 `wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))` ——
+我原本憑名字猜 sprite_walk_on 在前,反組譯說 play_sfx 在前,以反組譯為準;`0x20707` 釘兩次 `unit_inactive` 的單位編號。
