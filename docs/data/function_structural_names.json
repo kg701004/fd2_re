@@ -1,0 +1,1080 @@
+{
+ "_meta": {
+  "generator": "tools/function_inventory.py --structural",
+  "caution": "結構性描述,不是語意;不得當成 verified 引用",
+  "total": 152,
+  "by_kind": {
+   "thunk": 4,
+   "ail_only": 30,
+   "wrapper": 95,
+   "leaf_global": 23
+  },
+  "wrapper_rounds": 1
+ },
+ "names": {
+  "0x11b48": {
+   "kind": "wrapper",
+   "name": "wrapper(redraw)",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x11c59": {
+   "kind": "wrapper",
+   "name": "wrapper(redraw)",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
+  },
+  "0x12c0d": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 9,
+   "argc": 0
+  },
+  "0x12c60": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x13460": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a0c]",
+   "round": 0,
+   "callers": 4,
+   "argc": 0
+  },
+  "0x13512": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a45]",
+   "round": 0,
+   "callers": 11,
+   "argc": 1
+  },
+  "0x173e7": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53c57]",
+   "round": 0,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x1a7bd": {
+   "kind": "wrapper",
+   "name": "wrapper(load_res)",
+   "round": 1,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x1a7f1": {
+   "kind": "wrapper",
+   "name": "wrapper(heap_free)",
+   "round": 1,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x1b5f1": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x1b722": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a45]",
+   "round": 0,
+   "callers": 20,
+   "argc": 2
+  },
+  "0x1d4cb": {
+   "kind": "wrapper",
+   "name": "wrapper(load_res)",
+   "round": 1,
+   "callers": 6,
+   "argc": 0
+  },
+  "0x1d4f6": {
+   "kind": "wrapper",
+   "name": "wrapper(play_sfx)",
+   "round": 1,
+   "callers": 4,
+   "argc": 0
+  },
+  "0x1f6ef": {
+   "kind": "wrapper",
+   "name": "wrapper(memset)",
+   "round": 1,
+   "callers": 2,
+   "argc": 4
+  },
+  "0x206c5": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20707": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20765": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20822": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x2084a": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20872": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, raw_result_code_0_1_2, roster_has, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x208cf": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20926": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20957": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20a51": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20a87": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20aaf": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20b14": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20b3c": {
+   "kind": "wrapper",
+   "name": "wrapper(raw_result_code_0_1_2, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20b72": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x20bf5": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x2185f": {
+   "kind": "wrapper",
+   "name": "wrapper(sprite_walk_on, play_sfx)",
+   "round": 1,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x21a9e": {
+   "kind": "wrapper",
+   "name": "wrapper(sprite_walk_on, play_sfx)",
+   "round": 1,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x22ef6": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x230f2": {
+   "kind": "wrapper",
+   "name": "wrapper(join, sync_party, dialog, layout_units, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x231bc": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x231f9": {
+   "kind": "wrapper",
+   "name": "wrapper(join, sync_party, dialog, layout_units)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x23296": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, join, pan, act)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x235bc": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x23790": {
+   "kind": "wrapper",
+   "name": "wrapper(join, sync_party, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x237d5": {
+   "kind": "wrapper",
+   "name": "wrapper(join, sync_party, act, dialog, layout_units)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x2389f": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x239bd": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party, dialog, roster_has)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x23e39": {
+   "kind": "wrapper",
+   "name": "wrapper(sync_party, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x2921a": {
+   "kind": "wrapper",
+   "name": "wrapper(memset)",
+   "round": 1,
+   "callers": 4,
+   "argc": 4
+  },
+  "0x2a07a": {
+   "kind": "wrapper",
+   "name": "wrapper(unit_inactive)",
+   "round": 1,
+   "callers": 1,
+   "argc": 1
+  },
+  "0x2ae0e": {
+   "kind": "wrapper",
+   "name": "wrapper(find_item_slot)",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
+  },
+  "0x2b749": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53bfb]",
+   "round": 0,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x314de": {
+   "kind": "wrapper",
+   "name": "wrapper(load_res)",
+   "round": 1,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x32fb2": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act, dialog, loadch_call, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3314b": {
+   "kind": "wrapper",
+   "name": "wrapper(loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x33219": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, act, dialog, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3327d": {
+   "kind": "wrapper",
+   "name": "wrapper(focus_unit, reset_pose, pan, act, dialog, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3332b": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x33367": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act, dialog, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x333f5": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, reset_pose, pan, act, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3346b": {
+   "kind": "wrapper",
+   "name": "wrapper(loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3347c": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x334d9": {
+   "kind": "wrapper",
+   "name": "wrapper(focus_unit, pan, act, dialog, loadch_call, roster_has)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x335aa": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, loadch_call, roster_has)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x335da": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, act, dialog, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3367e": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x338c4": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, dialog, loadch_call, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x33aae": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, act, loadch_call)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x33dba": {
+   "kind": "wrapper",
+   "name": "wrapper(pan, act, dialog, loadch_call, pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x344f2": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a45]",
+   "round": 0,
+   "callers": 20,
+   "argc": 3
+  },
+  "0x34738": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34778": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act, dialog, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34818": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, dialog, unit_inactive, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x348bb": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x349ec": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34b2f": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, unit_inactive)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34c7a": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34d64": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a45]",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x34dd0": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34eb3": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34f38": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34f74": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x34fcc": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35009": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53a45]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35022": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, reset_pose, pan, act, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x350c8": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, reset_pose, pan, act)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35298": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35321": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x353b5": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35422": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, join, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35468": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, dialog, wait_ticks)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3553f": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, wait_ticks)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x355b7": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, join, pan, wait_ticks)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35638": {
+   "kind": "wrapper",
+   "name": "wrapper(pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35677": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, zero_hp_from)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x356b3": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, delay)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x357dd": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn, pan, act, dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35833": {
+   "kind": "wrapper",
+   "name": "wrapper(spawn)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35c1d": {
+   "kind": "wrapper",
+   "name": "wrapper(pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35c40": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, pan_spawn_group, zero_hp_from)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35d1e": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35d9e": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35ec1": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog, zero_hp_from)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35f48": {
+   "kind": "wrapper",
+   "name": "wrapper(pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x35f88": {
+   "kind": "wrapper",
+   "name": "wrapper(pan_spawn_group)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36214": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53ad5]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36228": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53ad5]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x363de": {
+   "kind": "wrapper",
+   "name": "wrapper(dialog)",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36416": {
+   "kind": "leaf_global",
+   "name": "leaf[0x53beb]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x364d4": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 6,
+   "argc": 1
+  },
+  "0x364fb": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 24,
+   "argc": 2
+  },
+  "0x36522": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 4
+  },
+  "0x365ab": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 8,
+   "argc": 3
+  },
+  "0x36647": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 7,
+   "argc": null
+  },
+  "0x36683": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 29,
+   "argc": 2
+  },
+  "0x36c56": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x36cab": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x3806a": {
+   "kind": "thunk",
+   "name": "thunk->0x3ea74",
+   "round": 0,
+   "callers": 15,
+   "argc": 0
+  },
+  "0x3806f": {
+   "kind": "thunk",
+   "name": "thunk->0x3ea81",
+   "round": 0,
+   "callers": 17,
+   "argc": 0
+  },
+  "0x382d6": {
+   "kind": "thunk",
+   "name": "thunk->0x3f0a8",
+   "round": 0,
+   "callers": 2,
+   "argc": null
+  },
+  "0x3845e": {
+   "kind": "thunk",
+   "name": "thunk->0x3f22a",
+   "round": 0,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x38463": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": null
+  },
+  "0x3db46": {
+   "kind": "leaf_global",
+   "name": "leaf[0x541a4]",
+   "round": 0,
+   "callers": 26,
+   "argc": 0
+  },
+  "0x3dbe7": {
+   "kind": "wrapper",
+   "name": "wrapper(heap_free)",
+   "round": 1,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x3dd8a": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x3ea74": {
+   "kind": "leaf_global",
+   "name": "leaf[0x52bea]",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x3ebb4": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": null
+  },
+  "0x3f22a": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 159,
+   "argc": 0
+  },
+  "0x3f5b4": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 3
+  },
+  "0x40240": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x40b40": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 3,
+   "argc": null
+  },
+  "0x40cf0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x41b1c": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 5,
+   "argc": 1
+  },
+  "0x41b84": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x41deb": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": null
+  },
+  "0x42270": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x424b0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x42f50": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 2
+  },
+  "0x43160": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x43230": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x439a0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 3,
+   "argc": 2
+  },
+  "0x43ad0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x45880": {
+   "kind": "wrapper",
+   "name": "wrapper(AIL_set_sample_volume, AIL_set_sample_pan)",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
+  },
+  "0x466f4": {
+   "kind": "leaf_global",
+   "name": "leaf[0x537e4]",
+   "round": 0,
+   "callers": 3,
+   "argc": 2
+  },
+  "0x47006": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 2,
+   "argc": 3
+  },
+  "0x49891": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 9,
+   "argc": 2
+  },
+  "0x49923": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 5,
+   "argc": 1
+  },
+  "0x4997e": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 8,
+   "argc": 3
+  },
+  "0x4e4be": {
+   "kind": "leaf_global",
+   "name": "leaf[0x60060]",
+   "round": 0,
+   "callers": 4,
+   "argc": 0
+  },
+  "0x4e809": {
+   "kind": "leaf_global",
+   "name": "leaf[0x6238d]",
+   "round": 0,
+   "callers": 7,
+   "argc": 1
+  },
+  "0x4e821": {
+   "kind": "leaf_global",
+   "name": "leaf[0x620a1]",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x4e838": {
+   "kind": "leaf_global",
+   "name": "leaf[0x61da1]",
+   "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x4e84f": {
+   "kind": "leaf_global",
+   "name": "leaf[0x61af9]",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
+  },
+  "0x4e866": {
+   "kind": "leaf_global",
+   "name": "leaf[0x619fd]",
+   "round": 0,
+   "callers": 11,
+   "argc": 1
+  },
+  "0x4e8a5": {
+   "kind": "leaf_global",
+   "name": "leaf[0x61646]",
+   "round": 0,
+   "callers": 8,
+   "argc": 1
+  },
+  "0x4e8bc": {
+   "kind": "leaf_global",
+   "name": "leaf[0x602ad]",
+   "round": 0,
+   "callers": 23,
+   "argc": 1
+  },
+  "0x4ebe3": {
+   "kind": "leaf_global",
+   "name": "leaf[0x627b8]",
+   "round": 0,
+   "callers": 40,
+   "argc": 0
+  }
+ }
+}

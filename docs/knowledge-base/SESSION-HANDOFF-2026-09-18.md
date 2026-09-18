@@ -223,6 +223,25 @@ AIL 的 105 個早已由 `ail_entry_points.json` 收錄。這條路沒有可收�
 - `__STK` 之前的無名 `strong` 入口 217 個,其中 54 個是可機械命名的 wrapper。
 - 從 main `0x25bf4` 沿直接 CALL 可達 646 個入口;從 AIL 105 個進入點可達 357 個。
 
+### 6.0d 結構性自動命名做成工具(`function_inventory.py --structural`,同日)
+
+產物 `docs/data/function_structural_names.json`,**152 個**,每筆標 `kind`。這些是**結構描述,不是語意**
+(`wrapper(load_res)` 說的是「它只呼叫 load_res」),不得當成 verified 引用。
+
+| kind | 數量 | 定義 |
+|---|---|---|
+| `wrapper` | 95 | 有被呼叫者、全部有真名、`span_upper` ≤ 256 |
+| `ail_only` | 30 | 所有直接呼叫端都是 AIL 進入點或已判定的 `ail_only`(不動點) |
+| `leaf_global` | 23 | 沒有被呼叫者、恰好碰一個全域、`span_upper` ≤ 64 |
+| `thunk` | 4 | 入口即 `jmp` |
+
+- 扣掉之後,`strong` 858 個裡仍然完全沒有任何描述的是 **286 個**(原 377)。
+- 與 §6.0c 的估計對照:wrapper 95 高於當時的 57(當時要求「不是文件記載的入口」,工具只要求「沒有真名」);
+  名稱傳播在真實資料上是 **1 輪就停**,沒有 §6.0c 估的 155 —— 那個數字把只有位址、沒有名稱字串的
+  `verified_addresses`/勘誤也算成「已知」,工具不算,因為那樣產生的名字是 `wrapper(0x…)`,沒有資訊量。
+- `ail_only` 的名字刻意只說工具能證明的事。抽查 `0x364d4`/`0x364fb`(24 個呼叫端全在 AIL 內):本體是
+  「經函式指標配置 → 鎖定」與「解鎖 → 經函式指標釋放」,是 AIL 的記憶體輔助(靜態 RE,Capstone)。
+
 ### 6.1 解析程度(三層)
 
 | 層 | 程度 | 依據 |

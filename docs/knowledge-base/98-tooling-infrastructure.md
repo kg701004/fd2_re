@@ -5360,3 +5360,28 @@ AIL 105 全在且 `strong`、`__STK` 本身不是入口、`0x3e01d` 以 thunk �
 
 其餘六支(改動的 `derive_native_argcounts`、`verify_generated_artifacts`,與連帶相依的 `dump_chapter_beats`、
 `export_handler_scripts`、`verify_address_claim_coverage`、`verify_tool_hygiene`)同一次 `--precommit` 全部歸零。
+
+## 2026-09-18 續二十六:結構性自動命名 —— `function_inventory.py --structural`
+
+使用者同意下載 Watcom 函式庫做簽名比對之後,我查了 EXE 的版權字串(`WATCOM C/C++32 Run-Time system … 1988-1993`)
+與 Open Watcom v2 的發行檔(2026 年建置,150 MB),判斷三十年的差距會讓命中率很低,改建議先做不需要下載的部分;
+使用者同意。這一則就是那部分。
+
+四種 kind,依序判定先中先贏:`thunk`(入口即 jmp)→ `ail_only`(所有直接呼叫端都在 AIL 內,不動點)→
+`wrapper`(被呼叫者全部有真名且 ≤ 256 bytes,逐輪傳播)→ `leaf_global`(無被呼叫者、恰一個全域、≤ 64 bytes)。
+真實 EXE 上得 152 個(4 / 30 / 95 / 23),`strong` 裡完全無描述的由 377 降到 286。
+
+三個設計決定:
+
+* **只認有名稱字串的來源**(PRIM、`DOC_OP_NAMES`、AIL)。`verified_addresses` 與勘誤只有位址,算進來會產生
+  `wrapper(0x…)` 這種沒有資訊量的名字,也讓傳播數字虛胖 —— 唯讀可行性分析估的 155 就是這樣來的,工具實測傳播 1 輪即停。
+* **名稱只說工具能證明的事。** 第一版叫 `ail_internal`,看到 `0x364fb` 有 24 個呼叫端、位址又在 `__STK` 之前,
+  先懷疑是歸屬錯誤(呼叫端被 `span_upper` 高估吸進某個 AIL 入口)。查呼叫端的 owner:全部是 `0x3f950`–`0x45f99`
+  的 AIL 驅動層函式,本身也是不動點加入的;再反組譯本體,是「經函式指標配置 → 鎖定」「解鎖 → 經函式指標釋放」。
+  分類成立,但工具證明的只是「呼叫端都在 AIL 內」,它也可能是只有 AIL 用到的 CRT 函式,所以改名 `ail_only`。
+* **產物不看文件。** 輸入是 `function_inventory.json` 加命名表;命名表改了要重生(與 `native_argcounts.json` 對
+  `DOC_OP_NAMES` 的相依同一種),但文件 commit 不會讓它漂移。REGISTRY 第 20 項。
+
+selftest 新增三組純函式成對案例(`span` 恰為上限/超過 1、一個未知被呼叫者、weak、互相呼叫永不已知、thunk 優先於
+wrapper、`ail_only` 優先於 wrapper、有被呼叫者就不是 leaf、種子本身不回傳、有集合外呼叫端會連帶擋住下游)與六項
+真實 EXE 檢查(釘值、`0x2185f`、`0x364fb`、有真名的不命名、全是 strong、已提交產物逐位元組相同)。

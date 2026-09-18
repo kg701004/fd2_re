@@ -31,6 +31,20 @@
 AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為入口」取
 `verify_address_claim_coverage.classify_all()` 的有訊號集合。
 
+結構性自動命名(`--structural`)
+------------------------------
+有些函式不需要人讀:本體的**結構**就是它的描述。只用本清單的機械事實加上**有真名**的命名表
+(PRIM、`DOC_OP_NAMES`、AIL;`verified_addresses`/勘誤只有位址沒有名稱字串,不算)。依序判定,先中先贏:
+  * `thunk`         入口即 `jmp`:`thunk->目標`
+  * `ail_only`      所有直接呼叫端都是 AIL 進入點或已判定的 ail_only(不動點;自己呼叫自己不算呼叫端)。
+                    名稱只說工具能證明的事:它可能是 AIL 的內部輔助(實測 `0x364d4`/`0x364fb` 是配置後鎖定、
+                    解鎖後釋放的記憶體輔助),也可能是只有 AIL 用到的 CRT 函式 —— 兩者都可以從遊戲邏輯的待辦扣掉。
+  * `wrapper`       有被呼叫者、全部已知、`span_upper` <= 256:`wrapper(a, b, …)`。已知 = 有真名,或前幾輪已被
+                    結構性命名(以 `~0x位址` 表示)。逐輪傳播到不動點,`round` 記第幾輪。
+  * `leaf_global`   沒有被呼叫者、恰好碰一個全域、`span_upper` <= 64:`leaf[0x全域]`(讀或寫要看反組譯,這裡不判)
+只對 `strong` 且沒有真名的入口命名。這些是**描述不是語意**:`wrapper(load_res)` 說的是「它只呼叫 load_res」,
+不是「它載入什麼」。產物 `docs/data/function_structural_names.json` 的每一筆都標 `kind`,不得當成 verified 引用。
+
 誠實邊界
 --------
 * 只經跳表/函式指標抵達、又沒有 Watcom 序頭的函式看不到(fixup 目標大多是函式內的 case 標籤,
@@ -43,6 +57,7 @@ AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為
     python tools/function_inventory.py docs/data/function_inventory.json   # 重生產物
     python tools/function_inventory.py --coverage                           # 命名/記載覆蓋率
     python tools/function_inventory.py --unnamed [--limit N]                # 無名的 strong 入口,依呼叫端數排序
+    python tools/function_inventory.py --structural docs/data/function_structural_names.json
     python tools/function_inventory.py --ghidra-export PATH                 # 與 Ghidra 匯出對照
     python tools/function_inventory.py --selftest
 """
@@ -70,6 +85,8 @@ VERIFIED_JSON = ROOT / "docs" / "data" / "verified_addresses.json"
 ERRATA_JSON = ROOT / "docs" / "data" / "known_address_errata.json"
 JMP_REL32 = 0xE9
 STRONG_CALLERS = 2          # 只被 CALL 一次的位址可能是資料位元組的偶然命中
+WRAPPER_MAX_SPAN = 256      # 再大就不是「只是包裝」,本體有自己的邏輯
+LEAF_MAX_SPAN = 64
 HEX = re.compile(r"0x[0-9a-fA-F]{4,6}")
 GHIDRA_HEADER = re.compile(r"^FUNCTION \d+/\d+: \S+ @ (\S+?)\s+size=(\d+)\s*$", re.M)
 
@@ -77,17 +94,86 @@ GHIDRA_HEADER = re.compile(r"^FUNCTION \d+/\d+: \S+ @ (\S+?)\s+size=(\d+)\s*$", 
 # --------------------------------------------------------------------------- #
 # 純函式核心(selftest 直接餵合成位元組,不需要 EXE 或 capstone)
 # --------------------------------------------------------------------------- #
-def thunk_targets(entries: set[int], code: bytes, base: int, hi: int) -> dict[int, int]:
-    """入口的第一個位元組是 `E9 rel32` 時,回傳 {跳去的位址: thunk 入口};目標須落在 [base, hi)。"""
+def entry_thunks(entries: set[int], code: bytes, base: int, hi: int) -> dict[int, int]:
+    """{thunk 入口: 跳去的位址}:入口的第一個位元組是 `E9 rel32`,且目標落在 [base, hi)。"""
     out: dict[int, int] = {}
-    for a in sorted(entries):
+    for a in entries:
         off = a - base
         if off < 0 or off + 5 > len(code) or code[off] != JMP_REL32:
             continue
         t = a + 5 + int.from_bytes(code[off + 1:off + 5], "little", signed=True)
         if base <= t < hi:
-            out.setdefault(t, a)
+            out[a] = t
     return out
+
+
+def thunk_targets(entries: set[int], code: bytes, base: int, hi: int) -> dict[int, int]:
+    """{跳去的位址: thunk 入口};多個 thunk 指向同一目標時記位址最小的那個。"""
+    out: dict[int, int] = {}
+    for a, t in sorted(entry_thunks(entries, code, base, hi).items()):
+        out.setdefault(t, a)
+    return out
+
+
+def direct_callers(entries: list[dict]) -> dict[int, set[int]]:
+    """由各入口的 callees 反推 {被呼叫者: 呼叫它的入口};自己呼叫自己不算。"""
+    out: dict[int, set[int]] = {}
+    for e in entries:
+        a = int(e["addr"], 16)
+        for t in e["callees"]:
+            if int(t, 16) != a:
+                out.setdefault(int(t, 16), set()).add(a)
+    return out
+
+
+def closed_under_callers(entries: list[dict], seeds: set[int]) -> set[int]:
+    """所有直接呼叫端都在集合內的入口,逐輪加入到不動點;回傳**新加入**的(不含 seeds)。沒有呼叫端的不算。"""
+    callers = direct_callers(entries)
+    inside = set(seeds)
+    while True:
+        new = {a for a, cs in callers.items() if a not in inside and cs <= inside}
+        if not new:
+            return inside - set(seeds)
+        inside |= new
+
+
+def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int], ail: set[int]) -> dict[int, dict]:
+    """{入口: {"kind", "name", "round"}}。判定順序與各 kind 的定義見模組 docstring。"""
+    todo = {int(e["addr"], 16): e for e in entries if e["grade"] == "strong" and int(e["addr"], 16) not in names}
+    out: dict[int, dict] = {}
+    for a in sorted(todo):
+        if a in thunks:
+            out[a] = {"kind": "thunk", "name": f"thunk->{names.get(thunks[a], hex(thunks[a]))}", "round": 0}
+    for a in sorted(closed_under_callers(entries, ail)):
+        if a in todo and a not in out:
+            out[a] = {"kind": "ail_only", "name": "ail_only", "round": 0}
+    label = dict(names)
+    rnd = 0
+    while True:
+        rnd += 1
+        new = {}
+        for a, e in sorted(todo.items()):
+            cs = [int(t, 16) for t in e["callees"]]
+            if a not in out and cs and e["span_upper"] <= WRAPPER_MAX_SPAN and all(t in label for t in cs):
+                new[a] = {"kind": "wrapper", "name": "wrapper(" + ", ".join(label[t] for t in cs) + ")", "round": rnd}
+        if not new:
+            break
+        out.update(new)
+        label.update({a: f"~{a:#x}" for a in new})
+    for a, e in sorted(todo.items()):
+        if a not in out and not e["callees"] and len(e["globals"]) == 1 and e["span_upper"] <= LEAF_MAX_SPAN:
+            out[a] = {"kind": "leaf_global", "name": f"leaf[{e['globals'][0]}]", "round": 0}
+    return out
+
+
+def structural_doc(entries: list[dict], named: dict[int, dict]) -> dict:
+    by = {int(e["addr"], 16): e for e in entries}
+    kinds = ("thunk", "ail_only", "wrapper", "leaf_global")
+    return {"_meta": {"generator": "tools/function_inventory.py --structural",
+                      "caution": "結構性描述,不是語意;不得當成 verified 引用",
+                      "total": len(named), "by_kind": {k: sum(1 for v in named.values() if v["kind"] == k) for k in kinds},
+                      "wrapper_rounds": max([v["round"] for v in named.values()] or [0])},
+            "names": {hex(a): {**v, "callers": by[a]["callers"], "argc": by[a]["argc"]} for a, v in sorted(named.items())}}
 
 
 def entry_signals(prologue: set[int], callers: dict[int, int], ail: set[int],
@@ -275,6 +361,20 @@ def load_names() -> dict[int, dict]:
     return out
 
 
+def real_names() -> dict[int, str]:
+    """只收有名稱字串的來源(PRIM、DOC_OP_NAMES、AIL)。"""
+    return {a: v["name"] for a, v in load_names().items() if v["name"]}
+
+
+def build_structural() -> dict:
+    import verify_address_claim_coverage as CC
+    inv = build(with_argc=True)
+    _, _, code, base, hi = CC.load_image()
+    ents = {int(e["addr"], 16) for e in inv["entries"]}
+    named = structural(inv["entries"], real_names(), entry_thunks(ents, code, base, hi), set(load_ail()))
+    return structural_doc(inv["entries"], named)
+
+
 def documented_entries() -> set[int]:
     import verify_address_claim_coverage as CC
     return set(CC.classify_all()["covered"])
@@ -297,6 +397,10 @@ def report_coverage() -> int:
         done = c["named"] + c["documented"]
         print(f"  {label:<6} 分母 {c['total']:>4}:有名稱 {c['named']:>4} / 文件記載為入口 {c['documented']:>4} / "
               f"無名 {c['unnamed']:>4}  ->  {done * 100 // max(c['total'], 1)}% 有名稱或記載")
+    sd = build_structural()
+    left = sum(1 for e in inv["entries"] if e["grade"] == "strong" and e["addr"] not in sd["names"]
+               and tier(int(e["addr"], 16), names, documented) == "unnamed")
+    print(f"  結構性命名 {sd['_meta']['total']} 個 {sd['_meta']['by_kind']};扣掉之後 strong 裡仍完全無描述的:{left}")
     have = {int(e["addr"], 16) for e in inv["entries"]}
     stray = sorted(a for a in names if a not in have and int(m["image_range"][0], 16) <= a < int(m["image_range"][1], 16))
     print(f"  命名表裡不是任何入口的 obj1 位址:{len(stray)} 個" + (f"(前 12:{[hex(a) for a in stray[:12]]})" if stray else ""))
@@ -445,6 +549,74 @@ def _selftest_pure(fails: list[str]) -> None:
            "mine_in_gap": [0xfff, 0x1010, 0x1018], "gap_strong": [0xfff, 0x1010]})
 
 
+def _selftest_structural(fails: list[str]) -> None:
+    def check(label: str, got, want) -> None:
+        ok = got == want
+        print(f"    {'PASS' if ok else 'FAIL'}: {label}")
+        if not ok:
+            fails.append(f"{label}: got {got!r} want {want!r}")
+
+    def ent(addr, callees=(), globals_=(), span=16, grade_="strong"):
+        return {"addr": hex(addr), "callees": [hex(t) for t in callees], "globals": [hex(g) for g in globals_],
+                "span_upper": span, "grade": grade_, "callers": 0, "argc": None}
+
+    print("(9) entry_thunks:每個 thunk 各自的目標(thunk_targets 是它的反向、取最小入口)")
+    base, hi = 0x1000, 0x1040
+    code = bytearray(0x40)
+    for at, to in ((0x1000, 0x1020), (0x1008, 0x1020), (0x1010, hi)):
+        code[at - base:at - base + 5] = bytes([JMP_REL32]) + (to - at - 5).to_bytes(4, "little", signed=True)
+    check("兩個 thunk 同目標都列出;目標 == hi 不算;非入口不算",
+          entry_thunks({0x1000, 0x1008, 0x1010, 0x1020}, bytes(code), base, hi), {0x1000: 0x1020, 0x1008: 0x1020})
+
+    print("(10) direct_callers / closed_under_callers")
+    es = [ent(0x10, [0x20, 0x30]), ent(0x20, [0x20, 0x40]), ent(0x30, [0x40]), ent(0x40), ent(0x50, [0x30]), ent(0x60)]
+    check("反推呼叫端;自己呼叫自己不算", direct_callers(es), {0x20: {0x10}, 0x30: {0x10, 0x50}, 0x40: {0x20, 0x30}})
+    check("只被集合內呼叫 -> 加入,逐輪到不動點;有集合外呼叫端(0x30 被 0x50 呼叫)-> 不加入,連帶 0x40 也不加入;沒有呼叫端不算",
+          closed_under_callers(es, {0x10}), {0x20})
+    check("把 0x50 也放進種子,0x30 與 0x40 才逐輪加入", closed_under_callers(es, {0x10, 0x50}), {0x20, 0x30, 0x40})
+    check("種子本身不回傳", closed_under_callers(es, {0x10, 0x20}), set())
+
+    print("(11) structural:判定順序、邊界、傳播")
+    names = {0x100: "pan", 0x200: "spawn"}
+    es = [
+        ent(0x10, [0x100, 0x200], span=WRAPPER_MAX_SPAN),          # wrapper,span 恰為上限
+        ent(0x11, [0x100], span=WRAPPER_MAX_SPAN + 1),             # 超過上限
+        ent(0x12, [0x100, 0x999]),                                 # 有一個未知被呼叫者
+        ent(0x13, [0x100], grade_="weak"),                         # weak 不命名
+        ent(0x14, [0x10, 0x200]),                                  # 第 2 輪:靠 0x10 的結構性名稱
+        ent(0x15, [0x14]),                                         # 第 3 輪
+        ent(0x16, [0x17]), ent(0x17, [0x16]),                      # 互相呼叫,永遠不會已知
+        ent(0x18, globals_=[0x5000], span=LEAF_MAX_SPAN),          # leaf_global,span 恰為上限
+        ent(0x19, globals_=[0x5000], span=LEAF_MAX_SPAN + 1),
+        ent(0x1a, globals_=[0x5000, 0x5004]),                      # 兩個全域
+        ent(0x1b),                                                 # 沒有被呼叫者也沒有全域
+        ent(0x1c, [0x100]),                                        # thunk 優先於 wrapper
+        ent(0x1d, [0x100]),                                        # thunk 目標無名 -> 用位址
+        ent(0x100, [0x200]),                                       # 已有真名 -> 不命名
+        ent(0x300, [0x1e]), ent(0x1e, [0x100]),                    # 只被 AIL 種子呼叫 -> ail_only 優先於 wrapper
+        ent(0x1f, [0x100], globals_=[0x5000]),                     # 有被呼叫者 -> wrapper,不是 leaf_global
+    ]
+    got = structural(es, names, {0x1c: 0x200, 0x1d: 0x777}, {0x300})
+    check("每一筆的 kind / name / round", got, {
+        0x10: {"kind": "wrapper", "name": "wrapper(pan, spawn)", "round": 1},
+        0x14: {"kind": "wrapper", "name": "wrapper(~0x10, spawn)", "round": 2},
+        0x15: {"kind": "wrapper", "name": "wrapper(~0x14)", "round": 3},
+        0x18: {"kind": "leaf_global", "name": "leaf[0x5000]", "round": 0},
+        0x1c: {"kind": "thunk", "name": "thunk->spawn", "round": 0},
+        0x1d: {"kind": "thunk", "name": "thunk->0x777", "round": 0},
+        0x1e: {"kind": "ail_only", "name": "ail_only", "round": 0},
+        0x1f: {"kind": "wrapper", "name": "wrapper(pan)", "round": 1},
+    })
+    check("AIL 種子本身(0x300,無真名時)不因為呼叫 ail_only 而變成 wrapper:ail_only 沒有進 label",
+          got.get(0x300), None)
+    doc = structural_doc(es, got)
+    check("structural_doc 的計數與每筆附帶 callers/argc",
+          (doc["_meta"]["total"], doc["_meta"]["by_kind"], doc["_meta"]["wrapper_rounds"], doc["names"]["0x10"]),
+          (8, {"thunk": 2, "ail_only": 1, "wrapper": 4, "leaf_global": 1}, 3,
+           {"kind": "wrapper", "name": "wrapper(pan, spawn)", "round": 1, "callers": 0, "argc": None}))
+    check("空輸入", (structural([], {}, {}, set()), structural_doc([], {})["_meta"]["wrapper_rounds"]), ({}, 0))
+
+
 def _selftest_live(fails: list[str]) -> bool:
     """真實 EXE 上的回歸與交叉核對。沒有 EXE 回 False(SKIP)。"""
     import verify_address_claim_coverage as CC
@@ -475,6 +647,18 @@ def _selftest_live(fails: list[str]) -> bool:
           all(x["span_upper"] > 0 for x in inv["entries"])
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
     check("重建兩次逐位元組相同", dump(inv) == dump(build(with_argc=False)))
+    print("(12) 真實 EXE:結構性命名")
+    sd = build_structural()
+    check("回歸釘值:thunk 4 / ail_only 30 / wrapper 95 / leaf_global 23",
+          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 95, "leaf_global": 23}, str(sd["_meta"]["by_kind"]))
+    check("0x2185f = wrapper(sprite_walk_on, play_sfx)", sd["names"].get("0x2185f", {}).get("name") == "wrapper(sprite_walk_on, play_sfx)")
+    check("0x364fb(解鎖後釋放的記憶體輔助,24 個呼叫端全在 AIL 內)= ail_only", sd["names"].get("0x364fb", {}).get("kind") == "ail_only")
+    real = real_names()
+    check("有真名的入口一個都不會被結構性命名", not any(int(a, 16) in real for a in sd["names"]))
+    check("每一筆都是 strong 入口", all(by[int(a, 16)]["grade"] == "strong" for a in sd["names"]))
+    sc = ROOT / "docs" / "data" / "function_structural_names.json"
+    if sc.exists():
+        check("已提交的結構性命名產物與現算逐位元組相同", sc.read_text(encoding="utf-8") == dump(sd))
     committed = ROOT / "docs" / "data" / "function_inventory.json"
     if committed.exists():
         old = json.loads(committed.read_text(encoding="utf-8"))
@@ -486,13 +670,15 @@ def _selftest_live(fails: list[str]) -> bool:
 def selftest() -> int:
     fails: list[str] = []
     _selftest_pure(fails)
+    _selftest_structural(fails)
     live = _selftest_live(fails)
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(7 組純函式成對案例" + (" + 真實 EXE 的 9 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+    print("\n--selftest passed(7 組清單純函式 + 3 組結構性命名純函式的成對案例"
+          + (" + 真實 EXE 的 15 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 
@@ -503,6 +689,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--unnamed", action="store_true", help="列出無名的 strong 入口")
     ap.add_argument("--limit", type=int, default=None, help="--unnamed 的列數上限")
     ap.add_argument("--ghidra-export", metavar="PATH", help="與 Ghidra 的 FD2_disasm_full.txt 對照")
+    ap.add_argument("--structural", metavar="OUT", help="寫出結構性自動命名 function_structural_names.json")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args(argv)
     if a.selftest:
@@ -513,8 +700,13 @@ def main(argv: list[str]) -> int:
         return report_unnamed(a.limit)
     if a.ghidra_export:
         return report_ghidra(a.ghidra_export)
+    if a.structural:
+        sd = build_structural()
+        Path(a.structural).write_text(dump(sd), encoding="utf-8", newline="\n")
+        print(f"wrote {a.structural}: {sd['_meta']['total']} {sd['_meta']['by_kind']}")
+        return 0
     if not a.out:
-        ap.error("需要輸出路徑,或 --coverage / --unnamed / --ghidra-export / --selftest 之一")
+        ap.error("需要輸出路徑,或 --coverage / --unnamed / --ghidra-export / --structural / --selftest 之一")
     inv = build(with_argc=True)
     Path(a.out).write_text(dump(inv), encoding="utf-8", newline="\n")
     m = inv["_meta"]

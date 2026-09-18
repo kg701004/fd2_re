@@ -34568,6 +34568,38 @@
    "excerpt": "逐位元組重生比對(REGISTRY 第 19 項)。覆蓋率由 `--coverage` 現算:`strong` 858 裡有名稱 231、文件記載為入口 250、",
    "verdict": "benign",
    "note": "工具產物的重生比對方式與覆蓋率計數(function_inventory --coverage 的輸出),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5376,
+   "excerpt_sha1": "521f07dd62be6bc5db4c52da4e5f592ee53bc08e",
+   "excerpt": "* **只認有名稱字串的來源**(PRIM、`DOC_OP_NAMES`、AIL)。`verified_addresses` 與勘誤只有位址,算進來會產生",
+   "verdict": "benign",
+   "note": "工具設計決定的說明(命名來源只認有名稱字串者),句中 verified_addresses 是檔名,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5377,
+   "excerpt_sha1": "7c3717dffb3df120fe092bbe3c8a3784f55f35ca",
+   "excerpt": "`wrapper(0x…)` 這種沒有資訊量的名字,也讓傳播數字虛胖 —— 唯讀可行性分析估的 155 就是這樣來的,工具實測傳播 1 輪即停。",
+   "verdict": "benign",
+   "note": "工具實測與先前估計的差異說明(名稱傳播 1 輪即停),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 229,
+   "excerpt_sha1": "6962704e5d6e8fa05e8f480f68636b58f5ee62b7",
+   "excerpt": "(`wrapper(load_res)` 說的是「它只呼叫 load_res」),不得當成 verified 引用。",
+   "verdict": "benign",
+   "note": "產物使用警語(結構描述不得當成 verified 引用),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 241,
+   "excerpt_sha1": "6f2bd4ccfbe22f57955d5d69db3ea4b8b377f8aa",
+   "excerpt": "`verified_addresses`/勘誤也算成「已知」,工具不算,因為那樣產生的名字是 `wrapper(0x…)`,沒有資訊量。",
+   "verdict": "benign",
+   "note": "估計與工具實測的差異說明,句中 verified_addresses 是檔名,不是遊戲事實主張"
   }
  ]
 }
