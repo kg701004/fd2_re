@@ -1281,6 +1281,293 @@
      "insn": "call 0x18795"
     }
    ]
+  },
+  {
+   "addr": "0x3f46b",
+   "name": "fprintf",
+   "summary": "Watcom CRT fprintf(fp, fmt, ...):取 &fmt 之後為 va_list,轉呼叫 vfprintf。238 個直接呼叫點幾乎全在 AIL 的 105 個進入點裡(AIL_DEBUG 追蹤輸出)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3f471",
+     "insn": "lea eax, [ebp + 0x10]"
+    },
+    {
+     "at": "0x3f481",
+     "insn": "call 0x3dab1"
+    }
+   ]
+  },
+  {
+   "addr": "0x3dab1",
+   "name": "vfprintf",
+   "summary": "Watcom CRT vfprintf(fp, fmt, va):FILE 旗標在 +0xc、緩衝在 +8(沒有就先配置),以格式化核心 0x3e117 搭配逐字輸出回呼處理,無緩衝模式時結束前 flush。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3dabd",
+     "insn": "mov esi, dword ptr [ebx + 0xc]"
+    },
+    {
+     "at": "0x3daca",
+     "insn": "cmp dword ptr [ebx + 8], 0"
+    },
+    {
+     "at": "0x3dafa",
+     "insn": "call 0x3e117"
+    }
+   ]
+  },
+  {
+   "addr": "0x37b29",
+   "name": "sprintf",
+   "summary": "Watcom CRT sprintf(buf, fmt, ...):va_list 取自 &fmt 之後,以格式化核心 0x3e117 寫入 buf,最後補 NUL。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37b2f",
+     "insn": "lea eax, [ebp + 0x10]"
+    },
+    {
+     "at": "0x37b44",
+     "insn": "call 0x3e117"
+    },
+    {
+     "at": "0x37b4f",
+     "insn": "mov byte ptr [eax + edx], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x37c9c",
+   "name": "ail_debug_trace_prefix",
+   "summary": "AIL_DEBUG 追蹤每一行的前綴:巢狀深度 [0x54178]==1 時以 0x502f4 的格式印時間戳頭,否則印 14 次 0x5030f 的填白;再依深度印縮排(0x50311)。回傳 1。每個 AIL 進入點都呼叫它(105 個呼叫端)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37cc8",
+     "insn": "cmp dword ptr [0x4178], 1"
+    },
+    {
+     "at": "0x37cd9",
+     "insn": "push 0x2f4"
+    },
+    {
+     "at": "0x37d08",
+     "insn": "cmp ebx, 0xe"
+    },
+    {
+     "at": "0x37d29",
+     "insn": "cmp ebx, dword ptr [0x4178]"
+    }
+   ]
+  },
+  {
+   "addr": "0x19953",
+   "name": "yes_no_prompt",
+   "summary": "是/否選擇框的互動迴圈:選擇存在 [0x53c57](進入時清 0);左鍵 0x4b 設 0、右鍵 0x4d 設 1,Enter 0x1c / 空白 0x39 確認。等待期間重畫地圖層與單位層並跑選擇圖示動畫。知識庫記載的「0x1956B 開框 → 0x19953 確認 → 看 [0x53C57]」流程就是它。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x19972",
+     "insn": "mov dword ptr [0x3c57], 0"
+    },
+    {
+     "at": "0x19b07",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x19d74",
+     "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x19d8f",
+     "insn": "cmp eax, 0x1c"
+    },
+    {
+     "at": "0x19d94",
+     "insn": "cmp eax, 0x39"
+    },
+    {
+     "at": "0x19dcb",
+     "insn": "cmp eax, 0x4b"
+    },
+    {
+     "at": "0x19dd0",
+     "insn": "mov dword ptr [0x3c57], 0"
+    },
+    {
+     "at": "0x19de8",
+     "insn": "mov dword ptr [0x3c57], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x197e5",
+   "name": "slide_in_choice_icons",
+   "summary": "兩個選擇圖示([0x53a89] 資源,索引取自 0x51ee5 的兩個 dword)由兩側滑入的 4 步動畫:水平位移從 -16/+16 每步各收 4;每步重畫地圖層、單位層,以 blit_image_transparent 貼圖示,再把視窗複製到 VGA;最後把框樣板的 86 列貼回 VGA。無參數、無輸入處理。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x197f8",
+     "insn": "mov esi, 0x1ee5"
+    },
+    {
+     "at": "0x1980b",
+     "insn": "mov dword ptr [esp + 8], 0xfffffff0"
+    },
+    {
+     "at": "0x19813",
+     "insn": "mov dword ptr [esp + 0xc], 0x10"
+    },
+    {
+     "at": "0x198c1",
+     "insn": "call 0x4ed34"
+    },
+    {
+     "at": "0x198fc",
+     "insn": "cmp ebp, 4"
+    },
+    {
+     "at": "0x19903",
+     "insn": "add dword ptr [esp + 8], 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ed34",
+   "name": "blit_image_transparent",
+   "summary": "(dst, src, stride):src 開頭 u16 寬、u16 高,之後是未壓縮像素;像素 0 不寫(透明)。stride 存進 [0x627a3] 給核心 0x4ed4f 用。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4ed41",
+     "insn": "mov word ptr [0x27a3], ax"
+    },
+    {
+     "at": "0x4ed47",
+     "insn": "call 0x4ed4f"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ed4f",
+   "name": "blit_image_transparent_core",
+   "summary": "blit_image_transparent 的暫存器慣例核心(edi=dst、esi=src、[0x627a3]=列尾跳距):逐列逐像素,0 跳過、非 0 寫入。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4ed5d",
+     "insn": "mov bx, word ptr [0x27a3]"
+    },
+    {
+     "at": "0x4ed69",
+     "insn": "or al, al"
+    },
+    {
+     "at": "0x4ed6d",
+     "insn": "mov byte ptr [edi], al"
+    },
+    {
+     "at": "0x4ed73",
+     "insn": "add edi, ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e22a",
+   "name": "blit_tile24_rle",
+   "summary": "(src, dst, stride):24×24 地圖格的 RLE 解碼繪製。控制 byte 高兩 bit 選操作 —— 00 填色(rep stosb)、01 隔一格寫、1x 直接複製(rep movsb)或跳過;低 6 bits + 1 為長度。每列 24 px,列尾 dst += stride - 24。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e239",
+     "insn": "sub edx, 0x18"
+    },
+    {
+     "at": "0x4e23e",
+     "insn": "mov bl, 0x18"
+    },
+    {
+     "at": "0x4e255",
+     "insn": "rep stosb byte ptr es:[edi], al"
+    },
+    {
+     "at": "0x4e27c",
+     "insn": "rep movsb byte ptr es:[edi], byte ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x126f7",
+   "name": "draw_map_overlay_cell",
+   "summary": "(x, y, cell):格子 (x, y) 在視窗內(捲動 [0x53aa9]/[0x53aad],視窗寬高 [0x51a87]/[0x51a8b])時,把覆蓋層資源 [0x53a4d] 的第 cell 格以 blit_tile24_rle 畫進地圖緩衝 [0x53a49] + 0x8088 + (y-捲動y)*24*456 + (x-捲動x)*24(stride 456)。知識庫記載為移動範圍高亮疊圖的單格繪製。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12709",
+     "insn": "cmp eax, dword ptr [0x3aa9]"
+    },
+    {
+     "at": "0x1271a",
+     "insn": "add eax, dword ptr [0x1a87]"
+    },
+    {
+     "at": "0x12771",
+     "insn": "imul edx, edx, 0x18"
+    },
+    {
+     "at": "0x12783",
+     "insn": "add edx, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x1279c",
+     "insn": "call 0x4e22a"
+    }
+   ]
+  },
+  {
+   "addr": "0x187d6",
+   "name": "draw_number",
+   "summary": "把整數畫成數字字形:負數先歸 0;寬度 3 且 > 999、或寬度 2 且 > 99 時改畫溢位字形;否則以 sprintf 和 0x51ebf 的格式(寬度字元 = '0'+寬度)轉字串,每個字元畫成資源 [0x53a81] 的第 (基底 + 字元 - '0') 格,間隔 6 px。知識庫記載為回合數字/數值顯示用。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x187ff",
+     "insn": "xor eax, eax"
+    },
+    {
+     "at": "0x18808",
+     "insn": "cmp eax, 0x3e7"
+    },
+    {
+     "at": "0x18833",
+     "insn": "cmp eax, 0x63"
+    },
+    {
+     "at": "0x18840",
+     "insn": "add bl, 0x30"
+    },
+    {
+     "at": "0x18852",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x18871",
+     "insn": "imul eax, ebx, 6"
+    }
+   ]
   }
  ]
 }
