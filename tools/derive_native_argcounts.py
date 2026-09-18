@@ -275,6 +275,14 @@ def _is_stack_check_prologue(cg, a: int) -> bool:
                 and j.op_str.startswith("0x") and int(j.op_str, 16) == STACK_CHECK)
 
 
+def _esp_imm(op: str) -> int | None:
+    """`esp, <imm>` 的立即值;不是立即值(`sub esp, eax` 這類 alloca 式調整)回 None。"""
+    try:
+        return int(op.split(",")[1], 0)
+    except ValueError:
+        return None
+
+
 def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
     """第三條訊號:**被呼叫端本體**讀到第幾個參數。回傳 (最大參數序號, 說明);判不出來回 (None, 原因)。
 
@@ -339,10 +347,14 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
             delta += 4
         elif m == "pop":
             delta -= 4
-        elif m == "sub" and op.startswith("esp,"):
-            delta += int(op.split(",")[1], 0)
-        elif m == "add" and op.startswith("esp,"):
-            delta -= int(op.split(",")[1], 0)
+        elif m in ("sub", "add") and op.startswith("esp,"):
+            # 2026-09-18:function_inventory 把它套到全部 1102 個入口時撞到 `sub esp, eax`
+            # (原本只餵過章節 handler 可達的那幾十個目標),`int(' eax', 0)` 直接 ValueError。
+            # ESP 被暫存器調整之後位移不可知,之後的 [esp+X] 都換算不回來 —— 回 None,不是 0。
+            n = _esp_imm(op)
+            if n is None:
+                return None, f"esp adjusted by non-immediate at {a:#x}"
+            delta += n if m == "sub" else -n
         elif m == "leave" and ebp_base is not None:
             delta = ebp_base - 4                        # mov esp,ebp; pop ebp
         elif m == "call" and op.startswith("0x") and int(op, 16) == STACK_CHECK:
@@ -761,6 +773,16 @@ def _selftest_callee_cases() -> dict:
     g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"),
              _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
     syn["ret 後接指令(多出口)就繼續"] = callee_argc(g, 0, [])[0] == 2
+    # (m)(n)(o) 2026-09-18:ESP 被暫存器調整 -> None(先前已讀到的 [esp+4] 也不能當答案回傳);
+    #          成對的立即值 add 必須照算:兩個 push 之後 add esp,8 退回原位,[esp+0x7] 是第 1 個參數的
+    #          最後一個 byte(把 add 當 sub 會算成 0,少退會算成第 2 個以上)。
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "sub", "esp, eax", 2), _CI(0, "ret")])
+    syn["sub esp, <暫存器> -> None"] = callee_argc(g, 0, []) == (None, "esp adjusted by non-immediate at 0xe")
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "add", "esp, ecx", 2), _CI(0, "ret")])
+    syn["add esp, <暫存器> -> None"] = callee_argc(g, 0, [])[0] is None
+    g = _cg([_CI(0, "push", "eax"), _CI(0, "push", "eax"), _CI(0, "add", "esp, 8", 3),
+             _CI(0, "movzx", "eax, byte ptr [esp + 0x7]", 5), _CI(0, "ret")])
+    syn["add esp, <立即值> 照算且退回恰好該值"] = callee_argc(g, 0, [])[0] == 1
     return syn
 
 

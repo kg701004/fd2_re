@@ -34560,6 +34560,14 @@
    "excerpt": "`verified_addresses.json` / 勘誤 `correct_address` 五張命名表。",
    "verdict": "benign",
    "note": "量測資料來源清單(五張命名表的檔名),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5338,
+   "excerpt_sha1": "0c48937128fe6379191193f14185c5b4b3ca8345",
+   "excerpt": "逐位元組重生比對(REGISTRY 第 19 項)。覆蓋率由 `--coverage` 現算:`strong` 858 裡有名稱 231、文件記載為入口 250、",
+   "verdict": "benign",
+   "note": "工具產物的重生比對方式與覆蓋率計數(function_inventory --coverage 的輸出),不是遊戲事實主張"
   }
  ]
 }

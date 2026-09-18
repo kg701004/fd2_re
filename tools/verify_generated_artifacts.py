@@ -98,6 +98,9 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     ("docs/data/sfx_static_reachability.json", "fd2_sfx_static_reachability.py",
      ["--json", "{out}"], "bytes"),
     ("docs/data/exe_tables", "dump_exe_tables.py", [EXE, "{out}"], "dir"),
+    # 2026-09-18:程式碼層的分母。只含由 EXE(加 AIL 表)算得出的機械事實,所以逐位元組比對;
+    # 名稱/文件記載的覆蓋率會隨文件變動,刻意不進產物(`function_inventory.py --coverage` 現算)。
+    ("docs/data/function_inventory.json", "function_inventory.py", ["{out}"], "bytes"),
     # 2026-09-08 新增。加進來的第一次執行就抓到真東西:treasure 那支把一個
     # **已經是新版位址**的常數又加了一次版本位移(+0x356),輸出 `0x35baa`——
     # 落在指令中段,根本不是函式。已改成從事件跳表 0x51b91 讀(且走 fixup),

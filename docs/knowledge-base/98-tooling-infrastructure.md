@@ -5322,3 +5322,41 @@ native_argcounts.json 重生。教訓:錨點引文要取**結論句**,不是標�
 
 量測腳本沒有進庫(一次性);若要工具化,就是路 0 的 `function_inventory`,骨架要用位元組訊號的聯集,
 不是 Ghidra 的函式清單。
+
+## 2026-09-18 續二十五:`tools/function_inventory.py` —— 程式碼層的分母做成工具
+
+續二十四的一小時量測版升級成正式工具。設計上三個決定:
+
+**骨架只用位元組訊號,Ghidra 降為對照。** 入口 = Watcom 序頭(541)∪ 直接 CALL 目標(848)∪ AIL 進入點(105)
+∪ 入口上的 `E9` thunk 目標(5,`delay` 的本體 `0x3e01d` 只能這樣抵達)= 1102。判準全部沿用兄弟工具
+(`verify_address_claim_coverage.prologue_entries`、`derive_native_argcounts._scan`),不另立一套。
+E8 位元組掃描會命中資料位元組,所以「只被 CALL 一次、沒有其他訊號」的 244 個標 `weak`,分母以 `strong` 858 為主。
+`--ghidra-export` 對照:共有 721、只有 Ghidra 29、只有本清單 381(空隙裡的 `strong` 295)。
+
+**產物只放 EXE 算得出的東西。** 名稱與「文件有沒有記載」每次改文件都會變,放進產物會讓 artifacts 棘輪在每個
+文件 commit 都報漂移;所以 `function_inventory.json` 只含訊號、呼叫端數、`span_upper`、`argc`、`callees`、`globals`,
+逐位元組重生比對(REGISTRY 第 19 項)。覆蓋率由 `--coverage` 現算:`strong` 858 裡有名稱 231、文件記載為入口 250、
+無名 377(56%)。
+
+**selftest 的真實 EXE 段用已登記的結論交叉核對,不是只釘數字**:序頭 541(= findings 的 584-entries)、
+AIL 105 全在且 `strong`、`__STK` 本身不是入口、`0x3e01d` 以 thunk 目標收進來、`0x35b78` 的 callees 含 pan 與 spawn
+(續二十二讀本體得到的結論,這裡由機械事實重現)、`0x26b91` 的 globals 含金幣全域 `0x53bf3`、`span_upper` 總和恰為
+整段、重建兩次逐位元組相同。
+
+**順帶抓到 `callee_argc` 的崩潰**:`sub esp, eax` 讓 `int(' eax', 0)` 丟 ValueError。這條訊號先前只餵過章節 handler
+可達的幾十個目標,套到 1102 個入口才撞到 —— 又一次「擴大涵蓋才找得到」(記憶 `project_fd2_re_hygiene_ratchet` 的
+原始觀察)。改成回 None 並補成對案例(暫存器調整 -> None;立即值 add 照算且退回恰好該值)。
+
+**訂正續二十四/交接文件 §6.0 的一句話**:初稿把 `__STK`(`0x3702f`)之後整段叫「函式庫區」。那一段也有遊戲側的
+低階繪圖常式(`0x4e98d`、`0x4df4c`、`0x4e390`),不能靠位址分段判定函式庫,要靠簽名比對。
+
+**突變窮舉抓到的一個逃逸,原因在夾具本身會說謊**:`thunk_targets` 的 `off + 5 > len(code)` 改成 6 沒有任何案例失敗。
+我明明寫了「入口太靠近尾端、讀不滿 5 bytes 不算」與「剛好讀滿要算」兩個案例。查下去是 `bytearray` 的切片賦值:
+`code[0x3d:0x41] = 四個 bytes` 在長度 0x40 的陣列上不會截斷,而是**把陣列撐長到 0x41**。於是「讀不滿」的那個入口
+其實讀得滿;它算出來的目標又剛好和另一個 thunk 相同,`setdefault` 保留先到的,結果看不出差別。兩個錯疊在一起
+讓案例變成裝飾。修法:夾具的寫入函式只寫得下的部分、加一條「夾具前提:寫入沒有把 image 撐長」的檢查、
+讀不滿的案例改用獨一的目標位址(算進來就會多一筆)。重跑窮舉 39 個可達突變歸零(1 個由 artifacts 軸抓到)。
+同類教訓見記憶 `feedback_fixture_must_state_its_premise`。
+
+其餘六支(改動的 `derive_native_argcounts`、`verify_generated_artifacts`,與連帶相依的 `dump_chapter_beats`、
+`export_handler_scripts`、`verify_address_claim_coverage`、`verify_tool_hygiene`)同一次 `--precommit` 全部歸零。
