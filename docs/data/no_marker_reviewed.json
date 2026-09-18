@@ -34464,6 +34464,86 @@
    "excerpt": "`--triage` 實測:955 個無訊號位址裡 **770 個落在合法指令邊界、且在某個有訊號函式內部**,184 個不在",
    "verdict": "benign",
    "note": "工具行為陳述(claim_coverage 分母修正的實測數字),非遊戲事實主張;依據為 verify_address_claim_coverage 的 selftest、--triage 與閘門輸出。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 4,
+   "excerpt_sha1": "6a0e3cc7e2a7302b4545187cb64997058d90e24a",
+   "excerpt": "> 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證。",
+   "verdict": "benign",
+   "note": "交接文件體例說明(Project_Continuity 引言),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 18,
+   "excerpt_sha1": "df89b7cb8021ade03702e8029ad54f55fac78d6c",
+   "excerpt": "2. 「還有哪些需要確認?」→「可以同步進行的請同步進行」→「優化改善後會有哪些風險或者盲點?」",
+   "verdict": "benign",
+   "note": "引用使用者原話的指示序列,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 36,
+   "excerpt_sha1": "6685823c18c3810d4e170eec1a08d7040f9290a0",
+   "excerpt": "| **產物重生** | 重跑產生器與已提交檔逐位元組比對 | chapter_beats、native_argcounts、基準線 |",
+   "verdict": "benign",
+   "note": "驗證等級對照表的定義列(產物重生 = 重跑產生器比對),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 89,
+   "excerpt_sha1": "d1cc39b98163c98d1d001c576a2930aa8b569166",
+   "excerpt": "| `known_address_errata.json` 存在 22 天沒有任何驗證軸讀它 | 待辦 25 | 接上 `verify_address_citations` 第十一軸 |",
+   "verdict": "benign",
+   "note": "工具接線的流程陳述(勘誤表接上 verify_address_citations 軸,待辦 25),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 91,
+   "excerpt_sha1": "03d89ea092abeb22ac4250202e76a7dbf0954a1a",
+   "excerpt": "| 一筆 `confidence: verified` 的錯 | `verify_address_claim_coverage` 上線第一天抓到(待辦 29) | 訂正 |",
+   "verdict": "benign",
+   "note": "工具上線抓到一筆錯的流程陳述(待辦 29,細節在 doc98),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 118,
+   "excerpt_sha1": "d575c15e437099fbb82c52c825a6c0612e051420",
+   "excerpt": "| 舊位址字面引用未逐一改寫 | 79 筆勘誤只登記、沒有改寫每個引用點;讀者靠勘誤表換算(`query_verified_address` 會提示) | 若要改寫,走 `verify_address_citations --diff` 逐檔 |",
+   "verdict": "benign",
+   "note": "未完成事項的流程陳述(勘誤只登記未改寫引用點),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 160,
+   "excerpt_sha1": "2435e531ed7afa8d119844d501a96668394e57fb",
+   "excerpt": "| 3 | **動態優先** | `dosbox_exec_trace` 跑遍標題/城鎮/商店/30 章/過場,收軌跡與記憶體變化 | 證據天生最強;順便得到真實呼叫順序與時序 | 只涵蓋跑到的;每個場景要人操作或腳本驅動 | 60–70% | 證實 | **10–15 天** |",
+   "verdict": "benign",
+   "note": "方法比較表(動態優先路線的估計),整節標明估計,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 161,
+   "excerpt_sha1": "281c4beaf4d1643170fb31a1ebb7222fc2511355",
+   "excerpt": "| 4 | **函式庫簽名比對** | Watcom CRT / AIL 的位元組樣式比對,一次命名 runtime 函式 | 便宜、確定、不用看語意;把分母砍掉 250–350 | 只處理非遊戲邏輯 | 25–35% | 證實(簽名相符) | **1–2 天** |",
+   "verdict": "benign",
+   "note": "方法比較表(函式庫簽名比對路線的估計),整節標明估計,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 162,
+   "excerpt_sha1": "a20ed84a570f2990fb02d79c26de1410dcdc669a",
+   "excerpt": "| 5 | **目標驅動局部解析** | 從「新建/改版需要什麼」反推,只解可達的那一叢,其餘標 `not_needed` | 最省;每個解出來的都用得上 | 不是「完全」;目標改了要補 | 200–300 個函式 | 記載 → 證實(配路 3) | **10–15 天** |",
+   "verdict": "benign",
+   "note": "方法比較表(目標驅動局部解析路線的估計),整節標明估計,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 201,
+   "excerpt_sha1": "8c2e9ad0c2007182b208d8b08b8f64f913ea645c",
+   "excerpt": "- **驗證工具/突變 harness 執行中不得編輯檔案**(工作樹指紋),也不中途砍 harness;",
+   "verdict": "benign",
+   "note": "工作流程的坑(harness 執行中不得編輯),不是遊戲事實主張"
   }
  ]
 }

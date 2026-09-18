@@ -3,6 +3,7 @@
 > 依 `AI_Development_Standard/00_Global/Project_Continuity.md` 撰寫:明確區分完成/未完成/
 > 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證。
 > 前一份:[`SESSION-HANDOFF-2026-09-04.md`](SESSION-HANDOFF-2026-09-04.md)。
+> **後一份(較新):[`SESSION-HANDOFF-2026-09-18.md`](SESSION-HANDOFF-2026-09-18.md)**。
 
 ## 0. 本輪的主軸
 
