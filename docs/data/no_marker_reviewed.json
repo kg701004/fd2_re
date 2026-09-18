@@ -34544,6 +34544,22 @@
    "excerpt": "- **驗證工具/突變 harness 執行中不得編輯檔案**(工作樹指紋),也不中途砍 harness;",
    "verdict": "benign",
    "note": "工作流程的坑(harness 執行中不得編輯),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 134,
+   "excerpt_sha1": "e0e8eacc4aa3b90de8882c509db1bc0c2522f109",
+   "excerpt": "### 6.0 實測(2026-09-18,取代下面各節的「976 個函式」與「約 110 個有名字」)",
+   "verdict": "benign",
+   "note": "小節標題(說明本節取代先前估計),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-18.md",
+   "line": 139,
+   "excerpt_sha1": "b0688c30cf9bd03e669ab7b8d179609b3a0be353",
+   "excerpt": "`verified_addresses.json` / 勘誤 `correct_address` 五張命名表。",
+   "verdict": "benign",
+   "note": "量測資料來源清單(五張命名表的檔名),不是遊戲事實主張"
   }
  ]
 }
