@@ -34624,6 +34624,62 @@
    "excerpt": "`build_structural(include_registry=False)`;含登錄表的版本由「已提交產物逐位元組相同」那一條管。",
    "verdict": "benign",
    "note": "selftest 回歸釘值設計的說明,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 4,
+   "excerpt_sha1": "6a0e3cc7e2a7302b4545187cb64997058d90e24a",
+   "excerpt": "> 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證。",
+   "verdict": "benign",
+   "note": "交接文件體例說明(Project_Continuity 引言),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 26,
+   "excerpt_sha1": "ee908f4e82041ba79fe93469cc5735375c9d7c96",
+   "excerpt": "| **位元組證據** | 名稱附帶的 `{at, insn}` 在該位址逐字比對通過 | 80 / 80 |",
+   "verdict": "benign",
+   "note": "驗證等級對照表的定義列與計數(位元組證據 80/80),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 28,
+   "excerpt_sha1": "693059a8de2f51beebbd877eff0b425d457bfe15",
+   "excerpt": "| **產物重生** | 重跑產生器與已提交檔逐位元組比對 | `function_inventory.json`、`function_structural_names.json`(REGISTRY 第 19、20 項) |",
+   "verdict": "benign",
+   "note": "驗證等級對照表的定義列(產物重生),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 55,
+   "excerpt_sha1": "5cad954825b5a473b234d0af7d87feabd760fe5e",
+   "excerpt": "- `--check-names`:驗 `function_names.json` 每筆 evidence 在位元組上逐字相符、且落在函式範圍內。",
+   "verdict": "benign",
+   "note": "工具子命令說明(--check-names),不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 75,
+   "excerpt_sha1": "69f89395ec97e773b84fd3feae6fbc4c92b26deb",
+   "excerpt": "2. **可行性估計虛胖**:唯讀分析估名稱傳播上限 155,工具實測傳播 1 輪即停 —— 估計時把只有位址、沒有名稱字串的來源也算成「已知」。",
+   "verdict": "benign",
+   "note": "自我訂正:估計與工具實測的差異,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 105,
+   "excerpt_sha1": "9724aa0d17ab23401dadd18a3c9c4872c99bcf2b",
+   "excerpt": "`verify_tool_hygiene --cross-check`、`verify_generated_artifacts`、`function_inventory --selftest`、`--precommit`。",
+   "verdict": "benign",
+   "note": "接手流程的閘門清單,不是遊戲事實主張"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-19.md",
+   "line": 107,
+   "excerpt_sha1": "ae64572a9c765b570f21de74f0a754430f8f0d5b",
+   "excerpt": "6. 逐檔暫存、確認暫存 blob 無 CR、提交、只推 `fork remaster-local`。",
+   "verdict": "benign",
+   "note": "接手流程的提交步驟,不是遊戲事實主張"
   }
  ]
 }
