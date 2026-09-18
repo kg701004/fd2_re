@@ -275,6 +275,14 @@ AIL 的 105 個早已由 `ail_entry_points.json` 收錄。這條路沒有可收�
   `strong` 裡完全無描述的降到 **212**(今天開始時 377)。
 - 清單的 `callees` 現在只收落在 obj1 內的目標(E8 位元組掃描命中資料時會算出 `0x75c1f2d7` 這種假目標,讓 wrapper 判定永遠不成立)。
 
+- **第四批 +10(共 47 筆)**:EXE 資料表的列指標(`item_effect_row_ptr` = 0x602ad 每列 0x17、`move_cost_row_ptr` = 0x61646 每列 0x14、
+  `row7_ptr_619fd`、`row31_ptr_6238d`)、`unit_spend_mp`、`unit_add_item`、`map_cell_info`、`tick_anim_counters`、`draw_unit_layer`、
+  `close_box_slide_down_no_redraw`。有真名的 `strong` 入口 231 -> **267**;完全無描述的 **208**。
+- **自我訂正一筆**:讀 `map_cell_info`(`0x12e38`)時看出地圖格陣列的表頭是 4 bytes、每格 `{u16 tile, u8 旗標, u8 byte3}`;
+  第二批把 `0x146a7`/`0x14b16` 寫成「6-byte 表頭的 byte0 / byte1」是錯的(位元組證據本身沒錯,錯的是我對版面的描述)。
+  已改寫 summary,`map_collect_cells_byte1_set` 改名 `map_collect_cells_byte3_set`。位元組證據擋得住抄錯位址,擋不住解讀錯 ——
+  summary 仍然要靠後續的函式互相印證。
+
 命名時的取捨:讀得出機制但讀不出用途的,名字只寫機制(`map_cell_set_bit7`、`set_units_byte34_low_nibble`),用途留給之後的證據。
 
 ### 6.1 解析程度(三層)

@@ -2,12 +2,12 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 238,
+  "total": 244,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 167,
-   "leaf_global": 15,
+   "wrapper": 177,
+   "leaf_global": 11,
    "leaf_ptr": 13,
    "leaf_pure": 9
   },
@@ -15,6 +15,13 @@
   "disasm_available": true
  },
  "names": {
+  "0x1145a": {
+   "kind": "wrapper",
+   "name": "wrapper(item_effect_row_ptr(_))",
+   "round": 1,
+   "callers": 2,
+   "argc": 1
+  },
   "0x11aa8": {
    "kind": "wrapper",
    "name": "wrapper(kbd_buffer_has_key(), palette_cycle_tick(), redraw(0), int386(0x16, 0x3a8d, 0x3a8d))",
@@ -50,6 +57,13 @@
    "callers": 3,
    "argc": 0
   },
+  "0x12263": {
+   "kind": "wrapper",
+   "name": "wrapper(map_cell_info(_, _, _))",
+   "round": 1,
+   "callers": 6,
+   "argc": 0
+  },
   "0x12c0d": {
    "kind": "wrapper",
    "name": "wrapper(unit_inactive(_))",
@@ -71,6 +85,13 @@
    "callers": 1,
    "argc": 0
   },
+  "0x13a44": {
+   "kind": "wrapper",
+   "name": "wrapper(map_cell_info(_, _, _))",
+   "round": 1,
+   "callers": 5,
+   "argc": 3
+  },
   "0x145cd": {
    "kind": "wrapper",
    "name": "wrapper(~0x14625(_, _))",
@@ -91,6 +112,13 @@
    "round": 1,
    "callers": 1,
    "argc": 5
+  },
+  "0x15df3": {
+   "kind": "wrapper",
+   "name": "wrapper(map_cell_info(_, _, _))",
+   "round": 1,
+   "callers": 1,
+   "argc": 2
   },
   "0x164e8": {
    "kind": "wrapper",
@@ -239,6 +267,13 @@
    "callers": 2,
    "argc": 2
   },
+  "0x1c8ed": {
+   "kind": "wrapper",
+   "name": "wrapper(row7_ptr_619fd(_), ~0x1c916(_, _))",
+   "round": 2,
+   "callers": 1,
+   "argc": 2
+  },
   "0x1c916": {
    "kind": "wrapper",
    "name": "wrapper(prng_next())",
@@ -274,6 +309,13 @@
    "callers": 1,
    "argc": 1
   },
+  "0x1debe": {
+   "kind": "wrapper",
+   "name": "wrapper(abs(_), abs(_), find_equipped_slot(_, 0), unit_item_id(_, _), item_effect_row_ptr(_))",
+   "round": 1,
+   "callers": 1,
+   "argc": 5
+  },
   "0x1e529": {
    "kind": "wrapper",
    "name": "wrapper(prng_next(), ~0x16e24(), kbd_flush(), dialog(_, _, _, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))",
@@ -308,6 +350,13 @@
    "round": 1,
    "callers": 6,
    "argc": 2
+  },
+  "0x1f0dc": {
+   "kind": "wrapper",
+   "name": "wrapper(abs(_), abs(_), find_equipped_slot(_, 0), unit_item_id(_, _), item_effect_row_ptr(_))",
+   "round": 1,
+   "callers": 6,
+   "argc": 5
   },
   "0x1f6ef": {
    "kind": "wrapper",
@@ -463,6 +512,20 @@
    "callers": 0,
    "argc": 3
   },
+  "0x2218a": {
+   "kind": "wrapper",
+   "name": "wrapper(focus_unit(_), unit_spend_mp(_, 0x17), unit_present(_, 0xff, 0xff, _, _), camera_step_to(_, _), unit_present(_, _, _, _, _))",
+   "round": 1,
+   "callers": 1,
+   "argc": 3
+  },
+  "0x22470": {
+   "kind": "wrapper",
+   "name": "wrapper(memmove(_, _, 0x25680), ~0x4ebab(_, _, 0x1c8), draw_unit_layer(), copy_rect(0xa0504, 0x140, _, 0x1c8, 0x138, 0xc0), wait_ticks(1))",
+   "round": 2,
+   "callers": 1,
+   "argc": 3
+  },
   "0x22e5c": {
    "kind": "wrapper",
    "name": "wrapper(bgm(-1, 1), wait_ticks(1), palfade_in(), load_res(0x1a4d, 0, 0x4f), memset(0xa0000, 0, 0xfa00), blit_anim_frame(_, 0, 0xa0000, 0x140, -1), palfade(), wait_ticks(9), blit_anim_frame(_, 1, 0xa0000, 0x140, -1), wait_ticks(0x24))",
@@ -575,13 +638,6 @@
    "callers": 11,
    "argc": 3
   },
-  "0x26996": {
-   "kind": "wrapper",
-   "name": "wrapper(present_box_at_row(_, _, _), memmove(0xa0000, _, 0xfa00), heap_free(_), heap_free(_), heap_free(_))",
-   "round": 1,
-   "callers": 42,
-   "argc": 0
-  },
   "0x26c9b": {
    "kind": "wrapper",
    "name": "wrapper(memmove(_, _, 6))",
@@ -602,6 +658,13 @@
    "round": 1,
    "callers": 5,
    "argc": 0
+  },
+  "0x28632": {
+   "kind": "wrapper",
+   "name": "wrapper(item_effect_row_ptr(_), item_effect_row_ptr(_))",
+   "round": 1,
+   "callers": 1,
+   "argc": 3
   },
   "0x2921a": {
    "kind": "wrapper",
@@ -644,6 +707,13 @@
    "round": 1,
    "callers": 5,
    "argc": 6
+  },
+  "0x30e25": {
+   "kind": "wrapper",
+   "name": "wrapper(map_cell_info(_, _, _), unit_uses_move_cost_row19(_))",
+   "round": 1,
+   "callers": 2,
+   "argc": 2
   },
   "0x314de": {
    "kind": "wrapper",
@@ -1625,13 +1695,6 @@
    "callers": 3,
    "argc": 1
   },
-  "0x4e809": {
-   "kind": "leaf_global",
-   "name": "leaf_ref[0x6238d]",
-   "round": 0,
-   "callers": 7,
-   "argc": 1
-  },
   "0x4e821": {
    "kind": "leaf_global",
    "name": "leaf_ref[0x620a1]",
@@ -1651,27 +1714,6 @@
    "name": "leaf_ref[0x61af9]",
    "round": 0,
    "callers": 4,
-   "argc": 1
-  },
-  "0x4e866": {
-   "kind": "leaf_global",
-   "name": "leaf_ref[0x619fd]",
-   "round": 0,
-   "callers": 11,
-   "argc": 1
-  },
-  "0x4e8a5": {
-   "kind": "leaf_global",
-   "name": "leaf_ref[0x61646]",
-   "round": 0,
-   "callers": 8,
-   "argc": 1
-  },
-  "0x4e8bc": {
-   "kind": "leaf_global",
-   "name": "leaf_ref[0x602ad]",
-   "round": 0,
-   "callers": 23,
    "argc": 1
   },
   "0x4ebab": {

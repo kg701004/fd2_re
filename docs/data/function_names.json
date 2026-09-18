@@ -578,7 +578,7 @@
   {
    "addr": "0x146a7",
    "name": "map_cell_set_bit7",
-   "summary": "(x, y):地圖格陣列 [0x53a51](6-byte 表頭後每格 4 bytes,寬 [0x53ac1])第 (x, y) 格的 byte0 設 0x80。",
+   "summary": "(x, y):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。把第 (x, y) 格的旗標 byte 設 0x80(base + idx*4 + 6)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -598,8 +598,8 @@
   },
   {
    "addr": "0x14b16",
-   "name": "map_collect_cells_byte1_set",
-   "summary": "(out):掃整張地圖(寬 [0x53ac1]、高 [0x53ac5]),把 byte1 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。",
+   "name": "map_collect_cells_byte3_set",
+   "summary": "(out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]、高 [0x53ac5]。掃整張地圖,把 byte3 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。(2026-09-19 訂正:初版誤記為 6-byte 表頭的 byte1。)",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -836,6 +836,224 @@
     {
      "at": "0x1f1be",
      "insn": "cmp eax, 5"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e8bc",
+   "name": "item_effect_row_ptr",
+   "summary": "(item):回傳 0x602ad + item*0x17 —— native_item_effect_rows(23 bytes/列,見 verified_addresses)的列指標。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e8c2",
+     "insn": "mov edx, 0x17"
+    },
+    {
+     "at": "0x4e8c9",
+     "insn": "lea edx, [0x2ad]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e8a5",
+   "name": "move_cost_row_ptr",
+   "summary": "(selector):回傳 0x61646 + selector*0x14 —— native_movement_cost_rows(20 bytes/列)的列指標。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e8ab",
+     "insn": "mov edx, 0x14"
+    },
+    {
+     "at": "0x4e8b2",
+     "insn": "lea edx, [0x1646]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e866",
+   "name": "row7_ptr_619fd",
+   "summary": "(id):回傳 0x619fd + id*7(7 bytes/列的表;列 +5 是 unit_spend_mp 扣的 MP 量)。表的正式名稱未查證,名字只寫機制。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e86c",
+     "insn": "mov edx, 7"
+    },
+    {
+     "at": "0x4e873",
+     "insn": "lea edx, [0x19fd]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e809",
+   "name": "row31_ptr_6238d",
+   "summary": "(id):回傳 0x6238d + (id-1)*0x1f(31 bytes/列、1 起算的表)。表的正式名稱未查證。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4e80f",
+     "insn": "dec eax"
+    },
+    {
+     "at": "0x4e810",
+     "insn": "mov edx, 0x1f"
+    },
+    {
+     "at": "0x4e817",
+     "insn": "lea edx, [0x238d]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1ca89",
+   "name": "unit_spend_mp",
+   "summary": "(unit, id):unit[+0x44](word,現有 MP)-= byte[row7_ptr_619fd(id) + 5]。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1ca98",
+     "insn": "call 0x4e866"
+    },
+    {
+     "at": "0x1cab7",
+     "insn": "movzx ebx, word ptr [eax + 0x44]"
+    },
+    {
+     "at": "0x1cabb",
+     "insn": "movzx edx, byte ptr [edx + 5]"
+    },
+    {
+     "at": "0x1cac1",
+     "insn": "mov word ptr [eax + 0x44], bx"
+    }
+   ]
+  },
+  {
+   "addr": "0x1bb8c",
+   "name": "unit_add_item",
+   "summary": "(unit, item):在單位的 8 個道具欄(+0xa 起,2 bytes/欄)找第一個旗標含 0x80(空欄)的,旗標清 0、id 設為 item,回 1;沒有空欄回 -1。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1bbb2",
+     "insn": "cmp edx, 8"
+    },
+    {
+     "at": "0x1bbbf",
+     "insn": "test byte ptr [eax], 0x80"
+    },
+    {
+     "at": "0x1bbc4",
+     "insn": "mov byte ptr [eax], 0"
+    },
+    {
+     "at": "0x1bbcb",
+     "insn": "mov byte ptr [eax + 1], dl"
+    }
+   ]
+  },
+  {
+   "addr": "0x12e38",
+   "name": "map_cell_info",
+   "summary": "(x, y, out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。out[0..1] = tile & 0x3ff、out[2..3] = 旗標 & 0x1f、out[4..7] = 地形表 [0x53a69] 第 tile 列的 4 bytes。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12e4e",
+     "insn": "imul eax, dword ptr [0x3ac1]"
+    },
+    {
+     "at": "0x12e6a",
+     "insn": "and bh, 3"
+    },
+    {
+     "at": "0x12e70",
+     "insn": "and al, 0x1f"
+    },
+    {
+     "at": "0x12e86",
+     "insn": "mov eax, dword ptr [0x3a69]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1297d",
+   "name": "tick_anim_counters",
+   "summary": "每次呼叫 [0x53c07] = ([0x53c07]+1) % 4;距上次超過 4 tick(或 tick 回繞)時 [0x53c0b] = ([0x53c0b]+1) % 4 並記下現在的 tick。redraw 的第一步。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x12995",
+     "insn": "cmp eax, 4"
+    },
+    {
+     "at": "0x129ac",
+     "insn": "inc dword ptr [0x3c0b]"
+    },
+    {
+     "at": "0x129d2",
+     "insn": "inc dword ptr [0x3c07]"
+    }
+   ]
+  },
+  {
+   "addr": "0x26996",
+   "name": "close_box_slide_down_no_redraw",
+   "summary": "與 close_box_slide_down 逐步相同(i=1..5 的 present_box_at_row、存檔畫面搬回 VGA、釋放三塊緩衝),只差最後不呼叫 redraw。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x269b4",
+     "insn": "imul eax, ebx, 0xd"
+    },
+    {
+     "at": "0x269bb",
+     "insn": "call 0x1974c"
+    },
+    {
+     "at": "0x269d9",
+     "insn": "call 0x3771c"
+    },
+    {
+     "at": "0x26a03",
+     "insn": "call 0x3776e"
+    }
+   ]
+  },
+  {
+   "addr": "0x127a9",
+   "name": "draw_unit_layer",
+   "summary": "對 i < [0x53beb] 的每個單位,unit_inactive(i) 為 0 才呼叫 0x127e0(i);最後呼叫 0x129ec。知識庫記載為 redraw 的單位層。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x127b9",
+     "insn": "cmp ebx, dword ptr [0x3beb]"
+    },
+    {
+     "at": "0x127c2",
+     "insn": "call 0x34894"
+    },
+    {
+     "at": "0x127cf",
+     "insn": "call 0x127e0"
+    },
+    {
+     "at": "0x127d9",
+     "insn": "call 0x129ec"
     }
    ]
   }
