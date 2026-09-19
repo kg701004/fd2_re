@@ -2,12 +2,12 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 257,
+  "total": 259,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 190,
-   "leaf_global": 11,
+   "wrapper": 193,
+   "leaf_global": 10,
    "leaf_ptr": 13,
    "leaf_pure": 9
   },
@@ -1471,13 +1471,6 @@
    "callers": 2,
    "argc": 1
   },
-  "0x3db46": {
-   "kind": "leaf_global",
-   "name": "leaf_ref[0x541a4]",
-   "round": 0,
-   "callers": 26,
-   "argc": 0
-  },
   "0x3dbe7": {
    "kind": "wrapper",
    "name": "wrapper(heap_free)",
@@ -1674,6 +1667,20 @@
    "callers": 3,
    "argc": 2
   },
+  "0x4670c": {
+   "kind": "wrapper",
+   "name": "wrapper(errno_ptr, ~0x467c5)",
+   "round": 2,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x467c5": {
+   "kind": "wrapper",
+   "name": "wrapper(errno_ptr())",
+   "round": 1,
+   "callers": 2,
+   "argc": 1
+  },
   "0x46f3a": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
@@ -1743,6 +1750,13 @@
    "round": 0,
    "callers": 6,
    "argc": null
+  },
+  "0x4d715": {
+   "kind": "wrapper",
+   "name": "wrapper(errno_ptr())",
+   "round": 1,
+   "callers": 3,
+   "argc": 0
   },
   "0x4deec": {
    "kind": "leaf_ptr",

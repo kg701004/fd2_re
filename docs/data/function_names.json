@@ -2073,6 +2073,211 @@
      "insn": "call 0x187d6"
     }
    ]
+  },
+  {
+   "addr": "0x37324",
+   "name": "fopen",
+   "summary": "Watcom CRT fopen(name, mode):轉呼叫 fsopen(name, mode, 0)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x37327",
+     "insn": "push 0"
+    },
+    {
+     "at": "0x3732f",
+     "insn": "call 0x372f9"
+    }
+   ]
+  },
+  {
+   "addr": "0x372f9",
+   "name": "fsopen",
+   "summary": "Watcom CRT _fsopen(名稱去掉底線以符合登錄表的 snake_case 規則)(name, mode, share):以 0x3db52 取一個空的 FILE,成功才以 0x37214 開檔。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x372fe",
+     "insn": "call 0x3db52"
+    },
+    {
+     "at": "0x37316",
+     "insn": "call 0x37214"
+    }
+   ]
+  },
+  {
+   "addr": "0x373ca",
+   "name": "fread",
+   "summary": "Watcom CRT fread(buf, size, n, fp):FILE 旗標(+0xc)沒有可讀 bit 時設 errno=4 並設錯誤旗標;位元組數 = size*n;沒有緩衝(+8)先配置。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x373d6",
+     "insn": "test byte ptr [ebx + 0xc], 1"
+    },
+    {
+     "at": "0x373e1",
+     "insn": "mov dword ptr [eax], 4"
+    },
+    {
+     "at": "0x373f5",
+     "insn": "imul eax, dword ptr [ebp + 0x18]"
+    },
+    {
+     "at": "0x3740f",
+     "insn": "call 0x3dc69"
+    }
+   ]
+  },
+  {
+   "addr": "0x3759c",
+   "name": "fclose",
+   "summary": "Watcom CRT fclose(fp):在已開檔串列 [0x541ac] 裡找 fp,找到以 0x375c8(fp, 1) 關閉,找不到回 -1。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x375a2",
+     "insn": "mov eax, dword ptr [0x41ac]"
+    },
+    {
+     "at": "0x375ab",
+     "insn": "mov eax, 0xffffffff"
+    },
+    {
+     "at": "0x375b2",
+     "insn": "cmp edx, dword ptr [eax + 4]"
+    },
+    {
+     "at": "0x375be",
+     "insn": "call 0x375c8"
+    }
+   ]
+  },
+  {
+   "addr": "0x3db46",
+   "name": "errno_ptr",
+   "summary": "回傳 errno 的位址 0x541a4(fread 失敗時經它寫入 4)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x3db46",
+     "insn": "mov eax, 0x41a4"
+    }
+   ]
+  },
+  {
+   "addr": "0x2e95b",
+   "name": "load_fd2_tmp",
+   "summary": "以 fopen(\"FD2.TMP\", \"rb\") 開檔,malloc(0x32a00) 存進 [0x53a61],fread 整塊 0x32a00 bytes,fclose。無參數。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x2e966",
+     "insn": "push 0x2ba"
+    },
+    {
+     "at": "0x2e970",
+     "insn": "call 0x37324"
+    },
+    {
+     "at": "0x2e97a",
+     "insn": "push 0x32a00"
+    },
+    {
+     "at": "0x2e987",
+     "insn": "mov dword ptr [0x3a61], eax"
+    },
+    {
+     "at": "0x2e995",
+     "insn": "call 0x373ca"
+    },
+    {
+     "at": "0x2e99e",
+     "insn": "call 0x3759c"
+    }
+   ]
+  },
+  {
+   "addr": "0x1d79c",
+   "name": "unit_set_bit_1a",
+   "summary": "(unit, bit):單位記錄(80 bytes,基底 [0x53a45])+0x1a 起的 40-bit 位元欄設第 bit 位(byte = bit/8,遮罩取自 0x52024 的 8-byte 表)。與 unit_list_bits_1a 成對。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1d7b2",
+     "insn": "mov esi, 0x2024"
+    },
+    {
+     "at": "0x1d7df",
+     "insn": "sar eax, 3"
+    },
+    {
+     "at": "0x1d7fb",
+     "insn": "mov bl, byte ptr [ecx + eax + 0x1a]"
+    },
+    {
+     "at": "0x1d7ff",
+     "insn": "or bl, byte ptr [esp + edx]"
+    }
+   ]
+  },
+  {
+   "addr": "0x15da2",
+   "name": "sum_if_unit_byte_zero",
+   "summary": "(n, list, off, w):對 list 裡的 n 個單位編號,每個單位記錄(80 bytes,基底 [0x53a45])byte[+off] 為 0 就加 w;回傳總和。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x15dcb",
+     "insn": "movzx ebx, byte ptr [edx + eax]"
+    },
+    {
+     "at": "0x15de0",
+     "insn": "movzx eax, byte ptr [esi + eax]"
+    },
+    {
+     "at": "0x15de8",
+     "insn": "add ecx, edi"
+    }
+   ]
+  },
+  {
+   "addr": "0x1ec2a",
+   "name": "unit_popup_position",
+   "summary": "(out, unit):依單位記錄(80 bytes,基底 [0x53a45])的格座標與捲動 [0x53aa9]/[0x53aad] 算出螢幕座標(每格 24 px),再依 +3(方向)與螢幕邊界(x+0x6c 超過 319、y+0x25 超過 199 等)調整,寫入 out[0]=x、out[1]=y。唯一呼叫端 0x1eb05 用它定位單位旁的顯示框。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1ec52",
+     "insn": "sub eax, dword ptr [0x3aa9]"
+    },
+    {
+     "at": "0x1ec58",
+     "insn": "imul eax, eax, 0x18"
+    },
+    {
+     "at": "0x1ec74",
+     "insn": "cmp eax, 2"
+    },
+    {
+     "at": "0x1ec91",
+     "insn": "cmp eax, 0x13f"
+    },
+    {
+     "at": "0x1eca8",
+     "insn": "cmp eax, 0xc7"
+    }
+   ]
   }
  ]
 }
