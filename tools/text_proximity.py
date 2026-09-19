@@ -77,6 +77,11 @@ def address_variants(addr: str) -> list[str]:
 def address_spans(text: str, addr: str) -> list[tuple[int, int]]:
     """`addr` 在這一行的所有出現位置(含各種寫法)。右邊界擋掉 `0x2a6bdf` 這種更長的位址。"""
     out: list[tuple[int, int]] = []
+    # 前置篩選(2026-09-19):每一種寫法命中都必然含小寫本體,所以不含就不可能命中。沒有它時,
+    # 勘誤 163 筆 × 4 種寫法 = 652 個 pattern 超過 re 模組 512 筆快取,每次呼叫都重編譯,
+    # verify_address_citations 全庫掃描從幾十秒變成十幾分鐘。
+    if addr[2:].lower() not in text.lower():
+        return out
     for v in address_variants(addr):
         for m in re.finditer(re.escape(v) + r"(?![0-9a-fA-F])", text, re.IGNORECASE):
             out.append((m.start(), m.end()))

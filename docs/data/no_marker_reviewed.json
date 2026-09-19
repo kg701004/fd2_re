@@ -34688,6 +34688,14 @@
    "excerpt": "新版位址的函式名稱與位元組證據在 `docs/data/function_names.json`(`draw_glyph16`、`typewriter_tick` 等),由 `function_inventory.py --check-names` 驗證。",
    "verdict": "benign",
    "note": "指向資料檔與驗證工具的說明句,本身不是遊戲事實主張(事實在上方有位元組證據的表格)"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5477,
+   "excerpt_sha1": "10b46c250502f106fa43a196aed49e067fbb3992",
+   "excerpt": "**逐一核對的佐證**(79 筆都寫在各自勘誤條目的 `discovery_method`):",
+   "verdict": "benign",
+   "note": "小節引導句,指向勘誤條目的 discovery_method;下方每一條佐證都帶位址與位元組層證據"
   }
  ]
 }

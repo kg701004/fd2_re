@@ -26,6 +26,9 @@ INNER:函式內部引用,不是入口主張(2026-09-17)
 時把這一類分出來(INNER),不進棘輪分母;沒有 capstone(WSL)時閘門只印摘要、不比基準線。
 已知上限:錯的位址若剛好落在別的函式內部的合法邊界上,也會被歸成 INNER(與邊界判準的 10/14 召回
 同一個結構性上限);已登記為勘誤的位址在 INNER 之前就被分到 KNOWN_ERRATUM,不受影響。
+2026-09-19 補上這個上限的一大類:`--stale-edition` 對知識庫**任何一行**的位址(不限入口語言)檢查
+「本身無訊號、加上所在區段的已知舊→新位移後是強入口」,閘門要求這類候選全部登勘誤或審過。首輪登錄
+79 筆(77 個未處理 + 2 個被 09-18 誤審為語意不合的),見 doc98 續三十。
 
 **為什麼一定要三個**:541 那個集合是「需要堆疊探測的函式」,**不是全部函式**。小型
 葉函式沒有序頭。實測 `0x4ebe3` 有 **40 個直接呼叫端**、起頭是乾淨的 `33 c0`
@@ -56,6 +59,7 @@ INNER:函式內部引用,不是入口主張(2026-09-17)
     python tools/verify_address_claim_coverage.py --addr 0x4e893 # 單一位址的四個訊號與分類
     python tools/verify_address_claim_coverage.py --triage       # 殘餘依『是否落在指令邊界』分流
     python tools/verify_address_claim_coverage.py --dossier 20 --json out.json   # 殘餘的判讀資料(四個假說)
+    python tools/verify_address_claim_coverage.py --stale-edition  # 全知識庫舊版位移候選與空模型
     python tools/verify_address_claim_coverage.py --mark-reviewed 0x4a62c file_offset "doc58:EXE 檔案 offset"   # 審過的非主張
     python tools/verify_address_claim_coverage.py --write-baseline
     python tools/verify_address_claim_coverage.py --selftest
@@ -89,7 +93,8 @@ ERRATA = os.path.join(ROOT, "docs", "data", "known_address_errata.json")
 # 推翻的主張。每筆要 verdict + note;--mark-reviewed 只收目前仍是 UNREVIEWED 的位址。
 REVIEWS = os.path.join(ROOT, "docs", "data", "address_claim_reviews.json")
 REVIEW_VERDICTS = ("file_offset", "live_address", "approximate", "disp32_value", "old_edition_inner",
-                   "old_edition_unresolved", "refuted_claim", "region_label", "data_table", "other")
+                   "old_edition_unresolved", "refuted_claim", "region_label", "data_table", "other",
+                   "edition_coincidence")      # --stale-edition 命中、審過是新版的合法引用(位移命中是巧合)
 
 STACK_PROBE = 0x3702F
 
@@ -456,6 +461,141 @@ def dossier(limit: int | None, json_out: str | None) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- #
+# --stale-edition:知識庫任何一行裡的舊版位址(2026-09-19)
+# --------------------------------------------------------------------------- #
+# 模組說明裡「INNER 已知上限」在 2026-09-19 被實際量到:doc35 的五個舊版繪圖原語位址剛好落在別的
+# 函式內部的合法邊界上,被歸成 INNER 放行,doc35 據此寫下「0 次命中」「兩支是同一支」兩個錯結論。
+# 判準(全部機械,不看文件措辭):
+#   1. 位址被知識庫任何一行提到(不限入口語言:舊位址常以呼叫點、表格欄出現),在 obj1,本身沒有入口訊號;
+#   2. 位在已知位移區段:錨點 = 勘誤表中位移被 edition_deltas 採用的每一對 + EDITION_MOVED 的舊位址。
+#      前後兩個錨點位移相同 -> 區段內;否則離最近錨點 SHIFT_MARGIN 以內才套那個錨點的位移;
+#   3. 位址 + 區段位移 是 strong 入口(序頭、JMP 目標,或 ≥2 個直接 CALL 呼叫端)。
+# 已登勘誤(citation_check.flag)或已登 reviews 的算已處理。區段限定是判準的核心:2026-09-19 實測
+# 不限定區段時命中 114、空模型(改套 d+k)平均約 40;限定後命中 73、空模型平均約 4。
+SHIFT_MARGIN = 0x800
+SHIFT_NULL_MIN = 9          # 0x350/0x356/0x358 彼此只差 2~8,空模型的 k 必須跳過這一圈
+SHIFT_NULL_MAX = 60
+
+
+def _errata_pairs(base: int, hi: int) -> list[tuple[int, int]]:
+    """勘誤表中兩端都在 obj1 且不同的 (錯位址, 正確位址)。讀不到檔回空串列。"""
+    out: list[tuple[int, int]] = []
+    try:
+        with open(ERRATA, encoding="utf-8") as f:
+            errata = json.load(f).get("errata", [])
+    except (OSError, ValueError):
+        return out
+    for e in errata:
+        try:
+            w, c = int(e["wrong_address"], 16), int(e["correct_address"], 16)
+        except (KeyError, ValueError, TypeError):
+            continue
+        if base <= w < hi and base <= c < hi and c != w:
+            out.append((w, c))
+    return out
+
+
+def shift_anchors(sig: dict, deltas: dict[int, str] | None = None) -> list[tuple[int, int]]:
+    """(舊位址, 位移) 錨點,依舊位址排序。只收位移已被 edition_deltas 採用的勘誤配對與 EDITION_MOVED。"""
+    deltas = edition_deltas(sig) if deltas is None else deltas
+    out = {(w, c - w) for w, c in _errata_pairs(sig["base"], sig["hi"]) if c - w in deltas}
+    try:
+        import dump_chapter_beats as DC
+        out |= {(old, new - old) for old, new in DC.EDITION_MOVED.values()}
+    except Exception:                                          # noqa: BLE001
+        pass
+    return sorted(out)
+
+
+def region_delta(anchors: list[tuple[int, int]], addr: int, margin: int = SHIFT_MARGIN) -> int | None:
+    """`addr` 所在區段的舊→新位移;不在任何已知區段回 None。
+
+    前後兩個錨點位移相同 -> 夾在同一區段內,不論距離;兩者不同(區段交界)或只有一側 ->
+    離 `addr` 較近、且距離 ≤ margin 的那一側。
+    """
+    import bisect
+    keys = [a for a, _ in anchors]
+    i = bisect.bisect_right(keys, addr) - 1
+    prev = anchors[i] if i >= 0 else None
+    nxt = anchors[i + 1] if i + 1 < len(anchors) else None
+    if prev is not None and nxt is not None and prev[1] == nxt[1]:
+        return prev[1]
+    near: list[tuple[int, int]] = []
+    if prev is not None and addr - prev[0] <= margin:
+        near.append((addr - prev[0], prev[1]))
+    if nxt is not None and nxt[0] - addr <= margin:
+        near.append((nxt[0] - addr, nxt[1]))
+    return min(near)[1] if near else None
+
+
+def strong_entries(sig: dict) -> set[int]:
+    """強入口:序頭、JMP 目標、或至少兩個直接 CALL 呼叫端(單一呼叫端的 E8 目標可能是資料位元組的偶然命中)。"""
+    return set(sig["prologue"]) | set(sig["jmps"]) | {t for t, n in sig["calls"].items() if n >= 2}
+
+
+def kb_mentions(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
+    """知識庫任何一行提到、落在 obj1(不含基底本身)的相異位址 -> [(檔名, 行號), ...]。"""
+    out: dict[int, list[tuple[str, int]]] = {}
+    for path in sorted(glob.glob(os.path.join(KB, "*.md"))):
+        name = os.path.basename(path)
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for lineno, text in enumerate(f, 1):
+                for m in ADDR.findall(text):
+                    n = int(m, 16)
+                    if base < n < hi:
+                        out.setdefault(n, []).append((name, lineno))
+    return out
+
+
+def stale_hits(pool, anchors: list[tuple[int, int]], strong: set[int],
+               margin: int = SHIFT_MARGIN, k: int = 0) -> dict[int, int]:
+    """pool 中「位在已知區段、位址 + 區段位移 + k 是強入口」的 {位址: 位移}。k != 0 就是空模型。"""
+    out: dict[int, int] = {}
+    for a in pool:
+        d = region_delta(anchors, a, margin)
+        if d is not None and a + d + k in strong:
+            out[a] = d
+    return out
+
+
+def stale_edition(sig: dict | None = None) -> dict:
+    """全知識庫的舊版位移候選。open = 尚未登勘誤也未審的;conflicts = 已審、但判準說它是舊版位址的。"""
+    sig = signals() if sig is None else sig
+    mentions = kb_mentions(sig["base"], sig["hi"])
+    bad, reviews = known_bad(), load_reviews()
+    anchors = shift_anchors(sig)
+    strong = strong_entries(sig)
+    pool = [a for a in mentions if a not in sig["plausible"]]
+    hits = stale_hits(pool, anchors, strong)
+    olds = {a for a, _ in anchors}
+    free = [a for a in pool if a not in olds]                  # 空模型只量非錨點:錨點本身必然命中
+    ks = [k for k in range(-SHIFT_NULL_MAX, SHIFT_NULL_MAX + 1) if abs(k) >= SHIFT_NULL_MIN]
+    null = [len(stale_hits(free, anchors, strong, k=k)) for k in ks]
+    return {"sig": sig, "mentions": mentions, "anchors": anchors, "pool": pool, "hits": hits,
+            "open": {a: d for a, d in hits.items() if a not in bad and a not in reviews},
+            "conflicts": {a: reviews[a]["verdict"] for a in hits if a in reviews and a not in bad},
+            "free_hits": sum(1 for a in free if a in hits), "null": null}
+
+
+def report_stale() -> int:
+    st = stale_edition()
+    null = st["null"]
+    print(f"錨點 {len(st['anchors'])} 個;知識庫 obj1 位址 {len(st['mentions'])} 個,本身無入口訊號 {len(st['pool'])} 個")
+    print(f"命中 {len(st['hits'])}(非錨點 {st['free_hits']});空模型(d+k,{SHIFT_NULL_MIN}≤|k|≤{SHIFT_NULL_MAX})"
+          f"平均 {sum(null) / max(1, len(null)):.1f}、最大 {max(null, default=0)}")
+    print(f"未處理 {len(st['open'])} 個(未登勘誤、未審):")
+    for a in sorted(st["open"], key=lambda x: (-len(st["mentions"][x]), x)):
+        d = st["open"][a]
+        name, lineno = st["mentions"][a][0]
+        print(f"  {a:#08x} {d:+#x} -> {a + d:#08x}  引用 {len(st['mentions'][a]):3d}  {name}:{lineno}")
+    if st["conflicts"]:
+        print("已審但判準說是舊版位址(請重看審閱結論):")
+        for a, v in sorted(st["conflicts"].items()):
+            print(f"  {a:#08x} [{v}] -> {a + st['hits'][a]:#08x}")
+    return 0
+
+
 def kb_entry_claims(base: int, hi: int) -> dict[int, list[tuple[str, int]]]:
     """被入口語言同行提及、且落在 obj1 的相異位址 -> [(檔名, 行號), ...]。"""
     out: dict[int, list[tuple[str, int]]] = {}
@@ -615,7 +755,7 @@ def mark_reviewed(addr_s: str, verdict: str, note: str) -> int:
         print("note 不得為空")
         return 1
     r = classify_all()
-    if addr not in r["unreviewed"]:
+    if addr not in r["unreviewed"] and addr not in stale_edition(r["sig"])["open"]:
         where = next((k for k in ("covered", "erratum", "reviewed", "inner") if addr in r[k]), "不在主張清單")
         print(f"{addr:#x} 不是 UNREVIEWED(目前分類:{where}),不登錄")
         return 1
@@ -686,6 +826,15 @@ def gate() -> int:
     print(f"  函式內部引用   {len(r['inner']):4d}  (落在有訊號函式內部的合法指令邊界,不是入口主張)")
     print(f"  審過非主張     {len(r['reviewed']):4d}  (address_claim_reviews.json:offset/live/近似/舊版內部/被推翻)")
     print(f"  無訊號未登記   {len(un):4d}  <- 這個數字才是 findings 軸看不見的部分")
+    # 舊版位移候選不需要 capstone,WSL 下也照樣擋
+    st = stale_edition(r["sig"])
+    print(f"\n全知識庫舊版位移候選(不限入口語言;--stale-edition):命中 {len(st['hits'])}、未處理 {len(st['open'])}")
+    if st["open"]:
+        print(f"\nFAIL {len(st['open'])} 個位址像舊版位址(+區段位移是強入口)卻沒有登勘誤、也沒有審過:")
+        for a in sorted(st["open"])[:20]:
+            print(f"  {a:#08x} -> {a + st['open'][a]:#08x}  {st['mentions'][a][0][0]}:{st['mentions'][a][0][1]}")
+        print("  登進 known_address_errata.json,或巧合者以 --mark-reviewed ADDR edition_coincidence NOTE 登錄")
+        return 1
     if not r["inner_available"]:
         print("\nSKIP:本環境沒有 capstone,分不出函式內部引用,不比基準線(閘門在 Windows 跑)。")
         return 0
@@ -1061,14 +1210,97 @@ def selftest() -> int:
     if not ok15:
         fails.append(f"propose 邊界:{[k for k, v in b15.items() if not v]}")
 
+    print("\n(16) --stale-edition:區段位移的邊界(合成錨點)、留一法召回對空模型、未處理/矛盾的篩選、閘門會擋")
+    an16 = [(0x1000, 5), (0x3000, 5), (0x5000, 9), (0x7000, 2), (0x7008, 7)]
+    b16 = {
+        "夾在同位移兩錨點之間不論距離": region_delta(an16, 0x2000, 0x10) == 5,
+        "錨點本身": region_delta(an16, 0x3000, 0x10) == 5 and region_delta(an16, 0x5000, 0x10) == 9,
+        "交界恰好 margin 內套近側": region_delta(an16, 0x3010, 0x10) == 5 and region_delta(an16, 0x4FF0, 0x10) == 9,
+        "交界 margin+1 不套": region_delta(an16, 0x3011, 0x10) is None and region_delta(an16, 0x4FEF, 0x10) is None,
+        "兩側都在 margin 內取近的": region_delta(an16, 0x7002, 0x10) == 2 and region_delta(an16, 0x7006, 0x10) == 7,
+        "第一個錨點之前": region_delta(an16, 0xFF0, 0x10) == 5 and region_delta(an16, 0xFEF, 0x10) is None,
+        "最後一個錨點之後": region_delta(an16, 0x7018, 0x10) == 7 and region_delta(an16, 0x7019, 0x10) is None,
+        "預設 margin 是 SHIFT_MARGIN": region_delta([(0x1000, 5)], 0x1000 + SHIFT_MARGIN) == 5
+        and region_delta([(0x1000, 5)], 0x1001 + SHIFT_MARGIN) is None,
+        "stale_hits 只收位移後是強入口的、k 平移": stale_hits([0x2000, 0x2001, 0x9000], an16, {0x2005}, 0x10) == {0x2000: 5}
+        and stale_hits([0x2000], an16, {0x2006}, 0x10, k=1) == {0x2000: 5},
+        "強入口:序頭/JMP/≥2 呼叫端,單一呼叫端不算": strong_entries(
+            {"prologue": {1}, "jmps": {2}, "calls": Counter({3: 1, 4: 2})}) == {1, 2, 4},
+        "kb_mentions 不含 obj1 基底、行號對得回原文": sig["base"] not in kb_mentions(sig["base"], sig["hi"]),
+    }
+    km = kb_mentions(sig["base"], sig["hi"])
+    a16, s16 = next(iter(sorted(km.items())))
+    l16 = open(os.path.join(KB, s16[0][0]), encoding="utf-8", errors="replace").read().splitlines()[s16[0][1] - 1]
+    b16["kb_mentions 不含 obj1 基底、行號對得回原文"] &= a16 in {int(m, 16) for m in ADDR.findall(l16)}
+    # 留一法:本次掃描**之前**就登錄的勘誤錨點(判準獨立於本工具),逐一拿掉後剩下的錨點能否把它找回;
+    # 同一批改套 d+k 的空模型必須低得多。2026-09-19 實測 54/60 對 平均 0.42、最大 3;漏掉的 6 個是
+    # 0x37xxx–0x3dxxx 錨點稀疏處與正確位址不是強入口的 0x4e9bb。
+    an = shift_anchors(sig)
+    st16 = strong_entries(sig)
+    swept: set[int] = set()
+    try:
+        with open(ERRATA, encoding="utf-8") as f:
+            swept = {int(e["wrong_address"], 16) for e in json.load(f)["errata"]
+                     if "--stale-edition" in e.get("discovery_method", "")}
+    except (OSError, ValueError, KeyError):
+        pass
+
+    def _loo(k: int = 0) -> int:
+        return sum(1 for i, (w, d) in enumerate(an) if w not in swept
+                   and stale_hits([w], an[:i] + an[i + 1:], st16, k=k) == {w: d})
+    n_old = sum(1 for w, _ in an if w not in swept)
+    rec = _loo()
+    nul = [_loo(k) for k in range(-SHIFT_NULL_MAX, SHIFT_NULL_MAX + 1) if abs(k) >= SHIFT_NULL_MIN]
+    b16[f"留一法召回 {rec}/{n_old} ≥ 50、空模型最大 {max(nul)} ≤ 6"] = n_old >= 55 and rec >= 50 and max(nul) <= 6
+    # 未處理/矛盾的篩選與閘門:把勘誤表當成空的,已登錄的舊位址必須全部回到 open、閘門必須失敗;
+    # 再把其中一個登進暫存 reviews,它必須離開 open、進 conflicts
+    import tempfile as _tf16, contextlib as _cl16, io as _io16
+    kb_bak, rv_bak = globals()["known_bad"], globals()["REVIEWS"]
+    with _tf16.TemporaryDirectory() as td16:
+        rv16 = os.path.join(td16, "reviews.json")
+        try:
+            globals()["known_bad"] = lambda: set()
+            st_all = stale_edition(sig)
+            b16["勘誤表清空後命中全部回到 open"] = bool(st_all["hits"]) and st_all["open"] == st_all["hits"]
+            # 勘誤表清空也會讓基準線比對失敗,所以要看失敗的是**哪一條**:舊版位移的 FAIL 訊息必須出現
+            out16 = _io16.StringIO()
+            with _cl16.redirect_stdout(out16):
+                rc16 = gate()
+            b16["有 open 時閘門以舊版位移失敗"] = rc16 == 1 and "像舊版位址" in out16.getvalue()
+            # 報表數字與閘門列出的內容(2026-09-19 --precommit 抓到的 9 個逃逸:只印不驗的欄位)
+            olds16 = {w for w, _ in st_all["anchors"]}
+            b16["空模型 k 範圍 = 2×(MAX−MIN+1)"] = len(st_all["null"]) == 2 * (SHIFT_NULL_MAX - SHIFT_NULL_MIN + 1)
+            b16["非錨點命中計數"] = st_all["free_hits"] == sum(1 for a in st_all["hits"] if a not in olds16) > 0
+            r16 = classify_all()
+            lines16 = out16.getvalue().splitlines()
+            pct16 = f"({100 * len(r16['covered']) // max(1, len(r16['claims']))}%)"
+            b16["閘門摘要的涵蓋百分比"] = any(ln.startswith("  有位元組訊號") and pct16 in ln for ln in lines16)
+            exp16 = [f"  {a:#08x} -> {a + st_all['open'][a]:#08x}  "
+                     f"{st_all['mentions'][a][0][0]}:{st_all['mentions'][a][0][1]}" for a in sorted(st_all["open"])[:20]]
+            got16 = [ln for ln in lines16 if re.match(r"  0x[0-9a-f]{6} -> 0x", ln)]
+            b16["閘門列出前 20 個與各自第一處引用"] = len(exp16) == 20 and got16 == exp16
+            probe16 = min(st_all["open"])
+            with open(rv16, "w", encoding="utf-8") as f:
+                json.dump({"reviews": [{"address": f"{probe16:#x}", "verdict": "other", "note": "selftest"}]}, f)
+            globals()["REVIEWS"] = rv16
+            st_rv = stale_edition(sig)
+            b16["已審的離開 open、進 conflicts"] = (probe16 not in st_rv["open"]
+                                                  and st_rv["conflicts"] == {probe16: "other"})
+        finally:
+            globals()["known_bad"], globals()["REVIEWS"] = kb_bak, rv_bak
+    ok16 = all(b16.values())
+    print(f"    {'PASS' if ok16 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in b16.items()))
+    if not ok16:
+        fails.append(f"--stale-edition:{[k for k, v in b16.items() if not v]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(14 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
+    print("\n--selftest passed(15 項:訊號基數 + 訊號獨立性 + 正向控制 + 實測配對負向控制 + "
           "非恆真 + 宣稱語言有在篩選 + 雙向棘輪 + 邊界判準誤報率 + 邊界判準召回率 + "
-          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界 + 範圍/否定句排除 + reviews 登錄)。")
+          "行號可對回原文 + 所在函式選擇正確 + 第四訊號與 INNER 分類 + dossier 假說的雙向控制 + propose 邊界 + 範圍/否定句排除 + reviews 登錄 + 舊版位移掃描)。")
     return 0
 
 
@@ -1081,6 +1313,8 @@ def main() -> int:
     ap.add_argument("--dossier", nargs="?", const=0, type=int, metavar="N",
                     help="殘餘無訊號位址的判讀資料(資料表/舊版位移/打字錯/措辭);N = 只列引用最多的前 N 個")
     ap.add_argument("--json", help="--dossier 的 JSON 輸出路徑")
+    ap.add_argument("--stale-edition", action="store_true",
+                    help="全知識庫的舊版位移候選(本身無訊號、+區段位移是強入口)與空模型")
     ap.add_argument("--mark-reviewed", nargs=3, metavar=("ADDR", "VERDICT", "NOTE"),
                     help="把一個審過的無訊號位址登進 address_claim_reviews.json(不是入口主張:offset/live/近似/舊版內部/被推翻)")
     ap.add_argument("--write-baseline", action="store_true")
@@ -1094,6 +1328,8 @@ def main() -> int:
         return mark_reviewed(*a.mark_reviewed)
     if a.dossier is not None:
         return dossier(a.dossier or None, a.json)
+    if a.stale_edition:
+        return report_stale()
     if a.triage:
         return triage()
     if a.write_baseline:

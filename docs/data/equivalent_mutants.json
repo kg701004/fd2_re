@@ -813,6 +813,22 @@
    "reason": "run_check_names 只用清單的 addr 與 span_upper;with_argc 只決定要不要另外算每個入口的 argc(約多 5 秒),算出來的值在這條路徑上沒有任何人讀。改成 True 只會變慢,檢查結果逐筆相同。",
    "evidence": "check_names 的參數只有 spans_(由 addr/span_upper 組成)、命名表與解碼器,不含 argc。",
    "scope_hash": "49bff8008157"
+  },
+  {
+   "tool": "verify_address_claim_coverage.py",
+   "kind": "equivalent",
+   "key": "gate|print(f\" 有位元組訊號 {len(covered):4d}({100 * len(covered) // max(1, total)}%)\")|int 1->2#0",
+   "reason": "max(1, total) 只為了 total=0 時不除以零;改成 max(2, total) 只在 total<2 時不同,而知識庫入口主張有上千筆(2026-09-19 為 1117),輸出逐位元組相同。",
+   "evidence": "閘門第一行印出的分母 total = len(claims);selftest (5) 要求 total > 100。",
+   "scope_hash": "1e48b77d24b2"
+  },
+  {
+   "tool": "text_proximity.py",
+   "kind": "tuning",
+   "key": "address_spans|if addr[2:].lower() not in text.lower():|int 2->3#0",
+   "reason": "前置篩選只是加速:addr[3:] 是 addr[2:] 的後綴,篩選條件變寬鬆(放過更多行進入 regex),命中集合完全相同,只會變慢。",
+   "evidence": "後面的 regex 對每一種寫法各自確認完整位址;篩選只決定要不要跑 regex,不決定結果。",
+   "scope_hash": "bbf9093393e9"
   }
  ]
 }

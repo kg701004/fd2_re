@@ -88,12 +88,6 @@
    "date": "2026-09-17"
   },
   {
-   "address": "0x2f4c6",
-   "verdict": "old_edition_inner",
-   "note": "SESSION-HANDOFF L2003:「0x2f4a6 call 0x2f4c6」,新版 0x2f4a6 落在 push [esp+0xb4] 中段,整段是舊版位址",
-   "date": "2026-09-17"
-  },
-  {
    "address": "0x28ce6",
    "verdict": "old_edition_inner",
    "note": "doc35 L234:「0x288a9 / 0x28ce6 call 0x2a289」,新版 0x288a9 是 mov [0x3ae1],eax、0x28ce9 是 cmp,呼叫點在舊版",
@@ -151,18 +145,6 @@
    "address": "0x39a2c",
    "verdict": "old_edition_unresolved",
    "note": "doc11 L628 同批法術鏈位址;新版不在指令邊界",
-   "date": "2026-09-17"
-  },
-  {
-   "address": "0x4de56",
-   "verdict": "old_edition_unresolved",
-   "note": "doc56 L2463:FDICON opaque-index 變換的 blit;+0x350 候選 0x4e1a6 是 doc11 的尋路函式,語意不合,對應未定",
-   "date": "2026-09-17"
-  },
-  {
-   "address": "0x4e8af",
-   "verdict": "old_edition_unresolved",
-   "note": "doc35 L432 引用的位址;+0x350 候選 0x4ebff 是 blit(dest,src,stride),與該行語意對不上,對應未定",
    "date": "2026-09-17"
   },
   {

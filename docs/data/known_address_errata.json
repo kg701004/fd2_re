@@ -2372,6 +2372,2194 @@
           "SESSION-HANDOFF-2026-07-06.md": 5
         }
       }
+    },
+    {
+      "wrong_address": "0x2d3ff",
+      "correct_address": "0x26a7a",
+      "wrong_semantic_claimed": "商店 credit(加錢)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2d3ff 本身沒有入口訊號,位在 -0x6985 區段,0x26a7a 是強入口。佐證:新版 0x26a7a 本體 add dword ptr [0x53bf3], [esp+0x4c](金錢全域)並以 sprintf 轉數字。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d3ff"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d620",
+      "correct_address": "0x26c9b",
+      "wrong_semantic_claimed": "逐列 memmove 的 partial write callback",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2d620 本身沒有入口訊號,位在 -0x6985 區段,0x26c9b 是強入口。佐證:新版 0x26c9b = wrapper(memmove(_, _, 6)),與 0x2d516-0x6985 有 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d620"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d85f",
+      "correct_address": "0x26eda",
+      "wrong_semantic_claimed": "mode-zero 穩定動畫、兩 tick selected pulse",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2d85f 本身沒有入口訊號,位在 -0x6985 區段,0x26eda 是強入口。佐證:新版 0x26eda(menu_read_key)呼叫 0x2d9fe-0x6985=0x27079。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d85f"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2d9fe",
+      "correct_address": "0x27079",
+      "wrong_semantic_claimed": "只重畫被選的 cell",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2d9fe 本身沒有入口訊號,位在 -0x6985 區段,0x27079 是強入口。佐證:新版 0x27079 被 0x26eda(=0x2d85f-0x6985)呼叫。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2d9fe"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2dc55",
+      "correct_address": "0x272d0",
+      "wrong_semantic_claimed": "商品/來源物品清單 renderer(mode=1)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2dc55 本身沒有入口訊號,位在 -0x6985 區段,0x272d0 是強入口。佐證:新版 0x272d0 與 0x2e0bd-0x6985=0x27738 有 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2dc55"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 3,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2df6b",
+      "correct_address": "0x275e6",
+      "wrong_semantic_claimed": "六格可見物品清單",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2df6b 本身沒有入口訊號,位在 -0x6985 區段,0x275e6 是強入口。佐證:新版 0x275e6 與 0x2f8ea-0x6985 有 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2df6b"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 3,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2e0bd",
+      "correct_address": "0x27738",
+      "wrong_semantic_claimed": "物品來源清單(mode=1)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2e0bd 本身沒有入口訊號,位在 -0x6985 區段,0x27738 是強入口。佐證:新版 0x27738 呼叫 0x2dc55-0x6985=0x272d0。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2e0bd"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2e6b8",
+      "correct_address": "0x27d33",
+      "wrong_semantic_claimed": "兩欄六人 party roster 選擇",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2e6b8 本身沒有入口訊號,位在 -0x6985 區段,0x27d33 是強入口。佐證:新版 0x27d33(choice_box_left_right)被 0x2f883/0x2f8ea/0x2ffa5 等已登勘誤位址的新版對應直接呼叫(5 條 CALL 邊)。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2e6b8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 4,
+          "91-worklist.md": 3,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2e8cf",
+      "correct_address": "0x27f4a",
+      "wrong_semantic_claimed": "三列裝備比較面板",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2e8cf 本身沒有入口訊號,位在 -0x6985 區段,0x27f4a 是強入口。佐證:新版 0x27f4a 呼叫 0x2ebe0-0x6985=0x2825b。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2e8cf"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 2,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2ea90",
+      "correct_address": "0x2810b",
+      "wrong_semantic_claimed": "兩欄 roster 的第二個 caller/狀態面板",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2ea90 本身沒有入口訊號,位在 -0x6985 區段,0x2810b 是強入口。佐證:新版 0x2810b 與 0x2e6b8-0x6985=0x27d33 有直接 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2ea90"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2ebe0",
+      "correct_address": "0x2825b",
+      "wrong_semantic_claimed": "商店裝備比較面板(0x2e8cf→0x2ebe0)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2ebe0 本身沒有入口訊號,位在 -0x6985 區段,0x2825b 是強入口。佐證:新版 0x2825b 被 0x2e8cf-0x6985=0x27f4a 呼叫,並呼叫 0x2ef8f/0x2efb7 的位移後位址。注意:doc35 L3707/3718/3819 的 0x2ebe0 是新版 blit_anim_frame(0x2eb9f,66 bytes)的範圍終點,那幾處不是舊版位址,計入 baseline 但不是錯。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/58-remake-live-verification-log.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2ebe0"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 4,
+          "56-fd2-remake-sdd.md": 2,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 5,
+          "99-reflections-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2ef8f",
+      "correct_address": "0x2860a",
+      "wrong_semantic_claimed": "能力比較選數字 glyph",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2ef8f 本身沒有入口訊號,位在 -0x6985 區段,0x2860a 是強入口。佐證:新版 0x2860a 結構性名稱 compare_to_glyph,與文件『selects raw digit』一致;被 0x2825b 呼叫。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2ef8f"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2efb7",
+      "correct_address": "0x28632",
+      "wrong_semantic_claimed": "type<0x20 的 filtered 三列比較面板",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2efb7 本身沒有入口訊號,位在 -0x6985 區段,0x28632 是強入口。佐證:新版 0x28632 = wrapper(item_effect_row_ptr(_), ...),讀 item row;被 0x2825b 呼叫。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2efb7"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "99-reflections-log.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2f4c6",
+      "correct_address": "0x28b41",
+      "wrong_semantic_claimed": "購買/復活共用的 success 動畫 helper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2f4c6 本身沒有入口訊號,位在 -0x6985 區段,0x28b41 是強入口。佐證:新版 0x28b41 呼叫 palette_delta_ramp(DAC delta 0→62→0)、blit_res_cell_sprite(FDOTHER#14 entries 疊圖)、wait_ticks(每幀 2 tick),與文件逐項一致。09-18 審為 old_edition_inner,改登勘誤。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2f4c6"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 6,
+          "91-worklist.md": 4,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
+    },
+    {
+      "wrong_address": "0x2f70a",
+      "correct_address": "0x28d85",
+      "wrong_semantic_claimed": "購買成功分支(selector 未重設)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x2f70a 本身沒有入口訊號,位在 -0x6985 區段,0x28d85 是強入口。佐證:舊 0x2f70a 在舊 0x2f642 函式內;新 0x28d85 同樣在新 0x28cbd(=0x2f642-0x6985,已登勘誤)內,是 JMP 目標。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x2f70a"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30012",
+      "correct_address": "0x2968d",
+      "wrong_semantic_claimed": "存檔槽 writer(寫 0x59cb 位元組 envelope、算 checksum、套 rolling XOR)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x30012 本身沒有入口訊號,位在 -0x6985 區段,0x2968d 是強入口。佐證:新版 0x2968d 直接呼叫 0x4df09(=舊 0x4dbb9+0x350 checksum)與 0x4df28(=舊 0x4dbd8+0x350 XOR)及 fread/fwrite 系;文件同行的 0x2cad7/0x2fc85 也都是舊版位址。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/58-remake-live-verification-log.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-chapter-sweep-results.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30012"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1,
+          "25-battle-event-system.md": 24,
+          "27-combat-rules-and-validation-checklist.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 22,
+          "99-chapter-sweep-results.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
+    },
+    {
+      "wrong_address": "0x301ec",
+      "correct_address": "0x29867",
+      "wrong_semantic_claimed": "出發流程回傳 0 時的離開點",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x301ec 本身沒有入口訊號,位在 -0x6985 區段,0x29867 是強入口。佐證:舊 0x301ec 在舊 0x30012 函式尾端(0x301f4 之前 8 bytes);新 0x29867 同樣在新 0x2968d 函式內、0x2986f 之前 8 bytes,是 JMP 目標。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x301ec"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x301f4",
+      "correct_address": "0x2986f",
+      "wrong_semantic_claimed": "旅館服務 selector 2 的分支目標",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x301f4 本身沒有入口訊號,位在 -0x6985 區段,0x2986f 是強入口。佐證:新版 0x2986f 由 0x2fc85-0x6985=0x29300 的 selector 分派抵達;與 selector 1 的 0x30012→0x2968d 同一位移。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x301f4"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30437",
+      "correct_address": "0x29ab2",
+      "wrong_semantic_claimed": "存檔槽選單的 selection renderer",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x30437 本身沒有入口訊號,位在 -0x6985 區段,0x29ab2 是強入口。佐證:新版 0x29ab2 被新 0x29bcb(=0x30550-0x6985)呼叫。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30437"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 2,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x30550",
+      "correct_address": "0x29bcb",
+      "wrong_semantic_claimed": "讀檔:存檔槽選單",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x30550 本身沒有入口訊號,位在 -0x6985 區段,0x29bcb 是強入口。佐證:新版 0x29bcb 的呼叫端就是文件同段列的 0x25ebb/0x26130 分派(這幾個在未位移區段,新舊同址)。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x30550"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 3,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x311dc",
+      "correct_address": "0x2a857",
+      "wrong_semantic_claimed": "轉職候選三列可見角色清單(上下 bounded scroll)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x311dc 本身沒有入口訊號,位在 -0x6985 區段,0x2a857 是強入口。佐證:新版 0x2a857 與 0x2d85f-0x6985=0x26eda(menu_read_key)、0x31385-0x6985 有直接 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/42-re-vs-remake-gap-audit.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x311dc"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 1,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31793",
+      "correct_address": "0x2ae0e",
+      "wrong_semantic_claimed": "轉職候選/target resolver(特殊 portrait 0x34 固定查 item 0x5a)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x31793 本身沒有入口訊號,位在 -0x6985 區段,0x2ae0e 是強入口。佐證:新版 0x2ae0e 的結構性名稱是 wrapper(find_item_slot(_, _), find_item_slot(_, 0x5a)),與文件的 0x5a 常數逐字相同。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/02-game-data-reference.md",
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/42-re-vs-remake-gap-audit.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31793"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "02-game-data-reference.md": 1,
+          "32-item-combat-stats-re.md": 10,
+          "42-re-vs-remake-gap-audit.md": 1,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x31860",
+      "correct_address": "0x2aedb",
+      "wrong_semantic_claimed": "掃角色 8 個 inventory slot 找 item id",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x31860 本身沒有入口訊號,位在 -0x6985 區段,0x2aedb 是強入口。佐證:新版 0x2aedb 已命名 find_item_slot(位元組證據見 function_names.json)。",
+      "root_cause": "舊版 EXE 位址:城鎮/教會/商店/存檔區段(0x2cxxx–0x32xxx)在新版整段低 0x6985(同區段已登 22 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/58-remake-live-verification-log.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x31860"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 2,
+          "50-cutscene-script-system-design.md": 2,
+          "56-fd2-remake-sdd.md": 2,
+          "58-remake-live-verification-log.md": 6,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x342b5",
+      "correct_address": "0x3460b",
+      "wrong_semantic_claimed": "事件 handler(event 1)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x342b5 本身沒有入口訊號,位在 +0x356 區段,0x3460b 是強入口。佐證:新版事件跳表 0x51b91+1*4 = 0x51b95 的 fixup 指向 0x3460b(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x342b5"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3431d",
+      "correct_address": "0x34673",
+      "wrong_semantic_claimed": "事件 handler(event 2)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x3431d 本身沒有入口訊號,位在 +0x356 區段,0x34673 是強入口。佐證:新版事件跳表 0x51b91+2*4 = 0x51b99 的 fixup 指向 0x34673(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3431d"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x34377",
+      "correct_address": "0x346cd",
+      "wrong_semantic_claimed": "事件 handler(event 3)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x34377 本身沒有入口訊號,位在 +0x356 區段,0x346cd 是強入口。佐證:新版事件跳表 0x51b91+3*4 = 0x51b9d 的 fixup 指向 0x346cd(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x34377"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x344c2",
+      "correct_address": "0x34818",
+      "wrong_semantic_claimed": "事件 handler(event 9)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x344c2 本身沒有入口訊號,位在 +0x356 區段,0x34818 是強入口。佐證:新版事件跳表 0x51b91+9*4 = 0x51bb5 的 fixup 指向 0x34818(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/26-per-chapter-event-handlers.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x344c2"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "26-per-chapter-event-handlers.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x345ea",
+      "correct_address": "0x34940",
+      "wrong_semantic_claimed": "事件 handler(event 14)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x345ea 本身沒有入口訊號,位在 +0x356 區段,0x34940 是強入口。佐證:新版事件跳表 0x51b91+14*4 = 0x51bc9 的 fixup 指向 0x34940(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x345ea"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "99-chapter-sweep-results.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x349d9",
+      "correct_address": "0x34d2f",
+      "wrong_semantic_claimed": "事件 handler(event 27)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x349d9 本身沒有入口訊號,位在 +0x356 區段,0x34d2f 是強入口。佐證:新版事件跳表 0x51b91+27*4 = 0x51bfd 的 fixup 指向 0x34d2f(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x349d9"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x34a0e",
+      "correct_address": "0x34d64",
+      "wrong_semantic_claimed": "事件 handler(event 28)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x34a0e 本身沒有入口訊號,位在 +0x356 區段,0x34d64 是強入口。佐證:新版事件跳表 0x51b91+28*4 = 0x51c01 的 fixup 指向 0x34d64(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x34a0e"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x34ff0",
+      "correct_address": "0x35346",
+      "wrong_semantic_claimed": "事件 handler(event 41)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x34ff0 本身沒有入口訊號,位在 +0x356 區段,0x35346 是強入口。佐證:新版事件跳表 0x51b91+41*4 = 0x51c35 的 fixup 指向 0x35346(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/50-cutscene-script-system-design.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x34ff0"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35112",
+      "correct_address": "0x35468",
+      "wrong_semantic_claimed": "事件 handler(event 47)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35112 本身沒有入口訊號,位在 +0x356 區段,0x35468 是強入口。佐證:新版事件跳表 0x51b91+47*4 = 0x51c4d 的 fixup 指向 0x35468(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35112"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35318",
+      "correct_address": "0x3566e",
+      "wrong_semantic_claimed": "event63 staging 共用尾段(STAGING_SHARED_TAIL)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35318 本身沒有入口訊號,位在 +0x356 區段,0x3566e 是強入口。佐證:doc98 L2226 自己記 +0x356;新版 0x3566e 是 event73 等 handler 的 jmp 尾呼叫目標。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/98-tooling-infrastructure.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35318"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "98-tooling-infrastructure.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35641",
+      "correct_address": "0x35997",
+      "wrong_semantic_claimed": "事件 handler(event 59)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35641 本身沒有入口訊號,位在 +0x356 區段,0x35997 是強入口。佐證:新版事件跳表 0x51b91+59*4 = 0x51c7d 的 fixup 指向 0x35997(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35641"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "91-worklist.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x359c8",
+      "correct_address": "0x35d1e",
+      "wrong_semantic_claimed": "事件 handler(event 66)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x359c8 本身沒有入口訊號,位在 +0x356 區段,0x35d1e 是強入口。佐證:新版事件跳表 0x51b91+66*4 = 0x51c99 的 fixup 指向 0x35d1e(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x359c8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35a2f",
+      "correct_address": "0x35d85",
+      "wrong_semantic_claimed": "事件 handler(event 67)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35a2f 本身沒有入口訊號,位在 +0x356 區段,0x35d85 是強入口。佐證:新版事件跳表 0x51b91+67*4 = 0x51c9d 的 fixup 指向 0x35d85(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35a2f"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35a48",
+      "correct_address": "0x35d9e",
+      "wrong_semantic_claimed": "事件 handler(event 68)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35a48 本身沒有入口訊號,位在 +0x356 區段,0x35d9e 是強入口。佐證:新版事件跳表 0x51b91+68*4 = 0x51ca1 的 fixup 指向 0x35d9e(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35a48"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35ab8",
+      "correct_address": "0x35e0e",
+      "wrong_semantic_claimed": "事件 handler(event 69)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35ab8 本身沒有入口訊號,位在 +0x356 區段,0x35e0e 是強入口。佐證:新版事件跳表 0x51b91+69*4 = 0x51ca5 的 fixup 指向 0x35e0e(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35ab8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35b05",
+      "correct_address": "0x35e5b",
+      "wrong_semantic_claimed": "事件 handler(event 70)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35b05 本身沒有入口訊號,位在 +0x356 區段,0x35e5b 是強入口。佐證:新版事件跳表 0x51b91+70*4 = 0x51ca9 的 fixup 指向 0x35e5b(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35b05"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35b6b",
+      "correct_address": "0x35ec1",
+      "wrong_semantic_claimed": "事件 handler(event 71)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35b6b 本身沒有入口訊號,位在 +0x356 區段,0x35ec1 是強入口。佐證:新版事件跳表 0x51b91+71*4 = 0x51cad 的 fixup 指向 0x35ec1(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35b6b"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35bf2",
+      "correct_address": "0x35f48",
+      "wrong_semantic_claimed": "事件 handler(event 72)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35bf2 本身沒有入口訊號,位在 +0x356 區段,0x35f48 是強入口。佐證:新版事件跳表 0x51b91+72*4 = 0x51cb1 的 fixup 指向 0x35f48(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35bf2"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35c23",
+      "correct_address": "0x35f79",
+      "wrong_semantic_claimed": "事件 handler(event 73)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35c23 本身沒有入口訊號,位在 +0x356 區段,0x35f79 是強入口。佐證:新版事件跳表 0x51b91+73*4 = 0x51cb5 的 fixup 指向 0x35f79(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35c23"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35c32",
+      "correct_address": "0x35f88",
+      "wrong_semantic_claimed": "事件 handler(event 74)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35c32 本身沒有入口訊號,位在 +0x356 區段,0x35f88 是強入口。佐證:新版事件跳表 0x51b91+74*4 = 0x51cb9 的 fixup 指向 0x35f88(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35c32"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35c79",
+      "correct_address": "0x35fcf",
+      "wrong_semantic_claimed": "事件 handler(event 75)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35c79 本身沒有入口訊號,位在 +0x356 區段,0x35fcf 是強入口。佐證:新版事件跳表 0x51b91+75*4 = 0x51cbd 的 fixup 指向 0x35fcf(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35c79"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1,
+          "99-chapter-sweep-results.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35e5a",
+      "correct_address": "0x361b0",
+      "wrong_semantic_claimed": "palette pulse(固定 0x11df2(0,255,delta) 0→63、hold、62→0)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35e5a 本身沒有入口訊號,位在 +0x356 區段,0x361b0 是強入口。佐證:新版 0x361b0 已命名 palette_fade_in_hold_out,7 個直接呼叫端。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35e5a"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "50-cutscene-script-system-design.md": 2,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35ee6",
+      "correct_address": "0x3623c",
+      "wrong_semantic_claimed": "事件 handler(event 79)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35ee6 本身沒有入口訊號,位在 +0x356 區段,0x3623c 是強入口。佐證:新版事件跳表 0x51b91+79*4 = 0x51ccd 的 fixup 指向 0x3623c(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35ee6"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35f5a",
+      "correct_address": "0x362b0",
+      "wrong_semantic_claimed": "事件 handler(event 80)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35f5a 本身沒有入口訊號,位在 +0x356 區段,0x362b0 是強入口。佐證:新版事件跳表 0x51b91+80*4 = 0x51cd1 的 fixup 指向 0x362b0(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/99-chapter-sweep-results.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35f5a"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1,
+          "99-chapter-sweep-results.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35f6f",
+      "correct_address": "0x362c5",
+      "wrong_semantic_claimed": "事件 handler(event 81)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35f6f 本身沒有入口訊號,位在 +0x356 區段,0x362c5 是強入口。佐證:新版事件跳表 0x51b91+81*4 = 0x51cd5 的 fixup 指向 0x362c5(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35f6f"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x35f92",
+      "correct_address": "0x362e8",
+      "wrong_semantic_claimed": "事件 handler(event 82)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x35f92 本身沒有入口訊號,位在 +0x356 區段,0x362e8 是強入口。佐證:新版事件跳表 0x51b91+82*4 = 0x51cd9 的 fixup 指向 0x362e8(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x35f92"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "11-enemy-ai.md": 2,
+          "25-battle-event-system.md": 2,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x360c0",
+      "correct_address": "0x36416",
+      "wrong_semantic_claimed": "事件 handler(event 84)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x360c0 本身沒有入口訊號,位在 +0x356 區段,0x36416 是強入口。佐證:新版事件跳表 0x51b91+84*4 = 0x51ce1 的 fixup 指向 0x36416(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x360c0"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x360d8",
+      "correct_address": "0x3642e",
+      "wrong_semantic_claimed": "事件 handler(event 85)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x360d8 本身沒有入口訊號,位在 +0x356 區段,0x3642e 是強入口。佐證:新版事件跳表 0x51b91+85*4 = 0x51ce5 的 fixup 指向 0x3642e(Watcom 序頭);文件列的 event 編號/呼叫次序與該 slot 相同。舊位址在新版落在別的 handler 中段。",
+      "root_cause": "舊版 EXE 位址:事件 handler 區段 0x34xxx–0x36xxx 在新版整段高 0x356(doc25 §10 同一現象;EDITION_MOVED unit_inactive)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x360d8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x36cd7",
+      "correct_address": "0x3702f",
+      "wrong_semantic_claimed": "Watcom 堆疊探測 __STK(push N; call 0x36cd7)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x36cd7 本身沒有入口訊號,位在 +0x358 區段,0x3702f 是強入口。佐證:新版 __STK = 0x3702f(本工具的 STACK_PROBE,541 個序頭都呼叫它)。",
+      "root_cause": "舊版 EXE 位址:0x36cxx–0x374xx(__STK、memmove、free、delay thunk)在新版高 0x358(EDITION_MOVED delay 0x375b2→0x3790a)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/36-sfx-audio-data.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x36cd7"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1,
+          "25-battle-event-system.md": 1,
+          "35-battle-animation-rendering.md": 4,
+          "36-sfx-audio-data.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x373c4",
+      "correct_address": "0x3771c",
+      "wrong_semantic_claimed": "present 用 memcpy helper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x373c4 本身沒有入口訊號,位在 +0x358 區段,0x3771c 是強入口。佐證:新版 0x3771c 已命名 memmove;被 0x11eb0 present 原語呼叫。",
+      "root_cause": "舊版 EXE 位址:0x36cxx–0x374xx(__STK、memmove、free、delay thunk)在新版高 0x358(EDITION_MOVED delay 0x375b2→0x3790a)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x373c4"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 6,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x37416",
+      "correct_address": "0x3776e",
+      "wrong_semantic_claimed": "free",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x37416 本身沒有入口訊號,位在 +0x358 區段,0x3776e 是強入口。佐證:新版 0x3776e 是 heap_free。",
+      "root_cause": "舊版 EXE 位址:0x36cxx–0x374xx(__STK、memmove、free、delay thunk)在新版高 0x358(EDITION_MOVED delay 0x375b2→0x3790a)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x37416"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x375b2",
+      "correct_address": "0x3790a",
+      "wrong_semantic_claimed": "delay(幀間延遲)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x375b2 本身沒有入口訊號,位在 +0x358 區段,0x3790a 是強入口。佐證:EDITION_MOVED:delay 舊 0x375b2 → 新 0x3790a(同一呼叫點在兩版分別呼叫的位址)。",
+      "root_cause": "舊版 EXE 位址:0x36cxx–0x374xx(__STK、memmove、free、delay thunk)在新版高 0x358(EDITION_MOVED delay 0x375b2→0x3790a)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/39-ani-afm-format.md",
+        "docs/knowledge-base/47-intro-handler-full-transcript.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/98-tooling-infrastructure.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x375b2"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "39-ani-afm-format.md": 6,
+          "47-intro-handler-full-transcript.md": 3,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "98-tooling-infrastructure.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x377a4",
+      "correct_address": "0x37af4",
+      "wrong_semantic_claimed": "__CHP(fnstcw、RC=11b、frndint 後 restore)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x377a4 本身沒有入口訊號,位在 +0x350 區段,0x37af4 是強入口。佐證:新版 0x37af4 本體 fnstcw [esp]; mov byte [esp+1],0x1f; fldcw,逐字對應。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x377a4"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x377d9",
+      "correct_address": "0x37b29",
+      "wrong_semantic_claimed": "數值格式化(itoa)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x377d9 本身沒有入口訊號,位在 +0x350 區段,0x37b29 是強入口。佐證:新版 0x37b29 已命名 sprintf;被 0x160a5、0x187d6 呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/14-text-control-codes.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x377d9"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "14-text-control-codes.md": 1,
+          "35-battle-animation-rendering.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x37805",
+      "correct_address": "0x37b55",
+      "wrong_semantic_claimed": "數值/字串格式化 helper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x37805 本身沒有入口訊號,位在 +0x350 區段,0x37b55 是強入口。佐證:新版 0x37b55 字串掃描 leaf,被 0x160a5 呼叫(與 0x377d9 同行)。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/14-text-control-codes.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x37805"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "14-text-control-codes.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x391d1",
+      "correct_address": "0x39521",
+      "wrong_semantic_claimed": "AIL_init_sample 呼叫目標",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x391d1 本身沒有入口訊號,位在 +0x350 區段,0x39521 是強入口。佐證:新版 0x39521 是 AIL_init_sample(AIL_DEBUG 字串自名);doc36 L1500 已自行更正。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x391d1"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "36-sfx-audio-data.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x393c6",
+      "correct_address": "0x39716",
+      "wrong_semantic_claimed": "AIL_set_sample_type wrapper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x393c6 本身沒有入口訊號,位在 +0x350 區段,0x39716 是強入口。佐證:新版 0x39716 是 AIL_set_sample_type。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x393c6"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "36-sfx-audio-data.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x395fc",
+      "correct_address": "0x3994c",
+      "wrong_semantic_claimed": "AIL_set_sample_playback_rate wrapper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x395fc 本身沒有入口訊號,位在 +0x350 區段,0x3994c 是強入口。佐證:新版 0x3994c 是 AIL_set_sample_playback_rate。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x395fc"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "36-sfx-audio-data.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x3dccd",
+      "correct_address": "0x3e01d",
+      "wrong_semantic_claimed": "delay thunk 的實際目標(busy-wait)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x3dccd 本身沒有入口訊號,位在 +0x350 區段,0x3e01d 是強入口。佐證:新版 delay 0x3790a = jmp 0x3e01d,0x3e01d = 0x3dccd+0x350。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/39-ani-afm-format.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x3dccd"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "39-ani-afm-format.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4dbb9",
+      "correct_address": "0x4df09",
+      "wrong_semantic_claimed": "存檔 byte-sum checksum",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4dbb9 本身沒有入口訊號,位在 +0x350 區段,0x4df09 是強入口。佐證:新版 0x4df09(leaf_ptr_get)被 0x2968d(=0x30012-0x6985)呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4dbb9"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 1,
+          "25-battle-event-system.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4dbd8",
+      "correct_address": "0x4df28",
+      "wrong_semantic_claimed": "存檔 rolling XOR",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4dbd8 本身沒有入口訊號,位在 +0x350 區段,0x4df28 是強入口。佐證:新版 0x4df28(leaf_ptr_rw)被 0x2968d(=0x30012-0x6985)與 0x2602c/0x26098 reader 呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4dbd8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 2,
+          "25-battle-event-system.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4de56",
+      "correct_address": "0x4e1a6",
+      "wrong_semantic_claimed": "24×24 RLE palette-band blit((index&7)+band)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4de56 本身沒有入口訊號,位在 +0x350 區段,0x4e1a6 是強入口。佐證:新版 0x4e1a6 本體 lodsb; and al,7; add al,dl(dl=0x18),正是文件寫的 opaque-index 變換;被 draw_unit_sprite(0x127e0)呼叫。09-18 審為語意不合是拿 doc11 的舊版位址比對,改登勘誤。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4de56"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 4,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 6
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4deda",
+      "correct_address": "0x4e22a",
+      "wrong_semantic_claimed": "24×24 tile raw indexed RLE blit",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4deda 本身沒有入口訊號,位在 +0x350 區段,0x4e22a 是強入口。佐證:新版 0x4e22a 已命名 blit_tile24_rle;被 draw_unit_sprite(0x127e0)等 9 個文件同行位址呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/01-container-and-asset-formats.md",
+        "docs/knowledge-base/05-image-compression-format.md",
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/36-sfx-audio-data.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4deda"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "01-container-and-asset-formats.md": 1,
+          "05-image-compression-format.md": 1,
+          "25-battle-event-system.md": 1,
+          "36-sfx-audio-data.md": 1,
+          "56-fd2-remake-sdd.md": 7,
+          "91-worklist.md": 11,
+          "SESSION-HANDOFF-2026-07-06.md": 16
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e031",
+      "correct_address": "0x4e381",
+      "wrong_semantic_claimed": "鍵盤緩衝 head→tail word copy(清空待處理輸入)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e031 本身沒有入口訊號,位在 +0x350 區段,0x4e381 是強入口。佐證:新版 0x4e381 已命名 kbd_flush。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/24-callgraph-analysis-log.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e031"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "23-boot-title-and-scenario-flow.md": 4,
+          "24-callgraph-analysis-log.md": 1,
+          "56-fd2-remake-sdd.md": 2,
+          "91-worklist.md": 3,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e0dc",
+      "correct_address": "0x4e42c",
+      "wrong_semantic_claimed": "尋路:右左下上順序遞迴",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e0dc 本身沒有入口訊號,位在 +0x350 區段,0x4e42c 是強入口。佐證:新版 0x4e42c 與 0x4e390(=0x4e040+0x350)、0x4e4be(=0x4e16e+0x350)有 CALL 邊。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e0dc"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "11-enemy-ai.md": 2,
+          "56-fd2-remake-sdd.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e16e",
+      "correct_address": "0x4e4be",
+      "wrong_semantic_claimed": "尋路:檢查 0x40/0x80 與地形成本的鄰格消費端",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e16e 本身沒有入口訊號,位在 +0x350 區段,0x4e4be 是強入口。佐證:新版 0x4e4be 被 0x4e0dc+0x350=0x4e42c 呼叫(文件同行的 0x4e040 已登勘誤 →0x4e390)。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e16e"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "11-enemy-ai.md": 2,
+          "56-fd2-remake-sdd.md": 3,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e48d",
+      "correct_address": "0x4e7dd",
+      "wrong_semantic_claimed": "mobility increment 表 helper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e48d 本身沒有入口訊號,位在 +0x350 區段,0x4e7dd 是強入口。佐證:新版 0x4e7dd = leaf_ref[0x615fe];被 0x31602-0x6985(已登勘誤)呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e48d"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e4b9",
+      "correct_address": "0x4e809",
+      "wrong_semantic_claimed": "目前章節城鎮資料 row helper",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e4b9 本身沒有入口訊號,位在 +0x350 區段,0x4e809 是強入口。佐證:新版 0x4e809(row31_ptr_6238d)被 0x2cad7/0x2d093 的新版對應(已登勘誤)呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/12-music-playback-and-scene.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e4b9"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 2,
+          "50-cutscene-script-system-design.md": 1,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e4d1",
+      "correct_address": "0x4e821",
+      "wrong_semantic_claimed": "11-byte growth record selector(0x620a1 + portrait*11)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e4d1 本身沒有入口訊號,位在 +0x350 區段,0x4e821 是強入口。佐證:新版 0x4e821 = leaf_ref[0x620a1],表基底與文件逐字相同。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e4d1"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "32-item-combat-stats-re.md": 2,
+          "56-fd2-remake-sdd.md": 3,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e4e8",
+      "correct_address": "0x4e838",
+      "wrong_semantic_claimed": "24-byte lower_class record helper(0x61da1)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e4e8 本身沒有入口訊號,位在 +0x350 區段,0x4e838 是強入口。佐證:新版 0x4e838 = leaf_ref[0x61da1]。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e4e8"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e4ff",
+      "correct_address": "0x4e84f",
+      "wrong_semantic_claimed": "10-byte high_class record helper(0x61af9)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e4ff 本身沒有入口訊號,位在 +0x350 區段,0x4e84f 是強入口。佐證:新版 0x4e84f = leaf_ref[0x61af9]。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/92-m5-normal-playthrough-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e4ff"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 2,
+          "92-m5-normal-playthrough-log.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e516",
+      "correct_address": "0x4e866",
+      "wrong_semantic_claimed": "row 指標 helper(0x1598a/0x15311 以索引呼叫)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e516 本身沒有入口訊號,位在 +0x350 區段,0x4e866 是強入口。佐證:新版 0x4e866(row7_ptr_619fd)被 0x1598a/0x15311 等 7 個文件同行位址呼叫。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/13-battle-menu-system.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e516"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "11-enemy-ai.md": 3,
+          "13-battle-menu-system.md": 1,
+          "56-fd2-remake-sdd.md": 6,
+          "57-ui-evidence-matrix.md": 4,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e56c",
+      "correct_address": "0x4e8bc",
+      "wrong_semantic_claimed": "item_effect row 指標(row+0x10 是 command byte)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e56c 本身沒有入口訊號,位在 +0x350 區段,0x4e8bc 是強入口。佐證:新版 0x4e8bc 已命名 item_effect_row_ptr;15 條 CALL 邊與文件同行位址一致。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/11-enemy-ai.md",
+        "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/37-spell-effect-figani.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e56c"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "11-enemy-ai.md": 3,
+          "27-combat-rules-and-validation-checklist.md": 2,
+          "32-item-combat-stats-re.md": 9,
+          "37-spell-effect-figani.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 4
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e85b",
+      "correct_address": "0x4ebab",
+      "wrong_semantic_claimed": "LMI 逐像素合成(經 0x4e916 decode)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e85b 本身沒有入口訊號,位在 +0x350 區段,0x4ebab 是強入口。佐證:新版 0x4ebab = wrapper(rle_c0_fetch_pixel()),而 0x4e916→0x4ec66 rle_c0_fetch_pixel 已登勘誤。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e85b"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "25-battle-event-system.md": 1,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e96f",
+      "correct_address": "0x4ecbf",
+      "wrong_semantic_claimed": "LMI 解壓(寫 width/height 後解碼)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e96f 本身沒有入口訊號,位在 +0x350 區段,0x4ecbf 是強入口。佐證:新版 0x4ecbf 本體把兩個參數以 stosw 寫成 width/height word 後進解碼迴圈。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/57-ui-evidence-matrix.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e96f"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "57-ui-evidence-matrix.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e9e4",
+      "correct_address": "0x4ed34",
+      "wrong_semantic_claimed": "transparent blit(index 0 preserve,stride 0x140)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "verify_address_claim_coverage.py --stale-edition:0x4e9e4 本身沒有入口訊號,位在 +0x350 區段,0x4ed34 是強入口。佐證:新版 0x4ed34 已命名 blit_image_transparent。",
+      "root_cause": "舊版 EXE 位址:尾段 0x37xxx–0x4exxx(CRT、AIL、繪圖原語)在新版整段高 0x350(同區段已登 16 對勘誤)。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/57-ui-evidence-matrix.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/99-reflections-log.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-09-19 續三十:舊版位址全面掃描",
+      "still_pending": "知識庫原文未逐一改寫;讀者遇到字面舊位址時以本條換算。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e9e4"
+        ],
+        "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
+        "baseline": {
+          "56-fd2-remake-sdd.md": 1,
+          "57-ui-evidence-matrix.md": 2,
+          "91-worklist.md": 1,
+          "99-reflections-log.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
     }
   ]
 }
