@@ -2386,6 +2386,13 @@ function 起點,避免漏掉「命中同一函式但不是入口那個 byte」�
 glyph blit」)**其實是同一個 Ghidra function**(`FUN_0004e98d`,`0x4e98d..0x4eb47`,442 bytes)
 ——過去分別記錄成兩個不同「原語」,現在確認是同一支函式裡的兩個內部位址,不是兩支獨立函式。
 
+> **2026-09-19 訂正(靜態 RE)**:上面這個「第一個具體發現」與本表的命中數,用的是**舊版 EXE 位址**。尾段 `0x37xxx–0x4exxx`
+> 在新版整體高 `0x350`:`0x4e9bb` → `0x4ed0b`(`blit_raw_image`)、`0x4ea2a` → `0x4ed7a`(`draw_glyph16`)、`0x4e8af` → `0x4ebff`
+> (`blit_rle_image`)、`0x4e8e1` → `0x4ec31`(鏡像版)、`0x4e916` → `0x4ec66`(RLE 取值)、`0x37795` → `0x37ae5`(`outp`)。
+> 舊位址在新版 EXE 都落在別的函式中段 —— `0x4e9bb`/`0x4ea2a` 同落在 `0x4e98d` 裡,所以「兩者是同一支函式」是位址錯位造成的,
+> 它們其實是兩支不同的函式;`0x4e8af`/`0x4e8e1` 的「0 次命中」量的是錯的位置,不能當成「沒有執行」的證據。
+> 六筆已登記於 `known_address_errata.json`,詳見 doc14「2026-09-19 dialog 九參數」。
+
 **第二個具體發現(核心)**:**兩輪 trace 對 present/palette/DAC/FDTXT/glyph-blit 這五類「文字與
 螢幕更新」原語的命中結果完全一致(數字幾乎相同),但續六十六(正確涵蓋 CG 播放窗口的那次)對
 `0x4e63d`/`0x2921a`/`0x4e8af` 這整個「sprite/figure blit 家族」是徹底的零命中**——不是命中數

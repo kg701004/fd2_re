@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 258,
+  "total": 257,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 191,
+   "wrapper": 190,
    "leaf_global": 11,
    "leaf_ptr": 13,
    "leaf_pure": 9
@@ -126,13 +126,6 @@
    "round": 1,
    "callers": 1,
    "argc": 2
-  },
-  "0x164e8": {
-   "kind": "wrapper",
-   "name": "wrapper(draw_dialog_cell(_), play_sfx(_, 2, 1), wait_ticks(1))",
-   "round": 1,
-   "callers": 2,
-   "argc": 0
   },
   "0x16e24": {
    "kind": "wrapper",

@@ -461,7 +461,8 @@
           "56-fd2-remake-sdd.md": 5,
           "91-worklist.md": 3,
           "98-tooling-infrastructure.md": 1,
-          "SESSION-HANDOFF-2026-07-06.md": 3
+          "SESSION-HANDOFF-2026-07-06.md": 3,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -698,7 +699,9 @@
           "58-remake-live-verification-log.md": 1,
           "91-worklist.md": 24,
           "98-tooling-infrastructure.md": 1,
-          "SESSION-HANDOFF-2026-07-06.md": 18
+          "SESSION-HANDOFF-2026-07-06.md": 18,
+          "SESSION-HANDOFF-2026-09-18.md": 1,
+          "SESSION-HANDOFF-2026-09-19.md": 1
         }
       }
     },
@@ -2055,7 +2058,8 @@
           "98-tooling-infrastructure.md": 1,
           "99-chapter-sweep-results.md": 1,
           "99-reflections-log.md": 2,
-          "SESSION-HANDOFF-2026-07-06.md": 7
+          "SESSION-HANDOFF-2026-07-06.md": 7,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -2085,7 +2089,8 @@
           "56-fd2-remake-sdd.md": 1,
           "91-worklist.md": 3,
           "99-reflections-log.md": 2,
-          "SESSION-HANDOFF-2026-07-06.md": 3
+          "SESSION-HANDOFF-2026-07-06.md": 3,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -2115,7 +2120,8 @@
           "56-fd2-remake-sdd.md": 2,
           "91-worklist.md": 2,
           "99-reflections-log.md": 1,
-          "SESSION-HANDOFF-2026-07-06.md": 4
+          "SESSION-HANDOFF-2026-07-06.md": 4,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -2152,7 +2158,8 @@
           "98-tooling-infrastructure.md": 1,
           "99-reflections-log.md": 2,
           "SESSION-HANDOFF-2026-07-06.md": 8,
-          "SESSION-HANDOFF-2026-09-03.md": 1
+          "SESSION-HANDOFF-2026-09-03.md": 1,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -2184,7 +2191,8 @@
           "58-remake-live-verification-log.md": 1,
           "91-worklist.md": 5,
           "98-tooling-infrastructure.md": 1,
-          "SESSION-HANDOFF-2026-07-06.md": 4
+          "SESSION-HANDOFF-2026-07-06.md": 4,
+          "SESSION-HANDOFF-2026-09-18.md": 1
         }
       }
     },
@@ -2214,6 +2222,153 @@
           "91-worklist.md": 2,
           "98-tooling-infrastructure.md": 1,
           "99-reflections-log.md": 2,
+          "SESSION-HANDOFF-2026-07-06.md": 5,
+          "SESSION-HANDOFF-2026-09-18.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4ea2a",
+      "correct_address": "0x4ed7a",
+      "wrong_semantic_claimed": "16×16 1bpp glyph blit(font, glyph, dst, stride, 字色, 陰影色, 底色)(doc14 L50/L94、doc35 L262/L308/L375、doc56 L195)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "新版 0x4ea2a 落在 0x4e98d 函式中段;0x4ed7a 是入口,本體把 7 個參數存進 0x627ac/0x627b0/0x627a8/0x627a3/0x627a5/0x627a7/0x627a6,底色非 0 時先以 rep stosd 填 16×16 底,再依 font+glyph*32 的點陣寫字色、下方與左下寫陰影色 —— 與 doc35 L262 記的 7 參數簽名逐一吻合。dialog(0x15f84)本體兩處 call 0x4ed7a,沒有任何 call 0x4ea2a。 發現經過:讀 dialog 的參數時,doc14 說字形由 0x4EA2A 畫,本體卻只呼叫 0x4ed7a;差值 +0x350 即尾段版本差,同一段 doc35 的其他原語位址加 0x350 也逐一落在今天命名的函式上。",
+      "root_cause": "舊版 EXE 位址:0x37xxx–0x4exxx 尾段在新版整體高 0x350(見勘誤表既有的同位移配對)。",
+      "affected_docs": [
+        "docs/knowledge-base/14-text-control-codes.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "2026-09-19 dialog 九參數",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4ea2a"
+        ],
+        "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "14-text-control-codes.md": 2,
+          "35-battle-animation-rendering.md": 7,
+          "56-fd2-remake-sdd.md": 3,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 4,
+          "SESSION-HANDOFF-2026-07-06.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e8af",
+      "correct_address": "0x4ebff",
+      "wrong_semantic_claimed": "RLE 逐列 blit 原語(正向)(doc35 L241/L265/L288/L372/L2380)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "新版 0x4e8af 落在 0x4e8a5 函式中段;0x4ebff(blit_rle_image)開頭 lodsw 寬、lodsw 高,逐列呼叫 0x4ec66 取像素 —— 與 doc35 L241 的描述吻合。 發現經過:讀 dialog 的參數時,doc14 說字形由 0x4EA2A 畫,本體卻只呼叫 0x4ed7a;差值 +0x350 即尾段版本差,同一段 doc35 的其他原語位址加 0x350 也逐一落在今天命名的函式上。",
+      "root_cause": "舊版 EXE 位址:0x37xxx–0x4exxx 尾段在新版整體高 0x350(見勘誤表既有的同位移配對)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "2026-09-19 dialog 九參數",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e8af"
+        ],
+        "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "14-text-control-codes.md": 4,
+          "35-battle-animation-rendering.md": 14,
+          "36-sfx-audio-data.md": 1,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 5,
+          "SESSION-HANDOFF-2026-07-06.md": 5
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e8e1",
+      "correct_address": "0x4ec31",
+      "wrong_semantic_claimed": "RLE 逐列 blit(水平鏡像)(doc35 L265/L288/L372/L2381)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "新版 0x4e8e1 落在 0x4e8d3 函式中段;0x4ec31(blit_rle_image_mirrored)與 0x4ebff 同形、每列由右到左寫。 發現經過:讀 dialog 的參數時,doc14 說字形由 0x4EA2A 畫,本體卻只呼叫 0x4ed7a;差值 +0x350 即尾段版本差,同一段 doc35 的其他原語位址加 0x350 也逐一落在今天命名的函式上。",
+      "root_cause": "舊版 EXE 位址:0x37xxx–0x4exxx 尾段在新版整體高 0x350(見勘誤表既有的同位移配對)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "2026-09-19 dialog 九參數",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e8e1"
+        ],
+        "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "14-text-control-codes.md": 4,
+          "35-battle-animation-rendering.md": 7,
+          "56-fd2-remake-sdd.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e9bb",
+      "correct_address": "0x4ed0b",
+      "wrong_semantic_claimed": "cell blit 原語(doc35 L249/L374/L2375)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "新版 0x4e9bb 落在 0x4e98d 函式中段;0x4ed0b(blit_raw_image)是入口,且 0x1685c(blit_raw_cell)正是 call 0x4ed0b —— doc35 L249 寫的「0x1685c → 0x4e9bb」。 發現經過:讀 dialog 的參數時,doc14 說字形由 0x4EA2A 畫,本體卻只呼叫 0x4ed7a;差值 +0x350 即尾段版本差,同一段 doc35 的其他原語位址加 0x350 也逐一落在今天命名的函式上。",
+      "root_cause": "舊版 EXE 位址:0x37xxx–0x4exxx 尾段在新版整體高 0x350(見勘誤表既有的同位移配對)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "2026-09-19 dialog 九參數",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e9bb"
+        ],
+        "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 8,
+          "56-fd2-remake-sdd.md": 1,
+          "58-remake-live-verification-log.md": 1,
+          "91-worklist.md": 1,
+          "SESSION-HANDOFF-2026-07-06.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x4e916",
+      "correct_address": "0x4ec66",
+      "wrong_semantic_claimed": "RLE getbyte codec(doc35 L288/L2357)",
+      "discovered_date": "2026-09-19",
+      "discovery_method": "新版 0x4e916 落在 0x4e8d3 函式中段;0x4ec66(rle_c0_fetch_pixel)是 blit_rle_image 每像素呼叫的 PCX 式 0xC0 RLE 取值。 發現經過:讀 dialog 的參數時,doc14 說字形由 0x4EA2A 畫,本體卻只呼叫 0x4ed7a;差值 +0x350 即尾段版本差,同一段 doc35 的其他原語位址加 0x350 也逐一落在今天命名的函式上。",
+      "root_cause": "舊版 EXE 位址:0x37xxx–0x4exxx 尾段在新版整體高 0x350(見勘誤表既有的同位移配對)。",
+      "affected_docs": [
+        "docs/knowledge-base/35-battle-animation-rendering.md"
+      ],
+      "correction_doc": "docs/knowledge-base/14-text-control-codes.md",
+      "correction_section": "2026-09-19 dialog 九參數",
+      "still_pending": "",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e916"
+        ],
+        "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 6,
+          "56-fd2-remake-sdd.md": 4,
+          "57-ui-evidence-matrix.md": 1,
+          "91-worklist.md": 6,
           "SESSION-HANDOFF-2026-07-06.md": 5
         }
       }

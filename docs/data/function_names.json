@@ -1949,6 +1949,130 @@
      "insn": "cmp eax, 1"
     }
    ]
+  },
+  {
+   "addr": "0x4ed7a",
+   "name": "draw_glyph16",
+   "summary": "(font, glyph, dst, stride, color, shadow, bg):bg 非 0 時先把 16×16 填成 bg;glyph==0xa 不畫;否則讀 font + glyph*32 的16×16 1bpp 點陣,每個 1 bit 寫 color,並在正下方與左下方寫 shadow。dialog 每個一般字元呼叫一次(游標 +16)。舊版位址 0x4ea2a(見勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x4ed99",
+     "insn": "mov word ptr [0x27a3], ax"
+    },
+    {
+     "at": "0x4edc0",
+     "insn": "or al, al"
+    },
+    {
+     "at": "0x4eddd",
+     "insn": "rep stosd dword ptr es:[edi], eax"
+    },
+    {
+     "at": "0x4edeb",
+     "insn": "cmp eax, 0xa"
+    },
+    {
+     "at": "0x4edf0",
+     "insn": "shl eax, 5"
+    },
+    {
+     "at": "0x4ee1e",
+     "insn": "mov byte ptr [edi], dl"
+    },
+    {
+     "at": "0x4ee20",
+     "insn": "mov byte ptr [ebx + edi], dh"
+    }
+   ]
+  },
+  {
+   "addr": "0x164e8",
+   "name": "typewriter_tick",
+   "summary": "dialog 逐字顯示時每個字元後呼叫一次:每 2 次推進嘴型影格 [0x53a10](0..3,3 畫成 1)並以 draw_dialog_cell 重貼,再以 play_sfx 播一次打字音、wait_ticks(1)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x164f8",
+     "insn": "cmp dword ptr [0x3a14], 2"
+    },
+    {
+     "at": "0x16507",
+     "insn": "cmp dword ptr [0x3a10], 4"
+    },
+    {
+     "at": "0x1652a",
+     "insn": "call 0x16559"
+    },
+    {
+     "at": "0x16546",
+     "insn": "call 0x25a96"
+    },
+    {
+     "at": "0x16550",
+     "insn": "call 0x17aa9"
+    }
+   ]
+  },
+  {
+   "addr": "0x15e9e",
+   "name": "decode_blit_transparent",
+   "summary": "(img, a2, stride, x, y):依 img 開頭的 u16 寬高配置 w*h+8 的暫存,以 0x4ecbf 解碼進暫存,再以 blit_image_transparent 貼到 y*stride + x + a2;回傳暫存指標(呼叫端負責釋放)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x15eb3",
+     "insn": "movsx ebx, word ptr [edi]"
+    },
+    {
+     "at": "0x15ed0",
+     "insn": "add esi, 8"
+    },
+    {
+     "at": "0x15ed4",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x15eed",
+     "insn": "call 0x4ecbf"
+    },
+    {
+     "at": "0x15eff",
+     "insn": "call 0x4ed34"
+    }
+   ]
+  },
+  {
+   "addr": "0x1aeb1",
+   "name": "draw_signed_number2",
+   "summary": "(dst, stride, value):value >= 0 畫資源 [0x53a81] 第 0x83 格、負數畫第 0x84 格並取絕對值(正負號字形),再於 +8 px 處以 draw_number 畫 2 位數(字形基底 0x1f)。",
+   "confidence": "static_re",
+   "date": "2026-09-19",
+   "evidence": [
+    {
+     "at": "0x1aebc",
+     "insn": "mov ebx, 0x83"
+    },
+    {
+     "at": "0x1aecc",
+     "insn": "mov ebx, 0x84"
+    },
+    {
+     "at": "0x1aed1",
+     "insn": "call 0x37932"
+    },
+    {
+     "at": "0x1af02",
+     "insn": "push 0x1f"
+    },
+    {
+     "at": "0x1af14",
+     "insn": "call 0x187d6"
+    }
+   ]
   }
  ]
 }
