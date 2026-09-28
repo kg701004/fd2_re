@@ -34752,6 +34752,22 @@
    "excerpt": "兩種都驗證不了公式。所以只在模擬器記憶體改數值(不動任何檔案),讓預測成為可檢查的具體數字。",
    "verdict": "benign",
    "note": "實驗設計的理由說明(為何改用受控數值),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5815,
+   "excerpt_sha1": "4c9918576587e46c7e2bd3a7763d5a42c176efe5",
+   "excerpt": "**未驗證。** 距離 ≠ 1 的分支(需要遠程攻方)與「沒有裝備武器」分支(`find_equipped_slot` 回 -1)這次沒有測;`+0x26` 的遊戲語意也沒有確定,",
+   "verdict": "benign",
+   "note": "列出本次未測的分支與未確定的語意,是範圍聲明而非遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5818,
+   "excerpt_sha1": "ffa99f8346a0683ee1cc4c0158f683fdcedd1539",
+   "excerpt": "**登錄。** `defender_can_counter` 升為 `verified_dynamic`(摘要補上本次量測與未測分支);doc27 表格下加註。",
+   "verdict": "benign",
+   "note": "登錄動作的簿記說明,不是遊戲事實主張"
   }
  ]
 }

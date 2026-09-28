@@ -3307,8 +3307,8 @@
   {
    "addr": "0x1f0dc",
    "name": "defender_can_counter",
-   "summary": "(attacker, defender):守方能反擊回 1,否則 -1。條件:守方 +0x26 為 0、兩者曼哈頓距離 == 1、守方有裝備武器且 row+0xb == 1。",
-   "confidence": "static_re",
+   "summary": "(attacker, defender):堆疊參數為兩者的單位序號;守方能反擊回 1,否則 -1。條件:守方 +0x26 為 0、兩者曼哈頓距離 == 1、守方有裝備武器(find_equipped_slot)且該武器 item_effect_row_ptr 列 +0xb == 1。2026-09-28 DOSBox-X 動態驗證(doc98 續四十二):雙方 AP19/DP0/HIT250/EV0,每組只改守方一個條件 —— +0x26=0、相鄰、道具 0(+0xb=1)兩次都反擊 17;+0x26=1 不反擊(斷點停在 0x1f117,EAX=1);道具 44(+0xb=2)不反擊(斷點停在 0x1f17a,EAX=2)。距離 ≠ 1 與未裝備武器兩個分支未測。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
     {
@@ -3330,6 +3330,10 @@
     {
      "at": "0x1f17a",
      "insn": "cmp eax, 1"
+    },
+    {
+     "at": "0x1f117",
+     "insn": "mov eax, 0xffffffff"
     }
    ]
   },
