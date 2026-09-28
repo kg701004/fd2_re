@@ -3804,6 +3804,2349 @@
      "insn": "cmp esi, 0xa"
     }
    ]
+  },
+  {
+   "addr": "0x21206",
+   "name": "command_handler_0",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x21227(_, 0, _, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d01",
+     "table": "0x51d01",
+     "index": 0
+    }
+   ]
+  },
+  {
+   "addr": "0x2134b",
+   "name": "command_handler_1",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 1 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d05",
+     "table": "0x51d01",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x21364",
+   "name": "command_handler_2",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 2 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d09",
+     "table": "0x51d01",
+     "index": 2
+    }
+   ]
+  },
+  {
+   "addr": "0x2137d",
+   "name": "command_handler_3",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 3 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d0d",
+     "table": "0x51d01",
+     "index": 3
+    }
+   ]
+  },
+  {
+   "addr": "0x21396",
+   "name": "command_handler_4",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 4 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x213b7(_, 4, _, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d11",
+     "table": "0x51d01",
+     "index": 4
+    }
+   ]
+  },
+  {
+   "addr": "0x21449",
+   "name": "command_handler_5",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 5 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d15",
+     "table": "0x51d01",
+     "index": 5
+    }
+   ]
+  },
+  {
+   "addr": "0x21462",
+   "name": "command_handler_6",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 6 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d19",
+     "table": "0x51d01",
+     "index": 6
+    }
+   ]
+  },
+  {
+   "addr": "0x2147b",
+   "name": "command_handler_7",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 7 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d1d",
+     "table": "0x51d01",
+     "index": 7
+    }
+   ]
+  },
+  {
+   "addr": "0x21494",
+   "name": "command_handler_8",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 8 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d21",
+     "table": "0x51d01",
+     "index": 8
+    }
+   ]
+  },
+  {
+   "addr": "0x214ad",
+   "name": "command_handler_9",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 9 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d25",
+     "table": "0x51d01",
+     "index": 9
+    }
+   ]
+  },
+  {
+   "addr": "0x21527",
+   "name": "command_handler_10",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 10 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d29",
+     "table": "0x51d01",
+     "index": 10
+    }
+   ]
+  },
+  {
+   "addr": "0x2185f",
+   "name": "command_handler_11",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d2d",
+     "table": "0x51d01",
+     "index": 11
+    }
+   ]
+  },
+  {
+   "addr": "0x21a9e",
+   "name": "command_handler_12",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0x1e, 0x10))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d31",
+     "table": "0x51d01",
+     "index": 12
+    }
+   ]
+  },
+  {
+   "addr": "0x21ad9",
+   "name": "command_handler_13",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 13 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d35",
+     "table": "0x51d01",
+     "index": 13
+    }
+   ]
+  },
+  {
+   "addr": "0x21b99",
+   "name": "command_handler_14",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 14 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d39",
+     "table": "0x51d01",
+     "index": 14
+    }
+   ]
+  },
+  {
+   "addr": "0x2211c",
+   "name": "command_handler_15",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 15 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d3d",
+     "table": "0x51d01",
+     "index": 15
+    }
+   ]
+  },
+  {
+   "addr": "0x22153",
+   "name": "command_handler_16",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 16 項、指令/行動 dispatch 表 0x51d01 第 24 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d41",
+     "table": "0x51d01",
+     "index": 16
+    },
+    {
+     "fixup_from": "0x51d61",
+     "table": "0x51d01",
+     "index": 24
+    }
+   ]
+  },
+  {
+   "addr": "0x2218a",
+   "name": "command_handler_23",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 23 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(focus_unit(_), unit_spend_mp(_, 0x17), unit_present(_, 0xff, 0xff, _, _), camera_step_to(_, _), unit_present(_, _, _, _, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d5d",
+     "table": "0x51d01",
+     "index": 23
+    }
+   ]
+  },
+  {
+   "addr": "0x226ea",
+   "name": "command_handler_17",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 17 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d45",
+     "table": "0x51d01",
+     "index": 17
+    }
+   ]
+  },
+  {
+   "addr": "0x2282f",
+   "name": "command_handler_18",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 18 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_spend_mp(_, 0x12), ~0x22866(_, _, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d49",
+     "table": "0x51d01",
+     "index": 18
+    }
+   ]
+  },
+  {
+   "addr": "0x22960",
+   "name": "command_handler_19",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 19 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d4d",
+     "table": "0x51d01",
+     "index": 19
+    }
+   ]
+  },
+  {
+   "addr": "0x22a85",
+   "name": "command_handler_20",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 20 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x22aa8(_, 0x14, _, _, 0x25))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d51",
+     "table": "0x51d01",
+     "index": 20
+    }
+   ]
+  },
+  {
+   "addr": "0x22bc6",
+   "name": "command_handler_21",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 21 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d55",
+     "table": "0x51d01",
+     "index": 21
+    }
+   ]
+  },
+  {
+   "addr": "0x22be1",
+   "name": "command_handler_22",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 22 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d59",
+     "table": "0x51d01",
+     "index": 22
+    }
+   ]
+  },
+  {
+   "addr": "0x22c04",
+   "name": "command_handler_25",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 25 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d65",
+     "table": "0x51d01",
+     "index": 25
+    }
+   ]
+  },
+  {
+   "addr": "0x22cbf",
+   "name": "command_handler_26",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 26 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d69",
+     "table": "0x51d01",
+     "index": 26
+    }
+   ]
+  },
+  {
+   "addr": "0x22e41",
+   "name": "command_handler_27",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 27 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d6d",
+     "table": "0x51d01",
+     "index": 27
+    }
+   ]
+  },
+  {
+   "addr": "0x22ef6",
+   "name": "command_handler_58",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 58 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51de9",
+     "table": "0x51d01",
+     "index": 58
+    }
+   ]
+  },
+  {
+   "addr": "0x22f37",
+   "name": "command_handler_59",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 59 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ded",
+     "table": "0x51d01",
+     "index": 59
+    }
+   ]
+  },
+  {
+   "addr": "0x230f2",
+   "name": "command_handler_60",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 60 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(6), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), layout_units(_, _, _, _, 6, _, _, _, _, 2, _), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(2))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51df1",
+     "table": "0x51d01",
+     "index": 60
+    }
+   ]
+  },
+  {
+   "addr": "0x231bc",
+   "name": "command_handler_61",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 61 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51df5",
+     "table": "0x51d01",
+     "index": 61
+    }
+   ]
+  },
+  {
+   "addr": "0x231f9",
+   "name": "command_handler_62",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 62 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 6, 0x29, 0xc, 8, 0, 6, 4), dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xa), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51df9",
+     "table": "0x51d01",
+     "index": 62
+    }
+   ]
+  },
+  {
+   "addr": "0x23296",
+   "name": "command_handler_63",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 63 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(0xd), spawn(3), pan(5, 0xe), act(0x1b))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dfd",
+     "table": "0x51d01",
+     "index": 63
+    }
+   ]
+  },
+  {
+   "addr": "0x232e8",
+   "name": "command_handler_64",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 64 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(0x2b), layout_units(_, _, _, _, 8, 0x2b, 0xc, 7, 2, 6, 2), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xc), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e01",
+     "table": "0x51d01",
+     "index": 64
+    }
+   ]
+  },
+  {
+   "addr": "0x234bb",
+   "name": "command_handler_65",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 65 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e05",
+     "table": "0x51d01",
+     "index": 65
+    }
+   ]
+  },
+  {
+   "addr": "0x235bc",
+   "name": "command_handler_66",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 66 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(6, 1), spawn(4), act(0x24))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e09",
+     "table": "0x51d01",
+     "index": 66
+    }
+   ]
+  },
+  {
+   "addr": "0x235f9",
+   "name": "command_handler_67",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 67 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e0d",
+     "table": "0x51d01",
+     "index": 67
+    }
+   ]
+  },
+  {
+   "addr": "0x23790",
+   "name": "command_handler_68",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 68 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0xe))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e11",
+     "table": "0x51d01",
+     "index": 68
+    }
+   ]
+  },
+  {
+   "addr": "0x237d5",
+   "name": "command_handler_69",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 69 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 0xd, 0xe, 0xa, 2, 0, 4, 0), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2d), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0x11))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e15",
+     "table": "0x51d01",
+     "index": 69
+    }
+   ]
+  },
+  {
+   "addr": "0x2389f",
+   "name": "command_handler_70",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 70 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e19",
+     "table": "0x51d01",
+     "index": 70
+    }
+   ]
+  },
+  {
+   "addr": "0x238dc",
+   "name": "command_handler_71",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 71 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1), layout_units(_, _, _, 0, 0xf, 0, 0, 0, 0, 0xc, 0xa), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2f), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e1d",
+     "table": "0x51d01",
+     "index": 71
+    }
+   ]
+  },
+  {
+   "addr": "0x239bd",
+   "name": "command_handler_72",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 72 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e21",
+     "table": "0x51d01",
+     "index": 72
+    }
+   ]
+  },
+  {
+   "addr": "0x23a0a",
+   "name": "command_handler_73",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 73 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e25",
+     "table": "0x51d01",
+     "index": 73
+    }
+   ]
+  },
+  {
+   "addr": "0x23b5f",
+   "name": "command_handler_74",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 74 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e29",
+     "table": "0x51d01",
+     "index": 74
+    }
+   ]
+  },
+  {
+   "addr": "0x23cd5",
+   "name": "command_handler_75",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 75 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e2d",
+     "table": "0x51d01",
+     "index": 75
+    }
+   ]
+  },
+  {
+   "addr": "0x23e39",
+   "name": "command_handler_76",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 76 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e31",
+     "table": "0x51d01",
+     "index": 76
+    }
+   ]
+  },
+  {
+   "addr": "0x23e74",
+   "name": "command_handler_77",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 77 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e35",
+     "table": "0x51d01",
+     "index": 77
+    }
+   ]
+  },
+  {
+   "addr": "0x240fa",
+   "name": "command_handler_78",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 78 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e39",
+     "table": "0x51d01",
+     "index": 78
+    }
+   ]
+  },
+  {
+   "addr": "0x244b6",
+   "name": "command_handler_79",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 79 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e3d",
+     "table": "0x51d01",
+     "index": 79
+    }
+   ]
+  },
+  {
+   "addr": "0x24754",
+   "name": "command_handler_80",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 80 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e41",
+     "table": "0x51d01",
+     "index": 80
+    }
+   ]
+  },
+  {
+   "addr": "0x24c1e",
+   "name": "command_handler_81",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 81 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e45",
+     "table": "0x51d01",
+     "index": 81
+    }
+   ]
+  },
+  {
+   "addr": "0x24df2",
+   "name": "command_handler_82",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 82 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(4, 0x10), spawn(2), act(0x4b), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0x1a), sync_party())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e49",
+     "table": "0x51d01",
+     "index": 82
+    }
+   ]
+  },
+  {
+   "addr": "0x24e80",
+   "name": "command_handler_83",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 83 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e4d",
+     "table": "0x51d01",
+     "index": 83
+    }
+   ]
+  },
+  {
+   "addr": "0x250cc",
+   "name": "command_handler_84",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 84 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e51",
+     "table": "0x51d01",
+     "index": 84
+    }
+   ]
+  },
+  {
+   "addr": "0x25464",
+   "name": "command_handler_85",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 85 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e55",
+     "table": "0x51d01",
+     "index": 85
+    }
+   ]
+  },
+  {
+   "addr": "0x2548c",
+   "name": "command_handler_86",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 86 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e59",
+     "table": "0x51d01",
+     "index": 86
+    }
+   ]
+  },
+  {
+   "addr": "0x25757",
+   "name": "command_handler_87",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 87 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51e5d",
+     "table": "0x51d01",
+     "index": 87
+    }
+   ]
+  },
+  {
+   "addr": "0x3231b",
+   "name": "command_handler_28",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 28 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d71",
+     "table": "0x51d01",
+     "index": 28
+    }
+   ]
+  },
+  {
+   "addr": "0x32d18",
+   "name": "command_handler_29",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 29 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d75",
+     "table": "0x51d01",
+     "index": 29
+    }
+   ]
+  },
+  {
+   "addr": "0x32e8c",
+   "name": "command_handler_30",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 30 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d79",
+     "table": "0x51d01",
+     "index": 30
+    }
+   ]
+  },
+  {
+   "addr": "0x32fb2",
+   "name": "command_handler_31",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 31 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 0xb), act(0x14), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(4, 0), delay(0xc8))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d7d",
+     "table": "0x51d01",
+     "index": 31
+    }
+   ]
+  },
+  {
+   "addr": "0x33049",
+   "name": "command_handler_32",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 32 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d81",
+     "table": "0x51d01",
+     "index": 32
+    }
+   ]
+  },
+  {
+   "addr": "0x3314b",
+   "name": "command_handler_33",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 33 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d85",
+     "table": "0x51d01",
+     "index": 33
+    }
+   ]
+  },
+  {
+   "addr": "0x33169",
+   "name": "command_handler_34",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 34 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(8, 1), act(0x1c), pan(8, 0), act(0x1d), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d89",
+     "table": "0x51d01",
+     "index": 34
+    }
+   ]
+  },
+  {
+   "addr": "0x33219",
+   "name": "command_handler_35",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 35 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(7, 0x20), act(0x1f), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(7, 0x17), act(0x20))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d8d",
+     "table": "0x51d01",
+     "index": 35
+    }
+   ]
+  },
+  {
+   "addr": "0x3327d",
+   "name": "command_handler_36",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 36 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(6, 0), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x23), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0), reset_pose())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d91",
+     "table": "0x51d01",
+     "index": 36
+    }
+   ]
+  },
+  {
+   "addr": "0x3332b",
+   "name": "command_handler_37",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 37 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0xa, 0))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d95",
+     "table": "0x51d01",
+     "index": 37
+    }
+   ]
+  },
+  {
+   "addr": "0x33367",
+   "name": "command_handler_38",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 38 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0xa, 7), spawn(1), act(0x26), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d99",
+     "table": "0x51d01",
+     "index": 38
+    }
+   ]
+  },
+  {
+   "addr": "0x333f5",
+   "name": "command_handler_39",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 39 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 4), spawn(1), act(0x28), pan(0xb, 0x28), act(0x29), reset_pose())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51d9d",
+     "table": "0x51d01",
+     "index": 39
+    }
+   ]
+  },
+  {
+   "addr": "0x3346b",
+   "name": "command_handler_40",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 40 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51da1",
+     "table": "0x51d01",
+     "index": 40
+    }
+   ]
+  },
+  {
+   "addr": "0x3347c",
+   "name": "command_handler_41",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 41 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x14, 0x14))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51da5",
+     "table": "0x51d01",
+     "index": 41
+    }
+   ]
+  },
+  {
+   "addr": "0x334d9",
+   "name": "command_handler_42",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 42 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x18, 0x11), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x30), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51da9",
+     "table": "0x51d01",
+     "index": 42
+    }
+   ]
+  },
+  {
+   "addr": "0x335aa",
+   "name": "command_handler_44",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 44 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0x12), spawn(1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51db1",
+     "table": "0x51d01",
+     "index": 44
+    }
+   ]
+  },
+  {
+   "addr": "0x335da",
+   "name": "command_handler_45",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 45 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4), act(0x36), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51db5",
+     "table": "0x51d01",
+     "index": 45
+    }
+   ]
+  },
+  {
+   "addr": "0x3367e",
+   "name": "command_handler_49",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 49 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x10, 0x1c))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dc5",
+     "table": "0x51d01",
+     "index": 49
+    }
+   ]
+  },
+  {
+   "addr": "0x336a0",
+   "name": "command_handler_50",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 50 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dc9",
+     "table": "0x51d01",
+     "index": 50
+    }
+   ]
+  },
+  {
+   "addr": "0x338c4",
+   "name": "command_handler_51",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 51 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(0, 4), delay(0x190), pan(0, 0x16), delay(0x190), pan(0x1a, 0x18), delay(0x190), pan(0x1a, 2), delay(0x190))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dcd",
+     "table": "0x51d01",
+     "index": 51
+    }
+   ]
+  },
+  {
+   "addr": "0x3396a",
+   "name": "command_handler_52",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 52 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dd1",
+     "table": "0x51d01",
+     "index": 52
+    }
+   ]
+  },
+  {
+   "addr": "0x33aae",
+   "name": "command_handler_53",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 53 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x27), act(0x4c))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dd5",
+     "table": "0x51d01",
+     "index": 53
+    }
+   ]
+  },
+  {
+   "addr": "0x33af1",
+   "name": "command_handler_54",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 54 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51dd9",
+     "table": "0x51d01",
+     "index": 54
+    }
+   ]
+  },
+  {
+   "addr": "0x33c9d",
+   "name": "command_handler_55",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 55 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ddd",
+     "table": "0x51d01",
+     "index": 55
+    }
+   ]
+  },
+  {
+   "addr": "0x33dba",
+   "name": "command_handler_56",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 56 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x38), act(0x56), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(9, 0x13, 8))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51de1",
+     "table": "0x51d01",
+     "index": 56
+    }
+   ]
+  },
+  {
+   "addr": "0x33e3c",
+   "name": "command_handler_57",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 57 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51de5",
+     "table": "0x51d01",
+     "index": 57
+    }
+   ]
+  },
+  {
+   "addr": "0x34531",
+   "name": "event_handler_0",
+   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51b91",
+     "table": "0x51b91",
+     "index": 0
+    }
+   ]
+  },
+  {
+   "addr": "0x3460b",
+   "name": "event_handler_1",
+   "summary": "事件跳表 0x51b91 第 1 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0xb, 0x10), spawn_intro(4), kbd_flush(), redraw(1), act(3), reset_pose(), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x342b5(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51b95",
+     "table": "0x51b91",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x34673",
+   "name": "event_handler_2",
+   "summary": "事件跳表 0x51b91 第 2 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0, 0x10), spawn_intro(5), kbd_flush(), redraw(1), act(4), reset_pose())。舊文件位址 0x3431d(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51b99",
+     "table": "0x51b91",
+     "index": 2
+    }
+   ]
+  },
+  {
+   "addr": "0x346cd",
+   "name": "event_handler_3",
+   "summary": "事件跳表 0x51b91 第 3 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0xb, 0xb), spawn(6), redraw(1), act(6), reset_pose(), kbd_flush())。舊文件位址 0x34377(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51b9d",
+     "table": "0x51b91",
+     "index": 3
+    }
+   ]
+  },
+  {
+   "addr": "0x34738",
+   "name": "event_handler_4",
+   "summary": "事件跳表 0x51b91 第 4 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ba1",
+     "table": "0x51b91",
+     "index": 4
+    }
+   ]
+  },
+  {
+   "addr": "0x34778",
+   "name": "event_handler_6",
+   "summary": "事件跳表 0x51b91 第 6 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(9, 1), delay(0x64), spawn(3), act(0xd), delay(0xc8), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ba9",
+     "table": "0x51b91",
+     "index": 6
+    }
+   ]
+  },
+  {
+   "addr": "0x34818",
+   "name": "event_handler_9",
+   "summary": "事件跳表 0x51b91 第 9 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_inactive(6), spawn(2), pan(3, 0), delay(0x320), pan(3, 0x11), delay(0xc8), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x344c2(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bb5",
+     "table": "0x51b91",
+     "index": 9
+    }
+   ]
+  },
+  {
+   "addr": "0x348bb",
+   "name": "event_handler_11",
+   "summary": "事件跳表 0x51b91 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(2))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bbd",
+     "table": "0x51b91",
+     "index": 11
+    }
+   ]
+  },
+  {
+   "addr": "0x348ea",
+   "name": "event_handler_12",
+   "summary": "事件跳表 0x51b91 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x18, 0x1b, 7), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bc1",
+     "table": "0x51b91",
+     "index": 12
+    }
+   ]
+  },
+  {
+   "addr": "0x34940",
+   "name": "event_handler_14",
+   "summary": "事件跳表 0x51b91 第 14 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x25, 0x28, 0), set_units_byte34_low_nibble(0xd, 0x18, 0))。舊文件位址 0x345ea(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bc9",
+     "table": "0x51b91",
+     "index": 14
+    }
+   ]
+  },
+  {
+   "addr": "0x34984",
+   "name": "event_handler_15",
+   "summary": "事件跳表 0x51b91 第 15 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(2), pan(0xe, 0), act(0x17), reset_pose(), set_units_byte34_low_nibble(7, 0xc, 0), set_units_byte34_low_nibble(0x21, 0x23, 0))。舊文件位址 0x3462e(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bcd",
+     "table": "0x51b91",
+     "index": 15
+    }
+   ]
+  },
+  {
+   "addr": "0x349ec",
+   "name": "event_handler_16",
+   "summary": "事件跳表 0x51b91 第 16 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(3))。舊文件位址 0x34696(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bd1",
+     "table": "0x51b91",
+     "index": 16
+    }
+   ]
+  },
+  {
+   "addr": "0x34a1e",
+   "name": "event_handler_17",
+   "summary": "事件跳表 0x51b91 第 17 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x30, 0x33, 7), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x18))。舊文件位址 0x346c8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bd5",
+     "table": "0x51b91",
+     "index": 17
+    }
+   ]
+  },
+  {
+   "addr": "0x34a6c",
+   "name": "event_handler_19",
+   "summary": "事件跳表 0x51b91 第 19 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(7, 0x24, 7), dialog(_, 8, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), unit_inactive(_), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bdd",
+     "table": "0x51b91",
+     "index": 19
+    }
+   ]
+  },
+  {
+   "addr": "0x34b07",
+   "name": "event_handler_20",
+   "summary": "事件跳表 0x51b91 第 20 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51be1",
+     "table": "0x51b91",
+     "index": 20
+    }
+   ]
+  },
+  {
+   "addr": "0x34b2f",
+   "name": "event_handler_21",
+   "summary": "事件跳表 0x51b91 第 21 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_inactive(8), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51be5",
+     "table": "0x51b91",
+     "index": 21
+    }
+   ]
+  },
+  {
+   "addr": "0x34b6f",
+   "name": "event_handler_22",
+   "summary": "事件跳表 0x51b91 第 22 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_inactive(8), spawn(1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51be9",
+     "table": "0x51b91",
+     "index": 22
+    }
+   ]
+  },
+  {
+   "addr": "0x34b9a",
+   "name": "event_handler_23",
+   "summary": "事件跳表 0x51b91 第 23 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(8, 0x1c, 0), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(2), pan(5, 0x11), act(0x19), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(5, 0x11), act(0x1a), deactivate_unit(0x21))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bed",
+     "table": "0x51b91",
+     "index": 23
+    }
+   ]
+  },
+  {
+   "addr": "0x34c52",
+   "name": "event_handler_24",
+   "summary": "事件跳表 0x51b91 第 24 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bf1",
+     "table": "0x51b91",
+     "index": 24
+    }
+   ]
+  },
+  {
+   "addr": "0x34c7a",
+   "name": "event_handler_25",
+   "summary": "事件跳表 0x51b91 第 25 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(2), pan(0x10, 0xa), act(0x1e), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x34924(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bf5",
+     "table": "0x51b91",
+     "index": 25
+    }
+   ]
+  },
+  {
+   "addr": "0x34cf1",
+   "name": "event_handler_26",
+   "summary": "事件跳表 0x51b91 第 26 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(9, 0x1b, 0))。舊文件位址 0x3499b(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bf9",
+     "table": "0x51b91",
+     "index": 26
+    }
+   ]
+  },
+  {
+   "addr": "0x34d2f",
+   "name": "event_handler_27",
+   "summary": "事件跳表 0x51b91 第 27 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(8, 2), delay(0x64), spawn(_))。舊文件位址 0x349d9(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bfd",
+     "table": "0x51b91",
+     "index": 27
+    }
+   ]
+  },
+  {
+   "addr": "0x34d64",
+   "name": "event_handler_28",
+   "summary": "事件跳表 0x51b91 第 28 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x34a0e(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c01",
+     "table": "0x51b91",
+     "index": 28
+    }
+   ]
+  },
+  {
+   "addr": "0x34d92",
+   "name": "event_handler_29",
+   "summary": "事件跳表 0x51b91 第 29 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c05",
+     "table": "0x51b91",
+     "index": 29
+    }
+   ]
+  },
+  {
+   "addr": "0x34dd0",
+   "name": "event_handler_30",
+   "summary": "事件跳表 0x51b91 第 30 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c09",
+     "table": "0x51b91",
+     "index": 30
+    }
+   ]
+  },
+  {
+   "addr": "0x34eb3",
+   "name": "event_handler_31",
+   "summary": "事件跳表 0x51b91 第 31 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(_), pan(0, 0), delay(0xc8), pan(0xc, 0), delay(0xc8), pan(0xc, 0xb), delay(0xc8), pan(0, 0xb))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c0d",
+     "table": "0x51b91",
+     "index": 31
+    }
+   ]
+  },
+  {
+   "addr": "0x34f38",
+   "name": "event_handler_32",
+   "summary": "事件跳表 0x51b91 第 32 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c11",
+     "table": "0x51b91",
+     "index": 32
+    }
+   ]
+  },
+  {
+   "addr": "0x34f74",
+   "name": "event_handler_33",
+   "summary": "事件跳表 0x51b91 第 33 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c15",
+     "table": "0x51b91",
+     "index": 33
+    }
+   ]
+  },
+  {
+   "addr": "0x34fcc",
+   "name": "event_handler_35",
+   "summary": "事件跳表 0x51b91 第 35 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0xc, 5), spawn(2), act(0x2a))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c1d",
+     "table": "0x51b91",
+     "index": 35
+    }
+   ]
+  },
+  {
+   "addr": "0x35009",
+   "name": "event_handler_36",
+   "summary": "事件跳表 0x51b91 第 36 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c21",
+     "table": "0x51b91",
+     "index": 36
+    }
+   ]
+  },
+  {
+   "addr": "0x35022",
+   "name": "event_handler_37",
+   "summary": "事件跳表 0x51b91 第 37 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0xf, 0x22), spawn(3), act(0x2b), reset_pose(), pan(0, 0x1a), spawn(4), act(0x2c), reset_pose())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c25",
+     "table": "0x51b91",
+     "index": 37
+    }
+   ]
+  },
+  {
+   "addr": "0x350c8",
+   "name": "event_handler_7",
+   "summary": "事件跳表 0x51b91 第 7 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0x1b, 5), spawn(2), act(0x2e), reset_pose())。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bad",
+     "table": "0x51b91",
+     "index": 7
+    }
+   ]
+  },
+  {
+   "addr": "0x35123",
+   "name": "event_handler_8",
+   "summary": "事件跳表 0x51b91 第 8 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_item_count(_), unit_add_item(_, 0x59), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bb1",
+     "table": "0x51b91",
+     "index": 8
+    }
+   ]
+  },
+  {
+   "addr": "0x35191",
+   "name": "event_handler_10",
+   "summary": "事件跳表 0x51b91 第 10 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x10, 0x47, _), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bb9",
+     "table": "0x51b91",
+     "index": 10
+    }
+   ]
+  },
+  {
+   "addr": "0x351e6",
+   "name": "event_handler_13",
+   "summary": "事件跳表 0x51b91 第 13 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), set_units_byte34_low_nibble(0x40, 0x49, 3), set_units_byte34_low_nibble(0x23, 0x31, 0))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bc5",
+     "table": "0x51b91",
+     "index": 13
+    }
+   ]
+  },
+  {
+   "addr": "0x35258",
+   "name": "event_handler_18",
+   "summary": "事件跳表 0x51b91 第 18 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 8, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), set_units_byte34_low_nibble(0x10, 0x22, 0))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51bd9",
+     "table": "0x51b91",
+     "index": 18
+    }
+   ]
+  },
+  {
+   "addr": "0x35298",
+   "name": "event_handler_38",
+   "summary": "事件跳表 0x51b91 第 38 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c29",
+     "table": "0x51b91",
+     "index": 38
+    }
+   ]
+  },
+  {
+   "addr": "0x352ca",
+   "name": "event_handler_39",
+   "summary": "事件跳表 0x51b91 第 39 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c2d",
+     "table": "0x51b91",
+     "index": 39
+    }
+   ]
+  },
+  {
+   "addr": "0x35321",
+   "name": "event_handler_40",
+   "summary": "事件跳表 0x51b91 第 40 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(2), pan(0x11, 0x25))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c31",
+     "table": "0x51b91",
+     "index": 40
+    }
+   ]
+  },
+  {
+   "addr": "0x35346",
+   "name": "event_handler_41",
+   "summary": "事件跳表 0x51b91 第 41 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x34ff0(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c35",
+     "table": "0x51b91",
+     "index": 41
+    }
+   ]
+  },
+  {
+   "addr": "0x353b5",
+   "name": "event_handler_42",
+   "summary": "事件跳表 0x51b91 第 42 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c39",
+     "table": "0x51b91",
+     "index": 42
+    }
+   ]
+  },
+  {
+   "addr": "0x353e7",
+   "name": "event_handler_43",
+   "summary": "事件跳表 0x51b91 第 43 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c3d",
+     "table": "0x51b91",
+     "index": 43
+    }
+   ]
+  },
+  {
+   "addr": "0x353fa",
+   "name": "event_handler_44",
+   "summary": "事件跳表 0x51b91 第 44 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c41",
+     "table": "0x51b91",
+     "index": 44
+    }
+   ]
+  },
+  {
+   "addr": "0x3540f",
+   "name": "event_handler_45",
+   "summary": "事件跳表 0x51b91 第 45 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c45",
+     "table": "0x51b91",
+     "index": 45
+    }
+   ]
+  },
+  {
+   "addr": "0x35422",
+   "name": "event_handler_46",
+   "summary": "事件跳表 0x51b91 第 46 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0x1b))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c49",
+     "table": "0x51b91",
+     "index": 46
+    }
+   ]
+  },
+  {
+   "addr": "0x35468",
+   "name": "event_handler_47",
+   "summary": "事件跳表 0x51b91 第 47 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(_), wait_ticks(1), pan(0, 0), wait_ticks(8), pan(0x1c, 0), wait_ticks(8), pan(0x1c, 0x20), wait_ticks(8), pan(0, 0x20), wait_ticks(8), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x35112(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c4d",
+     "table": "0x51b91",
+     "index": 47
+    }
+   ]
+  },
+  {
+   "addr": "0x3551c",
+   "name": "event_handler_48",
+   "summary": "事件跳表 0x51b91 第 48 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x23, 0x2a, 3))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c51",
+     "table": "0x51b91",
+     "index": 48
+    }
+   ]
+  },
+  {
+   "addr": "0x3553f",
+   "name": "event_handler_49",
+   "summary": "事件跳表 0x51b91 第 49 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(_), pan(0x20, 0x23), wait_ticks(8), pan(0, 0x23), wait_ticks(8))。舊文件位址 0x351e9(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c55",
+     "table": "0x51b91",
+     "index": 49
+    }
+   ]
+  },
+  {
+   "addr": "0x355b7",
+   "name": "event_handler_50",
+   "summary": "事件跳表 0x51b91 第 50 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(2), pan(0x10, 0x2a), wait_ticks(8), join(0x14))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c59",
+     "table": "0x51b91",
+     "index": 50
+    }
+   ]
+  },
+  {
+   "addr": "0x355f0",
+   "name": "event_handler_51",
+   "summary": "事件跳表 0x51b91 第 51 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c5d",
+     "table": "0x51b91",
+     "index": 51
+    }
+   ]
+  },
+  {
+   "addr": "0x35638",
+   "name": "event_handler_52",
+   "summary": "事件跳表 0x51b91 第 52 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan_spawn_group(2, 0xb, _), pan_spawn_group(0x1a, 0xb, _))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c61",
+     "table": "0x51b91",
+     "index": 52
+    }
+   ]
+  },
+  {
+   "addr": "0x35677",
+   "name": "event_handler_53",
+   "summary": "事件跳表 0x51b91 第 53 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), zero_hp_from(0x12))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c65",
+     "table": "0x51b91",
+     "index": 53
+    }
+   ]
+  },
+  {
+   "addr": "0x356b3",
+   "name": "event_handler_54",
+   "summary": "事件跳表 0x51b91 第 54 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(_), pan(0, 4), delay(0x190), pan(0, 0x16), delay(0x190), pan(0x1a, 0x18), delay(0x190), pan(0x1a, 2), delay(0x190))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c69",
+     "table": "0x51b91",
+     "index": 54
+    }
+   ]
+  },
+  {
+   "addr": "0x35730",
+   "name": "event_handler_55",
+   "summary": "事件跳表 0x51b91 第 55 項的 handler(身分由跳表 fixup 決定)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c6d",
+     "table": "0x51b91",
+     "index": 55
+    }
+   ]
+  },
+  {
+   "addr": "0x357dd",
+   "name": "event_handler_56",
+   "summary": "事件跳表 0x51b91 第 56 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(6, 0x28), spawn(1), act(0x4a), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c71",
+     "table": "0x51b91",
+     "index": 56
+    }
+   ]
+  },
+  {
+   "addr": "0x35833",
+   "name": "event_handler_57",
+   "summary": "事件跳表 0x51b91 第 57 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(_))。舊文件位址 0x354dd(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c75",
+     "table": "0x51b91",
+     "index": 57
+    }
+   ]
+  },
+  {
+   "addr": "0x35854",
+   "name": "event_handler_58",
+   "summary": "事件跳表 0x51b91 第 58 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x354fe(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c79",
+     "table": "0x51b91",
+     "index": 58
+    }
+   ]
+  },
+  {
+   "addr": "0x35997",
+   "name": "event_handler_59",
+   "summary": "事件跳表 0x51b91 第 59 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x27, 0x2c, 0))。舊文件位址 0x35641(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c7d",
+     "table": "0x51b91",
+     "index": 59
+    }
+   ]
+  },
+  {
+   "addr": "0x359cb",
+   "name": "event_handler_60",
+   "summary": "事件跳表 0x51b91 第 60 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x17, 0x18, 0), set_units_byte34_low_nibble(0x35, 0x38, 0))。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c81",
+     "table": "0x51b91",
+     "index": 60
+    }
+   ]
+  },
+  {
+   "addr": "0x35a0d",
+   "name": "event_handler_61",
+   "summary": "事件跳表 0x51b91 第 61 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x356b7(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c85",
+     "table": "0x51b91",
+     "index": 61
+    }
+   ]
+  },
+  {
+   "addr": "0x35bee",
+   "name": "event_handler_62",
+   "summary": "事件跳表 0x51b91 第 62 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35898(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c89",
+     "table": "0x51b91",
+     "index": 62
+    }
+   ]
+  },
+  {
+   "addr": "0x35c1d",
+   "name": "event_handler_63",
+   "summary": "事件跳表 0x51b91 第 63 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan_spawn_group(3, 0x1b, 1))。舊文件位址 0x358c7(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c8d",
+     "table": "0x51b91",
+     "index": 63
+    }
+   ]
+  },
+  {
+   "addr": "0x35c40",
+   "name": "event_handler_64",
+   "summary": "事件跳表 0x51b91 第 64 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, _), pan_spawn_group(9, 0x2c, 3), pan_spawn_group(0, 9, 4), pan_spawn_group(0x11, 9, 5), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), zero_hp_from(0x10))。舊文件位址 0x358ea(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c91",
+     "table": "0x51b91",
+     "index": 64
+    }
+   ]
+  },
+  {
+   "addr": "0x35cf1",
+   "name": "event_handler_65",
+   "summary": "事件跳表 0x51b91 第 65 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x3599b(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c95",
+     "table": "0x51b91",
+     "index": 65
+    }
+   ]
+  },
+  {
+   "addr": "0x35d1e",
+   "name": "event_handler_66",
+   "summary": "事件跳表 0x51b91 第 66 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(0x11, 0x12, 1), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x359c8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c99",
+     "table": "0x51b91",
+     "index": 66
+    }
+   ]
+  },
+  {
+   "addr": "0x35d85",
+   "name": "event_handler_67",
+   "summary": "事件跳表 0x51b91 第 67 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35a2f(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51c9d",
+     "table": "0x51b91",
+     "index": 67
+    }
+   ]
+  },
+  {
+   "addr": "0x35d9e",
+   "name": "event_handler_68",
+   "summary": "事件跳表 0x51b91 第 68 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(0xe, 7, 2), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x35a48(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ca1",
+     "table": "0x51b91",
+     "index": 68
+    }
+   ]
+  },
+  {
+   "addr": "0x35e0e",
+   "name": "event_handler_69",
+   "summary": "事件跳表 0x51b91 第 69 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35ab8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ca5",
+     "table": "0x51b91",
+     "index": 69
+    }
+   ]
+  },
+  {
+   "addr": "0x35e5b",
+   "name": "event_handler_70",
+   "summary": "事件跳表 0x51b91 第 70 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(set_units_byte34_low_nibble(0x29, 0x2d, 0), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(8, 7, 3), pan_spawn_group(4, 7, 4))。舊文件位址 0x35b05(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ca9",
+     "table": "0x51b91",
+     "index": 70
+    }
+   ]
+  },
+  {
+   "addr": "0x35ec1",
+   "name": "event_handler_71",
+   "summary": "事件跳表 0x51b91 第 71 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), zero_hp_from(0x14))。舊文件位址 0x35b6b(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cad",
+     "table": "0x51b91",
+     "index": 71
+    }
+   ]
+  },
+  {
+   "addr": "0x35f48",
+   "name": "event_handler_72",
+   "summary": "事件跳表 0x51b91 第 72 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan_spawn_group(4, 0x23, 2), pan_spawn_group(0xe, 0x23, 3))。舊文件位址 0x35bf2(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cb1",
+     "table": "0x51b91",
+     "index": 72
+    }
+   ]
+  },
+  {
+   "addr": "0x35f79",
+   "name": "event_handler_73",
+   "summary": "事件跳表 0x51b91 第 73 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35c23(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cb5",
+     "table": "0x51b91",
+     "index": 73
+    }
+   ]
+  },
+  {
+   "addr": "0x35f88",
+   "name": "event_handler_74",
+   "summary": "事件跳表 0x51b91 第 74 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan_spawn_group(0xa, 0x1d, _))。舊文件位址 0x35c32(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cb9",
+     "table": "0x51b91",
+     "index": 74
+    }
+   ]
+  },
+  {
+   "addr": "0x35fcf",
+   "name": "event_handler_75",
+   "summary": "事件跳表 0x51b91 第 75 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(open_dialog_box(_), dialog(_, 0, 0xa951f, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), draw_dialog_cell(0), wait_key_with_marker(0), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x35c79(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cbd",
+     "table": "0x51b91",
+     "index": 75
+    }
+   ]
+  },
+  {
+   "addr": "0x360b6",
+   "name": "event_handler_76",
+   "summary": "事件跳表 0x51b91 第 76 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(unit_set_flag5_bit7(1), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), palette_fade_in_hold_out(), delay(0x190), palette_fade_in_hold_out(), delay(0x190), palette_fade_in_hold_out(), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x35d60(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cc1",
+     "table": "0x51b91",
+     "index": 76
+    }
+   ]
+  },
+  {
+   "addr": "0x36214",
+   "name": "event_handler_77",
+   "summary": "事件跳表 0x51b91 第 77 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35ebe(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cc5",
+     "table": "0x51b91",
+     "index": 77
+    }
+   ]
+  },
+  {
+   "addr": "0x36228",
+   "name": "event_handler_78",
+   "summary": "事件跳表 0x51b91 第 78 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35ed2(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cc9",
+     "table": "0x51b91",
+     "index": 78
+    }
+   ]
+  },
+  {
+   "addr": "0x3623c",
+   "name": "event_handler_79",
+   "summary": "事件跳表 0x51b91 第 79 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(prng_next(), unit_set_flag5_bit7(_), unit_set_flag5_bit7(_))。舊文件位址 0x35ee6(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ccd",
+     "table": "0x51b91",
+     "index": 79
+    }
+   ]
+  },
+  {
+   "addr": "0x362b0",
+   "name": "event_handler_80",
+   "summary": "事件跳表 0x51b91 第 80 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35f5a(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cd1",
+     "table": "0x51b91",
+     "index": 80
+    }
+   ]
+  },
+  {
+   "addr": "0x362c5",
+   "name": "event_handler_81",
+   "summary": "事件跳表 0x51b91 第 81 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x35f6f(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cd5",
+     "table": "0x51b91",
+     "index": 81
+    }
+   ]
+  },
+  {
+   "addr": "0x362e8",
+   "name": "event_handler_82",
+   "summary": "事件跳表 0x51b91 第 82 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(0x10, 1), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 0xe), camera_step_then_present(_, 0x16, 0x12), spawn(_), set_units_byte34_low_nibble(_, _, 0), camera_step_then_present(_, 0x15, 0x12), camera_step_then_present(_, 0x17, 0x12), set_units_byte34_low_nibble(0x14, 0x14, 0xb))。舊文件位址 0x35f92(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cd9",
+     "table": "0x51b91",
+     "index": 82
+    }
+   ]
+  },
+  {
+   "addr": "0x363de",
+   "name": "event_handler_83",
+   "summary": "事件跳表 0x51b91 第 83 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 8, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。舊文件位址 0x36088(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51cdd",
+     "table": "0x51b91",
+     "index": 83
+    }
+   ]
+  },
+  {
+   "addr": "0x36416",
+   "name": "event_handler_84",
+   "summary": "事件跳表 0x51b91 第 84 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x360c0(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ce1",
+     "table": "0x51b91",
+     "index": 84
+    }
+   ]
+  },
+  {
+   "addr": "0x3642e",
+   "name": "event_handler_85",
+   "summary": "事件跳表 0x51b91 第 85 項的 handler(身分由跳表 fixup 決定)。舊文件位址 0x360d8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x51ce5",
+     "table": "0x51b91",
+     "index": 85
+    }
+   ]
   }
  ]
 }

@@ -112,6 +112,15 @@ WRAPPER_MAX_SPAN = 256      # 再大就不是「只是包裝」,本體有自己�
 LEAF_MAX_SPAN = 64
 HEX = re.compile(r"0x[0-9a-fA-F]{4,6}")
 GHIDRA_HEADER = re.compile(r"^FUNCTION \d+/\d+: \S+ @ (\S+?)\s+size=(\d+)\s*$", re.M)
+# fixup 證據只收這些已知跳表:表基底 -> (格數, 名稱前綴, 說明)。白名單的理由:任何一個 fixup 都「指向某處」,
+# 不限定表的話「表 X 第 N 項」可以拿任意資料指標冒充;帶格數是因為 0x51b91 之後的 fixup 一路連到第 179 項,
+# 第 90 項起已是游標變數與另一張表(doc25 §20.3)。名稱形如「前綴_N」者必須有同一張表第 N 項的證據。
+JUMP_TABLES = {
+    0x51B91: (90, "event_handler", "event_id handler 跳表(doc25 L944/§20.3:90 格,event_id 0..89)"),
+    0x51D01: (88, "command_handler", "指令/行動 dispatch 表(doc25 §20.3:88 格,0x1541f 與 0x1d479 以 call [eax*4+0x51d01] 分派)"),
+}
+EVENT_TABLE = 0x51B91
+TABLE_NAME_RE = re.compile(r"^(" + "|".join(v[1] for v in JUMP_TABLES.values()) + r")_(\d+)$")
 
 
 # --------------------------------------------------------------------------- #
@@ -390,10 +399,18 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
             "entries": entries}
 
 
-def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int, str], insn_at) -> list[str]:
+def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int, str], insn_at,
+                fixups: dict[int, int] | None = None) -> list[str]:
     """驗 function_names.json 的每一筆;回傳錯誤訊息(空 = 全過)。`insn_at` 為 None 時證據無法驗,算錯誤。
 
-    `spans_` = {入口: span_upper};`other_names` = 其他命名表的 {位址: 名稱}。
+    `spans_` = {入口: span_upper};`other_names` = 其他命名表的 {位址: 名稱};`fixups` = {fixup 來源: 目標}。
+
+    證據有兩種(2026-09-28 加第二種):
+    * `{"at", "insn"}`:本體裡的一條指令,逐字比對反組譯。
+    * `{"fixup_from", "table", "index"}`:已知跳表(JUMP_TABLES)第 index 項的 fixup 指向這個入口。事件 handler 的身分
+      只由跳表決定,本體裡沒有任何一條指令能證明「這是事件 82」。`fixups` 為 None 時無法驗,算錯誤。
+    名稱形如「表前綴_N」(`event_handler_N`、`command_handler_N`)的,必須有一筆指向該表第 N 項的 fixup 證據;
+    index 不得超出表的格數。
     """
     errs: list[str] = []
     seen_addr: set[int] = set()
@@ -427,7 +444,29 @@ def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int
         ev = it.get("evidence") or []
         if not ev:
             errs.append(f"{tag}: 沒有 evidence")
+        slots: set[tuple[int, int]] = set()          # 驗證通過的 (表, 索引)
         for e in ev:
+            if "fixup_from" in e:
+                try:
+                    src, tbl, idx = int(str(e.get("fixup_from")), 16), int(str(e.get("table")), 16), int(e.get("index"))
+                except (TypeError, ValueError):
+                    errs.append(f"{tag}: fixup 證據欄位格式錯:{e}")
+                    continue
+                if tbl not in JUMP_TABLES:
+                    errs.append(f"{tag}: fixup 證據的表 {tbl:#x} 不在已知跳表清單")
+                    continue
+                if idx < 0 or src != tbl + 4 * idx:
+                    errs.append(f"{tag}: fixup_from {src:#x} 不等於 表 {tbl:#x} + 4×{idx}")
+                    continue
+                if idx >= JUMP_TABLES[tbl][0]:
+                    errs.append(f"{tag}: index {idx} 超出表 {tbl:#x} 的 {JUMP_TABLES[tbl][0]} 格")
+                    continue
+                got_t = fixups.get(src) if fixups is not None else None
+                if got_t != a:
+                    errs.append(f"{tag}: fixup {src:#x} 指向 {'None' if got_t is None else hex(got_t)},不是 {a:#x}")
+                    continue
+                slots.add((tbl, idx))
+                continue
             try:
                 at = int(str(e.get("at")), 16)
             except ValueError:
@@ -440,6 +479,11 @@ def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int
             text = f"{got[1]} {got[2]}".strip() if got else None
             if text != e.get("insn"):
                 errs.append(f"{tag}: evidence {at:#x} 期望 {e.get('insn')!r},實際 {text!r}")
+        m = TABLE_NAME_RE.match(name)
+        if m:
+            tbl = next(t for t, v in JUMP_TABLES.items() if v[1] == m.group(1))
+            if (tbl, int(m.group(2))) not in slots:
+                errs.append(f"{tag}: 名稱是 {tbl:#x} 表第 {m.group(2)} 項,卻沒有通過驗證的該項 fixup 證據")
     return errs
 
 
@@ -551,7 +595,10 @@ def run_check_names() -> list[str]:
     inv = build(with_argc=False)
     _, _, code, base, _ = CC.load_image()
     spans_ = {int(e["addr"], 16): e["span_upper"] for e in inv["entries"]}
-    return check_names(load_function_names(), spans_, other_real_names(), insn_decoder(code, base))
+    import disasm_le as D
+    data, meta = CC.load_image()[:2]
+    return check_names(load_function_names(), spans_, other_real_names(), insn_decoder(code, base),
+                       D.build_fixups(data, meta))
 
 
 def load_names(include_registry: bool = True) -> dict[int, dict]:
@@ -1017,6 +1064,50 @@ def _selftest_names(fails: list[str]) -> None:
     check("同一 addr 登錄兩次 / 同一名稱用兩次", check_names(two, spans_, {}, insn_at),
           ["0x1000 other_name: addr 重複登錄", "0x1010 draw_wait_marker: 名稱重複或與其他命名表撞名"])
 
+    print("(16b) fixup 證據(跳表第 N 項)與 event_handler_N 名稱:每條規則各有一筆違規與一筆合格")
+    T = EVENT_TABLE
+    C = 0x51D01
+    fx = {T + 4 * 3: 0x1000, T: 0x1000, T + 4 * 5: 0x1010, 0x60000: 0x1000,
+          T + 4 * 89: 0x1000, T + 4 * 90: 0x1000, C + 4 * 2: 0x1000}
+    ev3 = {"fixup_from": f"{T + 12:#x}", "table": f"{T:#x}", "index": 3}
+    h3 = {**ok, "name": "event_handler_3", "evidence": [ev3]}
+
+    def fb(item, fixups=fx):
+        return check_names([item], spans_, {}, insn_at, fixups)
+    check("合格:只有 fixup 證據、名稱索引一致", fb(h3), [])
+    check("合格:索引 0 的邊界", fb({**h3, "name": "event_handler_0",
+                                  "evidence": [{"fixup_from": f"{T:#x}", "table": f"{T:#x}", "index": 0}]}), [])
+    check("合格:指令證據與 fixup 證據並存", fb({**h3, "evidence": [ev3, {"at": "0x1001", "insn": "call 0x500"}]}), [])
+    check("合格:非 event_handler 名稱帶 fixup 證據也可以", fb({**h3, "name": "some_handler"}), [])
+    check("沒有 fixup 表:無法驗,算錯誤", fb(h3, None),
+          [f"0x1000 event_handler_3: fixup {T + 12:#x} 指向 None,不是 0x1000",
+           "0x1000 event_handler_3: 名稱是 0x51b91 表第 3 項,卻沒有通過驗證的該項 fixup 證據"])
+    check("合格:表的最後一格(89)", fb({**h3, "name": "event_handler_89",
+                                     "evidence": [{"fixup_from": f"{T + 4 * 89:#x}", "table": f"{T:#x}", "index": 89}]}), [])
+    check("index 等於格數(90,該處 fixup 存在但已是別的資料)",
+          fb({**h3, "name": "x_handler", "evidence": [{"fixup_from": f"{T + 4 * 90:#x}", "table": f"{T:#x}", "index": 90}]}),
+          ["0x1000 x_handler: index 90 超出表 0x51b91 的 90 格"])
+    ec2 = {"fixup_from": f"{C + 8:#x}", "table": f"{C:#x}", "index": 2}
+    check("合格:第二張表 command_handler_N", fb({**h3, "name": "command_handler_2", "evidence": [ec2]}), [])
+    check("前綴與表不符:command_handler_3 拿事件表第 3 項", fb({**h3, "name": "command_handler_3"}),
+          ["0x1000 command_handler_3: 名稱是 0x51d01 表第 3 項,卻沒有通過驗證的該項 fixup 證據"])
+    check("表不在白名單(0x60000 的 fixup 確實指向入口,仍不收)",
+          fb({**h3, "name": "x_handler", "evidence": [{"fixup_from": "0x60000", "table": "0x60000", "index": 0}]}),
+          ["0x1000 x_handler: fixup 證據的表 0x60000 不在已知跳表清單"])
+    check("fixup_from 不等於 表+4×index", fb({**h3, "name": "x_handler", "evidence": [{**ev3, "index": 4}]}),
+          [f"0x1000 x_handler: fixup_from {T + 12:#x} 不等於 表 {T:#x} + 4×4"])
+    check("負索引", fb({**h3, "name": "x_handler", "evidence": [{"fixup_from": f"{T - 4:#x}", "table": f"{T:#x}", "index": -1}]}),
+          [f"0x1000 x_handler: fixup_from {T - 4:#x} 不等於 表 {T:#x} + 4×-1"])
+    check("fixup 指向別的入口", fb({**h3, "name": "x_handler",
+                                  "evidence": [{"fixup_from": f"{T + 20:#x}", "table": f"{T:#x}", "index": 5}]}),
+          [f"0x1000 x_handler: fixup {T + 20:#x} 指向 0x1010,不是 0x1000"])
+    check("欄位格式錯", fb({**h3, "name": "x_handler", "evidence": [{"fixup_from": "zz", "table": f"{T:#x}", "index": 3}]}),
+          ["0x1000 x_handler: fixup 證據欄位格式錯:{'fixup_from': 'zz', 'table': '0x51b91', 'index': 3}"])
+    check("event_handler_N 只有指令證據", fb({**ok, "name": "event_handler_3"}),
+          ["0x1000 event_handler_3: 名稱是 0x51b91 表第 3 項,卻沒有通過驗證的該項 fixup 證據"])
+    check("event_handler_N 的證據是別的索引", fb({**h3, "name": "event_handler_0"}),
+          ["0x1000 event_handler_0: 名稱是 0x51b91 表第 0 項,卻沒有通過驗證的該項 fixup 證據"])
+
 
 def _selftest_live(fails: list[str]) -> bool:
     """真實 EXE 上的回歸與交叉核對。沒有 EXE 回 False(SKIP)。"""
@@ -1070,6 +1161,13 @@ def _selftest_live(fails: list[str]) -> bool:
     check("每一筆都是 strong 入口", all(by[int(a, 16)]["grade"] == "strong" for a in sd["names"]))
     errs = run_check_names()
     check(f"function_names.json 的 {len(load_function_names())} 筆全部通過位元組證據檢查", not errs, "; ".join(errs[:3]))
+    # 事件跳表的正向控制:doc25 L950 記 slot 82 指向舊版 0x35f92,新版 +0x356 = 0x362e8(續三十勘誤)。
+    # 表基底或 fixup 解析錯了,這題先失敗,而不是讓所有 event_handler_N 一起變成「fixup 指向別處」。
+    import disasm_le as D
+    data_l, meta_l = CC.load_image()[:2]
+    fx_l = D.build_fixups(data_l, meta_l)
+    check("事件跳表第 82 項的 fixup 指向 0x362e8(doc25 L950 舊 0x35f92 + 0x356)", fx_l.get(EVENT_TABLE + 4 * 82) == 0x362E8,
+          f"實際 {fx_l.get(EVENT_TABLE + 4 * 82)}")
     sc = ROOT / "docs" / "data" / "function_structural_names.json"
     if sc.exists():
         check("已提交的結構性命名產物與現算(含登錄表)逐位元組相同", sc.read_text(encoding="utf-8") == dump(full))
@@ -1093,7 +1191,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 19 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 20 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

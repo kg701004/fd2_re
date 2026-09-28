@@ -34712,6 +34712,14 @@
    "excerpt": "並補成對案例(同一位址只有 errata/verified 來源 -> 不是 named;補上 function_names 名稱 -> named)。修正後的數字:",
    "verdict": "benign",
    "note": "描述 selftest fixture 的成對案例,是工具測試說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5595,
+   "excerpt_sha1": "896fe60cbb4a0cf11129326ed37302e75133b8e0",
+   "excerpt": "4. 名稱形如 `event_handler_N` / `command_handler_N` 的,必須有同一張表第 N 項通過驗證的證據。",
+   "verdict": "benign",
+   "note": "描述 function_inventory.check_names 的名稱規則,是工具行為說明,不是遊戲事實主張"
   }
  ]
 }
