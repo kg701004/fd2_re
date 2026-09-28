@@ -2,13 +2,13 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 160,
+  "total": 164,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 104,
+   "wrapper": 109,
    "leaf_global": 5,
-   "leaf_ptr": 9,
+   "leaf_ptr": 8,
    "leaf_pure": 8
   },
   "wrapper_rounds": 3,
@@ -820,13 +820,6 @@
    "callers": 2,
    "argc": 0
   },
-  "0x3cf26": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_rw",
-   "round": 0,
-   "callers": 5,
-   "argc": 3
-  },
   "0x3db31": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
@@ -845,6 +838,20 @@
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x3df03": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x3e103(_))",
+   "round": 2,
+   "callers": 2,
+   "argc": 1
+  },
+  "0x3e103": {
+   "kind": "wrapper",
+   "name": "wrapper(lseek(_, 0, 1))",
+   "round": 1,
    "callers": 2,
    "argc": 1
   },
@@ -882,6 +889,13 @@
    "round": 0,
    "callers": 159,
    "argc": 0
+  },
+  "0x3f48b": {
+   "kind": "wrapper",
+   "name": "wrapper(strlen(_), strnicmp(_, _, _))",
+   "round": 1,
+   "callers": 5,
+   "argc": 1
   },
   "0x3f5b4": {
    "kind": "ail_only",
@@ -1113,6 +1127,20 @@
    "round": 0,
    "callers": 6,
    "argc": null
+  },
+  "0x4ce84": {
+   "kind": "wrapper",
+   "name": "wrapper(ld_mul_core(), ld_add_core())",
+   "round": 1,
+   "callers": 5,
+   "argc": 0
+  },
+  "0x4d695": {
+   "kind": "wrapper",
+   "name": "wrapper(ioalloc(_), fputc(_, _), stdio_flush(_))",
+   "round": 1,
+   "callers": 3,
+   "argc": 2
   },
   "0x4d715": {
    "kind": "wrapper",

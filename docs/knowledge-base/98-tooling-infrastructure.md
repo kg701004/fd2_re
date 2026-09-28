@@ -5604,3 +5604,25 @@ import 到的是突變版:`entry_thunks` 的 `code[off + 2:off + 5]` 是正在�
 事件內容;事件內容在 `event_id_groups.json` 與 doc25/26。
 
 `--coverage`:strong 858 裡有名稱 465(本節前 298)、文件記載為入口 177、完全無描述 122(本節前 163)。
+
+## 2026-09-28 續三十五:函式庫區命名 26 筆 —— Watcom CRT 的 I/O 層與 80-bit 軟體浮點
+
+完全無描述的 strong 入口依呼叫端數排序後,前段幾乎全在 `__STK` 之後的函式庫區。第十八、十九批(314 -> 340)收兩叢:
+
+**CRT I/O 層(18 筆)。** `fread`/`fwrite` 往下每一層都補上:`ioalloc`、`stdio_mark_tty`、`stdio_fill_buffer`、`stdio_flush`、
+`flush_streams_matching`、`fputc`;POSIX 層 `open`/`sopen`/`read`/`write`/`lseek`/`close`;DOS 層 `dos_read`(AH=3Fh)、
+`dos_write`(AH=40h,append 先移檔尾)、`dos_getche`(AH=01h)、`set_errno_dos`;另有 `memcpy`、`strnicmp`、
+`read_at_file_or_memory`。身分都由 DOS 呼叫號與 FILE 旗標決定,每筆證據含那條 `mov ah, N` 或旗標測試。
+
+**反組譯器的顯示怪癖。** `memcpy`(0x3cf26)顯示成不帶前綴的 `movsd`,看起來像只搬一個 dword 的 bug。位元組是 `F2 A5`:
+capstone 因 F2 A5 與 SSE2 的 `movsd` 編碼衝突而省略前綴;MOVS 上的 REPNE 行為同 REP。登錄前先看位元組才下結論,摘要已註明。
+
+**80-bit 軟體浮點(7 筆)。** 運算元是 10 bytes `{u32 尾數低, u32 尾數高, u16 符號+指數}`。三個核心由本體區分:
+`ld_add_core`(指數差 > 0x40 直接回傳較大者)、`ld_div_core`(除數為 0 時 0/0 回 indefinite NaN、x/0 回無限大,經 0x4a314 報錯)、
+`ld_mul_core`(指數相加減偏移 0x3ffe);包裝 `ld_add`/`ld_add_by_value`/`ld_div`/`ld_mul` 各載入兩個運算元後呼叫核心。
+0x4a314(5382 bytes,19 個呼叫端)是它們共用的錯誤/格式化大函式,這批沒有命名。
+
+**`delay` 的校準值從哪來。** 讀 `fputc` 時看到它 `ret` 之後、0x3dfef 起有一段不是清單入口的程式碼:以 `int 21h AH=2Ch` 數一個
+百分之一秒內能跑幾圈,存進 `[0x541b0]` —— 正是 `delay_impl` 換算毫秒用的乘數。它沒有直接呼叫端(推定經初始化表呼叫),不在入口清單裡,所以沒有命名。
+
+`--coverage`:strong 858 裡有名稱 489、文件記載為入口 177、完全無描述 94。

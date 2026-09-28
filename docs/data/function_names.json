@@ -6147,6 +6147,656 @@
      "index": 85
     }
    ]
+  },
+  {
+   "addr": "0x3cf50",
+   "name": "lseek",
+   "summary": "Watcom CRT lseek(fd, offset, whence):DOS int 21h AH=42h,失敗經 set_errno_dos 回 -1,成功回新位置。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3cf67",
+     "insn": "mov ah, 0x42"
+    },
+    {
+     "at": "0x3cf6e",
+     "insn": "int 0x21"
+    },
+    {
+     "at": "0x3cf85",
+     "insn": "call 0x46632"
+    }
+   ]
+  },
+  {
+   "addr": "0x3d36c",
+   "name": "close",
+   "summary": "Watcom CRT close(fd):DOS int 21h AH=3Eh;成功清 handle 旗標表項,失敗 errno=4 回 -1。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3d377",
+     "insn": "mov ah, 0x3e"
+    },
+    {
+     "at": "0x3d379",
+     "insn": "int 0x21"
+    },
+    {
+     "at": "0x3d397",
+     "insn": "mov dword ptr [eax], 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x3d074",
+   "name": "open",
+   "summary": "Watcom CRT open(path, oflag, ...):取出 varargs 的 pmode,轉呼叫 sopen(path, oflag, 0, pmode)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3d077",
+     "insn": "lea eax, [ebp + 0x10]"
+    },
+    {
+     "at": "0x3d081",
+     "insn": "push 0"
+    },
+    {
+     "at": "0x3d089",
+     "insn": "call 0x3d093"
+    }
+   ]
+  },
+  {
+   "addr": "0x3d093",
+   "name": "sopen",
+   "summary": "Watcom CRT sopen(path, oflag, share, pmode):以 DOS AH=3Dh 開檔,需要時 AH=3Ch 建檔,截斷模式以 AH=40h 寫 0 bytes,再依是否為終端機(0x3fe5f)設 handle 旗標。open 與 fsopen 的底層。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3d0c1",
+     "insn": "mov ah, 0x3d"
+    },
+    {
+     "at": "0x3d12a",
+     "insn": "mov ah, 0x40"
+    },
+    {
+     "at": "0x3d187",
+     "insn": "mov ah, 0x3c"
+    },
+    {
+     "at": "0x3d199",
+     "insn": "call 0x46632"
+    }
+   ]
+  },
+  {
+   "addr": "0x3d3e5",
+   "name": "write",
+   "summary": "Watcom CRT write(fd, buf, n):append 模式先 AH=42h 移到檔尾;二進位模式直接 AH=40h;文字模式把每個 0xa 前面補 0xd (經堆疊上的暫存緩衝)分段寫出。fwrite 的直寫路徑用它。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3d432",
+     "insn": "mov ah, 0x42"
+    },
+    {
+     "at": "0x3d470",
+     "insn": "mov ah, 0x40"
+    },
+    {
+     "at": "0x3d4eb",
+     "insn": "cmp byte ptr [eax], 0xa"
+    },
+    {
+     "at": "0x3d4f3",
+     "insn": "mov byte ptr [esi + eax], 0xd"
+    }
+   ]
+  },
+  {
+   "addr": "0x3dce0",
+   "name": "dos_read",
+   "summary": "(fd, buf, n):DOS int 21h AH=3Fh 讀檔,失敗經 set_errno_dos 回 -1,成功回讀到的位元組數。fread 與 stdio_fill_buffer 的底層。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3dcf0",
+     "insn": "mov ah, 0x3f"
+    },
+    {
+     "at": "0x3dcf2",
+     "insn": "int 0x21"
+    },
+    {
+     "at": "0x3dd02",
+     "insn": "call 0x46632"
+    }
+   ]
+  },
+  {
+   "addr": "0x46d53",
+   "name": "dos_write",
+   "summary": "(fd, buf, n):handle 旗標(0x466a2)有 0x80(append)時先 AH=42h/AL=2 移到檔尾;再 AH=40h 寫出;寫少於 n 時 errno=0xc。stdio_flush 的底層。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x46d65",
+     "insn": "test al, 0x80"
+    },
+    {
+     "at": "0x46d69",
+     "insn": "mov al, 2"
+    },
+    {
+     "at": "0x46da2",
+     "insn": "mov ah, 0x40"
+    },
+    {
+     "at": "0x46dc3",
+     "insn": "mov dword ptr [eax], 0xc"
+    }
+   ]
+  },
+  {
+   "addr": "0x46632",
+   "name": "set_errno_dos",
+   "summary": "(dos_err):把 DOS 錯誤碼存進 doserrno(0x3db4c),[0x5283a] ≥ 3 時(推定是 DOS 主版本號,Watcom __set_errno_dos 的慣例)先歸併擴充錯誤碼,再查 [0x5377c] 表轉成 errno;≥0x100 時取高 byte。回傳 -1。9 個 DOS I/O 函式失敗時都走這裡。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4663d",
+     "insn": "call 0x3db4c"
+    },
+    {
+     "at": "0x4664d",
+     "insn": "cmp byte ptr [0x283a], 3"
+    },
+    {
+     "at": "0x46679",
+     "insn": "movsx ax, byte ptr [eax + 0x377c]"
+    },
+    {
+     "at": "0x46699",
+     "insn": "mov eax, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x3dc69",
+   "name": "ioalloc",
+   "summary": "Watcom CRT __ioalloc(fp):FILE(+0 緩衝指標、+4 計數、+8 緩衝基底、+0xc/+0xd 旗標、+0x10 handle、+0x14 緩衝大小)。未指定緩衝大小時:行緩衝(+0xd bit 2)0x86、不緩衝(bit 4)1、其他 0x1000;malloc 失敗就改用 FILE 內建的 1 byte(+0x18)並設為不緩衝。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3dc85",
+     "insn": "mov dword ptr [ebx + 0x14], 0x86"
+    },
+    {
+     "at": "0x3dc9d",
+     "insn": "mov dword ptr [ebx + 0x14], 0x1000"
+    },
+    {
+     "at": "0x3dca7",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x3dcb6",
+     "insn": "and byte ptr [ebx + 0xd], 0xf8"
+    },
+    {
+     "at": "0x3dcba",
+     "insn": "lea eax, [ebx + 0x18]"
+    }
+   ]
+  },
+  {
+   "addr": "0x3dc3c",
+   "name": "stdio_mark_tty",
+   "summary": "(fp):尚未檢查過(+0xd bit 0x20 清)時以 0x3fe5f 判斷 handle 是否為終端機;是就設 0x20,且未指定緩衝模式時設為行緩衝(bit 2)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3dc43",
+     "insn": "test byte ptr [ebx + 0xd], 0x20"
+    },
+    {
+     "at": "0x3dc4c",
+     "insn": "call 0x3fe5f"
+    },
+    {
+     "at": "0x3dc58",
+     "insn": "or byte ptr [ebx + 0xd], 0x20"
+    },
+    {
+     "at": "0x3dc62",
+     "insn": "or byte ptr [ebx + 0xd], 2"
+    }
+   ]
+  },
+  {
+   "addr": "0x3de66",
+   "name": "stdio_flush",
+   "summary": "Watcom CRT __flush(fp):緩衝有寫入(+0xd bit 0x10)且可寫時以 dos_write 寫出,寫不完 errno=0xc;否則(讀緩衝)以 lseek(fd, -剩餘, SEEK_CUR) 丟掉未讀部分。失敗設錯誤旗標(+0xc 0x20)回 -1;最後重設緩衝指標與計數。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3de70",
+     "insn": "test byte ptr [ebx + 0xd], 0x10"
+    },
+    {
+     "at": "0x3de97",
+     "insn": "call 0x46d53"
+    },
+    {
+     "at": "0x3ded6",
+     "insn": "push 1"
+    },
+    {
+     "at": "0x3ded8",
+     "insn": "neg eax"
+    },
+    {
+     "at": "0x3dede",
+     "insn": "call 0x3cf50"
+    }
+   ]
+  },
+  {
+   "addr": "0x3ddb5",
+   "name": "stdio_fill_buffer",
+   "summary": "Watcom CRT __filbuf(fp):沒有緩衝先 ioalloc;終端機輸入前先 flush_streams_matching(0x2000);終端機且 handle 0 時以 dos_getche 讀一字,否則 dos_read 讀滿(不緩衝時 1 byte)。讀到 0 設 EOF(+0xc 0x10)、失敗設錯誤(0x20)。回傳讀到的數量。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3ddc3",
+     "insn": "call 0x3dc69"
+    },
+    {
+     "at": "0x3ddd7",
+     "insn": "push 0x2000"
+    },
+    {
+     "at": "0x3de09",
+     "insn": "call 0x46d38"
+    },
+    {
+     "at": "0x3de36",
+     "insn": "call 0x3dce0"
+    },
+    {
+     "at": "0x3de49",
+     "insn": "or byte ptr [ebx + 0xc], 0x10"
+    }
+   ]
+  },
+  {
+   "addr": "0x3df47",
+   "name": "fputc",
+   "summary": "Watcom CRT fputc(c, fp):不可寫(+0xc bit 2 清)時 errno=4 回 -1;沒有緩衝先 ioalloc;文字模式(+0xc bit 0x40 清)遇 '\\n' 先寫 '\\r';緩衝滿或行緩衝遇換行時 stdio_flush。回傳寫入的字元。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3df4f",
+     "insn": "test byte ptr [ebx + 0xc], 2"
+    },
+    {
+     "at": "0x3df82",
+     "insn": "cmp dword ptr [ebp + 0x10], 0xa"
+    },
+    {
+     "at": "0x3df8d",
+     "insn": "test byte ptr [ebx + 0xc], 0x40"
+    },
+    {
+     "at": "0x3df99",
+     "insn": "mov byte ptr [eax], 0xd"
+    },
+    {
+     "at": "0x3dfdb",
+     "insn": "call 0x3de66"
+    }
+   ]
+  },
+  {
+   "addr": "0x46d00",
+   "name": "flush_streams_matching",
+   "summary": "(mask):走訪已開檔串列 [0x541ac],旗標(+0xc)與 mask 相交的串流計數,其中緩衝有寫入的呼叫 stdio_flush。回傳符合的數量。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x46d09",
+     "insn": "mov ebx, dword ptr [0x41ac]"
+    },
+    {
+     "at": "0x46d16",
+     "insn": "test dword ptr [eax + 0xc], edi"
+    },
+    {
+     "at": "0x46d1c",
+     "insn": "test byte ptr [eax + 0xd], 0x10"
+    },
+    {
+     "at": "0x46d23",
+     "insn": "call 0x3de66"
+    }
+   ]
+  },
+  {
+   "addr": "0x46d38",
+   "name": "dos_getche",
+   "summary": "讀一個鍵:[0x52824] 有暫存(ungetch)就回傳並清掉,否則 DOS int 21h AH=01h(有回顯)。stdio_fill_buffer 的終端機路徑用它。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x46d38",
+     "insn": "mov eax, dword ptr [0x2824]"
+    },
+    {
+     "at": "0x46d3d",
+     "insn": "mov dword ptr [0x2824], 0"
+    },
+    {
+     "at": "0x46d4b",
+     "insn": "mov ah, 1"
+    },
+    {
+     "at": "0x46d4d",
+     "insn": "int 0x21"
+    }
+   ]
+  },
+  {
+   "addr": "0x3cf26",
+   "name": "memcpy",
+   "summary": "Watcom CRT memcpy(dst, src, n):n/4 個 dword 再 n&3 個 byte,回傳 dst。注意:位元組是 F2 A5(REPNE MOVSD),capstone 因與 SSE2 movsd 編碼衝突而顯示成不帶前綴的 movsd;MOVS 上的 REPNE 行為同 REP,這不是只搬一個 dword 的 bug。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3cf3c",
+     "insn": "shr ecx, 2"
+    },
+    {
+     "at": "0x3cf3f",
+     "insn": "movsd dword ptr es:[edi], dword ptr [esi]"
+    },
+    {
+     "at": "0x3cf43",
+     "insn": "and cl, 3"
+    },
+    {
+     "at": "0x3cf46",
+     "insn": "repne movsb byte ptr es:[edi], byte ptr [esi]"
+    },
+    {
+     "at": "0x3cf4a",
+     "insn": "mov eax, edi"
+    }
+   ]
+  },
+  {
+   "addr": "0x3cf9b",
+   "name": "read",
+   "summary": "Watcom CRT read(fd, buf, n):handle 旗標(0x466a2)為 0 時 errno=4、不可讀(bit 0 清)時 errno=6,回 -1;二進位模式(bit 0x40)直接 DOS AH=3Fh;文字模式另走逐段讀取路徑。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3cfad",
+     "insn": "call 0x466a2"
+    },
+    {
+     "at": "0x3cfc1",
+     "insn": "mov dword ptr [eax], 4"
+    },
+    {
+     "at": "0x3cfd1",
+     "insn": "test al, 1"
+    },
+    {
+     "at": "0x3cfda",
+     "insn": "mov dword ptr [eax], 6"
+    },
+    {
+     "at": "0x3cfe2",
+     "insn": "test al, 0x40"
+    },
+    {
+     "at": "0x3cfee",
+     "insn": "mov ah, 0x3f"
+    }
+   ]
+  },
+  {
+   "addr": "0x46f4f",
+   "name": "strnicmp",
+   "summary": "Watcom CRT strnicmp(s1, s2, n):逐字把 'A'..'Z' 轉小寫後比較,最多 n 字,遇 0 結束;回傳差值(n 為 0 回 0)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x46f5c",
+     "insn": "test ebx, ebx"
+    },
+    {
+     "at": "0x46f68",
+     "insn": "cmp cl, 0x41"
+    },
+    {
+     "at": "0x46f6d",
+     "insn": "cmp cl, 0x5a"
+    },
+    {
+     "at": "0x46f72",
+     "insn": "add cl, 0x20"
+    },
+    {
+     "at": "0x46f8c",
+     "insn": "sub eax, edx"
+    }
+   ]
+  },
+  {
+   "addr": "0x3645d",
+   "name": "read_at_file_or_memory",
+   "summary": "旗標參數 bit 0 設時從記憶體影像 memcpy,否則 lseek 到位置後 read;回傳 位置 + 長度。唯一呼叫端 0x3669a(17 個呼叫點)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3646a",
+     "insn": "test byte ptr [esp + 0x18], 1"
+    },
+    {
+     "at": "0x36480",
+     "insn": "call 0x3cf26"
+    },
+    {
+     "at": "0x3648f",
+     "insn": "call 0x3cf50"
+    },
+    {
+     "at": "0x364a6",
+     "insn": "call 0x3cf9b"
+    }
+   ]
+  },
+  {
+   "addr": "0x4b882",
+   "name": "ld_add_core",
+   "summary": "80-bit 軟體浮點加法核心(暫存器 ABI:edx:eax 與 si 高半為一個運算元,ecx:ebx 與 esi 低半為另一個)。任一為 0 回傳另一個;指數差 > 0x40 直接回傳較大者;否則對齊尾數後依符號相加減。10-byte 擴充精度值 {u32 尾數低, u32 尾數高, u16 符號+指數(偏移 0x3fff)}。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4b8c5",
+     "insn": "and edi, 0x80007fff"
+    },
+    {
+     "at": "0x4b8e2",
+     "insn": "sub cx, di"
+    },
+    {
+     "at": "0x4b8f1",
+     "insn": "cmp cx, 0x40"
+    }
+   ]
+  },
+  {
+   "addr": "0x4bab1",
+   "name": "ld_div_core",
+   "summary": "80-bit 軟體浮點除法核心(暫存器 ABI 同 ld_add_core)。先檢查除數為 0:0/0 經 0x4a314 報錯並回傳 indefinite NaN(尾數 0xc0000000、指數 0xffff),x/0 報錯並回傳無限大(指數 0x7fff);被除數為 0 回 0。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4bab9",
+     "insn": "test esi, 0x7fff0000"
+    },
+    {
+     "at": "0x4bad2",
+     "insn": "mov ah, 0x81"
+    },
+    {
+     "at": "0x4bad4",
+     "insn": "call 0x4a314"
+    },
+    {
+     "at": "0x4bad9",
+     "insn": "mov edx, 0xc0000000"
+    },
+    {
+     "at": "0x4baf6",
+     "insn": "or si, 0x7fff"
+    }
+   ]
+  },
+  {
+   "addr": "0x4bc86",
+   "name": "ld_mul_core",
+   "summary": "80-bit 軟體浮點乘法核心(暫存器 ABI 同 ld_add_core)。任一為 0 回 0;指數相加後減偏移 0x3ffe,溢位/下溢另行處理。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4bca7",
+     "insn": "sub eax, eax"
+    },
+    {
+     "at": "0x4bcc9",
+     "insn": "add ecx, edi"
+    },
+    {
+     "at": "0x4bccb",
+     "insn": "sub cx, 0x3ffe"
+    },
+    {
+     "at": "0x4bcd2",
+     "insn": "cmp cx, 0x7fff"
+    }
+   ]
+  },
+  {
+   "addr": "0x4b828",
+   "name": "ld_add",
+   "summary": "*ebx = *eax + *edx(10-byte 擴充精度值 {u32 尾數低, u32 尾數高, u16 符號+指數(偏移 0x3fff)}):把兩個 10-byte 運算元載入暫存器後呼叫 ld_add_core,結果寫回 ebx 指向處。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4b82b",
+     "insn": "mov si, word ptr [edx + 8]"
+    },
+    {
+     "at": "0x4b840",
+     "insn": "call 0x4b882"
+    },
+    {
+     "at": "0x4b84b",
+     "insn": "mov word ptr [ebx + 8], si"
+    }
+   ]
+  },
+  {
+   "addr": "0x4b852",
+   "name": "ld_add_by_value",
+   "summary": "*ebx = *eax + (堆疊上以值傳入的 10-byte 運算元):呼叫 ld_add_core,ret 0xc 自行清掉 12 bytes 參數。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4b855",
+     "insn": "mov si, word ptr [esp + 0x18]"
+    },
+    {
+     "at": "0x4b86e",
+     "insn": "call 0x4b882"
+    },
+    {
+     "at": "0x4b87f",
+     "insn": "ret 0xc"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ba87",
+   "name": "ld_div",
+   "summary": "*ebx = *eax / *edx(10-byte 擴充精度值 {u32 尾數低, u32 尾數高, u16 符號+指數(偏移 0x3fff)}):載入後呼叫 ld_div_core。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4ba8a",
+     "insn": "mov si, word ptr [edx + 8]"
+    },
+    {
+     "at": "0x4ba9f",
+     "insn": "call 0x4bab1"
+    },
+    {
+     "at": "0x4baaa",
+     "insn": "mov word ptr [ebx + 8], si"
+    }
+   ]
+  },
+  {
+   "addr": "0x4bc5c",
+   "name": "ld_mul",
+   "summary": "*ebx = *eax × *edx(10-byte 擴充精度值 {u32 尾數低, u32 尾數高, u16 符號+指數(偏移 0x3fff)}):載入後呼叫 ld_mul_core。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4bc5f",
+     "insn": "mov si, word ptr [edx + 8]"
+    },
+    {
+     "at": "0x4bc74",
+     "insn": "call 0x4bc86"
+    },
+    {
+     "at": "0x4bc7f",
+     "insn": "mov word ptr [ebx + 8], si"
+    }
+   ]
   }
  ]
 }
