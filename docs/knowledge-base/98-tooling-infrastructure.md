@@ -5564,3 +5564,19 @@ import 到的是突變版:`entry_thunks` 的 `code[off + 2:off + 5]` 是正在�
 (存在 `.premutation` 檔)不 import、不執行受測工具。
 
 `--coverage`(續三十一的新定義):strong 858 裡有名稱 288、文件記載為入口 241、完全無描述 171。
+
+## 2026-09-28 續三十三:戰鬥路徑剩餘 11 筆 —— unit_present 的兩段 LUT 效果與轉場
+
+第十六批(136 -> 147)收掉 09-19 列的戰鬥路徑清單。
+
+**unit_present(0x22253)的兩個子段不再是黑盒。** 續三十二時 0x22547/0x22656 卡在共同的 0x22046;往下讀 0x219ad 後整條鏈清楚了:
+`remap_bytes_by_lut`(就地 `buf[i]=lut[buf[i]]`)<- `remap_circle_scanlines`(每列半寬 `sqrt(r²-dy²)*scale/常數`)<-
+`lut_remap_circle_band`(畫單位層前後各一次圓形重映射,再一段矩形帶)。unit_present 先以 `lut_circle_shrink_frames` 做 6 幀
+半徑遞減,收尾以 `lut_circle_frames` 做 10 幀固定半徑,每幀的 LUT 取自 `[0x53a6d]` 資源的第 i 項。SESSION-HANDOFF-2026-07-06 L561
+對 0x219ad 的描述與本體一致。doc50/91 記的「0x22253 choreography 尚未實作」是 remake 側的狀態,本批只補原版側的函式身分。
+
+**其餘:** `blit_rle_image_at_xy`(0x4e98d,39 個呼叫端,三種模式)、`blit_tile24_rle_band_cycled`、`flash_listed_units_band_cycle`、
+`draw_units_with_list_overlay`,以及指令環攻擊路徑上的兩個方向相反的 640 px 橫向平移轉場 `pan_view_left_to_panel`/
+`pan_view_right_to_panel`(名稱只描述機械行為;它們是否就是「攻守雙方視角切換」,要看呼叫端 0x2ebe1 的上下文,未確認)。
+
+`--coverage`:strong 858 裡有名稱 298、文件記載為入口 238、完全無描述 163。

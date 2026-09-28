@@ -2,13 +2,13 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 250,
+  "total": 257,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 193,
+   "wrapper": 201,
    "leaf_global": 5,
-   "leaf_ptr": 10,
+   "leaf_ptr": 9,
    "leaf_pure": 8
   },
   "wrapper_rounds": 4,
@@ -323,6 +323,13 @@
    "callers": 1,
    "argc": 2
   },
+  "0x1cac7": {
+   "kind": "wrapper",
+   "name": "wrapper(draw_units_with_list_overlay(_, _, _, 0x4a), malloc(0x25680), draw_units_with_list_overlay(_, _, _, 0x4b), copy_rect(0xa0504, 0x140, _, 0x1c8, 0x138, 0xc0), delay(0x5a), copy_rect(0xa0504, 0x140, _, 0x1c8, 0x138, 0xc0), delay(0x5a), redraw(0), heap_free(_))",
+   "round": 1,
+   "callers": 2,
+   "argc": 4
+  },
   "0x1d4cb": {
    "kind": "wrapper",
    "name": "wrapper(load_res(0x1a4d, 0, 0x50))",
@@ -384,6 +391,13 @@
    "name": "wrapper(memset(_, _, _))",
    "round": 1,
    "callers": 2,
+   "argc": 4
+  },
+  "0x1f73f": {
+   "kind": "wrapper",
+   "name": "wrapper(palfade_in(), memset(0xa0000, 0, 0xfa00), load_res(0x1a4d, _, _), load_res(0x1a4d, 0, _), blit_rle_image_at_xy(_, 0, 0, 0xa0000, 0x140, -1), palfade(), wait_ticks(1), wait_ticks(6), palfade_in(), load_res(0x1a4d, _, 0x65), copy_rect(0xa0000, 0x140, _, 0x140, 0x140, 0xc8), palfade())",
+   "round": 1,
+   "callers": 1,
    "argc": 4
   },
   "0x1ff79": {
@@ -524,6 +538,41 @@
    "name": "wrapper(play_map_effect_animation(_, 0xd, _), present_effect_on_targets(_, 0xd, _, _), ~0x1c916(_, _), queue_unit_number_popup(_, 0x69, _))",
    "round": 2,
    "callers": 2,
+   "argc": 4
+  },
+  "0x21206": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x21227(_, 0, _, _))",
+   "round": 4,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x21227": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
+   "round": 3,
+   "callers": 1,
+   "argc": 4
+  },
+  "0x212b9": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
+   "round": 3,
+   "callers": 0,
+   "argc": 4
+  },
+  "0x21396": {
+   "kind": "wrapper",
+   "name": "wrapper(~0x213b7(_, 4, _, _))",
+   "round": 4,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x213b7": {
+   "kind": "wrapper",
+   "name": "wrapper(play_map_effect_animation(_, _, _), ~0x1cac7(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
+   "round": 3,
+   "callers": 1,
    "argc": 4
   },
   "0x2185f": {
@@ -770,6 +819,13 @@
    "round": 1,
    "callers": 5,
    "argc": 6
+  },
+  "0x2fe14": {
+   "kind": "wrapper",
+   "name": "wrapper(wait_ticks(1), memset(_, 0, 0x1f400), blit_rle_image_at_xy(_, 0, 0x32, _, 0x280, -1), blit_anim_frame(_, _, _, 0x280, -1), copy_rect(0xa0000, 0x140, _, 0x280, 0x140, 0xc8))",
+   "round": 1,
+   "callers": 2,
+   "argc": 3
   },
   "0x30e25": {
    "kind": "wrapper",
@@ -1743,13 +1799,6 @@
    "round": 1,
    "callers": 3,
    "argc": 0
-  },
-  "0x4deec": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_rw",
-   "round": 0,
-   "callers": 2,
-   "argc": 3
   },
   "0x4e390": {
    "kind": "wrapper",

@@ -3465,6 +3465,345 @@
      "insn": "rep stosb byte ptr es:[edi], al"
     }
    ]
+  },
+  {
+   "addr": "0x4deec",
+   "name": "remap_bytes_by_lut",
+   "summary": "(lut, n, buf):就地查表 buf[i] = lut[buf[i]],共 n bytes。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4defe",
+     "insn": "lodsb al, byte ptr [esi]"
+    },
+    {
+     "at": "0x4deff",
+     "insn": "mov al, byte ptr [eax + edx]"
+    },
+    {
+     "at": "0x4df02",
+     "insn": "stosb byte ptr es:[edi], al"
+    },
+    {
+     "at": "0x4df03",
+     "insn": "loop 0x4defe"
+    }
+   ]
+  },
+  {
+   "addr": "0x219ad",
+   "name": "remap_circle_scanlines",
+   "summary": "在離屏緩衝 [0x53a49]+0x8088(stride 0x1c8)上,對圓內每一列以 remap_bytes_by_lut 查表重映射;該列半寬 = sqrt(r²-dy²) * scale / [0x501f0](chp_truncate 取整),x 範圍裁在 0..0x138。與 SESSION-HANDOFF-2026-07-06 L561 記的「圓形 scanline in-place remap」一致。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x21a3e",
+     "insn": "call 0x37932"
+    },
+    {
+     "at": "0x21a4b",
+     "insn": "imul eax, eax"
+    },
+    {
+     "at": "0x21a5e",
+     "insn": "call 0x3ca4c"
+    },
+    {
+     "at": "0x21a78",
+     "insn": "fdiv qword ptr [0x1f0]"
+    },
+    {
+     "at": "0x219d6",
+     "insn": "cmp edx, 0x138"
+    },
+    {
+     "at": "0x21a10",
+     "insn": "call 0x4deec"
+    }
+   ]
+  },
+  {
+   "addr": "0x22046",
+   "name": "lut_remap_circle_band",
+   "summary": "以同一 LUT:先 remap_circle_scanlines,畫單位層(draw_unit_layer),再 remap_circle_scanlines 一次,最後把寬度 = 參數 × [0x50208] 的一段矩形帶逐列 remap_bytes_by_lut(x 裁在 0..0x138)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2206f",
+     "insn": "call 0x219ad"
+    },
+    {
+     "at": "0x22077",
+     "insn": "call 0x127a9"
+    },
+    {
+     "at": "0x22093",
+     "insn": "call 0x219ad"
+    },
+    {
+     "at": "0x220a3",
+     "insn": "fmul qword ptr [0x208]"
+    },
+    {
+     "at": "0x220cc",
+     "insn": "cmp edx, 0x138"
+    },
+    {
+     "at": "0x2210b",
+     "insn": "call 0x4deec"
+    }
+   ]
+  },
+  {
+   "addr": "0x22547",
+   "name": "lut_circle_shrink_frames",
+   "summary": "unit_present 的第一段:先在單位格子(相對捲動,每格 24 px)以 blit_rle_c0_transparent 畫影像,再 6 幀(5..0):還原離屏緩衝、以 [0x53a6d] 資源第 i 項為 LUT 呼叫 lut_remap_circle_band,半徑 = r/5 × i,貼到畫面,每幀 10ms。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x225a3",
+     "insn": "call 0x4ebab"
+    },
+    {
+     "at": "0x225ab",
+     "insn": "mov ebx, 5"
+    },
+    {
+     "at": "0x225bd",
+     "insn": "mov edi, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x225eb",
+     "insn": "imul eax, ebx"
+    },
+    {
+     "at": "0x225f6",
+     "insn": "call 0x22046"
+    },
+    {
+     "at": "0x2262a",
+     "insn": "push 0xa"
+    }
+   ]
+  },
+  {
+   "addr": "0x22656",
+   "name": "lut_circle_frames",
+   "summary": "unit_present 的收尾段:10 幀,每幀還原離屏緩衝、以 [0x53a6d] 資源第 i 項為 LUT 呼叫 lut_remap_circle_band(固定半徑),貼到畫面,每幀 1 tick。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x22678",
+     "insn": "mov esi, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x226a1",
+     "insn": "call 0x22046"
+    },
+    {
+     "at": "0x226d7",
+     "insn": "call 0x17aa9"
+    },
+    {
+     "at": "0x226e0",
+     "insn": "cmp ebx, 0xa"
+    }
+   ]
+  },
+  {
+   "addr": "0x4df84",
+   "name": "blit_tile24_rle_band_cycled",
+   "summary": "(src, dst, stride, base, shift):與 blit_tile24_rle 同一種 24×24 RLE,每個像素改成 ((index + shift) & 7) + base。blit_tile24_rle_band 是 shift=0、base=0x18 的特例。唯一呼叫端 flash_listed_units_band_cycle。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4df99",
+     "insn": "mov eax, dword ptr [ebp + 0x18]"
+    },
+    {
+     "at": "0x4df9e",
+     "insn": "mov dh, 7"
+    },
+    {
+     "at": "0x4dfbb",
+     "insn": "add al, ah"
+    },
+    {
+     "at": "0x4dfbd",
+     "insn": "and al, dh"
+    },
+    {
+     "at": "0x4dfbf",
+     "insn": "add al, dl"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e98d",
+   "name": "blit_rle_image_at_xy",
+   "summary": "(src, x, y, dst, stride, mode):src 開頭兩個 u16 是寬高(另存 [0x627b4]/[0x627b6]),畫到 dst + y*stride + x。mode -1:一般 RLE(含字面複製段);mode ≤ 0xff:所有非透明像素填 mode;mode > 0xff:像素 = ((index + 高 byte) & 7) + 低 byte。39 個呼叫端。舊文件位址 0x4e63d(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e996",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4e9b3",
+     "insn": "mul edx"
+    },
+    {
+     "at": "0x4e9c9",
+     "insn": "cmp eax, -1"
+    },
+    {
+     "at": "0x4e9ce",
+     "insn": "cmp ax, 0xff"
+    },
+    {
+     "at": "0x4ea23",
+     "insn": "rep movsb byte ptr es:[edi], byte ptr [esi]"
+    },
+    {
+     "at": "0x4eae2",
+     "insn": "and al, 7"
+    }
+   ]
+  },
+  {
+   "addr": "0x1cd17",
+   "name": "flash_listed_units_band_cycle",
+   "summary": "(tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(base = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1cd33",
+     "insn": "mov esi, 0x2006"
+    },
+    {
+     "at": "0x1cd38",
+     "insn": "rep movsd dword ptr es:[edi], dword ptr [esi]"
+    },
+    {
+     "at": "0x1cd9c",
+     "insn": "cmp esi, 0xa"
+    },
+    {
+     "at": "0x1cde1",
+     "insn": "mov eax, 7"
+    },
+    {
+     "at": "0x1cdf9",
+     "insn": "call 0x4df84"
+    }
+   ]
+  },
+  {
+   "addr": "0x1cb94",
+   "name": "draw_units_with_list_overlay",
+   "summary": "(buf, count, list, res_idx):在 buf 重畫地形層,再畫全部存活(+5 bit0 清)且在攝影機視窗內的單位:名單內的單位改畫 [0x53ad1] 資源第 res_idx 項(blit_rle_c0_transparent),其餘畫一般精靈(blit_tile24_rle)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1cbcc",
+     "insn": "call 0x11eee"
+    },
+    {
+     "at": "0x1cbde",
+     "insn": "mov eax, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x1cc1d",
+     "insn": "cmp esi, dword ptr [0x3beb]"
+    },
+    {
+     "at": "0x1cc3b",
+     "insn": "test byte ptr [eax + 5], 1"
+    },
+    {
+     "at": "0x1cc14",
+     "insn": "call 0x4ebab"
+    },
+    {
+     "at": "0x1cd0d",
+     "insn": "call 0x4e22a"
+    }
+   ]
+  },
+  {
+   "addr": "0x2f4d4",
+   "name": "pan_view_left_to_panel",
+   "summary": "(strip, ..., panel_buf, ...):在 640 px 寬的條帶(stride 0x280)上,視窗從 x=288 以每幀 32 px 移到 0(10 幀),背景是 [0x5413f] 三張圖輪播;接著清空條帶、在 panel_buf 畫背景與 draw_unit_panel_by_side,複製到條帶左半、疊 blit_anim_frame,再平移一次停在左半。呼叫端 0x2cf30、0x2ebe1(指令環攻擊路徑)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2f4e5",
+     "insn": "mov esi, 9"
+    },
+    {
+     "at": "0x2f506",
+     "insn": "push dword ptr [edx*4 + 0x413f]"
+    },
+    {
+     "at": "0x2f526",
+     "insn": "shl edx, 5"
+    },
+    {
+     "at": "0x2f543",
+     "insn": "push 0x1f400"
+    },
+    {
+     "at": "0x2f589",
+     "insn": "call 0x2facd"
+    },
+    {
+     "at": "0x2f5c0",
+     "insn": "call 0x2eb9f"
+    }
+   ]
+  },
+  {
+   "addr": "0x2f631",
+   "name": "pan_view_right_to_panel",
+   "summary": "pan_view_left_to_panel 的反方向:視窗 x 從 32 以每幀 32 px 往右移,新面板(另在 (0xa4,0x9d) 多畫一張圖)複製到條帶右半,第二段平移停在 x=320。唯一呼叫端 0x2ebe1。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2f643",
+     "insn": "mov esi, 1"
+    },
+    {
+     "at": "0x2f6a3",
+     "insn": "cmp esi, 0xa"
+    },
+    {
+     "at": "0x2f6f1",
+     "insn": "push 0x9d"
+    },
+    {
+     "at": "0x2f6f6",
+     "insn": "push 0xa4"
+    },
+    {
+     "at": "0x2f70f",
+     "insn": "call 0x2facd"
+    },
+    {
+     "at": "0x2f7ac",
+     "insn": "cmp esi, 0xa"
+    }
+   ]
   }
  ]
 }
