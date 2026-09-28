@@ -444,8 +444,13 @@ def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int
 
 
 def tier(addr: int, names: dict[int, dict], documented: set[int]) -> str:
-    """覆蓋率分層:命名表有 = named;否則文件記載為入口 = documented;否則 unnamed。"""
-    if addr in names:
+    """覆蓋率分層:有名稱字串 = named;否則文件記載為入口 = documented;否則 unnamed。
+
+    2026-09-28 修正:原本「位址出現在任何來源」就算 named,但 verified_addresses 與勘誤的 correct_address
+    只有位址、沒有名稱(load_names 記成 name=None)。--stale-edition 登錄 79 筆勘誤後 named 從 306 跳到 363,
+    接著真的命名 32 個卻只 +1 —— 那 57 個是只有位址的勘誤被算成有名稱。
+    """
+    if (names.get(addr) or {}).get("name"):
         return "named"
     return "documented" if addr in documented else "unnamed"
 
@@ -804,9 +809,15 @@ def _selftest_pure(fails: list[str]) -> None:
     print("(6) tier / coverage_counts:命名表優先於文件記載;strong_only 真的只數 strong")
     ents6 = [{"addr": "0x10", "grade": "strong"}, {"addr": "0x20", "grade": "strong"},
              {"addr": "0x30", "grade": "weak"}, {"addr": "0x40", "grade": "strong"}, {"addr": "0x50", "grade": "weak"}]
-    names6, doc6 = {0x10: {}, 0x30: {}}, {0x10, 0x20, 0x50}
+    names6, doc6 = {0x10: {"name": "a"}, 0x30: {"name": "b"}}, {0x10, 0x20, 0x50}
     check("tier 三分", [tier(0x10, names6, doc6), tier(0x20, names6, doc6), tier(0x40, names6, doc6)],
           ["named", "documented", "unnamed"])
+    # 只有位址、沒有名稱的來源(勘誤 correct_address、verified_addresses)不算 named:
+    # 有文件記載落 documented、沒有落 unnamed;同一位址補上名稱才是 named(成對)
+    nl6 = {0x20: {"name": None, "sources": ["errata.correct"]}, 0x40: {"name": None, "sources": ["verified_addresses"]}}
+    check("無名稱字串的來源不算 named", [tier(0x20, nl6, doc6), tier(0x40, nl6, doc6),
+                                     tier(0x40, {0x40: {"name": "c", "sources": ["function_names"]}}, doc6)],
+          ["documented", "unnamed", "named"])
     check("strong_only", coverage_counts(ents6, names6, doc6, True), {"total": 3, "named": 1, "documented": 1, "unnamed": 1})
     check("全部", coverage_counts(ents6, names6, doc6, False), {"total": 5, "named": 2, "documented": 2, "unnamed": 1})
 

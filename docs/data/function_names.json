@@ -2278,6 +2278,846 @@
      "insn": "cmp eax, 0xc7"
     }
    ]
+  },
+  {
+   "addr": "0x4df09",
+   "name": "save_checksum_sum",
+   "summary": "(buf, len):前 len-4 個 byte 的無號和(存檔 envelope 最後 4 bytes 存這個和)。舊文件位址 0x4dbb9(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4df16",
+     "insn": "sub ecx, 4"
+    },
+    {
+     "at": "0x4df1d",
+     "insn": "lodsb al, byte ptr [esi]"
+    },
+    {
+     "at": "0x4df1e",
+     "insn": "add ebx, eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x4df28",
+   "name": "save_xor_crypt",
+   "summary": "(buf, len):原地可逆 rolling XOR。seed=0xa5,每 byte seed=rol16(seed+0x9014,3),以低 byte XOR。舊文件位址 0x4dbd8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4df35",
+     "insn": "mov dx, 0xa5"
+    },
+    {
+     "at": "0x4df3a",
+     "insn": "add dx, 0x9014"
+    },
+    {
+     "at": "0x4df3f",
+     "insn": "rol dx, 3"
+    },
+    {
+     "at": "0x4df43",
+     "insn": "xor al, dl"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e7dd",
+   "name": "promoted_row2_ptr_615fe",
+   "summary": "(portrait):回傳 0x615fe + (portrait-0x20)*2。只收轉職後 portrait(≥0x20),呼叫端全在轉職流程(0x2a694/0x2aa00/0x2ac7d)。舊文件位址 0x4e48d(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e7e3",
+     "insn": "sub eax, 0x20"
+    },
+    {
+     "at": "0x4e7e6",
+     "insn": "shl eax, 1"
+    },
+    {
+     "at": "0x4e7e8",
+     "insn": "lea edx, [0x15fe]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e821",
+   "name": "growth_row11_ptr",
+   "summary": "(portrait):回傳 0x620a1 + portrait*11(11-byte 成長記錄)。呼叫端含建構子 0x10c50 與 join。舊文件位址 0x4e4d1(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e827",
+     "insn": "mov edx, 0xb"
+    },
+    {
+     "at": "0x4e82e",
+     "insn": "lea edx, [0x20a1]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e838",
+   "name": "lower_class_row24_ptr",
+   "summary": "(idx):回傳 0x61da1 + idx*24(低階職業 24-byte 記錄)。舊文件位址 0x4e4e8(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e83e",
+     "insn": "mov edx, 0x18"
+    },
+    {
+     "at": "0x4e845",
+     "insn": "lea edx, [0x1da1]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e84f",
+   "name": "high_class_row10_ptr",
+   "summary": "(idx):回傳 0x61af9 + idx*10(高階職業 10-byte 記錄,建構子以 FDFIELD b1-0x44 當索引)。舊文件位址 0x4e4ff(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e855",
+     "insn": "mov edx, 0xa"
+    },
+    {
+     "at": "0x4e85c",
+     "insn": "lea edx, [0x1af9]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e4be",
+   "name": "flood_try_cell",
+   "summary": "移動範圍擴散的單格檢查(暫存器 ABI):ebx 指向格子,取 tile 低 10 bits 查 [0x60060] 地形成本表,剩餘移動力 cl 減成本;不足或不比已記錄的多就 CF=1;flags 0x40(阻擋)也 CF=1;0x80 時剩餘歸零;否則寫回並 CF=0。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e4c4",
+     "insn": "and ah, 3"
+    },
+    {
+     "at": "0x4e4cb",
+     "insn": "add eax, dword ptr [0x60]"
+    },
+    {
+     "at": "0x4e4d8",
+     "insn": "sub cl, byte ptr [esi + eax]"
+    },
+    {
+     "at": "0x4e4e6",
+     "insn": "test al, 0x40"
+    },
+    {
+     "at": "0x4e4f0",
+     "insn": "mov byte ptr [ebx], cl"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e42c",
+   "name": "flood_move_recurse",
+   "summary": "移動範圍擴散的遞迴本體(暫存器 ABI,自建 7-byte 堆疊框):依右、左、下、上四方向以 flood_try_cell 檢查,通過就遞迴自己;邊界是 [0x60068]/[0x60069](地圖寬高)。舊文件位址 0x4e0dc(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e43a",
+     "insn": "cmp dl, byte ptr [0x68]"
+    },
+    {
+     "at": "0x4e445",
+     "insn": "call 0x4e4be"
+    },
+    {
+     "at": "0x4e44c",
+     "insn": "call 0x4e42c"
+    },
+    {
+     "at": "0x4e47c",
+     "insn": "cmp dh, byte ptr [0x69]"
+    }
+   ]
+  },
+  {
+   "addr": "0x37b55",
+   "name": "strlen",
+   "summary": "Watcom CRT strlen(s):repne scasb 找 0,回傳長度。dialog 等 13 個呼叫端。舊文件位址 0x37805(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x37b59",
+     "insn": "mov edi, dword ptr [ebp + 0xc]"
+    },
+    {
+     "at": "0x37b66",
+     "insn": "repne scasb al, byte ptr es:[edi]"
+    },
+    {
+     "at": "0x37b68",
+     "insn": "not ecx"
+    }
+   ]
+  },
+  {
+   "addr": "0x3e01d",
+   "name": "delay_impl",
+   "summary": "delay(ms) 的本體(0x3790a 是 jmp 到這裡的 thunk):迴圈數 = (ms*[0x541b0]+500)/1000,至少 1;每圈以 DOS int 21h ah=2Ch 讀時間,等百分之一秒欄位改變。舊文件位址 0x3dccd(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3e02b",
+     "insn": "imul eax, dword ptr [0x41b0]"
+    },
+    {
+     "at": "0x3e032",
+     "insn": "add eax, 0x1f4"
+    },
+    {
+     "at": "0x3e037",
+     "insn": "mov esi, 0x3e8"
+    },
+    {
+     "at": "0x3e04b",
+     "insn": "mov ah, 0x2c"
+    },
+    {
+     "at": "0x3e04d",
+     "insn": "int 0x21"
+    }
+   ]
+  },
+  {
+   "addr": "0x37af4",
+   "name": "chp_truncate",
+   "summary": "Watcom __CHP:暫存 FPU 控制字,把捨入模式設成 11b(toward zero),frndint 後還原。舊文件位址 0x377a4(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x37af6",
+     "insn": "fnstcw word ptr [esp]"
+    },
+    {
+     "at": "0x37afd",
+     "insn": "mov byte ptr [esp + 1], 0x1f"
+    },
+    {
+     "at": "0x37b06",
+     "insn": "frndint"
+    },
+    {
+     "at": "0x37b09",
+     "insn": "fldcw word ptr [esp + 4]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ecbf",
+   "name": "decode_image_with_header",
+   "summary": "(dst, w, h, src, off, arg6):在 dst 寫 {u16 w, u16 h, u32 off} 標頭(w/h 另存 [0x627b4]/[0x627b6]),src+=off 後交給 0x4ecf0 解碼。舊文件位址 0x4e96f(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4ecc9",
+     "insn": "mov word ptr [0x27b4], ax"
+    },
+    {
+     "at": "0x4eccf",
+     "insn": "stosw word ptr es:[edi], ax"
+    },
+    {
+     "at": "0x4ece2",
+     "insn": "stosd dword ptr es:[edi], eax"
+    },
+    {
+     "at": "0x4ece8",
+     "insn": "call 0x4ecf0"
+    }
+   ]
+  },
+  {
+   "addr": "0x4ebab",
+   "name": "blit_rle_c0_transparent",
+   "summary": "(dst, src, stride):src 開頭兩個 u16 是寬高,逐像素經 rle_c0_fetch_pixel 解碼,非零才寫(0 透明),每列 dst += stride。舊文件位址 0x4e85b(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4ebb8",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4ebcb",
+     "insn": "call 0x4ec66"
+    },
+    {
+     "at": "0x4ebd0",
+     "insn": "or al, al"
+    },
+    {
+     "at": "0x4ebd4",
+     "insn": "mov byte ptr [edi], al"
+    },
+    {
+     "at": "0x4ebda",
+     "insn": "add edi, ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e1a6",
+   "name": "blit_tile24_rle_band",
+   "summary": "(src, dst, stride):24×24 四模式 RLE,每個像素值改成 (index & 7) + 0x18(調色帶)後寫入;與 blit_tile24_rle 同一種編碼。draw_unit_sprite 在單位已行動(+5 bit7)時用它。舊文件位址 0x4de56(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e1ba",
+     "insn": "mov ah, 7"
+    },
+    {
+     "at": "0x4e1bc",
+     "insn": "mov dl, 0x18"
+    },
+    {
+     "at": "0x4e1d5",
+     "insn": "and al, ah"
+    },
+    {
+     "at": "0x4e1d7",
+     "insn": "add al, dl"
+    }
+   ]
+  },
+  {
+   "addr": "0x26c9b",
+   "name": "draw_cell_6x9",
+   "summary": "(dst, stride, idx):從 [0x53f66] 資源(+[+0xe]+4 起的 6-byte 列)取第 idx 格,memmove 9 列、每列 6 bytes,每列 dst += stride。唯二呼叫端在商店金錢顯示(0x26a7a/0x26b91)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x26cb1",
+     "insn": "mov ebx, dword ptr [0x3f66]"
+    },
+    {
+     "at": "0x26cbd",
+     "insn": "imul esi, dword ptr [esp + 0x1c], 6"
+    },
+    {
+     "at": "0x26cc8",
+     "insn": "push 6"
+    },
+    {
+     "at": "0x26cda",
+     "insn": "cmp esi, 9"
+    }
+   ]
+  },
+  {
+   "addr": "0x28632",
+   "name": "preview_stats_with_item",
+   "summary": "(unit, item, out):以候選 item 的 row 取代同類裝備,算出預覽的 4 個能力值寫進 out[0..3]:基底 單位記錄(80 bytes,基底 [0x53a45])+0x37/+0x39/+0x3e 加上候選 row +1/+5/+3/+7,再加上另一類(武器 ≤0x14 / 防具 >0x14)已裝備(0x40)物品的同欄位。舊文件位址 0x2efb7(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2866f",
+     "insn": "movsx edx, word ptr [edx + 0x37]"
+    },
+    {
+     "at": "0x28680",
+     "insn": "movsx ebp, word ptr [ebp + 0x39]"
+    },
+    {
+     "at": "0x2868d",
+     "insn": "movsx edx, word ptr [edx + 0x3e]"
+    },
+    {
+     "at": "0x286c8",
+     "insn": "test byte ptr [esi], 0x40"
+    },
+    {
+     "at": "0x286cd",
+     "insn": "cmp dword ptr [esp + 4], 0x14"
+    }
+   ]
+  },
+  {
+   "addr": "0x2ae0e",
+   "name": "collect_class_change_candidates",
+   "summary": "(idx_out, target_out):掃名冊([0x53bfb] 人),Lv(+0x21)≥20、portrait(+7)<0x12 且 ≠7 的寫入候選,目標 portrait = portrait+0x20;持有 [0x523d5+portrait] 指定道具時改 +0x32;portrait 9 持有 item 0x5a 時固定 0x34。回傳候選數。舊文件位址 0x31793(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2ae61",
+     "insn": "cmp eax, 0x14"
+    },
+    {
+     "at": "0x2ae66",
+     "insn": "cmp ebx, 0x12"
+    },
+    {
+     "at": "0x2ae6b",
+     "insn": "cmp ebx, 7"
+    },
+    {
+     "at": "0x2ae7d",
+     "insn": "add dl, 0x20"
+    },
+    {
+     "at": "0x2aea9",
+     "insn": "push 0x5a"
+    },
+    {
+     "at": "0x2aec1",
+     "insn": "mov byte ptr [edi + ebx], 0x34"
+    }
+   ]
+  },
+  {
+   "addr": "0x2968d",
+   "name": "save_game_menu",
+   "summary": "(view_arg):malloc 0x59cb 存檔 envelope;存檔檔存在就 fread 並以 save_xor_crypt 解密,否則 memset 0xff。迴圈呼叫 save_slot_selector,選定後把名冊 [0x53bf7] 0xa00 bytes 與章節/人數/金錢等 10 bytes 中繼資料寫進 +0x312b+slot*0xa28,重算 save_checksum_sum 存到 +0x59c7,加密、寫檔(0x377a3)、fclose。舊文件位址 0x30012(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2969b",
+     "insn": "push 0x59cb"
+    },
+    {
+     "at": "0x296db",
+     "insn": "call 0x4df28"
+    },
+    {
+     "at": "0x29743",
+     "insn": "push 0xa00"
+    },
+    {
+     "at": "0x297ae",
+     "insn": "call 0x4df09"
+    },
+    {
+     "at": "0x297b6",
+     "insn": "mov dword ptr [esi + 0x59c7], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x29ab2",
+   "name": "draw_save_slot_list",
+   "summary": "(cursor, dst, records):畫 4 個存檔槽,一般字色 0xcd、游標所在槽 0xc9;記錄 +0xa00(章節 byte)== 0xff 顯示空槽字串 0x202,否則顯示章節文字 0x226+章節。舊文件位址 0x30437(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x29ac7",
+     "insn": "mov edi, 0xcd"
+    },
+    {
+     "at": "0x29b10",
+     "insn": "movzx eax, byte ptr [esi + 0xa00]"
+    },
+    {
+     "at": "0x29b17",
+     "insn": "cmp eax, 0xff"
+    },
+    {
+     "at": "0x29b44",
+     "insn": "cmp ebx, 4"
+    },
+    {
+     "at": "0x29b74",
+     "insn": "mov edi, 0xc9"
+    }
+   ]
+  },
+  {
+   "addr": "0x29bcb",
+   "name": "save_slot_selector",
+   "summary": "(records, use_marker_key):配置 3 個 0xfa00 畫面緩衝、畫存檔槽清單並滑入。第二個參數選讀鍵方式:非零用 wait_key_with_marker(0),零則直接 int386(0x16)(0xe0/0x52 視為 Enter、0x53 視為 Esc)。之後同一個迴圈:↓(0x50)在 <3 時加一、↑(0x48)在 >0 時減一(不繞回),Enter/Space 回 1、Esc 回 -1;游標存 [0x53c57]。舊文件位址 0x30550(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x29be3",
+     "insn": "push 0xfa00"
+    },
+    {
+     "at": "0x29cda",
+     "insn": "push 0x16"
+    },
+    {
+     "at": "0x29d1d",
+     "insn": "cmp dword ptr [0x3c57], 3"
+    },
+    {
+     "at": "0x29d82",
+     "insn": "cmp eax, 0x1c"
+    },
+    {
+     "at": "0x29d98",
+     "insn": "mov esi, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x26a7a",
+   "name": "gold_add_with_counter_anim",
+   "summary": "(delta):以 sprintf 取新舊金錢([0x53bf3])的 8 位數字,[0x53bf3] += delta,再逐位滾動顯示(draw_cell_6x9,每步 delay 10ms)直到每一位都等於新值。舊文件位址 0x2d3ff(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x26a9a",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x26ab5",
+     "insn": "add dword ptr [0x3bf3], eax"
+    },
+    {
+     "at": "0x26b17",
+     "insn": "push 0xa"
+    },
+    {
+     "at": "0x26b57",
+     "insn": "call 0x26c9b"
+    }
+   ]
+  },
+  {
+   "addr": "0x28b41",
+   "name": "service_success_anim",
+   "summary": "城鎮服務成功動畫,依 hub 選項 [0x53f4a] 分支:1 = FDOTHER#14 格 0x17 起 5 幀;3 = 單格 0x17 停 8 tick;4(教會復活)= 9 幀後 palette_delta_ramp 0→62→0(每步 4ms);5 = 7 幀。每幀 wait_ticks(2),結束 kbd_flush。舊文件位址 0x2f4c6(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x28b4c",
+     "insn": "cmp dword ptr [0x3f4a], 1"
+    },
+    {
+     "at": "0x28bcd",
+     "insn": "cmp dword ptr [0x3f4a], 4"
+    },
+    {
+     "at": "0x28c2a",
+     "insn": "call 0x11df2"
+    },
+    {
+     "at": "0x28c3f",
+     "insn": "cmp ebx, 0x40"
+    },
+    {
+     "at": "0x28cb6",
+     "insn": "call 0x4e381"
+    }
+   ]
+  },
+  {
+   "addr": "0x377a3",
+   "name": "fwrite",
+   "summary": "Watcom CRT fwrite(buf, size, n, fp):FILE 旗標(+0xc)沒有可寫 bit(2)時設 errno=4 並設錯誤旗標;位元組數 = size*n;沒有緩衝(+8)先配置;回傳寫入位元組數 / size。與 fread 對稱;save_game_menu 用它寫存檔。舊文件位址不在勘誤表(0x377a3 本身就是新版入口)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x377b2",
+     "insn": "test byte ptr [ebx + 0xc], 2"
+    },
+    {
+     "at": "0x377bd",
+     "insn": "mov dword ptr [eax], 4"
+    },
+    {
+     "at": "0x377ce",
+     "insn": "imul esi, dword ptr [ebp + 0x18]"
+    },
+    {
+     "at": "0x37902",
+     "insn": "div dword ptr [ebp + 0x18]"
+    }
+   ]
+  },
+  {
+   "addr": "0x272d0",
+   "name": "draw_item_list_two_column",
+   "summary": "(count, items, sel, dst, sell):從捲動位置 [0x53f4e] 畫最多 6 格(下面還有更多時 5 格),兩欄(x = (i%2)*0x94、y = (i/2)*0x1a)。每格:類型圖示(<0x15 / <0x20 / 其他)、物品名(文字 0xb5+id,選中 0xc9 否則 0xcd)、一個能力值(武器 row+1、防具 row+5、類型 0x20 依 row+0xd 取 row+0xe)、價格 row+0x13(sell 旗標時 ×3/4)。舊文件位址 0x2dc55(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x272e9",
+     "insn": "cmp eax, 6"
+    },
+    {
+     "at": "0x2734b",
+     "insn": "mov eax, 0xcd"
+    },
+    {
+     "at": "0x2735e",
+     "insn": "mov eax, 0xc9"
+    },
+    {
+     "at": "0x27396",
+     "insn": "add eax, 0xb5"
+    },
+    {
+     "at": "0x27532",
+     "insn": "movzx eax, word ptr [ebx + 0x13]"
+    },
+    {
+     "at": "0x275b0",
+     "insn": "imul edx, edx, 0x94"
+    }
+   ]
+  },
+  {
+   "addr": "0x275e6",
+   "name": "item_list_select",
+   "summary": "(count, items, sell):以 menu_read_key(1) 讀鍵,→ +1、← -1、↑ -2、↓ +2(兩欄),游標 [0x53c57];游標離開 6 格視窗時捲動 [0x53f4e] ±2 並播捲動動畫,重畫 draw_item_list_two_column。Enter/Space 回 1、Esc 回 -1。舊文件位址 0x2df6b(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x27607",
+     "insn": "cmp eax, 0x4d"
+    },
+    {
+     "at": "0x27643",
+     "insn": "add dword ptr [0x3f4e], 2"
+    },
+    {
+     "at": "0x2766f",
+     "insn": "cmp eax, 0x4b"
+    },
+    {
+     "at": "0x276d8",
+     "insn": "sub dword ptr [0x3c57], 2"
+    },
+    {
+     "at": "0x27725",
+     "insn": "mov edi, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x27738",
+   "name": "open_item_list_panel",
+   "summary": "(count, items, sell):配置 3 個 0xfa00 畫面緩衝並快照 VGA,畫面板底圖與 draw_item_list_two_column,再以 present_box_at_row 由下往上 6 段滑入。舊文件位址 0x2e0bd(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x27743",
+     "insn": "push 0xfa00"
+    },
+    {
+     "at": "0x277c3",
+     "insn": "call 0x4ebff"
+    },
+    {
+     "at": "0x277e5",
+     "insn": "call 0x272d0"
+    },
+    {
+     "at": "0x27807",
+     "insn": "call 0x1974c"
+    }
+   ]
+  },
+  {
+   "addr": "0x27079",
+   "name": "menu_tick_redraw",
+   "summary": "(mode, positions):menu_read_key 每個 tick 的重繪 callback。計數器 [0x53f72] 以 [0x53f52] bit0 為閘門、mod 4 前進。mode 0:只重畫游標所在格的選中圖(變體 = 計數/2);mode 1/3:清單上下捲動箭頭(依 [0x53f4e]+6 與總數 [0x53f5e]);mode 2:同上但視窗 3 列,另畫最多 3 個單位圖。舊文件位址 0x2d9fe(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2708b",
+     "insn": "test byte ptr [0x3f52], 1"
+    },
+    {
+     "at": "0x27094",
+     "insn": "inc dword ptr [0x3f72]"
+    },
+    {
+     "at": "0x2709a",
+     "insn": "cmp dword ptr [0x3f72], 4"
+    },
+    {
+     "at": "0x27175",
+     "insn": "add eax, 6"
+    },
+    {
+     "at": "0x2720a",
+     "insn": "add eax, 3"
+    }
+   ]
+  },
+  {
+   "addr": "0x2986f",
+   "name": "load_game_menu",
+   "summary": "讀檔:讀入並解密存檔 envelope(沒有檔就 memset 0xff),save_slot_selector 選槽;空槽(+0xa00 == 0xff)略過,[0x523e7+章節] 非零時顯示文字 0x1df 不載入;否則名冊 0xa00 bytes 拷回 [0x53bf7]、章節/人數/金錢等中繼資料寫回各全域,重新對每個名冊成員以 0x11019(portrait, fp) 載入資源,[0x53f56] = row31_ptr_6238d(章節),顯示文字 0x1de 後離開。舊文件位址 0x301f4(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x29928",
+     "insn": "movzx eax, byte ptr [ebx + 0xa00]"
+    },
+    {
+     "at": "0x2993a",
+     "insn": "cmp byte ptr [eax + 0x23e7], 0"
+    },
+    {
+     "at": "0x29974",
+     "insn": "push 0xa00"
+    },
+    {
+     "at": "0x29991",
+     "insn": "mov dword ptr [0x3c03], eax"
+    },
+    {
+     "at": "0x29a17",
+     "insn": "call 0x11019"
+    }
+   ]
+  },
+  {
+   "addr": "0x27f4a",
+   "name": "equip_compare_select",
+   "summary": "(count, units, item):開面板(3 個 0xfa00 緩衝、6 段滑入),以 draw_equip_compare_rows 畫 3 列可見的單位比較;menu_read_key(2) 讀鍵,↓/↑ 移動游標 [0x53c57]、離開 3 列視窗時捲動 [0x53f4e] 並播捲動動畫;Enter/Space 回 1、Esc 回 -1。舊文件位址 0x2e8cf(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x27fc9",
+     "insn": "mov dword ptr [0x3f4e], esi"
+    },
+    {
+     "at": "0x28008",
+     "insn": "call 0x2825b"
+    },
+    {
+     "at": "0x28041",
+     "insn": "cmp eax, 0x50"
+    },
+    {
+     "at": "0x28078",
+     "insn": "cmp eax, 3"
+    },
+    {
+     "at": "0x280f9",
+     "insn": "mov esi, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x2825b",
+   "name": "draw_equip_compare_rows",
+   "summary": "(count, units, item, sel, dst):最多 3 列;每列以 preview_stats_with_item 算裝上 item 後的 4 個能力值,與單位目前衍生值 +0x48/+0x4a/+0x4c/+0x4e 以 compare_to_glyph 比出升降符號,畫單位圖、名字(選中 0xc9)與新舊數值。舊文件位址 0x2ebe0(勘誤;doc35 的同字面位址是另一回事,見該勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2828a",
+     "insn": "cmp eax, 3"
+    },
+    {
+     "at": "0x282bd",
+     "insn": "call 0x28632"
+    },
+    {
+     "at": "0x282d7",
+     "insn": "movzx eax, word ptr [esi + 0x48]"
+    },
+    {
+     "at": "0x282ef",
+     "insn": "movzx eax, word ptr [esi + 0x4e]"
+    },
+    {
+     "at": "0x283a1",
+     "insn": "call 0x2860a"
+    }
+   ]
+  },
+  {
+   "addr": "0x2810b",
+   "name": "draw_party_roster_two_column",
+   "summary": "(sel, dst):名冊 [0x53bfb] 人,從捲動位置 [0x53f4e] 畫最多 6 人(下面還有更多時 5 人),兩欄;每人畫單位圖(動畫幀 [0x53f72],3 視為 1)與名字(文字 record+8 +1,選中 0xc9 否則 0xcd)。舊文件位址 0x2ea90(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2811c",
+     "insn": "mov eax, dword ptr [0x3f72]"
+    },
+    {
+     "at": "0x28130",
+     "insn": "mov eax, dword ptr [0x3bfb]"
+    },
+    {
+     "at": "0x28139",
+     "insn": "cmp eax, 6"
+    },
+    {
+     "at": "0x2818b",
+     "insn": "movzx eax, byte ptr [edi + 8]"
+    },
+    {
+     "at": "0x28249",
+     "insn": "mov eax, 0xc9"
+    }
+   ]
+  },
+  {
+   "addr": "0x2a857",
+   "name": "class_change_candidate_select",
+   "summary": "(count, list, arg):轉職候選清單。總數存 [0x53f5e]、清單存 [0x53f62],開面板後以 0x2a694 畫 3 列可見;menu_read_key(2) 讀鍵,↑/↓ 移動並在離開視窗時捲動;Enter/Space 回 1、Esc 回 -1。舊文件位址 0x311dc(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2a8e2",
+     "insn": "mov dword ptr [0x3f62], ebp"
+    },
+    {
+     "at": "0x2a8e8",
+     "insn": "mov dword ptr [0x3f5e], edi"
+    },
+    {
+     "at": "0x2a921",
+     "insn": "call 0x2a694"
+    },
+    {
+     "at": "0x2a9c6",
+     "insn": "cmp eax, 3"
+    },
+    {
+     "at": "0x2a9ee",
+     "insn": "mov esi, 0xffffffff"
+    }
+   ]
   }
  ]
 }

@@ -34696,6 +34696,22 @@
    "excerpt": "**逐一核對的佐證**(79 筆都寫在各自勘誤條目的 `discovery_method`):",
    "verdict": "benign",
    "note": "小節引導句,指向勘誤條目的 discovery_method;下方每一條佐證都帶位址與位元組層證據"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5525,
+   "excerpt_sha1": "2a57680cc2b6f8fed7aefb2abef8285fd0352f56",
+   "excerpt": "named,但 `load_names` 的來源包括 `verified_addresses` 與勘誤的 `correct_address`,這兩者只有位址、`name` 是 None。",
+   "verdict": "benign",
+   "note": "描述本 repo 工具 function_inventory.load_names 的資料來源,是工具行為說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5532,
+   "excerpt_sha1": "209e26135840af613ef6fcf453d07a6c382edfa9",
+   "excerpt": "並補成對案例(同一位址只有 errata/verified 來源 -> 不是 named;補上 function_names 名稱 -> named)。修正後的數字:",
+   "verdict": "benign",
+   "note": "描述 selftest fixture 的成對案例,是工具測試說明,不是遊戲事實主張"
   }
  ]
 }
