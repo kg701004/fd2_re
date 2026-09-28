@@ -34744,6 +34744,14 @@
    "excerpt": "`blit_tile24_rle_flat` 的填色(續三十二:顏色參數沒被讀,填的是 stride 低 byte)沒有做動態驗證。執行只能證明畫面上填的是哪個",
    "verdict": "benign",
    "note": "說明沒有做的動態驗證與理由,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5764,
+   "excerpt_sha1": "199d57f8a09c5ba5de13e95a9f5fe4c3fe1586c3",
+   "excerpt": "兩種都驗證不了公式。所以只在模擬器記憶體改數值(不動任何檔案),讓預測成為可檢查的具體數字。",
+   "verdict": "benign",
+   "note": "實驗設計的理由說明(為何改用受控數值),不是遊戲事實主張"
   }
  ]
 }

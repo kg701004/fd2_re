@@ -3122,7 +3122,7 @@
   {
    "addr": "0x1ecc7",
    "name": "map_attack_resolve",
-   "summary": "(attacker, defender):地圖物理攻擊一擊的判定,回傳守方新 HP。單位記錄(80 bytes,基底 [0x53a45])欄位:攻 AP +0x48、HIT +0x4c,守 DP +0x4a、EV +0x4e、HP +0x40/MaxHP +0x42。地形修正(unit_uses_move_cost_row19 為真者跳過):AP += AP*[0x51a12+地形*4]/100、DP += DP*[0x51a2a+地形*4]/100。會心率 = [0x524a8 + 職業(+0x20)-1],武器 row+9==4 再加 row+0xa;row+9==2 時以 row+0xa% 機率設守方 +0x25 = 2..5。命中:rand%100 < HIT-EV([0x53c6b] 清 0)。會心:rand%100 < 會心率 時 DP/2。傷害 = max(0,(AP-DP)*9/10),再加 rand % (傷害/9);HP 扣完不低於 0。攻方 side(+6)==2 且守方 portrait ≥ 0x44 時算經驗值寫 [0x53ec8]。與 doc27 記錄的 0x2f7b6(指令環攻擊)同一套公式。",
+   "summary": "(attacker, defender):地圖物理攻擊一擊的判定,回傳守方新 HP。單位記錄(80 bytes,基底 [0x53a45])欄位:攻 AP +0x48、HIT +0x4c,守 DP +0x4a、EV +0x4e、HP +0x40/MaxHP +0x42。地形修正(unit_uses_move_cost_row19 為真者跳過):AP += AP*[0x51a12+地形*4]/100、DP += DP*[0x51a2a+地形*4]/100。會心率 = [0x524a8 + 職業(+0x20)-1],武器 row+9==4 再加 row+0xa;row+9==2 時以 row+0xa% 機率設守方 +0x25 = 2..5。命中:rand%100 < HIT-EV([0x53c6b] 清 0)。會心:rand%100 < 會心率 時 DP/2。傷害 = max(0,(AP-DP)*9/10),再加 rand % (傷害/9);HP 扣完不低於 0。攻方 side(+6)==2 且守方 portrait ≥ 0x44 時算經驗值寫 [0x53ec8]。與 doc27 記錄的 0x2f7b6(指令環攻擊)同一套公式。 動態驗證的邊界(doc98 續四十一):有戰鬥場景的攻擊走的是 scene_attack_resolve(0x2f7b6),本函式的斷點在那次攻擊中沒有觸發;公式雖與 0x2f7b6 相同且後者已動態驗證,本函式本身仍只有靜態證據(何時走地圖直接攻擊的這條路未量測)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7927,6 +7927,59 @@
     {
      "at": "0x16c25",
      "insn": "call 0x15e9e"
+    }
+   ]
+  },
+  {
+   "addr": "0x2f7b6",
+   "name": "scene_attack_resolve",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-28",
+   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。",
+   "evidence": [
+    {
+     "at": "0x2f823",
+     "insn": "movzx eax, word ptr [ebp + 0x48]"
+    },
+    {
+     "at": "0x2f82b",
+     "insn": "movzx eax, word ptr [edi + 0x4a]"
+    },
+    {
+     "at": "0x2f8c4",
+     "insn": "mov edx, dword ptr [eax*4 + 0x1a12]"
+    },
+    {
+     "at": "0x2f929",
+     "insn": "movzx eax, byte ptr [eax + 0x24a8]"
+    },
+    {
+     "at": "0x2f9d4",
+     "insn": "sar eax, 1"
+    },
+    {
+     "at": "0x2f9da",
+     "insn": "mov dword ptr [esi + 4], 1"
+    },
+    {
+     "at": "0x2f9eb",
+     "insn": "shl eax, 3"
+    },
+    {
+     "at": "0x2f9f0",
+     "insn": "mov ebx, 0xa"
+    },
+    {
+     "at": "0x2fa0c",
+     "insn": "mov ebx, 9"
+    },
+    {
+     "at": "0x2fa24",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x2fa45",
+     "insn": "mov dword ptr [esp + 0x28], 0"
     }
    ]
   }
