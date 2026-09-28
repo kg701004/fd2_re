@@ -5539,3 +5539,28 @@ named,但 `load_names` 的來源包括 `verified_addresses` 與勘誤的 `correc
 
 續二十五、續二十八到續三十與 `SESSION-HANDOFF-2026-09-19.md` 表格裡的「有名稱」都是舊定義(含只有位址的來源),
 偏高;以本節為準,舊段落不改寫。
+
+## 2026-09-28 續三十二:戰鬥路徑命名 11 筆 —— 地圖上的物理攻擊,以及一個不讀顏色參數的繪圖函式
+
+第十五批(125 -> 136)全在戰鬥指令的「攻擊」路徑上,唯一的上層呼叫端都是 0x1548e:
+
+* `map_attack_resolve`(0x1ecc7)是一擊的判定本體:地形修正、`HIT-EV` 命中、職業會心率(`0x524a8`)、會心時 DP 減半、
+  `max(0,(AP-DP)*9/10) + rand%(傷害/9)`、HP 下限 0、經驗值寫 `[0x53ec8]`。doc27 §4.1 以 0x2f7b6(指令環攻擊)記錄的是同一套公式,
+  並已把 0x1ecc7 列為「第二個獨立實作」;本批逐指令讀過,兩者一致,沒有新的矛盾。
+* `map_attack_sequence`(0x1e856):攻擊次數預設 1,攻方武器 row+9 == 3 或 `rand%100 < 3` 時 2 次;每擊之間 HP 條逐格遞減。
+* `defender_can_counter`(0x1f0dc):守方 +0x26 為 0、曼哈頓距離 1、守方武器 row+0xb == 1 才回 1;`open_attack_hp_panels` 據此決定
+  要不要也開攻方的 HP 面板。
+* 另有 `play_weapon_hit_effect`、`redraw_map_with_hp_panels`、`draw_hp_bar`、`draw_unit_hp_bar`、`hit_effect_table_ptr`、
+  `draw_single_unit_sprite`、`blit_tile24_rle_flat`。
+
+**`blit_tile24_rle_flat`(0x4e127)不讀它的顏色參數。** 它與 `blit_tile24_rle` 同一種 24×24 RLE 解碼,但把每個非透明像素寫成同一個值,
+而那個值取自第三個參數(`mov eax,[ebp+0x10]; mov ah,al`)—— 也就是 stride。兩個呼叫端(0x1db58、0x1c357)都 push 四個參數
+`(src, dst, stride, color)`,第四個從未被讀。實際填入值是 stride 的低 byte:0x140 -> 0x40、0x1c8 -> 0xc8。這可能是原作的 bug,也可能
+那兩個值剛好就是想要的顏色;靜態分析分不出來,名稱摘要照實寫,不下結論。要確認得在 DOSBox-X 裡看閃爍幀的實際顏色。
+
+**這批的卡片重做過一次。** 第一次產生戰鬥路徑的事實卡時,`--precommit` 正在突變 `function_inventory.py`(就地改寫),我的腳本
+import 到的是突變版:`entry_thunks` 的 `code[off + 2:off + 5]` 是正在測的突變,四個函式因而被截成 45 bytes 並標成 thunk。harness
+結束後重新產生,本批 11 個函式的反組譯與先前逐行相同(受影響的只有那四個的 span 與分類),登錄才進行。規則:突變執行期間
+(存在 `.premutation` 檔)不 import、不執行受測工具。
+
+`--coverage`(續三十一的新定義):strong 858 裡有名稱 288、文件記載為入口 241、完全無描述 171。

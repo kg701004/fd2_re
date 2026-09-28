@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 253,
+  "total": 250,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 196,
+   "wrapper": 193,
    "leaf_global": 5,
    "leaf_ptr": 10,
    "leaf_pure": 8
@@ -365,33 +365,12 @@
    "callers": 3,
    "argc": 1
   },
-  "0x1e739": {
-   "kind": "wrapper",
-   "name": "wrapper(blit_raw_cell(_, _, _, 0x17), blit_raw_cell(_, _, _, 0x18), blit_raw_cell(_, _, _, 0x19), blit_raw_cell(_, _, _, 0x1d), blit_raw_cell(_, _, _, 0x1d), blit_raw_cell(_, _, _, 0x1e))",
-   "round": 1,
-   "callers": 3,
-   "argc": 3
-  },
-  "0x1e7f6": {
-   "kind": "wrapper",
-   "name": "wrapper(~0x1e739(_, _, _))",
-   "round": 2,
-   "callers": 4,
-   "argc": 4
-  },
   "0x1f04a": {
    "kind": "wrapper",
    "name": "wrapper(abs(_), abs(_))",
    "round": 1,
    "callers": 6,
    "argc": 2
-  },
-  "0x1f0dc": {
-   "kind": "wrapper",
-   "name": "wrapper(abs(_), abs(_), find_equipped_slot(_, 0), unit_item_id(_, _), item_effect_row_ptr(_))",
-   "round": 1,
-   "callers": 6,
-   "argc": 5
   },
   "0x1f42d": {
    "kind": "wrapper",

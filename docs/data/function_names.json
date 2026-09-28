@@ -3118,6 +3118,353 @@
      "insn": "mov esi, 0xffffffff"
     }
    ]
+  },
+  {
+   "addr": "0x1ecc7",
+   "name": "map_attack_resolve",
+   "summary": "(attacker, defender):地圖物理攻擊一擊的判定,回傳守方新 HP。單位記錄(80 bytes,基底 [0x53a45])欄位:攻 AP +0x48、HIT +0x4c,守 DP +0x4a、EV +0x4e、HP +0x40/MaxHP +0x42。地形修正(unit_uses_move_cost_row19 為真者跳過):AP += AP*[0x51a12+地形*4]/100、DP += DP*[0x51a2a+地形*4]/100。會心率 = [0x524a8 + 職業(+0x20)-1],武器 row+9==4 再加 row+0xa;row+9==2 時以 row+0xa% 機率設守方 +0x25 = 2..5。命中:rand%100 < HIT-EV([0x53c6b] 清 0)。會心:rand%100 < 會心率 時 DP/2。傷害 = max(0,(AP-DP)*9/10),再加 rand % (傷害/9);HP 扣完不低於 0。攻方 side(+6)==2 且守方 portrait ≥ 0x44 時算經驗值寫 [0x53ec8]。與 doc27 記錄的 0x2f7b6(指令環攻擊)同一套公式。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1ed08",
+     "insn": "movzx eax, word ptr [edi + 0x48]"
+    },
+    {
+     "at": "0x1ed10",
+     "insn": "movzx eax, word ptr [esi + 0x4a]"
+    },
+    {
+     "at": "0x1eda7",
+     "insn": "mov edx, dword ptr [eax*4 + 0x1a12]"
+    },
+    {
+     "at": "0x1edec",
+     "insn": "mov edx, dword ptr [eax*4 + 0x1a2a]"
+    },
+    {
+     "at": "0x1ee0c",
+     "insn": "movzx eax, byte ptr [eax + 0x24a8]"
+    },
+    {
+     "at": "0x1eed1",
+     "insn": "sub eax, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x1ef66",
+     "insn": "sub eax, edx"
+    },
+    {
+     "at": "0x1ef78",
+     "insn": "shl eax, 3"
+    },
+    {
+     "at": "0x1ef7d",
+     "insn": "mov ebx, 0xa"
+    },
+    {
+     "at": "0x1ef91",
+     "insn": "mov ebx, 9"
+    },
+    {
+     "at": "0x1efce",
+     "insn": "mov word ptr [esi + 0x40], ax"
+    },
+    {
+     "at": "0x1f024",
+     "insn": "mov dword ptr [0x3ec8], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e856",
+   "name": "map_attack_sequence",
+   "summary": "(attacker, defender, panel_pos):攻擊次數預設 1;攻方武器 row+9 == 3 時 2 次,另有 rand%100 < 3 也 2 次。每一擊:map_attack_resolve 取守方新 HP,play_weapon_hit_effect 播命中特效,HP 條從 HP*0x46/MaxHP 逐格減到新值(每格 8ms)。守方 HP 歸 0 即停。回傳守方最後 HP。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1e8ad",
+     "insn": "movzx eax, byte ptr [eax + 9]"
+    },
+    {
+     "at": "0x1e8b1",
+     "insn": "cmp eax, 3"
+    },
+    {
+     "at": "0x1e8c5",
+     "insn": "mov ebx, 0x64"
+    },
+    {
+     "at": "0x1e8cf",
+     "insn": "cmp edx, 3"
+    },
+    {
+     "at": "0x1e8fb",
+     "insn": "imul edx, dword ptr [esp + 8], 0x46"
+    },
+    {
+     "at": "0x1e912",
+     "insn": "call 0x1ecc7"
+    },
+    {
+     "at": "0x1e928",
+     "insn": "call 0x1e98c"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e98c",
+   "name": "play_weapon_hit_effect",
+   "summary": "(attacker, defender):依攻方武器 row[0](類型)經 hit_effect_table_ptr 取特效表,byte0 = 幀數,每幀 {圖, 音效}(音效 0xff = 不播);畫在守方格子(相對捲動 [0x53aa9]/[0x53aad],每格 24 px),每幀停 80ms。第 0/1 幀在命中時([0x53c6b]==0)以 draw_single_unit_sprite 閃守方單位。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1e9c9",
+     "insn": "call 0x4e87d"
+    },
+    {
+     "at": "0x1e9d3",
+     "insn": "movzx eax, byte ptr [eax]"
+    },
+    {
+     "at": "0x1e9ef",
+     "insn": "sub ebx, dword ptr [0x3aa9]"
+    },
+    {
+     "at": "0x1ea63",
+     "insn": "movzx eax, byte ptr [edi + eax*2 + 1]"
+    },
+    {
+     "at": "0x1eab5",
+     "insn": "movzx eax, byte ptr [edi + eax*2 + 2]"
+    },
+    {
+     "at": "0x1ea8b",
+     "insn": "push 0x50"
+    }
+   ]
+  },
+  {
+   "addr": "0x1eb05",
+   "name": "open_attack_hp_panels",
+   "summary": "(attacker, defender):以 unit_popup_position 算守方 HP 面板位置存 [0x53a30];defender_can_counter 回 1 時也算攻方面板位置存 [0x53a38],否則 [0x53a38] = -1。兩個面板以圖 0x27..0x30 共 10 幀滑入(每幀 25ms)。回傳 0x53a30。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1eb17",
+     "insn": "push 0x3a30"
+    },
+    {
+     "at": "0x1eb2c",
+     "insn": "call 0x1f0dc"
+    },
+    {
+     "at": "0x1eb4c",
+     "insn": "mov dword ptr [0x3a38], 0xffffffff"
+    },
+    {
+     "at": "0x1eb5b",
+     "insn": "cmp ebx, 0xa"
+    },
+    {
+     "at": "0x1eb64",
+     "insn": "lea esi, [ebx + 0x27]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e611",
+   "name": "redraw_map_with_hp_panels",
+   "summary": "(panels, stride, arg):在離屏緩衝 [0x53a49]+0x8088(stride 0x1c8)重畫地形層與單位層,在面板位置畫面板底圖 0x30、滿格 HP 條與 draw_unit_hp_bar;第二個面板(panels[2] != -1)同樣處理;最後複製 0x138×0xc0 到畫面。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1e640",
+     "insn": "call 0x11eee"
+    },
+    {
+     "at": "0x1e648",
+     "insn": "call 0x127a9"
+    },
+    {
+     "at": "0x1e64d",
+     "insn": "push 0x30"
+    },
+    {
+     "at": "0x1e6c4",
+     "insn": "cmp dword ptr [ebx + 8], -1"
+    },
+    {
+     "at": "0x1e734",
+     "insn": "jmp 0x11d2c"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f0dc",
+   "name": "defender_can_counter",
+   "summary": "(attacker, defender):守方能反擊回 1,否則 -1。條件:守方 +0x26 為 0、兩者曼哈頓距離 == 1、守方有裝備武器且 row+0xb == 1。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1f10f",
+     "insn": "movzx eax, byte ptr [ebx + 0x26]"
+    },
+    {
+     "at": "0x1f129",
+     "insn": "call 0x37932"
+    },
+    {
+     "at": "0x1f148",
+     "insn": "cmp eax, 1"
+    },
+    {
+     "at": "0x1f176",
+     "insn": "movzx eax, byte ptr [eax + 0xb]"
+    },
+    {
+     "at": "0x1f17a",
+     "insn": "cmp eax, 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e87d",
+   "name": "hit_effect_table_ptr",
+   "summary": "(type):回傳 dword [0x61955 + type*4](命中特效表指標)。唯一呼叫端 play_weapon_hit_effect。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e883",
+     "insn": "shl ebx, 2"
+    },
+    {
+     "at": "0x4e886",
+     "insn": "mov eax, dword ptr [ebx + 0x1955]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e739",
+   "name": "draw_hp_bar",
+   "summary": "(dst, stride, len):長度 len 的 HP 條(總長 0x46 格):左端 cell 0x17、填滿 0x18 ×(len-1)、填滿端 0x19,其餘以空格 0x1d 補到 0x45,右端 0x1e;len ≤ 0 時整條空。cell 來自 [0x53a81]。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1e759",
+     "insn": "push 0x17"
+    },
+    {
+     "at": "0x1e772",
+     "insn": "push 0x18"
+    },
+    {
+     "at": "0x1e78c",
+     "insn": "push 0x19"
+    },
+    {
+     "at": "0x1e79e",
+     "insn": "cmp ebp, 0x46"
+    },
+    {
+     "at": "0x1e7ae",
+     "insn": "push 0x1d"
+    },
+    {
+     "at": "0x1e7df",
+     "insn": "push 0x1e"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e7f6",
+   "name": "draw_unit_hp_bar",
+   "summary": "(unit, dst, stride, pos):HP > 0 時以 len = HP*0x45/MaxHP + 1 在面板位置(+6 列、+7 px)呼叫 draw_hp_bar。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1e81b",
+     "insn": "movzx edx, word ptr [eax + 0x40]"
+    },
+    {
+     "at": "0x1e81f",
+     "insn": "movzx ecx, word ptr [eax + 0x42]"
+    },
+    {
+     "at": "0x1e827",
+     "insn": "imul edx, edx, 0x45"
+    },
+    {
+     "at": "0x1e84c",
+     "insn": "call 0x1e739"
+    }
+   ]
+  },
+  {
+   "addr": "0x1da16",
+   "name": "draw_single_unit_sprite",
+   "summary": "(dst, stride, unit, mode, color):單位在攝影機視窗外([0x53aa9]-1..+[0x51a87]、[0x53aad]-1..+[0x51a8b]+1)不畫。精靈 = [0x53a61] 表[ 職業(+2)*12 + 面向(+3)*3 + 動畫幀 ],動畫幀依 +4 取 [0x53c0b] 或 [0x53c07](3 視為 1);位置依面向偏移 +4 × 步距。mode 0 用 blit_tile24_rle,mode 2 用 blit_tile24_rle_flat。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1da53",
+     "insn": "mov eax, dword ptr [0x3aa9]"
+    },
+    {
+     "at": "0x1da66",
+     "insn": "add eax, dword ptr [0x1a87]"
+    },
+    {
+     "at": "0x1dadf",
+     "insn": "imul edi, edi, 0xc"
+    },
+    {
+     "at": "0x1db36",
+     "insn": "call 0x4e22a"
+    },
+    {
+     "at": "0x1db58",
+     "insn": "call 0x4e127"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e127",
+   "name": "blit_tile24_rle_flat",
+   "summary": "(src, dst, stride):與 blit_tile24_rle 同一種 24×24 四模式 RLE,但每個非透明像素都寫成同一個值 = 第三個參數的低 byte。兩個呼叫端(draw_single_unit_sprite 0x1db58、present_effect_on_targets 0x1c357)都 push 4 個參數 (src, dst, stride, color),本函式不讀第四個,所以實際填入的是 stride 的低 byte(stride 0x140 -> 0x40、0x1c8 -> 0xc8)。這個值是否剛好是原作要的顏色,靜態分析判斷不了;未動態驗證。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x4e133",
+     "insn": "mov edx, dword ptr [ebp + 0x10]"
+    },
+    {
+     "at": "0x4e13b",
+     "insn": "mov eax, dword ptr [ebp + 0x10]"
+    },
+    {
+     "at": "0x4e13e",
+     "insn": "mov ah, al"
+    },
+    {
+     "at": "0x4e157",
+     "insn": "mov al, ah"
+    },
+    {
+     "at": "0x4e159",
+     "insn": "rep stosb byte ptr es:[edi], al"
+    }
+   ]
   }
  ]
 }
