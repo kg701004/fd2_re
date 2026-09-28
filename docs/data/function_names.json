@@ -6797,6 +6797,180 @@
      "insn": "mov word ptr [ebx + 8], si"
     }
    ]
+  },
+  {
+   "addr": "0x26b91",
+   "name": "gold_sub_with_counter_anim",
+   "summary": "(delta):gold_add_with_counter_anim 的反向:[0x53bf3] -= delta,8 位數字逐位往下滾動顯示(draw_cell_6x9,每步 delay 10ms)。呼叫端 0x2872b、0x2a43e(城鎮服務付款)。舊文件位址 0x2d516(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x26bb1",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x26bcc",
+     "insn": "sub dword ptr [0x3bf3], eax"
+    },
+    {
+     "at": "0x26c20",
+     "insn": "dec byte ptr [esp + esi + 0x28]"
+    },
+    {
+     "at": "0x26c3f",
+     "insn": "push 0xa"
+    },
+    {
+     "at": "0x26c80",
+     "insn": "call 0x26c9b"
+    }
+   ]
+  },
+  {
+   "addr": "0x265ec",
+   "name": "town_hub_redraw",
+   "summary": "城鎮選單重畫:row31_ptr_6238d(章節) 取城鎮 id,從 [0x53a5d] 還原背景到離屏緩衝,畫 [0x53f5a] 圖,印選項標籤(文字 0x1ef + 選項 [0x53f4a]),再依 [0x52363]/[0x52375] 表(城鎮 id×6 + 選項)的格座標畫標記精靈,貼到畫面。舊文件位址 0x2cf71(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x26600",
+     "insn": "call 0x4e809"
+    },
+    {
+     "at": "0x26613",
+     "insn": "push dword ptr [0x3a5d]"
+    },
+    {
+     "at": "0x26662",
+     "insn": "mov eax, 0x1ef"
+    },
+    {
+     "at": "0x266ac",
+     "insn": "movzx edx, byte ptr [eax + 0x2363]"
+    },
+    {
+     "at": "0x266c1",
+     "insn": "movzx eax, byte ptr [eax + 0x2375]"
+    },
+    {
+     "at": "0x266d5",
+     "insn": "call 0x4e22a"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b749",
+   "name": "count_nonzero_roster_flags",
+   "summary": "(flags):數 flags[0 .. [0x53bfb]-2] 中非 0 的 byte(名冊人數減 1 項,最後一項不算),經共用尾段 0x26ed6(mov eax, ebx)回傳計數。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2b75f",
+     "insn": "mov edx, dword ptr [0x3bfb]"
+    },
+    {
+     "at": "0x2b765",
+     "insn": "dec edx"
+    },
+    {
+     "at": "0x2b76e",
+     "insn": "cmp byte ptr [ecx + eax], 0"
+    },
+    {
+     "at": "0x2b774",
+     "insn": "inc ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x33faf",
+   "name": "copy_protection_password_check",
+   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x34040",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x340e0",
+     "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x34282",
+     "insn": "call 0x37ed8"
+    },
+    {
+     "at": "0x3429b",
+     "insn": "push 0x2c5"
+    },
+    {
+     "at": "0x342b4",
+     "insn": "mov byte ptr [0x3a44], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x34366",
+   "name": "draw_password_screen",
+   "summary": "copy_protection_password_check 的畫面:備份畫面,以 sprintf(\"%02d\") 把題號畫成兩個數字格(0x40+數字,(0x96,0x4b)/(0xa2,0x4b)),畫一列 6 格符號(0x56+i×0x19, 0x84)、一列 n 格選項(0x74+i×32, 0x61)與游標格,再整頁貼到 VGA。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x343a8",
+     "insn": "push 0x2e8"
+    },
+    {
+     "at": "0x343b2",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x343d6",
+     "insn": "add eax, 0x40"
+    },
+    {
+     "at": "0x34432",
+     "insn": "cmp eax, 6"
+    },
+    {
+     "at": "0x3449b",
+     "insn": "call 0x3771c"
+    }
+   ]
+  },
+  {
+   "addr": "0x34317",
+   "name": "fill_band_color_run6",
+   "summary": "(v, out):out[0..5] = (v & 0xf8) + (v%8 > 3 ? 2 : 0) + i,六個連續色號。唯一呼叫端 copy_protection_password_check。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x34331",
+     "insn": "and ch, 0xf8"
+    },
+    {
+     "at": "0x34343",
+     "insn": "cmp edx, 3"
+    },
+    {
+     "at": "0x34348",
+     "insn": "mov cl, 2"
+    },
+    {
+     "at": "0x34354",
+     "insn": "mov byte ptr [ebx + eax], dh"
+    },
+    {
+     "at": "0x3435c",
+     "insn": "cmp eax, 6"
+    }
+   ]
   }
  ]
 }
