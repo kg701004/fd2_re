@@ -7735,6 +7735,200 @@
      "insn": "call 0x3dab1"
     }
    ]
+  },
+  {
+   "addr": "0x1b41d",
+   "name": "draw_battle_situation_panel",
+   "summary": "(dst, stride):戰況面板。標籤格 0x85..0x88,數字:章節 [0x53c03]+1、回合 [0x53bef]、金錢 [0x53bf3](8 位)、三個陣營各自的數量 0x1b5f1(0) / (2) / (1);兩行章節文字 0x255 + 章節×2 與其下一條。特例:章節 index 0x10 且名冊沒有角色 0x12 (roster_has)時改用前一組文字(編號 -2)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1b4b8",
+     "insn": "mov eax, dword ptr [0x3c03]"
+    },
+    {
+     "at": "0x1b4d8",
+     "insn": "push dword ptr [0x3bef]"
+    },
+    {
+     "at": "0x1b4f4",
+     "insn": "push dword ptr [0x3bf3]"
+    },
+    {
+     "at": "0x1b518",
+     "insn": "call 0x1b5f1"
+    },
+    {
+     "at": "0x1b580",
+     "insn": "add edi, 0x255"
+    },
+    {
+     "at": "0x1b5ac",
+     "insn": "cmp dword ptr [0x3c03], 0x10"
+    },
+    {
+     "at": "0x1b5b5",
+     "insn": "push 0x12"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b1e7",
+   "name": "battle_situation_screen",
+   "summary": "戰況畫面(呼叫端 0x19df7):畫地形與單位層,面板以 4 個部件分 12 段滑入;等鍵期間每個 BIOS tick 推進動畫計數與palette_cycle_tick,重畫地圖與 draw_battle_situation_panel 並貼到畫面;有鍵後 12 段滑出、還原畫面、kbd_flush。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1b288",
+     "insn": "call 0x1b41d"
+    },
+    {
+     "at": "0x1b2e9",
+     "insn": "cmp ebx, 0xc"
+    },
+    {
+     "at": "0x1b307",
+     "insn": "call 0x4e31c"
+    },
+    {
+     "at": "0x1b349",
+     "insn": "call 0x1b41d"
+    },
+    {
+     "at": "0x1b38e",
+     "insn": "mov ebx, 0xb"
+    }
+   ]
+  },
+  {
+   "addr": "0x16f0b",
+   "name": "debug_print_answer",
+   "summary": "殘留的除錯輸出(沒有任何直接呼叫端,也沒有 fixup 參照 —— 死碼):sprintf(buf, \"%d\", n),再 printf(\" Ans = %s,   Length = %d\\n\", buf, strlen(buf)),然後 getch 等一鍵。印的是哪個答案,本體看不出來。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x16f1c",
+     "insn": "push 0x14f"
+    },
+    {
+     "at": "0x16f26",
+     "insn": "call 0x37b29"
+    },
+    {
+     "at": "0x16f31",
+     "insn": "call 0x37b55"
+    },
+    {
+     "at": "0x16f3f",
+     "insn": "push 0x152"
+    },
+    {
+     "at": "0x16f44",
+     "insn": "call 0x37119"
+    },
+    {
+     "at": "0x16f4c",
+     "insn": "call 0x37b71"
+    }
+   ]
+  },
+  {
+   "addr": "0x37b71",
+   "name": "getch",
+   "summary": "Watcom CRT getch():[0x52824] 有暫存(ungetch)就回傳並清掉,否則 DOS int 21h AH=08h(不回顯)讀一鍵。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x37b71",
+     "insn": "mov eax, dword ptr [0x2824]"
+    },
+    {
+     "at": "0x37b76",
+     "insn": "mov dword ptr [0x2824], 0"
+    },
+    {
+     "at": "0x37b84",
+     "insn": "mov ah, 8"
+    },
+    {
+     "at": "0x37b86",
+     "insn": "int 0x21"
+    }
+   ]
+  },
+  {
+   "addr": "0x165ac",
+   "name": "dialog_box_open_anim",
+   "summary": "對話框的開框動畫:camera_step_to 後,一張 [0x53a81] 框圖從游標格([0x53ab9]/[0x53abd] × 24)以內插逐步移向框的位置(步數 = 欄 + 列);接著分 5 段展開框,每段以 decode_image_with_header 存下底下的背景條、以 0x168b6 畫框並 delay。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x165d6",
+     "insn": "call 0x12cea"
+    },
+    {
+     "at": "0x165e8",
+     "insn": "imul eax, dword ptr [0x3ab9], 0x18"
+    },
+    {
+     "at": "0x16604",
+     "insn": "mov edi, dword ptr [0x3ab9]"
+    },
+    {
+     "at": "0x16662",
+     "insn": "call 0x15e9e"
+    },
+    {
+     "at": "0x166e4",
+     "insn": "cmp esi, 5"
+    },
+    {
+     "at": "0x16712",
+     "insn": "call 0x4ecbf"
+    },
+    {
+     "at": "0x1672e",
+     "insn": "call 0x168b6"
+    }
+   ]
+  },
+  {
+   "addr": "0x16b43",
+   "name": "dialog_box_close_anim",
+   "summary": "(saved, fly_back):dialog_box_open_anim 的反向:倒序還原 5 段存下的背景條(每段 10ms);fly_back 非 0 時,框圖再從框的位置以內插逐步移回游標格([0x53ab9]/[0x53abd] × 24)。doc14 L68:dialog 開新框前,若已有框會先呼叫它收框。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x16b58",
+     "insn": "mov ebx, 4"
+    },
+    {
+     "at": "0x16b6b",
+     "insn": "call 0x15e71"
+    },
+    {
+     "at": "0x16b9d",
+     "insn": "cmp dword ptr [esp + 0x20], 0"
+    },
+    {
+     "at": "0x16ba8",
+     "insn": "imul eax, dword ptr [0x3ab9], 0x18"
+    },
+    {
+     "at": "0x16bc9",
+     "insn": "add edi, dword ptr [0x3abd]"
+    },
+    {
+     "at": "0x16c25",
+     "insn": "call 0x15e9e"
+    }
+   ]
   }
  ]
 }
