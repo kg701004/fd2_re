@@ -34728,6 +34728,22 @@
    "excerpt": "「戰鬥指令選單」的演出,§9.22 又證實同一引擎驅動結局 CG 與角色回顧卡,「戰鬥動畫」會超出文件的結論(第一版這樣寫,已改)。",
    "verdict": "benign",
    "note": "延續上一行的措辭說明(為何表說明用「演出引擎」),引用 doc35 §9.2/§9.22 既有結論,不是新的遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5745,
+   "excerpt_sha1": "c92369c602ec7c4ac83a917cc39518f6f2e9b9ee",
+   "excerpt": "(改一個 byte 後的 Enter)。`copy_protection_password_check` 的 confidence 改為 `verified_dynamic`,這是登錄表第一筆動態驗證。",
+   "verdict": "benign",
+   "note": "說明登錄表 confidence 欄位的變更,是工具紀錄,不是遊戲事實主張(事實在上方有 DOSBox-X 與位址的行)"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5758,
+   "excerpt_sha1": "68342d979a9fff76b215dcbdca0c9f505a102950",
+   "excerpt": "`blit_tile24_rle_flat` 的填色(續三十二:顏色參數沒被讀,填的是 stride 低 byte)沒有做動態驗證。執行只能證明畫面上填的是哪個",
+   "verdict": "benign",
+   "note": "說明沒有做的動態驗證與理由,不是遊戲事實主張"
   }
  ]
 }

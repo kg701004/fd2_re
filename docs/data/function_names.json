@@ -6888,8 +6888,8 @@
   {
    "addr": "0x33faf",
    "name": "copy_protection_password_check",
-   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。",
-   "confidence": "static_re",
+   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。 2026-09-28 DOSBox-X 動態驗證(doc98 續四十):戰場上連按 Enter,[0x51a42] 由 3 遞減到 0(該分支確實執行),之後的 Enter 都經過 0x118a3,只出現單位面板、[0x53a44] 始終 0;執行中記憶體的 0x118a3 是 80 3d .. 00 eb 07(載入後未改寫)。正向對照:只把執行中 0x118aa 的 EB 改成 75,下一次 Enter 即出現「NO. 01」密碼畫面(evidence/copyprot_positive_byte75_20260928.png)。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
     {
