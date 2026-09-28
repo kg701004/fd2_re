@@ -34784,6 +34784,14 @@
    "excerpt": "**登錄。** `scene_attack_resolve` 摘要補上命中判定的動態驗證;doc27 表第 4 項下加註。",
    "verdict": "benign",
    "note": "登錄動作的簿記說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5876,
+   "excerpt_sha1": "b458d86518f7d03571dfd7fbe05384d2699f491d",
+   "excerpt": "**未驗證。** 施法者屬性不參與只由靜態確認(本次施法者屬性沒有改);spell 10..12 的種族閘門、經驗值累加、範圍法術(裂地術等經其他呼叫端",
+   "verdict": "benign",
+   "note": "列出本次未測的範圍(施法者屬性、spell 10..12 閘門、經驗值、範圍/召喚法術),是範圍聲明而非遊戲事實主張"
   }
  ]
 }

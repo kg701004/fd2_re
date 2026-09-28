@@ -876,7 +876,7 @@
   {
    "addr": "0x4e866",
    "name": "row7_ptr_619fd",
-   "summary": "(id):回傳 0x619fd + id*7(7 bytes/列的表;列 +5 是 unit_spend_mp 扣的 MP 量)。表的正式名稱未查證,名字只寫機制。",
+   "summary": "(id):回傳 0x619fd + id*7(7 bytes/列的表;列 +5 是 unit_spend_mp 扣的 MP 量)。表的正式名稱未查證,名字只寫機制。 表格語意(doc98 續四十四):這是法術記錄,7 bytes/筆,+0 傷害(int16)、+2 命中率、+5 MP 消耗(聖光彈 0x18 = 24,與法術選單顯示一致);DOSBox-X 以執行期位址 0x1f39fd(object 3 delta 0x192000)讀回 spell 8 = b8 01 64 08 00 18 00,與檔案相同。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -7992,6 +7992,72 @@
     {
      "at": "0x2f9a4",
      "insn": "cmp edx, eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c75e",
+   "name": "spell_damage_resolve",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-28",
+   "summary": "(target, spell):法術傷害的命中與基礎值。把 [0x51f96] 起 28 個 dword(職業魔抗表)複製到堆疊,resist = 表[守方 +0x20 職業 - 1];spell 列 = row7_ptr_619fd(spell),base = (int16)列+0 × resist / 10;spell 為 10..12 且 unit_uses_move_cost_row19(target) 為真時直接回 0;否則 rand%100 < 列+2(命中率)才呼叫 spell_damage_apply(target, base),未命中回 0。施法者的屬性不參與。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):悠妮施放聖光彈(spell 8,傷害 440、命中 100),斷點在 0x1c7fe 讀 ESI=base —— 守方職業 7/13/26 分別得 440/220/176(魔抗 10/5/4);把記憶體中命中率改 30 時亂數 25 與 0 命中,改 10 時亂數 73 未命中(HP 不變、MP 仍扣)。",
+   "evidence": [
+    {
+     "at": "0x1c775",
+     "insn": "mov esi, 0x1f96"
+    },
+    {
+     "at": "0x1c7ab",
+     "insn": "imul edx, dword ptr [esp + esi*4 - 4]"
+    },
+    {
+     "at": "0x1c7ba",
+     "insn": "idiv esi"
+    },
+    {
+     "at": "0x1c7be",
+     "insn": "movzx eax, byte ptr [ebx + 2]"
+    },
+    {
+     "at": "0x1c7fe",
+     "insn": "cmp edx, dword ptr [esp + 0x70]"
+    },
+    {
+     "at": "0x1c80c",
+     "insn": "call 0x1c81f"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c81f",
+   "name": "spell_damage_apply",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-28",
+   "summary": "(target, base):HP(+0x40)-= base × 9 / 10 + (rand%100) × base / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— base 440 亂數 75 -> 429(999->570)、base 220 亂數 65 -> 212(999->787)、base 176 亂數 58 -> 168(999->831)、base 440 亂數 32 -> 410(999->589,兩次)。",
+   "evidence": [
+    {
+     "at": "0x1c845",
+     "insn": "movzx edi, word ptr [esi + 0x40]"
+    },
+    {
+     "at": "0x1c865",
+     "insn": "idiv ebp"
+    },
+    {
+     "at": "0x1c87f",
+     "insn": "imul edx, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x1c891",
+     "insn": "idiv dword ptr [esp + 4]"
+    },
+    {
+     "at": "0x1c89f",
+     "insn": "mov word ptr [esi + 0x40], di"
+    },
+    {
+     "at": "0x1c8e2",
+     "insn": "add dword ptr [0x3ec8], eax"
     }
    ]
   }

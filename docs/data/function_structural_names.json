@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 164,
+  "total": 162,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 109,
+   "wrapper": 107,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
@@ -288,20 +288,6 @@
    "callers": 2,
    "argc": 2
   },
-  "0x1c75e": {
-   "kind": "wrapper",
-   "name": "wrapper(row7_ptr_619fd(_), unit_uses_move_cost_row19(_), prng_next(), ~0x1c81f(_, _))",
-   "round": 2,
-   "callers": 8,
-   "argc": 2
-  },
-  "0x1c81f": {
-   "kind": "wrapper",
-   "name": "wrapper(prng_next(), high_class_row10_ptr(_))",
-   "round": 1,
-   "callers": 3,
-   "argc": 2
-  },
   "0x1c8ed": {
    "kind": "wrapper",
    "name": "wrapper(row7_ptr_619fd(_), ~0x1c916(_, _))",
@@ -542,22 +528,22 @@
   },
   "0x21227": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
-   "round": 3,
+   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), spell_damage_resolve(_, _), queue_unit_fixed_popup(_))",
+   "round": 1,
    "callers": 1,
    "argc": 4
   },
   "0x212b9": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
-   "round": 3,
+   "name": "wrapper(play_map_effect_animation(_, _, _), flash_listed_units_band_cycle(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), spell_damage_resolve(_, _), queue_unit_fixed_popup(_))",
+   "round": 1,
    "callers": 0,
    "argc": 4
   },
   "0x213b7": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, _, _), ~0x1cac7(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), ~0x1c75e(_, _), queue_unit_fixed_popup(_))",
-   "round": 3,
+   "name": "wrapper(play_map_effect_animation(_, _, _), ~0x1cac7(_, _, _, _), unit_spend_mp(_, _), queue_unit_number_popup(_, 0x5e, _), spell_damage_resolve(_, _), queue_unit_fixed_popup(_))",
+   "round": 2,
    "callers": 1,
    "argc": 4
   },
