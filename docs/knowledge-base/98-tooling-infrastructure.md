@@ -5654,3 +5654,28 @@ capstone 因 F2 A5 與 SSE2 的 `movsd` 編碼衝突而省略前綴;MOVS 上的 
 `fill_band_color_run6`(0x34317)是這個畫面用的色號填充小函式。
 
 `--coverage`:strong 858 裡有名稱 495、完全無描述 87(本節前 489 / 94)。
+
+## 2026-09-28 續三十七:遊戲區第一、二批 21 筆 —— 城鎮服務、TAI 演出引擎的 phase 表進白名單
+
+**第一批(第二十一批,8 筆):城鎮服務。** `shop_sell_service`(售價 row+0x13 × 3/4)、`town_equip_service` 與它呼叫的
+`equip_menu`(戰鬥選單 0x1bbdc 也用)、`collect_town_shop_items`、`draw_revive_candidate_rows`/`revive_candidate_select`、
+出擊前的名冊點選畫面 `draw_roster_pick_grid`/`roster_pick_wait_key`。
+
+**復活費率表的舊位址。** `draw_revive_candidate_rows` 讀 `word [0x52399 + (職業-1)×2]`,以職業為索引即 `0x52397 + 職業×2`。
+doc56 L2005、91-worklist 與 SESSION-HANDOFF-2026-07-06 L348 記的 `0x52669 + 職業×2` 是舊版位址(doc91 L98 已記「0x52669 在現行 EXE
+0 筆參照」)。這是資料區位址,不在 `--stale-edition` 的範圍(它只管 obj1 程式碼),所以記在名稱摘要與本節,不登勘誤;
+`docs/data/exe_tables/revive_fee_rates.json` 當時由舊版 EXE 讀出,數值是否與新版相同本節未核對。
+
+**第二批:0x524c6 phase 表進跳表白名單。** 0x2bfd9/0x2c217/0x2c441/0x2cafc 沒有直接呼叫端,是 `0x524c6` 起 10 格函式指標表的
+第 3/4/5/7 項。doc35 §9.2 已逐 byte 核對過這張表(FIGANI/TAI.DAT/BG.DAT/FDOTHER.DAT 演出引擎,主控 0x2ff01 與 0x31266 以
+`call [reg*4+0x524c6]` 分派;第 10 格是非 fixup 的 0x20000)。與事件/指令表同一種情形 —— 身分由表決定,本體沒有指令能證明 ——
+所以把它加進 `JUMP_TABLES`(10 格,前綴 `tai_phase_handler`),10 格全部登錄。表的說明用「演出引擎」:doc35 §9.2 標題定性為
+「戰鬥指令選單」的演出,§9.22 又證實同一引擎驅動結局 CG 與角色回顧卡,「戰鬥動畫」會超出文件的結論(第一版這樣寫,已改)。
+
+selftest 改成**逐表**跑同一組邊界(末格合格、index = 格數被拒、前綴配本表合格、配別表不合格),新增的表自動受檢;真實 EXE 段加
+「phase 表第 5 項 -> 0x2c441、第 10 項沒有 fixup」的正向控制(21 項)。
+
+另有 `tai_phase_transition_9tick`(0x31266,與 doc35 §9.13.3 反編譯一致)、`play_command_cast_animation`(0x30e9d:幀旗標
++4 == 1 時 `unit_spend_mp` 扣 MP)、`roster_move_member_to_slot1`(0x2b843)。
+
+`--coverage`:strong 858 裡有名稱 516、文件記載為入口 171、完全無描述 73(本節前 495 / 87)。

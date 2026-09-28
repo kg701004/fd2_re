@@ -6971,6 +6971,497 @@
      "insn": "cmp eax, 6"
     }
    ]
+  },
+  {
+   "addr": "0x28cbd",
+   "name": "shop_sell_service",
+   "summary": "商店賣出:choice_box_left_right 選角色,收集其非空(flag 0x80 清)物品;沒有就顯示依 hub 選項取自 [0x52458] 的文字。否則 open_item_list_panel/item_list_select(sell=1)選物品,售價 = row+0x13 × 3/4 存 [0x53ae1],yes_no_prompt 確認後service_success_anim、gold_add_with_counter_anim、remove_inventory_slot、recalc_equipped_stats。舊文件位址 0x2f642(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x28cf6",
+     "insn": "test byte ptr [eax], 0x80"
+    },
+    {
+     "at": "0x28de3",
+     "insn": "call 0x27738"
+    },
+    {
+     "at": "0x28e39",
+     "insn": "movzx edx, word ptr [eax + 0x13]"
+    },
+    {
+     "at": "0x28e3f",
+     "insn": "shl eax, 2"
+    },
+    {
+     "at": "0x28ea5",
+     "insn": "call 0x19953"
+    },
+    {
+     "at": "0x28ed7",
+     "insn": "call 0x26a7a"
+    },
+    {
+     "at": "0x28ee1",
+     "insn": "call 0x1b8e7"
+    }
+   ]
+  },
+  {
+   "addr": "0x28efe",
+   "name": "town_equip_service",
+   "summary": "城鎮的裝備服務:choice_box_left_right 選角色,呼叫 equip_menu,保留 [0x53c67],再依 hub 選項重新 load_res 城鎮資源到 [0x53a85]。舊文件位址 0x2f883(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x28f13",
+     "insn": "call 0x27d33"
+    },
+    {
+     "at": "0x28f30",
+     "insn": "call 0x1bffe"
+    },
+    {
+     "at": "0x28f38",
+     "insn": "mov dword ptr [0x3c67], ebx"
+    },
+    {
+     "at": "0x28f56",
+     "insn": "call 0x111ba"
+    }
+   ]
+  },
+  {
+   "addr": "0x1bffe",
+   "name": "equip_menu",
+   "summary": "(unit):裝備選單。畫面(0x17e0b)後迴圈以 0x1b9de 選物品槽(-1 離開);槽內有物品且 unit_can_equip_item 為真時以 0x1c142 切換裝備、recalc_equipped_stats,並重畫能力面板(0x17eef、0x184c0)。離開時 12 段滑出(0x18409)並釋放三個畫面緩衝。呼叫端:戰鬥選單 0x1bbdc、城鎮 town_equip_service。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1c010",
+     "insn": "call 0x17e0b"
+    },
+    {
+     "at": "0x1c025",
+     "insn": "call 0x1b9de"
+    },
+    {
+     "at": "0x1c060",
+     "insn": "call 0x1c1c3"
+    },
+    {
+     "at": "0x1c073",
+     "insn": "call 0x1c142"
+    },
+    {
+     "at": "0x1c07c",
+     "insn": "call 0x1b750"
+    },
+    {
+     "at": "0x1c0f9",
+     "insn": "cmp ebx, 0xb"
+    }
+   ]
+  },
+  {
+   "addr": "0x26a0d",
+   "name": "collect_town_shop_items",
+   "summary": "(out):從城鎮資料 [0x53f56] 取商品 id 到 out,遇 0xff 停;hub 選項 1 取 +3 起 12 格、選項 3 取 +0xf 起 8 格、其他取 +0x17 起 8 格。回傳數量。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x26a1b",
+     "insn": "mov ebp, 8"
+    },
+    {
+     "at": "0x26a29",
+     "insn": "mov ebp, 0xc"
+    },
+    {
+     "at": "0x26a2e",
+     "insn": "mov edi, 3"
+    },
+    {
+     "at": "0x26a3e",
+     "insn": "mov edi, 0xf"
+    },
+    {
+     "at": "0x26a45",
+     "insn": "mov edi, 0x17"
+    },
+    {
+     "at": "0x26a6b",
+     "insn": "cmp ebx, 0xff"
+    }
+   ]
+  },
+  {
+   "addr": "0x2a0c2",
+   "name": "draw_revive_candidate_rows",
+   "summary": "(count, dst, sel, list):最多 3 列復活候選:單位圖、名字(record+8 +1)、兩個文字欄(0x8c+[+0x1f]、0x96+[+0x20])、費用 = word [0x52399 + (職業-1)×2] × Lv(+0x21)。註:doc56/91 與 SESSION-HANDOFF-2026-07-06 記的費率表 0x52669(+職業×2)是舊版位址,本版以職業為索引是 0x52397 + 職業×2。舊文件位址 0x30a47(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2a155",
+     "insn": "movzx eax, byte ptr [esi + 0x1f]"
+    },
+    {
+     "at": "0x2a182",
+     "insn": "movzx eax, byte ptr [esi + 0x20]"
+    },
+    {
+     "at": "0x2a1d5",
+     "insn": "movsx eax, word ptr [eax*2 + 0x2399]"
+    },
+    {
+     "at": "0x2a1dd",
+     "insn": "imul eax, dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x2a293",
+     "insn": "mov ebx, 0xc9"
+    }
+   ]
+  },
+  {
+   "addr": "0x2a29d",
+   "name": "revive_candidate_select",
+   "summary": "(count, list):復活候選清單。總數 [0x53f5e]、清單 [0x53f62],開面板後以 draw_revive_candidate_rows 畫 3 列;menu_read_key(2) ↑/↓ 移動並在離開視窗時捲動,Enter/Space 回 1、Esc 回 -1。舊文件位址 0x30c22(勘誤)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2a328",
+     "insn": "mov dword ptr [0x3f62], ebp"
+    },
+    {
+     "at": "0x2a32e",
+     "insn": "mov dword ptr [0x3f5e], edi"
+    },
+    {
+     "at": "0x2a363",
+     "insn": "call 0x2a0c2"
+    },
+    {
+     "at": "0x2a404",
+     "insn": "cmp eax, 3"
+    },
+    {
+     "at": "0x2a42c",
+     "insn": "mov esi, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b4fb",
+   "name": "draw_roster_pick_grid",
+   "summary": "(bg, limit, flags, cursor):複製背景到 [0x53c63],畫數字 limit 與 limit - count_nonzero_roster_flags(flags);名冊前 [0x53bfb]-1 人以每列 10 格排開,flags 非 0 的畫一般精靈、為 0 的畫調色帶版(blit_tile24_rle_band),游標格另畫一個精靈。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2b53c",
+     "insn": "call 0x187d6"
+    },
+    {
+     "at": "0x2b54e",
+     "insn": "call 0x2b749"
+    },
+    {
+     "at": "0x2b55a",
+     "insn": "sub esi, eax"
+    },
+    {
+     "at": "0x2b647",
+     "insn": "cmp byte ptr [esi + ebp], 0"
+    },
+    {
+     "at": "0x2b660",
+     "insn": "call 0x4e22a"
+    },
+    {
+     "at": "0x2b678",
+     "insn": "call 0x4e1a6"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b67f",
+   "name": "roster_pick_wait_key",
+   "summary": "(4 參數同 draw_roster_pick_grid):沒有按鍵時每個 BIOS tick(0x46c 改變)重畫 draw_roster_pick_grid 並貼到 VGA;有鍵時以 int386(0x16) 讀,0xe0/0x52 掃描碼或 Space 字元視為 Enter(0x1c)、0x53 視為 Esc(1),回傳掃描碼。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2b69d",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x2b6a6",
+     "insn": "mov eax, 0x46c"
+    },
+    {
+     "at": "0x2b6c7",
+     "insn": "call 0x2b4fb"
+    },
+    {
+     "at": "0x2b6fa",
+     "insn": "push 0x16"
+    },
+    {
+     "at": "0x2b71e",
+     "insn": "cmp eax, 0x20"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b996",
+   "name": "tai_phase_handler_0",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 0 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 7。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524c6",
+     "table": "0x524c6",
+     "index": 0
+    }
+   ]
+  },
+  {
+   "addr": "0x2bb33",
+   "name": "tai_phase_handler_1",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 1 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 8。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524ca",
+     "table": "0x524c6",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x2bd6c",
+   "name": "tai_phase_handler_2",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 2 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 1。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524ce",
+     "table": "0x524c6",
+     "index": 2
+    }
+   ]
+  },
+  {
+   "addr": "0x2bfd9",
+   "name": "tai_phase_handler_3",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 3 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 12。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524d2",
+     "table": "0x524c6",
+     "index": 3
+    }
+   ]
+  },
+  {
+   "addr": "0x2c217",
+   "name": "tai_phase_handler_4",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 4 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 6。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524d6",
+     "table": "0x524c6",
+     "index": 4
+    }
+   ]
+  },
+  {
+   "addr": "0x2c441",
+   "name": "tai_phase_handler_5",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 5 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 6。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524da",
+     "table": "0x524c6",
+     "index": 5
+    }
+   ]
+  },
+  {
+   "addr": "0x2c67d",
+   "name": "tai_phase_handler_6",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 6 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 5;本格是 5 點圓弧 carousel 定位(π/180、72°)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524de",
+     "table": "0x524c6",
+     "index": 6
+    }
+   ]
+  },
+  {
+   "addr": "0x2cafc",
+   "name": "tai_phase_handler_7",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 7 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 3。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524e2",
+     "table": "0x524c6",
+     "index": 7
+    }
+   ]
+  },
+  {
+   "addr": "0x2ccf4",
+   "name": "tai_phase_handler_8",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 8 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 16(本格不吃 slot,用全域)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524e6",
+     "table": "0x524c6",
+     "index": 8
+    }
+   ]
+  },
+  {
+   "addr": "0x2ce1a",
+   "name": "tai_phase_handler_9",
+   "summary": "TAI.DAT 演出引擎 phase handler 表 0x524c6 第 9 項(身分由跳表 fixup 決定;主控 0x2ff01 與 0x31266 以 call [reg*4+0x524c6] 分派)。doc35 §9.2 記:以事件碼 0..8 分派(0 初始化、3 回傳固定長度、6 凍結、1/2/5/7/8 每幀 tick),per-slot tick 陣列長 1(本格不吃 slot,用全域)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "fixup_from": "0x524ea",
+     "table": "0x524c6",
+     "index": 9
+    }
+   ]
+  },
+  {
+   "addr": "0x31266",
+   "name": "tai_phase_transition_9tick",
+   "summary": "TAI.DAT 演出引擎的轉場:正向 4 tick + 反向 5 tick,每 tick 在兩次 blit_anim_frame 前後各以同一個 phase index 呼叫 [0x524c6] 表的 handler,copy_rect 貼上後 wait_ticks。phase index 由呼叫端傳入,不是自己選的(doc35 §9.13.3 反編譯一致)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x312dd",
+     "insn": "call dword ptr [ebp*4 + 0x24c6]"
+    },
+    {
+     "at": "0x312f7",
+     "insn": "call 0x2eb9f"
+    },
+    {
+     "at": "0x3132f",
+     "insn": "call dword ptr [ebp*4 + 0x24c6]"
+    },
+    {
+     "at": "0x3135d",
+     "insn": "call 0x17aa9"
+    },
+    {
+     "at": "0x31366",
+     "insn": "cmp esi, 5"
+    },
+    {
+     "at": "0x313ea",
+     "insn": "call dword ptr [ebp*4 + 0x24c6]"
+    }
+   ]
+  },
+  {
+   "addr": "0x30e9d",
+   "name": "play_command_cast_animation",
+   "summary": "(caster, cmd, script, ...):逐幀播放指令演出腳本(幀數在 script+2、幀位移表在 +8)。依指令 id 決定幀長(8/0x20/0x21 為 0x13、≤3 或 0x23 為 0xf、其他 0xb);指令 0x18、0x1c..0x1e 時每幀播幀內音效。幀的旗標 +4 == 1 時unit_spend_mp(caster, cmd) 扣 MP、重畫單位面板,指令 <0xa 或 ≥0x20 時再以 0x4e8d3 做 6 幀 LUT 淡入並播音效。呼叫端 0x2cf30、0x2d80d、0x2ff45(doc35 §9.22.8)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x30ecc",
+     "insn": "mov dword ptr [esp + 4], 0xb"
+    },
+    {
+     "at": "0x30ee3",
+     "insn": "mov dword ptr [esp + 4], 0x13"
+    },
+    {
+     "at": "0x30f2a",
+     "insn": "movzx eax, byte ptr [eax + 2]"
+    },
+    {
+     "at": "0x30f47",
+     "insn": "add edx, dword ptr [eax + 8]"
+    },
+    {
+     "at": "0x30f84",
+     "insn": "cmp eax, 1"
+    },
+    {
+     "at": "0x30f92",
+     "insn": "call 0x1ca89"
+    },
+    {
+     "at": "0x30fe1",
+     "insn": "call 0x4e8d3"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b843",
+   "name": "roster_move_member_to_slot1",
+   "summary": "(char_id):在名冊 [0x53bf7](80-byte 記錄,[0x53bfb] 人)第 1 格起找 record+8 == char_id 的成員,把他移到第 1 格(第 0 格不動),其餘成員依原順序從第 2 格起排;接著釋放精靈快取 [0x53a61],開 0x5029f 的 FDICON 檔,對每個成員以 0x11019(portrait, fp) 重新載入圖示。唯一呼叫端 0x2af28。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2b85a",
+     "insn": "mov byte ptr [esp + 4], 2"
+    },
+    {
+     "at": "0x2b87f",
+     "insn": "movzx edx, byte ptr [edx + eax + 8]"
+    },
+    {
+     "at": "0x2b8ce",
+     "insn": "add eax, 0x50"
+    },
+    {
+     "at": "0x2b8ee",
+     "insn": "cmp ebx, eax"
+    },
+    {
+     "at": "0x2b942",
+     "insn": "push 0x29f"
+    },
+    {
+     "at": "0x2b976",
+     "insn": "call 0x11019"
+    }
+   ]
   }
  ]
 }

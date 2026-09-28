@@ -34720,6 +34720,14 @@
    "excerpt": "4. 名稱形如 `event_handler_N` / `command_handler_N` 的,必須有同一張表第 N 項通過驗證的證據。",
    "verdict": "benign",
    "note": "描述 function_inventory.check_names 的名稱規則,是工具行為說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5673,
+   "excerpt_sha1": "c6c4e0ee4dc28085c526c1efcfaef516a7a026f9",
+   "excerpt": "「戰鬥指令選單」的演出,§9.22 又證實同一引擎驅動結局 CG 與角色回顧卡,「戰鬥動畫」會超出文件的結論(第一版這樣寫,已改)。",
+   "verdict": "benign",
+   "note": "延續上一行的措辭說明(為何表說明用「演出引擎」),引用 doc35 §9.2/§9.22 既有結論,不是新的遊戲事實主張"
   }
  ]
 }

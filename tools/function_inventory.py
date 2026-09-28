@@ -118,6 +118,8 @@ GHIDRA_HEADER = re.compile(r"^FUNCTION \d+/\d+: \S+ @ (\S+?)\s+size=(\d+)\s*$", 
 JUMP_TABLES = {
     0x51B91: (90, "event_handler", "event_id handler 跳表(doc25 L944/§20.3:90 格,event_id 0..89)"),
     0x51D01: (88, "command_handler", "指令/行動 dispatch 表(doc25 §20.3:88 格,0x1541f 與 0x1d479 以 call [eax*4+0x51d01] 分派)"),
+    0x524C6: (10, "tai_phase_handler", "TAI.DAT 演出引擎 phase handler 表(doc35 §9.2 定性為戰鬥指令選單的演出:10 格,主控 0x2ff01 與 0x31266 以 "
+                                       "call [reg*4+0x524c6] 分派;第 10 格是非 fixup 的 0x20000)"),
 }
 EVENT_TABLE = 0x51B91
 TABLE_NAME_RE = re.compile(r"^(" + "|".join(v[1] for v in JUMP_TABLES.values()) + r")_(\d+)$")
@@ -1091,6 +1093,20 @@ def _selftest_names(fails: list[str]) -> None:
     check("合格:第二張表 command_handler_N", fb({**h3, "name": "command_handler_2", "evidence": [ec2]}), [])
     check("前綴與表不符:command_handler_3 拿事件表第 3 項", fb({**h3, "name": "command_handler_3"}),
           ["0x1000 command_handler_3: 名稱是 0x51d01 表第 3 項,卻沒有通過驗證的該項 fixup 證據"])
+    # 白名單裡的每一張表都跑同一組邊界:最後一格合格、等於格數的 index 被拒、前綴配本表合格、配別張表不合格。
+    # 逐表寫死的案例只釘得住寫到的那幾張表;新增一張表時它的格數或前綴被改掉,沒有任何一題會失敗。
+    for tb, (cnt, pre, _) in sorted(JUMP_TABLES.items()):
+        other = next(t for t in sorted(JUMP_TABLES) if t != tb)
+        fxt = {tb + 4 * (cnt - 1): 0x1000, tb + 4 * cnt: 0x1000, tb: 0x1000, other: 0x1000}
+
+        def ev_(t, i):
+            return [{"fixup_from": f"{t + 4 * i:#x}", "table": f"{t:#x}", "index": i}]
+        got = [fb({**ok, "name": f"{pre}_{cnt - 1}", "evidence": ev_(tb, cnt - 1)}, fxt),
+               fb({**ok, "name": "x_handler", "evidence": ev_(tb, cnt)}, fxt),
+               fb({**ok, "name": f"{pre}_0", "evidence": ev_(tb, 0)}, fxt),
+               fb({**ok, "name": f"{pre}_0", "evidence": ev_(other, 0)}, fxt)]
+        check(f"表 {tb:#x}({pre},{cnt} 格):末格合格/越界被拒/前綴配本表合格/配別表不合格",
+              [bool(g) for g in got], [False, True, False, True])
     check("表不在白名單(0x60000 的 fixup 確實指向入口,仍不收)",
           fb({**h3, "name": "x_handler", "evidence": [{"fixup_from": "0x60000", "table": "0x60000", "index": 0}]}),
           ["0x1000 x_handler: fixup 證據的表 0x60000 不在已知跳表清單"])
@@ -1168,6 +1184,8 @@ def _selftest_live(fails: list[str]) -> bool:
     fx_l = D.build_fixups(data_l, meta_l)
     check("事件跳表第 82 項的 fixup 指向 0x362e8(doc25 L950 舊 0x35f92 + 0x356)", fx_l.get(EVENT_TABLE + 4 * 82) == 0x362E8,
           f"實際 {fx_l.get(EVENT_TABLE + 4 * 82)}")
+    check("TAI phase 表第 5 項指向 0x2c441、第 10 項沒有 fixup(doc35 §9.2 逐 byte 核對的表)",
+          fx_l.get(0x524C6 + 4 * 5) == 0x2C441 and (0x524C6 + 4 * 10) not in fx_l, f"實際 {fx_l.get(0x524C6 + 4 * 5)}")
     sc = ROOT / "docs" / "data" / "function_structural_names.json"
     if sc.exists():
         check("已提交的結構性命名產物與現算(含登錄表)逐位元組相同", sc.read_text(encoding="utf-8") == dump(full))
@@ -1191,7 +1209,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 20 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 21 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 
