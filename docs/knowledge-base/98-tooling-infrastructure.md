@@ -5679,3 +5679,19 @@ selftest 改成**逐表**跑同一組邊界(末格合格、index = 格數被拒�
 +4 == 1 時 `unit_spend_mp` 扣 MP)、`roster_move_member_to_slot1`(0x2b843)。
 
 `--coverage`:strong 858 裡有名稱 516、文件記載為入口 171、完全無描述 73(本節前 495 / 87)。
+
+## 2026-09-28 續三十八:遊戲區第三批 9 筆 —— 法術演出與全地圖縮圖
+
+第二十四批(367 -> 376),多數位在指令 handler 區(0x20xxx–0x22xxx):
+
+* `earthquake_spell_effect`(0x21548,唯一呼叫端 command_handler_10)的身分由它自己的錯誤字串決定:配置緩衝失敗時以 `printf`
+  印 0x501cf 的 **"Out of memory at Earth Quack !!"**(原作把 Quake 拼成 Quack)。本體:扣 MP、以 `draw_map_scaled_fixedpoint`
+  畫晃動的地圖、音效 0xd、逐目標以 0x1c75e 算傷害。doc 過去只稱它「indexed compositor」。
+* `apply_status_spell_to_targets`(0x22d1b)/`cast_status_spell`(0x22cda):狀態異常法術 —— 目標欄位為 0、職業不是 0x19/0x1a、
+  `rand%100 < 50` 才生效,持續 `rand%4+2`,經驗 `+= 目標 Lv×8`。與 doc13 的記載逐項一致。
+* `rising_particles_effect`(0x21bd0)與 `spawn_random_particle_in_circle`(0x21db2);`lut_circle_burst_at_cursor`(0x21eb1,指令 13~16 共用)。
+* `map_overview_screen`(0x2000a,戰場游標迴圈呼叫):縮放比依地圖高度(> 0x28 格用 3、否則 4),8 步從目前視角縮放;
+  它與地震術共用 `draw_map_scaled_fixedpoint`(0x1f558,定點數每格 0xc00 = 24×128)。
+* `printf`(0x37119):`vfprintf(stdout 0x5285a, fmt, ap)`;防拷的錯誤訊息也走它。
+
+`--coverage`:strong 858 裡有名稱 525、文件記載為入口 169、完全無描述 66(本節前 516 / 73)。

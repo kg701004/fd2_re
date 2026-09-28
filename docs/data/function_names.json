@@ -7462,6 +7462,279 @@
      "insn": "call 0x11019"
     }
    ]
+  },
+  {
+   "addr": "0x22d1b",
+   "name": "apply_status_spell_to_targets",
+   "summary": "(caster, count, targets, field_off, anim):播地圖效果並呈現在目標上,再逐一處理:目標記錄 +field_off 為 0、職業(+0x20)不是 0x19/0x1a、且 rand%100 < 50 時生效 —— 跳數字、+field_off = rand%4+2(持續回合)、[0x53ec8] += 目標 Lv(+0x21)×8;否則跳固定提示框。與 doc13 對狀態法術的記載(種族免疫、duration、Lv<<3 經驗)一致。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x22d3c",
+     "insn": "call 0x1c4cc"
+    },
+    {
+     "at": "0x22d54",
+     "insn": "call 0x1c2da"
+    },
+    {
+     "at": "0x22db0",
+     "insn": "cmp eax, 0x19"
+    },
+    {
+     "at": "0x22db5",
+     "insn": "cmp eax, 0x1a"
+    },
+    {
+     "at": "0x22dcb",
+     "insn": "cmp edx, 0x32"
+    },
+    {
+     "at": "0x22dfe",
+     "insn": "add edx, 2"
+    },
+    {
+     "at": "0x22e08",
+     "insn": "shl eax, 3"
+    },
+    {
+     "at": "0x22e0b",
+     "insn": "add dword ptr [0x3ec8], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x22cda",
+   "name": "cast_status_spell",
+   "summary": "[0x53ec4] = 0,unit_spend_mp(施法者, 指令),再以同樣 5 個參數尾端呼叫 apply_status_spell_to_targets。唯一呼叫端 command_handler_22(指令 26 經尾跳共用同一段,doc13)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x22ce4",
+     "insn": "mov dword ptr [0x3ec4], 0"
+    },
+    {
+     "at": "0x22cf6",
+     "insn": "call 0x1ca89"
+    },
+    {
+     "at": "0x22d12",
+     "insn": "call 0x22d1b"
+    }
+   ]
+  },
+  {
+   "addr": "0x21548",
+   "name": "earthquake_spell_effect",
+   "summary": "地震術演出(唯一呼叫端 command_handler_10):扣 MP,配置緩衝(失敗以 printf 印 \"Out of memory at Earth Quack !!\",原作拼字),以 draw_map_scaled_fixedpoint 繪出晃動的地圖並疊單位,音效 0xd;之後對每個目標以 0x1c75e 算傷害並跳數字或提示框。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x215a2",
+     "insn": "call 0x1ca89"
+    },
+    {
+     "at": "0x215e7",
+     "insn": "push 0x1cf"
+    },
+    {
+     "at": "0x216d0",
+     "insn": "call 0x1f558"
+    },
+    {
+     "at": "0x217aa",
+     "insn": "push 0xd"
+    },
+    {
+     "at": "0x2182e",
+     "insn": "call 0x1c75e"
+    }
+   ]
+  },
+  {
+   "addr": "0x21db2",
+   "name": "spawn_random_particle_in_circle",
+   "summary": "(radius, i, xs, ys, speeds, cx, cy):第 i 個粒子隨機落在圓內:距離 = rand%64 × radius/64 - 1,角度 = rand%360 × [0x501f8](度轉弧度),x = cx + 距離×0x3cbd5(角)、y = cy + 距離×0x3cbe8(角) + [0x50200](doc35 記 0x3cbd5/0x3cbe8 為 sin/cos);速度 = rand%8 + 1。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x21dc8",
+     "insn": "mov ebx, 0x40"
+    },
+    {
+     "at": "0x21dea",
+     "insn": "mov ebx, 0x168"
+    },
+    {
+     "at": "0x21dfc",
+     "insn": "fmul qword ptr [0x1f8]"
+    },
+    {
+     "at": "0x21e0d",
+     "insn": "call 0x3cbd5"
+    },
+    {
+     "at": "0x21e57",
+     "insn": "call 0x3cbe8"
+    },
+    {
+     "at": "0x21e97",
+     "insn": "mov ebx, 8"
+    }
+   ]
+  },
+  {
+   "addr": "0x21bd0",
+   "name": "rising_particles_effect",
+   "summary": "粒子上升效果:共 N 幀,每幀補生到上限個粒子(spawn_random_particle_in_circle),還原背景,把在 0..0x136 × 0..0xbe 內的粒子以 0x4e795 畫成 [0x53a6d] 資源的小圖,貼到畫面,每個粒子 y -= 速度,超出 -10 就在圓內重生;每幀 10ms。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x21c72",
+     "insn": "call 0x21db2"
+    },
+    {
+     "at": "0x21ccb",
+     "insn": "cmp ebx, 0x136"
+    },
+    {
+     "at": "0x21cdb",
+     "insn": "cmp edx, 0xbe"
+    },
+    {
+     "at": "0x21d0d",
+     "insn": "call 0x4e795"
+    },
+    {
+     "at": "0x21d79",
+     "insn": "sub ecx, ebx"
+    },
+    {
+     "at": "0x21d82",
+     "insn": "cmp eax, -0xa"
+    }
+   ]
+  },
+  {
+   "addr": "0x21eb1",
+   "name": "lut_circle_burst_at_cursor",
+   "summary": "(radius_start, step):以游標格([0x53ab9]/[0x53abd] × 24)為中心,LUT 圓(lut_remap_circle_band)9 幀逐步擴大半徑(每幀 5ms),停 200ms,再以 LUT 第 3..9 張各播一幀,最後 redraw 並停 200ms。指令 13~16 共用(command_handler_13..16)。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x21ec6",
+     "insn": "imul eax, dword ptr [0x3ab9], 0x18"
+    },
+    {
+     "at": "0x21ed4",
+     "insn": "imul ebp, dword ptr [0x3abd], 0x18"
+    },
+    {
+     "at": "0x21f10",
+     "insn": "mov ebx, 9"
+    },
+    {
+     "at": "0x21f4c",
+     "insn": "call 0x22046"
+    },
+    {
+     "at": "0x21f80",
+     "insn": "add esi, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x21f93",
+     "insn": "push 0xc8"
+    }
+   ]
+  },
+  {
+   "addr": "0x2000a",
+   "name": "map_overview_screen",
+   "summary": "全地圖縮圖(戰場游標迴圈 0x117e7 呼叫):以 0x1399c 建縮小圖塊,地圖高度 [0x53ac5] > 0x28 時縮放比 3、否則 4;逐格以 map_cell_info 建圖塊指標表,用 draw_map_scaled_fixedpoint 從目前視角 8 步縮放過去,之後等鍵(期間閃爍標記),離開時釋放並 redraw。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x2004b",
+     "insn": "call 0x1399c"
+    },
+    {
+     "at": "0x20055",
+     "insn": "cmp dword ptr [0x3ac5], 0x28"
+    },
+    {
+     "at": "0x2005e",
+     "insn": "mov ebp, 3"
+    },
+    {
+     "at": "0x200fb",
+     "insn": "call 0x12e38"
+    },
+    {
+     "at": "0x201a2",
+     "insn": "call 0x1f558"
+    },
+    {
+     "at": "0x201c2",
+     "insn": "cmp ebx, 8"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f558",
+   "name": "draw_map_scaled_fixedpoint",
+   "summary": "(tiles, cx, cy, scale):定點數縮放地圖繪製,每格 0xc00(24×128)單位;以 (cx, cy) 為畫面中心(半寬 0x9c)算起始格與格內偏移,清空 [0x53a49] 後畫到 +0x504 起的畫面區。呼叫端 map_overview_screen、earthquake_spell_effect。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x1f569",
+     "insn": "imul ebx, dword ptr [esp + 0x38], 0x9c"
+    },
+    {
+     "at": "0x1f58d",
+     "insn": "mov esi, 0xc00"
+    },
+    {
+     "at": "0x1f599",
+     "insn": "idiv esi"
+    },
+    {
+     "at": "0x1f5ea",
+     "insn": "lea ecx, [eax + 0x504]"
+    },
+    {
+     "at": "0x1f5f4",
+     "insn": "push 0xfa00"
+    }
+   ]
+  },
+  {
+   "addr": "0x37119",
+   "name": "printf",
+   "summary": "Watcom CRT printf(fmt, ...):把 varargs 包成 va_list,呼叫 vfprintf(stdout 0x5285a, fmt, ap)。印出 \"Sorry your password is wrong !!!\" 與 \"Out of memory at Earth Quack !!\" 都走它。",
+   "confidence": "static_re",
+   "date": "2026-09-28",
+   "evidence": [
+    {
+     "at": "0x3711f",
+     "insn": "lea eax, [ebp + 0xc]"
+    },
+    {
+     "at": "0x3712c",
+     "insn": "push 0x285a"
+    },
+    {
+     "at": "0x37131",
+     "insn": "call 0x3dab1"
+    }
+   ]
   }
  ]
 }
