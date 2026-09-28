@@ -7939,7 +7939,7 @@
    "name": "scene_attack_resolve",
    "confidence": "verified_dynamic",
    "date": "2026-09-28",
-   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。",
+   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。命中判定(續四十三):0x2f9a4 `cmp edx, eax`,EDX = rand%100、EAX = HIT−EV,有號比較、jge 為 miss;斷點實測 5 擊全部符合 —— 差 −10(亂數 73)miss、差 0 miss、差 100 命中、差 50 時亂數 38 命中與亂數 72 miss;差 −10 那擊排除了無號比較。",
    "evidence": [
     {
      "at": "0x2f823",
@@ -7984,6 +7984,14 @@
     {
      "at": "0x2fa45",
      "insn": "mov dword ptr [esp + 0x28], 0"
+    },
+    {
+     "at": "0x2f9a0",
+     "insn": "sub eax, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x2f9a4",
+     "insn": "cmp edx, eax"
     }
    ]
   }

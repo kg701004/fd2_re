@@ -34768,6 +34768,22 @@
    "excerpt": "**登錄。** `defender_can_counter` 升為 `verified_dynamic`(摘要補上本次量測與未測分支);doc27 表格下加註。",
    "verdict": "benign",
    "note": "登錄動作的簿記說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5827,
+   "excerpt_sha1": "af09fe5e18e447effa39bdbe663421697320497d",
+   "excerpt": "**受控設計。** 盜賊 #11 `+0x26`=1(續四十二已證實不反擊)、EV 20、DP 0、HP 999;攻方 AP19、DP0、EV0,只改 HIT。命中必為 17,miss 則 HP 不變。",
+   "verdict": "benign",
+   "note": "受控實驗的設定說明(改了哪些數值、為何命中必為 17),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5847,
+   "excerpt_sha1": "64df4a0f4bfd2601fe4a57f5f1dd1a60bdcd5a7e",
+   "excerpt": "**登錄。** `scene_attack_resolve` 摘要補上命中判定的動態驗證;doc27 表第 4 項下加註。",
+   "verdict": "benign",
+   "note": "登錄動作的簿記說明,不是遊戲事實主張"
   }
  ]
 }
