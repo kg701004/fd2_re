@@ -1,0 +1,442 @@
+{
+ "note": "DOSBox-X 記憶體傾印與斷點讀值整理;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。collect 的 predicted 依『+5 bit0 未設、格子記號 != 0xff、陣營符合 selector』離線計算;heal 的 predicted = amount*9//10 + roll*amount//1000。",
+ "collect_rounds": {
+  "hA1": {
+   "return_address_static": "0x1d2c4",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 4,
+   "threshold": 0,
+   "selector": 1,
+   "returned_count": 5,
+   "predicted": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "units_on_marked_cells": [
+    {
+     "unit": 1,
+     "x": 23,
+     "y": 16,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 4,
+     "predicted_in": true
+    },
+    {
+     "unit": 2,
+     "x": 22,
+     "y": 13,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    },
+    {
+     "unit": 3,
+     "x": 24,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 4,
+     "x": 24,
+     "y": 15,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 2,
+     "predicted_in": true
+    },
+    {
+     "unit": 5,
+     "x": 25,
+     "y": 15,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 3,
+     "predicted_in": false
+    }
+   ],
+   "marked_cells": {
+    "23,12": 0,
+    "22,13": 0,
+    "23,13": 1,
+    "24,13": 0,
+    "21,14": 0,
+    "22,14": 1,
+    "23,14": 2,
+    "24,14": 1,
+    "25,14": 0,
+    "20,15": 0,
+    "21,15": 1,
+    "22,15": 2,
+    "23,15": 3,
+    "24,15": 2,
+    "25,15": 1,
+    "26,15": 0,
+    "19,16": 0,
+    "20,16": 1,
+    "21,16": 2,
+    "22,16": 3,
+    "23,16": 4,
+    "24,16": 3,
+    "25,16": 2,
+    "26,16": 1,
+    "20,17": 0,
+    "21,17": 1,
+    "22,17": 2,
+    "23,17": 3,
+    "24,17": 2,
+    "25,17": 1,
+    "26,17": 0,
+    "21,18": 0,
+    "22,18": 1,
+    "23,18": 2,
+    "24,18": 1,
+    "25,18": 0,
+    "22,19": 0,
+    "23,19": 1,
+    "24,19": 0,
+    "23,20": 0
+   },
+   "out_buf": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "hA2": {
+   "return_address_static": "0x1d32f",
+   "origin": [
+    24,
+    15
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 1,
+   "threshold": 0,
+   "selector": 1,
+   "returned_count": 3,
+   "predicted": [
+    3,
+    4,
+    5
+   ],
+   "units_on_marked_cells": [
+    {
+     "unit": 3,
+     "x": 24,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    },
+    {
+     "unit": 4,
+     "x": 24,
+     "y": 15,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 5,
+     "x": 25,
+     "y": 15,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    },
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": false
+    }
+   ],
+   "marked_cells": {
+    "24,14": 0,
+    "23,15": 0,
+    "24,15": 1,
+    "25,15": 0,
+    "24,16": 0
+   },
+   "out_buf": [
+    3,
+    4,
+    5
+   ]
+  },
+  "hB0": {
+   "return_address_static": "0x18e2a",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x0",
+   "range": 1,
+   "threshold": 1,
+   "selector": 0,
+   "returned_count": 1,
+   "predicted": [
+    11
+   ],
+   "units_on_marked_cells": [
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    }
+   ],
+   "marked_cells": {
+    "23,15": 0,
+    "22,16": 0,
+    "24,16": 0,
+    "23,17": 0
+   },
+   "out_buf": null
+  },
+  "hB1": {
+   "return_address_static": "0x1d2c4",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 4,
+   "threshold": 0,
+   "selector": 1,
+   "returned_count": 5,
+   "predicted": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "units_on_marked_cells": [
+    {
+     "unit": 1,
+     "x": 23,
+     "y": 16,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 4,
+     "predicted_in": true
+    },
+    {
+     "unit": 2,
+     "x": 22,
+     "y": 13,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    },
+    {
+     "unit": 3,
+     "x": 24,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 4,
+     "x": 24,
+     "y": 15,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 2,
+     "predicted_in": true
+    },
+    {
+     "unit": 5,
+     "x": 25,
+     "y": 15,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 3,
+     "predicted_in": false
+    }
+   ],
+   "marked_cells": {
+    "23,12": 0,
+    "22,13": 0,
+    "23,13": 1,
+    "24,13": 0,
+    "21,14": 0,
+    "22,14": 1,
+    "23,14": 2,
+    "24,14": 1,
+    "25,14": 0,
+    "20,15": 0,
+    "21,15": 1,
+    "22,15": 2,
+    "23,15": 3,
+    "24,15": 2,
+    "25,15": 1,
+    "26,15": 0,
+    "19,16": 0,
+    "20,16": 1,
+    "21,16": 2,
+    "22,16": 3,
+    "23,16": 4,
+    "24,16": 3,
+    "25,16": 2,
+    "26,16": 1,
+    "20,17": 0,
+    "21,17": 1,
+    "22,17": 2,
+    "23,17": 3,
+    "24,17": 2,
+    "25,17": 1,
+    "26,17": 0,
+    "21,18": 0,
+    "22,18": 1,
+    "23,18": 2,
+    "24,18": 1,
+    "25,18": 0,
+    "22,19": 0,
+    "23,19": 1,
+    "24,19": 0,
+    "23,20": 0
+   },
+   "out_buf": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "hB2": {
+   "return_address_static": "0x1d32f",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 0,
+   "threshold": 0,
+   "selector": 1,
+   "returned_count": 1,
+   "predicted": [
+    1
+   ],
+   "units_on_marked_cells": [
+    {
+     "unit": 1,
+     "x": 23,
+     "y": 16,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 0,
+     "predicted_in": true
+    }
+   ],
+   "marked_cells": {
+    "23,16": 0
+   },
+   "out_buf": [
+    1
+   ]
+  }
+ },
+ "heals": [
+  {
+   "round": "hA",
+   "spell": 14,
+   "amount": 140,
+   "target": 3,
+   "roll": 44,
+   "predicted": 132,
+   "hp_before": 100,
+   "hp_after": 232,
+   "max_hp": 867
+  },
+  {
+   "round": "hA",
+   "spell": 14,
+   "amount": 140,
+   "target": 4,
+   "roll": 31,
+   "predicted": 130,
+   "hp_before": 100,
+   "hp_after": 230,
+   "max_hp": 918
+  },
+  {
+   "round": "hA",
+   "spell": 14,
+   "amount": 140,
+   "target": 5,
+   "roll": 75,
+   "predicted": 136,
+   "hp_before": 10,
+   "hp_after": 42,
+   "max_hp": 42
+  },
+  {
+   "round": "hB",
+   "spell": 13,
+   "amount": 70,
+   "target": 1,
+   "roll": 36,
+   "predicted": 65,
+   "hp_before": 100,
+   "hp_after": 165,
+   "max_hp": 782
+  }
+ ],
+ "experience": {
+  "caster": 1,
+  "caster_level": 2,
+  "caster_class": 21,
+  "divisor": 32,
+  "ex_before": 12,
+  "ex_after_hA": 25,
+  "ex_after_hB": 28,
+  "hA_accumulated": 446,
+  "hB_accumulated": 106
+ }
+}

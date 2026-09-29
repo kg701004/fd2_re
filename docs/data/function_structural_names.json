@@ -2,16 +2,16 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 162,
+  "total": 160,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 107,
+   "wrapper": 105,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
   },
-  "wrapper_rounds": 3,
+  "wrapper_rounds": 2,
   "disasm_available": true
  },
  "names": {
@@ -288,20 +288,6 @@
    "callers": 2,
    "argc": 2
   },
-  "0x1c8ed": {
-   "kind": "wrapper",
-   "name": "wrapper(row7_ptr_619fd(_), ~0x1c916(_, _))",
-   "round": 2,
-   "callers": 1,
-   "argc": 2
-  },
-  "0x1c916": {
-   "kind": "wrapper",
-   "name": "wrapper(prng_next())",
-   "round": 1,
-   "callers": 3,
-   "argc": 2
-  },
   "0x1c9dd": {
    "kind": "wrapper",
    "name": "wrapper(prng_next())",
@@ -521,8 +507,8 @@
   },
   "0x211a4": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, 0xd, _), present_effect_on_targets(_, 0xd, _, _), ~0x1c916(_, _), queue_unit_number_popup(_, 0x69, _))",
-   "round": 2,
+   "name": "wrapper(play_map_effect_animation(_, 0xd, _), present_effect_on_targets(_, 0xd, _, _), heal_hp_apply(_, _), queue_unit_number_popup(_, 0x69, _))",
+   "round": 1,
    "callers": 2,
    "argc": 4
   },
@@ -549,8 +535,8 @@
   },
   "0x21b18": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), unit_spend_mp(_, _), ~0x1c8ed(_, _), queue_unit_number_popup(_, 0x69, _))",
-   "round": 3,
+   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), unit_spend_mp(_, _), spell_heal_resolve(_, _), queue_unit_number_popup(_, 0x69, _))",
+   "round": 1,
    "callers": 1,
    "argc": 4
   },
@@ -571,14 +557,14 @@
   "0x22aa8": {
    "kind": "wrapper",
    "name": "wrapper(unit_spend_mp(_, _), ~0x22af6(_, _, _, _, _))",
-   "round": 3,
+   "round": 2,
    "callers": 1,
    "argc": 5
   },
   "0x22af6": {
    "kind": "wrapper",
-   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), queue_unit_fixed_popup(_), ~0x1c916(_, 0xa), queue_unit_number_popup(_, 0x69, _), redraw(0))",
-   "round": 2,
+   "name": "wrapper(play_map_effect_animation(_, _, _), present_effect_on_targets(_, _, _, _), queue_unit_fixed_popup(_), heal_hp_apply(_, 0xa), queue_unit_number_popup(_, 0x69, _), redraw(0))",
+   "round": 1,
    "callers": 2,
    "argc": 5
   },

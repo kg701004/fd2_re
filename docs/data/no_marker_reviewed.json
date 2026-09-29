@@ -34816,6 +34816,14 @@
    "excerpt": "**登錄。** `collect_targets_in_range` 升為 `verified_dynamic`,摘要補上單位篩選規則與未驗證範圍;`row7_ptr_619fd` 補上 `+3`/`+4`/`+6` 的語意(靜態)。",
    "verdict": "benign",
    "note": "登錄動作的簿記說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5991,
+   "excerpt_sha1": "a193f0539dc21d7eccdd07f7aa1d7b1da7739229",
+   "excerpt": "**未驗證。** 施法者的等級加成條件在這裡是「職業 > 8」,沒有其他函式常見的上界 `< 0x19`,本次施法者職業 21 分不出兩者;",
+   "verdict": "benign",
+   "note": "列出本次未測或分辨不出的項目,是範圍聲明而非遊戲事實主張"
   }
  ]
 }

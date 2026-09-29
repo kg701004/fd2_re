@@ -1093,7 +1093,7 @@
   {
    "addr": "0x14818",
    "name": "collect_targets_in_range",
-   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。 單位篩選(0x14940 起):依單位序號掃 [0x53beb] 個單位,+5 bit0 已設的跳過,所站格子記號(地圖格 byte3)為 0xff 的跳過,陣營(+6)依 sideSelector 篩選 —— 0 取 +6 == 0(敵方)、1 取 +6 != 0、2 取 +6 == 1、3 取 +6 == 2;通過的序號寫進 outBuf,回傳筆數。extraThreshold 非 0 時把曼哈頓距離小於它的格子記號改成 0xff(內圈排除)。2026-09-29 DOSBox-X 動態驗證(doc98 續四十六):裂地術選定時斷點停在返回點 0x149f0,返回位址 0x1d393,參數 origin (23,16)、range 9、threshold 0、selector 0;以傾印的地圖記號與 21 個單位離線重算清單,兩輪都與 outBuf 相同([11,14] 與 [11,12,13,14,15]),之後 spell_damage_resolve 的入口斷點也只出現這些目標。記號值 = 9 - 曼哈頓距離(距離 9 記 0、距離 10 為 0xff)。rangeByte >= 0x10 的分支、extraThreshold、selector 1..3 未動態驗證。",
+   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。 單位篩選(0x14940 起):依單位序號掃 [0x53beb] 個單位,+5 bit0 已設的跳過,所站格子記號(地圖格 byte3)為 0xff 的跳過,陣營(+6)依 sideSelector 篩選 —— 0 取 +6 == 0(敵方)、1 取 +6 != 0、2 取 +6 == 1、3 取 +6 == 2;通過的序號寫進 outBuf,回傳筆數。extraThreshold 非 0 時把曼哈頓距離小於它的格子記號改成 0xff(內圈排除)。2026-09-29 DOSBox-X 動態驗證(doc98 續四十六):裂地術選定時斷點停在返回點 0x149f0,返回位址 0x1d393,參數 origin (23,16)、range 9、threshold 0、selector 0;以傾印的地圖記號與 21 個單位離線重算清單,兩輪都與 outBuf 相同([11,14] 與 [11,12,13,14,15]),之後 spell_damage_resolve 的入口斷點也只出現這些目標。記號值 = 9 - 曼哈頓距離(距離 9 記 0、距離 10 為 0xff)。rangeByte >= 0x10 的分支、extraThreshold、selector 1..3 未動態驗證。 續四十七補充(DOSBox-X):有施法距離的治療法術兩段呼叫都離線重算相符 —— 第一段 range 4、selector 1 得 [1,2,3,4,5](含陣營 1 的友軍 NPC),第二段以落點 (24,15) 為原點、range 1 得 [3,4,5],範圍內的敵方被排除;range 0 時只標原點一格。開指令環時的呼叫(返回位址 0x18e2a)range 1、threshold 1:原點格被改成 0xff,筆數 1。所以 selector 1 與 extraThreshold 已有動態證據;rangeByte >= 0x10、selector 2..3 仍未驗證。",
    "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
@@ -1201,7 +1201,7 @@
   {
    "addr": "0x1c269",
    "name": "unit_list_bits_1a",
-   "summary": "(unit, out):單位記錄(80 bytes,基底 [0x53a45])+0x1a 起 5 bytes 共 40 個 bit;每個為 1 的 bit,out 非 0 時寫入其序號(byte*8 + bit),回傳個數。",
+   "summary": "(unit, out):單位記錄(80 bytes,基底 [0x53a45])+0x1a 起 5 bytes 共 40 個 bit;每個為 1 的 bit,out 非 0 時寫入其序號(byte*8 + bit),回傳個數。 這 40 個 bit 是已學法術,bit 序號 = 法術編號(doc98 續四十七,DOSBox-X):悠妮讀到 [8,12,23,25,32,33,34,35],與法術選單的八項一致;把 bit 23、25 清掉並設 bit 13、14 後,選單的傳送術、行動術變成治療術(MP 3)、回復術(MP 10)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -8090,6 +8090,150 @@
     {
      "at": "0x1c8e2",
      "insn": "add dword ptr [0x3ec8], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c916",
+   "name": "heal_hp_apply",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-29",
+   "summary": "(target, amount):HP(+0x40)+= amount × 9 / 10 + (rand%100) × amount / 1000,上限 MaxHP(+0x42);回傳未封頂的恢復量。目標 +7 < 0x4b 時 [0x53ec8] += 等級(+0x21;職業 9..24 再 +0x1e)× 40 × 實際增加的 HP / MaxHP。不擲命中、不看魔抗。2026-09-29 DOSBox-X 動態驗證(doc98 續四十七):斷點在 0x1c971 讀亂數後預測,4 個目標全部逐點相同 —— amount 140:亂數 44 -> 132(100->232)、亂數 31 -> 130(100->230)、亂數 75 -> 136 封頂(10->42 = MaxHP);amount 70:亂數 36 -> 65(100->165)。",
+   "evidence": [
+    {
+     "at": "0x1c93c",
+     "insn": "movzx edi, word ptr [esi + 0x40]"
+    },
+    {
+     "at": "0x1c95c",
+     "insn": "idiv ebx"
+    },
+    {
+     "at": "0x1c971",
+     "insn": "imul edx, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x1c988",
+     "insn": "cmp edi, dword ptr [esp]"
+    },
+    {
+     "at": "0x1c998",
+     "insn": "mov word ptr [esi + 0x40], di"
+    },
+    {
+     "at": "0x1c9b5",
+     "insn": "cmp edx, 0x4b"
+    },
+    {
+     "at": "0x1c9cf",
+     "insn": "add dword ptr [0x3ec8], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c8ed",
+   "name": "spell_heal_resolve",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-29",
+   "summary": "(target, spell):amount = (int16)row7_ptr_619fd(spell) 的 +0,直接呼叫 heal_hp_apply(target, amount)。唯一呼叫端 0x21b77。DOSBox-X(doc98 續四十七):heal_hp_apply 入口的返回位址都是 0x1c911,法術 14 讀到 amount 140、法術 13 讀到 70,與法術記錄相同。",
+   "evidence": [
+    {
+     "at": "0x1c8fc",
+     "insn": "call 0x4e866"
+    },
+    {
+     "at": "0x1c904",
+     "insn": "movsx eax, word ptr [eax]"
+    },
+    {
+     "at": "0x1c90c",
+     "insn": "call 0x1c916"
+    }
+   ]
+  },
+  {
+   "addr": "0x18d8c",
+   "name": "player_action_ring",
+   "confidence": "static_re",
+   "date": "2026-09-29",
+   "summary": "玩家單位的指令環流程(唯一呼叫端在 0x18890)。以 [0x53c57] 為選到的項目:1 = 法術,反覆呼叫 player_spell_select 直到非 0,回傳不是 -1 時 unit_set_flag5_bit7(已行動),並把 [0x53ec8] 除以施法者等級(+0x21;職業 +0x20 > 8 時再 +0x1e);2 = 道具,走 0x1bbdc,之後 [0x53ec8] = 0。開環前以 collect_targets_in_range(range 1、threshold 1、selector 0、outBuf 0)數可攻擊的目標。DOSBox-X 觀察(doc98 續四十七):該次 collect 的返回位址 0x18e2a、筆數 1;兩次治療後施法者 EX(+0x3c)增加 13 與 3,等於累加值 446、106 各除以 32(Lv 2 + 30)。除法本身未下斷點,是由讀值反推。",
+   "evidence": [
+    {
+     "at": "0x18e25",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x19005",
+     "insn": "cmp dword ptr [0x3c57], 1"
+    },
+    {
+     "at": "0x1900f",
+     "insn": "call 0x1cff0"
+    },
+    {
+     "at": "0x19021",
+     "insn": "call 0x13512"
+    },
+    {
+     "at": "0x19036",
+     "insn": "add ebx, 0x1e"
+    },
+    {
+     "at": "0x19043",
+     "insn": "idiv ebx"
+    },
+    {
+     "at": "0x19056",
+     "insn": "call 0x1bbdc"
+    },
+    {
+     "at": "0x1906b",
+     "insn": "mov dword ptr [0x3ec8], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x1cff0",
+   "name": "player_spell_select",
+   "confidence": "static_re",
+   "date": "2026-09-29",
+   "summary": "(unit):玩家選法術與目標。unit_list_bits_1a 取已學法術清單,選定後讀法術記錄 +3(施法距離)、+4(效果範圍)、+6(陣營選擇子):施法距離非 0 時先 collect_targets_in_range(游標, range = +3, selector = +6)再進 target_cursor_loop 選落點,之後以落點為原點再 collect 一次(range = +4);施法距離為 0 時只 collect 一次(range = +4、selector 寫死 0)。法術 0x17 與 0x1e 另有分支。DOSBox-X(doc98 續四十六、四十七):兩條路的 collect 參數都讀到(返回位址 0x1d393;0x1d2c4 與 0x1d32f)。本函式其餘部分未驗證。",
+   "evidence": [
+    {
+     "at": "0x1d15f",
+     "insn": "call 0x1c269"
+    },
+    {
+     "at": "0x1d175",
+     "insn": "call 0x4e866"
+    },
+    {
+     "at": "0x1d18d",
+     "insn": "movzx eax, byte ptr [esi + 3]"
+    },
+    {
+     "at": "0x1d2a6",
+     "insn": "movzx ebx, byte ptr [ebp + 6]"
+    },
+    {
+     "at": "0x1d2bf",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x1d2e3",
+     "insn": "call 0x115b6"
+    },
+    {
+     "at": "0x1d314",
+     "insn": "movzx eax, byte ptr [ebp + 4]"
+    },
+    {
+     "at": "0x1d32a",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x1d38e",
+     "insn": "call 0x14818"
     }
    ]
   }
