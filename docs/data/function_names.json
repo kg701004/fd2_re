@@ -2399,7 +2399,7 @@
   {
    "addr": "0x4e84f",
    "name": "high_class_row10_ptr",
-   "summary": "(idx):回傳 0x61af9 + idx*10(高階職業 10-byte 記錄,建構子以 FDFIELD b1-0x44 當索引)。舊文件位址 0x4e4ff(勘誤)。",
+   "summary": "(idx):回傳 0x61af9 + idx*10(高階職業 10-byte 記錄,建構子以 FDFIELD b1-0x44 當索引)。舊文件位址 0x4e4ff(勘誤)。 記錄 +9 是每級經驗值(doc98 續四十八):+7 = 0x60 的列執行期讀回 01 07 0e 00 00 07 01 01 04 15,+9 = 21,代入攻擊經驗公式後 DOSBox-X 實測相符。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7967,7 +7967,7 @@
    "name": "scene_attack_resolve",
    "confidence": "verified_dynamic",
    "date": "2026-09-28",
-   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。命中判定(續四十三):0x2f9a4 `cmp edx, eax`,EDX = rand%100、EAX = HIT−EV,有號比較、jge 為 miss;斷點實測 5 擊全部符合 —— 差 −10(亂數 73)miss、差 0 miss、差 100 命中、差 50 時亂數 38 命中與亂數 72 miss;差 −10 那擊排除了無號比較。",
+   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。命中判定(續四十三):0x2f9a4 `cmp edx, eax`,EDX = rand%100、EAX = HIT−EV,有號比較、jge 為 miss;斷點實測 5 擊全部符合 —— 差 −10(亂數 73)miss、差 0 miss、差 100 命中、差 50 時亂數 38 命中與亂數 72 miss;差 −10 那擊排除了無號比較。經驗值(續四十八):只有攻方 +6 == 2 且守方 +7 >= 0x44 時計算;基礎 = 守方等級 × high_class_row10_ptr(守方 +7 - 0x44) 的 +9 ÷ 攻方等級(攻方職業 9..24 或 +8 == 0x1c 時等級 +0x1e),守方存活時再 × 傷害 ÷ 守方 MaxHP。DOSBox-X 斷點 0x2fa9f/0x2fab9 實測 5 擊全部符合:基礎 35/61/23/51/131、縮放後 29/51/19/43,擊殺那擊不縮放且 EX 只加 99;攻方職業 25 不加 0x1e。守方等級只乘一次。",
    "evidence": [
     {
      "at": "0x2f823",
@@ -8020,6 +8020,26 @@
     {
      "at": "0x2f9a4",
      "insn": "cmp edx, eax"
+    },
+    {
+     "at": "0x2fa51",
+     "insn": "cmp eax, 2"
+    },
+    {
+     "at": "0x2fa5a",
+     "insn": "cmp eax, 0x44"
+    },
+    {
+     "at": "0x2fa82",
+     "insn": "add byte ptr [esp + 0x38], 0x1e"
+    },
+    {
+     "at": "0x2fa9d",
+     "insn": "idiv ebx"
+    },
+    {
+     "at": "0x2fab5",
+     "insn": "idiv dword ptr [esp + 8]"
     }
    ]
   },
@@ -8234,6 +8254,39 @@
     {
      "at": "0x1d38e",
      "insn": "call 0x14818"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e292",
+   "name": "apply_pending_exp",
+   "confidence": "static_re",
+   "date": "2026-09-29",
+   "summary": "(unit):把待入帳的經驗值 [0x53ec8] 加到單位的 EX(+0x3c)。[0x53ec8] 為 0 或單位 +5 bit0 已設時不做事;等級(+0x21)已達上限時也不做事 —— +7 為 0x1e/0x1f 的上限 0x63,其餘 0x28。呼叫端 0x117e7(玩家行動後,先把 [0x53ec8] 封頂在 0x63)與 0x1548e。DOSBox-X 觀察(doc98 續四十七、四十八):攻擊與治療後 EX 的增量都等於預測的待入帳值,131 時只增加 99。升級分支未動態驗證。",
+   "evidence": [
+    {
+     "at": "0x1e2c9",
+     "insn": "cmp dword ptr [0x3ec8], 0"
+    },
+    {
+     "at": "0x1e2d6",
+     "insn": "test byte ptr [esi + 5], 1"
+    },
+    {
+     "at": "0x1e2ea",
+     "insn": "cmp eax, 0x63"
+    },
+    {
+     "at": "0x1e2ef",
+     "insn": "cmp eax, 0x28"
+    },
+    {
+     "at": "0x1e2fd",
+     "insn": "call 0x4e821"
+    },
+    {
+     "at": "0x1e309",
+     "insn": "movzx eax, byte ptr [esi + 0x3c]"
     }
    ]
   }
