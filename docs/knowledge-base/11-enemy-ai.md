@@ -1163,6 +1163,13 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 - spell id `17..19` 進入另一個 raw scoring helper；`20/21/26/27` 讀取 `+0x25/+0x26` flag bytes，ID22 先 gate `+0x27` 再呼 `0x1C269`。這些是 call/score topology，不足以命名成增益、毒麻或其他 gameplay status。
 - 依 spawn constructor `0x10f6b..0x10fa5` 的 direct trace，FDFIELD b13..b16 的 `initial_command_mask` 只複製到 runtime `unit+0x1a..+0x1d`，而 `unit+0x22..+0x27` 另由 constructor 清零。前者是 runtime 五位元組 command bitset 的初始四位元組；後者目前只能稱為 raw transient／modifier bytes。雖然 writer paths 會讀寫其中幾個欄位，derived-stat/property/status 名稱仍未由完整 equipment recompute、presentation 與 caller evidence 證實；不能把它們命名成 AP/DP/HIT 或 M1–M5 spell bitfield。AI 仍依 spell family 選目標，individual command ID 與後續 modifier writer 待另行接線。
 
+**2026-09-30 補充(DOSBox-X 動態驗證,doc98 續五十三)**：攻擊術分支比較的是**法術列 `+0` 的數值**(`0x4E866(spell)` 的 word，
+例如聖光彈 440),不是施法者的能力值：目標 HP ≥ 該值得 8、否則 24,目標 `+8 == 0` 時再 × 1.5,法術 10..12 跳過
+`0x1F183`(`unit_uses_move_cost_row19`)為真的目標，逐目標加總。`0x1598A`(`ai_spell_candidate_select`)以嚴格大於更新最佳值，
+同分時法術列 `+0` 較大者勝，再同分保留先出現者(施放點依 y 再 x 掃描)。實機讓盜賊只會聖光彈與裂地術跑 4 輪，
+50 次評分回傳值、8 次候選清單與最終選擇全部與離線重算相同(`evidence/ai_spell_score_20260930.json`)。
+恢復分支(13..16)與 17 以上的分支沒有實測。
+
 2026-07-29 地圖輸入勘誤與評分橋接：
 
 - 先前文件雖已證實 FDFIELD b13..b16 是命令遮罩來源，但 33 張重製地圖的

@@ -599,7 +599,7 @@
   {
    "addr": "0x14b16",
    "name": "map_collect_cells_byte3_set",
-   "summary": "(out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]、高 [0x53ac5]。掃整張地圖,把 byte3 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。(2026-09-19 訂正:初版誤記為 6-byte 表頭的 byte1。)",
+   "summary": "(out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]、高 [0x53ac5]。掃整張地圖,把 byte3 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。(2026-09-19 訂正:初版誤記為 6-byte 表頭的 byte1。) 2026-09-30 DOSBox-X(doc98 續五十三):ai_spell_candidate_select 的施放點依 y 再 x 遞增出現,例如 (22,13)、(20,14)、(23,14)、(24,15)、(23,16)、(13,17)、(14,17)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -817,7 +817,7 @@
   {
    "addr": "0x1f183",
    "name": "unit_uses_move_cost_row19",
-   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十,在 scene_attack_resolve 的地形修正閘門上):種族 1 修正照做、種族 5 跳過、職業 0x13(種族 1)跳過、+7 = 0x1c(種族 5)照做,攻守兩方各自判定。種族 4 未測。",
+   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十,在 scene_attack_resolve 的地形修正閘門上):種族 1 修正照做、種族 5 跳過、職業 0x13(種族 1)跳過、+7 = 0x1c(種族 5)照做,攻守兩方各自判定。種族 4 未測。 2026-09-30 DOSBox-X(doc98 續五十三,在 ai_spell_target_score 的法術 10..12 閘門上):種族 4 與種族 5 的目標記 0、種族 1 照算。",
    "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
@@ -840,6 +840,10 @@
     {
      "at": "0x1f1c3",
      "insn": "mov eax, 1"
+    },
+    {
+     "at": "0x1f1b9",
+     "insn": "cmp eax, 4"
     }
    ]
   },
@@ -8101,7 +8105,7 @@
    "name": "spell_damage_apply",
    "confidence": "verified_dynamic",
    "date": "2026-09-28",
-   "summary": "(target, base):HP(+0x40)-= base × 9 / 10 + (rand%100) × base / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— base 440 亂數 75 -> 429(999->570)、base 220 亂數 65 -> 212(999->787)、base 176 亂數 58 -> 168(999->831)、base 440 亂數 32 -> 410(999->589,兩次)。",
+   "summary": "(target, base):HP(+0x40)-= base × 9 / 10 + (rand%100) × base / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— base 440 亂數 75 -> 429(999->570)、base 220 亂數 65 -> 212(999->787)、base 176 亂數 58 -> 168(999->831)、base 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。",
    "evidence": [
     {
      "at": "0x1c845",
@@ -8442,7 +8446,7 @@
    "name": "ai_spell_execute",
    "confidence": "verified_dynamic",
    "date": "2026-09-29",
-   "summary": "(unit, a2):AI 單位執行已選好的法術(法術 [0x53c2f]、施放點 [0x53c27]/[0x53c2b],[0x53c23] < 6 時直接回 0)。以 collect_targets_in_range(施放點, range = 法術列 +4)取目標,選擇子:a2 為 0 時取「法術列 +6 為 0 ? 1 : 0」,否則取 +6;法術 < 10 且 byte [0x53af9] 為 0 時走 0x2ff01(場景呈現),否則呼叫指令 handler 表 [0x51d01 + 法術*4](地圖呈現,與玩家同一套 handler);最後 [0x53ec8] = 0(AI 施法不入帳經驗)。呼叫端 0x13a9f、0x14ef0。2026-09-29 DOSBox-X 動態驗證(doc98 續五十二):盜賊只會聖光彈時,[0x53af9] = 1 那輪 spell_damage_resolve 的返回位址是 0x212a4(handler 迴圈),= 0 那輪先停在 0x2ff01(返回位址 0x15405)、spell_damage_resolve 返回位址 0x3095d;兩輪傷害都符合 spell_damage_apply 的公式,MP 各扣 24。",
+   "summary": "(unit, a2):AI 單位執行已選好的法術(法術 [0x53c2f]、施放點 [0x53c27]/[0x53c2b],[0x53c23] < 6 時直接回 0)。以 collect_targets_in_range(施放點, range = 法術列 +4)取目標,選擇子:a2 為 0 時取「法術列 +6 為 0 ? 1 : 0」,否則取 +6;法術 < 10 且 byte [0x53af9] 為 0 時走 0x2ff01(場景呈現),否則呼叫指令 handler 表 [0x51d01 + 法術*4](地圖呈現,與玩家同一套 handler);最後 [0x53ec8] = 0(AI 施法不入帳經驗)。呼叫端 0x13a9f、0x14ef0。2026-09-29 DOSBox-X 動態驗證(doc98 續五十二):盜賊只會聖光彈時,[0x53af9] = 1 那輪 spell_damage_resolve 的返回位址是 0x212a4(handler 迴圈),= 0 那輪先停在 0x2ff01(返回位址 0x15405)、spell_damage_resolve 返回位址 0x3095d;兩輪傷害都符合 spell_damage_apply 的公式,MP 各扣 24。 2026-09-30 DOSBox-X(doc98 續五十三):AI 以聖光彈擊殺友軍 NPC(+7 = 0x85、等級 3)後,0x1546a 停點讀到 [0x53ec8] = 3(= high_class_row10_ptr(0x41)+9 的 1 × 3),0x15474 停點讀到 0;施法者 EX 維持 0。",
    "evidence": [
     {
      "at": "0x15321",
@@ -8492,6 +8496,112 @@
     {
      "at": "0x2ff06",
      "insn": "call 0x3702f"
+    }
+   ]
+  },
+  {
+   "addr": "0x1598a",
+   "name": "ai_spell_candidate_select",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "summary": "(unit, mode):AI 單位的法術候選選擇。先把 [0x53c23] 設 0;unit_list_bits_1a 為 0 或 unit+0x27 != 0 直接返回。依法術編號遞增逐一處理:法術列(row7_ptr_619fd)+5 的 MP 大於 unit+0x44 就跳過;0x4e390 以施法者目前位置、半徑 = 列 +3 標記施放點,map_collect_cells_byte3_set 依 y 再 x 的掃描序列出;每個施放點以 collect_targets_in_range(半徑 = 列 +4,選擇子:mode 為 0 時取「列 +6 為 0 ? 1 : 0」,否則取 +6)取目標,目標數為 0 跳過,否則呼叫 ai_spell_target_score。分數嚴格大於 [0x53c23] 才換;同分時列 +0(法術數值)較大才換,再同分保留先出現者。勝出者寫入 [0x53c23] 分數、[0x53c27]/[0x53c2b] 施放點、[0x53c2f] 法術。呼叫端 0x1d91a(返回 0x1d91f)、0x14f15(返回 0x14f1a),0x13e09。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三):4 輪 8 次呼叫的候選清單(法術、施放點、目標、順序)與最終選擇,全部與由單位表離線重算的結果相同;MP 79 那輪沒有任何法術 12(MP 80)的評分呼叫。",
+   "evidence": [
+    {
+     "at": "0x1599b",
+     "insn": "mov dword ptr [0x3c23], 0"
+    },
+    {
+     "at": "0x159fa",
+     "insn": "call 0x1c269"
+    },
+    {
+     "at": "0x15a0e",
+     "insn": "movzx eax, byte ptr [esi + 0x27]"
+    },
+    {
+     "at": "0x15a3d",
+     "insn": "cmp edx, dword ptr [esp + 0x2c]"
+    },
+    {
+     "at": "0x15a60",
+     "insn": "call 0x4e390"
+    },
+    {
+     "at": "0x15a6c",
+     "insn": "call 0x14b16"
+    },
+    {
+     "at": "0x15aaa",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x15ad8",
+     "insn": "call 0x15b77"
+    },
+    {
+     "at": "0x15ae2",
+     "insn": "cmp eax, dword ptr [0x3c23]"
+    },
+    {
+     "at": "0x15aef",
+     "insn": "cmp eax, dword ptr [esp + 0x48]"
+    },
+    {
+     "at": "0x15b12",
+     "insn": "mov dword ptr [0x3c2f], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x15b77",
+   "name": "ai_spell_target_score",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "summary": "(spell, count, targets):AI 法術評分。法術 < 13(攻擊):v = 法術列 +0,逐目標得 8(HP >= v)或 24(HP < v),目標 +8 == 0 時再 × 1.5(double 常數 0x50144,frndint 取整),加總;法術 10..12 跳過 unit_uses_move_cost_row19 為真的目標。法術 13..16(恢復):HP < MaxHP/3 得 8、否則 < MaxHP/2 得 3、否則 0,+0x34 bit0 時 × 2。0x11..0x13 回傳 0x15da2(count, targets, 法術 + 0x11, 3);0x14/0x15 目標 +0x25/+0x26 非 0 各 +6;0x16 目標 +0x27 為 0 且 unit_list_bits_1a 非 0 各 +6;0x1a/0x1b 回傳 0x15da2(count, targets, 0x25/0x26, 4);其餘 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三,只驗攻擊分支):50 次評分回傳值全部等於離線重算 —— HP 440 對 v 440 得 8、HP 439 得 24,索爾(+8 = 0)得 12,法術 12 對種族 5、種族 4 目標記 0,對種族 1 目標照算(8×3 = 24、8×3 + 24×2 = 72)。恢復與其他分支未測。",
+   "evidence": [
+    {
+     "at": "0x15b92",
+     "insn": "call 0x4e866"
+    },
+    {
+     "at": "0x15ba0",
+     "insn": "cmp dword ptr [esp + 0x24], 0xd"
+    },
+    {
+     "at": "0x15baf",
+     "insn": "mov dword ptr [esp + 8], 8"
+    },
+    {
+     "at": "0x15bb7",
+     "insn": "movzx eax, byte ptr [ebx + 8]"
+    },
+    {
+     "at": "0x15bc3",
+     "insn": "fmul qword ptr [0x144]"
+    },
+    {
+     "at": "0x15be1",
+     "insn": "cmp dword ptr [esp + 0x24], 0xa"
+    },
+    {
+     "at": "0x15bed",
+     "insn": "call 0x1f183"
+    },
+    {
+     "at": "0x15c12",
+     "insn": "cmp eax, dword ptr [esp]"
+    },
+    {
+     "at": "0x15c17",
+     "insn": "mov dword ptr [esp + 8], 0x18"
+    },
+    {
+     "at": "0x15c9c",
+     "insn": "idiv dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x15c53",
+     "insn": "test byte ptr [ebx + 0x34], 1"
     }
    ]
   }

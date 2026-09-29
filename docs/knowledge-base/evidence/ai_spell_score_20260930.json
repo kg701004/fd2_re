@@ -1,0 +1,1548 @@
+{
+ "note": "DOSBox-X 斷點停點(0x1598a 入口、0x15add 評分回傳 EAX、0x15b6d 出口的 [0x53c23..0x53c2f])與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。盜賊 #11 只會法術 8、12,拿掉武器。score_recomputed 依 0x15b77:HP >= 法術列 +0 得 8、否則 24,+8 == 0 再 × 1.5,法術 10..12 跳過 unit_uses_move_cost_row19 為真的目標,逐目標加總。每輪 0x1598a 被呼叫兩次(返回位址 0x1d91f 與 0x14f1a),兩次結果相同。",
+ "spell_rows": {
+  "8": {
+   "value": 440,
+   "cast": 8,
+   "area": 0,
+   "mp": 24,
+   "sel": 0,
+   "row": "b8 01 64 08 00 18 00"
+  },
+  "12": {
+   "value": 340,
+   "cast": 0,
+   "area": 9,
+   "mp": 80,
+   "sel": 0,
+   "row": "54 01 5a 00 09 50 00"
+  }
+ },
+ "runs": [
+  {
+   "run": "r1",
+   "units_dump": "sc_units_r1_6",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 5,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 439,
+     "+8": 4,
+     "race": 5,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 5,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 5,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 7,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 8,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 9,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 10,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 11,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 12,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    24,
+    22,
+    13,
+    8
+   ],
+   "best_predicted": [
+    24,
+    22,
+    13,
+    8
+   ]
+  },
+  {
+   "run": "r1",
+   "units_dump": "sc_units_r1_14",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 5,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 439,
+     "+8": 4,
+     "race": 5,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 5,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 5,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 15,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 16,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 17,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 18,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 19,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 20,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    24,
+    22,
+    13,
+    8
+   ],
+   "best_predicted": [
+    24,
+    22,
+    13,
+    8
+   ]
+  },
+  {
+   "run": "r2",
+   "units_dump": "sc_units_r2_6",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 439,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 7,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 8,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 9,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 10,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 11,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 12,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    24,
+    22,
+    13,
+    8
+   ],
+   "best_predicted": [
+    24,
+    22,
+    13,
+    8
+   ]
+  },
+  {
+   "run": "r2",
+   "units_dump": "sc_units_r2_14",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 439,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 15,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 16,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 17,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 18,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 19,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 20,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    24,
+    22,
+    13,
+    8
+   ],
+   "best_predicted": [
+    24,
+    22,
+    13,
+    8
+   ]
+  },
+  {
+   "run": "r3",
+   "units_dump": "sc_units_r3_10_2",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 440,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      14,
+      17
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      13,
+      17
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 3,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 4,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 5,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 6,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 7,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 8,
+     "spell": 8,
+     "cast_point": [
+      13,
+      17
+     ],
+     "targets": [
+      6
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 9,
+     "spell": 8,
+     "cast_point": [
+      14,
+      17
+     ],
+     "targets": [
+      5
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 10,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "score_eax": 72,
+     "score_recomputed": 72
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    72,
+    19,
+    17,
+    12
+   ],
+   "best_predicted": [
+    72,
+    19,
+    17,
+    12
+   ]
+  },
+  {
+   "run": "r3",
+   "units_dump": "sc_units_r3_10_12",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 100
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 440,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      14,
+      17
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      13,
+      17
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 13,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 14,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 15,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 16,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 17,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 18,
+     "spell": 8,
+     "cast_point": [
+      13,
+      17
+     ],
+     "targets": [
+      6
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 19,
+     "spell": 8,
+     "cast_point": [
+      14,
+      17
+     ],
+     "targets": [
+      5
+     ],
+     "score_eax": 24,
+     "score_recomputed": 24
+    },
+    {
+     "stop": 20,
+     "spell": 12,
+     "cast_point": [
+      19,
+      17
+     ],
+     "targets": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "score_eax": 72,
+     "score_recomputed": 72
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    72,
+    19,
+    17,
+    12
+   ],
+   "best_predicted": [
+    72,
+    19,
+    17,
+    12
+   ]
+  },
+  {
+   "run": "r4",
+   "units_dump": "sc_units_r4_6",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 79
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 440,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 7,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 8,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 9,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 10,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 11,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    12,
+    20,
+    14,
+    8
+   ],
+   "best_predicted": [
+    12,
+    20,
+    14,
+    8
+   ]
+  },
+  {
+   "run": "r4",
+   "units_dump": "sc_units_r4_13",
+   "caster": {
+    "xy": [
+     19,
+     17
+    ],
+    "mp": 79
+   },
+   "targets_state": {
+    "0": {
+     "xy": [
+      20,
+      14
+     ],
+     "hp": 823,
+     "+8": 0,
+     "race": 5,
+     "class": 9,
+     "+7": 32
+    },
+    "1": {
+     "xy": [
+      23,
+      16
+     ],
+     "hp": 440,
+     "+8": 9,
+     "race": 1,
+     "class": 21,
+     "+7": 52
+    },
+    "2": {
+     "xy": [
+      22,
+      13
+     ],
+     "hp": 440,
+     "+8": 4,
+     "race": 4,
+     "class": 11,
+     "+7": 36
+    },
+    "3": {
+     "xy": [
+      23,
+      14
+     ],
+     "hp": 867,
+     "+8": 30,
+     "race": 1,
+     "class": 25,
+     "+7": 30
+    },
+    "4": {
+     "xy": [
+      24,
+      15
+     ],
+     "hp": 918,
+     "+8": 1,
+     "race": 1,
+     "class": 10,
+     "+7": 33
+    },
+    "5": {
+     "xy": [
+      11,
+      14
+     ],
+     "hp": 42,
+     "+8": 134,
+     "race": 1,
+     "class": 27,
+     "+7": 134
+    },
+    "6": {
+     "xy": [
+      11,
+      15
+     ],
+     "hp": 36,
+     "+8": 133,
+     "race": 1,
+     "class": 27,
+     "+7": 133
+    }
+   },
+   "calls": [
+    {
+     "stop": 14,
+     "spell": 8,
+     "cast_point": [
+      22,
+      13
+     ],
+     "targets": [
+      2
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 15,
+     "spell": 8,
+     "cast_point": [
+      20,
+      14
+     ],
+     "targets": [
+      0
+     ],
+     "score_eax": 12,
+     "score_recomputed": 12
+    },
+    {
+     "stop": 16,
+     "spell": 8,
+     "cast_point": [
+      23,
+      14
+     ],
+     "targets": [
+      3
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 17,
+     "spell": 8,
+     "cast_point": [
+      24,
+      15
+     ],
+     "targets": [
+      4
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    },
+    {
+     "stop": 18,
+     "spell": 8,
+     "cast_point": [
+      23,
+      16
+     ],
+     "targets": [
+      1
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    12,
+    20,
+    14,
+    8
+   ],
+   "best_predicted": [
+    12,
+    20,
+    14,
+    8
+   ]
+  }
+ ],
+ "r6_exp_reset": {
+  "target": 6,
+  "target_+7": 133,
+  "target_level": 3,
+  "row_0x61d83": "01 1b 0c 00 00 01 03 01 04 01",
+  "predicted_53ec8": 3,
+  "observed_at_0x1546a": 3,
+  "observed_at_0x15474": 0,
+  "caster_ex_before": 0,
+  "caster_ex_after": 0,
+  "caster_mp": [
+   79,
+   55
+  ]
+ }
+}

@@ -34856,6 +34856,14 @@
    "excerpt": "**登錄。** `unit_uses_move_cost_row19` 升為 `verified_dynamic`;`scene_attack_resolve`、`map_cell_info` 摘要補充。",
    "verdict": "benign",
    "note": "登錄動作的簿記說明,不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 6183,
+   "excerpt_sha1": "8e27d6ed5ddddb0b522465741ca5cdf649992960",
+   "excerpt": "`ai_spell_execute` 補上歸 0 實測、`map_collect_cells_byte3_set` 補上掃描序、`spell_damage_apply` 補上 AI 施法的累加。共 397 筆。",
+   "verdict": "benign",
+   "note": "登錄動作的簿記說明(登錄表補了哪些欄位、總筆數),不是遊戲事實主張"
   }
  ]
 }
