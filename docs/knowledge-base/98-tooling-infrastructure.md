@@ -6120,3 +6120,27 @@ M3 的 NPC #9 被 AP 24 的盜賊打兩次,兩名攻擊者都站在類型 0 地�
 **未驗證。** `[0x53af9]` 對 AI 施法路徑(0x15311 的 0x153e7)的影響;雙擊(3%)在地圖路徑未觀察到;選單標籤與實際措辭的對照。
 
 **登錄。** 新名稱 `ai_attack_execute`(0x1548e,`verified_dynamic`);`map_attack_resolve`、`map_attack_sequence` 升為 `verified_dynamic`;doc11 在 `[0x53af9]` 的段落補上行為。共 393 筆。
+
+## 2026-09-29 續五十二:AI 施法的執行路徑 —— 同樣依 `[0x53af9]` 選地圖或場景,傷害公式與玩家施法相同
+
+**靜態依據。** 0x15311(本輪命名 `ai_spell_execute`,呼叫端 0x13a9f、0x14ef0)執行 AI 選好的法術:法術編號 `[0x53c2f]`、施放點 `[0x53c27]/[0x53c2b]`;
+以 `collect_targets_in_range`(range = 法術列 `+4`)取目標;**法術 < 10 且 `[0x53af9]` 為 0** 時呼叫 0x2ff01(場景呈現,本輪命名 `spell_cast_scene`),
+否則呼叫指令 handler 表 `[0x51d01 + 法術*4]`(地圖呈現,與玩家施法同一套 handler);最後把 `[0x53ec8]` 設 0,所以 AI 施法不入帳經驗。
+玩家施法(`player_spell_select` 0x1d407..0x1d479)的分流條件不同:法術 < 9、== 0x18 或 > 0x1b 走場景,其餘走 handler,而且不看 `[0x53af9]`。
+
+**受控設計。** 第 1 章的盜賊不會法術,所以在 DOSBox-X 記憶體中給盜賊 #11:已學法術位元欄只有 bit 8(聖光彈,傷害 440、命中 100、射程 8、MP 24)、MP 100、
+拿掉武器(slot0 旗標 0x40 -> 0),讓 AI 只能施法。友軍 NPC #5、#6 搬離射程。斷點:`ai_spell_execute`、0x2ff01、`spell_damage_resolve` 入口(讀返回位址與參數)、
+0x1c7fe(ESI = base、EDX = 命中亂數)、0x1c87f(EDX = 傷害亂數)。每輪其餘我方設已行動,索爾出手後自動進入敵方回合。
+
+| 輪 | `[0x53af9]` | 停點順序 | `spell_damage_resolve` 返回位址 | 目標 | base / 命中亂數 / 傷害亂數 | 預測 | HP |
+|---|---|---|---|---|---|---|---|
+| C1 | 1 | `ai_spell_execute` → `spell_damage_resolve` | 0x212a4(handler 迴圈,地圖) | 友軍 NPC #10(距離 8) | 440 / 19 / 14 | 402 | 36 -> 0 |
+| C2 | 0 | `ai_spell_execute` → **0x2ff01**(ret 0x15405)→ `spell_damage_resolve` | 0x3095d(場景) | 索爾 | 440 / 69 / 1 | 396 | 823 -> 427 |
+
+兩輪都相符(DOSBox-X 斷點與記憶體讀值;`evidence/ai_spell_path_20260929.json` 由施法前後的傾印驗算)。兩輪盜賊 MP 都 100 -> 76。
+C1 的 AI 選了正好在射程邊緣、一擊就會死的 NPC,而不是相鄰的索爾;C2(NPC #10 已死)才選索爾。這只是觀察,AI 法術評分(0x1598a)本輪沒有追。
+C1 中 NPC #10 陣亡觸發了一段對話,按鍵推進後敵方回合才結束。
+
+**未驗證。** 範圍法術與 `spell_cast_scene` 的內部流程;AI 施法的經驗值歸 0(盜賊 EX 本來就是 255,量不到);AI 法術目標的評分規則;法術 9 在玩家(handler)與 AI(`[0x53af9]` 為 0 時走場景)的分流差異。
+
+**登錄。** 新名稱 `ai_spell_execute`(0x15311,`verified_dynamic`)、`spell_cast_scene`(0x2ff01,`static_re`);`player_spell_select` 補上呈現分流。共 395 筆。

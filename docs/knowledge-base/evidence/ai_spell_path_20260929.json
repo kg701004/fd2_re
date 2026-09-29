@@ -1,0 +1,107 @@
+{
+ "note": "DOSBox-X 斷點停點與施法前後的單位記錄;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。盜賊 #11 的已學法術位元欄設為只有法術 8(聖光彈)、MP 100、拿掉武器(slot0 旗標 0),讓 AI 只能施法。predicted_damage = base*9//10 + roll*base//1000,HP 下限 0。",
+ "rounds": {
+  "C1": {
+   "flag_53af9": 1,
+   "breakpoint_stops": [
+    {
+     "function": "ai_spell_execute",
+     "return_static": "0x14fe0",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "spell_damage_resolve",
+     "return_static": "0x212a4",
+     "arg1": 10,
+     "arg2": 8
+    },
+    {
+     "function": "0x1c7fe",
+     "esi_base": 440,
+     "edx_hit_roll": 19
+    },
+    {
+     "function": "0x1c87f",
+     "esi_target_record": "0x26c0e8",
+     "edx_damage_roll": 14
+    }
+   ],
+   "caster": {
+    "unit": 11,
+    "spell_bits": "0001000000",
+    "weapon_slot0_flag": 0,
+    "mp_before": 100,
+    "mp_after": 76,
+    "xy": [
+     19,
+     14
+    ]
+   },
+   "target": {
+    "unit": 10,
+    "xy": [
+     23,
+     6
+    ],
+    "hp_before": 36,
+    "hp_after": 0,
+    "predicted_damage": 402
+   }
+  },
+  "C2": {
+   "flag_53af9": 0,
+   "breakpoint_stops": [
+    {
+     "function": "ai_spell_execute",
+     "return_static": "0x14fe0",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "0x2ff01",
+     "return_static": "0x15405",
+     "arg1": 11,
+     "arg2": 8
+    },
+    {
+     "function": "spell_damage_resolve",
+     "return_static": "0x3095d",
+     "arg1": 0,
+     "arg2": 8
+    },
+    {
+     "function": "0x1c7fe",
+     "esi_base": 440,
+     "edx_hit_roll": 69
+    },
+    {
+     "function": "0x1c87f",
+     "esi_target_record": "0x26bdc8",
+     "edx_damage_roll": 1
+    }
+   ],
+   "caster": {
+    "unit": 11,
+    "spell_bits": "0001000000",
+    "weapon_slot0_flag": 0,
+    "mp_before": 100,
+    "mp_after": 76,
+    "xy": [
+     19,
+     14
+    ]
+   },
+   "target": {
+    "unit": 0,
+    "xy": [
+     20,
+     14
+    ],
+    "hp_before": 823,
+    "hp_after": 427,
+    "predicted_damage": 396
+   }
+  }
+ }
+}
