@@ -817,8 +817,8 @@
   {
    "addr": "0x1f183",
    "name": "unit_uses_move_cost_row19",
-   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。",
-   "confidence": "static_re",
+   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十,在 scene_attack_resolve 的地形修正閘門上):種族 1 修正照做、種族 5 跳過、職業 0x13(種族 1)跳過、+7 = 0x1c(種族 5)照做,攻守兩方各自判定。種族 4 未測。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
     {
@@ -836,6 +836,10 @@
     {
      "at": "0x1f1be",
      "insn": "cmp eax, 5"
+    },
+    {
+     "at": "0x1f1c3",
+     "insn": "mov eax, 1"
     }
    ]
   },
@@ -964,7 +968,7 @@
   {
    "addr": "0x12e38",
    "name": "map_cell_info",
-   "summary": "(x, y, out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。out[0..1] = tile & 0x3ff、out[2..3] = 旗標 & 0x1f、out[4..7] = 地形表 [0x53a69] 第 tile 列的 4 bytes。",
+   "summary": "(x, y, out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。out[0..1] = tile & 0x3ff、out[2..3] = 旗標 & 0x1f、out[4..7] = 地形表 [0x53a69] 第 tile 列的 4 bytes。 out[5](地形表列的 byte 1)是地形類型 0..5,scene_attack_resolve 以它索引 [0x51a12]/[0x51a2a];DOSBox-X(doc98 續五十)讀第 1 章地圖只出現 0、1、2 三種,三種都實測過修正值。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -7967,7 +7971,7 @@
    "name": "scene_attack_resolve",
    "confidence": "verified_dynamic",
    "date": "2026-09-28",
-   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。命中判定(續四十三):0x2f9a4 `cmp edx, eax`,EDX = rand%100、EAX = HIT−EV,有號比較、jge 為 miss;斷點實測 5 擊全部符合 —— 差 −10(亂數 73)miss、差 0 miss、差 100 命中、差 50 時亂數 38 命中與亂數 72 miss;差 −10 那擊排除了無號比較。經驗值(續四十八):只有攻方 +6 == 2 且守方 +7 >= 0x44 時計算;基礎 = 守方等級 × high_class_row10_ptr(守方 +7 - 0x44) 的 +9 ÷ 攻方等級(攻方職業 9..24 或 +8 == 0x1c 時等級 +0x1e),守方存活時再 × 傷害 ÷ 守方 MaxHP。DOSBox-X 斷點 0x2fa9f/0x2fab9 實測 5 擊全部符合:基礎 35/61/23/51/131、縮放後 29/51/19/43,擊殺那擊不縮放且 EX 只加 99;攻方職業 25 不加 0x1e。守方等級只乘一次。",
+   "summary": "(attacker, defender, out):指令環攻擊(有戰鬥場景的那條路,唯一呼叫端 0x2ebe1)的一擊判定;與 map_attack_resolve 同一套公式:AP +0x48 / DP +0x4a / HIT +0x4c / EV +0x4e,地形修正(unit_uses_move_cost_row19 為真者跳過)查 [0x51a12]/[0x51a2a],會心率 [0x524a8+職業-1],會心時 DP/2 並設 out+4 = 1;傷害 = max(0,(AP-DP)*9/10) + rand % (傷害/9),HP 下限 0;經驗值寫 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十一):場景攻擊時斷點停在本函式(0x1cb7b6 = 0x2f7b6 + delta),map_attack_resolve 的斷點未觸發;受控實測 9 擊全部符合預測 —— AP19/DP0 恰好 17(兩個 instance 各一次)、AP19/DP9 一般 9 兩次與會心 13 一次、AP200/DP0(種族 5 跳過地形)189/199/189/193/187 全在 [180,199]。命中判定(續四十三):0x2f9a4 `cmp edx, eax`,EDX = rand%100、EAX = HIT−EV,有號比較、jge 為 miss;斷點實測 5 擊全部符合 —— 差 −10(亂數 73)miss、差 0 miss、差 100 命中、差 50 時亂數 38 命中與亂數 72 miss;差 −10 那擊排除了無號比較。經驗值(續四十八):只有攻方 +6 == 2 且守方 +7 >= 0x44 時計算;基礎 = 守方等級 × high_class_row10_ptr(守方 +7 - 0x44) 的 +9 ÷ 攻方等級(攻方職業 9..24 或 +8 == 0x1c 時等級 +0x1e),守方存活時再 × 傷害 ÷ 守方 MaxHP。DOSBox-X 斷點 0x2fa9f/0x2fab9 實測 5 擊全部符合:基礎 35/61/23/51/131、縮放後 29/51/19/43,擊殺那擊不縮放且 EX 只加 99;攻方職業 25 不加 0x1e。守方等級只乘一次。地形修正(續五十):攻方 AP += AP × [0x51a12][t] / 100、守方 DP += DP × [0x51a2a][t] / 100,t = map_cell_info 的 out[5],idiv 向零截斷;unit_uses_move_cost_row19 為真的一方不修正。DOSBox-X 斷點 0x2f8dc/0x2f921/0x2f9fc 實測 7 擊全部符合:修正值 +5/0、跳過/0、+5/+10、+5/跳過、-5/0(餘數 -50,向下取整會是 -6)、跳過/0(職業 0x13)、-5/0(+7 = 0x1c),傷害 13/9/4/13/9/13/9。",
    "evidence": [
     {
      "at": "0x2f823",
@@ -8040,6 +8044,18 @@
     {
      "at": "0x2fab5",
      "insn": "idiv dword ptr [esp + 8]"
+    },
+    {
+     "at": "0x2f8bf",
+     "insn": "movzx eax, byte ptr [esp + 5]"
+    },
+    {
+     "at": "0x2f8da",
+     "insn": "idiv ecx"
+    },
+    {
+     "at": "0x2f909",
+     "insn": "mov edx, dword ptr [eax*4 + 0x1a2a]"
     }
    ]
   },

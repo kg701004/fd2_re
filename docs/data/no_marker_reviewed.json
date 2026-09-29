@@ -34840,6 +34840,22 @@
    "excerpt": "**未驗證。** 學到法術時有沒有訊息(截圖沒有拍到);`+7` 為 0x1e/0x1f 的單位升到 30 級是否也歸 0;成長記錄第 6 組以後的學法術項;",
    "verdict": "benign",
    "note": "列出本次未測的項目,是範圍聲明而非遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 6091,
+   "excerpt_sha1": "d673a8d442395850bd32a7df870fbc21b1792f81",
+   "excerpt": "**未驗證。** 地形類型 3、4、5 在這張地圖沒有出現(表值 3 與 2 相同、4 是 AP −5/DP −5、5 無修正,都只有靜態);種族 4;",
+   "verdict": "benign",
+   "note": "列出本次未測的地形類型與條件,是範圍聲明;表值是靜態讀值的轉述,已在同段標為只有靜態"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 6094,
+   "excerpt_sha1": "6cd4418c39a33265bac62a54740edb00e1e77bab",
+   "excerpt": "**登錄。** `unit_uses_move_cost_row19` 升為 `verified_dynamic`;`scene_attack_resolve`、`map_cell_info` 摘要補充。",
+   "verdict": "benign",
+   "note": "登錄動作的簿記說明,不是遊戲事實主張"
   }
  ]
 }
