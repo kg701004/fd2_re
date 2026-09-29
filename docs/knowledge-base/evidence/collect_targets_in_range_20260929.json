@@ -1,0 +1,531 @@
+{
+ "note": "DOSBox-X 在 collect_targets_in_range 返回點 0x149f0(執行期 0x1b09f0)的記憶體傾印整理;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。predicted 依『+5 bit0 未設、格子記號 != 0xff、+6 == 0』離線計算,out_buf 是程式寫出的清單。",
+ "map": {
+  "pointer_live": "0x21934c",
+  "width": 27,
+  "height": 21,
+  "mark_offset": "4-byte 表頭後每格 4 bytes 的 byte3"
+ },
+ "rounds": {
+  "tA": {
+   "return_address_live": "0x1b9393",
+   "return_address_static": "0x1d393",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 9,
+   "threshold": 0,
+   "selector": 0,
+   "returned_count": 2,
+   "out_buf": [
+    11,
+    14
+   ],
+   "predicted": [
+    11,
+    14
+   ],
+   "match": true,
+   "units": [
+    {
+     "unit": 0,
+     "x": 20,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 4,
+     "manhattan": 5,
+     "predicted_in": false
+    },
+    {
+     "unit": 1,
+     "x": 23,
+     "y": 16,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 9,
+     "manhattan": 0,
+     "predicted_in": false
+    },
+    {
+     "unit": 2,
+     "x": 22,
+     "y": 13,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 5,
+     "manhattan": 4,
+     "predicted_in": false
+    },
+    {
+     "unit": 3,
+     "x": 23,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": false
+    },
+    {
+     "unit": 4,
+     "x": 24,
+     "y": 15,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": false
+    },
+    {
+     "unit": 5,
+     "x": 16,
+     "y": 14,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 0,
+     "manhattan": 9,
+     "predicted_in": false
+    },
+    {
+     "unit": 6,
+     "x": 15,
+     "y": 13,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 11,
+     "predicted_in": false
+    },
+    {
+     "unit": 7,
+     "x": 9,
+     "y": 12,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 18,
+     "predicted_in": false
+    },
+    {
+     "unit": 8,
+     "x": 7,
+     "y": 7,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 25,
+     "predicted_in": false
+    },
+    {
+     "unit": 9,
+     "x": 6,
+     "y": 10,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 23,
+     "predicted_in": false
+    },
+    {
+     "unit": 10,
+     "x": 23,
+     "y": 6,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 10,
+     "predicted_in": false
+    },
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 8,
+     "manhattan": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 12,
+     "x": 23,
+     "y": 17,
+     "side": 0,
+     "flags5": 1,
+     "cell_mark": 8,
+     "manhattan": 1,
+     "predicted_in": false
+    },
+    {
+     "unit": 13,
+     "x": 24,
+     "y": 17,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": false
+    },
+    {
+     "unit": 14,
+     "x": 25,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": true
+    },
+    {
+     "unit": 15,
+     "x": 10,
+     "y": 18,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 15,
+     "predicted_in": false
+    },
+    {
+     "unit": 16,
+     "x": 9,
+     "y": 19,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 17,
+     "predicted_in": false
+    },
+    {
+     "unit": 17,
+     "x": 3,
+     "y": 9,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    },
+    {
+     "unit": 18,
+     "x": 2,
+     "y": 8,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 29,
+     "predicted_in": false
+    },
+    {
+     "unit": 19,
+     "x": 2,
+     "y": 10,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    },
+    {
+     "unit": 20,
+     "x": 1,
+     "y": 11,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    }
+   ],
+   "marks_rows": [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 00 .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 01 00 ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 02 01 00",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 03 02 01",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 04 03 02",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 05 04 03",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 06 05 04",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 07 06 05",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 09 08 07 06",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 07 06 05",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 06 05 04",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 05 04 03",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 04 03 02"
+   ]
+  },
+  "tB": {
+   "return_address_live": "0x1b9393",
+   "return_address_static": "0x1d393",
+   "origin": [
+    23,
+    16
+   ],
+   "out_buf_live": "0x1f1488",
+   "range": 9,
+   "threshold": 0,
+   "selector": 0,
+   "returned_count": 5,
+   "out_buf": [
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "predicted": [
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "match": true,
+   "units": [
+    {
+     "unit": 0,
+     "x": 20,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 4,
+     "manhattan": 5,
+     "predicted_in": false
+    },
+    {
+     "unit": 1,
+     "x": 23,
+     "y": 16,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 9,
+     "manhattan": 0,
+     "predicted_in": false
+    },
+    {
+     "unit": 2,
+     "x": 22,
+     "y": 13,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 5,
+     "manhattan": 4,
+     "predicted_in": false
+    },
+    {
+     "unit": 3,
+     "x": 23,
+     "y": 14,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": false
+    },
+    {
+     "unit": 4,
+     "x": 24,
+     "y": 15,
+     "side": 2,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": false
+    },
+    {
+     "unit": 5,
+     "x": 16,
+     "y": 14,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 0,
+     "manhattan": 9,
+     "predicted_in": false
+    },
+    {
+     "unit": 6,
+     "x": 15,
+     "y": 13,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 11,
+     "predicted_in": false
+    },
+    {
+     "unit": 7,
+     "x": 9,
+     "y": 12,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 18,
+     "predicted_in": false
+    },
+    {
+     "unit": 8,
+     "x": 7,
+     "y": 7,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 25,
+     "predicted_in": false
+    },
+    {
+     "unit": 9,
+     "x": 6,
+     "y": 10,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 23,
+     "predicted_in": false
+    },
+    {
+     "unit": 10,
+     "x": 23,
+     "y": 6,
+     "side": 1,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 10,
+     "predicted_in": false
+    },
+    {
+     "unit": 11,
+     "x": 24,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 8,
+     "manhattan": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 12,
+     "x": 23,
+     "y": 17,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 8,
+     "manhattan": 1,
+     "predicted_in": true
+    },
+    {
+     "unit": 13,
+     "x": 24,
+     "y": 17,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": true
+    },
+    {
+     "unit": 14,
+     "x": 25,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 7,
+     "manhattan": 2,
+     "predicted_in": true
+    },
+    {
+     "unit": 15,
+     "x": 14,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 0,
+     "manhattan": 9,
+     "predicted_in": true
+    },
+    {
+     "unit": 16,
+     "x": 13,
+     "y": 16,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 10,
+     "predicted_in": false
+    },
+    {
+     "unit": 17,
+     "x": 3,
+     "y": 9,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    },
+    {
+     "unit": 18,
+     "x": 2,
+     "y": 8,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 29,
+     "predicted_in": false
+    },
+    {
+     "unit": 19,
+     "x": 2,
+     "y": 10,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    },
+    {
+     "unit": 20,
+     "x": 1,
+     "y": 11,
+     "side": 0,
+     "flags5": 0,
+     "cell_mark": 255,
+     "manhattan": 27,
+     "predicted_in": false
+    }
+   ],
+   "marks_rows": [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 00 .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 01 00 ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 02 01 00",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 03 02 01",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 04 03 02",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 05 04 03",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 06 05 04",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 07 06 05",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 09 08 07 06",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 08 07 06 05",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 07 06 05 04",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 06 05 04 03",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. 00 01 02 03 04 05 04 03 02"
+   ]
+  }
+ }
+}

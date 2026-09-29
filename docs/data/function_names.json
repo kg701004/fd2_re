@@ -876,7 +876,7 @@
   {
    "addr": "0x4e866",
    "name": "row7_ptr_619fd",
-   "summary": "(id):回傳 0x619fd + id*7(7 bytes/列的表;列 +5 是 unit_spend_mp 扣的 MP 量)。表的正式名稱未查證,名字只寫機制。 表格語意(doc98 續四十四):這是法術記錄,7 bytes/筆,+0 傷害(int16)、+2 命中率、+5 MP 消耗(聖光彈 0x18 = 24,與法術選單顯示一致);DOSBox-X 以執行期位址 0x1f39fd(object 3 delta 0x192000)讀回 spell 8 = b8 01 64 08 00 18 00,與檔案相同。",
+   "summary": "(id):回傳 0x619fd + id*7(7 bytes/列的表;列 +5 是 unit_spend_mp 扣的 MP 量)。表的正式名稱未查證,名字只寫機制。 表格語意(doc98 續四十四):這是法術記錄,7 bytes/筆,+0 傷害(int16)、+2 命中率、+5 MP 消耗(聖光彈 0x18 = 24,與法術選單顯示一致);DOSBox-X 以執行期位址 0x1f39fd(object 3 delta 0x192000)讀回 spell 8 = b8 01 64 08 00 18 00,與檔案相同。 其餘欄位(doc98 續四十六,靜態,讀取端在玩家法術選擇流程 0x1d181..0x1d38e):+3 施法距離(0 = 以施法者為中心)、+4 效果範圍、+6 目標陣營選擇子;施法距離為 0 時 collect_targets_in_range 的選擇子寫死為 0,不讀 +6。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -1093,8 +1093,8 @@
   {
    "addr": "0x14818",
    "name": "collect_targets_in_range",
-   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。",
-   "confidence": "static_re",
+   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。 單位篩選(0x14940 起):依單位序號掃 [0x53beb] 個單位,+5 bit0 已設的跳過,所站格子記號(地圖格 byte3)為 0xff 的跳過,陣營(+6)依 sideSelector 篩選 —— 0 取 +6 == 0(敵方)、1 取 +6 != 0、2 取 +6 == 1、3 取 +6 == 2;通過的序號寫進 outBuf,回傳筆數。extraThreshold 非 0 時把曼哈頓距離小於它的格子記號改成 0xff(內圈排除)。2026-09-29 DOSBox-X 動態驗證(doc98 續四十六):裂地術選定時斷點停在返回點 0x149f0,返回位址 0x1d393,參數 origin (23,16)、range 9、threshold 0、selector 0;以傾印的地圖記號與 21 個單位離線重算清單,兩輪都與 outBuf 相同([11,14] 與 [11,12,13,14,15]),之後 spell_damage_resolve 的入口斷點也只出現這些目標。記號值 = 9 - 曼哈頓距離(距離 9 記 0、距離 10 為 0xff)。rangeByte >= 0x10 的分支、extraThreshold、selector 1..3 未動態驗證。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
     {
@@ -1108,6 +1108,22 @@
     {
      "at": "0x1485d",
      "insn": "call 0x4e390"
+    },
+    {
+     "at": "0x14981",
+     "insn": "test byte ptr [eax + 5], 1"
+    },
+    {
+     "at": "0x1498a",
+     "insn": "cmp esi, 0xff"
+    },
+    {
+     "at": "0x1499d",
+     "insn": "test esi, esi"
+    },
+    {
+     "at": "0x149e6",
+     "insn": "mov byte ptr [eax], bl"
     }
    ]
   },

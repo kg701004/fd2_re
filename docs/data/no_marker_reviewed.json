@@ -34800,6 +34800,22 @@
    "excerpt": "**未驗證。** 範圍法術的未命中(命中率 90,11 次都命中;未命中分支已在續四十四的單體法術驗證);閘門的另外兩個條件(職業 0x13、`+7` = 0x1c);",
    "verdict": "benign",
    "note": "列出本次未測的範圍(範圍法術未命中、閘門另兩個條件、其餘呼叫端),是範圍聲明而非遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5946,
+   "excerpt_sha1": "00f553fcbcec3824757cc599aac61cc6291c003f",
+   "excerpt": "**未驗證。** rangeByte ≥ 0x10 的列/欄分支、extraThreshold 內圈排除、selector 1..3、有施法距離的法術(先選落點再取範圍的兩段呼叫)、",
+   "verdict": "benign",
+   "note": "列出本次未測的分支與呼叫端,是範圍聲明而非遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 5949,
+   "excerpt_sha1": "b5fe838af470b723ad7a2912366693a211df4fa0",
+   "excerpt": "**登錄。** `collect_targets_in_range` 升為 `verified_dynamic`,摘要補上單位篩選規則與未驗證範圍;`row7_ptr_619fd` 補上 `+3`/`+4`/`+6` 的語意(靜態)。",
+   "verdict": "benign",
+   "note": "登錄動作的簿記說明,不是遊戲事實主張"
   }
  ]
 }
