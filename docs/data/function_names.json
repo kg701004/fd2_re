@@ -1667,7 +1667,7 @@
   {
    "addr": "0x1b750",
    "name": "recalc_equipped_stats",
-   "summary": "(unit):以單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)的基礎 AP(+0x37)、DP(+0x39)、DX(+0x3e,+0x24 非 0 再加 0xf)為起點,加上每個已裝備(旗標 0x40)道具在 item_effect_row_ptr 列的 +1/+5/+3/+7 四個 word;+0x22 非 0 時再以 0x5018d 的浮點係數乘上。verified_addresses 記載的 runtime 裝備重算(0x1B750..0x1B83D)。",
+   "summary": "(unit):以單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)的基礎 AP(+0x37)、DP(+0x39)、DX(+0x3e,+0x24 非 0 再加 0xf)為起點,加上每個已裝備(旗標 0x40)道具在 item_effect_row_ptr 列的 +1/+5/+3/+7 四個 word;+0x22 非 0 時再以 0x5018d 的浮點係數乘上。verified_addresses 記載的 runtime 裝備重算(0x1B750..0x1B83D)。 DOSBox-X(doc98 續四十九):升級後衍生 AP/DP/HIT/EV(+0x48/+0x4a/+0x4c/+0x4e)被重寫成 基礎 AP + 320、基礎 DP + 300、DX + 100、DX + 20(測試前手動寫入的 19/0/250/0 被覆蓋);沒有升級的案例不重算。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -2365,7 +2365,7 @@
   {
    "addr": "0x4e821",
    "name": "growth_row11_ptr",
-   "summary": "(portrait):回傳 0x620a1 + portrait*11(11-byte 成長記錄)。呼叫端含建構子 0x10c50 與 join。舊文件位址 0x4e4d1(勘誤)。",
+   "summary": "(portrait):回傳 0x620a1 + portrait*11(11-byte 成長記錄)。呼叫端含建構子 0x10c50 與 join。舊文件位址 0x4e4d1(勘誤)。 記錄格式(doc98 續四十九):5 組 (下限, 上限) 依序是 AP、DP、DX、MaxHP、MaxMP 的每級成長,+0xa 是學法術表的索引(0xff = 無);DOSBox-X 以執行期位址 0x1f4201(+7 = 0x20)讀回 08 0c 05 08 03 05 0a 0d 07 09 04,與檔案相同。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -8260,9 +8260,9 @@
   {
    "addr": "0x1e292",
    "name": "apply_pending_exp",
-   "confidence": "static_re",
+   "confidence": "verified_dynamic",
    "date": "2026-09-29",
-   "summary": "(unit):把待入帳的經驗值 [0x53ec8] 加到單位的 EX(+0x3c)。[0x53ec8] 為 0 或單位 +5 bit0 已設時不做事;等級(+0x21)已達上限時也不做事 —— +7 為 0x1e/0x1f 的上限 0x63,其餘 0x28。呼叫端 0x117e7(玩家行動後,先把 [0x53ec8] 封頂在 0x63)與 0x1548e。DOSBox-X 觀察(doc98 續四十七、四十八):攻擊與治療後 EX 的增量都等於預測的待入帳值,131 時只增加 99。升級分支未動態驗證。",
+   "summary": "(unit):把待入帳的經驗值 [0x53ec8] 加到單位的 EX(+0x3c)。[0x53ec8] 為 0 或單位 +5 bit0 已設時不做事;等級(+0x21)已達上限時也不做事 —— +7 為 0x1e/0x1f 的上限 0x63,其餘 0x28。呼叫端 0x117e7(玩家行動後,先把 [0x53ec8] 封頂在 0x63)與 0x1548e。DOSBox-X 觀察(doc98 續四十七、四十八):攻擊與治療後 EX 的增量都等於預測的待入帳值,131 時只增加 99。升級分支未動態驗證。 升級(doc98 續四十九,DOSBox-X 實測 5 例全部符合):合計 = EX + 待入帳值,每滿 100 等級 +1 並扣 100;以 growth_row11_ptr(+7) 的 5 組上下限依序對基礎 AP(+0x37)、DP(+0x39)、DX(+0x3e)、MaxHP(+0x42)、MaxMP(+0x46)呼叫 apply_stat_growth,現有 HP/MP 不變;成長記錄 +0xa 不是 0xff 時查 spell_learn_row12_ptr 學法術;之後 recalc_equipped_stats。升級後等級等於 0x1e,或 +7 為 0x1e/0x1f 且等級等於 0x63 時,合計歸 0(兩個條件是 OR;+7 為 0x1e/0x1f 的單位到 30 級是否也歸 0 未動態驗證)。實測:6->7 EX 90+29 -> 19;29->30 EX 90+17 -> 0;40 級 EX 50 不變且無對話;+7 = 0x1e 的單位 98->99 EX -> 0,99 級 EX 50 不變。因為待入帳值封頂 99、EX 最多 99,一次行動最多升一級。",
    "evidence": [
     {
      "at": "0x1e2c9",
@@ -8287,6 +8287,84 @@
     {
      "at": "0x1e309",
      "insn": "movzx eax, byte ptr [esi + 0x3c]"
+    },
+    {
+     "at": "0x1e3ee",
+     "insn": "sub dword ptr [esp + 4], 0x64"
+    },
+    {
+     "at": "0x1e440",
+     "insn": "inc byte ptr [esi + 0x21]"
+    },
+    {
+     "at": "0x1e3e2",
+     "insn": "call 0x1b750"
+    },
+    {
+     "at": "0x1e39a",
+     "insn": "call 0x1d79c"
+    },
+    {
+     "at": "0x1e4f6",
+     "insn": "cmp eax, 0x1e"
+    },
+    {
+     "at": "0x1e517",
+     "insn": "mov byte ptr [esi + 0x3c], al"
+    },
+    {
+     "at": "0x1e403",
+     "insn": "cmp eax, 0x63"
+    }
+   ]
+  },
+  {
+   "addr": "0x1e529",
+   "name": "apply_stat_growth",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-29",
+   "summary": "(stat_ptr, growth_pair_ptr, msg, line):成長量 = 下限 byte[0] + rand % (byte[1] - byte[0])(兩者相等時就是下限,不取亂數),寫進 [0x53ae1];為 0 時不顯示訊息也不改屬性,否則顯示訊息 msg 並把 word [stat_ptr] 加上成長量。回傳下一個訊息行號。2026-09-29 DOSBox-X 動態驗證(doc98 續四十九):斷點 0x1e55a 讀 EBP,上下限相等的測試記錄得到 5/3/0/7/2,原始記錄(07 0e 06 0d 02 04 08 0f 00 00)得到 11/10/2/13/0,都在下限到上限減 1 之間;屬性的增加量與讀值相同。",
+   "evidence": [
+    {
+     "at": "0x1e53f",
+     "insn": "movzx ebp, byte ptr [eax]"
+    },
+    {
+     "at": "0x1e542",
+     "insn": "movzx esi, byte ptr [eax + 1]"
+    },
+    {
+     "at": "0x1e54a",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x1e554",
+     "insn": "idiv esi"
+    },
+    {
+     "at": "0x1e55a",
+     "insn": "mov dword ptr [0x3ae1], ebp"
+    },
+    {
+     "at": "0x1e5b5",
+     "insn": "add word ptr [edx], ax"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e7f2",
+   "name": "spell_learn_row12_ptr",
+   "confidence": "static_re",
+   "date": "2026-09-29",
+   "summary": "(idx):回傳 0x626b3 + idx*12。apply_pending_exp 把它當成 6 組 (等級, 法術編號):升級後的等級等於某組的等級時,以 unit_set_bit_1a 學會該法術。idx 取自成長記錄的 +0xa(0xff 表示沒有)。DOSBox-X(doc98 續四十九):索爾的列原值 04 18 ff..,執行期改成 07 0d 後升到 7 級,法術位元欄 00 11 80 03 0f 變成 00 31 80 03 0f(bit 13)。",
+   "evidence": [
+    {
+     "at": "0x4e7f8",
+     "insn": "mov edx, 0xc"
+    },
+    {
+     "at": "0x4e7ff",
+     "insn": "lea edx, [0x26b3]"
     }
    ]
   }
