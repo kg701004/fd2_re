@@ -3142,8 +3142,8 @@
   {
    "addr": "0x1ecc7",
    "name": "map_attack_resolve",
-   "summary": "(attacker, defender):地圖物理攻擊一擊的判定,回傳守方新 HP。單位記錄(80 bytes,基底 [0x53a45])欄位:攻 AP +0x48、HIT +0x4c,守 DP +0x4a、EV +0x4e、HP +0x40/MaxHP +0x42。地形修正(unit_uses_move_cost_row19 為真者跳過):AP += AP*[0x51a12+地形*4]/100、DP += DP*[0x51a2a+地形*4]/100。會心率 = [0x524a8 + 職業(+0x20)-1],武器 row+9==4 再加 row+0xa;row+9==2 時以 row+0xa% 機率設守方 +0x25 = 2..5。命中:rand%100 < HIT-EV([0x53c6b] 清 0)。會心:rand%100 < 會心率 時 DP/2。傷害 = max(0,(AP-DP)*9/10),再加 rand % (傷害/9);HP 扣完不低於 0。攻方 side(+6)==2 且守方 portrait ≥ 0x44 時算經驗值寫 [0x53ec8]。與 doc27 記錄的 0x2f7b6(指令環攻擊)同一套公式。 動態驗證的邊界(doc98 續四十一):有戰鬥場景的攻擊走的是 scene_attack_resolve(0x2f7b6),本函式的斷點在那次攻擊中沒有觸發;公式雖與 0x2f7b6 相同且後者已動態驗證,本函式本身仍只有靜態證據(何時走地圖直接攻擊的這條路未量測)。",
-   "confidence": "static_re",
+   "summary": "(attacker, defender):地圖物理攻擊一擊的判定,回傳守方新 HP。單位記錄(80 bytes,基底 [0x53a45])欄位:攻 AP +0x48、HIT +0x4c,守 DP +0x4a、EV +0x4e、HP +0x40/MaxHP +0x42。地形修正(unit_uses_move_cost_row19 為真者跳過):AP += AP*[0x51a12+地形*4]/100、DP += DP*[0x51a2a+地形*4]/100。會心率 = [0x524a8 + 職業(+0x20)-1],武器 row+9==4 再加 row+0xa;row+9==2 時以 row+0xa% 機率設守方 +0x25 = 2..5。命中:rand%100 < HIT-EV([0x53c6b] 清 0)。會心:rand%100 < 會心率 時 DP/2。傷害 = max(0,(AP-DP)*9/10),再加 rand % (傷害/9);HP 扣完不低於 0。攻方 side(+6)==2 且守方 portrait ≥ 0x44 時算經驗值寫 [0x53ec8]。與 doc27 記錄的 0x2f7b6(指令環攻擊)同一套公式。 動態驗證的邊界(doc98 續四十一):有戰鬥場景的攻擊走的是 scene_attack_resolve(0x2f7b6),本函式的斷點在那次攻擊中沒有觸發;公式雖與 0x2f7b6 相同且後者已動態驗證,當時本函式本身仍只有靜態證據;續五十一已補上。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十一):這是 AI 攻擊在 [0x53af9] 非 0 時的路徑(經 ai_attack_execute -> map_attack_sequence,返回位址 0x1e917)。實測 5 擊的 HP 減少量全部符合公式:19 對 DP 8 -> 9、19 對 DP 0 -> 17(兩次,含反擊)、AP 24 站類型 0 地形(+1)對 DP 8 -> 15(兩次,無地形修正會是 14)。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
     {
@@ -3199,8 +3199,8 @@
   {
    "addr": "0x1e856",
    "name": "map_attack_sequence",
-   "summary": "(attacker, defender, panel_pos):攻擊次數預設 1;攻方武器 row+9 == 3 時 2 次,另有 rand%100 < 3 也 2 次。每一擊:map_attack_resolve 取守方新 HP,play_weapon_hit_effect 播命中特效,HP 條從 HP*0x46/MaxHP 逐格減到新值(每格 8ms)。守方 HP 歸 0 即停。回傳守方最後 HP。",
-   "confidence": "static_re",
+   "summary": "(attacker, defender, panel_pos):攻擊次數預設 1;攻方武器 row+9 == 3 時 2 次,另有 rand%100 < 3 也 2 次。每一擊:map_attack_resolve 取守方新 HP,play_weapon_hit_effect 播命中特效,HP 條從 HP*0x46/MaxHP 逐格減到新值(每格 8ms)。守方 HP 歸 0 即停。回傳守方最後 HP。 DOSBox-X(doc98 續五十一):AI 攻擊時被 ai_attack_execute 呼叫,反擊時以對調的參數再呼叫一次(返回位址 0x15613)。守方武器欄是 id >= 0x80 的友軍 NPC 被攻擊時,第二次呼叫沒有出現,與 defender_can_counter 的武器條件一致。雙擊(3%)未觀察到。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
     {
@@ -8381,6 +8381,43 @@
     {
      "at": "0x4e7ff",
      "insn": "lea edx, [0x26b3]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1548e",
+   "name": "ai_attack_execute",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-29",
+   "summary": "(unit, a2):AI 單位執行已選好的物理攻擊(目標序號在 [0x53c4b],落點在 [0x53c43]/[0x53c47])。focus_unit、0x14b78 移動到落點;byte [0x53af9] 非 0 時走地圖呈現:open_attack_hp_panels 後 map_attack_sequence(unit, 目標),目標仍存活且 defender_can_counter 為 1 時再 map_attack_sequence(目標, unit) 反擊;為 0 時改呼叫 0x2e2b0(與玩家攻擊相同的場景呈現)。最後 apply_pending_exp(目標)。呼叫端 0x13a9f、0x14ef0(AI 流程)。玩家攻擊(player_action_ring 0x18fc6)無條件呼叫 0x2e2b0,不看 [0x53af9]。2026-09-29 DOSBox-X 動態驗證(doc98 續五十一):[0x53af9] = 1 的兩輪,AI 攻擊 4 次都停在 map_attack_sequence/map_attack_resolve,反擊由第二次 map_attack_sequence(返回位址 0x15613)執行;= 0 的一輪 AI 攻擊停在 scene_attack_resolve;三輪玩家攻擊都走場景。",
+   "evidence": [
+    {
+     "at": "0x154f5",
+     "insn": "movzx eax, byte ptr [0x3af9]"
+    },
+    {
+     "at": "0x154fe",
+     "insn": "je 0x15618"
+    },
+    {
+     "at": "0x155a9",
+     "insn": "call 0x1e856"
+    },
+    {
+     "at": "0x155c0",
+     "insn": "call 0x1f0dc"
+    },
+    {
+     "at": "0x1560e",
+     "insn": "call 0x1e856"
+    },
+    {
+     "at": "0x1561f",
+     "insn": "call 0x2e2b0"
+    },
+    {
+     "at": "0x1566a",
+     "insn": "call 0x1e292"
     }
    ]
   }

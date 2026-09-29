@@ -1,0 +1,296 @@
+{
+ "note": "DOSBox-X 斷點停點(函式入口,[ESP] 返回位址、[ESP+4]/[ESP+8] 前兩個參數)與攻擊前後單位記錄的 HP 差;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每回合前:玩家其餘 4 人設已行動,索爾攻擊盜賊 #11 後自動進入友軍與敵方回合。predicted 依 (AP+地形修正-DP-地形修正)*9//10,攻守數值皆 <= 17 或整除使亂數項為 0;地形修正 null = 該方種族 5 被跳過。",
+ "rounds": {
+  "M1": {
+   "flag_53af9": 1,
+   "breakpoint_stops": [
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 0,
+     "arg2": 11
+    },
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "ai_attack_execute",
+     "return_static": "0x14fa0",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_sequence",
+     "return_static": "0x155ae",
+     "arg1": 11,
+     "arg2": 5
+    },
+    {
+     "function": "map_attack_resolve",
+     "return_static": "0x1e917",
+     "arg1": 11,
+     "arg2": 5
+    }
+   ],
+   "hits": [
+    {
+     "attacker": 0,
+     "defender": 11,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": 0,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 0,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": null,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 5,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 8,
+     "defender_terrain_mod": 0,
+     "predicted": 9
+    }
+   ],
+   "hp_loss_predicted": {
+    "11": 17,
+    "0": 17,
+    "5": 9
+   },
+   "hp_loss_measured": {
+    "11": 17,
+    "0": 17,
+    "5": 9
+   }
+  },
+  "M2": {
+   "flag_53af9": 0,
+   "breakpoint_stops": [
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 0,
+     "arg2": 11
+    },
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "ai_attack_execute",
+     "return_static": "0x14fa0",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 11,
+     "arg2": 6
+    }
+   ],
+   "hits": [
+    {
+     "attacker": 0,
+     "defender": 11,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": 0,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 0,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": null,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 6,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 11,
+     "defender_terrain_mod": 0,
+     "predicted": 7
+    }
+   ],
+   "hp_loss_predicted": {
+    "11": 17,
+    "0": 17,
+    "6": 7
+   },
+   "hp_loss_measured": {
+    "11": 17,
+    "0": 17,
+    "6": 7
+   }
+  },
+  "M3": {
+   "flag_53af9": 1,
+   "breakpoint_stops": [
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 0,
+     "arg2": 11
+    },
+    {
+     "function": "scene_attack_resolve",
+     "return_static": "0x2ed11",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "ai_attack_execute",
+     "return_static": "0x14fa0",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_sequence",
+     "return_static": "0x155ae",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_resolve",
+     "return_static": "0x1e917",
+     "arg1": 11,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_sequence",
+     "return_static": "0x15613",
+     "arg1": 0,
+     "arg2": 11
+    },
+    {
+     "function": "map_attack_resolve",
+     "return_static": "0x1e917",
+     "arg1": 0,
+     "arg2": 11
+    },
+    {
+     "function": "ai_attack_execute",
+     "return_static": "0x14fa0",
+     "arg1": 13,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_sequence",
+     "return_static": "0x155ae",
+     "arg1": 13,
+     "arg2": 9
+    },
+    {
+     "function": "map_attack_resolve",
+     "return_static": "0x1e917",
+     "arg1": 13,
+     "arg2": 9
+    },
+    {
+     "function": "ai_attack_execute",
+     "return_static": "0x14fa0",
+     "arg1": 17,
+     "arg2": 0
+    },
+    {
+     "function": "map_attack_sequence",
+     "return_static": "0x155ae",
+     "arg1": 17,
+     "arg2": 9
+    },
+    {
+     "function": "map_attack_resolve",
+     "return_static": "0x1e917",
+     "arg1": 17,
+     "arg2": 9
+    }
+   ],
+   "hits": [
+    {
+     "attacker": 0,
+     "defender": 11,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": 0,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 0,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": null,
+     "predicted": 17
+    },
+    {
+     "attacker": 11,
+     "defender": 0,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": 0,
+     "defender_dp": 0,
+     "defender_terrain_mod": null,
+     "predicted": 17
+    },
+    {
+     "attacker": 0,
+     "defender": 11,
+     "attacker_ap": 19,
+     "attacker_terrain_mod": null,
+     "defender_dp": 0,
+     "defender_terrain_mod": 0,
+     "predicted": 17
+    },
+    {
+     "attacker": 13,
+     "defender": 9,
+     "attacker_ap": 24,
+     "attacker_terrain_mod": 1,
+     "defender_dp": 8,
+     "defender_terrain_mod": 0,
+     "predicted": 15
+    },
+    {
+     "attacker": 17,
+     "defender": 9,
+     "attacker_ap": 24,
+     "attacker_terrain_mod": 1,
+     "defender_dp": 8,
+     "defender_terrain_mod": 0,
+     "predicted": 15
+    }
+   ],
+   "hp_loss_predicted": {
+    "11": 34,
+    "0": 34,
+    "9": 30
+   },
+   "hp_loss_measured": {
+    "11": 34,
+    "0": 34,
+    "9": 30
+   }
+  }
+ }
+}

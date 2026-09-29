@@ -6092,3 +6092,31 @@ T5 的 110 × −5 / 100 = −5.5,斷點讀到商 −5、餘數 −50,確認是�
 `map_attack_resolve`(0x1ecc7)的同一段仍只有靜態證據。
 
 **登錄。** `unit_uses_move_cost_row19` 升為 `verified_dynamic`;`scene_attack_resolve`、`map_cell_info` 摘要補充。
+
+## 2026-09-29 續五十一:`map_attack_resolve` 何時被呼叫 —— AI 攻擊依 `[0x53af9]` 選地圖或場景呈現
+
+**靜態依據。** `map_attack_resolve`(0x1ecc7)唯一的呼叫端是 `map_attack_sequence`(0x1e856),後者只被 0x1548e 呼叫(0x155a9 攻擊、0x1560e 反擊)。
+0x1548e 是 AI 物理攻擊的執行函式(呼叫端 0x13a9f、0x14ef0,doc11 記載的 AI 流程),本輪命名 `ai_attack_execute`:移動到落點後讀 byte `[0x53af9]`,
+非 0 走地圖呈現(0x154fe 不跳),為 0 跳到 0x15618 呼叫 0x2e2b0(場景呈現,內部經 0x2ebe1 呼叫 `scene_attack_resolve`)。
+玩家攻擊在 `player_action_ring` 0x18fc6 無條件呼叫 0x2e2b0。`[0x53af9]` 是 doc11 記載的戰鬥中四項切換子選單第 3 項,並存進存檔。
+
+**受控設計。** 每一輪:其餘 4 名我方設為已行動,索爾(AP19/DP0/HIT250/EV0)攻擊旁邊的盜賊 #11(同數值、HP 999),打完自動進入友軍與敵方回合。
+斷點下在四個函式入口(`ai_attack_execute`、`map_attack_sequence`、`map_attack_resolve`、`scene_attack_resolve`),每次停下讀返回位址與前兩個參數。
+數值都讓亂數項為 0,所以 HP 的減少量是確定值。
+
+| 輪 | `[0x53af9]` | 玩家攻擊(索爾 ↔ 盜賊) | AI 攻擊 | AI 攻擊的路徑 | HP 減少(預測 = 實測) |
+|---|---|---|---|---|---|
+| M1 | 1 | scene ×2(攻擊與反擊) | #11 → 友軍 NPC #5 | `map_attack_sequence`(ret 0x155ae)→ `map_attack_resolve`(ret 0x1e917);NPC 武器欄是 id 128 所以沒有反擊 | NPC #5:(19−8)×9/10 = 9 |
+| M2 | **0** | scene ×2 | #11 → 友軍 NPC #6 | **`scene_attack_resolve`**(ret 0x2ed11),地圖路徑斷點未觸發 | NPC #6:(19−11)×9/10 = 7 |
+| M3 | 1 | scene ×2 | #11 → 索爾,索爾反擊;#13、#17 → NPC #9 | 4 次都走地圖;反擊是第二次 `map_attack_sequence`(ret **0x15613**,參數對調) | 索爾 17+17、盜賊 17+17、NPC #9 15+15 |
+
+三輪都相符(DOSBox-X 斷點停點與記憶體讀值;`evidence/attack_path_selection_20260929.json` 由攻擊前後的傾印驗證每輪的 HP 減少量)。
+M3 的 NPC #9 被 AP 24 的盜賊打兩次,兩名攻擊者都站在類型 0 地形,AP 修正 +1,每擊 (25−8)×9/10 = 15;沒有地形修正會是 14×2 = 28,DOSBox-X 實測 30,
+所以地圖路徑的地形修正也有實機證據。M3 的敵方回合被第 3 回合的劇情對話擋住,按鍵推進後才繼續。
+
+**結論。** `map_attack_resolve` 不是死碼:它是 `[0x53af9]` 非 0 時 AI 物理攻擊與其反擊的判定函式;公式與 `scene_attack_resolve` 相同,實測也相同。
+玩家攻擊一律走場景。
+
+**未驗證。** `[0x53af9]` 對 AI 施法路徑(0x15311 的 0x153e7)的影響;雙擊(3%)在地圖路徑未觀察到;選單標籤與實際措辭的對照。
+
+**登錄。** 新名稱 `ai_attack_execute`(0x1548e,`verified_dynamic`);`map_attack_resolve`、`map_attack_sequence` 升為 `verified_dynamic`;doc11 在 `[0x53af9]` 的段落補上行為。共 393 筆。
