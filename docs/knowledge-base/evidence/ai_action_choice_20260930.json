@@ -1,0 +1,419 @@
+{
+ "note": "DOSBox-X 斷點停點與記憶體讀值;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。0x14f62 停下時讀 [0x53c23..0x53c52]、[ESP](= 攻方 +0x48 - 物理目標 +0x4a)、EBP(= 攻方 +0x34 & 0x40)、ESI(單位);之後停在 0x1548e / 0x15311 / 0x15055 其中之一即為勝者。predicted 依 0x14f62..0x15050 的靜態規則。物理攻擊全部未命中(HP 不變),這不影響選擇;#15 的法術打到了 NPC 回合走進射程的 NPC #5(與 #4 同為 8 分,掃描序在前)。#12、#18 的 [0x53c2f] 是前一個單位留下的值(它們不會法術,S = 0)。",
+ "decisions": [
+  {
+   "stop": 5,
+   "unit": 11,
+   "design": "S > P",
+   "P_53c4f": 8,
+   "S_53c23": 24,
+   "I_53c33": 0,
+   "spell_53c2f": 8,
+   "physical_target_53c4b": 1,
+   "d_ap_minus_target_dp": 100,
+   "bit40_34": 0,
+   "predicted": "spell",
+   "executor_observed": "spell"
+  },
+  {
+   "stop": 9,
+   "unit": 13,
+   "design": "P == S、法術 < 11、440 < d",
+   "P_53c4f": 8,
+   "S_53c23": 8,
+   "I_53c33": 0,
+   "spell_53c2f": 8,
+   "physical_target_53c4b": 2,
+   "d_ap_minus_target_dp": 441,
+   "bit40_34": 0,
+   "predicted": "physical",
+   "executor_observed": "physical"
+  },
+  {
+   "stop": 12,
+   "unit": 14,
+   "design": "P(0x12)> S",
+   "P_53c4f": 18,
+   "S_53c23": 8,
+   "I_53c33": 0,
+   "spell_53c2f": 8,
+   "physical_target_53c4b": 3,
+   "d_ap_minus_target_dp": 501,
+   "bit40_34": 0,
+   "predicted": "physical",
+   "executor_observed": "physical"
+  },
+  {
+   "stop": 15,
+   "unit": 15,
+   "design": "P == S、法術 < 11、440 < d 不成立(d = 440)",
+   "P_53c4f": 8,
+   "S_53c23": 8,
+   "I_53c33": 0,
+   "spell_53c2f": 8,
+   "physical_target_53c4b": 4,
+   "d_ap_minus_target_dp": 440,
+   "bit40_34": 0,
+   "predicted": "spell",
+   "executor_observed": "spell"
+  },
+  {
+   "stop": 19,
+   "unit": 16,
+   "design": "P == S、法術 >= 11、bit 0x40 = 1",
+   "P_53c4f": 8,
+   "S_53c23": 8,
+   "I_53c33": 0,
+   "spell_53c2f": 13,
+   "physical_target_53c4b": 0,
+   "d_ap_minus_target_dp": 100,
+   "bit40_34": 64,
+   "predicted": "physical",
+   "executor_observed": "physical"
+  },
+  {
+   "stop": 23,
+   "unit": 17,
+   "design": "P == S、法術 >= 11、bit 0x40 = 0",
+   "P_53c4f": 8,
+   "S_53c23": 8,
+   "I_53c33": 0,
+   "spell_53c2f": 13,
+   "physical_target_53c4b": 0,
+   "d_ap_minus_target_dp": 100,
+   "bit40_34": 0,
+   "predicted": "spell",
+   "executor_observed": "spell"
+  },
+  {
+   "stop": 26,
+   "unit": 12,
+   "design": "(未設計)P > S = 0",
+   "P_53c4f": 8,
+   "S_53c23": 0,
+   "I_53c33": 0,
+   "spell_53c2f": 13,
+   "physical_target_53c4b": 0,
+   "d_ap_minus_target_dp": 24,
+   "bit40_34": 0,
+   "predicted": "physical",
+   "executor_observed": "physical"
+  },
+  {
+   "stop": 30,
+   "unit": 18,
+   "design": "(未設計)P > S = 0",
+   "P_53c4f": 8,
+   "S_53c23": 0,
+   "I_53c33": 0,
+   "spell_53c2f": 13,
+   "physical_target_53c4b": 0,
+   "d_ap_minus_target_dp": 100,
+   "bit40_34": 0,
+   "predicted": "physical",
+   "executor_observed": "physical"
+  }
+ ],
+ "effects_hp_mp": {
+  "0": {
+   "xy": [
+    [
+     16,
+     15
+    ],
+    [
+     16,
+     15
+    ]
+   ],
+   "hp": [
+    823,
+    823
+   ],
+   "mp": [
+    805,
+    805
+   ]
+  },
+  "1": {
+   "xy": [
+    [
+     3,
+     3
+    ],
+    [
+     3,
+     3
+    ]
+   ],
+   "hp": [
+    300,
+    98
+   ],
+   "mp": [
+    817,
+    817
+   ]
+  },
+  "2": {
+   "xy": [
+    [
+     23,
+     2
+    ],
+    [
+     23,
+     2
+    ]
+   ],
+   "hp": [
+    999,
+    999
+   ],
+   "mp": [
+    767,
+    767
+   ]
+  },
+  "3": {
+   "xy": [
+    [
+     2,
+     15
+    ],
+    [
+     2,
+     15
+    ]
+   ],
+   "hp": [
+    500,
+    500
+   ],
+   "mp": [
+    767,
+    767
+   ]
+  },
+  "4": {
+   "xy": [
+    [
+     22,
+     19
+    ],
+    [
+     22,
+     19
+    ]
+   ],
+   "hp": [
+    999,
+    999
+   ],
+   "mp": [
+    767,
+    767
+   ]
+  },
+  "5": {
+   "xy": [
+    [
+     12,
+     20
+    ],
+    [
+     14,
+     18
+    ]
+   ],
+   "hp": [
+    999,
+    575
+   ],
+   "mp": [
+    0,
+    0
+   ]
+  },
+  "6": {
+   "xy": [
+    [
+     13,
+     20
+    ],
+    [
+     13,
+     18
+    ]
+   ],
+   "hp": [
+    999,
+    999
+   ],
+   "mp": [
+    0,
+    0
+   ]
+  },
+  "11": {
+   "xy": [
+    [
+     4,
+     3
+    ],
+    [
+     4,
+     3
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    76
+   ]
+  },
+  "12": {
+   "xy": [
+    [
+     17,
+     15
+    ],
+    [
+     16,
+     14
+    ]
+   ],
+   "hp": [
+    999,
+    149
+   ],
+   "mp": [
+    100,
+    100
+   ]
+  },
+  "13": {
+   "xy": [
+    [
+     22,
+     2
+    ],
+    [
+     22,
+     2
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    100
+   ]
+  },
+  "14": {
+   "xy": [
+    [
+     3,
+     15
+    ],
+    [
+     3,
+     15
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    100
+   ]
+  },
+  "15": {
+   "xy": [
+    [
+     21,
+     19
+    ],
+    [
+     21,
+     19
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    76
+   ]
+  },
+  "16": {
+   "xy": [
+    [
+     16,
+     17
+    ],
+    [
+     15,
+     15
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    100
+   ]
+  },
+  "17": {
+   "xy": [
+    [
+     15,
+     17
+    ],
+    [
+     15,
+     17
+    ]
+   ],
+   "hp": [
+    28,
+    28
+   ],
+   "mp": [
+    100,
+    97
+   ]
+  },
+  "18": {
+   "xy": [
+    [
+     14,
+     17
+    ],
+    [
+     16,
+     16
+    ]
+   ],
+   "hp": [
+    5,
+    28
+   ],
+   "mp": [
+    100,
+    100
+   ]
+  }
+ }
+}
