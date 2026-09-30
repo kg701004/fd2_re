@@ -1,0 +1,69 @@
+{
+ "note": "DOSBox-X 斷點停點與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。敵人 #13 在 (1,1),附近沒有可打的目標(物理 P = 0),活著的我方與 NPC 都在曼哈頓距離 >= 30 外。兩輪都停在:0x14121 入口 → 0x141cd(找不到,回 0)→ 0x13e9c 入口 → 0x14b78(目標 x, y, 13, 0),返回位址 0x13fb1。R1 的 NPC #7 設 +5 bit0(屍體)在 (1,7);R2 把屍體移到 (26,19)。rival_excluding_dead 是「跳過 +5 bit0」的另一種規則,R1 兩者不同。",
+ "runs": {
+  "R1": {
+   "actor": 13,
+   "actor_xy": [
+    1,
+    1
+   ],
+   "observed_0x14b78_target": [
+    1,
+    7
+   ],
+   "predicted_including_dead": {
+    "xy": [
+     1,
+     7
+    ],
+    "unit": 7,
+    "distance": 6,
+    "dead": true
+   },
+   "rival_excluding_dead": {
+    "xy": [
+     22,
+     15
+    ],
+    "unit": 0,
+    "distance": 35
+   },
+   "actor_moved_to": [
+    0,
+    4
+   ]
+  },
+  "R2": {
+   "actor": 13,
+   "actor_xy": [
+    1,
+    1
+   ],
+   "observed_0x14b78_target": [
+    22,
+    15
+   ],
+   "predicted_including_dead": {
+    "xy": [
+     22,
+     15
+    ],
+    "unit": 0,
+    "distance": 35,
+    "dead": false
+   },
+   "rival_excluding_dead": {
+    "xy": [
+     22,
+     15
+    ],
+    "unit": 0,
+    "distance": 35
+   },
+   "actor_moved_to": [
+    5,
+    1
+   ]
+  }
+ }
+}
