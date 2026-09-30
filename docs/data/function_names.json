@@ -8779,6 +8779,51 @@
      "insn": "mov eax, 0x12"
     }
    ]
+  },
+  {
+   "addr": "0x13fd4",
+   "name": "rest_hp_recover",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "summary": "(unit):HP(+0x40)等於 MaxHP(+0x42),或 +0x25(中毒計數)、+0x26(麻痺計數)任一非 0 時回 0、不寫;否則播放演出後寫入 min(HP + MaxHP/5, MaxHP)(整數除法),[0x51a83] = 1,回 1。呼叫端:AI 模式 0/1/2 的備援收尾(0x13c0f,返回 0x13c14;在 0x13e9c 沒有移動時)、其他 AI 模式分支(0x13bc5、0x13c84、0x13d58、0x13e52)與玩家指令環的休息(0x19082)。2026-09-30 DOSBox-X 動態驗證(doc98 續五十九):兩輪 12 次停點全部符合 —— MaxHP 28 的 HP 9 -> 14、26 -> 28(封頂)、28 回 0;MaxHP 34 的 HP 9 -> 15(34/5 取整為 6,四捨五入會是 7);+0x25 = 2 回 0;+0x26 仍非 0 的單位沒有進來。玩家休息的一次實測見 doc36(20 + 42/5 = 28)。",
+   "evidence": [
+    {
+     "at": "0x13ff6",
+     "insn": "movzx edi, word ptr [ebx + 0x40]"
+    },
+    {
+     "at": "0x13ffa",
+     "insn": "movzx esi, word ptr [ebx + 0x42]"
+    },
+    {
+     "at": "0x13ffe",
+     "insn": "cmp edi, esi"
+    },
+    {
+     "at": "0x14002",
+     "insn": "movzx eax, byte ptr [ebx + 0x25]"
+    },
+    {
+     "at": "0x1400a",
+     "insn": "movzx eax, byte ptr [ebx + 0x26]"
+    },
+    {
+     "at": "0x140f4",
+     "insn": "mov ecx, 5"
+    },
+    {
+     "at": "0x14100",
+     "insn": "idiv ecx"
+    },
+    {
+     "at": "0x14104",
+     "insn": "cmp edi, esi"
+    },
+    {
+     "at": "0x1410a",
+     "insn": "mov word ptr [ebx + 0x40], di"
+    }
+   ]
   }
  ]
 }

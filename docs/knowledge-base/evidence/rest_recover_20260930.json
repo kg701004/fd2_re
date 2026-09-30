@@ -1,0 +1,527 @@
+{
+ "note": "DOSBox-X 斷點停點(0x13fd4 入口、0x14012 回 0、0x1410a 寫入)與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。左上一群沒有我方可打的敵人走模式 0 的備援(ai_choose_action 回 0 → 0x14121 → 0x13e9c 沒移動 → 0x13fd4,返回位址 0x13c14)。r1 的 #18 移動了(4,6 -> 5,9),沒有進 0x13fd4;r2 把它放到 (5,5) 後照規則回復。中毒 / 麻痺計數在評分前各減 1,r1 設 1 時到 0x13fd4 已歸 0;r2 設 3 時中毒的 #16 讀到 +0x25 = 2 被擋下,麻痺的 #17 沒有進 0x13fd4。",
+ "stops": [
+  {
+   "run": "r1",
+   "stop": 7,
+   "unit": 11,
+   "at_entry": {
+    "hp": 28,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": null,
+   "observed": "rejected",
+   "observed_new_hp": null,
+   "round_instead_of_floor_would_give": null
+  },
+  {
+   "run": "r1",
+   "stop": 10,
+   "unit": 13,
+   "at_entry": {
+    "hp": 9,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 14,
+   "observed": "write",
+   "observed_new_hp": 14,
+   "round_instead_of_floor_would_give": 15
+  },
+  {
+   "run": "r1",
+   "stop": 12,
+   "unit": 14,
+   "at_entry": {
+    "hp": 26,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 28,
+   "observed": "write",
+   "observed_new_hp": 28,
+   "round_instead_of_floor_would_give": 28
+  },
+  {
+   "run": "r1",
+   "stop": 14,
+   "unit": 15,
+   "at_entry": {
+    "hp": 28,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": null,
+   "observed": "rejected",
+   "observed_new_hp": null,
+   "round_instead_of_floor_would_give": null
+  },
+  {
+   "run": "r1",
+   "stop": 16,
+   "unit": 16,
+   "at_entry": {
+    "hp": 7,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 12,
+   "observed": "write",
+   "observed_new_hp": 12,
+   "round_instead_of_floor_would_give": 13
+  },
+  {
+   "run": "r1",
+   "stop": 18,
+   "unit": 17,
+   "at_entry": {
+    "hp": 9,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 14,
+   "observed": "write",
+   "observed_new_hp": 14,
+   "round_instead_of_floor_would_give": 15
+  },
+  {
+   "run": "r2",
+   "stop": 6,
+   "unit": 11,
+   "at_entry": {
+    "hp": 28,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": null,
+   "observed": "rejected",
+   "observed_new_hp": null,
+   "round_instead_of_floor_would_give": null
+  },
+  {
+   "run": "r2",
+   "stop": 8,
+   "unit": 13,
+   "at_entry": {
+    "hp": 9,
+    "maxhp": 34,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 15,
+   "observed": "write",
+   "observed_new_hp": 15,
+   "round_instead_of_floor_would_give": 16
+  },
+  {
+   "run": "r2",
+   "stop": 10,
+   "unit": 14,
+   "at_entry": {
+    "hp": 26,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 28,
+   "observed": "write",
+   "observed_new_hp": 28,
+   "round_instead_of_floor_would_give": 28
+  },
+  {
+   "run": "r2",
+   "stop": 12,
+   "unit": 15,
+   "at_entry": {
+    "hp": 28,
+    "maxhp": 28,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": null,
+   "observed": "rejected",
+   "observed_new_hp": null,
+   "round_instead_of_floor_would_give": null
+  },
+  {
+   "run": "r2",
+   "stop": 14,
+   "unit": 16,
+   "at_entry": {
+    "hp": 7,
+    "maxhp": 28,
+    "b25": 2,
+    "b26": 0
+   },
+   "predicted_new_hp": null,
+   "observed": "rejected",
+   "observed_new_hp": null,
+   "round_instead_of_floor_would_give": null
+  },
+  {
+   "run": "r2",
+   "stop": 16,
+   "unit": 18,
+   "at_entry": {
+    "hp": 9,
+    "maxhp": 34,
+    "b25": 0,
+    "b26": 0
+   },
+   "predicted_new_hp": 15,
+   "observed": "write",
+   "observed_new_hp": 15,
+   "round_instead_of_floor_would_give": 16
+  }
+ ],
+ "pre_post": {
+  "r1": {
+   "11": {
+    "xy": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     28,
+     28
+    ]
+   },
+   "13": {
+    "xy": [
+     [
+      3,
+      4
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     14
+    ]
+   },
+   "14": {
+    "xy": [
+     [
+      5,
+      4
+     ],
+     [
+      5,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     26,
+     28
+    ]
+   },
+   "15": {
+    "xy": [
+     [
+      4,
+      5
+     ],
+     [
+      4,
+      5
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     28,
+     28
+    ]
+   },
+   "16": {
+    "xy": [
+     [
+      4,
+      3
+     ],
+     [
+      4,
+      3
+     ]
+    ],
+    "b25": [
+     1,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     12
+    ]
+   },
+   "17": {
+    "xy": [
+     [
+      6,
+      4
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     1,
+     0
+    ],
+    "hp": [
+     9,
+     14
+    ]
+   },
+   "18": {
+    "xy": [
+     [
+      4,
+      6
+     ],
+     [
+      5,
+      9
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     9
+    ]
+   }
+  },
+  "r2": {
+   "11": {
+    "xy": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     28,
+     28
+    ]
+   },
+   "13": {
+    "xy": [
+     [
+      3,
+      4
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     15
+    ]
+   },
+   "14": {
+    "xy": [
+     [
+      5,
+      4
+     ],
+     [
+      5,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     26,
+     28
+    ]
+   },
+   "15": {
+    "xy": [
+     [
+      4,
+      5
+     ],
+     [
+      4,
+      5
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     28,
+     28
+    ]
+   },
+   "16": {
+    "xy": [
+     [
+      4,
+      3
+     ],
+     [
+      4,
+      3
+     ]
+    ],
+    "b25": [
+     3,
+     2
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     7
+    ]
+   },
+   "17": {
+    "xy": [
+     [
+      6,
+      4
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     3,
+     2
+    ],
+    "hp": [
+     9,
+     9
+    ]
+   },
+   "18": {
+    "xy": [
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      5
+     ]
+    ],
+    "b25": [
+     0,
+     0
+    ],
+    "b26": [
+     0,
+     0
+    ],
+    "hp": [
+     9,
+     15
+    ]
+   }
+  }
+ }
+}
