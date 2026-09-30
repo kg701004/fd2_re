@@ -599,7 +599,7 @@
   {
    "addr": "0x14b16",
    "name": "map_collect_cells_byte3_set",
-   "summary": "(out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]、高 [0x53ac5]。掃整張地圖,把 byte3 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。(2026-09-19 訂正:初版誤記為 6-byte 表頭的 byte1。) 2026-09-30 DOSBox-X(doc98 續五十三):ai_spell_candidate_select 的施放點依 y 再 x 遞增出現,例如 (22,13)、(20,14)、(23,14)、(24,15)、(23,16)、(13,17)、(14,17)。",
+   "summary": "(out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]、高 [0x53ac5]。掃整張地圖,把 byte3 != 0xff 的格子的 (x, y) 依序寫進 out(每筆 2 bytes),回傳筆數。(2026-09-19 訂正:初版誤記為 6-byte 表頭的 byte1。) 2026-09-30 DOSBox-X(doc98 續五十三):ai_spell_candidate_select 的施放點依 y 再 x 遞增出現,例如 (22,13)、(20,14)、(23,14)、(24,15)、(23,16)、(13,17)、(14,17)。 續六十二:move_unit_toward_point 的 9 次呼叫,輸出清單都等於同一時刻地圖 byte3 != 0xff 的格(y 外 x 內)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -1812,9 +1812,9 @@
   {
    "addr": "0x146d1",
    "name": "map_block_cells_of_side",
-   "summary": "(except, mode):對每個單位(數量 [0x53beb],略過 except 與 +5 bit0 已設者),mode==0 時挑 +6(陣營)==0 的、否則挑 +6!=0 的,把它所在地圖格的 byte3 設 0xff。",
-   "confidence": "static_re",
-   "date": "2026-09-19",
+   "summary": "(except, mode):對每個單位(數量 [0x53beb],略過 except 與 +5 bit0 已設者),mode==0 時挑 +6(陣營)==0 的、否則挑 +6!=0 的,把它所在地圖格的 byte3 設 0xff。 2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):在 move_unit_toward_point 內比對泛洪後與本函式後的地圖,4 次非空的差集都正好是同陣營、+5 bit0 未設、不是自己的單位所在的可達格,其他格不變。",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
    "evidence": [
     {
      "at": "0x146ff",
@@ -8888,6 +8888,51 @@
     {
      "at": "0x1dd4c",
      "insn": "mov byte ptr [ebx + 5], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x14b78",
+   "name": "move_unit_toward_point",
+   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "evidence": [
+    {
+     "at": "0x14b9f",
+     "insn": "movzx eax, byte ptr [ebx + 0x3b]"
+    },
+    {
+     "at": "0x14c3a",
+     "insn": "call 0x4e4f6"
+    },
+    {
+     "at": "0x14c72",
+     "insn": "push 0x1c"
+    },
+    {
+     "at": "0x14d0d",
+     "insn": "movzx eax, byte ptr [edx + eax*4 + 7]"
+    },
+    {
+     "at": "0x14d8d",
+     "insn": "call 0x146d1"
+    },
+    {
+     "at": "0x14d99",
+     "insn": "call 0x14b16"
+    },
+    {
+     "at": "0x14e38",
+     "insn": "cmp ebp, dword ptr [esp + 0x30]"
+    },
+    {
+     "at": "0x14e40",
+     "insn": "cmp eax, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x14ec4",
+     "insn": "call 0x13488"
     }
    ]
   }
