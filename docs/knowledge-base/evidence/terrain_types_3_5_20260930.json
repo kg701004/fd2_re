@@ -1,0 +1,186 @@
+{
+ "note": "DOSBox-X 記憶體傾印與斷點讀值;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。第 1 章地圖沒有地形類型 3..5,所以每擊之前把地形表 [0x53a69](執行期 0x22841c)中索爾所在格 tile 0x6e 與盜賊所在格 tile 0x6d 那兩列的 byte 1 改成指定類型(tt_*.bin 為改寫後讀回)。修正表執行期讀回 [5,0,-5,-5,-5,0] / [0,0,10,10,-5,0]。predicted 依 scene_attack_resolve 與 unit_uses_move_cost_row19 的靜態規則計算;null = 該修正被跳過。",
+ "cases": [
+  {
+   "case": "u1",
+   "attacker": {
+    "xy": [
+     20,
+     14
+    ],
+    "tile": "0x6e",
+    "terrain_type": 3,
+    "race": 1,
+    "ap": 125,
+    "gated": false
+   },
+   "defender": {
+    "xy": [
+     19,
+     14
+    ],
+    "tile": "0x6d",
+    "terrain_type": 4,
+    "race": 1,
+    "dp": 115,
+    "gated": false
+   },
+   "predicted": {
+    "ap_mod": -6,
+    "dp_mod": -5,
+    "damage": 8
+   },
+   "breakpoints": {
+    "ap_mod_0x2f8dc_eax_edx": [
+     -6,
+     -25
+    ],
+    "dp_mod_0x2f921_eax_edx": [
+     -5,
+     -75
+    ],
+    "damage_0x2f9fc": 8
+   },
+   "defender_hp_drop": 8,
+   "floor_division_would_give": {
+    "ap_mod": -7,
+    "dp_mod": -6
+   }
+  },
+  {
+   "case": "u2",
+   "attacker": {
+    "xy": [
+     20,
+     14
+    ],
+    "tile": "0x6e",
+    "terrain_type": 4,
+    "race": 1,
+    "ap": 125,
+    "gated": false
+   },
+   "defender": {
+    "xy": [
+     19,
+     14
+    ],
+    "tile": "0x6d",
+    "terrain_type": 5,
+    "race": 1,
+    "dp": 115,
+    "gated": false
+   },
+   "predicted": {
+    "ap_mod": -6,
+    "dp_mod": 0,
+    "damage": 3
+   },
+   "breakpoints": {
+    "ap_mod_0x2f8dc_eax_edx": [
+     -6,
+     -25
+    ],
+    "dp_mod_0x2f921_eax_edx": [
+     0,
+     0
+    ],
+    "damage_0x2f9fc": 3
+   },
+   "defender_hp_drop": 3,
+   "floor_division_would_give": {
+    "ap_mod": -7,
+    "dp_mod": 0
+   }
+  },
+  {
+   "case": "u3",
+   "attacker": {
+    "xy": [
+     20,
+     14
+    ],
+    "tile": "0x6e",
+    "terrain_type": 5,
+    "race": 1,
+    "ap": 125,
+    "gated": false
+   },
+   "defender": {
+    "xy": [
+     19,
+     14
+    ],
+    "tile": "0x6d",
+    "terrain_type": 3,
+    "race": 1,
+    "dp": 105,
+    "gated": false
+   },
+   "predicted": {
+    "ap_mod": 0,
+    "dp_mod": 10,
+    "damage": 9
+   },
+   "breakpoints": {
+    "ap_mod_0x2f8dc_eax_edx": [
+     0,
+     0
+    ],
+    "dp_mod_0x2f921_eax_edx": [
+     10,
+     50
+    ],
+    "damage_0x2f9fc": 9
+   },
+   "defender_hp_drop": 9,
+   "floor_division_would_give": {
+    "ap_mod": 0,
+    "dp_mod": 10
+   }
+  },
+  {
+   "case": "u4",
+   "attacker": {
+    "xy": [
+     20,
+     14
+    ],
+    "tile": "0x6e",
+    "terrain_type": 5,
+    "race": 1,
+    "ap": 125,
+    "gated": false
+   },
+   "defender": {
+    "xy": [
+     19,
+     14
+    ],
+    "tile": "0x6d",
+    "terrain_type": 3,
+    "race": 4,
+    "dp": 110,
+    "gated": true
+   },
+   "predicted": {
+    "ap_mod": 0,
+    "dp_mod": null,
+    "damage": 13
+   },
+   "breakpoints": {
+    "ap_mod_0x2f8dc_eax_edx": [
+     0,
+     0
+    ],
+    "dp_mod_0x2f921_eax_edx": null,
+    "damage_0x2f9fc": 13
+   },
+   "defender_hp_drop": 13,
+   "floor_division_would_give": {
+    "ap_mod": 0,
+    "dp_mod": null
+   }
+  }
+ ]
+}

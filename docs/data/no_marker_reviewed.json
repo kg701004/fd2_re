@@ -34864,6 +34864,14 @@
    "excerpt": "`ai_spell_execute` 補上歸 0 實測、`map_collect_cells_byte3_set` 補上掃描序、`spell_damage_apply` 補上 AI 施法的累加。共 397 筆。",
    "verdict": "benign",
    "note": "登錄動作的簿記說明(登錄表補了哪些欄位、總筆數),不是遊戲事實主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 6206,
+   "excerpt_sha1": "0c2a76ef0718c4e6972aaa1eaf507b09c3194a14",
+   "excerpt": "**未驗證。** 類型 3..5 在實際地圖上的分布(哪些圖、哪些 tile);`map_attack_resolve` 對類型 3..5 的修正(續五十一已證同一公式,但沒有在這三種類型上實測)。",
+   "verdict": "benign",
+   "note": "列出本次未測的範圍,是範圍聲明,不是遊戲事實主張"
   }
  ]
 }
