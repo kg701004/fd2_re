@@ -1,0 +1,162 @@
+{
+ "note": "DOSBox-X 斷點停點(返回位址為靜態位址)與施法前後單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。法術 9 列 = 999 / 命中 50 / 距離 3 / 範圍 0 / MP 30。base_predicted = 999 × 魔抗表 0x51f96[職業-1] / 10;命中 = 亂數 < 50;damage = base*9//10 + roll*base//1000。P1、P2 是 悠妮 #1 對盜賊 #11,A1、A2 是盜賊 #11(只會法術 9、拿掉武器)對 悠妮 #1。",
+ "rounds": {
+  "P1": {
+   "flag_53af9": 0,
+   "caster": 1,
+   "target": 11,
+   "target_class": 7,
+   "breakpoint_stops": [
+    [
+     "command_handler_9 0x214ad",
+     "ret 0x1d480"
+    ],
+    [
+     "spell_damage_resolve",
+     "ret 0x214f2",
+     11,
+     9
+    ],
+    [
+     "0x1c7fe",
+     "base 999",
+     "hit_roll 99"
+    ]
+   ],
+   "base_predicted": 999,
+   "hit_roll": 99,
+   "hit": false,
+   "damage_predicted": 0,
+   "note": "施法後遊戲回到標題畫面(所有 NPC 都設了 +5 bit0),沒有施法後傾印"
+  },
+  "P2": {
+   "flag_53af9": 0,
+   "caster": 1,
+   "target": 11,
+   "target_class": 7,
+   "breakpoint_stops": [
+    [
+     "command_handler_9 0x214ad",
+     "ret 0x1d480"
+    ],
+    [
+     "spell_damage_resolve",
+     "ret 0x214f2",
+     11,
+     9
+    ],
+    [
+     "0x1c7fe",
+     "base 999",
+     "hit_roll 99"
+    ]
+   ],
+   "base_predicted": 999,
+   "hit_roll": 99,
+   "hit": false,
+   "damage_predicted": 0,
+   "target_hp": [
+    999,
+    999
+   ],
+   "caster_mp": [
+    817,
+    787
+   ]
+  },
+  "A1": {
+   "flag_53af9": 0,
+   "caster": 11,
+   "target": 1,
+   "target_class": 21,
+   "breakpoint_stops": [
+    [
+     "ai_spell_execute",
+     "ret 0x14fe0",
+     11,
+     0
+    ],
+    [
+     "spell_cast_scene 0x2ff01",
+     "ret 0x15405",
+     11,
+     9
+    ],
+    [
+     "spell_damage_resolve",
+     "ret 0x3095d",
+     1,
+     9
+    ],
+    [
+     "0x1c7fe",
+     "base 499",
+     "hit_roll 27"
+    ],
+    [
+     "0x1c87f",
+     "dmg_roll 95"
+    ]
+   ],
+   "base_predicted": 499,
+   "hit_roll": 27,
+   "hit": true,
+   "damage_predicted": 496,
+   "target_hp": [
+    999,
+    503
+   ],
+   "caster_mp": [
+    100,
+    70
+   ]
+  },
+  "A2": {
+   "flag_53af9": 1,
+   "caster": 11,
+   "target": 1,
+   "target_class": 21,
+   "breakpoint_stops": [
+    [
+     "ai_spell_execute",
+     "ret 0x14fe0",
+     11,
+     0
+    ],
+    [
+     "command_handler_9 0x214ad",
+     "ret 0x15426",
+     11,
+     1
+    ],
+    [
+     "spell_damage_resolve",
+     "ret 0x214f2",
+     1,
+     9
+    ],
+    [
+     "0x1c7fe",
+     "base 499",
+     "hit_roll 39"
+    ],
+    [
+     "0x1c87f",
+     "dmg_roll 91"
+    ]
+   ],
+   "base_predicted": 499,
+   "hit_roll": 39,
+   "hit": true,
+   "damage_predicted": 494,
+   "target_hp": [
+    999,
+    505
+   ],
+   "caster_mp": [
+    100,
+    70
+   ]
+  }
+ }
+}
