@@ -1137,6 +1137,9 @@ mode 0 雖是多數(56%)，但 mode 2 也佔了 28%，不能省略這個檢查�
   `+0x34 bit7` 再乘3；type0x14／0x15 由 row `+0x0E` 經 `0x4E516`
   取 command word，type0x18 直接用 row word，target HP 小於等於門檻得
   0x12，否則8。其他 type 回零；不為 type 或 bit 指派效果名稱。
+  **2026-09-30 DOSBox-X 動態驗證(doc98 續五十八,`0x1567E` / `0x15880` 命名 `ai_item_candidate_select` / `ai_item_target_score`)**:
+  恢復道具 58 對 MaxHP 28 的 HP 9/10(bit7)/14/15 得 8/9/3/0,道具 38(type 0x15、數值 120)對 HP 120 得 0x12、HP 121 得 8;
+  40 次評分、候選清單與勝出者全部與重算相同。type 0x18 與 `command-0x10` 的 `0x149F8` 分支未實測。
 - `ScoreNativeAI1567E` 已閉合完整數值 producer。它以 `0x1B8A6` 的
   bit7-clear count 掃 raw slots `0..count-1`，依 slot item row 建
   row-major 目的地；低 command 以第二個 `0x14818` 產生 roster-ordered

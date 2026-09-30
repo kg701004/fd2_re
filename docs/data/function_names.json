@@ -8638,7 +8638,7 @@
    "name": "ai_choose_action",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
-   "summary": "(unit, a2):依序呼叫 0x14237(物理,優先級寫 [0x53c4f])、ai_spell_candidate_select([0x53c23])、0x1567e(道具,[0x53c33]),d = 攻方 +0x48 - 物理目標([0x53c4b])+0x4a,bit = 攻方 +0x34 & 0x40。三者都 < 6 回 0;P > S 且 P > I → 0x1548e(ai_attack_execute);P == S 且 P > I:法術 < 11 時法術列 +0 < d 走物理、否則 ai_spell_execute,法術 >= 11 時 bit 非 0 走物理、否則施法;P == I 且 P > S:bit 非 0 物理、否則 0x15055;S > P 且 S >= I → ai_spell_execute;I > P 且 I > S → 0x15055;其餘(例如三者相等)不行動。呼叫端 0x13a9f 等。2026-09-30 DOSBox-X 動態驗證(doc98 續五十七):同一個敵方回合 8 個敵人,在 0x14f62 讀到的 (P, S, d, bit) 與之後停下的執行函式全部符合 ——S 24 > P 8 施法、P 0x12 > S 8 物理、P = S = 8 且法術 8 時 d 441 物理 / d 440 施法、法術 13 時 bit 0x40 = 1 物理 / 0 施法。道具分支未測。",
+   "summary": "(unit, a2):依序呼叫 0x14237(物理,優先級寫 [0x53c4f])、ai_spell_candidate_select([0x53c23])、0x1567e(道具,[0x53c33]),d = 攻方 +0x48 - 物理目標([0x53c4b])+0x4a,bit = 攻方 +0x34 & 0x40。三者都 < 6 回 0;P > S 且 P > I → 0x1548e(ai_attack_execute);P == S 且 P > I:法術 < 11 時法術列 +0 < d 走物理、否則 ai_spell_execute,法術 >= 11 時 bit 非 0 走物理、否則施法;P == I 且 P > S:bit 非 0 物理、否則 0x15055;S > P 且 S >= I → ai_spell_execute;I > P 且 I > S → 0x15055;其餘(例如三者相等)不行動。呼叫端 0x13a9f 等。2026-09-30 DOSBox-X 動態驗證(doc98 續五十七):同一個敵方回合 8 個敵人,在 0x14f62 讀到的 (P, S, d, bit) 與之後停下的執行函式全部符合 ——S 24 > P 8 施法、P 0x12 > S 8 物理、P = S = 8 且法術 8 時 d 441 物理 / d 440 施法、法術 13 時 bit 0x40 = 1 物理 / 0 施法。道具分支未測。 道具分支(續五十八,DOSBox-X):I 9 > P 0 與 I 0x12 > P 8 走 0x15055;P = I = 8 時 bit 0x40 = 1 物理、0 走 0x15055;P、S、I 都是 0 的 4 個敵人停在 0x14f62 後沒有進任何執行函式。",
    "evidence": [
     {
      "at": "0x14f0b",
@@ -8683,6 +8683,100 @@
     {
      "at": "0x15006",
      "insn": "call 0x15055"
+    }
+   ]
+  },
+  {
+   "addr": "0x1567e",
+   "name": "ai_item_candidate_select",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "summary": "(unit, mode):AI 道具候選。[0x53c33] = 0;以 0x1b8a6(旗標 bit7 清除的 slot 數)掃 slot 0..count-1,道具 = +0xb + 2*slot,列 = item_effect_row_ptr;列 +0xd 為 0 跳過。施放點 = 距施法者 <= 列 +0x10 的格(> 0xf 時改 1),依 y 再 x;每格以 collect_targets_in_range(範圍 = 列 +0x12,選擇子:mode 為 0 時取「列 +0x11 為 0 ? 1 : 0」)取目標(列 +0x10 > 0xf 時改呼叫 0x149f8),有目標才呼叫 ai_item_target_score;嚴格大於才換,寫入 [0x53c33] 分數、[0x53c37]/[0x53c3b] 施放點、[0x53c3f] slot。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):4 個持道具的敵人,候選清單(施放點、目標、順序)與勝出的 (分數, 施放點, slot) 全部與重算相同。",
+   "evidence": [
+    {
+     "at": "0x1568f",
+     "insn": "mov dword ptr [0x3c33], 0"
+    },
+    {
+     "at": "0x156e4",
+     "insn": "call 0x1b8a6"
+    },
+    {
+     "at": "0x1571a",
+     "insn": "movzx eax, byte ptr [eax + 0xb]"
+    },
+    {
+     "at": "0x15723",
+     "insn": "call 0x4e8bc"
+    },
+    {
+     "at": "0x1573e",
+     "insn": "movzx eax, byte ptr [esi + 0xd]"
+    },
+    {
+     "at": "0x157d4",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x157f8",
+     "insn": "call 0x15880"
+    },
+    {
+     "at": "0x15800",
+     "insn": "cmp eax, dword ptr [0x3c33]"
+    },
+    {
+     "at": "0x15823",
+     "insn": "mov dword ptr [0x3c3f], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x15880",
+   "name": "ai_item_target_score",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "summary": "(item, count, targets):AI 道具評分。列 +0xd 為 5 或 0xd(恢復):逐目標 HP <= MaxHP/3 得 8、否則 HP <= MaxHP/2 得 3、否則 0(與法術評分的「<」不同),目標 +0x34 bit7 時 × 3;為 0x14/0x15:數值 = row7_ptr_619fd(列 +0xe) 的 +0 word,為 0x18:數值 = 列 +0xe;逐目標數值 >= HP 得 0x12、否則 8;其他 type 回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):40 次回傳值全部等於重算 —— 恢復道具 58 對 MaxHP 28 的 HP 9/10(bit7)/14/15 得 8/9/3/0,道具 38(數值 = 法術 1 的 120)對 HP 120 得 0x12、HP 121 得 8。0x18 型未測。",
+   "evidence": [
+    {
+     "at": "0x15897",
+     "insn": "call 0x4e8bc"
+    },
+    {
+     "at": "0x1589f",
+     "insn": "movzx ebp, word ptr [eax + 0xe]"
+    },
+    {
+     "at": "0x158a3",
+     "insn": "movzx esi, byte ptr [eax + 0xd]"
+    },
+    {
+     "at": "0x1591e",
+     "insn": "cmp ebp, eax"
+    },
+    {
+     "at": "0x15922",
+     "insn": "mov eax, 8"
+    },
+    {
+     "at": "0x158c8",
+     "insn": "mov eax, 3"
+    },
+    {
+     "at": "0x158d1",
+     "insn": "test byte ptr [ebx + 0x34], 0x80"
+    },
+    {
+     "at": "0x15939",
+     "insn": "call 0x4e866"
+    },
+    {
+     "at": "0x15978",
+     "insn": "cmp ebp, eax"
+    },
+    {
+     "at": "0x1594d",
+     "insn": "mov eax, 0x12"
     }
    ]
   }

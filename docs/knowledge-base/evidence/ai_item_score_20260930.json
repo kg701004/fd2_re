@@ -1,0 +1,1152 @@
+{
+ "note": "DOSBox-X 斷點停點與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每個施法者的 0x1567e 被呼叫兩次(第一遍掃描與 ai_choose_action),兩次候選與分數相同。HP 效果:#16 被道具 58 補滿(10 -> 28);#2、#3 被道具 38 打掉 98、93(base 108、96,亂數沒讀);#18 的物理被 #4 反擊致死。觀察(未追):#13..#15 在敵方回合後各 +5 HP(評分當下仍是 9/14/15);敵人的道具沒有被消耗。",
+ "items": {
+  "58": {
+   "type": 13,
+   "e": 300,
+   "range": 2,
+   "sel11": 1,
+   "area": 0,
+   "row": "06 b4 00 5a 00 00 00 00 00 00 00 01 01 0d 2c 01 02 01 00 10 27 01 00"
+  },
+  "38": {
+   "type": 21,
+   "e": 1,
+   "range": 2,
+   "sel11": 0,
+   "area": 1,
+   "row": "04 b4 00 64 00 00 00 00 00 00 00 01 01 15 01 00 02 00 01 d4 30 00 00"
+  }
+ },
+ "calls": [
+  {
+   "stop": 5,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    3
+   ],
+   "targets": [
+    16
+   ],
+   "target_state": [
+    {
+     "unit": 16,
+     "hp": 10,
+     "maxhp": 28,
+     "b34": 128
+    }
+   ],
+   "score_eax": 9,
+   "score_recomputed": 9
+  },
+  {
+   "stop": 6,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    3,
+    4
+   ],
+   "targets": [
+    13
+   ],
+   "target_state": [
+    {
+     "unit": 13,
+     "hp": 9,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 7,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    4
+   ],
+   "targets": [
+    11
+   ],
+   "target_state": [
+    {
+     "unit": 11,
+     "hp": 28,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 0,
+   "score_recomputed": 0
+  },
+  {
+   "stop": 8,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    5,
+    4
+   ],
+   "targets": [
+    14
+   ],
+   "target_state": [
+    {
+     "unit": 14,
+     "hp": 14,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 3,
+   "score_recomputed": 3
+  },
+  {
+   "stop": 9,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    5
+   ],
+   "targets": [
+    15
+   ],
+   "target_state": [
+    {
+     "unit": 15,
+     "hp": 15,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 0,
+   "score_recomputed": 0
+  },
+  {
+   "stop": 10,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    3
+   ],
+   "targets": [
+    16
+   ],
+   "target_state": [
+    {
+     "unit": 16,
+     "hp": 10,
+     "maxhp": 28,
+     "b34": 128
+    }
+   ],
+   "score_eax": 9,
+   "score_recomputed": 9
+  },
+  {
+   "stop": 11,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    3,
+    4
+   ],
+   "targets": [
+    13
+   ],
+   "target_state": [
+    {
+     "unit": 13,
+     "hp": 9,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 12,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    4
+   ],
+   "targets": [
+    11
+   ],
+   "target_state": [
+    {
+     "unit": 11,
+     "hp": 28,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 0,
+   "score_recomputed": 0
+  },
+  {
+   "stop": 13,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    5,
+    4
+   ],
+   "targets": [
+    14
+   ],
+   "target_state": [
+    {
+     "unit": 14,
+     "hp": 14,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 3,
+   "score_recomputed": 3
+  },
+  {
+   "stop": 14,
+   "actor": 11,
+   "item": 58,
+   "slot": 2,
+   "cast_point": [
+    4,
+    5
+   ],
+   "targets": [
+    15
+   ],
+   "target_state": [
+    {
+     "unit": 15,
+     "hp": 15,
+     "maxhp": 28,
+     "b34": 0
+    }
+   ],
+   "score_eax": 0,
+   "score_recomputed": 0
+  },
+  {
+   "stop": 18,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    1
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 19,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 20,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 21,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    24,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 22,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    3
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 23,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    1
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 24,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 25,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 26,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    24,
+    2
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 27,
+   "actor": 17,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    3
+   ],
+   "targets": [
+    2
+   ],
+   "target_state": [
+    {
+     "unit": 2,
+     "hp": 120,
+     "maxhp": 990,
+     "b34": 238
+    }
+   ],
+   "score_eax": 18,
+   "score_recomputed": 18
+  },
+  {
+   "stop": 31,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    18
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 32,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    21,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 33,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 34,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 35,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    20
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 36,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    18
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 37,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    21,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 38,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 39,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    23,
+    19
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 40,
+   "actor": 18,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    22,
+    20
+   ],
+   "targets": [
+    4
+   ],
+   "target_state": [
+    {
+     "unit": 4,
+     "hp": 121,
+     "maxhp": 918,
+     "b34": 0
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 45,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    14
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 46,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    1,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 47,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 48,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    3,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 49,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    16
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 50,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    14
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 51,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    1,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 52,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 53,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    3,
+    15
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  },
+  {
+   "stop": 54,
+   "actor": 19,
+   "item": 38,
+   "slot": 2,
+   "cast_point": [
+    2,
+    16
+   ],
+   "targets": [
+    3
+   ],
+   "target_state": [
+    {
+     "unit": 3,
+     "hp": 121,
+     "maxhp": 867,
+     "b34": 16
+    }
+   ],
+   "score_eax": 8,
+   "score_recomputed": 8
+  }
+ ],
+ "decisions": [
+  {
+   "stop": 15,
+   "unit": 11,
+   "P": 0,
+   "S": 0,
+   "I": 9,
+   "item_best_xy_slot": [
+    4,
+    3,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "item",
+   "executor_observed": "item",
+   "item_best_predicted": [
+    9,
+    4,
+    3,
+    2
+   ]
+  },
+  {
+   "stop": 28,
+   "unit": 17,
+   "P": 8,
+   "S": 0,
+   "I": 18,
+   "item_best_xy_slot": [
+    23,
+    1,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "item",
+   "executor_observed": "item",
+   "item_best_predicted": [
+    18,
+    23,
+    1,
+    2
+   ]
+  },
+  {
+   "stop": 41,
+   "unit": 18,
+   "P": 8,
+   "S": 0,
+   "I": 8,
+   "item_best_xy_slot": [
+    22,
+    18,
+    2
+   ],
+   "d": 50,
+   "bit40": 64,
+   "predicted": "physical",
+   "executor_observed": "physical",
+   "item_best_predicted": [
+    8,
+    22,
+    18,
+    2
+   ]
+  },
+  {
+   "stop": 55,
+   "unit": 19,
+   "P": 8,
+   "S": 0,
+   "I": 8,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "item",
+   "executor_observed": "item",
+   "item_best_predicted": [
+    8,
+    2,
+    14,
+    2
+   ]
+  },
+  {
+   "stop": 58,
+   "unit": 12,
+   "P": 8,
+   "S": 0,
+   "I": 0,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 24,
+   "bit40": 0,
+   "predicted": "physical",
+   "executor_observed": "physical",
+   "item_best_predicted": null
+  },
+  {
+   "stop": 62,
+   "unit": 13,
+   "P": 0,
+   "S": 0,
+   "I": 0,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "none",
+   "executor_observed": "none",
+   "item_best_predicted": null
+  },
+  {
+   "stop": 63,
+   "unit": 14,
+   "P": 0,
+   "S": 0,
+   "I": 0,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "none",
+   "executor_observed": "none",
+   "item_best_predicted": null
+  },
+  {
+   "stop": 64,
+   "unit": 15,
+   "P": 0,
+   "S": 0,
+   "I": 0,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "none",
+   "executor_observed": "none",
+   "item_best_predicted": null
+  },
+  {
+   "stop": 65,
+   "unit": 16,
+   "P": 0,
+   "S": 0,
+   "I": 0,
+   "item_best_xy_slot": [
+    2,
+    14,
+    2
+   ],
+   "d": 50,
+   "bit40": 0,
+   "predicted": "none",
+   "executor_observed": "none",
+   "item_best_predicted": null
+  }
+ ],
+ "hp_pre_post": {
+  "2": [
+   120,
+   22
+  ],
+  "3": [
+   121,
+   28
+  ],
+  "4": [
+   121,
+   121
+  ],
+  "13": [
+   9,
+   14
+  ],
+  "14": [
+   14,
+   19
+  ],
+  "15": [
+   15,
+   20
+  ],
+  "16": [
+   10,
+   28
+  ],
+  "18": [
+   28,
+   0
+  ]
+ }
+}
