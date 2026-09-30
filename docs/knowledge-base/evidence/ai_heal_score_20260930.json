@@ -1,0 +1,936 @@
+{
+ "note": "DOSBox-X 斷點停點(0x1598a 入口、0x15add 評分回傳 EAX、0x15b6d 出口)與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。盜賊 #11 只會法術 13(回復)、拿掉武器;其他盜賊 MaxHP 28,HP 夾在 28/3 = 9、28/2 = 14 兩個整數邊界上,部分設 +0x34 bit0。單位表只傾印 0..20 號;第 3 回合增援 21..26 沒有進入候選清單(觀察到的清單與只用 0..20 號重算的清單相同)。",
+ "spell_row_13": {
+  "value": 70,
+  "cast": 4,
+  "area": 0,
+  "mp": 3,
+  "sel": 1,
+  "row": "46 00 00 04 00 03 01"
+ },
+ "runs": [
+  {
+   "run": "h1",
+   "units_dump": "sc_units_h1_5",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 6,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 8,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 7,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 8,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 9,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 10,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 6,
+     "score_recomputed": 6,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 11,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    8,
+    13,
+    16,
+    13
+   ],
+   "casts_predicted": true
+  },
+  {
+   "run": "h1",
+   "units_dump": "sc_units_h1_13",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 14,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 8,
+     "score_recomputed": 8,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 8,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 15,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 16,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 17,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 18,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 6,
+     "score_recomputed": 6,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 19,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    8,
+    13,
+    16,
+    13
+   ],
+   "casts_predicted": true
+  },
+  {
+   "run": "h2",
+   "units_dump": "sc_units_h2_5",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 6,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 7,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 8,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 9,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 6,
+     "score_recomputed": 6,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 10,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 11,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 27,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    6,
+    15,
+    18,
+    13
+   ],
+   "casts_predicted": true
+  },
+  {
+   "run": "h2",
+   "units_dump": "sc_units_h2_13",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 14,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 15,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 16,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 17,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 6,
+     "score_recomputed": 6,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 18,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 19,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 27,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    6,
+    15,
+    18,
+    13
+   ],
+   "casts_predicted": true
+  },
+  {
+   "run": "h3",
+   "units_dump": "sc_units_h3_11_1",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 2,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 3,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 4,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 5,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 6,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 12,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 7,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 27,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    3,
+    13,
+    16,
+    13
+   ],
+   "casts_predicted": false
+  },
+  {
+   "run": "h3",
+   "units_dump": "sc_units_h3_11_33",
+   "caster": {
+    "xy": [
+     13,
+     18
+    ],
+    "mp": 100
+   },
+   "calls": [
+    {
+     "stop": 34,
+     "spell": 13,
+     "cast_point": [
+      13,
+      16
+     ],
+     "targets": [
+      13
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 13,
+       "hp": 9,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 35,
+     "spell": 13,
+     "cast_point": [
+      11,
+      18
+     ],
+     "targets": [
+      15
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 15,
+       "hp": 14,
+       "maxhp": 28,
+       "b34": 1
+      }
+     ]
+    },
+    {
+     "stop": 36,
+     "spell": 13,
+     "cast_point": [
+      13,
+      18
+     ],
+     "targets": [
+      11
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 11,
+       "hp": 28,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 37,
+     "spell": 13,
+     "cast_point": [
+      15,
+      18
+     ],
+     "targets": [
+      14
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 14,
+       "hp": 13,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 38,
+     "spell": 13,
+     "cast_point": [
+      16,
+      18
+     ],
+     "targets": [
+      17
+     ],
+     "score_eax": 3,
+     "score_recomputed": 3,
+     "target_state": [
+      {
+       "unit": 17,
+       "hp": 12,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    },
+    {
+     "stop": 39,
+     "spell": 13,
+     "cast_point": [
+      13,
+      20
+     ],
+     "targets": [
+      16
+     ],
+     "score_eax": 0,
+     "score_recomputed": 0,
+     "target_state": [
+      {
+       "unit": 16,
+       "hp": 27,
+       "maxhp": 28,
+       "b34": 0
+      }
+     ]
+    }
+   ],
+   "best_53c23_27_2b_2f": [
+    3,
+    13,
+    16,
+    13
+   ],
+   "casts_predicted": false
+  }
+ ],
+ "entry_order": {
+  "h1": [
+   "pass1:11",
+   "pass2:11",
+   "ai_spell_execute:11",
+   "pass1:12..17",
+   "pass2:12..17"
+  ],
+  "h2": [
+   "pass1:11",
+   "pass2:11",
+   "ai_spell_execute:11"
+  ],
+  "h3": [
+   "pass1:11",
+   "pass1:12..17,21..26",
+   "pass2:11",
+   "pass2:12..17,21..26",
+   "(沒有 ai_spell_execute)"
+  ]
+ },
+ "heal_results": {
+  "h1": {
+   "target": 13,
+   "hp": [
+    8,
+    28
+   ],
+   "maxhp": 28,
+   "caster_mp": [
+    100,
+    97
+   ]
+  },
+  "h2": {
+   "target": 14,
+   "hp": [
+    13,
+    28
+   ],
+   "maxhp": 28,
+   "caster_mp": [
+    100,
+    97
+   ]
+  }
+ }
+}

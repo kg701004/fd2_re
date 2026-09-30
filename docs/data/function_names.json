@@ -8520,7 +8520,7 @@
    "name": "ai_spell_candidate_select",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
-   "summary": "(unit, mode):AI 單位的法術候選選擇。先把 [0x53c23] 設 0;unit_list_bits_1a 為 0 或 unit+0x27 != 0 直接返回。依法術編號遞增逐一處理:法術列(row7_ptr_619fd)+5 的 MP 大於 unit+0x44 就跳過;0x4e390 以施法者目前位置、半徑 = 列 +3 標記施放點,map_collect_cells_byte3_set 依 y 再 x 的掃描序列出;每個施放點以 collect_targets_in_range(半徑 = 列 +4,選擇子:mode 為 0 時取「列 +6 為 0 ? 1 : 0」,否則取 +6)取目標,目標數為 0 跳過,否則呼叫 ai_spell_target_score。分數嚴格大於 [0x53c23] 才換;同分時列 +0(法術數值)較大才換,再同分保留先出現者。勝出者寫入 [0x53c23] 分數、[0x53c27]/[0x53c2b] 施放點、[0x53c2f] 法術。呼叫端 0x1d91a(返回 0x1d91f)、0x14f15(返回 0x14f1a),0x13e09。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三):4 輪 8 次呼叫的候選清單(法術、施放點、目標、順序)與最終選擇,全部與由單位表離線重算的結果相同;MP 79 那輪沒有任何法術 12(MP 80)的評分呼叫。",
+   "summary": "(unit, mode):AI 單位的法術候選選擇。先把 [0x53c23] 設 0;unit_list_bits_1a 為 0 或 unit+0x27 != 0 直接返回。依法術編號遞增逐一處理:法術列(row7_ptr_619fd)+5 的 MP 大於 unit+0x44 就跳過;0x4e390 以施法者目前位置、半徑 = 列 +3 標記施放點,map_collect_cells_byte3_set 依 y 再 x 的掃描序列出;每個施放點以 collect_targets_in_range(半徑 = 列 +4,選擇子:mode 為 0 時取「列 +6 為 0 ? 1 : 0」,否則取 +6)取目標,目標數為 0 跳過,否則呼叫 ai_spell_target_score。分數嚴格大於 [0x53c23] 才換;同分時列 +0(法術數值)較大才換,再同分保留先出現者。勝出者寫入 [0x53c23] 分數、[0x53c27]/[0x53c2b] 施放點、[0x53c2f] 法術。呼叫端 0x1d91a(返回 0x1d91f)、0x14f15(返回 0x14f1a),0x13e09。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三):4 輪 8 次呼叫的候選清單(法術、施放點、目標、順序)與最終選擇,全部與由單位表離線重算的結果相同;MP 79 那輪沒有任何法術 12(MP 80)的評分呼叫。 施法門檻(續五十六,DOSBox-X):[0x53c23] 的最佳分數 >= 6 才施法 —— 0x1d8ba 的第一遍掃描在 0x1d92d 判斷(>= 6 立刻呼叫 0x13a9f 行動),0x14ef0 在 0x14f6b 判斷(物理、法術、道具三者都 < 6 時跳到 0x22bbe)。實測最佳分數 8、6 時第一遍就接著呼叫 0x14f1a 並施法;最佳分數 3 時第一遍不行動,第二遍才評分且沒有呼叫 ai_spell_execute。同分 3 時保留掃描序最前的施放點。",
    "evidence": [
     {
      "at": "0x1599b",
@@ -8573,7 +8573,7 @@
    "name": "ai_spell_target_score",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
-   "summary": "(spell, count, targets):AI 法術評分。法術 < 13(攻擊):v = 法術列 +0,逐目標得 8(HP >= v)或 24(HP < v),目標 +8 == 0 時再 × 1.5(double 常數 0x50144,frndint 取整),加總;法術 10..12 跳過 unit_uses_move_cost_row19 為真的目標。法術 13..16(恢復):HP < MaxHP/3 得 8、否則 < MaxHP/2 得 3、否則 0,+0x34 bit0 時 × 2。0x11..0x13 回傳 0x15da2(count, targets, 法術 + 0x11, 3);0x14/0x15 目標 +0x25/+0x26 非 0 各 +6;0x16 目標 +0x27 為 0 且 unit_list_bits_1a 非 0 各 +6;0x1a/0x1b 回傳 0x15da2(count, targets, 0x25/0x26, 4);其餘 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三,只驗攻擊分支):50 次評分回傳值全部等於離線重算 —— HP 440 對 v 440 得 8、HP 439 得 24,索爾(+8 = 0)得 12,法術 12 對種族 5、種族 4 目標記 0,對種族 1 目標照算(8×3 = 24、8×3 + 24×2 = 72)。恢復與其他分支未測。",
+   "summary": "(spell, count, targets):AI 法術評分。法術 < 13(攻擊):v = 法術列 +0,逐目標得 8(HP >= v)或 24(HP < v),目標 +8 == 0 時再 × 1.5(double 常數 0x50144,frndint 取整),加總;法術 10..12 跳過 unit_uses_move_cost_row19 為真的目標。法術 13..16(恢復):HP < MaxHP/3 得 8、否則 < MaxHP/2 得 3、否則 0,+0x34 bit0 時 × 2。0x11..0x13 回傳 0x15da2(count, targets, 法術 + 0x11, 3);0x14/0x15 目標 +0x25/+0x26 非 0 各 +6;0x16 目標 +0x27 為 0 且 unit_list_bits_1a 非 0 各 +6;0x1a/0x1b 回傳 0x15da2(count, targets, 0x25/0x26, 4);其餘 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三,只驗攻擊分支):50 次評分回傳值全部等於離線重算 —— HP 440 對 v 440 得 8、HP 439 得 24,索爾(+8 = 0)得 12,法術 12 對種族 5、種族 4 目標記 0,對種族 1 目標照算(8×3 = 24、8×3 + 24×2 = 72)。恢復與其他分支未測。 恢復分支 2026-09-30 DOSBox-X 動態驗證(doc98 續五十六):MaxHP 28 的目標 HP 8 得 8、HP 9 得 3(28/3 取整為 9,不是 9.33)、HP 13 得 3、HP 14 得 0(28/2 = 14),+0x34 bit0 時 3 → 6、0 → 0,施法者自己(HP 滿)得 0;3 輪 36 次回傳值全部等於離線重算。",
    "evidence": [
     {
      "at": "0x15b92",
@@ -8618,6 +8618,18 @@
     {
      "at": "0x15c53",
      "insn": "test byte ptr [ebx + 0x34], 1"
+    },
+    {
+     "at": "0x15c8d",
+     "insn": "mov dword ptr [esp + 0xc], 3"
+    },
+    {
+     "at": "0x15c41",
+     "insn": "mov dword ptr [esp + 8], 3"
+    },
+    {
+     "at": "0x15c59",
+     "insn": "shl dword ptr [esp + 8], 1"
     }
    ]
   }
