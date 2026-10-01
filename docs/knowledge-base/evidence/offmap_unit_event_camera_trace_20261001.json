@@ -1,0 +1,583 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章戰場 = map 24,來源存檔 source_ch27.SAV 經 prepare_chapter_save;與續六十八同一個設定(v5_setup 的複本 v7_setup)。斷點位址為 Ghidra 位址,執行期 +0x19c000。",
+ "A_camera_focus": {
+  "note": "0x12cea(x, y) 入口讀游標 [0x53ab1]/[0x53ab5]、捲動 [0x53aa9]/[0x53aad]、[0x51a83];0x12d7b 的 ret(0x12dab)讀游標。每一筆 cursor_after == target_xy == 單位座標。",
+  "calls": [
+   {
+    "unit": 0,
+    "target_xy": [
+     7,
+     43
+    ],
+    "cursor_before": [
+     11,
+     27
+    ],
+    "cursor_after": [
+     7,
+     43
+    ],
+    "scroll_before": [
+     5,
+     21
+    ],
+    "scroll_after": [
+     5,
+     37
+    ],
+    "a83": 1,
+    "caller_ret": "0x1a7b0",
+    "unit_xy": [
+     7,
+     43
+    ]
+   },
+   {
+    "unit": 45,
+    "target_xy": [
+     21,
+     31
+    ],
+    "cursor_before": [
+     7,
+     43
+    ],
+    "cursor_after": [
+     21,
+     31
+    ],
+    "scroll_before": [
+     5,
+     37
+    ],
+    "scroll_after": [
+     10,
+     30
+    ],
+    "a83": 0,
+    "caller_ret": "0x14208",
+    "unit_xy": [
+     21,
+     31
+    ]
+   },
+   {
+    "unit": 45,
+    "target_xy": [
+     21,
+     31
+    ],
+    "cursor_before": [
+     21,
+     31
+    ],
+    "cursor_after": [
+     21,
+     31
+    ],
+    "scroll_before": [
+     10,
+     30
+    ],
+    "scroll_after": [
+     10,
+     30
+    ],
+    "a83": 0,
+    "caller_ret": "0x13f99",
+    "unit_xy": [
+     21,
+     31
+    ]
+   },
+   {
+    "unit": 48,
+    "target_xy": [
+     9,
+     15
+    ],
+    "cursor_before": [
+     21,
+     31
+    ],
+    "cursor_after": [
+     9,
+     15
+    ],
+    "scroll_before": [
+     10,
+     30
+    ],
+    "scroll_after": [
+     8,
+     14
+    ],
+    "a83": 0,
+    "caller_ret": "0x14208",
+    "unit_xy": [
+     9,
+     15
+    ]
+   }
+  ]
+ },
+ "B_offmap_field_event": {
+  "map": {
+   "W": 25,
+   "H": 53,
+   "grid_bytes": 5304
+  },
+  "rule": "0x1317a(逐步移動共用收尾 0x1314f)以游標 [0x53ab1]/[0x53ab5] 呼叫 field_event_lookup(x, y, 0);格子位址 grid + 4 + 4*(y*W + x) 不檢查邊界。寫入條件:地形表 [tile*4] & 0x60 == 0、slot = byte2 & 0x1f != 0、事件表 [0x53a55] + 0x33 + (slot-1)*2 的 (id, sel) 中 id != 0xff 且 sel == 參數。",
+  "event_table_slots_1_32": [
+   [
+    55,
+    1
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    255,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    191,
+    0
+   ],
+   [
+    0,
+    96
+   ],
+   [
+    0,
+    1
+   ],
+   [
+    32,
+    78
+   ],
+   [
+    0,
+    95
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    75,
+    0
+   ],
+   [
+    0,
+    195
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ]
+  ],
+  "lookups_logged": 193,
+  "off_grid": 34,
+  "in_grid_x_ge_W": 158,
+  "first_off_grid": [
+   150,
+   47
+  ],
+  "writes": [
+   {
+    "x": 164,
+    "y": 48,
+    "sel": 0,
+    "cell": [
+     254,
+     63,
+     254,
+     36
+    ],
+    "tile": 1022,
+    "slot": 30,
+    "tt_b0": 137,
+    "event_id": 0
+   },
+   {
+    "x": 173,
+    "y": 49,
+    "sel": 0,
+    "cell": [
+     99,
+     2,
+     30,
+     129
+    ],
+    "tile": 611,
+    "slot": 30,
+    "tt_b0": 128,
+    "event_id": 0
+   },
+   {
+    "x": 176,
+    "y": 49,
+    "sel": 0,
+    "cell": [
+     191,
+     190,
+     188,
+     171
+    ],
+    "tile": 703,
+    "slot": 28,
+    "tt_b0": 128,
+    "event_id": 0
+   },
+   {
+    "x": 177,
+    "y": 49,
+    "sel": 0,
+    "cell": [
+     170,
+     188,
+     191,
+     26
+    ],
+    "tile": 170,
+    "slot": 31,
+    "tt_b0": 0,
+    "event_id": 0
+   }
+  ],
+  "prediction_mismatches": 0,
+  "dispatch": [
+   {
+    "eip": "0x1d9ec",
+    "eax": 0,
+    "ebx": 3,
+    "ecx": 0,
+    "edx": 376,
+    "ebp": 5,
+    "esi": 53,
+    "edi": 2660,
+    "esp": 2037292,
+    "event_id": 0,
+    "handler": "0x34531",
+    "unit": 53
+   }
+  ],
+  "units_changed_excluding_0x26": [
+   {
+    "unit": 12,
+    "side": 2,
+    "xy_before": [
+     8,
+     47
+    ],
+    "xy_after": [
+     8,
+     49
+    ],
+    "changed_offsets": [
+     1
+    ]
+   },
+   {
+    "unit": 13,
+    "side": 2,
+    "xy_before": [
+     6,
+     48
+    ],
+    "xy_after": [
+     6,
+     49
+    ],
+    "changed_offsets": [
+     1
+    ]
+   },
+   {
+    "unit": 48,
+    "side": 0,
+    "xy_before": [
+     10,
+     10
+    ],
+    "xy_after": [
+     9,
+     15
+    ],
+    "changed_offsets": [
+     0,
+     1
+    ]
+   },
+   {
+    "unit": 53,
+    "side": 0,
+    "xy_before": [
+     0,
+     0
+    ],
+    "xy_after": [
+     178,
+     49
+    ],
+    "changed_offsets": [
+     0,
+     1
+    ]
+   }
+  ],
+  "unit_count_before_after": [
+   62,
+   62
+  ],
+  "terrain_table_dump_sha256": "35b60af43568127f20e65c6558d2caba40dfa59098874a06afeb9479bdb83dcf",
+  "screenshot": ".wsl_build/ctr/v7/ch25/e2_now.png",
+  "note": "e1(同一個敵方回合的前半段)因驅動腳本逾時被終止,停點紀錄沒寫出;e2 從同一次走路的 (39,25) 接續記錄到落地。"
+ },
+ "C_offmap_focus_never_returns": {
+  "entry": {
+   "ret": "0x12da8",
+   "xy": [
+    178,
+    49
+   ],
+   "cursor": [
+    8,
+    20
+   ],
+   "scroll": [
+    7,
+    14
+   ],
+   "a83": 0
+  },
+  "samples_every_6s_after_20s": [
+   {
+    "eip": "0x4e27c",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   },
+   {
+    "eip": "-0x19ba67",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   },
+   {
+    "eip": "0x4e273",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   },
+   {
+    "eip": "0x4e247",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   },
+   {
+    "eip": "0x4ef09",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   },
+   {
+    "eip": "0x4ef09",
+    "scroll": [
+     12,
+     14
+    ],
+    "cursor": [
+     24,
+     20
+    ],
+    "screen": [
+     12,
+     6
+    ],
+    "a83": 0
+   }
+  ],
+  "bp_0x12d3b_0x12d42_0x12dab": [
+   {
+    "eip": "0x12d3b",
+    "esi_target_x": 178,
+    "edi_target_y": 49,
+    "cursor": [
+     24,
+     20
+    ]
+   },
+   {
+    "eip": "0x12d3b",
+    "esi_target_x": 178,
+    "edi_target_y": 49,
+    "cursor": [
+     24,
+     20
+    ]
+   },
+   {
+    "eip": "0x12d3b",
+    "esi_target_x": 178,
+    "edi_target_y": 49,
+    "cursor": [
+     24,
+     20
+    ]
+   },
+   {
+    "eip": "0x12d3b",
+    "esi_target_x": 178,
+    "edi_target_y": 49,
+    "cursor": [
+     24,
+     20
+    ]
+   },
+   {
+    "eip": "0x12d3b",
+    "esi_target_x": 178,
+    "edi_target_y": 49,
+    "cursor": [
+     24,
+     20
+    ]
+   }
+  ],
+  "note": "x 迴圈每圈都停在 0x12d3b(ESI = 178),游標 x 停在 W−1 = 24,0x12d42(y 迴圈)與 0x12dab(返回)沒有停點。0x11bfa 在游標 x == W−1 時不遞增,所以目標 x >= W 時迴圈不結束。"
+ }
+}

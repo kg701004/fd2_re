@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 155,
+  "total": 151,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 100,
+   "wrapper": 96,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
@@ -27,34 +27,6 @@
    "name": "wrapper(kbd_buffer_has_key(), palette_cycle_tick(), redraw(0), int386(0x16, 0x3a8d, 0x3a8d))",
    "round": 1,
    "callers": 1,
-   "argc": 0
-  },
-  "0x11b48": {
-   "kind": "wrapper",
-   "name": "wrapper(redraw(0))",
-   "round": 1,
-   "callers": 3,
-   "argc": 0
-  },
-  "0x11b9b": {
-   "kind": "wrapper",
-   "name": "wrapper(redraw(0))",
-   "round": 1,
-   "callers": 3,
-   "argc": 0
-  },
-  "0x11bfa": {
-   "kind": "wrapper",
-   "name": "wrapper(redraw(0))",
-   "round": 1,
-   "callers": 3,
-   "argc": 0
-  },
-  "0x11c59": {
-   "kind": "wrapper",
-   "name": "wrapper(redraw(0))",
-   "round": 1,
-   "callers": 3,
    "argc": 0
   },
   "0x12263": {

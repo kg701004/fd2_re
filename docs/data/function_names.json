@@ -5027,7 +5027,7 @@
   {
    "addr": "0x34531",
    "name": "event_handler_0",
-   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。",
+   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。 2026-10-01 DOSBox-X(doc98 續六十九):map 24 的敵方回合以 0x1d9ec 分派到本函式(單位 53 走出地圖觸發,不是第 1 章);畫面是索爾頭像加亂碼文字框,鏡頭移到 map 24 的熔岩區;單位數不變,隊伍 #12、#13 的 y 改為 49(推論為本事件的演出)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -8894,7 +8894,7 @@
   {
    "addr": "0x14b78",
    "name": "move_unit_toward_point",
-   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。 續六十八(DOSBox-X):由 ai_move_toward_reachable_opponent 傳入地圖外的目標 (156,255) 時要跑數十秒才返回,回 1,單位落在 (172,53)(地圖寬 25)。之後同一敵方回合出現一段文字框是亂碼樣式的劇情對話,原因未查。",
+   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。 續六十八(DOSBox-X):由 ai_move_toward_reachable_opponent 傳入地圖外的目標 (156,255) 時要跑數十秒才返回,回 1,單位落在 (172,53)(地圖寬 25)。之後同一敵方回合出現一段文字框是亂碼樣式的劇情對話,原因未查。 續六十九(DOSBox-X):上述「亂碼樣式的劇情對話」是事件 0(event_handler_0,第 1 章的事件)——單位走出地圖時,逐步移動的 field_event_lookup 讀到地圖陣列之外的格子而寫入事件 0,敵方回合在該單位之後分派。",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
    "evidence": [
@@ -9108,7 +9108,7 @@
   {
    "addr": "0x13a44",
    "name": "field_event_lookup",
-   "summary": "(x, y, selector):以 map_cell_info 取格子資訊;格子旗標不含 0x60(寶箱/隱藏物品)且 event word(1-based slot)非 0 時,查 [0x53a55] + 0x33 起 2 bytes/筆的 (event_id, selector),event_id 不是 0xff 且 selector 等於參數就把 event_id 寫入待處理事件 [0x51a8f]。玩家行動結束後以 selector 1 呼叫(0x18aef / 0x18b0c),AI 端另有呼叫點。2026-10-01 DOSBox-X(doc98 續六十五):map 28 的 (15,21) 是 slot 2 → 事件 75(selector 1),悠妮走到該格休息後事件 75 的悠妮分支執行(對話、[0x53ad5]+0x11 = 1、列 0/1 回合改寫)。同圖另一個 slot 2 的 (11,38) 是寶箱格,不查表。",
+   "summary": "(x, y, selector):以 map_cell_info 取格子資訊;格子旗標不含 0x60(寶箱/隱藏物品)且 event word(1-based slot)非 0 時,查 [0x53a55] + 0x33 起 2 bytes/筆的 (event_id, selector),event_id 不是 0xff 且 selector 等於參數就把 event_id 寫入待處理事件 [0x51a8f]。玩家行動結束後以 selector 1 呼叫(0x18aef / 0x18b0c),AI 端另有呼叫點。2026-10-01 DOSBox-X(doc98 續六十五):map 28 的 (15,21) 是 slot 2 → 事件 75(selector 1),悠妮走到該格休息後事件 75 的悠妮分支執行(對話、[0x53ad5]+0x11 = 1、列 0/1 回合改寫)。同圖另一個 slot 2 的 (11,38) 是寶箱格,不查表。 續六十九(DOSBox-X,map 24):逐步移動的收尾 0x1314f 每走一格以游標座標呼叫本函式(selector 0,返回 0x1317a),不檢查邊界。單位走到地圖外時格子位址超出地圖陣列(25×53 的第 1325 格之後),讀到的是後面的記憶體;slot 取 byte2 & 0x1f,事件表 slot 17、18、24、27..32 是 (0, 0),所以 (164,48)、(173,49)、(176,49)、(177,49) 都寫入事件 0。193 次查詢以格子、地形表、事件表重算,寫入與否 0 筆不符。",
    "confidence": "verified_dynamic",
    "date": "2026-10-01",
    "evidence": [
@@ -9295,7 +9295,7 @@
   {
    "addr": "0x14121",
    "name": "ai_move_toward_reachable_opponent",
-   "summary": "(unit, a2):AI 模式 0/1/5/11 在 ai_choose_action 沒有候選時的移動備援。成本列同 move_unit_toward_point(class、0x1f183 → 19、+8 == 0x1c → 1),0x145cd(a2) 標出對手格後以 grid_path_search mode 2(預算 0x1c、目標固定 (0,0))找 0x40 格;outBuf 是自己堆疊上 8 byte 區域的 [esp+4..5],沒有初始化。回 0xff → 重設地圖、回 0。否則重設地圖後讀 outBuf 當目標:等於自己的格子就回 0(不移動);不等就 [0x51a83] = 0、0x12d7b(unit)、move_unit_toward_point(x, y, unit, a2),它回非 0 才回 1,最後 [0x51a83] = 1。2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):找得到對手的 #48 → (9,27),0x14b78 回 1,本函式回 1,不再呼叫 0x13e9c;MV 0 的 #45 → (19,47),0x14b78 回 0,本函式回 0,模式 0 接著呼叫 ai_move_toward_nearest 再休息;站在 (0,2) 的 #54 預算內沒有對手 → 0xff → 回 0 → 休息。**站在 (0,0) 的 #53**:mode 2 的起點檢查讓結果先變 0,預算內又沒有對手,回 0 而不是 0xff,本函式把未初始化的 [esp+4..5](入口時就是 [156,255])當目標,呼叫 0x14b78(156, 255),它回 1,#53 落在 (172,53)(地圖寬 25,已在地圖外);同一設定前一回合沒下斷點也落在 (172,53)。在 0x14132 把那兩個 byte 改成 (0,0) 時走「等於自己」分支:不呼叫 0x12d7b 與 0x14b78,回 0。四次 mode 2 搜尋以入口地圖逐指令重算,回傳值、outBuf、整張地圖都相同。證據 evidence/ai_seek_opponent_rand_trace_20261001.json",
+   "summary": "(unit, a2):AI 模式 0/1/5/11 在 ai_choose_action 沒有候選時的移動備援。成本列同 move_unit_toward_point(class、0x1f183 → 19、+8 == 0x1c → 1),0x145cd(a2) 標出對手格後以 grid_path_search mode 2(預算 0x1c、目標固定 (0,0))找 0x40 格;outBuf 是自己堆疊上 8 byte 區域的 [esp+4..5],沒有初始化。回 0xff → 重設地圖、回 0。否則重設地圖後讀 outBuf 當目標:等於自己的格子就回 0(不移動);不等就 [0x51a83] = 0、0x12d7b(unit)、move_unit_toward_point(x, y, unit, a2),它回非 0 才回 1,最後 [0x51a83] = 1。2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):找得到對手的 #48 → (9,27),0x14b78 回 1,本函式回 1,不再呼叫 0x13e9c;MV 0 的 #45 → (19,47),0x14b78 回 0,本函式回 0,模式 0 接著呼叫 ai_move_toward_nearest 再休息;站在 (0,2) 的 #54 預算內沒有對手 → 0xff → 回 0 → 休息。**站在 (0,0) 的 #53**:mode 2 的起點檢查讓結果先變 0,預算內又沒有對手,回 0 而不是 0xff,本函式把未初始化的 [esp+4..5](入口時就是 [156,255])當目標,呼叫 0x14b78(156, 255),它回 1,#53 落在 (172,53)(地圖寬 25,已在地圖外);同一設定前一回合沒下斷點也落在 (172,53)。在 0x14132 把那兩個 byte 改成 (0,0) 時走「等於自己」分支:不呼叫 0x12d7b 與 0x14b78,回 0。四次 mode 2 搜尋以入口地圖逐指令重算,回傳值、outBuf、整張地圖都相同。證據 evidence/ai_seek_opponent_rand_trace_20261001.json 續六十九(DOSBox-X):落到地圖外的單位下一個敵方回合再進本函式時,mode 2 回 1,focus_unit(0x12d7b)對地圖外座標 (178,49) 永不返回,遊戲卡住。",
    "confidence": "verified_dynamic",
    "date": "2026-10-01",
    "evidence": [
@@ -9322,6 +9322,98 @@
     {
      "at": "0x14215",
      "insn": "call 0x14b78"
+    }
+   ]
+  },
+  {
+   "addr": "0x11bfa",
+   "name": "cursor_step_right",
+   "summary": "():游標 x [0x53ab1] 加 1;已在 W−1([0x53ac1]−1)時不動。每步之後 0x11cac(0)。畫面相對位置 [0x53ab9]/[0x53abd] 在安全帶(x 2..10、y 2..5)內只移游標,到邊緣且視窗還能捲就連同捲動 [0x53aa9]/[0x53aad] 一起移。camera_step_to(0x12cea)的步進之一。",
+   "confidence": "static_re",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x11c04",
+     "insn": "mov eax, dword ptr [0x3ac1]"
+    },
+    {
+     "at": "0x11c0a",
+     "insn": "cmp eax, dword ptr [0x3ab1]"
+    },
+    {
+     "at": "0x11c2b",
+     "insn": "inc dword ptr [0x3ab1]"
+    },
+    {
+     "at": "0x11c31",
+     "insn": "inc dword ptr [0x3aa9]"
+    }
+   ]
+  },
+  {
+   "addr": "0x11c59",
+   "name": "cursor_step_left",
+   "summary": "():游標 x [0x53ab1] 減 1;已在 0 時不動。每步之後 0x11cac(0)。畫面相對位置 [0x53ab9]/[0x53abd] 在安全帶(x 2..10、y 2..5)內只移游標,到邊緣且視窗還能捲就連同捲動 [0x53aa9]/[0x53aad] 一起移。camera_step_to(0x12cea)的步進之一。",
+   "confidence": "static_re",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x11c63",
+     "insn": "cmp dword ptr [0x3ab1], 0"
+    },
+    {
+     "at": "0x11c7e",
+     "insn": "dec dword ptr [0x3ab1]"
+    },
+    {
+     "at": "0x11c84",
+     "insn": "dec dword ptr [0x3aa9]"
+    }
+   ]
+  },
+  {
+   "addr": "0x11b48",
+   "name": "cursor_step_up",
+   "summary": "():游標 y [0x53ab5] 減 1;已在 0 時不動。每步之後 0x11cac(0)。畫面相對位置 [0x53ab9]/[0x53abd] 在安全帶(x 2..10、y 2..5)內只移游標,到邊緣且視窗還能捲就連同捲動 [0x53aa9]/[0x53aad] 一起移。camera_step_to(0x12cea)的步進之一。",
+   "confidence": "static_re",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x11b52",
+     "insn": "cmp dword ptr [0x3ab5], 0"
+    },
+    {
+     "at": "0x11b6d",
+     "insn": "dec dword ptr [0x3ab5]"
+    },
+    {
+     "at": "0x11b73",
+     "insn": "dec dword ptr [0x3aad]"
+    }
+   ]
+  },
+  {
+   "addr": "0x11b9b",
+   "name": "cursor_step_down",
+   "summary": "():游標 y [0x53ab5] 加 1;已在 H−1([0x53ac5]−1)時不動。每步之後 0x11cac(0)。畫面相對位置 [0x53ab9]/[0x53abd] 在安全帶(x 2..10、y 2..5)內只移游標,到邊緣且視窗還能捲就連同捲動 [0x53aa9]/[0x53aad] 一起移。camera_step_to(0x12cea)的步進之一。",
+   "confidence": "static_re",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x11ba5",
+     "insn": "mov eax, dword ptr [0x3ac5]"
+    },
+    {
+     "at": "0x11bab",
+     "insn": "cmp eax, dword ptr [0x3ab5]"
+    },
+    {
+     "at": "0x11bcc",
+     "insn": "inc dword ptr [0x3ab5]"
+    },
+    {
+     "at": "0x11bd2",
+     "insn": "inc dword ptr [0x3aad]"
     }
    ]
   }

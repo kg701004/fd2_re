@@ -440,6 +440,12 @@
    "verdict": "region_label",
    "note": "doc35 L2048/99-reflections L82:「0x4E000–0x4F800」區段標籤",
    "date": "2026-09-18"
+  },
+  {
+   "address": "0x1d9ec",
+   "verdict": "other",
+   "note": "doc98 續六十九:enemy_phase_dispatch(0x1d8ba)第 2 趟的事件分派指令 call [eax*4+0x51b91],DOSBox-X 斷點位址,不是入口主張(工具把 0x1d94d 當成所在函式起點)",
+   "date": "2026-10-01"
   }
  ]
 }

@@ -6822,3 +6822,59 @@ C 落到地圖外 (172,53)(地圖寬 25),第 1 回合同樣設定、沒下斷點
 
 **登錄。** 新名稱 `ai_move_toward_reachable_opponent`(0x14121),verified_dynamic;`prng_next`(0x4ebe3)由 static_re 升為 verified_dynamic。
 map_attack_sequence、move_unit_toward_point、grid_path_search 補註。0x12d7b 呼叫 0x12cea,文件裡有「鏡頭」與「尋路原點」兩種說法,這次沒驗證,不登錄。共 417 筆。
+
+## 2026-10-01 續六十九:續六十八留下的兩項 —— 0x12d7b / 0x12cea 的語意、單位落到地圖外之後的「亂碼劇情對話」(DOSBox-X)
+
+證據 `evidence/offmap_unit_event_camera_trace_20261001.json`(DOSBox-X,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,第 25 章戰場 = map 24,來源存檔 source_ch27.SAV 經 prepare_chapter_save,
+單位設定與續六十八相同)。原始紀錄在 `.wsl_build/ctr/v7/ch25`。
+
+**0x12d7b / 0x12cea,靜態。** 兩者已有名稱:`focus_unit`(0x12d7b)、`camera_step_to`(0x12cea)(`native_argcounts.json`),這次不另外登錄。
+`focus_unit(unit)` 讀單位記錄 +0/+1,呼叫 `camera_step_to(x, y)`。`camera_step_to` 先跑 x 迴圈、再跑 y 迴圈,每圈呼叫一個游標步進函式,
+接著呼叫 0x4e381;[0x51a83] 不是 0 也不是 6 時,每步再等 1 tick。游標是 [0x53ab1]/[0x53ab5],捲動是 [0x53aa9]/[0x53aad]。
+四個步進函式(本輪登錄為 cursor_step_right / left / up / down)都把游標夾在地圖內,所以目標在地圖外時迴圈不會結束。
+單位逐步移動(0x13488 依方向分派到 0x12eaa / 0x1300d / 0x13185 / 0x13315)時,游標跟著單位走,而且不夾。共用收尾 0x1314f 以游標座標呼叫 `field_event_lookup(x, y, 0)`。
+所以 doc11 的「重置 pathing 原點、無副作用」不精確。0x12d7b 移的是游標,讓之後每一步的事件查詢落在單位所在格。
+路徑搜尋 0x4e4f6 與 move_unit_toward_point 本體都沒有參照 [0x53ab1]。
+
+另外,`0x33f78(a1, a2, a3)` 呼叫的是 `0x12cea(a2, a3)` 與 `0x22253(a1, a2, a3, a2, a3)`。文件記的 `0x22253(slot, x, y, x, y)` 是對的,
+所以 0x12cea 收的是 (x, y)。doc31(§9.5、§10)、doc50(L733)、doc91(L4378)寫的 `0x12cea(slot, x)` 是抄錄錯誤。本輪只記錄,沒有改那三份文件。
+
+**focus_unit,DOSBox-X。** 在 `camera_step_to` 入口與 `focus_unit` 的返回點(0x12dab)讀游標:
+
+| 呼叫(DOSBox-X) | 單位座標 | 入口游標 | 返回時游標 | 捲動 | [0x51a83] |
+|---|---|---|---|---|---|
+| 玩家回合開始(返回 0x1a7b0),單位 0 | (7,43) | (11,27) | (7,43) | (5,21) → (5,37) | 1 |
+| ai_move_toward_reachable_opponent,#45 | (21,31) | (7,43) | (21,31) | (5,37) → (10,30) | 0 |
+| ai_move_toward_nearest(返回 0x13f99),#45 | (21,31) | (21,31) | (21,31) | 不變 | 0 |
+| ai_move_toward_reachable_opponent,#48 | (9,15) | (21,31) | (9,15) | (10,30) → (8,14) | 0 |
+
+**亂碼劇情對話的來源,DOSBox-X(map 24 第 1 回合)。** 單位 C(#53)從 (0,0) 照續六十八的流程走出地圖,這次落在 (178,49)。
+outBuf 沒有初始化,殘值和上次不同,所以落點不同(續六十八是 (172,53))。
+走路的每一步都進 `field_event_lookup`(selector 0,返回 0x1317a)。從 (150,47) 起,格子索引 y×25+x 超過 1325,讀到的已經是地圖陣列之後的記憶體。
+這張地圖的事件表([0x53a55] + 0x33)真正的項目只有 slot 1 = 事件 55(selector 1);slot 17 以後是別的資料,其中 17、18、24、27..32 是 (0, 0)。
+
+| 項目(DOSBox-X) | 結果 |
+|---|---|
+| 記錄到的查詢(e2,從 (39,25) 起) | 193 次,地圖外 34 次 |
+| 以格子、地形表 byte0、事件表重算「寫不寫入」 | 0 筆不符 |
+| 寫入事件 0 的格子 | (164,48) slot 30、(173,49) slot 30、(176,49) slot 28、(177,49) slot 31 |
+| 落地後的收尾查詢(selector 1,返回 0x13e7c) | (178,49) slot 6 = (0xff, 0),不寫 |
+| 分派 | 0x1d9ec(第 2 趟),事件 0,處理函式 0x34531(event_handler_0),單位 53 |
+| 畫面 | 索爾頭像加亂碼文字框,和續六十八相同;鏡頭捲到 (5,8),畫面上的熔岩是 map 24 的真實地形 |
+| 單位表(事件前後) | 數量 62 不變;隊伍 #12 (8,47)→(8,49)、#13 (6,48)→(6,49) |
+
+結論:那段對話是第 1 章的事件 0。單位走出地圖後,逐步移動的事件查詢讀到地圖陣列之外的格子,把事件 0 寫進待處理事件,敵方回合在這個單位之後分派它。
+#12、#13 被搬動(DOSBox-X 單位表在事件前後的傾印比對),推論是事件 0 的演出所致:這段期間沒有其他會搬動隊伍單位的流程,但沒有斷在演出函式上確認。
+
+**單位在地圖外時的下一個回合(DOSBox-X,map 24 第 2 回合)。** C 在 (178,49) 再進 ai_move_toward_reachable_opponent,mode 2 回 1(outBuf 沒讀)。
+接著呼叫 `focus_unit(53)` → `camera_step_to(178, 49)`,入口游標 (8,20)。20 秒後每 6 秒停一次,共 6 次:游標都是 (24,20)、捲動都是 (12,14),EIP 在重繪 / 計時函式裡。
+再斷 x 迴圈的 0x12d3b、y 迴圈的 0x12d42、返回點 0x12dab:連續 5 次都停在 0x12d3b(ESI = 178、游標 x = 24),另外兩個沒有停過。
+cursor_step_right 在游標 x = W−1 時不遞增,所以這個迴圈不會結束,遊戲卡住。
+
+**未驗證。** 事件 0 其他呼叫(join、spawn)對存檔或隊伍旗標的影響;0x165db、0x1a7b0 是哪個函式呼叫的;實際關卡裡有沒有 AI 單位會站在 (0,0) 而且預算內沒有對手(續六十八的觸發前提),沒有查。
+
+**過程備註(DOSBox-X)。** 第一段(e1)在前景以 `timeout 590 … | tail` 執行,逾時被終止,管線裡的輸出也一起丟了,只剩傾印檔。之後改在背景以 `python -u` 寫 log 檔。
+`field_event_lookup` 每走一格就呼叫一次,長距離走路會有數百個停點,所以斷點只留入口(不斷 0x13a64,out 可由格子重算)。
+
+**登錄。** 新增 `cursor_step_right`(0x11bfa)、`cursor_step_left`(0x11c59)、`cursor_step_up`(0x11b48)、`cursor_step_down`(0x11b9b),static_re。
+field_event_lookup、move_unit_toward_point、ai_move_toward_reachable_opponent、event_handler_0 補註。共 421 筆。
