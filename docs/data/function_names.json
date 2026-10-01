@@ -5027,7 +5027,7 @@
   {
    "addr": "0x34531",
    "name": "event_handler_0",
-   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。 2026-10-01 DOSBox-X(doc98 續六十九):map 24 的敵方回合以 0x1d9ec 分派到本函式(單位 53 走出地圖觸發,不是第 1 章);畫面是索爾頭像加亂碼文字框,鏡頭移到 map 24 的熔岩區;單位數不變,隊伍 #12、#13 的 y 改為 49(推論為本事件的演出)。",
+   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。 2026-10-01 DOSBox-X(doc98 續六十九):map 24 的敵方回合以 0x1d9ec 分派到本函式(單位 53 走出地圖觸發,不是第 1 章);畫面是索爾頭像加亂碼文字框,鏡頭移到 map 24 的熔岩區;單位數不變,隊伍 #12、#13 的 y 改為 49(推論為本事件的演出)。 續七十(靜態 + DOSBox-X):#12、#13 的位移是本函式的 acting——ACT7 = slot 12 pose 0(Y+1)× 2 格,ACT8 = slot 13 pose 0 × 1 格,與兩次實測的 y 47→49、48→49 相同,前一句的「推論」改為已確認。spawn_group(3)、(7) 在 map 24 沒有對應 group 的單位,單位數不變;join(1)(0x112a5)在名冊 [0x53bf7] 尾端追加,不比對既有 +8、不檢查容量:DOSBox-X 名冊人數 16 → 17,新增第二筆 char_id 1(哈諾,LV3、AP 21、HP 56),原有那筆(+7 = 33、LV6)不變。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7919,7 +7919,7 @@
   {
    "addr": "0x165ac",
    "name": "dialog_box_open_anim",
-   "summary": "對話框的開框動畫:camera_step_to 後,一張 [0x53a81] 框圖從游標格([0x53ab9]/[0x53abd] × 24)以內插逐步移向框的位置(步數 = 欄 + 列);接著分 5 段展開框,每段以 decode_image_with_header 存下底下的背景條、以 0x168b6 畫框並 delay。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。",
+   "summary": "對話框的開框動畫:camera_step_to 後,一張 [0x53a81] 框圖從游標格([0x53ab9]/[0x53abd] × 24)以內插逐步移向框的位置(步數 = 欄 + 列);接著分 5 段展開框,每段以 decode_image_with_header 存下底下的背景條、以 0x168b6 畫框並 delay。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。 續七十(靜態):呼叫點 0x161d7 / 0x162bc 的座標是 0x12c60(char_id) 找到的場上單位的 +0/+1(找到時旗標 2 才移游標)。推論:說話者若是站在地圖外的單位,camera_step_to 同樣不會返回(未實測)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -9108,7 +9108,7 @@
   {
    "addr": "0x13a44",
    "name": "field_event_lookup",
-   "summary": "(x, y, selector):以 map_cell_info 取格子資訊;格子旗標不含 0x60(寶箱/隱藏物品)且 event word(1-based slot)非 0 時,查 [0x53a55] + 0x33 起 2 bytes/筆的 (event_id, selector),event_id 不是 0xff 且 selector 等於參數就把 event_id 寫入待處理事件 [0x51a8f]。玩家行動結束後以 selector 1 呼叫(0x18aef / 0x18b0c),AI 端另有呼叫點。2026-10-01 DOSBox-X(doc98 續六十五):map 28 的 (15,21) 是 slot 2 → 事件 75(selector 1),悠妮走到該格休息後事件 75 的悠妮分支執行(對話、[0x53ad5]+0x11 = 1、列 0/1 回合改寫)。同圖另一個 slot 2 的 (11,38) 是寶箱格,不查表。 續六十九(DOSBox-X,map 24):逐步移動的收尾 0x1314f 每走一格以游標座標呼叫本函式(selector 0,返回 0x1317a),不檢查邊界。單位走到地圖外時格子位址超出地圖陣列(25×53 的第 1325 格之後),讀到的是後面的記憶體;slot 取 byte2 & 0x1f,事件表 slot 17、18、24、27..32 是 (0, 0),所以 (164,48)、(173,49)、(176,49)、(177,49) 都寫入事件 0。193 次查詢以格子、地形表、事件表重算,寫入與否 0 筆不符。",
+   "summary": "(x, y, selector):以 map_cell_info 取格子資訊;格子旗標不含 0x60(寶箱/隱藏物品)且 event word(1-based slot)非 0 時,查 [0x53a55] + 0x33 起 2 bytes/筆的 (event_id, selector),event_id 不是 0xff 且 selector 等於參數就把 event_id 寫入待處理事件 [0x51a8f]。玩家行動結束後以 selector 1 呼叫(0x18aef / 0x18b0c),AI 端另有呼叫點。2026-10-01 DOSBox-X(doc98 續六十五):map 28 的 (15,21) 是 slot 2 → 事件 75(selector 1),悠妮走到該格休息後事件 75 的悠妮分支執行(對話、[0x53ad5]+0x11 = 1、列 0/1 回合改寫)。同圖另一個 slot 2 的 (11,38) 是寶箱格,不查表。 續六十九(DOSBox-X,map 24):逐步移動的收尾 0x1314f 每走一格以游標座標呼叫本函式(selector 0,返回 0x1317a),不檢查邊界。單位走到地圖外時格子位址超出地圖陣列(25×53 的第 1325 格之後),讀到的是後面的記憶體;slot 取 byte2 & 0x1f,事件表 slot 17、18、24、27..32 是 (0, 0),所以 (164,48)、(173,49)、(176,49)、(177,49) 都寫入事件 0。193 次查詢以格子、地形表、事件表重算,寫入與否 0 筆不符。 續七十(DOSBox-X + 靜態):地圖陣列結尾之後是 12 byte 區塊標頭(0x990、兩個指標)和 FDOTHER_073.bin 自 8672 起的位元組(316/316 相同),寫入事件 0 的 4 格都來自這塊殘留;所以地圖外會寫出哪個事件取決於堆積內容。e1 的 73 次查詢由傾印重算,全在陣列內、slot 都是 0;e1 + e2 在陣列內的 232 格,byte 0..2 與 FDFIELD_072 相同,byte 3 執行期為 0xff。",
    "confidence": "verified_dynamic",
    "date": "2026-10-01",
    "evidence": [

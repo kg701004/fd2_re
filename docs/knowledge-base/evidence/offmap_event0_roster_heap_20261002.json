@@ -1,0 +1,890 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章戰場 = map 24,來源存檔 source_ch27.SAV 經 prepare_chapter_save;v7 = 續六十九的原始紀錄,v8 = 本輪同一設定重做(v8_setup = v7_setup 的複本)。斷點位址為 Ghidra 位址,執行期 +0x19c000。",
+ "A_event0_acting_moves": {
+  "handler_0x34531_calls": [
+   "0x112a5(1) join",
+   "0x10b4e(3) spawn_group",
+   "0x135dd(5,8) pan",
+   "0x11cac(1)",
+   "0x3790a(100)",
+   "0x1366a(7) acting",
+   "0x4e381()",
+   "0x15f84([0x53a79], 0xb, ...) dialog",
+   "[0x51a83]=0",
+   "0x10b4e(7) spawn_group",
+   "0x11cac(1)",
+   "0x3790a(100)",
+   "0x1366a(8) acting",
+   "0x4e381()",
+   "0x15f84([0x53a79], 3, ...) dialog",
+   "0x134e4()"
+  ],
+  "acting_7": [
+   {
+    "beats": 2,
+    "units": [
+     {
+      "slot": 12,
+      "pose": 0
+     }
+    ]
+   },
+   {
+    "beats": 6,
+    "units": [
+     {
+      "slot": 12,
+      "pose": 1
+     }
+    ],
+    "special": true
+   },
+   {
+    "beats": 6,
+    "units": [
+     {
+      "slot": 12,
+      "pose": 3
+     }
+    ],
+    "special": true
+   },
+   {
+    "beats": 10,
+    "units": [
+     {
+      "slot": 12,
+      "pose": 1
+     }
+    ],
+    "special": true
+   },
+   {
+    "beats": 0,
+    "units": [
+     {
+      "slot": 12,
+      "pose": 1
+     }
+    ],
+    "special": true
+   }
+  ],
+  "acting_8": [
+   {
+    "beats": 1,
+    "units": [
+     {
+      "slot": 13,
+      "pose": 0
+     }
+    ]
+   },
+   {
+    "beats": 8,
+    "units": [
+     {
+      "slot": 13,
+      "pose": 3
+     }
+    ],
+    "special": true
+   },
+   {
+    "beats": 8,
+    "units": [
+     {
+      "slot": 13,
+      "pose": 1
+     }
+    ],
+    "special": true
+   }
+  ],
+  "pose_rule": "正常 frame:pose 0:Y+1、1:X-1、2:Y-1、3:X+1,beats = 格數;special frame 不搬格子(doc50 §1.2)",
+  "predicted_moves_by_slot": {
+   "12": [
+    0,
+    2
+   ],
+   "13": [
+    0,
+    1
+   ]
+  },
+  "map24_fdfield_groups": {
+   "0": 46,
+   "1": 8,
+   "2": 1,
+   "255": 15
+  },
+  "note_spawn_groups": "map 24 的 FDFIELD 沒有 group 3 / 7 的單位,spawn_group(3)、(7) 不新增單位;兩次實測單位數都是 62。",
+  "runs": {
+   "v7": {
+    "unit_count": [
+     62,
+     62
+    ],
+    "changed_units_excluding_+5_+0x26": [
+     {
+      "unit": 12,
+      "side": 2,
+      "xy_before": [
+       8,
+       47
+      ],
+      "xy_after": [
+       8,
+       49
+      ],
+      "changed": [
+       1
+      ]
+     },
+     {
+      "unit": 13,
+      "side": 2,
+      "xy_before": [
+       6,
+       48
+      ],
+      "xy_after": [
+       6,
+       49
+      ],
+      "changed": [
+       1
+      ]
+     },
+     {
+      "unit": 48,
+      "side": 0,
+      "xy_before": [
+       10,
+       10
+      ],
+      "xy_after": [
+       9,
+       15
+      ],
+      "changed": [
+       0,
+       1
+      ]
+     },
+     {
+      "unit": 53,
+      "side": 0,
+      "xy_before": [
+       0,
+       0
+      ],
+      "xy_after": [
+       178,
+       49
+      ],
+      "changed": [
+       0,
+       1
+      ]
+     }
+    ]
+   },
+   "v8": {
+    "unit_count": [
+     62,
+     62
+    ],
+    "changed_units_excluding_+5_+0x26": [
+     {
+      "unit": 12,
+      "side": 2,
+      "xy_before": [
+       8,
+       47
+      ],
+      "xy_after": [
+       8,
+       49
+      ],
+      "changed": [
+       1
+      ]
+     },
+     {
+      "unit": 13,
+      "side": 2,
+      "xy_before": [
+       6,
+       48
+      ],
+      "xy_after": [
+       6,
+       49
+      ],
+      "changed": [
+       1
+      ]
+     },
+     {
+      "unit": 48,
+      "side": 0,
+      "xy_before": [
+       10,
+       10
+      ],
+      "xy_after": [
+       9,
+       15
+      ],
+      "changed": [
+       0,
+       1
+      ]
+     },
+     {
+      "unit": 53,
+      "side": 0,
+      "xy_before": [
+       0,
+       0
+      ],
+      "xy_after": [
+       178,
+       49
+      ],
+      "changed": [
+       0,
+       1
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "B_event0_roster_append": {
+  "static": "0x112a5:位址 = [0x53bf7] + [0x53bfb]*0x50,寫 +5 = 0、+6 = 2、+7 = +8 = id …,呼叫 0x1145a,最後 inc [0x53bfb];本體沒有比對既有 +8,也沒有和容量比較。+0..+4、+0x17、+0x19 不寫(新記錄這幾個 byte 是殘值)。",
+  "dispatch": [
+   {
+    "eip": "0x1d9ec",
+    "eax": 0,
+    "ebx": 3,
+    "ecx": 0,
+    "edx": 376,
+    "ebp": 5,
+    "esi": 53,
+    "edi": 2660,
+    "esp": 2037292,
+    "event_id": 0,
+    "handler": "0x34531",
+    "unit": 53
+   }
+  ],
+  "roster_count_at_handler_entry": 16,
+  "join_call": {
+   "ret": "0x34543",
+   "join_id": 1,
+   "count_before": 16
+  },
+  "roster_count_after_join": 17,
+  "char_ids_before": [
+   0,
+   9,
+   4,
+   30,
+   1,
+   19,
+   22,
+   23,
+   24,
+   28,
+   25,
+   7,
+   21,
+   16,
+   18,
+   15
+  ],
+  "char_ids_after": [
+   0,
+   9,
+   4,
+   30,
+   1,
+   19,
+   22,
+   23,
+   24,
+   28,
+   25,
+   7,
+   21,
+   16,
+   18,
+   15,
+   1
+  ],
+  "hano_records": {
+   "index_4_existing": {
+    "+5..+9": [
+     0,
+     2,
+     33,
+     1,
+     0
+    ],
+    "items_+0a..+19": [
+     64,
+     43,
+     64,
+     163,
+     0,
+     93,
+     128,
+     255,
+     128,
+     255,
+     128,
+     255,
+     128,
+     255,
+     128,
+     255
+    ],
+    "lv_+21": 6,
+    "ex_+3c": 5,
+    "ap_+37": 627,
+    "dp_+39": 371,
+    "mv_+3b": 29,
+    "dx_+3e": 119,
+    "hp_+40_+42": [
+     918,
+     918
+    ],
+    "mp_+44_+46": [
+     767,
+     767
+    ],
+    "bytes_+0..+4_not_written_by_0x112a5": [
+     14,
+     39,
+     4,
+     2,
+     0
+    ]
+   },
+   "index_16_appended": {
+    "+5..+9": [
+     0,
+     2,
+     1,
+     1,
+     0
+    ],
+    "items_+0a..+19": [
+     64,
+     0,
+     64,
+     128,
+     128,
+     255,
+     128,
+     255,
+     128,
+     255,
+     128,
+     255,
+     128,
+     130,
+     128,
+     232
+    ],
+    "lv_+21": 3,
+    "ex_+3c": 0,
+    "ap_+37": 21,
+    "dp_+39": 12,
+    "mv_+3b": 4,
+    "dx_+3e": 3,
+    "hp_+40_+42": [
+     56,
+     56
+    ],
+    "mp_+44_+46": [
+     0,
+     0
+    ],
+    "bytes_+0..+4_not_written_by_0x112a5": [
+     133,
+     216,
+     204,
+     189,
+     189
+    ]
+   }
+  },
+  "screenshot": ".wsl_build/ctr/v8/ch25/j1_dlg_a.png"
+ },
+ "C_past_grid_memory": {
+  "grid": "0x23a1b0(執行期),大小 4 + 4*25*53 = 5304",
+  "past_grid_bytes_dumped": 328,
+  "header_12_bytes_u32": [
+   "0x990",
+   "0x2393b0",
+   "0x2442a0"
+  ],
+  "rest_equals": "FDOTHER_073.bin[8672 : 8660 + dump 長度],316/316 byte 相同",
+  "fdother73_header": {
+   "w": 320,
+   "h": 147,
+   "size": 10930
+  },
+  "event0_cells": [
+   {
+    "x": 164,
+    "y": 48,
+    "past_grid_offset": 156,
+    "fdother73_offset": 8816,
+    "cell": [
+     254,
+     63,
+     254,
+     36
+    ]
+   },
+   {
+    "x": 173,
+    "y": 49,
+    "past_grid_offset": 292,
+    "fdother73_offset": 8952,
+    "cell": [
+     99,
+     2,
+     30,
+     129
+    ]
+   },
+   {
+    "x": 176,
+    "y": 49,
+    "past_grid_offset": 304,
+    "fdother73_offset": 8964,
+    "cell": [
+     191,
+     190,
+     188,
+     171
+    ]
+   },
+   {
+    "x": 177,
+    "y": 49,
+    "past_grid_offset": 308,
+    "fdother73_offset": 8968,
+    "cell": [
+     170,
+     188,
+     191,
+     26
+    ]
+   }
+  ],
+  "interpretation": "INFERRED:12 byte 標頭的形狀(長度 0x990 + 兩個指標)像 Watcom 堆積的空閒區塊;其後是先前載入、已不再使用的 FDOTHER #73 內容。地圖外格子會寫出哪個事件,取決於這塊殘留,不是地圖外行走本身的固定結果。"
+ },
+ "D_e1_recovered_and_static_cells": {
+  "e1_lookups": 73,
+  "e1_rets": {
+   "0x18b6b": 1,
+   "0x13e7c": 2,
+   "0x1317a": 70
+  },
+  "e1_unit53_walk_first_last": [
+   [
+    9,
+    10
+   ],
+   [
+    37,
+    25
+   ]
+  ],
+  "e1_in_grid": 73,
+  "e1_nonzero_slot": 0,
+  "e1_predicted_writes": 0,
+  "e2_first": [
+   38,
+   25
+  ],
+  "in_grid_live_cells_e1_e2": 232,
+  "bytes_0_2_equal_FDFIELD_072": 232,
+  "byte3_live": 255,
+  "byte3_static": [
+   0
+  ],
+  "map24_static_cells_with_slot": [
+   [
+    10,
+    1,
+    1
+   ],
+   [
+    2,
+    6,
+    1
+   ],
+   [
+    18,
+    16,
+    6
+   ],
+   [
+    5,
+    25,
+    2
+   ],
+   [
+    17,
+    30,
+    3
+   ],
+   [
+    2,
+    34,
+    4
+   ],
+   [
+    18,
+    35,
+    5
+   ]
+  ]
+ },
+ "E_origin_cell_in_real_maps": {
+  "terrain_type_counts_at_0_0": {
+   "1": 9,
+   "2": 7,
+   "0": 10,
+   "3": 1,
+   "5": 3
+  },
+  "maps_with_units_at_0_0": [
+   {
+    "map": 16,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": [
+     {
+      "unit": 46,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 47,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 48,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 49,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 50,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 51,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 52,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 53,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 54,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 55,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 56,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 57,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 58,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 59,
+      "group": 255,
+      "camp": "enemy"
+     }
+    ]
+   }
+  ],
+  "literal_spawn_groups": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "dynamic_spawn_groups": {
+   "27": "$turn_counter[0x53bef]",
+   "31": "$reg_or_mem(eax)",
+   "47": "$reg_or_mem(eax)",
+   "49": "$reg_or_mem(eax)",
+   "54": "$turn_counter[0x53bef]",
+   "57": "$turn_counter[0x53bef]",
+   "82": "$reg_or_mem(eax)"
+  },
+  "per_map": [
+   {
+    "map": 0,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 1,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 2,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 3,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 4,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 5,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 6,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 7,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 8,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 9,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 10,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 11,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 12,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 13,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 14,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 15,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 16,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": [
+     {
+      "unit": 46,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 47,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 48,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 49,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 50,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 51,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 52,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 53,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 54,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 55,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 56,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 57,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 58,
+      "group": 255,
+      "camp": "enemy"
+     },
+     {
+      "unit": 59,
+      "group": 255,
+      "camp": "enemy"
+     }
+    ]
+   },
+   {
+    "map": 17,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 18,
+    "terrain_type_at_0_0": 3,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 19,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 20,
+    "terrain_type_at_0_0": 2,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 21,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 22,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 23,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 24,
+    "terrain_type_at_0_0": 5,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 25,
+    "terrain_type_at_0_0": 0,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 26,
+    "terrain_type_at_0_0": 5,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 27,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 28,
+    "terrain_type_at_0_0": 5,
+    "units_placed_at_0_0": []
+   },
+   {
+    "map": 29,
+    "terrain_type_at_0_0": 1,
+    "units_placed_at_0_0": []
+   }
+  ],
+  "note": "地形類型 = FDSHAP_{2*selector+1}[tile*4+1](map 24 與實機地形表相同,FDSHAP_049)。成本表 0x61646 每列 20 byte;類型 5 在全部列是 20(續六十五)。map 16 的 14 個 (0,0) 單位是 group 255,沒有字面 spawn_group(255);動態 group 是回合數、回合數/2 或 [[0x53ad5]+0x10](事件 31、82)。"
+ }
+}
