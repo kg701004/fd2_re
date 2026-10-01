@@ -1,0 +1,1587 @@
+{
+ "note": "DOSBox-X 斷點與記憶體傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 1 章戰場第 1 回合。斷點 collect_targets_in_range 返回點 0x149f0(執行期 0x1b09f0),每次停下傾印堆疊(筆數、返回位址、6 個參數)、地圖格陣列、21 個單位與 outBuf。記號格以活記憶體成本列 0 從原點重算 flood-fill(格旗標 0x40 不可進入、0x80 歸零)再套 extraThreshold,與傾印逐格比對;清單依 +5 bit0、記號、陣營規則重算後與 outBuf / 回傳筆數比對。擺位(距悠妮 (23,16)):我方 #3 (23,14) 2、#4 (24,15) 2、#2 (25,17) 3、索爾 (21,18) 4;NPC #5 (22,16) 1、#6 (23,18) 2、#7 (26,16) 3;敵 #11 (24,16) 1、#12 (21,16) 2。b*/c* 兩組是把法術 23 列 +6(執行期 0x1f3aa4)暫改成 2、5 後重選,之後改回 3。i* 為道具指令;i4 之前把 #3 從 (23,15) 移到 (23,13)。",
+ "selector_rule_static": "0x14992..0x149d2:0 → +6 == 0、1 → +6 != 0、2 → +6 == 1、3 → +6 == 2,其他值四個比較都不成立、不收",
+ "shipped_selector_values": {
+  "spell_0x6_over_36_spells": {
+   "0": 23,
+   "1": 12,
+   "3": 1
+  },
+  "spells_with_0x6_3": [
+   23
+  ],
+  "item_0x15_over_215_items": {
+   "0": 10,
+   "1": 23,
+   "5": 182
+  },
+  "item_0x11_equals_0x15_for_all": true,
+  "items_with_use_effect_0xd_by_selector": {
+   "0": 10,
+   "1": 23
+  },
+  "conclusion": "出貨資料沒有任何法術或道具帶 2;selector 3 只有法術 23(傳送術)與道具指令的兩個寫死呼叫;帶 5 的 182 個道具 +0xd 都是 0(沒有使用效果),所以 selector 2 與 >= 4 只能由改值觸發。"
+ },
+ "call_sites": [
+  {
+   "call": "0x14448",
+   "function": "ai_physical_candidate_select",
+   "selector": "a2 == 0 ? 1 : 0",
+   "extra_threshold": "武器列 +0xb",
+   "range": "武器列 +0xc"
+  },
+  {
+   "call": "0x15114",
+   "function": "0x15060(ai_choose_action 之後的道具執行段,未登錄)",
+   "selector": "mode == 0 ? (道具列 +0x11 == 0 ? 1 : 0) : +0x11",
+   "extra_threshold": "0",
+   "range": "道具列 +0x12"
+  },
+  {
+   "call": "0x15381",
+   "function": "ai_spell_execute",
+   "selector": "mode == 0 ? (法術 +6 == 0 ? 1 : 0) : +6",
+   "extra_threshold": "0",
+   "range": "法術 +4"
+  },
+  {
+   "call": "0x1575a",
+   "function": "ai_item_candidate_select",
+   "selector": "0(寫死,outBuf NULL,只標施放點)",
+   "extra_threshold": "列 +0x10 > 0xf",
+   "range": "列 +0x10"
+  },
+  {
+   "call": "0x157d4",
+   "function": "ai_item_candidate_select",
+   "selector": "mode == 0 ? (道具列 +0x11 == 0 ? 1 : 0) : +0x11",
+   "extra_threshold": "0",
+   "range": "道具列 +0x12"
+  },
+  {
+   "call": "0x15aaa",
+   "function": "ai_spell_candidate_select",
+   "selector": "mode == 0 ? (法術 +6 == 0 ? 1 : 0) : +6",
+   "extra_threshold": "0",
+   "range": "法術 +4"
+  },
+  {
+   "call": "0x18e25",
+   "function": "player_action_ring",
+   "selector": "0(寫死,outBuf NULL)",
+   "extra_threshold": "武器列 +0xb",
+   "range": "武器列 +0xc"
+  },
+  {
+   "call": "0x18f6a",
+   "function": "player_action_ring",
+   "selector": "0(寫死)",
+   "extra_threshold": "武器列 +0xb",
+   "range": "武器列 +0xc"
+  },
+  {
+   "call": "0x1bc3c",
+   "function": "player_item_action",
+   "selector": "3(寫死,outBuf NULL)",
+   "extra_threshold": "1",
+   "range": "1"
+  },
+  {
+   "call": "0x1bd43",
+   "function": "player_item_action",
+   "selector": "道具列 +0x15",
+   "extra_threshold": "道具列 +0xd == 0x17",
+   "range": "道具列 +0x10"
+  },
+  {
+   "call": "0x1bd93",
+   "function": "player_item_action",
+   "selector": "道具列 +0x15",
+   "extra_threshold": "0",
+   "range": "道具列 +0x12"
+  },
+  {
+   "call": "0x1becf",
+   "function": "player_item_action",
+   "selector": "3(寫死)",
+   "extra_threshold": "1",
+   "range": "1"
+  },
+  {
+   "call": "0x1d1c9",
+   "function": "player_spell_select(只有法術 0x17)",
+   "selector": "法術 +6",
+   "extra_threshold": "1",
+   "range": "法術 +3"
+  },
+  {
+   "call": "0x1d211",
+   "function": "player_spell_select(只有法術 0x17)",
+   "selector": "法術 +6",
+   "extra_threshold": "0",
+   "range": "法術 +4"
+  },
+  {
+   "call": "0x1d2bf",
+   "function": "player_spell_select",
+   "selector": "法術 +6",
+   "extra_threshold": "0",
+   "range": "法術 +3"
+  },
+  {
+   "call": "0x1d32a",
+   "function": "player_spell_select",
+   "selector": "法術 +6",
+   "extra_threshold": "0",
+   "range": "法術 +4"
+  },
+  {
+   "call": "0x1d38e",
+   "function": "player_spell_select(施法距離 0)",
+   "selector": "0(寫死)",
+   "extra_threshold": "0",
+   "range": "法術 +4"
+  }
+ ],
+ "summary": {
+  "stops": 12,
+  "all_match": true,
+  "by_selector": {
+   "0": 2,
+   "2": 2,
+   "3": 6,
+   "5": 2
+  },
+  "rival_rules_stops_differing": {
+   "sel_ge2_as_1": 8,
+   "sel3_eq3": 5,
+   "sel_ge4_as_3": 2,
+   "ignore_extra_threshold": 5
+  },
+  "rival_rules": {
+   "sel_ge2_as_1": "selector 2、3(及其他非 0 值)都當 1:收 +6 != 0",
+   "sel3_eq3": "selector 3 收 +6 == 3",
+   "sel_ge4_as_3": "selector >= 4 落到 3 的判斷(收 +6 == 2)",
+   "ignore_extra_threshold": "不套 extraThreshold(施法者 / 開道具者本身在清單內)"
+  },
+  "target_cursor_start": "a2/b2 的第二次呼叫原點是游標位置:取消時游標停在清單第一個單位(#2、#5);清單為空時留在施法者(c2)",
+  "give_disabled_when_count_0": "i4 計數 0 後同樣按 Left、Return,[0x53c57] 讀回 0(進到『使用』);i1 計數 1 時同一組按鍵走到 0x1becf(只有 [0x53c57] == 1 才會到)。也就是相鄰沒有我方時『交給』選不到。"
+ },
+ "stops": [
+  {
+   "tag": "a1",
+   "ret_static": "0x1d1ce",
+   "caller": "player_spell_select 0x1d1c9(法術 23 特例:range +3、thr 1、sel +6)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 3,
+   "extra_threshold": 1,
+   "selector": 3,
+   "count_live": 3,
+   "outbuf_live": [
+    2,
+    3,
+    4
+   ],
+   "predicted": [
+    2,
+    3,
+    4
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 24,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     2,
+     3,
+     4
+    ],
+    "ignore_extra_threshold": [
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 0,
+     "xy": [
+      21,
+      18
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 4,
+     "mark_live": 255
+    },
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 2,
+     "xy": [
+      25,
+      17
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      14
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 7,
+     "xy": [
+      26,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    }
+   ]
+  },
+  {
+   "tag": "a2",
+   "ret_static": "0x1d216",
+   "caller": "player_spell_select 0x1d211(range +4、thr 0、sel +6,原點 = 游標)",
+   "origin": [
+    25,
+    17
+   ],
+   "range": 0,
+   "extra_threshold": 0,
+   "selector": 3,
+   "count_live": 1,
+   "outbuf_live": [
+    2
+   ],
+   "predicted": [
+    2
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 1,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     2
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     2
+    ],
+    "ignore_extra_threshold": [
+     2
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 2,
+     "xy": [
+      25,
+      17
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 0
+    },
+    {
+     "unit": 7,
+     "xy": [
+      26,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "b1",
+   "ret_static": "0x1d1ce",
+   "caller": "player_spell_select 0x1d1c9(法術 23 特例:range +3、thr 1、sel +6)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 3,
+   "extra_threshold": 1,
+   "selector": 2,
+   "count_live": 3,
+   "outbuf_live": [
+    5,
+    6,
+    7
+   ],
+   "predicted": [
+    5,
+    6,
+    7
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 24,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "sel3_eq3": [
+     5,
+     6,
+     7
+    ],
+    "sel_ge4_as_3": [
+     5,
+     6,
+     7
+    ],
+    "ignore_extra_threshold": [
+     5,
+     6,
+     7
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 0,
+     "xy": [
+      21,
+      18
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 4,
+     "mark_live": 255
+    },
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 2,
+     "xy": [
+      25,
+      17
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      14
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 7,
+     "xy": [
+      26,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    }
+   ]
+  },
+  {
+   "tag": "b2",
+   "ret_static": "0x1d216",
+   "caller": "player_spell_select 0x1d211(range +4、thr 0、sel +6,原點 = 游標)",
+   "origin": [
+    22,
+    16
+   ],
+   "range": 0,
+   "extra_threshold": 0,
+   "selector": 2,
+   "count_live": 1,
+   "outbuf_live": [
+    5
+   ],
+   "predicted": [
+    5
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 1,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     5
+    ],
+    "sel3_eq3": [
+     5
+    ],
+    "sel_ge4_as_3": [
+     5
+    ],
+    "ignore_extra_threshold": [
+     5
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 0
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "c1",
+   "ret_static": "0x1d1ce",
+   "caller": "player_spell_select 0x1d1c9(法術 23 特例:range +3、thr 1、sel +6)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 3,
+   "extra_threshold": 1,
+   "selector": 5,
+   "count_live": 0,
+   "outbuf_live": [],
+   "predicted": [],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 24,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     2,
+     3,
+     4
+    ],
+    "ignore_extra_threshold": []
+   },
+   "units_near_origin": [
+    {
+     "unit": 0,
+     "xy": [
+      21,
+      18
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 4,
+     "mark_live": 255
+    },
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 2,
+     "xy": [
+      25,
+      17
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      14
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    },
+    {
+     "unit": 7,
+     "xy": [
+      26,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 3,
+     "mark_live": 0
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 2
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 1
+    }
+   ]
+  },
+  {
+   "tag": "c2",
+   "ret_static": "0x1d216",
+   "caller": "player_spell_select 0x1d211(range +4、thr 0、sel +6,原點 = 游標)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 0,
+   "extra_threshold": 0,
+   "selector": 5,
+   "count_live": 0,
+   "outbuf_live": [],
+   "predicted": [],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 1,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     1
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     1
+    ],
+    "ignore_extra_threshold": []
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 0
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      14
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 255
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 255
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "r1",
+   "ret_static": "0x18e2a",
+   "caller": "player_action_ring 0x18e25(開指令環:range 1、thr 1、sel 0)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 0,
+   "count_live": 1,
+   "outbuf_live": null,
+   "predicted": [
+    11
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     11
+    ],
+    "sel3_eq3": [
+     11
+    ],
+    "sel_ge4_as_3": [
+     11
+    ],
+    "ignore_extra_threshold": [
+     11
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "i1",
+   "ret_static": "0x1bc41",
+   "caller": "道具指令 0x1bc3c(開啟時計數:range 1、thr 1、sel 3 寫死,outBuf NULL)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 3,
+   "count_live": 1,
+   "outbuf_live": null,
+   "predicted": [
+    3
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     3,
+     5
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     3
+    ],
+    "ignore_extra_threshold": [
+     1,
+     3
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "i2",
+   "ret_static": "0x1bed4",
+   "caller": "道具指令 0x1becf(交給的對象清單:range 1、thr 1、sel 3 寫死)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 3,
+   "count_live": 1,
+   "outbuf_live": [
+    3
+   ],
+   "predicted": [
+    3
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     3,
+     5
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     3
+    ],
+    "ignore_extra_threshold": [
+     1,
+     3
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "i3",
+   "ret_static": "0x1bc41",
+   "caller": "道具指令 0x1bc3c(開啟時計數:range 1、thr 1、sel 3 寫死,outBuf NULL)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 3,
+   "count_live": 1,
+   "outbuf_live": null,
+   "predicted": [
+    3
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     3,
+     5
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [
+     3
+    ],
+    "ignore_extra_threshold": [
+     1,
+     3
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "r2",
+   "ret_static": "0x18e2a",
+   "caller": "player_action_ring 0x18e25(開指令環:range 1、thr 1、sel 0)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 0,
+   "count_live": 1,
+   "outbuf_live": null,
+   "predicted": [
+    11
+   ],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     11
+    ],
+    "sel3_eq3": [
+     11
+    ],
+    "sel_ge4_as_3": [
+     11
+    ],
+    "ignore_extra_threshold": [
+     11
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 3,
+     "xy": [
+      23,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  },
+  {
+   "tag": "i4",
+   "ret_static": "0x1bc41",
+   "caller": "道具指令 0x1bc3c(開啟時計數:range 1、thr 1、sel 3 寫死,outBuf NULL)",
+   "origin": [
+    23,
+    16
+   ],
+   "range": 1,
+   "extra_threshold": 1,
+   "selector": 3,
+   "count_live": 0,
+   "outbuf_live": null,
+   "predicted": [],
+   "count_match": true,
+   "list_match": true,
+   "marks_match_recompute": true,
+   "mark_cells_differing": 0,
+   "marked_cells": 4,
+   "rival_predictions": {
+    "sel_ge2_as_1": [
+     5
+    ],
+    "sel3_eq3": [],
+    "sel_ge4_as_3": [],
+    "ignore_extra_threshold": [
+     1
+    ]
+   },
+   "units_near_origin": [
+    {
+     "unit": 1,
+     "xy": [
+      23,
+      16
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 0,
+     "mark_live": 255
+    },
+    {
+     "unit": 4,
+     "xy": [
+      24,
+      15
+     ],
+     "side_0x6": 2,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 5,
+     "xy": [
+      22,
+      16
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 6,
+     "xy": [
+      23,
+      18
+     ],
+     "side_0x6": 1,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    },
+    {
+     "unit": 11,
+     "xy": [
+      24,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 1,
+     "mark_live": 0
+    },
+    {
+     "unit": 12,
+     "xy": [
+      21,
+      16
+     ],
+     "side_0x6": 0,
+     "f5": 0,
+     "dist": 2,
+     "mark_live": 255
+    }
+   ]
+  }
+ ]
+}

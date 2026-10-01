@@ -1,0 +1,519 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;來源存檔 ~/fd2-run/FD2.SAV(md5 e6d9a357…)經 prepare_chapter_save 改章節 byte。map_attack_resolve 斷點(執行期 +0x19c000):0x1edbf(AP 修正後,EAX 商 EDX 餘數,EDI 攻方記錄、ESI 守方記錄)、0x1ee04(DP 修正)、0x1efce(寫守方 HP,EAX = 新 HP);ai_attack_execute 0x1548e;[0x53af9] 設 1(地圖呈現)。",
+ "A_map24_npc17_on_terrain5": {
+  "ai_attack_execute_actor": 57,
+  "modifier_stops": [
+   {
+    "site": "0x1edbf AP",
+    "attacker": 57,
+    "defender": 17,
+    "quotient": 6,
+    "remainder": 0
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 57,
+    "defender": 17,
+    "quotient": 0,
+    "remainder": 0
+   },
+   {
+    "site": "0x1edbf AP",
+    "attacker": 17,
+    "defender": 57,
+    "quotient": 0,
+    "remainder": 0
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 17,
+    "defender": 57,
+    "quotient": 0,
+    "remainder": 0
+   }
+  ],
+  "hp_write_stops": [],
+  "pre": {
+   "57": {
+    "hp": 999,
+    "xy": [
+     10,
+     1
+    ],
+    "poison_0x25": 0
+   },
+   "17": {
+    "hp": 999,
+    "xy": [
+     10,
+     0
+    ],
+    "poison_0x25": 0
+   }
+  },
+  "post": {
+   "57": {
+    "hp": 986,
+    "xy": [
+     10,
+     1
+    ],
+    "poison_0x25": 0
+   },
+   "17": {
+    "hp": 985,
+    "xy": [
+     10,
+     0
+    ],
+    "poison_0x25": 0
+   }
+  },
+  "predicted": {
+   "mods": [
+    [
+     6,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "note": "#57(地形 0)攻 #17(地形 5):AP 120 → +6、#17 DP 110 → 0;#17 反擊:AP 120 → 0、#57 DP 105 → 0;傷害 14 / 13",
+   "rival_type5_as_4": "#17 DP 修正 -5、反擊 AP 修正 -6"
+  },
+  "modifiers_match": true,
+  "hp_change": {
+   "17": 14,
+   "57": 13
+  }
+ },
+ "B_map28_event_chain": {
+  "setup": "悠妮(+8 = 9)MV 改 45;除 #69..#72(麻痺 40)外的敵人 +5 bit0 並移到 (0,0);其餘不改",
+  "trigger_cell": [
+   15,
+   21
+  ],
+  "field_event_slot_1based": 2,
+  "field_event": {
+   "slot": 1,
+   "event_id": 75,
+   "selector": 1
+  },
+  "dialogue_event75": "『就是這裡了!系統識別碼..』…『中樞撤銷最高級系統防護需要一些時間…』",
+  "dialogue_event76_spawn": "『奇怪,終端竟然抗拒我的命令,有人對防衛系統動了手腳!』",
+  "states": [
+   {
+    "when": "開戰(未操作)",
+    "turn": 1,
+    "ad5_0x10": 0,
+    "ad5_0x11": 0,
+    "ad5_0x15": 0,
+    "rows_turn_event_camp": [
+     [
+      255,
+      74,
+      0
+     ],
+     [
+      255,
+      76,
+      2
+     ],
+     [
+      255,
+      79,
+      0
+     ]
+    ]
+   },
+   {
+    "when": "悠妮在 (15,21) 休息、事件 75 對話結束後",
+    "turn": 1,
+    "ad5_0x10": 4,
+    "ad5_0x11": 1,
+    "ad5_0x15": 0,
+    "rows_turn_event_camp": [
+     [
+      1,
+      74,
+      0
+     ],
+     [
+      2,
+      76,
+      2
+     ],
+     [
+      255,
+      79,
+      0
+     ]
+    ]
+   },
+   {
+    "when": "第 2 回合玩家回合",
+    "turn": 2,
+    "ad5_0x10": 5,
+    "ad5_0x11": 2,
+    "ad5_0x15": 0,
+    "rows_turn_event_camp": [
+     [
+      2,
+      74,
+      0
+     ],
+     [
+      3,
+      76,
+      2
+     ],
+     [
+      255,
+      79,
+      0
+     ]
+    ]
+   },
+   {
+    "when": "第 3 回合",
+    "turn": 3,
+    "ad5_0x10": 6,
+    "ad5_0x11": 3,
+    "ad5_0x15": 0,
+    "rows_turn_event_camp": [
+     [
+      3,
+      74,
+      0
+     ],
+     [
+      4,
+      76,
+      2
+     ],
+     [
+      255,
+      79,
+      0
+     ]
+    ]
+   },
+   {
+    "when": "第 4 回合",
+    "turn": 4,
+    "ad5_0x10": 7,
+    "ad5_0x11": 4,
+    "ad5_0x15": 0,
+    "rows_turn_event_camp": [
+     [
+      4,
+      74,
+      0
+     ],
+     [
+      5,
+      76,
+      2
+     ],
+     [
+      255,
+      79,
+      0
+     ]
+    ]
+   },
+   {
+    "when": "第 5 回合,事件 76 生成後",
+    "turn": 5,
+    "ad5_0x10": 8,
+    "ad5_0x11": 4,
+    "ad5_0x15": 84,
+    "rows_turn_event_camp": [
+     [
+      4,
+      74,
+      0
+     ],
+     [
+      5,
+      76,
+      2
+     ],
+     [
+      5,
+      79,
+      0
+     ]
+    ]
+   }
+  ],
+  "unit_count_after_spawn": 87,
+  "spawned_group1": [
+   {
+    "unit": 84,
+    "xy": [
+     13,
+     12
+    ],
+    "side_0x6": 0,
+    "raw_key_0x7": 104,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "hp": 2400
+   },
+   {
+    "unit": 85,
+    "xy": [
+     15,
+     12
+    ],
+    "side_0x6": 0,
+    "raw_key_0x7": 127,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "hp": 3600
+   },
+   {
+    "unit": 86,
+    "xy": [
+     17,
+     12
+    ],
+    "side_0x6": 0,
+    "raw_key_0x7": 105,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "hp": 2400
+   }
+  ],
+  "terrain_of_spawn_cells": 5
+ },
+ "C_map19_terrain4": {
+  "ai_attack_execute_actor": 24,
+  "modifier_stops": [
+   {
+    "site": "0x1edbf AP",
+    "attacker": 24,
+    "defender": 12,
+    "quotient": -6,
+    "remainder": -50
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 24,
+    "defender": 12,
+    "quotient": -5,
+    "remainder": -75
+   },
+   {
+    "site": "0x1edbf AP",
+    "attacker": 12,
+    "defender": 24,
+    "quotient": -6,
+    "remainder": -50
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 12,
+    "defender": 24,
+    "quotient": -5,
+    "remainder": -50
+   }
+  ],
+  "hp_write_stops": [
+   {
+    "defender": 12,
+    "new_hp": 987
+   },
+   {
+    "defender": 24,
+    "new_hp": 982
+   }
+  ],
+  "pre": {
+   "24": {
+    "hp": 999,
+    "xy": [
+     21,
+     34
+    ],
+    "poison_0x25": 0
+   },
+   "12": {
+    "hp": 999,
+    "xy": [
+     22,
+     34
+    ],
+    "poison_0x25": 3
+   }
+  },
+  "post": {
+   "24": {
+    "hp": 982,
+    "xy": [
+     21,
+     34
+    ],
+    "poison_0x25": 0
+   },
+   "12": {
+    "hp": 888,
+    "xy": [
+     22,
+     34
+    ],
+    "poison_0x25": 2
+   }
+  },
+  "predicted": {
+   "mods": [
+    [
+     -6,
+     -50
+    ],
+    [
+     -5,
+     -75
+    ],
+    [
+     -6,
+     -50
+    ],
+    [
+     -5,
+     -50
+    ]
+   ],
+   "note": "#24(地形 4、MV 0)攻 #12(地形 4、DP 115):AP 130 → -6、DP → -5;#12 反擊:AP 130 → -6、#24 DP 110 → -5;傷害 12 / 17"
+  },
+  "modifiers_match": true,
+  "hp_write": {
+   "P_new_hp": 987,
+   "E_new_hp": 982
+  },
+  "extra_poison": "攻方攻擊種類讓 #12 中毒(+0x25 = 3),下一個我方回合開始扣 MaxHP/10 = 99;第一次跑的 -111 = 12 + 99"
+ },
+ "C_map18_terrain3": {
+  "ai_attack_execute_actor": 23,
+  "modifier_stops": [
+   {
+    "site": "0x1edbf AP",
+    "attacker": 23,
+    "defender": 5,
+    "quotient": -6,
+    "remainder": -50
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 23,
+    "defender": 5,
+    "quotient": 10,
+    "remainder": 50
+   },
+   {
+    "site": "0x1edbf AP",
+    "attacker": 5,
+    "defender": 23,
+    "quotient": -6,
+    "remainder": -50
+   },
+   {
+    "site": "0x1ee04 DP",
+    "attacker": 5,
+    "defender": 23,
+    "quotient": 11,
+    "remainder": 0
+   }
+  ],
+  "hp_write_stops": [
+   {
+    "defender": 5,
+    "new_hp": 991
+   },
+   {
+    "defender": 23,
+    "new_hp": 997
+   }
+  ],
+  "pre": {
+   "23": {
+    "hp": 999,
+    "xy": [
+     15,
+     4
+    ],
+    "poison_0x25": 0
+   },
+   "5": {
+    "hp": 999,
+    "xy": [
+     16,
+     4
+    ],
+    "poison_0x25": 0
+   }
+  },
+  "post": {
+   "23": {
+    "hp": 997,
+    "xy": [
+     15,
+     4
+    ],
+    "poison_0x25": 0
+   },
+   "5": {
+    "hp": 991,
+    "xy": [
+     16,
+     4
+    ],
+    "poison_0x25": 0
+   }
+  },
+  "predicted": {
+   "mods": [
+    [
+     -6,
+     -50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     -6,
+     -50
+    ],
+    [
+     11,
+     0
+    ]
+   ],
+   "note": "#23(SM 搬到地形 3 的 (15,4)、MV 0)攻 #5(地形 3、DP 105):AP 130 → -6、DP → +10;#5 反擊:AP → -6、#23 DP 110 → +11;傷害 8 / 2"
+  },
+  "modifiers_match": true,
+  "first_try": "原本用站在地形 3 的 #26(+0x34 = 0x8,武器 item 56 射程 1):整個敵方回合沒有任何 ai_attack_execute 停點,改用 +0x34 = 0x2 的 #23"
+ },
+ "static": {
+  "turn_event_dispatch_0x1a813": "列 k 在 [0x53a55] + 3k:+3 回合、+4 event_id、+5 陣營;回合 = [0x53bef] 且陣營相符才呼叫 [0x51b91 + id*4]",
+  "dormant_rows_armed_by_handlers": "事件 75 寫列 1(+6)= 回合+1、列 0(+3)= 回合;事件 76 寫列 1 = 回合+1 或列 2(+9)= 回合;事件 74 寫列 0 = 回合+1",
+  "field_event_lookup_0x13a44": "格子 event word 低 5 位(1-based slot)查 [0x53a55]+0x33 的 (event_id, selector),寶箱格(旗標 0x60)不查;玩家行動結束後以 selector 1 呼叫(0x18aef/0x18b0c)",
+  "spawn_group_0x10b4e": "掃 FDFIELD 控制段單位(+0x83 起 26 bytes/筆)的 +0x15(波次)等於參數者逐一呼叫 0x10c50 建構",
+  "map28": "ch28_pre(0x33dba)spawn group 8(開場 56 敵)、ch28_post(0x2548c)spawn group 9((15,3) 地形 5,戰後演出)、事件 76 spawn group 1(三個頭目,地形 5)"
+ }
+}

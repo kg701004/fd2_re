@@ -1,0 +1,1077 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;來源存檔 ~/fd2-run/FD2.SAV(md5 e6d9a357…)經 prepare_chapter_save 改章節 byte。斷點位址為 Ghidra 位址,執行期 +0x19c000;每個斷點位址下斷前都先比對過活記憶體位元組與檔案。",
+ "A_map28_boss_on_terrain5": {
+  "setup": "ch29 戰場(map 28)第 1 回合以 SM 設 [0x53ad5]+0x11 = 4、控制段列 1(事件 76、陣營 2)回合 = 2,不經悠妮與事件 75;其他敵人麻痺 9,索爾休息結束回合。第 2 回合事件 76 走 == 4 分支放出頭目。",
+  "armed": {
+   "ad5_0x11": 4,
+   "ad5_0x15": 0,
+   "rows_turn_event_camp": [
+    [
+     255,
+     74,
+     0
+    ],
+    [
+     2,
+     76,
+     2
+    ],
+    [
+     255,
+     79,
+     0
+    ]
+   ]
+  },
+  "after_turn2_event76": {
+   "ad5_0x11": 4,
+   "ad5_0x15": 76,
+   "rows_turn_event_camp": [
+    [
+     255,
+     74,
+     0
+    ],
+    [
+     2,
+     76,
+     2
+    ],
+    [
+     2,
+     79,
+     0
+    ]
+   ]
+  },
+  "unit_count_after": 79,
+  "spawned_group1": [
+   {
+    "unit": 76,
+    "xy": [
+     13,
+     12
+    ],
+    "terrain": 5,
+    "key_0x7": 104,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "b34": 2,
+    "hp": 2400
+   },
+   {
+    "unit": 77,
+    "xy": [
+     15,
+     12
+    ],
+    "terrain": 5,
+    "key_0x7": 127,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "b34": 2,
+    "hp": 3600
+   },
+   {
+    "unit": 78,
+    "xy": [
+     17,
+     12
+    ],
+    "terrain": 5,
+    "key_0x7": 105,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "b34": 2,
+    "hp": 2400
+   }
+  ],
+  "note_shortcut": "事件 76(0x360b6)只讀 +0x11:!= 4 時 unit_set_flag5_bit7(1)、+0x11 加 1、列 1 回合 = 目前回合 + 1;== 4 時對話、spawn(1)、+0x15 = 單位數 - 3、列 2 = 目前回合",
+  "exchange_setup": "第 2..3 回合清事件 79 對話時多按的 Return 讓回合前進(那段沒有斷點,不採計)。第 4 回合:索爾 #0 已在 (13,13)(地形 0)、火龍 #76 在 (13,12)(地形 5);SM 設索爾 HP 999、AP 700、DP 900、HIT 250、EV 0,火龍 HP 999、AP 950、DP 560、HIT 250、EV 0,第二格道具移除、法術與 MP 清 0;[0x53af9] = 1。索爾在原地開指令環攻擊火龍;我方其他隊員仍麻痺,玩家回合隨即結束,敵方回合火龍攻擊索爾。",
+  "terrain_pct_table_exe_0x51a12": {
+   "ap": [
+    5,
+    0,
+    -5,
+    -5,
+    -5,
+    0
+   ],
+   "dp": [
+    0,
+    0,
+    10,
+    10,
+    -5,
+    0
+   ]
+  },
+  "pre": {
+   "sol_0": {
+    "xy": [
+     13,
+     13
+    ],
+    "f5": 0,
+    "side": 2,
+    "key_0x7": 32,
+    "race": 5,
+    "class": 9,
+    "mv": 30,
+    "b34": 206,
+    "hp": 999,
+    "maxhp": 999,
+    "ap": 700,
+    "dp": 900,
+    "hit": 250,
+    "ev": 0
+   },
+   "dragon_76": {
+    "xy": [
+     13,
+     12
+    ],
+    "f5": 0,
+    "side": 0,
+    "key_0x7": 104,
+    "race": 10,
+    "class": 26,
+    "mv": 0,
+    "b34": 2,
+    "hp": 999,
+    "maxhp": 999,
+    "ap": 950,
+    "dp": 560,
+    "hit": 250,
+    "ev": 0
+   }
+  },
+  "predicted": {
+   "dragon_dp_mod": [
+    0,
+    0
+   ],
+   "dragon_ap_mod": [
+    0,
+    0
+   ],
+   "sol_terrain_mods": "種族 5,unit_uses_move_cost_row19 為真,不修正(不應有索爾的修正停點)",
+   "base_sol_to_dragon": 126,
+   "base_dragon_to_sol": 45
+  },
+  "rivals": {
+   "terrain5_as_4": {
+    "dragon_dp_mod": -28,
+    "dragon_ap_mod": -47,
+    "base_sol_to_dragon": 151,
+    "base_dragon_to_sol": 2
+   },
+   "terrain5_as_3": {
+    "dragon_dp_mod": 56,
+    "dragon_ap_mod": -47,
+    "base_sol_to_dragon": 75,
+    "base_dragon_to_sol": 2
+   }
+  },
+  "scene_player_attack_stops": [
+   {
+    "eip": "0x2f921",
+    "eax": 0,
+    "edx": 0,
+    "ebp": 2558228,
+    "ebp_unit": 0,
+    "esi": 2036868,
+    "edi": 2564308,
+    "edi_unit": 76
+   },
+   {
+    "eip": "0x2f9fc",
+    "eax": 126,
+    "edx": 0,
+    "ebp": 2558228,
+    "ebp_unit": 0,
+    "esi": 2036868,
+    "edi": 2564308,
+    "edi_unit": 76
+   },
+   {
+    "eip": "0x2f8dc",
+    "eax": 0,
+    "edx": 0,
+    "ebp": 2564308,
+    "ebp_unit": 76,
+    "esi": 2036868,
+    "edi": 2558228,
+    "edi_unit": 0
+   },
+   {
+    "eip": "0x2f9fc",
+    "eax": 45,
+    "edx": 0,
+    "ebp": 2564308,
+    "ebp_unit": 76,
+    "esi": 2036868,
+    "edi": 2558228,
+    "edi_unit": 0
+   }
+  ],
+  "map_enemy_phase_stops": [
+   {
+    "eip": "0x1edbf",
+    "eax": 0,
+    "edx": 0,
+    "ebp": 0,
+    "esi": 2558228,
+    "esi_unit": 0,
+    "edi": 2564308,
+    "edi_unit": 76
+   },
+   {
+    "eip": "0x1efce",
+    "eax": 906,
+    "edx": 2,
+    "ebp": 47,
+    "esi": 2558228,
+    "esi_unit": 0,
+    "edi": 2564308,
+    "edi_unit": 76
+   },
+   {
+    "eip": "0x1ee04",
+    "eax": 0,
+    "edx": 0,
+    "ebp": 0,
+    "esi": 2564308,
+    "esi_unit": 76,
+    "edi": 2558228,
+    "edi_unit": 0
+   },
+   {
+    "eip": "0x1efce",
+    "eax": 733,
+    "edx": 1,
+    "ebp": 127,
+    "esi": 2564308,
+    "esi_unit": 76,
+    "edi": 2558228,
+    "edi_unit": 0
+   },
+   {
+    "eip": "0x1ee04",
+    "eax": 0,
+    "edx": 0,
+    "ebp": 0,
+    "esi": 2564308,
+    "esi_unit": 76,
+    "edi": 2558228,
+    "edi_unit": 0
+   },
+   {
+    "eip": "0x1efce",
+    "eax": 603,
+    "edx": 4,
+    "ebp": 130,
+    "esi": 2564308,
+    "esi_unit": 76,
+    "edi": 2558228,
+    "edi_unit": 0
+   }
+  ],
+  "hp_write_stops": [
+   {
+    "defender": 0,
+    "new_hp": 906,
+    "ebp_damage": 47
+   },
+   {
+    "defender": 76,
+    "new_hp": 733,
+    "ebp_damage": 127
+   },
+   {
+    "defender": 76,
+    "new_hp": 603,
+    "ebp_damage": 130
+   }
+  ],
+  "derived_damage": {
+   "scene_damage_to_dragon": 139,
+   "scene_counter_damage_to_sol": 46,
+   "map_damage_to_sol": 47,
+   "map_counters_to_dragon": [
+    127,
+    130
+   ]
+  },
+  "damage_ranges": {
+   "sol_to_dragon": [
+    126,
+    139
+   ],
+   "dragon_to_sol": [
+    45,
+    49
+   ]
+  },
+  "post_hp": {
+   "0": 906,
+   "76": 603
+  },
+  "observations": [
+   "索爾(種族 5)的 AP/DP 修正停點一次都沒有出現,與 unit_uses_move_cost_row19 閘門一致",
+   "敵方回合火龍攻擊一次後,索爾反擊兩次(0x1ee04 + 0x1efce 各兩組,守方都是 #76);兩次反擊的原因未查"
+  ]
+ },
+ "B_ai_mode8": {
+  "static": {
+   "dispatch_0x13a9f": [
+    "0x13aca test byte ptr [ebx + 5], 5 / jne 結尾",
+    "0x13ad4 mov al, byte ptr [ebx + 0x34]; and al, 0xf",
+    "0x13d97 cmp eax, 8 / 0x13d9a je 0x1317d(共用的 add esp,0xc; pop; ret 結尾)",
+    "其他模式做完後到 0x13e5a:field_event_lookup(x, y, 1)、unit_set_flag5_bit7(unit)、0x134e4、0x11cac(0)"
+   ],
+   "enemy_phase_0x1d8ba": [
+    "第 1 趟:+6 == 0、+5 & 0x81 == 0、+0x26 == 0 的單位先算 ai_spell_candidate_select 與 ai_item_candidate_select,[0x53c23] >= 6 或 [0x53c33] >= 6 才呼叫 0x13a9f(返回 0x1d947)",
+    "第 2 趟:同樣條件的單位全部呼叫 0x13a9f(返回 0x1d9d7);第 1 趟已行動的單位 +5 bit7 已設,不會再進"
+   ],
+   "doc11_correction": "doc11 原表寫模式 8「進入共用完成路徑」;實際是直接跳到結尾,不走 0x13e5a 的共用收尾,所以也不設 +5 bit7"
+  },
+  "setup": "ch19 戰場(map 18)。#26(FDFIELD b17 = 8,種族 1、職業 13、武器 item 56)SM 搬到 (10,32),正下方 (10,33) 是瞬移過去的索爾;其他敵人麻痺 9、[0x53af9] = 1;我方除悠妮外設已行動,悠妮移一格休息結束回合。同一單位、同一格,依序跑 4 個敵方回合。",
+  "runs": {
+   "m8a": {
+    "b34": 8,
+    "unit26_pre": {
+     "xy": [
+      10,
+      32
+     ],
+     "hp": 290,
+     "f5": 0
+    },
+    "spells_mp_cleared": false,
+    "unit26_post_hp": 290,
+    "sol_hp": [
+     823,
+     823
+    ],
+    "stops": [
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 2539536,
+      "caller_ret": "0x19099",
+      "arg0": 1
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 8,
+      "esi": 26,
+      "unit": 26,
+      "mode": 8,
+      "caller_ret": "0x1d947"
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 8,
+      "esi": 26,
+      "unit": 26,
+      "mode": 8,
+      "caller_ret": "0x1d9d7"
+     }
+    ]
+   },
+   "m8b": {
+    "b34": 2,
+    "unit26_pre": {
+     "xy": [
+      10,
+      32
+     ],
+     "hp": 290,
+     "f5": 0
+    },
+    "spells_mp_cleared": false,
+    "unit26_post_hp": 290,
+    "sol_hp": [
+     823,
+     823
+    ],
+    "stops": [
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 2539536,
+      "caller_ret": "0x19099",
+      "arg0": 1
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 2,
+      "esi": 26,
+      "unit": 26,
+      "mode": 2,
+      "caller_ret": "0x1d947"
+     },
+     {
+      "eip": "0x14ef0",
+      "eax": 2,
+      "esi": 26,
+      "caller_ret": "0x13b52",
+      "arg0": 26
+     },
+     {
+      "eip": "0x13e5a",
+      "eax": 1,
+      "esi": 26,
+      "unit": 26
+     },
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 26,
+      "caller_ret": "0x13e85",
+      "arg0": 26
+     }
+    ]
+   },
+   "m8c": {
+    "b34": 8,
+    "unit26_pre": {
+     "xy": [
+      10,
+      32
+     ],
+     "hp": 290,
+     "f5": 0
+    },
+    "spells_mp_cleared": true,
+    "unit26_post_hp": 290,
+    "sol_hp": [
+     823,
+     823
+    ],
+    "stops": [
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 2539536,
+      "caller_ret": "0x19099",
+      "arg0": 1
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 8,
+      "esi": 26,
+      "unit": 26,
+      "mode": 8,
+      "caller_ret": "0x1d947"
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 8,
+      "esi": 26,
+      "unit": 26,
+      "mode": 8,
+      "caller_ret": "0x1d9d7"
+     }
+    ]
+   },
+   "m8d": {
+    "b34": 2,
+    "unit26_pre": {
+     "xy": [
+      10,
+      32
+     ],
+     "hp": 290,
+     "f5": 0
+    },
+    "spells_mp_cleared": true,
+    "unit26_post_hp": 290,
+    "sol_hp": [
+     823,
+     776
+    ],
+    "stops": [
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 2539536,
+      "caller_ret": "0x19099",
+      "arg0": 1
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 2,
+      "esi": 26,
+      "unit": 26,
+      "mode": 2,
+      "caller_ret": "0x1d947"
+     },
+     {
+      "eip": "0x14ef0",
+      "eax": 2,
+      "esi": 26,
+      "caller_ret": "0x13b52",
+      "arg0": 26
+     },
+     {
+      "eip": "0x15055",
+      "eax": 8,
+      "esi": 26,
+      "caller_ret": "0x1503e",
+      "arg0": 26
+     },
+     {
+      "eip": "0x13e5a",
+      "eax": 1,
+      "esi": 26,
+      "unit": 26
+     },
+     {
+      "eip": "0x13512",
+      "eax": 0,
+      "esi": 26,
+      "caller_ret": "0x13e85",
+      "arg0": 26
+     }
+    ]
+   }
+  },
+  "result": "模式 8 的兩次(含 / 不含法術)#26 都在兩趟各進分派一次(EAX = 8,返回 0x1d947 與 0x1d9d7),之後沒有 ai_choose_action、執行函式、共用收尾或 unit_set_flag5_bit7 的停點,索爾 HP 不變。改模式 2 的兩次都進 ai_choose_action 與共用收尾、設 +5 bit7,第 2 趟不再進分派;清掉法術後走道具分支 0x15055(返回 0x1503e,EDX = AP − 目標 DP = −464),索爾 HP 823 → 776。"
+ },
+ "C_teleport_move_confirm": {
+  "static": [
+   "選單位:0x117e7 的 Enter 呼叫 0x12c0d,逐一比對單位記錄 +0/+1 與游標 [0x53ab1]/[0x53ab5](略過 0x34894 為真者),不讀地圖格的佔用",
+   "0x18890:可達範圍 flood_fill_reach_grid 從游標格展開(預算 = MV +0x3b),map_block_cells_of_side(unit, 1) 把其他非敵方單位的格子標 0xff;target_cursor_loop(4, 0, 0) 在確認鍵時只拒絕記號 0xff 的格子",
+   "接著 0x4e4f6 從選取時的游標格找到目的格的路徑:回 0(同一格)直接在原地開指令環(0x18b24 → 0x18d8c(unit, &, 0)),回 0xff 不開環就返回,其他值由 0x13488 走過去再開環;指令環按 Escape 時把 +0/+1 還原成選取時的游標格"
+  ],
+  "runs": {
+   "tpA": "第一次:劇情對話還在,按鍵全被對話吃掉(0x18890 沒停),截圖可見對話框 —— 不採計",
+   "tpB_teleported_sol_free_cell": {
+    "teleport": "(10,36) → (10,33)",
+    "stops": [
+     {
+      "after": "Return(select)",
+      "regs": {
+       "EAX": "0x1",
+       "EBX": "0x5",
+       "ECX": "0x0",
+       "EDX": "0x0",
+       "ESI": "0x0",
+       "EDI": "0x0",
+       "EBP": "0x1f1684",
+       "ESP": "0x1f1658",
+       "EIP": "0x1b4890"
+      },
+      "arg_unit": 0
+     },
+     {
+      "expect": "target_cursor_loop ret 0x18986",
+      "regs": {
+       "EAX": "0x1",
+       "EBX": "0x13",
+       "ECX": "0x0",
+       "EDX": "0x0",
+       "ESI": "0x26bfc0",
+       "EDI": "0x1f37c2",
+       "EBP": "0x0",
+       "ESP": "0x1f1610",
+       "EIP": "0x1b4986"
+      }
+     },
+     {
+      "expect": "path 0x189fd",
+      "regs": {
+       "EAX": "0x1",
+       "EBX": "0x13",
+       "ECX": "0x11",
+       "EDX": "0x734",
+       "ESI": "0x26bfc0",
+       "EDI": "0x1f37c2",
+       "EBP": "0x0",
+       "ESP": "0x1f15f4",
+       "EIP": "0x1b49fd"
+      }
+     }
+    ],
+    "xy_after_confirm": [
+     11,
+     33
+    ],
+    "xy_after_ring_escape": [
+     10,
+     33
+    ]
+   },
+   "tpD_teleported_sol_enemy_adjacent": {
+    "enemy": "#26 SM 到 (10,32)",
+    "steps": [
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x0",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0xffffffff",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x1",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Right",
+      "stops": [],
+      "cursor": [
+       11,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0x1",
+        "cursor": [
+         11,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       },
+       {
+        "eip": "0x189fd",
+        "eax": "0x1",
+        "cursor": [
+         11,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       11,
+       33
+      ],
+      "xy": [
+       11,
+       33
+      ],
+      "f5": "0x0"
+     }
+    ]
+   },
+   "tpE_teleported_sol_own_cell": {
+    "steps": [
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x0",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0x1",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       },
+       {
+        "eip": "0x189fd",
+        "eax": "0x0",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         10,
+         33
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       10,
+       33
+      ],
+      "f5": "0x0"
+     }
+    ]
+   },
+   "tpF_native_yuni_control": {
+    "steps": [
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x0",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0xffffffff",
+        "cursor": [
+         10,
+         33
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       10,
+       33
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Right",
+      "stops": [],
+      "cursor": [
+       11,
+       33
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Right",
+      "stops": [],
+      "cursor": [
+       12,
+       33
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Down",
+      "stops": [],
+      "cursor": [
+       12,
+       34
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Down",
+      "stops": [],
+      "cursor": [
+       12,
+       35
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Down",
+      "stops": [],
+      "cursor": [
+       12,
+       36
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x1",
+        "cursor": [
+         12,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       12,
+       36
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0x1",
+        "cursor": [
+         12,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       },
+       {
+        "eip": "0x189fd",
+        "eax": "0x0",
+        "cursor": [
+         12,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       12,
+       36
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Escape",
+      "stops": [
+       {
+        "eip": "0x18890",
+        "eax": "0x0",
+        "cursor": [
+         12,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       12,
+       36
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Right",
+      "stops": [],
+      "cursor": [
+       13,
+       36
+      ],
+      "xy": [
+       12,
+       36
+      ],
+      "f5": "0x0"
+     },
+     {
+      "key": "Return",
+      "stops": [
+       {
+        "eip": "0x18986",
+        "eax": "0x1",
+        "cursor": [
+         13,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       },
+       {
+        "eip": "0x189fd",
+        "eax": "0x1",
+        "cursor": [
+         13,
+         36
+        ],
+        "xy": [
+         12,
+         36
+        ]
+       }
+      ],
+      "cursor": [
+       13,
+       36
+      ],
+      "xy": [
+       13,
+       36
+      ],
+      "f5": "0x0"
+     }
+    ]
+   }
+  },
+  "result": "瞬移後的索爾:空地上往右一格 target_cursor_loop 回 1、路徑回 1、+0/+1 變 (11,33)、指令環開;敵人 #26 在正上方時同樣回 1/1、移到 (11,33)。在原地按確認:target_cursor_loop 回 1、路徑回 0,不移動、直接在原地開指令環。沒瞬移的悠妮兩種情況讀值完全相同(原地 1/0、移一格 1/1)。續六十五記的「瞬移後連相鄰格都確認不了」與「原地按 Return 只是切換移動範圍」都沒有重現;本輪第一次(tpA)按鍵被仍在進行的劇情對話吃掉,是與當時症狀一致的解釋(推論,當時沒有斷點紀錄)。"
+ }
+}

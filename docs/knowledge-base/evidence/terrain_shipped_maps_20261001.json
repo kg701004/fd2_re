@@ -1,0 +1,874 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。來源存檔 ~/fd2-run/FD2.SAV(md5 e6d9a35756cddfc2519969b10f039181)複製後以 fd2_chapter_sweep 的 prepare_chapter_save 改章節 byte(grid-pick 章節 roster_cap = 門檻 + 1),LOAD → attempt_camp_exit → ensure_battle_hud 進到可操作的戰場後傾印 [0x53a45] 單位陣列、[0x53a51] 地圖格、[0x53a69] 地形表。存檔章節 byte N 載入 map N(畫面顯示第 N+1 章)。受控攻擊的斷點:0x2f8dc(EAX = AP 修正、EDX = 餘數)、0x2f921(DP 修正)、0x2f9fc(傷害);攻方 AP 125、DP 0、HIT 250、EV 0,守方 HP 999、AP 19、HIT 250、EV 0、麻痺 1(不反擊)。攻方都用自己的移動走到格子上(以 SM 瞬移的攻方在 ch19 無法確認移動,改用正常移動);守方以 SM 搬到相鄰的同類地形格。",
+ "maps": [
+  {
+   "save_chapter_shown": 19,
+   "save_chapter_byte": 18,
+   "map": 18,
+   "W": 25,
+   "H": 40,
+   "tiles_equal_FDFIELD": 1000,
+   "cells": 1000,
+   "tiles_used": 66,
+   "live_type_byte_vs_terrain_json_differing": 0,
+   "live_type_counts": {
+    "0": 600,
+    "3": 400
+   },
+   "units_live": 64,
+   "units_on_type_ge3_at_player_control": [
+    {
+     "unit": 26,
+     "xy": [
+      16,
+      5
+     ],
+     "type": 3,
+     "side_0x6": 0,
+     "raw_key_0x7": 92,
+     "race": 1,
+     "class": 13,
+     "mv": 4
+    }
+   ],
+   "static_start_cells_type_ge3": [
+    {
+     "xy": [
+      3,
+      39
+     ],
+     "type": 3,
+     "entries": 1,
+     "occupied_by": null
+    },
+    {
+     "xy": [
+      16,
+      5
+     ],
+     "type": 3,
+     "entries": 1,
+     "occupied_by": 26
+    },
+    {
+     "xy": [
+      20,
+      16
+     ],
+     "type": 3,
+     "entries": 21,
+     "occupied_by": null
+    }
+   ]
+  },
+  {
+   "save_chapter_shown": 20,
+   "save_chapter_byte": 19,
+   "map": 19,
+   "W": 40,
+   "H": 40,
+   "tiles_equal_FDFIELD": 1600,
+   "cells": 1600,
+   "tiles_used": 117,
+   "live_type_byte_vs_terrain_json_differing": 0,
+   "live_type_counts": {
+    "0": 587,
+    "1": 260,
+    "2": 44,
+    "4": 709
+   },
+   "units_live": 83,
+   "units_on_type_ge3_at_player_control": [
+    {
+     "unit": 16,
+     "xy": [
+      26,
+      28
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 17,
+     "xy": [
+      4,
+      9
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 18,
+     "xy": [
+      7,
+      5
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 19,
+     "xy": [
+      18,
+      30
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 20,
+     "xy": [
+      34,
+      19
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 21,
+     "xy": [
+      18,
+      28
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 22,
+     "xy": [
+      27,
+      24
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 23,
+     "xy": [
+      15,
+      32
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 24,
+     "xy": [
+      21,
+      34
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 25,
+     "xy": [
+      21,
+      31
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 26,
+     "xy": [
+      24,
+      27
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 27,
+     "xy": [
+      29,
+      28
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 28,
+     "xy": [
+      31,
+      24
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 29,
+     "xy": [
+      33,
+      10
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 30,
+     "xy": [
+      28,
+      23
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 31,
+     "xy": [
+      30,
+      9
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 32,
+     "xy": [
+      32,
+      28
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 33,
+     "xy": [
+      19,
+      28
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 34,
+     "xy": [
+      27,
+      23
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    },
+    {
+     "unit": 35,
+     "xy": [
+      18,
+      31
+     ],
+     "type": 4,
+     "side_0x6": 0,
+     "raw_key_0x7": 121,
+     "race": 9,
+     "class": 28,
+     "mv": 4
+    }
+   ],
+   "static_start_cells_type_ge3": [
+    {
+     "xy": [
+      4,
+      9
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 17
+    },
+    {
+     "xy": [
+      7,
+      5
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 18
+    },
+    {
+     "xy": [
+      15,
+      32
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 23
+    },
+    {
+     "xy": [
+      18,
+      28
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 21
+    },
+    {
+     "xy": [
+      18,
+      30
+     ],
+     "type": 4,
+     "entries": 2,
+     "occupied_by": 19
+    },
+    {
+     "xy": [
+      19,
+      28
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 33
+    },
+    {
+     "xy": [
+      21,
+      31
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 25
+    },
+    {
+     "xy": [
+      21,
+      34
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 24
+    },
+    {
+     "xy": [
+      24,
+      27
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 26
+    },
+    {
+     "xy": [
+      26,
+      28
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 16
+    },
+    {
+     "xy": [
+      27,
+      23
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 34
+    },
+    {
+     "xy": [
+      27,
+      24
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 22
+    },
+    {
+     "xy": [
+      28,
+      23
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 30
+    },
+    {
+     "xy": [
+      29,
+      28
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 27
+    },
+    {
+     "xy": [
+      30,
+      9
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 31
+    },
+    {
+     "xy": [
+      31,
+      24
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 28
+    },
+    {
+     "xy": [
+      32,
+      28
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 32
+    },
+    {
+     "xy": [
+      33,
+      10
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 29
+    },
+    {
+     "xy": [
+      34,
+      19
+     ],
+     "type": 4,
+     "entries": 1,
+     "occupied_by": 20
+    }
+   ]
+  },
+  {
+   "save_chapter_shown": 25,
+   "save_chapter_byte": 24,
+   "map": 24,
+   "W": 25,
+   "H": 53,
+   "tiles_equal_FDFIELD": 1325,
+   "cells": 1325,
+   "tiles_used": 93,
+   "live_type_byte_vs_terrain_json_differing": 0,
+   "live_type_counts": {
+    "0": 700,
+    "1": 361,
+    "5": 264
+   },
+   "units_live": 62,
+   "units_on_type_ge3_at_player_control": [
+    {
+     "unit": 17,
+     "xy": [
+      10,
+      0
+     ],
+     "type": 5,
+     "side_0x6": 1,
+     "raw_key_0x7": 104,
+     "race": 10,
+     "class": 26,
+     "mv": 0
+    }
+   ],
+   "static_start_cells_type_ge3": [
+    {
+     "xy": [
+      5,
+      7
+     ],
+     "type": 5,
+     "entries": 15,
+     "occupied_by": null
+    },
+    {
+     "xy": [
+      10,
+      0
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": 17
+    }
+   ]
+  },
+  {
+   "save_chapter_shown": 26,
+   "save_chapter_byte": 25,
+   "map": 25,
+   "W": 31,
+   "H": 47,
+   "tiles_equal_FDFIELD": 1457,
+   "cells": 1457,
+   "tiles_used": 61,
+   "live_type_byte_vs_terrain_json_differing": 0,
+   "live_type_counts": {
+    "0": 718,
+    "1": 737,
+    "5": 2
+   },
+   "units_live": 57,
+   "units_on_type_ge3_at_player_control": [],
+   "static_start_cells_type_ge3": [
+    {
+     "xy": [
+      1,
+      45
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": null
+    }
+   ]
+  },
+  {
+   "save_chapter_shown": 29,
+   "save_chapter_byte": 28,
+   "map": 28,
+   "W": 31,
+   "H": 64,
+   "tiles_equal_FDFIELD": 1984,
+   "cells": 1984,
+   "tiles_used": 226,
+   "live_type_byte_vs_terrain_json_differing": 0,
+   "live_type_counts": {
+    "0": 558,
+    "1": 685,
+    "5": 741
+   },
+   "units_live": 76,
+   "units_on_type_ge3_at_player_control": [],
+   "static_start_cells_type_ge3": [
+    {
+     "xy": [
+      13,
+      12
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": null
+    },
+    {
+     "xy": [
+      15,
+      3
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": null
+    },
+    {
+     "xy": [
+      15,
+      12
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": null
+    },
+    {
+     "xy": [
+      17,
+      12
+     ],
+     "type": 5,
+     "entries": 1,
+     "occupied_by": null
+    }
+   ]
+  }
+ ],
+ "attacks": [
+  {
+   "map": 18,
+   "attacker": 5,
+   "attacker_cell": [
+    16,
+    36
+   ],
+   "attacker_type": 3,
+   "attacker_race_class": [
+    1,
+    6
+   ],
+   "defender": 26,
+   "defender_cell": [
+    16,
+    35
+   ],
+   "defender_type": 3,
+   "defender_race_class": [
+    1,
+    13
+   ],
+   "defender_moved_by_SM": true,
+   "AP": 125,
+   "DP": 105,
+   "predicted": {
+    "ap_mod": -6,
+    "ap_rem": -25,
+    "dp_mod": 10,
+    "dp_rem": 50,
+    "damage": 3
+   },
+   "rival_floor": {
+    "ap_mod": -7,
+    "damage": 2
+   },
+   "breakpoints": [
+    {
+     "eip": "001CB8DC",
+     "eax": -6,
+     "edx": -25
+    },
+    {
+     "eip": "001CB921",
+     "eax": 10,
+     "edx": 50
+    },
+    {
+     "eip": "001CB9FC",
+     "eax": 3,
+     "edx": 6
+    }
+   ],
+   "live": {
+    "ap_mod": -6,
+    "ap_rem": -25,
+    "dp_mod": 10,
+    "dp_rem": 50,
+    "damage": 3
+   },
+   "defender_hp_pre": 999,
+   "defender_hp_post": 996,
+   "match": true
+  },
+  {
+   "map": 19,
+   "attacker": 12,
+   "attacker_cell": [
+    26,
+    34
+   ],
+   "attacker_type": 4,
+   "attacker_race_class": [
+    1,
+    2
+   ],
+   "defender": 24,
+   "defender_cell": [
+    25,
+    34
+   ],
+   "defender_type": 4,
+   "defender_race_class": [
+    9,
+    28
+   ],
+   "defender_moved_by_SM": true,
+   "AP": 125,
+   "DP": 110,
+   "predicted": {
+    "ap_mod": -6,
+    "ap_rem": -25,
+    "dp_mod": -5,
+    "dp_rem": -50,
+    "damage": 12
+   },
+   "rival_floor": {
+    "ap_mod": -7,
+    "dp_mod": -6
+   },
+   "breakpoints": [
+    {
+     "eip": "001CB8DC",
+     "eax": -6,
+     "edx": -25
+    },
+    {
+     "eip": "001CB921",
+     "eax": -5,
+     "edx": -50
+    },
+    {
+     "eip": "001CB9FC",
+     "eax": 12,
+     "edx": 6
+    }
+   ],
+   "live": {
+    "ap_mod": -6,
+    "ap_rem": -25,
+    "dp_mod": -5,
+    "dp_rem": -50,
+    "damage": 12
+   },
+   "defender_hp_pre": 999,
+   "defender_hp_post": 987,
+   "match": true
+  },
+  {
+   "map": 28,
+   "attacker": 13,
+   "attacker_cell": [
+    13,
+    57
+   ],
+   "attacker_type": 0,
+   "attacker_race_class": [
+    1,
+    11
+   ],
+   "defender": 45,
+   "defender_cell": [
+    13,
+    56
+   ],
+   "defender_type": 5,
+   "defender_race_class": [
+    6,
+    25
+   ],
+   "defender_moved_by_SM": true,
+   "AP": 125,
+   "DP": 115,
+   "predicted": {
+    "ap_mod": 6,
+    "ap_rem": 25,
+    "dp_mod": 0,
+    "dp_rem": 0,
+    "damage": 14
+   },
+   "rival_type5_as_4": {
+    "dp_mod": -5,
+    "damage": 18
+   },
+   "rival_type5_as_3": {
+    "dp_mod": 11,
+    "damage": 4
+   },
+   "breakpoints": [
+    {
+     "eip": "001CB8DC",
+     "eax": 6,
+     "edx": 25
+    },
+    {
+     "eip": "001CB921",
+     "eax": 0,
+     "edx": 0
+    },
+    {
+     "eip": "001CB9FC",
+     "eax": 14,
+     "edx": 4
+    }
+   ],
+   "live": {
+    "ap_mod": 6,
+    "ap_rem": 25,
+    "dp_mod": 0,
+    "dp_rem": 0,
+    "damage": 14
+   },
+   "defender_hp_pre": 999,
+   "defender_hp_post": 985,
+   "match": true
+  }
+ ],
+ "terrain_modifier_tables_live": {
+  "ap_pct_0x51a12": [
+   5,
+   0,
+   -5,
+   -5,
+   -5,
+   0
+  ],
+  "dp_pct_0x51a2a": [
+   0,
+   0,
+   10,
+   10,
+   -5,
+   0
+  ],
+  "read_at": "每個戰場各讀一次 0x1eda12(執行期),三章相同"
+ },
+ "hud_readout": "游標停在地形 3 / 4 / 5 格時左下角資訊框分別顯示 A-05 D+10、A-05 D-05、A+00 D+00(截圖 t1_cursor / t3_moved / t4_aim)",
+ "terrain5_start_placement": "map 24(第 25 章)開場時 #17(陣營 1、raw key 0x68、種族 10、職業 26、MV 0)站在地形 5 的 (10,0);同圖 (5,7) 的 15 筆重複出場座標開場時無人。map 25 的 (1,45)、map 28 的 4 格開場時都無人;map 28 的回合事件列都是休眠(回合 0xff),但會被事件 75/76 改寫啟用,事件 76 之後把 group 1 的三個頭目放到其中 3 格(見 terrain_events_map_attack_20261001.json)。parse_field 以索引配對的(出場座標, 單位)與活記憶體逐筆相符,只是活陣列先放我方。"
+}
