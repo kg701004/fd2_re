@@ -1,0 +1,1570 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章戰場(map 24),來源存檔 source_ch27.SAV 經 prepare_chapter_save 改章節 byte。斷點位址為 Ghidra 位址,執行期 +0x19c000。受控設定:[0x53af9] = 1、敵 E 搬到索爾正上方 (7,42)、MV 0、清法術/MP/第二格,雙方 AP 300 / DP 200 / HIT 250 / EV 0 / HP 999,其他敵人與隊員麻痺 9。強制亂數用偵錯器 SR EDX 0,並讀回 pane 確認。",
+ "A_path_search_0x4e4f6": {
+  "static": {
+   "signature": "0x4e4f6(costRow, startX, startY, budget, outBuf, tgtX, tgtY, mode, grid, terrainTable);格子 4 bytes:c0/c1 圖塊字(c1 高 6 bits 存方向段數×4)、c2 旗標、c3 記號",
+   "return": "byte [0x60078]:起點就是目標 → 0;mode 0/1 抵達目標時的深度(步數),同深度或更短的後到者覆寫並把方向陣列寫進 outBuf(只寫前 d 個,較長的舊路徑尾巴留著);沒抵達 → 0xff。mode 2 每進一個 c2 & 0x40 的格就寫 (x, y) 到 outBuf[0..1] 並設 1",
+   "enter_rule_0x4e680": "扣成本(無號借位失敗)→ 剩餘與記號有號比較:小於失敗、大於接受、相等只有 mode 1 且這條路的方向段數 > 該格記錄的段數才接受;接受後寫段數。mode 2 直接寫記號並檢查 0x40;mode 0/1:0x40 失敗、0x80 剩餘歸 0、寫記號、檢查目標",
+   "dir_order": "右(3)、左(1)、下(0)、上(2)",
+   "callers": {
+    "0x189f8": "玩家確認落點,mode 0,預算 MV",
+    "0x14c3a": "move_unit_toward_point,mode 0,預算 MV",
+    "0x14c7d": "move_unit_toward_point,mode 1,預算 0x1c(先 0x4df4c 重設)",
+    "0x141b0": "0x14121,mode 2,預算 0x1c,目標 (0,0)",
+    "0x14e9f": "move_unit_toward_point 的最後一步,mode 0"
+   },
+   "caller_0x18890_on_0xff": "0x18b24 → 0x18b77 回 1(與選格時按 Escape 同一個出口,外層 do{}while(r==0) 結束,回地圖游標);沒有呼叫 0x3776e 釋放路徑緩衝",
+   "why_0xff_unreachable_from_player_confirm": "0x4e390/0x4e4be 與 mode 0 的 0x4e680 進格規則相同,同一個 0x145cd(1) 標記;target_cursor_loop(4) 只收 0x4e390 記號 != 0xff 的格,而 0x146d1 把同陣營單位格標 0xff"
+  },
+  "flood1_0x4e390_recompute": [
+   {
+    "run": "a1",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "grid_bytes": 5304,
+    "grid_diff": 0
+   },
+   {
+    "run": "a2",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "grid_bytes": 5304,
+    "grid_diff": 0
+   },
+   {
+    "run": "a4",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "grid_bytes": 5304,
+    "grid_diff": 0
+   }
+  ],
+  "path_search_recompute": [
+   {
+    "run": "a1b",
+    "caller_ret": "0x189fd",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "target": [
+     8,
+     37
+    ],
+    "mode": 0,
+    "live_eax": 9,
+    "sim": 9,
+    "outbuf_written_sim": [
+     3,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     1,
+     2,
+     2
+    ],
+    "outbuf_live": [
+     3,
+     3,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     1,
+     2,
+     2
+    ],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     11,
+     9,
+     9
+    ],
+    "rival_bfs_first_shortest": {
+     "result": 9,
+     "path": [
+      3,
+      3,
+      2,
+      2,
+      1,
+      2,
+      2,
+      2,
+      2
+     ],
+     "differs": true
+    },
+    "rival_manhattan": 7,
+    "match": true
+   },
+   {
+    "run": "a2",
+    "caller_ret": "0x189fd",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "target": [
+     7,
+     43
+    ],
+    "mode": 0,
+    "live_eax": 0,
+    "sim": 0,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     0
+    ],
+    "forced_flag_0x40_on": [
+     10,
+     43
+    ],
+    "match": true
+   },
+   {
+    "run": "a4",
+    "caller_ret": "0x189fd",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "target": [
+     10,
+     43
+    ],
+    "mode": 0,
+    "live_eax": 255,
+    "sim": 255,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [],
+    "forced_flag_0x40_on": [
+     10,
+     43
+    ],
+    "match": true
+   },
+   {
+    "run": "c7a",
+    "caller_ret": "0x189fd",
+    "start": [
+     7,
+     43
+    ],
+    "budget": 30,
+    "target": [
+     7,
+     43
+    ],
+    "mode": 0,
+    "live_eax": 0,
+    "sim": 0,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     0
+    ],
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x14c3f",
+    "start": [
+     7,
+     42
+    ],
+    "budget": 0,
+    "target": [
+     7,
+     42
+    ],
+    "mode": 0,
+    "live_eax": 0,
+    "sim": 0,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     0
+    ],
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x14ea4",
+    "start": [
+     7,
+     42
+    ],
+    "budget": 0,
+    "target": [
+     7,
+     42
+    ],
+    "mode": 0,
+    "live_eax": 0,
+    "sim": 0,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     0
+    ],
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x141b5",
+    "start": [
+     10,
+     10
+    ],
+    "budget": 28,
+    "target": [
+     0,
+     0
+    ],
+    "mode": 2,
+    "live_eax": 1,
+    "sim": 1,
+    "outbuf_written_sim": [
+     11,
+     27
+    ],
+    "outbuf_live": [
+     11,
+     27
+    ],
+    "grid_diff": 0,
+    "target_arrival_depths": [],
+    "mode2_hits_in_order": [
+     [
+      11,
+      26
+     ],
+     [
+      11,
+      27
+     ],
+     [
+      10,
+      27
+     ],
+     [
+      11,
+      26
+     ],
+     [
+      11,
+      27
+     ],
+     [
+      10,
+      27
+     ],
+     [
+      10,
+      30
+     ],
+     [
+      11,
+      26
+     ],
+     [
+      11,
+      27
+     ],
+     [
+      10,
+      27
+     ],
+     [
+      10,
+      30
+     ],
+     [
+      11,
+      26
+     ],
+     [
+      11,
+      27
+     ],
+     [
+      10,
+      27
+     ],
+     [
+      10,
+      30
+     ],
+     [
+      11,
+      26
+     ],
+     [
+      11,
+      27
+     ]
+    ],
+    "rival_first_hit": [
+     11,
+     26
+    ],
+    "rival_nearest_0x40_cell": [
+     10,
+     0
+    ],
+    "rival_nearest_reached_0x40_cell": [
+     [
+      10,
+      27
+     ],
+     [
+      11,
+      26
+     ]
+    ],
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x14c3f",
+    "start": [
+     10,
+     10
+    ],
+    "budget": 6,
+    "target": [
+     11,
+     27
+    ],
+    "mode": 0,
+    "live_eax": 255,
+    "sim": 255,
+    "outbuf_written_sim": [],
+    "outbuf_live": [],
+    "grid_diff": 0,
+    "target_arrival_depths": [],
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x14c82",
+    "start": [
+     10,
+     10
+    ],
+    "budget": 28,
+    "target": [
+     11,
+     27
+    ],
+    "mode": 1,
+    "live_eax": 20,
+    "sim": 20,
+    "outbuf_written_sim": [
+     1,
+     0,
+     0,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "outbuf_live": [
+     1,
+     0,
+     0,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     28,
+     28,
+     28,
+     28,
+     26,
+     26,
+     26,
+     24,
+     24,
+     24,
+     22,
+     22,
+     20
+    ],
+    "rival_mode0_rules": {
+     "result": 20,
+     "grid_diff": 335
+    },
+    "rival_equal_budget_fewer_turns": {
+     "result": 20,
+     "path_head": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      3,
+      0,
+      0
+     ],
+     "grid_diff": 440
+    },
+    "match": true
+   },
+   {
+    "run": "c7b",
+    "caller_ret": "0x14ea4",
+    "start": [
+     10,
+     10
+    ],
+    "budget": 6,
+    "target": [
+     10,
+     14
+    ],
+    "mode": 0,
+    "live_eax": 6,
+    "sim": 6,
+    "outbuf_written_sim": [
+     1,
+     0,
+     0,
+     3,
+     0,
+     0
+    ],
+    "outbuf_live": [
+     1,
+     0,
+     0,
+     3,
+     0,
+     0
+    ],
+    "grid_diff": 0,
+    "target_arrival_depths": [
+     6
+    ],
+    "rival_bfs_first_shortest": {
+     "result": 6,
+     "path": [
+      1,
+      0,
+      0,
+      3,
+      0,
+      0
+     ],
+     "differs": false
+    },
+    "rival_manhattan": 4,
+    "match": true
+   }
+  ],
+  "simulator_mutations": {
+   "same_depth_does_not_overwrite(> 改 >=)": {
+    "calls_that_fail": [
+     "a1b:mode0"
+    ],
+    "killed": true
+   },
+   "turn_count_not_written_mode0_2": {
+    "calls_that_fail": [
+     "a1b:mode0",
+     "a2:mode0",
+     "a4:mode0",
+     "c7a:mode0",
+     "c7b:mode2",
+     "c7b:mode0",
+     "c7b:mode0"
+    ],
+    "killed": true
+   },
+   "dir_order_up_first": {
+    "calls_that_fail": [
+     "a1b:mode0",
+     "a2:mode0",
+     "a4:mode0",
+     "c7a:mode0",
+     "c7b:mode2",
+     "c7b:mode0",
+     "c7b:mode1",
+     "c7b:mode0"
+    ],
+    "killed": true
+   },
+   "mode2_keeps_first_hit": {
+    "calls_that_fail": [
+     "c7b:mode2"
+    ],
+    "killed": true
+   }
+  },
+  "target_loop_reject_occupied": {
+   "run": "a4",
+   "cursor_cell": [
+    9,
+    43
+   ],
+   "occupied_by": "隊員 #1",
+   "keys": [
+    {
+     "key": "Escape",
+     "stops": [
+      "0x1894d",
+      "0x18952"
+     ]
+    },
+    {
+     "key": "Right",
+     "stops": []
+    },
+    {
+     "key": "Right",
+     "stops": []
+    },
+    {
+     "key": "Return",
+     "stops": []
+    },
+    {
+     "key": "Right",
+     "stops": []
+    },
+    {
+     "key": "Return",
+     "stops": [
+      "0x18986",
+      "0x189f8",
+      "0x189fd"
+     ]
+    },
+    {
+     "key": "-",
+     "stops": []
+    }
+   ]
+  },
+  "after_forced_0xff": {
+   "sol_xy": [
+    7,
+    43
+   ],
+   "sol_f5": 0,
+   "screen": "a4 之後回到地圖游標,沒有指令環"
+  }
+ },
+ "B_hit_count": {
+  "static": {
+   "map_0x1e856": "下數預設 1;攻方武器(find_equipped_slot(攻方, 0))道具列 +9 == 3 → 2;rand()%100 < 3 → 2(不疊加,最多 2)",
+   "scene_0x2ebe1": "下數預設 1;rand()%100 < 3 → 2;每一擊後若 scene_attack_resolve 的 out+0x10 != 0(武器列 +9 == 3 時設 1)且還沒加過,下數 +1(只加一次)→ 最多 3",
+   "row9_eq_3_items": [
+    71
+   ],
+   "item71_name_on_status_screen": "魔龍爪",
+   "ai_attack_execute_counter_calls": "0x1548e 只有一個反擊呼叫點 0x1560e(不在迴圈內)"
+  },
+  "sequences": [
+   {
+    "run": "b1b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 18,
+    "weapon_type_row9": 3,
+    "roll": 25,
+    "roll_used": 0,
+    "forced": true,
+    "predicted_hits": 3,
+    "observed_hits": 3,
+    "match": true
+   },
+   {
+    "run": "b1b",
+    "path": "scene 0x2ebe1",
+    "attacker": 18,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 47,
+    "roll_used": 47,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b1b",
+    "path": "map 0x1e856",
+    "attacker": 34,
+    "defender": 22,
+    "weapon_type_row9": 0,
+    "roll": 90,
+    "roll_used": 90,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b1b",
+    "path": "map 0x1e856",
+    "attacker": 36,
+    "defender": 21,
+    "weapon_type_row9": 0,
+    "roll": 71,
+    "roll_used": 71,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b1b",
+    "path": "map 0x1e856",
+    "attacker": 38,
+    "defender": 24,
+    "weapon_type_row9": 0,
+    "roll": 32,
+    "roll_used": 32,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b1b",
+    "path": "map 0x1e856",
+    "attacker": 39,
+    "defender": 22,
+    "weapon_type_row9": 0,
+    "roll": 80,
+    "roll_used": 80,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b2b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 18,
+    "weapon_type_row9": 3,
+    "roll": 77,
+    "roll_used": 77,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true
+   },
+   {
+    "run": "b2b",
+    "path": "scene 0x2ebe1",
+    "attacker": 18,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 57,
+    "roll_used": 57,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b2b",
+    "path": "map 0x1e856",
+    "attacker": 34,
+    "defender": 21,
+    "weapon_type_row9": 0,
+    "roll": 77,
+    "roll_used": 77,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b2b",
+    "path": "map 0x1e856",
+    "attacker": 36,
+    "defender": 21,
+    "weapon_type_row9": 0,
+    "roll": 49,
+    "roll_used": 49,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b2b",
+    "path": "map 0x1e856",
+    "attacker": 37,
+    "defender": 22,
+    "weapon_type_row9": 0,
+    "roll": 11,
+    "roll_used": 11,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b2b",
+    "path": "map 0x1e856",
+    "attacker": 38,
+    "defender": 24,
+    "weapon_type_row9": 0,
+    "roll": 6,
+    "roll_used": 6,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b2b",
+    "path": "map 0x1e856",
+    "attacker": 39,
+    "defender": 22,
+    "weapon_type_row9": 0,
+    "roll": 50,
+    "roll_used": 50,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b3b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 18,
+    "weapon_type_row9": 0,
+    "roll": 30,
+    "roll_used": 30,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b3b",
+    "path": "scene 0x2ebe1",
+    "attacker": 18,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 78,
+    "roll_used": 78,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b3b",
+    "path": "map 0x1e856",
+    "attacker": 34,
+    "defender": 23,
+    "weapon_type_row9": 0,
+    "roll": 68,
+    "roll_used": 68,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b3b",
+    "path": "map 0x1e856",
+    "attacker": 36,
+    "defender": 24,
+    "weapon_type_row9": 0,
+    "roll": 58,
+    "roll_used": 58,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b3b",
+    "path": "map 0x1e856",
+    "attacker": 37,
+    "defender": 23,
+    "weapon_type_row9": 0,
+    "roll": 81,
+    "roll_used": 81,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b3b",
+    "path": "map 0x1e856",
+    "attacker": 38,
+    "defender": 23,
+    "weapon_type_row9": 0,
+    "roll": 73,
+    "roll_used": 73,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b4b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 18,
+    "weapon_type_row9": 3,
+    "roll": 46,
+    "roll_used": 46,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true
+   },
+   {
+    "run": "b4b",
+    "path": "scene 0x2ebe1",
+    "attacker": 18,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 52,
+    "roll_used": 52,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b4b",
+    "path": "map 0x1e856",
+    "attacker": 34,
+    "defender": 18,
+    "weapon_type_row9": 0,
+    "roll": 46,
+    "roll_used": 46,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b4b",
+    "path": "map 0x1e856",
+    "attacker": 18,
+    "defender": 34,
+    "weapon_type_row9": 0,
+    "roll": 15,
+    "roll_used": 0,
+    "forced": true,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true,
+    "scene_rule_would_give": 2
+   },
+   {
+    "run": "b4b",
+    "path": "map 0x1e856",
+    "attacker": 37,
+    "defender": 18,
+    "weapon_type_row9": 0,
+    "roll": 85,
+    "roll_used": 85,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b4b",
+    "path": "map 0x1e856",
+    "attacker": 18,
+    "defender": 37,
+    "weapon_type_row9": 0,
+    "roll": 43,
+    "roll_used": 0,
+    "forced": true,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true,
+    "scene_rule_would_give": 2
+   },
+   {
+    "run": "b4b",
+    "path": "map 0x1e856",
+    "attacker": 38,
+    "defender": 18,
+    "weapon_type_row9": 0,
+    "roll": 7,
+    "roll_used": 7,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b5b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 19,
+    "weapon_type_row9": 3,
+    "roll": 94,
+    "roll_used": 94,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true
+   },
+   {
+    "run": "b5b",
+    "path": "scene 0x2ebe1",
+    "attacker": 19,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 84,
+    "roll_used": 84,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b5b",
+    "path": "map 0x1e856",
+    "attacker": 19,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 46,
+    "roll_used": 46,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b5b",
+    "path": "map 0x1e856",
+    "attacker": 0,
+    "defender": 19,
+    "weapon_type_row9": 3,
+    "roll": 21,
+    "roll_used": 21,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true,
+    "scene_rule_would_give": 2
+   },
+   {
+    "run": "b6b",
+    "path": "scene 0x2ebe1",
+    "attacker": 0,
+    "defender": 19,
+    "weapon_type_row9": 3,
+    "roll": 79,
+    "roll_used": 79,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true
+   },
+   {
+    "run": "b6b",
+    "path": "scene 0x2ebe1",
+    "attacker": 19,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 99,
+    "roll_used": 99,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true
+   },
+   {
+    "run": "b6d",
+    "path": "map 0x1e856",
+    "attacker": 62,
+    "defender": 19,
+    "weapon_type_row9": 0,
+    "roll": 5,
+    "roll_used": 5,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b6d",
+    "path": "map 0x1e856",
+    "attacker": 19,
+    "defender": 62,
+    "weapon_type_row9": 0,
+    "roll": 46,
+    "roll_used": 46,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b6e",
+    "path": "map 0x1e856",
+    "attacker": 19,
+    "defender": 0,
+    "weapon_type_row9": 0,
+    "roll": 82,
+    "roll_used": 82,
+    "forced": false,
+    "predicted_hits": 1,
+    "observed_hits": 1,
+    "match": true,
+    "scene_rule_would_give": 1
+   },
+   {
+    "run": "b6e",
+    "path": "map 0x1e856",
+    "attacker": 0,
+    "defender": 19,
+    "weapon_type_row9": 3,
+    "roll": 0,
+    "roll_used": 0,
+    "forced": false,
+    "predicted_hits": 2,
+    "observed_hits": 2,
+    "match": true,
+    "scene_rule_would_give": 3
+   }
+  ],
+  "s66_double_counter": {
+   "sol_slot0": [
+    64,
+    31
+   ],
+   "weapon31_row9": 0,
+   "conclusion": "續六十六索爾(武器 31,類型 0)在地圖路徑反擊打 2 下:靜態上只剩 rand()%100 < 3 這一支;該次亂數沒記錄,屬推論"
+  },
+  "note_ai_used_weapon_as_item": "E #18 原武器 60 的道具列 +0xd = 20,ai_choose_action 走道具執行 0x15055(把武器當道具用)而不是物理攻擊;換成武器 8(+0xd = 0)後才走 0x1548e。道具列 +0xd != 0 的武器:11, 29, 38, 40, 51, 56, 57, 58, 60, 61, 79, 94, 95, 96, 99, 101, 102"
+ },
+ "C_friendly_phase_mode8": {
+  "static": "0x1d80b:單一趟,條件 +6 == 1、+5 & 0x81 == 0、+0x26 == 0,呼叫 ai_mode_dispatch(unit, 1);模式比對不看 a2,所以模式 8 同樣在 0x13d97 跳到結尾",
+  "shipped_data": "map 24 友軍 NPC #17(10,0)出貨就是模式 8、MV 0",
+  "dispatches": [
+   {
+    "run": "b1b",
+    "unit": 17,
+    "mode_eax": 8,
+    "set_mode17": 8,
+    "phase": "friendly",
+    "after_until_next_dispatch": []
+   },
+   {
+    "run": "b1b",
+    "unit": 34,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(34)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 35,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(35)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 36,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(36)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 37,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(37)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 38,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(38)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 39,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(39)"
+    ]
+   },
+   {
+    "run": "b1b",
+    "unit": 18,
+    "mode_eax": 2,
+    "set_mode17": null,
+    "phase": "enemy",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(18)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 17,
+    "mode_eax": 3,
+    "set_mode17": 3,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(17)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 34,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(34)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 35,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(35)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 36,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(36)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 37,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(37)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 38,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(38)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 39,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(39)"
+    ]
+   },
+   {
+    "run": "b2b",
+    "unit": 18,
+    "mode_eax": 2,
+    "set_mode17": null,
+    "phase": "enemy",
+    "after_until_next_dispatch": [
+     "0x13e5a",
+     "0x13512(18)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 17,
+    "mode_eax": 8,
+    "set_mode17": 8,
+    "phase": "friendly",
+    "after_until_next_dispatch": []
+   },
+   {
+    "run": "b3b",
+    "unit": 34,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(34)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 35,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x13e5a",
+     "0x13512(35)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 36,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(36)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 37,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(37)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 38,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(38)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 39,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x13e5a",
+     "0x13512(39)"
+    ]
+   },
+   {
+    "run": "b3b",
+    "unit": 18,
+    "mode_eax": 2,
+    "set_mode17": null,
+    "phase": "enemy",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x15055",
+     "0x13e5a",
+     "0x13512(18)"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 17,
+    "mode_eax": 8,
+    "set_mode17": 8,
+    "phase": "friendly",
+    "after_until_next_dispatch": []
+   },
+   {
+    "run": "b4b",
+    "unit": 34,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x1e8b1",
+     "0x1e8cf"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 35,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x13e5a",
+     "0x13512(35)"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 36,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x13e5a",
+     "0x13512(36)"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 37,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x1e8b1",
+     "0x1e8cf"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 38,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x1548e",
+     "0x1e8b1",
+     "0x1e8cf",
+     "0x1e912",
+     "0x1efce",
+     "0x13e5a",
+     "0x13512(38)"
+    ]
+   },
+   {
+    "run": "b4b",
+    "unit": 39,
+    "mode_eax": 3,
+    "set_mode17": null,
+    "phase": "friendly",
+    "after_until_next_dispatch": [
+     "0x14ef0",
+     "0x13e5a",
+     "0x13512(39)"
+    ]
+   }
+  ]
+ }
+}
