@@ -1977,7 +1977,7 @@
   {
    "addr": "0x4ed7a",
    "name": "draw_glyph16",
-   "summary": "(font, glyph, dst, stride, color, shadow, bg):bg 非 0 時先把 16×16 填成 bg;glyph==0xa 不畫;否則讀 font + glyph*32 的16×16 1bpp 點陣,每個 1 bit 寫 color,並在正下方與左下方寫 shadow。dialog 每個一般字元呼叫一次(游標 +16)。舊版位址 0x4ea2a(見勘誤)。",
+   "summary": "(font, glyph, dst, stride, color, shadow, bg):bg 非 0 時先把 16×16 填成 bg;glyph==0xa 不畫;否則讀 font + glyph*32 的16×16 1bpp 點陣,每個 1 bit 寫 color,並在正下方與左下方寫 shadow。dialog 每個一般字元呼叫一次(游標 +16)。舊版位址 0x4ea2a(見勘誤)。 續七十一(靜態 + DOSBox-X):glyph 沒有範圍檢查。第 25 章事件 0 的第 0xb 條(FDTXT_025 偏移表只有 8 條)從奇數位移 343 讀起,5383 個字碼都交給本函式、其中 3888 個超出 FDOTHER_004 的 1824 個字模;沒有開框碼,所以從 0xa0000 起畫 —— 就是續六十八~七十的「亂碼文字框」。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -2719,7 +2719,7 @@
   {
    "addr": "0x2968d",
    "name": "save_game_menu",
-   "summary": "(view_arg):malloc 0x59cb 存檔 envelope;存檔檔存在就 fread 並以 save_xor_crypt 解密,否則 memset 0xff。迴圈呼叫 save_slot_selector,選定後把名冊 [0x53bf7] 0xa00 bytes 與章節/人數/金錢等 10 bytes 中繼資料寫進 +0x312b+slot*0xa28,重算 save_checksum_sum 存到 +0x59c7,加密、寫檔(0x377a3)、fclose。舊文件位址 0x30012(勘誤)。",
+   "summary": "(view_arg):malloc 0x59cb 存檔 envelope;存檔檔存在就 fread 並以 save_xor_crypt 解密,否則 memset 0xff。迴圈呼叫 save_slot_selector,選定後把名冊 [0x53bf7] 0xa00 bytes 與章節/人數/金錢等 10 bytes 中繼資料寫進 +0x312b+slot*0xa28,重算 save_checksum_sum 存到 +0x59c7,加密、寫檔(0x377a3)、fclose。舊文件位址 0x30012(勘誤)。 續七十一(DOSBox-X):酒店存檔只寫 0xa00 bytes 名冊與人數 byte。名冊 35 人時存檔人數 35、只有第 0..31 筆;全新實例讀檔後第 32..34 筆來自名冊後面的堆積(+8 = 60、21、12)。戰後寫回成出場那位複本的重複哈諾照樣存進槽。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -5027,7 +5027,7 @@
   {
    "addr": "0x34531",
    "name": "event_handler_0",
-   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。 2026-10-01 DOSBox-X(doc98 續六十九):map 24 的敵方回合以 0x1d9ec 分派到本函式(單位 53 走出地圖觸發,不是第 1 章);畫面是索爾頭像加亂碼文字框,鏡頭移到 map 24 的熔岩區;單位數不變,隊伍 #12、#13 的 y 改為 49(推論為本事件的演出)。 續七十(靜態 + DOSBox-X):#12、#13 的位移是本函式的 acting——ACT7 = slot 12 pose 0(Y+1)× 2 格,ACT8 = slot 13 pose 0 × 1 格,與兩次實測的 y 47→49、48→49 相同,前一句的「推論」改為已確認。spawn_group(3)、(7) 在 map 24 沒有對應 group 的單位,單位數不變;join(1)(0x112a5)在名冊 [0x53bf7] 尾端追加,不比對既有 +8、不檢查容量:DOSBox-X 名冊人數 16 → 17,新增第二筆 char_id 1(哈諾,LV3、AP 21、HP 56),原有那筆(+7 = 33、LV6)不變。",
+   "summary": "事件跳表 0x51b91 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(1), spawn(3), pan(5, 8), redraw(1), delay(0x64), act(7), kbd_flush(), dialog(_, 0xb, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(7), redraw(1), delay(0x64), act(8), kbd_flush(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), reset_pose())。舊文件位址 0x341db(勘誤)。 2026-10-01 DOSBox-X(doc98 續六十九):map 24 的敵方回合以 0x1d9ec 分派到本函式(單位 53 走出地圖觸發,不是第 1 章);畫面是索爾頭像加亂碼文字框,鏡頭移到 map 24 的熔岩區;單位數不變,隊伍 #12、#13 的 y 改為 49(推論為本事件的演出)。 續七十(靜態 + DOSBox-X):#12、#13 的位移是本函式的 acting——ACT7 = slot 12 pose 0(Y+1)× 2 格,ACT8 = slot 13 pose 0 × 1 格,與兩次實測的 y 47→49、48→49 相同,前一句的「推論」改為已確認。spawn_group(3)、(7) 在 map 24 沒有對應 group 的單位,單位數不變;join(1)(0x112a5)在名冊 [0x53bf7] 尾端追加,不比對既有 +8、不檢查容量:DOSBox-X 名冊人數 16 → 17,新增第二筆 char_id 1(哈諾,LV3、AP 21、HP 56),原有那筆(+7 = 33、LV6)不變。 續七十一(DOSBox-X):join(1) 在名冊滿時照樣追加 —— 人數 32 → 33,第 32 筆(0 起算)寫進名冊後面的調色盤快取 [0x53a65]。同一場戰鬥重複觸發時每次再多一個哈諾,ACT7 每次把 #12 下移 2 格,第三次落到地圖外 (8,53),之後被攻擊時 focus_unit 卡住。第 0xb 條對白在第 25 章超出 FDTXT_025 的 8 條偏移表(見 draw_glyph16)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7919,7 +7919,7 @@
   {
    "addr": "0x165ac",
    "name": "dialog_box_open_anim",
-   "summary": "對話框的開框動畫:camera_step_to 後,一張 [0x53a81] 框圖從游標格([0x53ab9]/[0x53abd] × 24)以內插逐步移向框的位置(步數 = 欄 + 列);接著分 5 段展開框,每段以 decode_image_with_header 存下底下的背景條、以 0x168b6 畫框並 delay。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。 續七十(靜態):呼叫點 0x161d7 / 0x162bc 的座標是 0x12c60(char_id) 找到的場上單位的 +0/+1(找到時旗標 2 才移游標)。推論:說話者若是站在地圖外的單位,camera_step_to 同樣不會返回(未實測)。",
+   "summary": "對話框的開框動畫:camera_step_to 後,一張 [0x53a81] 框圖從游標格([0x53ab9]/[0x53abd] × 24)以內插逐步移向框的位置(步數 = 欄 + 列);接著分 5 段展開框,每段以 decode_image_with_header 存下底下的背景條、以 0x168b6 畫框並 delay。呼叫點 0x161d7/0x162bc/0x1616c/0x16256/0x1638f/0x1640b/0x164cf 全在 doc14 L117 列為「開框」的常式(0x16140/0x1622A/0x16367/0x163E3,無獨立入口訊號,清單把它們算進 dialog 0x15f84 的範圍)。doc14 撤回的是「[0x53ab9]/[0x53abd] 是框寬高、這是縮放動畫」;本體正是把這兩個全域當游標格使用,與更正一致。 續七十(靜態):呼叫點 0x161d7 / 0x162bc 的座標是 0x12c60(char_id) 找到的場上單位的 +0/+1(找到時旗標 2 才移游標)。推論:說話者若是站在地圖外的單位,camera_step_to 同樣不會返回(未實測)。 續七十一(DOSBox-X):上句推論改為已確認,但有條件 —— v9c 說話者單位 16 在 (40,10)、入口游標 (7,14):camera_step_to(40,10) 卡在 x 迴圈 0x12d3b(ESI 40、游標 x 24),返回點沒有停過;v9b 游標已在 x = 171,往左走到 40 正常返回。只有游標要往右越過 W−1 或往下越過 H−1 才卡。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -9414,6 +9414,72 @@
     {
      "at": "0x11bd2",
      "insn": "inc dword ptr [0x3aad]"
+    }
+   ]
+  },
+  {
+   "addr": "0x12c60",
+   "name": "find_unit_by_char_id",
+   "summary": "(char_id):先把 [0x53c1b] 清 0,逐筆掃戰場單位 [0x53a45](0..[0x53beb]),+8 相同就把 [0x53c1b] 設成該筆;0x34894(索引) 回 0(活著)時回傳索引,否則繼續掃。掃完沒回傳:[0x53c1b] 仍是 0 才改掃名冊 [0x53bf7](0..[0x53bfb]),設成最後一筆同 id 的名冊紀錄;回 -1。所以回 -1 時 [0x53c1b] 可能是死掉的戰場單位、名冊紀錄或 0。dialog(0x15f84)的開框碼 0xFFEF / 0xFFEE 用它找說話者:回非 -1 時旗標 2 / 0x70(移鏡頭),回 -1 時旗標 0(不移),頭像與座標都從 [0x53c1b] 讀(doc98 續七十一)。",
+   "confidence": "static_re",
+   "date": "2026-10-02",
+   "evidence": [
+    {
+     "at": "0x12c77",
+     "insn": "mov dword ptr [0x3c1b], 0"
+    },
+    {
+     "at": "0x12c91",
+     "insn": "movzx eax, byte ptr [ebx + 8]"
+    },
+    {
+     "at": "0x12ca0",
+     "insn": "call 0x34894"
+    },
+    {
+     "at": "0x12cbb",
+     "insn": "mov ebx, dword ptr [0x3bf7]"
+    },
+    {
+     "at": "0x12ce1",
+     "insn": "mov eax, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x19df7",
+   "name": "battle_system_submenu",
+   "summary": "():戰場系統選單第 0 項開的子選單(唯一呼叫端 0x16fed)。先以 'rb' 讀 FD2.SAV 的 0x59cb bytes(沒有檔案就把各槽標成空),再跑四圖示選單(圖示表 0x51ef5),依 [0x53c57]:0 → 0x1b1e7(地圖資訊:勝敗條件、敵我數、金錢);1 → 文字 0x19a「要記錄戰況嗎?」,YES 時把事件表 [0x53a55] 0x8a3 bytes、名冊 [0x53bf7] 0xa00 bytes、戰場單位 [0x53beb]×0x50、[0x53ad5] 0x20 bytes 與游標、單位數、章節、名冊人數(低 byte)、金錢等中繼資料寫進 envelope 的 0..0x312b,重算校驗和、加密、寫檔;2 → 文字 0x19d「要讀取戰況嗎?」;3 → 「要離開戰場嗎?」。DOSBox-X(doc98 續七十一):第 1 項實際寫出 FD2.SAV,戰況區名冊與記憶體逐 byte 相同,只改動 0..0x312b 與校驗和;第 0 項顯示勝敗條件畫面。",
+   "confidence": "static_re",
+   "date": "2026-10-02",
+   "evidence": [
+    {
+     "at": "0x19e10",
+     "insn": "mov esi, 0x1ef5"
+    },
+    {
+     "at": "0x19efa",
+     "insn": "cmp dword ptr [0x3c57], 0"
+    },
+    {
+     "at": "0x19f0d",
+     "insn": "cmp dword ptr [0x3c57], 1"
+    },
+    {
+     "at": "0x19f3b",
+     "insn": "push 0x19a"
+    },
+    {
+     "at": "0x19ffd",
+     "insn": "push 0xa00"
+    },
+    {
+     "at": "0x1a19d",
+     "insn": "cmp dword ptr [0x3c57], 2"
+    },
+    {
+     "at": "0x1a1cb",
+     "insn": "push 0x19d"
     }
    ]
   }
