@@ -1,0 +1,5413 @@
+{
+ "note": "DOSBox-X 斷點與記憶體傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 1 章戰場,3 個敵方回合。斷點(執行期 +0x19c000):0x14237 入口、0x14368 候選格清單(另傾印地圖格陣列)、0x1449e(0x1debe 回傳 EAX)、0x144c5(每組比較前)、0x1459f(迴圈結束)、0x1548e(ai_attack_execute 入口,保護被選中的目標)。S1(攻方 #12,種族 5、MV 1、item 31):地形表 tile 2/3/6 的 byte 1 改成 3/4/5,地圖格 (6,8)/(4,7)/(5,10) 改指這三個 tile;目標 #1 裝弓 item 44(+0xb 2)、#2/#3 裝 item 31,全部未麻痺、AP 50、DP 60。S2(攻方 #13,種族 1、MV 1、item 77):第 1、2 回合把 item 77 列 +0xc 從 6 改成 0x13(射程 byte >= 0x10,十字半徑 3),在該攻方的 0x1459f 改回 6;第 3 回合不改(對照)。#4 卸下全部武器(0x1debe 無武器分支)。第 1 回合 #13 站在屋頂(地形 1,row 7 成本 20)走不動,第 2 回合移到平地。",
+ "summary": {
+  "calls_recomputed": 6,
+  "pairs": 54,
+  "pairs_match": 54,
+  "rival_rules_pairs_differing": {
+   "terrain_ge3_zero": 18,
+   "terrain_ge3_as2": 18,
+   "terrain_floor": 18,
+   "debe_ignores_b": 6,
+   "debe_unarmed_passes": 1,
+   "targets_cross_as_manhattan": 7,
+   "targets_cross_with_inner": 1
+  },
+  "rival_rules_final_choice_differing_calls": {
+   "terrain_ge3_zero": 3,
+   "terrain_ge3_as2": 3,
+   "terrain_floor": 0,
+   "debe_ignores_b": 0,
+   "debe_unarmed_passes": 0
+  },
+  "rival_rules": {
+   "terrain_ge3_zero": "地形 3..5 視為 0%(只有 0..2 有修正)",
+   "terrain_ge3_as2": "地形 3..5 當成地形 2",
+   "terrain_floor": "地形百分比取 floor 而非截斷向零",
+   "debe_ignores_b": "0x1debe 不看武器列 +0xb(弓也能反擊)",
+   "debe_unarmed_passes": "0x1debe 不要求裝備 kind0 武器",
+   "targets_cross_as_manhattan": "射程 byte >= 0x10 當曼哈頓(半徑 = byte - 0x10,含內圈排除與地形展開)",
+   "targets_cross_with_inner": "十字分支也套內圈排除(+0xb)"
+  },
+  "counter_gate_live_eax_by_first_failing_check": {
+   "distance_not_1|-1": 17,
+   "no_kind0_weapon|-1": 1,
+   "paralysed|-1": 21,
+   "pass|1": 9,
+   "weapon_row_0xb_gt_1|-1": 6
+  }
+ },
+ "terrain_modifier_tables_live": {
+  "ap_pct_0x51a12": [
+   5,
+   0,
+   -5,
+   -5,
+   -5,
+   0
+  ],
+  "dp_pct_0x51a2a": [
+   0,
+   0,
+   10,
+   10,
+   -5,
+   0
+  ]
+ },
+ "shipped_maps_with_move_code_3_to_5": {
+  "map18": {
+   "3": 400
+  },
+  "map19": {
+   "4": 709
+  },
+  "map24": {
+   "5": 264
+  },
+  "map25": {
+   "5": 2
+  },
+  "map26": {
+   "5": 324
+  },
+  "map27": {
+   "5": 19
+  },
+  "map28": {
+   "5": 741
+  },
+  "map29": {
+   "5": 24
+  }
+ },
+ "live_ch1_grid_equals_FDFIELD_003_map1": true,
+ "weapon_rows_0_to_0x7f": {
+  "count_by_0xb": {
+   "0": 11,
+   "1": 105,
+   "2": 12
+  },
+  "count_by_0xc": {
+   "0": 11,
+   "1": 80,
+   "2": 21,
+   "3": 5,
+   "4": 4,
+   "5": 5,
+   "6": 2
+  },
+  "items_with_0xb_2": [
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   77,
+   97,
+   98,
+   104
+  ],
+  "items_with_0xc_ge_0x10": []
+ },
+ "movement_cost_rows_live_vs_json": {
+  "live_0x1f3646_equals_static_object_bytes_0x61646": true,
+  "row7_live": "0114010202140101010101010101010101010101",
+  "row7_json_raw": "0101140102021401010101010101010101010101",
+  "row19_live": "0101010101140101010101010101010101010101",
+  "row19_json_raw": "0101010101011401010101010101010101010101",
+  "row0_live": "0101010101010101010101010101010101010101",
+  "note": "docs/data/exe_tables/native_movement_cost_rows.json 每列錯一個位元組(產生器 file_base 0x7A659,正確是 0x7A65A);本輪重算一律用活記憶體的成本列。另開任務修正,本輪不改。"
+ },
+ "runs": {
+  "r1": [
+   {
+    "actor": 12,
+    "a2": 0,
+    "actor_cell": [
+     5,
+     8
+    ],
+    "mv": 1,
+    "move_cost_row": 19,
+    "weapon_item": 31,
+    "weapon_row_0xb_0xc": [
+     1,
+     2
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000021300000000050000000500",
+    "item77_row_after_restore": null,
+    "reach_cells_live": [
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      7
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      5,
+      9
+     ],
+     [
+      6,
+      8
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": true,
+    "candidate_cells": [
+     [
+      5,
+      7
+     ],
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      6,
+      8
+     ],
+     [
+      5,
+      9
+     ]
+    ],
+    "pairs_live": [
+     [
+      5,
+      7,
+      1
+     ],
+     [
+      5,
+      7,
+      2
+     ],
+     [
+      4,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      1
+     ],
+     [
+      5,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      3
+     ],
+     [
+      6,
+      8,
+      1
+     ],
+     [
+      5,
+      9,
+      3
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       22,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       12,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       10,
+       100,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       4,
+       95,
+       22,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       4,
+       8
+      ],
+      "cell_type": 0,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       12,
+       105,
+       20,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       43,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       34,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       6,
+       8
+      ],
+      "cell_type": 4,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       19,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       9,
+       95,
+       19,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       9
+      ],
+      "cell_type": 0,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "recomputed": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "predicted_globals": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_ge3_as2": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_floor": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_ignores_b": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_unarmed_passes": [
+      5,
+      8,
+      1,
+      8
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 12
+    }
+   },
+   {
+    "actor": 13,
+    "a2": 0,
+    "actor_cell": [
+     15,
+     9
+    ],
+    "mv": 1,
+    "move_cost_row": 7,
+    "weapon_item": 77,
+    "weapon_row_0xb_0xc": [
+     2,
+     19
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000021300000000050000000500",
+    "item77_row_after_restore": "0ac8009600000000000000020600000000050000000500",
+    "reach_cells_live": [
+     [
+      15,
+      9
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": false,
+    "candidate_cells": [
+     [
+      15,
+      9
+     ]
+    ],
+    "pairs_live": [
+     [
+      15,
+      9,
+      5
+     ],
+     [
+      15,
+      9,
+      8
+     ],
+     [
+      15,
+      9,
+      9
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        15,
+        9,
+        4
+       ],
+       [
+        15,
+        9,
+        5
+       ],
+       [
+        15,
+        9,
+        6
+       ],
+       [
+        15,
+        9,
+        8
+       ],
+       [
+        15,
+        9,
+        9
+       ]
+      ],
+      "match": false
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        15,
+        9,
+        5
+       ],
+       [
+        15,
+        9,
+        8
+       ],
+       [
+        15,
+        9,
+        9
+       ]
+      ],
+      "match": true
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       15,
+       9
+      ],
+      "cell_type": 1,
+      "target": 5,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       200,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       9
+      ],
+      "cell_type": 1,
+      "target": 8,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       9
+      ],
+      "cell_type": 1,
+      "target": 9,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     15,
+     9,
+     5,
+     18
+    ],
+    "predicted_globals": [
+     15,
+     9,
+     5,
+     18
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      15,
+      9,
+      5,
+      18
+     ],
+     "terrain_ge3_as2": [
+      15,
+      9,
+      5,
+      18
+     ],
+     "terrain_floor": [
+      15,
+      9,
+      5,
+      18
+     ],
+     "debe_ignores_b": [
+      15,
+      9,
+      5,
+      18
+     ],
+     "debe_unarmed_passes": [
+      15,
+      9,
+      5,
+      18
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 13
+    }
+   }
+  ],
+  "r2": [
+   {
+    "actor": 12,
+    "a2": 0,
+    "actor_cell": [
+     5,
+     8
+    ],
+    "mv": 1,
+    "move_cost_row": 19,
+    "weapon_item": 31,
+    "weapon_row_0xb_0xc": [
+     1,
+     2
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000021300000000050000000500",
+    "item77_row_after_restore": null,
+    "reach_cells_live": [
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      7
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      5,
+      9
+     ],
+     [
+      6,
+      8
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": true,
+    "candidate_cells": [
+     [
+      5,
+      7
+     ],
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      6,
+      8
+     ],
+     [
+      5,
+      9
+     ]
+    ],
+    "pairs_live": [
+     [
+      5,
+      7,
+      1
+     ],
+     [
+      5,
+      7,
+      2
+     ],
+     [
+      4,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      1
+     ],
+     [
+      5,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      3
+     ],
+     [
+      6,
+      8,
+      1
+     ],
+     [
+      5,
+      9,
+      3
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       22,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       12,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       10,
+       100,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       4,
+       95,
+       22,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       4,
+       8
+      ],
+      "cell_type": 0,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       12,
+       105,
+       20,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       43,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       34,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       6,
+       8
+      ],
+      "cell_type": 4,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       19,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       9,
+       95,
+       19,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       9
+      ],
+      "cell_type": 0,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "recomputed": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "predicted_globals": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_ge3_as2": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_floor": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_ignores_b": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_unarmed_passes": [
+      5,
+      8,
+      1,
+      8
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 12
+    }
+   },
+   {
+    "actor": 13,
+    "a2": 0,
+    "actor_cell": [
+     14,
+     14
+    ],
+    "mv": 1,
+    "move_cost_row": 7,
+    "weapon_item": 77,
+    "weapon_row_0xb_0xc": [
+     2,
+     19
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000021300000000050000000500",
+    "item77_row_after_restore": "0ac8009600000000000000020600000000050000000500",
+    "reach_cells_live": [
+     [
+      13,
+      14
+     ],
+     [
+      14,
+      13
+     ],
+     [
+      14,
+      14
+     ],
+     [
+      14,
+      15
+     ],
+     [
+      15,
+      14
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": true,
+    "candidate_cells": [
+     [
+      14,
+      13
+     ],
+     [
+      13,
+      14
+     ],
+     [
+      14,
+      14
+     ],
+     [
+      15,
+      14
+     ],
+     [
+      14,
+      15
+     ]
+    ],
+    "pairs_live": [
+     [
+      14,
+      13,
+      4
+     ],
+     [
+      13,
+      14,
+      9
+     ],
+     [
+      14,
+      14,
+      4
+     ],
+     [
+      14,
+      14,
+      9
+     ],
+     [
+      14,
+      15,
+      4
+     ],
+     [
+      14,
+      15,
+      8
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        13,
+        14,
+        4
+       ],
+       [
+        13,
+        14,
+        9
+       ],
+       [
+        14,
+        14,
+        4
+       ],
+       [
+        14,
+        14,
+        8
+       ],
+       [
+        14,
+        14,
+        9
+       ],
+       [
+        15,
+        14,
+        4
+       ],
+       [
+        15,
+        14,
+        8
+       ],
+       [
+        14,
+        15,
+        4
+       ],
+       [
+        14,
+        15,
+        8
+       ]
+      ],
+      "match": false
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        13,
+        14,
+        9
+       ],
+       [
+        14,
+        14,
+        4
+       ],
+       [
+        14,
+        14,
+        9
+       ],
+       [
+        14,
+        15,
+        4
+       ],
+       [
+        14,
+        15,
+        8
+       ]
+      ],
+      "match": false
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       14,
+       13
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "no_kind0_weapon",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       10,
+       100,
+       20,
+       50,
+       1
+      ]
+     },
+     {
+      "cell": [
+       13,
+       14
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       15
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       15
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     13,
+     14,
+     9,
+     18
+    ],
+    "predicted_globals": [
+     13,
+     14,
+     9,
+     18
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      13,
+      14,
+      9,
+      18
+     ],
+     "terrain_ge3_as2": [
+      13,
+      14,
+      9,
+      18
+     ],
+     "terrain_floor": [
+      13,
+      14,
+      9,
+      18
+     ],
+     "debe_ignores_b": [
+      13,
+      14,
+      9,
+      18
+     ],
+     "debe_unarmed_passes": [
+      13,
+      14,
+      9,
+      18
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 13
+    }
+   }
+  ],
+  "r3": [
+   {
+    "actor": 12,
+    "a2": 0,
+    "actor_cell": [
+     5,
+     8
+    ],
+    "mv": 1,
+    "move_cost_row": 19,
+    "weapon_item": 31,
+    "weapon_row_0xb_0xc": [
+     1,
+     2
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000020600000000050000000500",
+    "item77_row_after_restore": null,
+    "reach_cells_live": [
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      7
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      5,
+      9
+     ],
+     [
+      6,
+      8
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": true,
+    "candidate_cells": [
+     [
+      5,
+      7
+     ],
+     [
+      4,
+      8
+     ],
+     [
+      5,
+      8
+     ],
+     [
+      6,
+      8
+     ],
+     [
+      5,
+      9
+     ]
+    ],
+    "pairs_live": [
+     [
+      5,
+      7,
+      1
+     ],
+     [
+      5,
+      7,
+      2
+     ],
+     [
+      4,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      1
+     ],
+     [
+      5,
+      8,
+      2
+     ],
+     [
+      5,
+      8,
+      3
+     ],
+     [
+      6,
+      8,
+      1
+     ],
+     [
+      5,
+      9,
+      3
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        5,
+        7,
+        1
+       ],
+       [
+        5,
+        7,
+        2
+       ],
+       [
+        4,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        1
+       ],
+       [
+        5,
+        8,
+        2
+       ],
+       [
+        5,
+        8,
+        3
+       ],
+       [
+        6,
+        8,
+        1
+       ],
+       [
+        5,
+        9,
+        3
+       ]
+      ],
+      "match": true
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       22,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       12,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       22,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       7
+      ],
+      "cell_type": 3,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       10,
+       100,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       4,
+       95,
+       22,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       3,
+       95,
+       22,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       4,
+       8
+      ],
+      "cell_type": 0,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "recomputed": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       12,
+       105,
+       20,
+       47,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       43,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       43,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 2,
+      "target_cell_type": 3,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       34,
+       100,
+       20,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       34,
+       100,
+       20,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       8
+      ],
+      "cell_type": 5,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       6,
+       8
+      ],
+      "cell_type": 4,
+      "target": 1,
+      "target_cell_type": 4,
+      "target_weapon": 44,
+      "gate_reason": "weapon_row_0xb_gt_1",
+      "live": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "recomputed": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       29,
+       95,
+       22,
+       48,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       38,
+       95,
+       19,
+       47,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       9,
+       95,
+       19,
+       48,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       38,
+       95,
+       19,
+       48,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       5,
+       9
+      ],
+      "cell_type": 0,
+      "target": 3,
+      "target_cell_type": 5,
+      "target_weapon": 31,
+      "gate_reason": "pass",
+      "live": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "recomputed": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       11,
+       105,
+       20,
+       48,
+       1
+      ],
+      "rival_terrain_floor": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       15,
+       105,
+       20,
+       50,
+       1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "predicted_globals": [
+     5,
+     8,
+     1,
+     8
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_ge3_as2": [
+      5,
+      7,
+      1,
+      8
+     ],
+     "terrain_floor": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_ignores_b": [
+      5,
+      8,
+      1,
+      8
+     ],
+     "debe_unarmed_passes": [
+      5,
+      8,
+      1,
+      8
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 12
+    }
+   },
+   {
+    "actor": 13,
+    "a2": 0,
+    "actor_cell": [
+     14,
+     14
+    ],
+    "mv": 1,
+    "move_cost_row": 7,
+    "weapon_item": 77,
+    "weapon_row_0xb_0xc": [
+     2,
+     6
+    ],
+    "item77_row_at_entry": "0ac8009600000000000000020600000000050000000500",
+    "item77_row_after_restore": "0ac8009600000000000000020600000000050000000500",
+    "reach_cells_live": [
+     [
+      13,
+      14
+     ],
+     [
+      14,
+      13
+     ],
+     [
+      14,
+      14
+     ],
+     [
+      14,
+      15
+     ],
+     [
+      15,
+      14
+     ]
+    ],
+    "reach_matches_recompute_with_live_cost_rows": true,
+    "reach_matches_recompute_with_json_cost_rows": true,
+    "candidate_cells": [
+     [
+      14,
+      13
+     ],
+     [
+      13,
+      14
+     ],
+     [
+      14,
+      14
+     ],
+     [
+      15,
+      14
+     ],
+     [
+      14,
+      15
+     ]
+    ],
+    "pairs_live": [
+     [
+      14,
+      13,
+      6
+     ],
+     [
+      14,
+      13,
+      7
+     ],
+     [
+      14,
+      13,
+      8
+     ],
+     [
+      14,
+      13,
+      9
+     ],
+     [
+      13,
+      14,
+      4
+     ],
+     [
+      13,
+      14,
+      7
+     ],
+     [
+      13,
+      14,
+      8
+     ],
+     [
+      13,
+      14,
+      9
+     ],
+     [
+      14,
+      14,
+      0
+     ],
+     [
+      14,
+      14,
+      4
+     ],
+     [
+      14,
+      14,
+      6
+     ],
+     [
+      14,
+      14,
+      8
+     ],
+     [
+      14,
+      14,
+      9
+     ],
+     [
+      15,
+      14,
+      0
+     ],
+     [
+      15,
+      14,
+      4
+     ],
+     [
+      15,
+      14,
+      6
+     ],
+     [
+      15,
+      14,
+      8
+     ],
+     [
+      15,
+      14,
+      9
+     ],
+     [
+      14,
+      15,
+      4
+     ],
+     [
+      14,
+      15,
+      8
+     ],
+     [
+      14,
+      15,
+      9
+     ]
+    ],
+    "pairs_enumeration_matches": true,
+    "pairs_rival_enumeration": {
+     "cross_as_manhattan": {
+      "pairs": [
+       [
+        14,
+        13,
+        6
+       ],
+       [
+        14,
+        13,
+        7
+       ],
+       [
+        14,
+        13,
+        8
+       ],
+       [
+        14,
+        13,
+        9
+       ],
+       [
+        13,
+        14,
+        4
+       ],
+       [
+        13,
+        14,
+        7
+       ],
+       [
+        13,
+        14,
+        8
+       ],
+       [
+        13,
+        14,
+        9
+       ],
+       [
+        14,
+        14,
+        0
+       ],
+       [
+        14,
+        14,
+        4
+       ],
+       [
+        14,
+        14,
+        6
+       ],
+       [
+        14,
+        14,
+        8
+       ],
+       [
+        14,
+        14,
+        9
+       ],
+       [
+        15,
+        14,
+        0
+       ],
+       [
+        15,
+        14,
+        4
+       ],
+       [
+        15,
+        14,
+        6
+       ],
+       [
+        15,
+        14,
+        8
+       ],
+       [
+        15,
+        14,
+        9
+       ],
+       [
+        14,
+        15,
+        4
+       ],
+       [
+        14,
+        15,
+        8
+       ],
+       [
+        14,
+        15,
+        9
+       ]
+      ],
+      "match": true
+     },
+     "cross_with_inner": {
+      "pairs": [
+       [
+        14,
+        13,
+        6
+       ],
+       [
+        14,
+        13,
+        7
+       ],
+       [
+        14,
+        13,
+        8
+       ],
+       [
+        14,
+        13,
+        9
+       ],
+       [
+        13,
+        14,
+        4
+       ],
+       [
+        13,
+        14,
+        7
+       ],
+       [
+        13,
+        14,
+        8
+       ],
+       [
+        13,
+        14,
+        9
+       ],
+       [
+        14,
+        14,
+        0
+       ],
+       [
+        14,
+        14,
+        4
+       ],
+       [
+        14,
+        14,
+        6
+       ],
+       [
+        14,
+        14,
+        8
+       ],
+       [
+        14,
+        14,
+        9
+       ],
+       [
+        15,
+        14,
+        0
+       ],
+       [
+        15,
+        14,
+        4
+       ],
+       [
+        15,
+        14,
+        6
+       ],
+       [
+        15,
+        14,
+        8
+       ],
+       [
+        15,
+        14,
+        9
+       ],
+       [
+        14,
+        15,
+        4
+       ],
+       [
+        14,
+        15,
+        8
+       ],
+       [
+        14,
+        15,
+        9
+       ]
+      ],
+      "match": true
+     }
+    },
+    "pairs": [
+     {
+      "cell": [
+       14,
+       13
+      ],
+      "cell_type": 0,
+      "target": 6,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       13
+      ],
+      "cell_type": 0,
+      "target": 7,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       13
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       13
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       13,
+       14
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       13,
+       14
+      ],
+      "cell_type": 0,
+      "target": 7,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       13,
+       14
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       13,
+       14
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 0,
+      "target_cell_type": 0,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "recomputed": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_terrain_floor": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 6,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       14
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "cell_type": 0,
+      "target": 0,
+      "target_cell_type": 0,
+      "target_weapon": 31,
+      "gate_reason": "distance_not_1",
+      "live": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "recomputed": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_terrain_floor": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       0,
+       -1348,
+       100,
+       20,
+       984,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "cell_type": 0,
+      "target": 6,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       15
+      ],
+      "cell_type": 0,
+      "target": 4,
+      "target_cell_type": 1,
+      "target_weapon": null,
+      "gate_reason": "distance_not_1",
+      "live": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "recomputed": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_terrain_floor": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       8,
+       40,
+       100,
+       20,
+       50,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       15
+      ],
+      "cell_type": 0,
+      "target": 8,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       178,
+       100,
+       20,
+       3,
+       -1
+      ]
+     },
+     {
+      "cell": [
+       14,
+       15
+      ],
+      "cell_type": 0,
+      "target": 9,
+      "target_cell_type": 0,
+      "target_weapon": null,
+      "gate_reason": "paralysed",
+      "live": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "recomputed": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "match": true,
+      "rival_terrain_ge3_zero": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_ge3_as2": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_terrain_floor": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_ignores_b": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ],
+      "rival_debe_unarmed_passes": [
+       18,
+       184,
+       100,
+       20,
+       3,
+       -1
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_loop_end": [
+     14,
+     13,
+     7,
+     18
+    ],
+    "predicted_globals": [
+     14,
+     13,
+     7,
+     18
+    ],
+    "rival_globals": {
+     "terrain_ge3_zero": [
+      14,
+      13,
+      7,
+      18
+     ],
+     "terrain_ge3_as2": [
+      14,
+      13,
+      7,
+      18
+     ],
+     "terrain_floor": [
+      14,
+      13,
+      7,
+      18
+     ],
+     "debe_ignores_b": [
+      14,
+      13,
+      7,
+      18
+     ],
+     "debe_unarmed_passes": [
+      14,
+      13,
+      7,
+      18
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 13
+    }
+   },
+   {
+    "actor": 21,
+    "candidate_count": 34,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   },
+   {
+    "actor": 22,
+    "candidate_count": 26,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   },
+   {
+    "actor": 23,
+    "candidate_count": 31,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   },
+   {
+    "actor": 24,
+    "candidate_count": 27,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   },
+   {
+    "actor": 25,
+    "candidate_count": 34,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   },
+   {
+    "actor": 26,
+    "candidate_count": 30,
+    "pair_count": 0,
+    "note": "第 3 回合劇情援軍;單位記錄在 21 筆傾印之外,0 組所以不影響重算"
+   }
+  ]
+ }
+}

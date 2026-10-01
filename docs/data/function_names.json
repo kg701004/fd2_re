@@ -867,8 +867,8 @@
   {
    "addr": "0x4e8a5",
    "name": "move_cost_row_ptr",
-   "summary": "(selector):回傳 0x61646 + selector*0x14 —— native_movement_cost_rows(20 bytes/列)的列指標。",
-   "confidence": "static_re",
+   "summary": "(selector):回傳 0x61646 + selector*0x14 —— native_movement_cost_rows(20 bytes/列)的列指標。 2026-10-01 DOSBox-X(doc98 續六十四):活記憶體 0x1f3646 起 580 bytes 與檔案 0x61646 起逐位元組相同;以 selector 19(種族 5)與 7(盜賊)取列重算可達集合都相符 —— 兩列在地形 1、3、4 的成本不同,換列會改變結果。docs/data/exe_tables/native_movement_cost_rows.json 的 raw 每列錯一個位元組(產生器檔案位移差 1),以活記憶體為準。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
     {
@@ -972,7 +972,7 @@
   {
    "addr": "0x12e38",
    "name": "map_cell_info",
-   "summary": "(x, y, out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。out[0..1] = tile & 0x3ff、out[2..3] = 旗標 & 0x1f、out[4..7] = 地形表 [0x53a69] 第 tile 列的 4 bytes。 out[5](地形表列的 byte 1)是地形類型 0..5,scene_attack_resolve 以它索引 [0x51a12]/[0x51a2a];DOSBox-X(doc98 續五十)讀第 1 章地圖只出現 0、1、2 三種,三種都實測過修正值。 2026-09-30(doc98 續五十四):把地形表兩列的 byte 1 改成 3、4、5 後,scene_attack_resolve 讀到的修正值依序符合 [0x51a12]/[0x51a2a] 的第 3..5 項,out[5] 沒有經過其他轉換。",
+   "summary": "(x, y, out):地圖格陣列 [0x53a51]:4-byte 表頭後每格 4 bytes = {u16 地形 tile(低 10 bits), u8 旗標, u8 byte3},寬 [0x53ac1]。out[0..1] = tile & 0x3ff、out[2..3] = 旗標 & 0x1f、out[4..7] = 地形表 [0x53a69] 第 tile 列的 4 bytes。 out[5](地形表列的 byte 1)是地形類型 0..5,scene_attack_resolve 以它索引 [0x51a12]/[0x51a2a];DOSBox-X(doc98 續五十)讀第 1 章地圖只出現 0、1、2 三種,三種都實測過修正值。 2026-09-30(doc98 續五十四):把地形表兩列的 byte 1 改成 3、4、5 後,scene_attack_resolve 讀到的修正值依序符合 [0x51a12]/[0x51a2a] 的第 3..5 項,out[5] 沒有經過其他轉換。 2026-10-01(doc98 續六十四):ai_physical_candidate_select 也直接用 out[5] 索引同兩張表,地形 3..5 在攻方候選格與目標格上都相符;第 1 章活地圖逐格等於 FDFIELD_003(map 1)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -1101,7 +1101,7 @@
   {
    "addr": "0x14818",
    "name": "collect_targets_in_range",
-   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。 單位篩選(0x14940 起):依單位序號掃 [0x53beb] 個單位,+5 bit0 已設的跳過,所站格子記號(地圖格 byte3)為 0xff 的跳過,陣營(+6)依 sideSelector 篩選 —— 0 取 +6 == 0(敵方)、1 取 +6 != 0、2 取 +6 == 1、3 取 +6 == 2;通過的序號寫進 outBuf,回傳筆數。extraThreshold 非 0 時把曼哈頓距離小於它的格子記號改成 0xff(內圈排除)。2026-09-29 DOSBox-X 動態驗證(doc98 續四十六):裂地術選定時斷點停在返回點 0x149f0,返回位址 0x1d393,參數 origin (23,16)、range 9、threshold 0、selector 0;以傾印的地圖記號與 21 個單位離線重算清單,兩輪都與 outBuf 相同([11,14] 與 [11,12,13,14,15]),之後 spell_damage_resolve 的入口斷點也只出現這些目標。記號值 = 9 - 曼哈頓距離(距離 9 記 0、距離 10 為 0xff)。rangeByte >= 0x10 的分支、extraThreshold、selector 1..3 未動態驗證。 續四十七補充(DOSBox-X):有施法距離的治療法術兩段呼叫都離線重算相符 —— 第一段 range 4、selector 1 得 [1,2,3,4,5](含陣營 1 的友軍 NPC),第二段以落點 (24,15) 為原點、range 1 得 [3,4,5],範圍內的敵方被排除;range 0 時只標原點一格。開指令環時的呼叫(返回位址 0x18e2a)range 1、threshold 1:原點格被改成 0xff,筆數 1。所以 selector 1 與 extraThreshold 已有動態證據;rangeByte >= 0x10、selector 2..3 仍未驗證。",
+   "summary": "(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector):verified_addresses 已記載的 AoE/射程目標陣列產生器。rangeByte < 0x10 走 0x4e390 flood-fill(以 move_cost_row_ptr(0) 為成本表),否則走列/欄門檻掃描。 單位篩選(0x14940 起):依單位序號掃 [0x53beb] 個單位,+5 bit0 已設的跳過,所站格子記號(地圖格 byte3)為 0xff 的跳過,陣營(+6)依 sideSelector 篩選 —— 0 取 +6 == 0(敵方)、1 取 +6 != 0、2 取 +6 == 1、3 取 +6 == 2;通過的序號寫進 outBuf,回傳筆數。extraThreshold 非 0 時把曼哈頓距離小於它的格子記號改成 0xff(內圈排除)。2026-09-29 DOSBox-X 動態驗證(doc98 續四十六):裂地術選定時斷點停在返回點 0x149f0,返回位址 0x1d393,參數 origin (23,16)、range 9、threshold 0、selector 0;以傾印的地圖記號與 21 個單位離線重算清單,兩輪都與 outBuf 相同([11,14] 與 [11,12,13,14,15]),之後 spell_damage_resolve 的入口斷點也只出現這些目標。記號值 = 9 - 曼哈頓距離(距離 9 記 0、距離 10 為 0xff)。rangeByte >= 0x10 的分支、extraThreshold、selector 1..3 未動態驗證。 續四十七補充(DOSBox-X):有施法距離的治療法術兩段呼叫都離線重算相符 —— 第一段 range 4、selector 1 得 [1,2,3,4,5](含陣營 1 的友軍 NPC),第二段以落點 (24,15) 為原點、range 1 得 [3,4,5],範圍內的敵方被排除;range 0 時只標原點一格。開指令環時的呼叫(返回位址 0x18e2a)range 1、threshold 1:原點格被改成 0xff,筆數 1。所以 selector 1 與 extraThreshold 已有動態證據;rangeByte >= 0x10、selector 2..3 仍未驗證。 續六十四補充(2026-10-01 DOSBox-X,經 ai_physical_candidate_select):出貨的 128 個 kind0 武器列 +0xc 最大 6,所以物理路徑碰不到 rangeByte >= 0x10;把 item 77 列 +0xc 改成 0x13 後,9 組目標清單等於十字(同列 |dx| <= 3 或同欄 |dy| <= 3):不套 extraThreshold(+0xb 2 的武器照收相鄰目標)、不受中間單位阻擋、斜向距離 2 的單位不收;當成曼哈頓的對照在 7 組、十字也排內圈的對照在 1 組預測不同。rangeByte 6、extraThreshold 2 的 flood-fill 分支 21 組也相符(距離 1 被排除)。selector 2..3 仍未驗證。",
    "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
@@ -2424,8 +2424,8 @@
   {
    "addr": "0x4e4be",
    "name": "flood_try_cell",
-   "summary": "移動範圍擴散的單格檢查(暫存器 ABI):ebx 指向格子,取 tile 低 10 bits 查 [0x60060] 地形成本表,剩餘移動力 cl 減成本;不足或不比已記錄的多就 CF=1;flags 0x40(阻擋)也 CF=1;0x80 時剩餘歸零;否則寫回並 CF=0。",
-   "confidence": "static_re",
+   "summary": "移動範圍擴散的單格檢查(暫存器 ABI):ebx 指向格子,取 tile 低 10 bits 查 [0x60060] 地形成本表,剩餘移動力 cl 減成本;不足或不比已記錄的多就 CF=1;flags 0x40(阻擋)也 CF=1;0x80 時剩餘歸零;否則寫回並 CF=0。 2026-10-01 DOSBox-X(doc98 續六十四):以本規則重算 flood_fill_reach_grid 的 6 個可達集合全部相同;成本列的欄位是地形表 byte 1(地形 0..5),row 7 = [1, 20, 1, 2, 2, 20, …]、row 19 = [1, 1, 1, 1, 1, 20, …]。",
+   "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
     {
@@ -8939,7 +8939,7 @@
   {
    "addr": "0x14237",
    "name": "ai_physical_candidate_select",
-   "summary": "(unit, a2):AI 物理攻擊候選。[0x53c4f] = 0;find_equipped_slot(unit, 0) 找不到直接回 0;武器列 +0xb / +0xc 當目標枚舉的內圈門檻與射程。0x145cd(a2)、0x4e390(MV +0x3b;成本列 = 職業,unit_uses_move_cost_row19 為 1 時 0x13)、0x146d1、0x14b16 取候選格(y 外 x 內);每格以 collect_targets_in_range(格, 列 +0xc, 列 +0xb, a2 == 0 ? 1 : 0)取目標,依目標序號逐一評分。地形修正只在 unit_uses_move_cost_row19 回 1 時套(攻方用候選格、目標用自己所站的格,[0x51a12]/[0x51a2a] 百分比截斷向零)—— 與 scene_attack_resolve 的閘門極性相反。原始 = 攻方 AP' - 目標 DP';> 2 優先級 8,否則 0(不略過);原始 > 目標目前 HP(+0x40)→ 分數 ×2、優先級 0x12;unit_can_counter_at(目標, 格) 回 1 時加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零。先比優先級再比分數,嚴格較大才寫入 [0x53c43]/[0x53c47] 格、[0x53c4b] 目標、[0x53c4f] 優先級(最佳分數是區域變數、初值 0,所以優先級 0 且分數 <= 0 的組不會被記下;優先級 8 的組即使分數為負也會蓋過優先級 0)。固定回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續六十三):2 回合 4 次呼叫、27 組 (格, 目標) 的優先級、分數、目標 AP'、攻方 AP'/DP' 與每次比較後的 [0x53c43..0x53c4f] 全部與重算相同。原始 2 > HP 1 記為 (0x12, 4);原始 2 <= HP 記為優先級 0 但照樣寫入全域、之後不攻擊;索爾距離 1 的組 -11 ×3/2 → -16(floor 為 -17);同分保留先出現的格。對照規則「<= 2 略過」在 10 組、「地形閘門同實戰」在 25 組、「×3/2 取 floor」在 1 組預測不同,「同分取後者」在 2 次呼叫的最終選擇上預測不同。",
+   "summary": "(unit, a2):AI 物理攻擊候選。[0x53c4f] = 0;find_equipped_slot(unit, 0) 找不到直接回 0;武器列 +0xb / +0xc 當目標枚舉的內圈門檻與射程。0x145cd(a2)、0x4e390(MV +0x3b;成本列 = 職業,unit_uses_move_cost_row19 為 1 時 0x13)、0x146d1、0x14b16 取候選格(y 外 x 內);每格以 collect_targets_in_range(格, 列 +0xc, 列 +0xb, a2 == 0 ? 1 : 0)取目標,依目標序號逐一評分。地形修正只在 unit_uses_move_cost_row19 回 1 時套(攻方用候選格、目標用自己所站的格,[0x51a12]/[0x51a2a] 百分比截斷向零)—— 與 scene_attack_resolve 的閘門極性相反。原始 = 攻方 AP' - 目標 DP';> 2 優先級 8,否則 0(不略過);原始 > 目標目前 HP(+0x40)→ 分數 ×2、優先級 0x12;unit_can_counter_at(目標, 格) 回 1 時加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零。先比優先級再比分數,嚴格較大才寫入 [0x53c43]/[0x53c47] 格、[0x53c4b] 目標、[0x53c4f] 優先級(最佳分數是區域變數、初值 0,所以優先級 0 且分數 <= 0 的組不會被記下;優先級 8 的組即使分數為負也會蓋過優先級 0)。固定回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續六十三):2 回合 4 次呼叫、27 組 (格, 目標) 的優先級、分數、目標 AP'、攻方 AP'/DP' 與每次比較後的 [0x53c43..0x53c4f] 全部與重算相同。原始 2 > HP 1 記為 (0x12, 4);原始 2 <= HP 記為優先級 0 但照樣寫入全域、之後不攻擊;索爾距離 1 的組 -11 ×3/2 → -16(floor 為 -17);同分保留先出現的格。對照規則「<= 2 略過」在 10 組、「地形閘門同實戰」在 25 組、「×3/2 取 floor」在 1 組預測不同,「同分取後者」在 2 次呼叫的最終選擇上預測不同。 2026-10-01 DOSBox-X(doc98 續六十四,3 個敵方回合 6 次呼叫、54 組全部與重算相同):地形 3..5(把地形表 byte 1 改成 3/4/5)在攻方候選格與目標所站格都依 [0x51a12]/[0x51a2a] 第 3..5 項修正(攻方 AP 100/DP 20 → 地形 3 為 95/22、4 為 95/19、5 為 100/20;目標 AP 50 → 48,截斷向零);「地形 3..5 不修正」與「當地形 2」的對照各在 18 組預測不同、改變 3 次最終選擇。出貨地圖中地形 3 只在 map 18、4 只在 map 19、5 在 map 24..29。射程 byte >= 0x10 的出貨武器不存在,改值後走十字分支(見 collect_targets_in_range)。",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
    "evidence": [
@@ -8996,7 +8996,7 @@
   {
    "addr": "0x1debe",
    "name": "unit_can_counter_at",
-   "summary": "(unit, x, y):unit +0x26(麻痺)非 0 回 -1;unit 所在格與 (x, y) 的曼哈頓距離不是 1 回 -1;find_equipped_slot(unit, 0) 找不到回 -1;武器列 +0xb > 1 回 -1;否則回 1。唯一呼叫端 ai_physical_candidate_select,傳入的是目標與候選格,成立時分數加 攻方 DP' - 目標 AP'(預估反擊)。2026-09-30 DOSBox-X(doc98 續六十三):索爾距離 1、未麻痺、武器 31(+0xb 1)→ 加項成立;同一目標距離 2、麻痺目標(武器 31)距離 1、沒有 kind0 武器的 NPC 距離 1 → 都不加;把攻方當第一參數的對照在 9 組上預測不同的分數。+0xb > 1 的分支未測。",
+   "summary": "(unit, x, y):unit +0x26(麻痺)非 0 回 -1;unit 所在格與 (x, y) 的曼哈頓距離不是 1 回 -1;find_equipped_slot(unit, 0) 找不到回 -1;武器列 +0xb > 1 回 -1;否則回 1。唯一呼叫端 ai_physical_candidate_select,傳入的是目標與候選格,成立時分數加 攻方 DP' - 目標 AP'(預估反擊)。2026-09-30 DOSBox-X(doc98 續六十三):索爾距離 1、未麻痺、武器 31(+0xb 1)→ 加項成立;同一目標距離 2、麻痺目標(武器 31)距離 1、沒有 kind0 武器的 NPC 距離 1 → 都不加;把攻方當第一參數的對照在 9 組上預測不同的分數。2026-10-01(doc98 續六十四,另斷 0x1449e 讀回傳值):目標裝弓 item 44(+0xb 2)、未麻痺、距離 1 → 6 次都回 -1;未麻痺、距離 1 但武器全部卸下(只剩 id >= 0x80 的裝備)→ 回 -1;同條件改裝 item 31 → 回 1。54 組的回傳值依第一個不成立的檢查分別為麻痺 21、距離 17、無武器 1、+0xb > 1 6、成立 9,全部與重算相同。",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
    "evidence": [
@@ -9019,6 +9019,27 @@
     {
      "at": "0x1df4b",
      "insn": "cmp eax, 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e390",
+   "name": "flood_fill_reach_grid",
+   "summary": "(costRow, x, y, budget, grid, terrainTable):在地圖格陣列 grid(4-byte 表頭 = 寬、高;每格 byte3 為記號)上從 (x, y) 展開可達範圍。起點記號 = budget,再由 flood_move_recurse / flood_try_cell 四方向擴散:剩餘 -= costRow[地形表第 tile 列的 byte 1];不足或不比已記錄的大就停;格旗標 0x40 不可進入,0x80 進入後剩餘歸零;記號保留最大剩餘值(結果與擴散順序無關)。呼叫端先以 0x4df4c 把記號重設成 0xff。2026-10-01 DOSBox-X(doc98 續六十四):ai_physical_candidate_select 的 6 次呼叫(row 19 MV 1 三次、row 7 MV 1 三次)以 0x14368 傾印的格旗標與活記憶體成本列重算,可達集合全部相同;盜賊站在地形 1 的屋頂上時 row 7 地形 1 成本 20,只剩起點一格。collect_targets_in_range 以 row 0、budget 6、內圈 2 從 5 個候選格展開的 21 組目標也相符。",
+   "confidence": "verified_dynamic",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x4e3d1",
+     "insn": "mov dword ptr [0x60], eax"
+    },
+    {
+     "at": "0x4e422",
+     "insn": "mov byte ptr [ebx], cl"
+    },
+    {
+     "at": "0x4e424",
+     "insn": "call 0x4e42c"
     }
    ]
   }

@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 158,
+  "total": 157,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 103,
+   "wrapper": 102,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
@@ -1106,13 +1106,6 @@
    "round": 1,
    "callers": 3,
    "argc": 0
-  },
-  "0x4e390": {
-   "kind": "wrapper",
-   "name": "wrapper(flood_move_recurse())",
-   "round": 1,
-   "callers": 6,
-   "argc": 6
   },
   "0x4e71f": {
    "kind": "leaf_global",
