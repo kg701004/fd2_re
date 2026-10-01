@@ -1,0 +1,791 @@
+{
+ "note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章戰場 = map 24,來源存檔 source_ch27.SAV 經 prepare_chapter_save;斷點位址為 Ghidra 位址,執行期 +0x19c000;rand 種子 0x627b8 在 obj3,執行期 +0x192000。",
+ "A_0x14121_after_mode2": {
+  "setup": "map 24(第 25 章)第 2 回合:A = #48 (10,10)、B = #45 (21,31) MV 0、C = #53 (0,0)、D = #54 (0,2),四者未麻痺、清法術/MP/第二格道具;友軍 #17 從 (10,0) 搬到 (24,52),其他單位麻痺 9。第 5 回合只留 C 在 (0,0),在 0x14132 把未初始化的 [esp+4..5] 改成 (0,0)。",
+  "calls": [
+   {
+    "tag": "f3",
+    "unit": 45,
+    "a2": 0,
+    "caller_ret": "0x13b0c",
+    "pos": [
+     21,
+     31
+    ],
+    "mode_b34": 0,
+    "mv": 0,
+    "seq": [
+     {
+      "eip": "0x14121"
+     },
+     {
+      "eip": "0x14132",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       147,
+       255,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x141b0",
+      "args": {
+       "start": [
+        21,
+        31
+       ],
+       "budget": 28,
+       "target": [
+        0,
+        0
+       ],
+       "mode": 2
+      }
+     },
+     {
+      "eip": "0x141b5",
+      "eax": 1,
+      "outbuf2": [
+       19,
+       47
+      ],
+      "sim_res": 1,
+      "sim_buf": [
+       19,
+       47
+      ],
+      "sim_hits": [
+       [
+        16,
+        43
+       ],
+       [
+        17,
+        45
+       ],
+       [
+        13,
+        43
+       ],
+       "..."
+      ],
+      "n_hits": 58,
+      "grid_diff": 0
+     },
+     {
+      "eip": "0x141e2",
+      "local": [
+       31,
+       0,
+       0,
+       0,
+       19,
+       47,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x14203"
+     },
+     {
+      "eip": "0x14215",
+      "args": [
+       19,
+       47,
+       45,
+       0
+      ],
+      "a83": 0
+     },
+     {
+      "eip": "0x1421d",
+      "eax": 0
+     },
+     {
+      "eip": "0x14230",
+      "eax": 0,
+      "a83": 1
+     },
+     {
+      "eip": "0x13e9c",
+      "args": [
+       45,
+       0
+      ],
+      "ret": "0x13b1e"
+     },
+     {
+      "eip": "0x13fd4",
+      "args": [
+       45,
+       0
+      ],
+      "ret": "0x13c14"
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 0
+     }
+    ],
+    "label": "B:MV 0,找得到對手"
+   },
+   {
+    "tag": "f3",
+    "unit": 48,
+    "a2": 0,
+    "caller_ret": "0x13b0c",
+    "pos": [
+     10,
+     10
+    ],
+    "mode_b34": 0,
+    "mv": 6,
+    "seq": [
+     {
+      "eip": "0x14121"
+     },
+     {
+      "eip": "0x14132",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       147,
+       255,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x141b0",
+      "args": {
+       "start": [
+        10,
+        10
+       ],
+       "budget": 28,
+       "target": [
+        0,
+        0
+       ],
+       "mode": 2
+      }
+     },
+     {
+      "eip": "0x141b5",
+      "eax": 1,
+      "outbuf2": [
+       9,
+       27
+      ],
+      "sim_res": 1,
+      "sim_buf": [
+       9,
+       27
+      ],
+      "sim_hits": [
+       [
+        10,
+        26
+       ],
+       [
+        9,
+        27
+       ],
+       [
+        12,
+        26
+       ],
+       "..."
+      ],
+      "n_hits": 32,
+      "grid_diff": 0
+     },
+     {
+      "eip": "0x141e2",
+      "local": [
+       10,
+       0,
+       0,
+       0,
+       9,
+       27,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x14203"
+     },
+     {
+      "eip": "0x14215",
+      "args": [
+       9,
+       27,
+       48,
+       0
+      ],
+      "a83": 0
+     },
+     {
+      "eip": "0x1421d",
+      "eax": 1
+     },
+     {
+      "eip": "0x14230",
+      "eax": 1,
+      "a83": 1
+     },
+     {
+      "eip": "0x13aef",
+      "eax": 1
+     }
+    ],
+    "label": "A:找得到對手"
+   },
+   {
+    "tag": "f3",
+    "unit": 53,
+    "a2": 0,
+    "caller_ret": "0x13b44",
+    "pos": [
+     0,
+     0
+    ],
+    "mode_b34": 1,
+    "mv": 6,
+    "seq": [
+     {
+      "eip": "0x14121"
+     },
+     {
+      "eip": "0x14132",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       156,
+       255,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x141b0",
+      "args": {
+       "start": [
+        0,
+        0
+       ],
+       "budget": 28,
+       "target": [
+        0,
+        0
+       ],
+       "mode": 2
+      }
+     },
+     {
+      "eip": "0x141b5",
+      "eax": 0,
+      "outbuf2": [
+       156,
+       255
+      ],
+      "sim_res": 0,
+      "sim_buf": [
+       null,
+       null
+      ],
+      "sim_hits": [],
+      "n_hits": 0,
+      "grid_diff": 0
+     },
+     {
+      "eip": "0x141e2",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       156,
+       255,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x14203"
+     },
+     {
+      "eip": "0x14215",
+      "args": [
+       156,
+       255,
+       53,
+       0
+      ],
+      "a83": 0
+     }
+    ],
+    "label": "C:站在 (0,0)"
+   },
+   {
+    "tag": "f3d",
+    "unit": 54,
+    "a2": 0,
+    "caller_ret": "0x13b44",
+    "pos": [
+     0,
+     2
+    ],
+    "mode_b34": 1,
+    "mv": 6,
+    "seq": [
+     {
+      "eip": "0x14121"
+     },
+     {
+      "eip": "0x14132",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       147,
+       255,
+       255,
+       255
+      ]
+     },
+     {
+      "eip": "0x141b0",
+      "args": {
+       "start": [
+        0,
+        2
+       ],
+       "budget": 28,
+       "target": [
+        0,
+        0
+       ],
+       "mode": 2
+      }
+     },
+     {
+      "eip": "0x141b5",
+      "eax": 255,
+      "outbuf2": [
+       147,
+       255
+      ],
+      "sim_res": 255,
+      "sim_buf": [
+       null,
+       null
+      ],
+      "sim_hits": [],
+      "n_hits": 0,
+      "grid_diff": 0
+     },
+     {
+      "eip": "0x141cd",
+      "eax": 255
+     },
+     {
+      "eip": "0x13fd4",
+      "args": [
+       54,
+       0
+      ],
+      "ret": "0x13c14"
+     }
+    ],
+    "label": "D:站在 (0,2)"
+   },
+   {
+    "tag": "f5",
+    "unit": 53,
+    "a2": 0,
+    "caller_ret": "0x13b44",
+    "pos": [
+     0,
+     0
+    ],
+    "mode_b34": 1,
+    "mv": 6,
+    "seq": [
+     {
+      "eip": "0x14121"
+     },
+     {
+      "eip": "0x14132",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       173,
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "eip": "0x141b0",
+      "args": {
+       "start": [
+        0,
+        0
+       ],
+       "budget": 28,
+       "target": [
+        0,
+        0
+       ],
+       "mode": 2
+      }
+     },
+     {
+      "eip": "0x141b5",
+      "eax": 0,
+      "outbuf2": [
+       0,
+       0
+      ],
+      "sim_res": 0,
+      "sim_buf": [
+       null,
+       null
+      ],
+      "sim_hits": [],
+      "n_hits": 0,
+      "grid_diff": 0
+     },
+     {
+      "eip": "0x141e2",
+      "local": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "eip": "0x14230",
+      "eax": 255,
+      "a83": 0
+     },
+     {
+      "eip": "0x13fd4",
+      "args": [
+       53,
+       0
+      ],
+      "ret": "0x13c14"
+     }
+    ],
+    "label": "C2:同 C,注入 (0,0)"
+   }
+  ],
+  "push_before_0x12d7b_raw": [
+   "-0x19bfd3",
+   "-0x19bfd0",
+   "-0x19bfcb"
+  ],
+  "C_0x14b78_return": {
+   "eip": "0x1421d",
+   "eax": 1
+  },
+  "C_final_xy": [
+   172,
+   53
+  ],
+  "C_turn1_unlogged_xy": [
+   172,
+   53
+  ],
+  "grid_wh": [
+   25,
+   53
+  ],
+  "injection": [
+   {
+    "before": [
+     0,
+     0,
+     0,
+     0,
+     173,
+     1,
+     0,
+     0
+    ],
+    "after": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ]
+ },
+ "B_rand_chain": {
+  "r1": {
+   "seed_at_enemy_phase_entry": "0x2836",
+   "seq": [
+    {
+     "map_attack_sequence": [
+      19,
+      0
+     ]
+    },
+    {
+     "site": "0x1e8c3",
+     "val": 49749,
+     "mod100": 49,
+     "chain": true
+    },
+    {
+     "roll_edx": 49
+    },
+    {
+     "site": "0x1eec1",
+     "val": 37706,
+     "mod100": 6,
+     "chain": true
+    },
+    {
+     "site": "0x1eee9",
+     "val": 6897,
+     "mod100": 97,
+     "chain": true
+    },
+    {
+     "site": "0x1efac",
+     "val": 22573,
+     "mod100": 73,
+     "chain": true
+    },
+    {
+     "dmg": 93,
+     "rem": 3,
+     "new_hp": 906
+    },
+    {
+     "map_attack_sequence": [
+      0,
+      19
+     ]
+    },
+    {
+     "site": "0x1e8c3",
+     "val": 16911,
+     "mod100": 11,
+     "chain": true
+    },
+    {
+     "roll_edx": 11
+    },
+    {
+     "site": "0x1eec1",
+     "val": 37150,
+     "mod100": 50,
+     "chain": true
+    },
+    {
+     "site": "0x1eee9",
+     "val": 2449,
+     "mod100": 49,
+     "chain": true
+    },
+    {
+     "site": "0x1efac",
+     "val": 52524,
+     "mod100": 24,
+     "chain": true
+    },
+    {
+     "dmg": 94,
+     "rem": 4,
+     "new_hp": 905
+    }
+   ]
+  },
+  "r2": {
+   "seed_at_enemy_phase_entry": "0xcd2c",
+   "seq": [
+    {
+     "map_attack_sequence": [
+      19,
+      0
+     ]
+    },
+    {
+     "site": "0x1e8c3",
+     "val": 59906,
+     "mod100": 6,
+     "chain": true
+    },
+    {
+     "roll_edx": 6
+    },
+    {
+     "site": "0x1eec1",
+     "val": 53427,
+     "mod100": 27,
+     "chain": true
+    },
+    {
+     "site": "0x1eee9",
+     "val": 1595,
+     "mod100": 95,
+     "chain": true
+    },
+    {
+     "site": "0x1efac",
+     "val": 45692,
+     "mod100": 92,
+     "chain": true
+    },
+    {
+     "dmg": 92,
+     "rem": 2,
+     "new_hp": 907
+    },
+    {
+     "map_attack_sequence": [
+      0,
+      19
+     ]
+    },
+    {
+     "site": "0x1e8c3",
+     "val": 5250,
+     "mod100": 50,
+     "chain": true
+    },
+    {
+     "roll_edx": 50,
+     "forced_to": 0
+    },
+    {
+     "site": "0x1eec1",
+     "val": 9397,
+     "mod100": 97,
+     "chain": true
+    },
+    {
+     "site": "0x1eee9",
+     "val": 42573,
+     "mod100": 73,
+     "chain": true
+    },
+    {
+     "site": "0x1efac",
+     "val": 45833,
+     "mod100": 33,
+     "chain": true
+    },
+    {
+     "dmg": 93,
+     "rem": 3,
+     "new_hp": 812
+    },
+    {
+     "site": "0x1eec1",
+     "val": 6378,
+     "mod100": 78,
+     "chain": true
+    },
+    {
+     "site": "0x1eee9",
+     "val": 18421,
+     "mod100": 21,
+     "chain": true
+    },
+    {
+     "site": "0x1efac",
+     "val": 49230,
+     "mod100": 30,
+     "chain": true
+    },
+    {
+     "dmg": 90,
+     "rem": 0,
+     "new_hp": 722
+    }
+   ]
+  }
+ },
+ "C_s66_counter_roll": {
+  "inputs_from_s66": {
+   "damage": [
+    47,
+    127,
+    130
+   ],
+   "rem": [
+    2,
+    1,
+    4
+   ],
+   "k": [
+    5,
+    14,
+    14
+   ],
+   "crit_threshold_0x524a8": {
+    "dragon_class26": 0,
+    "sol_class9": 5
+   },
+   "weapon_types": {
+    "103": 0,
+    "31": 0
+   }
+  },
+  "control_r1": {
+   "model": "E 下數(>=3)、命中、會心(>=3)、傷害 %10 == 3;索爾下數(>=3)、命中、會心(>=5)、傷害 %10 == 4",
+   "candidates": 569,
+   "true_state_in_candidates": true
+  },
+  "modelA_one_counter_two_hits": {
+   "candidates": 61,
+   "with_roll_lt3": 2,
+   "roll_values": [
+    0
+   ],
+   "states": [
+    {
+     "s0": "0x9940",
+     "roll_rand": 2700
+    },
+    {
+     "s0": "0x9ab8",
+     "roll_rand": 3400
+    }
+   ]
+  },
+  "modelB_two_counters_one_hit_each": {
+   "candidates": 44,
+   "note": "傷害資料本身排除不了;排除靠反擊只有一個呼叫點(0x1560e)與續六十七的實測"
+  },
+  "expected_random_count": 66.9
+ }
+}

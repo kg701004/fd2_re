@@ -202,9 +202,9 @@
   {
    "addr": "0x4ebe3",
    "name": "prng_next",
-   "summary": "16-bit 亂數:seed = rol16(seed + 0x9014, 3),種子在 0x627b8;回傳新種子(eax 高 16 bits 為 0)。",
-   "confidence": "static_re",
-   "date": "2026-09-18",
+   "summary": "16-bit 亂數:seed = rol16(seed + 0x9014, 3),種子在 0x627b8;回傳新種子(eax 高 16 bits 為 0)。 2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):敵方回合入口讀活記憶體種子(obj3 0x627b8,執行期 +0x192000),之後每一次 rand 的回傳都等於上一個狀態的下一步,兩輪共 19 次全部相符。EXE 裡對 0x627b8 的參照只在本函式,沒有 srand;呼叫端包括等鍵迴圈(wait_key_with_marker、menu_read_key、yes_no_prompt),所以狀態會隨等待時間前進。證據 evidence/ai_seek_opponent_rand_trace_20261001.json",
+   "confidence": "verified_dynamic",
+   "date": "2026-10-01",
    "evidence": [
     {
      "at": "0x4ebe5",
@@ -3203,7 +3203,7 @@
   {
    "addr": "0x1e856",
    "name": "map_attack_sequence",
-   "summary": "(attacker, defender, panel_pos):攻擊次數預設 1;攻方武器 row+9 == 3 時 2 次,另有 rand%100 < 3 也 2 次。每一擊:map_attack_resolve 取守方新 HP,play_weapon_hit_effect 播命中特效,HP 條從 HP*0x46/MaxHP 逐格減到新值(每格 8ms)。守方 HP 歸 0 即停。回傳守方最後 HP。 DOSBox-X(doc98 續五十一):AI 攻擊時被 ai_attack_execute 呼叫,反擊時以對調的參數再呼叫一次(返回位址 0x15613)。守方武器欄是 id >= 0x80 的友軍 NPC 被攻擊時,第二次呼叫沒有出現,與 defender_can_counter 的武器條件一致。雙擊(3%)未觀察到。 續六十七(DOSBox-X,map 24):以 0x1e8b1(EAX = 武器列 +9)、0x1e8cf(EDX = 亂數)與每一擊 0x1e912 計數:類型 0、自然亂數 >= 3(5..90)的 20 段全是 1 下;類型 0 亂數強制 0 → 2 下(2 段);類型 3(魔龍爪)亂數 21 → 2 下;類型 3 且亂數自然為 0 → 仍是 2 下(場景路徑同條件是 3 下)。續六十六索爾(武器 31,類型 0)反擊打 2 下只剩亂數 < 3 這一支可解釋(該次亂數沒記錄,推論)。",
+   "summary": "(attacker, defender, panel_pos):攻擊次數預設 1;攻方武器 row+9 == 3 時 2 次,另有 rand%100 < 3 也 2 次。每一擊:map_attack_resolve 取守方新 HP,play_weapon_hit_effect 播命中特效,HP 條從 HP*0x46/MaxHP 逐格減到新值(每格 8ms)。守方 HP 歸 0 即停。回傳守方最後 HP。 DOSBox-X(doc98 續五十一):AI 攻擊時被 ai_attack_execute 呼叫,反擊時以對調的參數再呼叫一次(返回位址 0x15613)。守方武器欄是 id >= 0x80 的友軍 NPC 被攻擊時,第二次呼叫沒有出現,與 defender_can_counter 的武器條件一致。雙擊(3%)未觀察到。 續六十七(DOSBox-X,map 24):以 0x1e8b1(EAX = 武器列 +9)、0x1e8cf(EDX = 亂數)與每一擊 0x1e912 計數:類型 0、自然亂數 >= 3(5..90)的 20 段全是 1 下;類型 0 亂數強制 0 → 2 下(2 段);類型 3(魔龍爪)亂數 21 → 2 下;類型 3 且亂數自然為 0 → 仍是 2 下(場景路徑同條件是 3 下)。續六十六索爾(武器 31,類型 0)反擊打 2 下只剩亂數 < 3 這一支可解釋(該次亂數沒記錄,推論)。 續六十八(DOSBox-X,map 24):敵方回合一次攻擊加反擊的 rand 順序是 下數(0x1e8be)→ 每一擊 命中(0x1eebc)、會心(0x1eee4)、傷害(0x1efa7),武器類型 0 沒有 0x1ee32 / 0x1ee49;強制反擊 2 下時兩擊之間也沒有其他 rand,AI 決策與攻擊之間也沒有。用這個順序列舉 65536 個狀態,續六十六那三次傷害(餘數 2、1、4)有 61 個狀態符合,其中能打 2 下的 2 個,下數亂數都是 0。",
    "confidence": "verified_dynamic",
    "date": "2026-09-28",
    "evidence": [
@@ -8894,7 +8894,7 @@
   {
    "addr": "0x14b78",
    "name": "move_unit_toward_point",
-   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。",
+   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。 續六十八(DOSBox-X):由 ai_move_toward_reachable_opponent 傳入地圖外的目標 (156,255) 時要跑數十秒才返回,回 1,單位落在 (172,53)(地圖寬 25)。之後同一敵方回合出現一段文字框是亂碼樣式的劇情對話,原因未查。",
    "confidence": "verified_dynamic",
    "date": "2026-09-30",
    "evidence": [
@@ -9212,7 +9212,7 @@
   {
    "addr": "0x4e4f6",
    "name": "grid_path_search",
-   "summary": "(costRow, startX, startY, budget, outBuf, tgtX, tgtY, mode, grid, terrainTable):在地圖格陣列上以遞迴 DFS(0x4e5cc,方向順序 右 3、左 1、下 0、上 2)從起點展開,進格判定 0x4e680:扣地形成本(無號借位失敗),剩餘預算與該格記號(c3)有號比較 —— 小於失敗、大於接受、相等只有 mode 1 且這條路的方向段數(0x4e71f)大於該格記錄的段數(c1 高 6 bits)才接受;接受後寫段數。mode 0/1:c2 & 0x40 不可進、& 0x80 進入後預算歸 0,寫記號後 0x4e751 檢查目標 —— 深度 <= 目前結果就更新結果並把方向陣列寫進 outBuf(只寫前 d 個,同深度後到者覆寫)。mode 2:不看 0x40/0x80,每進一個 0x40 格就把 (x, y) 寫進 outBuf[0..1]、結果 = 1(後寫的蓋前面)。起點就是目標回 0,沒抵達回 0xff。呼叫端:0x189f8(玩家確認落點,mode 0)、0x14c3a / 0x14e9f(mode 0)、0x14c7d(mode 1,預算 0x1c)、0x141b0(0x14121,mode 2,預算 0x1c,目標 (0,0))。0x18890 拿到 0xff 時回 1(同選格 Escape 的出口)且不釋放路徑緩衝;玩家路徑上 0xff 不會自然出現,因為 0x4e390 與 mode 0 的進格規則相同、target_cursor_loop(4) 只收泛洪記號 != 0xff 的格。2026-10-01 DOSBox-X 動態驗證(doc98 續六十七,map 24):10 次呼叫(mode 0 ×8、mode 1、mode 2)以入口傾印逐指令重算,回傳值、outBuf 與整張地圖(5304 bytes)全部相同;玩家 9 步路徑 [3,3,2,2,2,2,2,2,1] 與 outBuf 第 10、11 byte 的舊殘留(先抵達的 11 步路徑)都符合,BFS 先找到者 [3,3,2,2,1,…] 被排除;目標格強制設 0x40 → 回 0xff、索爾不動、回地圖游標;mode 2 回 (11,27)(第一個找到的 (11,26)、最近的可達 0x40 格都不是);mode 1 若改用 mode 0 規則或「段數較少才接受」,地圖差 335 / 440 bytes。模擬器的 4 個突變都被抓到。證據 evidence/path_search_hits_friendly_mode8_20261001.json",
+   "summary": "(costRow, startX, startY, budget, outBuf, tgtX, tgtY, mode, grid, terrainTable):在地圖格陣列上以遞迴 DFS(0x4e5cc,方向順序 右 3、左 1、下 0、上 2)從起點展開,進格判定 0x4e680:扣地形成本(無號借位失敗),剩餘預算與該格記號(c3)有號比較 —— 小於失敗、大於接受、相等只有 mode 1 且這條路的方向段數(0x4e71f)大於該格記錄的段數(c1 高 6 bits)才接受;接受後寫段數。mode 0/1:c2 & 0x40 不可進、& 0x80 進入後預算歸 0,寫記號後 0x4e751 檢查目標 —— 深度 <= 目前結果就更新結果並把方向陣列寫進 outBuf(只寫前 d 個,同深度後到者覆寫)。mode 2:不看 0x40/0x80,每進一個 0x40 格就把 (x, y) 寫進 outBuf[0..1]、結果 = 1(後寫的蓋前面)。起點就是目標回 0,沒抵達回 0xff。呼叫端:0x189f8(玩家確認落點,mode 0)、0x14c3a / 0x14e9f(mode 0)、0x14c7d(mode 1,預算 0x1c)、0x141b0(0x14121,mode 2,預算 0x1c,目標 (0,0))。0x18890 拿到 0xff 時回 1(同選格 Escape 的出口)且不釋放路徑緩衝;玩家路徑上 0xff 不會自然出現,因為 0x4e390 與 mode 0 的進格規則相同、target_cursor_loop(4) 只收泛洪記號 != 0xff 的格。2026-10-01 DOSBox-X 動態驗證(doc98 續六十七,map 24):10 次呼叫(mode 0 ×8、mode 1、mode 2)以入口傾印逐指令重算,回傳值、outBuf 與整張地圖(5304 bytes)全部相同;玩家 9 步路徑 [3,3,2,2,2,2,2,2,1] 與 outBuf 第 10、11 byte 的舊殘留(先抵達的 11 步路徑)都符合,BFS 先找到者 [3,3,2,2,1,…] 被排除;目標格強制設 0x40 → 回 0xff、索爾不動、回地圖游標;mode 2 回 (11,27)(第一個找到的 (11,26)、最近的可達 0x40 格都不是);mode 1 若改用 mode 0 規則或「段數較少才接受」,地圖差 335 / 440 bytes。模擬器的 4 個突變都被抓到。證據 evidence/path_search_hits_friendly_mode8_20261001.json 續六十八(DOSBox-X):mode 2 起點 (0,0)、預算內沒有 0x40 格時回 0(不是 0xff),outBuf 不寫;起點 (0,2) 同樣情況回 0xff。",
    "confidence": "verified_dynamic",
    "date": "2026-10-01",
    "evidence": [
@@ -9289,6 +9289,39 @@
     {
      "at": "0x2ed2d",
      "insn": "inc dword ptr [esp + 0x4c]"
+    }
+   ]
+  },
+  {
+   "addr": "0x14121",
+   "name": "ai_move_toward_reachable_opponent",
+   "summary": "(unit, a2):AI 模式 0/1/5/11 在 ai_choose_action 沒有候選時的移動備援。成本列同 move_unit_toward_point(class、0x1f183 → 19、+8 == 0x1c → 1),0x145cd(a2) 標出對手格後以 grid_path_search mode 2(預算 0x1c、目標固定 (0,0))找 0x40 格;outBuf 是自己堆疊上 8 byte 區域的 [esp+4..5],沒有初始化。回 0xff → 重設地圖、回 0。否則重設地圖後讀 outBuf 當目標:等於自己的格子就回 0(不移動);不等就 [0x51a83] = 0、0x12d7b(unit)、move_unit_toward_point(x, y, unit, a2),它回非 0 才回 1,最後 [0x51a83] = 1。2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):找得到對手的 #48 → (9,27),0x14b78 回 1,本函式回 1,不再呼叫 0x13e9c;MV 0 的 #45 → (19,47),0x14b78 回 0,本函式回 0,模式 0 接著呼叫 ai_move_toward_nearest 再休息;站在 (0,2) 的 #54 預算內沒有對手 → 0xff → 回 0 → 休息。**站在 (0,0) 的 #53**:mode 2 的起點檢查讓結果先變 0,預算內又沒有對手,回 0 而不是 0xff,本函式把未初始化的 [esp+4..5](入口時就是 [156,255])當目標,呼叫 0x14b78(156, 255),它回 1,#53 落在 (172,53)(地圖寬 25,已在地圖外);同一設定前一回合沒下斷點也落在 (172,53)。在 0x14132 把那兩個 byte 改成 (0,0) 時走「等於自己」分支:不呼叫 0x12d7b 與 0x14b78,回 0。四次 mode 2 搜尋以入口地圖逐指令重算,回傳值、outBuf、整張地圖都相同。證據 evidence/ai_seek_opponent_rand_trace_20261001.json",
+   "confidence": "verified_dynamic",
+   "date": "2026-10-01",
+   "evidence": [
+    {
+     "at": "0x14189",
+     "insn": "call 0x145cd"
+    },
+    {
+     "at": "0x1419d",
+     "insn": "push 2"
+    },
+    {
+     "at": "0x141b0",
+     "insn": "call 0x4e4f6"
+    },
+    {
+     "at": "0x141b8",
+     "insn": "cmp eax, 0xff"
+    },
+    {
+     "at": "0x141e2",
+     "insn": "movzx esi, byte ptr [esp + 4]"
+    },
+    {
+     "at": "0x14215",
+     "insn": "call 0x14b78"
     }
    ]
   }
