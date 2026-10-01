@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 159,
+  "total": 158,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 104,
+   "wrapper": 103,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
@@ -322,13 +322,6 @@
    "round": 1,
    "callers": 1,
    "argc": 1
-  },
-  "0x1debe": {
-   "kind": "wrapper",
-   "name": "wrapper(abs(_), abs(_), find_equipped_slot(_, 0), unit_item_id(_, _), item_effect_row_ptr(_))",
-   "round": 1,
-   "callers": 1,
-   "argc": 5
   },
   "0x1e5c0": {
    "kind": "wrapper",

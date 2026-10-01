@@ -1,0 +1,1413 @@
+{
+ "note": "DOSBox-X 斷點與記憶體傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。0x14237 內 4 個斷點(執行期 +0x19c000):入口 0x14237(參數、單位表)、0x14368(0x14b16 候選格清單)、0x144c5(每組 (格, 目標) 比較前:ESI 分數、EDI 優先級、EBP 目標 AP'、[ESP+0x3c]/[0x38] 攻方 AP'/DP'、[ESP+0x44]/[0x48] 格、[ESP+0x50] 目標,另讀 [0x53c43..0x53c4f])、0x1459f(迴圈結束);另在 ai_attack_execute 0x1548e 入口停下。r1 = 第 1 回合、r2 = 第 2 回合(敵方回合 3 個攻方)。重算規則:地形只在 0x1f183 回 1 時套(攻方用候選格、目標用自己的格,百分比截斷向零);原始 = 攻方 AP' - 目標 DP',> 2 優先級 8 否則 0;原始 > 目標目前 HP → ×2、優先級 0x12;0x1debe(目標, 格) 回 1(目標 +0x26 == 0、曼哈頓 1、目標裝備 kind0 武器列 +0xb <= 1)→ 加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零;先比優先級再比分數,嚴格較大才換。rival_* 為對照規則:doc11 舊述「<= 2 略過」、地形閘門與實戰同極性、0x1debe 取攻方、×3/2 取 floor、同分取後者。",
+ "runs": {
+  "r1": [
+   {
+    "actor": 12,
+    "a2": 0,
+    "return_address": "0x1b0f10",
+    "weapon_item": 31,
+    "weapon_row_0xb_0xc": [
+     1,
+     2
+    ],
+    "candidate_cells": [
+     [
+      15,
+      1
+     ],
+     [
+      14,
+      2
+     ],
+     [
+      15,
+      2
+     ],
+     [
+      16,
+      2
+     ],
+     [
+      13,
+      3
+     ],
+     [
+      14,
+      3
+     ],
+     [
+      15,
+      3
+     ],
+     [
+      16,
+      3
+     ],
+     [
+      17,
+      3
+     ],
+     [
+      14,
+      4
+     ],
+     [
+      15,
+      4
+     ],
+     [
+      16,
+      4
+     ],
+     [
+      15,
+      5
+     ]
+    ],
+    "pairs_enumeration_matches_row_major_x_unit_index": true,
+    "pairs": [
+     {
+      "cell": [
+       15,
+       1
+      ],
+      "target": 0,
+      "live": [
+       0,
+       -16
+      ],
+      "recomputed": [
+       0,
+       -16
+      ],
+      "counter": true,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       8,
+       -7
+      ],
+      "rival_debe_actor": [
+       0,
+       0
+      ],
+      "rival_floor_x15": [
+       0,
+       -17
+      ]
+     },
+     {
+      "cell": [
+       15,
+       2
+      ],
+      "target": 0,
+      "live": [
+       0,
+       0
+      ],
+      "recomputed": [
+       0,
+       0
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       8,
+       7
+      ],
+      "rival_debe_actor": [
+       0,
+       -16
+      ],
+      "rival_floor_x15": [
+       0,
+       0
+      ]
+     },
+     {
+      "cell": [
+       16,
+       2
+      ],
+      "target": 4,
+      "live": [
+       8,
+       45
+      ],
+      "recomputed": [
+       8,
+       45
+      ],
+      "counter": false,
+      "target_ap_live": 30,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       45
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       45
+      ],
+      "rival_debe_actor": [
+       8,
+       45
+      ],
+      "rival_floor_x15": [
+       8,
+       45
+      ]
+     },
+     {
+      "cell": [
+       13,
+       3
+      ],
+      "target": 1,
+      "live": [
+       0,
+       -3
+      ],
+      "recomputed": [
+       0,
+       -3
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       4
+      ],
+      "rival_debe_actor": [
+       0,
+       -3
+      ],
+      "rival_floor_x15": [
+       0,
+       -3
+      ]
+     },
+     {
+      "cell": [
+       17,
+       3
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     },
+     {
+      "cell": [
+       17,
+       3
+      ],
+      "target": 4,
+      "live": [
+       8,
+       45
+      ],
+      "recomputed": [
+       8,
+       45
+      ],
+      "counter": false,
+      "target_ap_live": 30,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       45
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       45
+      ],
+      "rival_debe_actor": [
+       8,
+       45
+      ],
+      "rival_floor_x15": [
+       8,
+       45
+      ]
+     },
+     {
+      "cell": [
+       14,
+       4
+      ],
+      "target": 1,
+      "live": [
+       0,
+       -3
+      ],
+      "recomputed": [
+       0,
+       -3
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       4
+      ],
+      "rival_debe_actor": [
+       0,
+       -3
+      ],
+      "rival_floor_x15": [
+       0,
+       -3
+      ]
+     },
+     {
+      "cell": [
+       16,
+       4
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     },
+     {
+      "cell": [
+       15,
+       5
+      ],
+      "target": 1,
+      "live": [
+       0,
+       -3
+      ],
+      "recomputed": [
+       0,
+       -3
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       4
+      ],
+      "rival_debe_actor": [
+       0,
+       -3
+      ],
+      "rival_floor_x15": [
+       0,
+       -3
+      ]
+     },
+     {
+      "cell": [
+       15,
+       5
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_entry_c43_c47_c4b_c4f": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "globals_at_loop_end": [
+     17,
+     3,
+     2,
+     8
+    ],
+    "predicted_globals": [
+     17,
+     3,
+     2,
+     8
+    ],
+    "rival_globals": {
+     "doc_skip_le2": [
+      17,
+      3,
+      2,
+      8
+     ],
+     "terrain_like_attack": [
+      13,
+      3,
+      1,
+      18
+     ],
+     "debe_actor": [
+      17,
+      3,
+      2,
+      8
+     ],
+     "floor_x15": [
+      17,
+      3,
+      2,
+      8
+     ],
+     "ties_last": [
+      15,
+      5,
+      2,
+      8
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 12,
+     "a2": 0
+    }
+   },
+   {
+    "actor": 13,
+    "a2": 0,
+    "return_address": "0x1b0f10",
+    "weapon_item": 0,
+    "weapon_row_0xb_0xc": [
+     1,
+     1
+    ],
+    "candidate_cells": [
+     [
+      15,
+      14
+     ],
+     [
+      14,
+      15
+     ],
+     [
+      15,
+      15
+     ],
+     [
+      16,
+      15
+     ],
+     [
+      15,
+      16
+     ]
+    ],
+    "pairs_enumeration_matches_row_major_x_unit_index": true,
+    "pairs": [
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "target": 3,
+      "live": [
+       0,
+       -3
+      ],
+      "recomputed": [
+       0,
+       -3
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       0,
+       2
+      ],
+      "rival_debe_actor": [
+       0,
+       -14
+      ],
+      "rival_floor_x15": [
+       0,
+       -3
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_entry_c43_c47_c4b_c4f": [
+     17,
+     3,
+     2,
+     0
+    ],
+    "globals_at_loop_end": [
+     17,
+     3,
+     2,
+     0
+    ],
+    "predicted_globals": null,
+    "rival_globals": {
+     "doc_skip_le2": null,
+     "terrain_like_attack": [
+      15,
+      14,
+      3,
+      0
+     ],
+     "debe_actor": null,
+     "floor_x15": null,
+     "ties_last": null
+    },
+    "ai_attack_execute_called": null
+   }
+  ],
+  "r2": [
+   {
+    "actor": 12,
+    "a2": 0,
+    "return_address": "0x1b0f10",
+    "weapon_item": 31,
+    "weapon_row_0xb_0xc": [
+     1,
+     2
+    ],
+    "candidate_cells": [
+     [
+      15,
+      1
+     ],
+     [
+      14,
+      2
+     ],
+     [
+      15,
+      2
+     ],
+     [
+      16,
+      2
+     ],
+     [
+      13,
+      3
+     ],
+     [
+      14,
+      3
+     ],
+     [
+      15,
+      3
+     ],
+     [
+      16,
+      3
+     ],
+     [
+      17,
+      3
+     ],
+     [
+      14,
+      4
+     ],
+     [
+      15,
+      4
+     ],
+     [
+      16,
+      4
+     ],
+     [
+      15,
+      5
+     ]
+    ],
+    "pairs_enumeration_matches_row_major_x_unit_index": true,
+    "pairs": [
+     {
+      "cell": [
+       15,
+       1
+      ],
+      "target": 0,
+      "live": [
+       8,
+       -9
+      ],
+      "recomputed": [
+       8,
+       -9
+      ],
+      "counter": true,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       -9
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       0
+      ],
+      "rival_debe_actor": [
+       8,
+       7
+      ],
+      "rival_floor_x15": [
+       8,
+       -9
+      ]
+     },
+     {
+      "cell": [
+       15,
+       2
+      ],
+      "target": 0,
+      "live": [
+       8,
+       7
+      ],
+      "recomputed": [
+       8,
+       7
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       7
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       15
+      ],
+      "rival_debe_actor": [
+       8,
+       -9
+      ],
+      "rival_floor_x15": [
+       8,
+       7
+      ]
+     },
+     {
+      "cell": [
+       16,
+       2
+      ],
+      "target": 4,
+      "live": [
+       8,
+       40
+      ],
+      "recomputed": [
+       8,
+       40
+      ],
+      "counter": false,
+      "target_ap_live": 29,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       40
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       50
+      ],
+      "rival_debe_actor": [
+       8,
+       40
+      ],
+      "rival_floor_x15": [
+       8,
+       40
+      ]
+     },
+     {
+      "cell": [
+       13,
+       3
+      ],
+      "target": 1,
+      "live": [
+       18,
+       4
+      ],
+      "recomputed": [
+       18,
+       4
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       14
+      ],
+      "rival_debe_actor": [
+       18,
+       4
+      ],
+      "rival_floor_x15": [
+       18,
+       4
+      ]
+     },
+     {
+      "cell": [
+       16,
+       3
+      ],
+      "target": 10,
+      "live": [
+       18,
+       178
+      ],
+      "recomputed": [
+       18,
+       178
+      ],
+      "counter": false,
+      "target_ap_live": 3,
+      "match": true,
+      "rival_doc_skip_le2": [
+       18,
+       178
+      ],
+      "rival_terrain_like_attack": [
+       18,
+       188
+      ],
+      "rival_debe_actor": [
+       18,
+       195
+      ],
+      "rival_floor_x15": [
+       18,
+       178
+      ]
+     },
+     {
+      "cell": [
+       17,
+       3
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     },
+     {
+      "cell": [
+       17,
+       3
+      ],
+      "target": 4,
+      "live": [
+       8,
+       40
+      ],
+      "recomputed": [
+       8,
+       40
+      ],
+      "counter": false,
+      "target_ap_live": 29,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       40
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       50
+      ],
+      "rival_debe_actor": [
+       8,
+       40
+      ],
+      "rival_floor_x15": [
+       8,
+       40
+      ]
+     },
+     {
+      "cell": [
+       17,
+       3
+      ],
+      "target": 10,
+      "live": [
+       18,
+       178
+      ],
+      "recomputed": [
+       18,
+       178
+      ],
+      "counter": false,
+      "target_ap_live": 3,
+      "match": true,
+      "rival_doc_skip_le2": [
+       18,
+       178
+      ],
+      "rival_terrain_like_attack": [
+       18,
+       188
+      ],
+      "rival_debe_actor": [
+       18,
+       178
+      ],
+      "rival_floor_x15": [
+       18,
+       178
+      ]
+     },
+     {
+      "cell": [
+       14,
+       4
+      ],
+      "target": 1,
+      "live": [
+       18,
+       4
+      ],
+      "recomputed": [
+       18,
+       4
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       14
+      ],
+      "rival_debe_actor": [
+       18,
+       4
+      ],
+      "rival_floor_x15": [
+       18,
+       4
+      ]
+     },
+     {
+      "cell": [
+       15,
+       4
+      ],
+      "target": 10,
+      "live": [
+       18,
+       178
+      ],
+      "recomputed": [
+       18,
+       178
+      ],
+      "counter": false,
+      "target_ap_live": 3,
+      "match": true,
+      "rival_doc_skip_le2": [
+       18,
+       178
+      ],
+      "rival_terrain_like_attack": [
+       18,
+       188
+      ],
+      "rival_debe_actor": [
+       18,
+       195
+      ],
+      "rival_floor_x15": [
+       18,
+       178
+      ]
+     },
+     {
+      "cell": [
+       16,
+       4
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     },
+     {
+      "cell": [
+       16,
+       4
+      ],
+      "target": 10,
+      "live": [
+       18,
+       178
+      ],
+      "recomputed": [
+       18,
+       178
+      ],
+      "counter": false,
+      "target_ap_live": 3,
+      "match": true,
+      "rival_doc_skip_le2": [
+       18,
+       178
+      ],
+      "rival_terrain_like_attack": [
+       18,
+       188
+      ],
+      "rival_debe_actor": [
+       18,
+       178
+      ],
+      "rival_floor_x15": [
+       18,
+       178
+      ]
+     },
+     {
+      "cell": [
+       15,
+       5
+      ],
+      "target": 1,
+      "live": [
+       18,
+       4
+      ],
+      "recomputed": [
+       18,
+       4
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       18,
+       14
+      ],
+      "rival_debe_actor": [
+       18,
+       4
+      ],
+      "rival_floor_x15": [
+       18,
+       4
+      ]
+     },
+     {
+      "cell": [
+       15,
+       5
+      ],
+      "target": 2,
+      "live": [
+       8,
+       50
+      ],
+      "recomputed": [
+       8,
+       50
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": [
+       8,
+       50
+      ],
+      "rival_terrain_like_attack": [
+       8,
+       55
+      ],
+      "rival_debe_actor": [
+       8,
+       50
+      ],
+      "rival_floor_x15": [
+       8,
+       50
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_entry_c43_c47_c4b_c4f": [
+     17,
+     3,
+     2,
+     0
+    ],
+    "globals_at_loop_end": [
+     16,
+     3,
+     10,
+     18
+    ],
+    "predicted_globals": [
+     16,
+     3,
+     10,
+     18
+    ],
+    "rival_globals": {
+     "doc_skip_le2": [
+      16,
+      3,
+      10,
+      18
+     ],
+     "terrain_like_attack": [
+      16,
+      3,
+      10,
+      18
+     ],
+     "debe_actor": [
+      16,
+      3,
+      10,
+      18
+     ],
+     "floor_x15": [
+      16,
+      3,
+      10,
+      18
+     ],
+     "ties_last": [
+      16,
+      4,
+      10,
+      18
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 12,
+     "a2": 0
+    }
+   },
+   {
+    "actor": 13,
+    "a2": 0,
+    "return_address": "0x1b0f10",
+    "weapon_item": 0,
+    "weapon_row_0xb_0xc": [
+     1,
+     1
+    ],
+    "candidate_cells": [
+     [
+      15,
+      14
+     ],
+     [
+      14,
+      15
+     ],
+     [
+      15,
+      15
+     ],
+     [
+      16,
+      15
+     ],
+     [
+      15,
+      16
+     ]
+    ],
+    "pairs_enumeration_matches_row_major_x_unit_index": true,
+    "pairs": [
+     {
+      "cell": [
+       15,
+       14
+      ],
+      "target": 3,
+      "live": [
+       0,
+       2
+      ],
+      "recomputed": [
+       0,
+       2
+      ],
+      "counter": false,
+      "target_ap_live": 31,
+      "match": true,
+      "rival_doc_skip_le2": null,
+      "rival_terrain_like_attack": [
+       8,
+       7
+      ],
+      "rival_debe_actor": [
+       0,
+       -9
+      ],
+      "rival_floor_x15": [
+       0,
+       2
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_entry_c43_c47_c4b_c4f": [
+     16,
+     3,
+     10,
+     0
+    ],
+    "globals_at_loop_end": [
+     15,
+     14,
+     3,
+     0
+    ],
+    "predicted_globals": [
+     15,
+     14,
+     3,
+     0
+    ],
+    "rival_globals": {
+     "doc_skip_le2": null,
+     "terrain_like_attack": [
+      15,
+      14,
+      3,
+      8
+     ],
+     "debe_actor": null,
+     "floor_x15": [
+      15,
+      14,
+      3,
+      0
+     ],
+     "ties_last": [
+      15,
+      14,
+      3,
+      0
+     ]
+    },
+    "ai_attack_execute_called": null
+   },
+   {
+    "actor": 15,
+    "a2": 0,
+    "return_address": "0x1b0f10",
+    "weapon_item": 0,
+    "weapon_row_0xb_0xc": [
+     1,
+     1
+    ],
+    "candidate_cells": [
+     [
+      4,
+      18
+     ],
+     [
+      3,
+      19
+     ],
+     [
+      4,
+      19
+     ],
+     [
+      5,
+      19
+     ],
+     [
+      4,
+      20
+     ]
+    ],
+    "pairs_enumeration_matches_row_major_x_unit_index": true,
+    "pairs": [
+     {
+      "cell": [
+       4,
+       18
+      ],
+      "target": 7,
+      "live": [
+       18,
+       184
+      ],
+      "recomputed": [
+       18,
+       184
+      ],
+      "counter": false,
+      "target_ap_live": 3,
+      "match": true,
+      "rival_doc_skip_le2": [
+       18,
+       184
+      ],
+      "rival_terrain_like_attack": [
+       18,
+       194
+      ],
+      "rival_debe_actor": [
+       18,
+       201
+      ],
+      "rival_floor_x15": [
+       18,
+       184
+      ]
+     }
+    ],
+    "all_pairs_match": true,
+    "global_after_every_comparison_matches": true,
+    "globals_at_entry_c43_c47_c4b_c4f": [
+     15,
+     14,
+     3,
+     0
+    ],
+    "globals_at_loop_end": [
+     4,
+     18,
+     7,
+     18
+    ],
+    "predicted_globals": [
+     4,
+     18,
+     7,
+     18
+    ],
+    "rival_globals": {
+     "doc_skip_le2": [
+      4,
+      18,
+      7,
+      18
+     ],
+     "terrain_like_attack": [
+      4,
+      18,
+      7,
+      18
+     ],
+     "debe_actor": [
+      4,
+      18,
+      7,
+      18
+     ],
+     "floor_x15": [
+      4,
+      18,
+      7,
+      18
+     ],
+     "ties_last": [
+      4,
+      18,
+      7,
+      18
+     ]
+    },
+    "ai_attack_execute_called": {
+     "unit": 15,
+     "a2": 0
+    }
+   }
+  ]
+ },
+ "tie_run_12_no_attack_recheck": {
+  "source": "續六十二第 2 回合 tie 場景的 0x14b78 入口傾印(.wsl_build/ctr/sl/tie_002_001B0B78.units.bin),本輪沒有在該場景下斷 0x14237",
+  "actor_12": {
+   "xy": [
+    3,
+    0
+   ],
+   "ap": 24
+  },
+  "adjacent_opponents": {
+   "sol_0": {
+    "xy": [
+     2,
+     0
+    ],
+    "dp": 724
+   },
+   "unit_4": {
+    "xy": [
+     3,
+     1
+    ],
+    "dp": 671
+   }
+  },
+  "npcs_boxed_in": {
+   "unit_5": [
+    0,
+    0
+   ],
+   "unit_6": [
+    1,
+    0
+   ],
+   "blocked_by": "四鄰全是對手格(0x40 不可進入)"
+  },
+  "conclusion": "可達配對的原始分數全部為負 → 優先級 0 且不大於 0,不記錄 → P = 0 → 0x14121 / 0x13e9c 備援(以本輪規則重算,推論)"
+ }
+}

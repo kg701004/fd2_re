@@ -817,7 +817,7 @@
   {
    "addr": "0x1f183",
    "name": "unit_uses_move_cost_row19",
-   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十,在 scene_attack_resolve 的地形修正閘門上):種族 1 修正照做、種族 5 跳過、職業 0x13(種族 1)跳過、+7 = 0x1c(種族 5)照做,攻守兩方各自判定。種族 4 未測。 2026-09-30 DOSBox-X(doc98 續五十三,在 ai_spell_target_score 的法術 10..12 閘門上):種族 4 與種族 5 的目標記 0、種族 1 照算。 2026-09-30(doc98 續五十四,地形修正閘門):守方種族 4 跳過 DP 修正。",
+   "summary": "(unit):unit[+7]==0x1c 回 0;否則 unit[+0x20](職業)==0x13 或 unit[+0x1f](種族) 為 4/5 回 1,其餘回 0。知識庫記載為移動成本表第 19 列例外的判定式。 2026-09-29 DOSBox-X 動態驗證(doc98 續五十,在 scene_attack_resolve 的地形修正閘門上):種族 1 修正照做、種族 5 跳過、職業 0x13(種族 1)跳過、+7 = 0x1c(種族 5)照做,攻守兩方各自判定。種族 4 未測。 2026-09-30 DOSBox-X(doc98 續五十三,在 ai_spell_target_score 的法術 10..12 閘門上):種族 4 與種族 5 的目標記 0、種族 1 照算。 2026-09-30(doc98 續五十四,地形修正閘門):守方種族 4 跳過 DP 修正。 2026-09-30(doc98 續六十三):ai_physical_candidate_select 用相反極性 —— 回 1 才套地形修正(種族 5 的目標 AP 30 → 31、樹林 DP 55 → 60;種族 1 的盜賊攻方與 NPC 目標不修正)。",
    "confidence": "verified_dynamic",
    "date": "2026-09-19",
    "evidence": [
@@ -8933,6 +8933,92 @@
     {
      "at": "0x14ec4",
      "insn": "call 0x13488"
+    }
+   ]
+  },
+  {
+   "addr": "0x14237",
+   "name": "ai_physical_candidate_select",
+   "summary": "(unit, a2):AI 物理攻擊候選。[0x53c4f] = 0;find_equipped_slot(unit, 0) 找不到直接回 0;武器列 +0xb / +0xc 當目標枚舉的內圈門檻與射程。0x145cd(a2)、0x4e390(MV +0x3b;成本列 = 職業,unit_uses_move_cost_row19 為 1 時 0x13)、0x146d1、0x14b16 取候選格(y 外 x 內);每格以 collect_targets_in_range(格, 列 +0xc, 列 +0xb, a2 == 0 ? 1 : 0)取目標,依目標序號逐一評分。地形修正只在 unit_uses_move_cost_row19 回 1 時套(攻方用候選格、目標用自己所站的格,[0x51a12]/[0x51a2a] 百分比截斷向零)—— 與 scene_attack_resolve 的閘門極性相反。原始 = 攻方 AP' - 目標 DP';> 2 優先級 8,否則 0(不略過);原始 > 目標目前 HP(+0x40)→ 分數 ×2、優先級 0x12;unit_can_counter_at(目標, 格) 回 1 時加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零。先比優先級再比分數,嚴格較大才寫入 [0x53c43]/[0x53c47] 格、[0x53c4b] 目標、[0x53c4f] 優先級(最佳分數是區域變數、初值 0,所以優先級 0 且分數 <= 0 的組不會被記下;優先級 8 的組即使分數為負也會蓋過優先級 0)。固定回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續六十三):2 回合 4 次呼叫、27 組 (格, 目標) 的優先級、分數、目標 AP'、攻方 AP'/DP' 與每次比較後的 [0x53c43..0x53c4f] 全部與重算相同。原始 2 > HP 1 記為 (0x12, 4);原始 2 <= HP 記為優先級 0 但照樣寫入全域、之後不攻擊;索爾距離 1 的組 -11 ×3/2 → -16(floor 為 -17);同分保留先出現的格。對照規則「<= 2 略過」在 10 組、「地形閘門同實戰」在 25 組、「×3/2 取 floor」在 1 組預測不同,「同分取後者」在 2 次呼叫的最終選擇上預測不同。",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "evidence": [
+    {
+     "at": "0x1427e",
+     "insn": "mov dword ptr [0x3c4f], 0"
+    },
+    {
+     "at": "0x143cd",
+     "insn": "call 0x1f183"
+    },
+    {
+     "at": "0x143d7",
+     "insn": "je 0x14430"
+    },
+    {
+     "at": "0x14448",
+     "insn": "call 0x14818"
+    },
+    {
+     "at": "0x1447f",
+     "insn": "cmp esi, eax"
+    },
+    {
+     "at": "0x14485",
+     "insn": "mov edi, 0x12"
+    },
+    {
+     "at": "0x14496",
+     "insn": "call 0x1debe"
+    },
+    {
+     "at": "0x144ab",
+     "insn": "movzx eax, byte ptr [ebx + 8]"
+    },
+    {
+     "at": "0x144c5",
+     "insn": "cmp edi, dword ptr [0x3c4f]"
+    },
+    {
+     "at": "0x14540",
+     "insn": "je 0x14586"
+    },
+    {
+     "at": "0x1458c",
+     "insn": "cmp esi, 2"
+    },
+    {
+     "at": "0x14595",
+     "insn": "mov edi, 8"
+    }
+   ]
+  },
+  {
+   "addr": "0x1debe",
+   "name": "unit_can_counter_at",
+   "summary": "(unit, x, y):unit +0x26(麻痺)非 0 回 -1;unit 所在格與 (x, y) 的曼哈頓距離不是 1 回 -1;find_equipped_slot(unit, 0) 找不到回 -1;武器列 +0xb > 1 回 -1;否則回 1。唯一呼叫端 ai_physical_candidate_select,傳入的是目標與候選格,成立時分數加 攻方 DP' - 目標 AP'(預估反擊)。2026-09-30 DOSBox-X(doc98 續六十三):索爾距離 1、未麻痺、武器 31(+0xb 1)→ 加項成立;同一目標距離 2、麻痺目標(武器 31)距離 1、沒有 kind0 武器的 NPC 距離 1 → 都不加;把攻方當第一參數的對照在 9 組上預測不同的分數。+0xb > 1 的分支未測。",
+   "confidence": "verified_dynamic",
+   "date": "2026-09-30",
+   "evidence": [
+    {
+     "at": "0x1dee0",
+     "insn": "movzx eax, byte ptr [ebx + 0x26]"
+    },
+    {
+     "at": "0x1df19",
+     "insn": "cmp eax, 1"
+    },
+    {
+     "at": "0x1df24",
+     "insn": "call 0x1b83d"
+    },
+    {
+     "at": "0x1df47",
+     "insn": "movzx eax, byte ptr [eax + 0xb]"
+    },
+    {
+     "at": "0x1df4b",
+     "insn": "cmp eax, 1"
     }
    ]
   }
