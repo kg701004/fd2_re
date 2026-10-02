@@ -1,0 +1,756 @@
+{
+ "_meta": {
+  "exe": "org_game\\炎龍騎士團\\FLAME2\\FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "dato": "org_game\\炎龍騎士團\\FLAME2\\DATO.DAT",
+  "dato_md5": "f15093e5bff4e5f3334a076ab2a7d130",
+  "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV md5 e6d9a357…);v11 / v14 另套 v9_setup.py + v11_setup.py",
+  "raw_dirs": [
+   ".wsl_build/ctr/v11/ch25",
+   ".wsl_build/ctr/v12/ch25",
+   ".wsl_build/ctr/v13/ch25",
+   ".wsl_build/ctr/v14/ch25",
+   ".wsl_build/ctr/v15/ch25"
+  ],
+  "drivers": "scratchpad t_v11.py(v11、v14)、v11_setup.py、t_v12.py(v12 離開戰場、v13、v15)、t_v12f.py(v12 強制 free)、heap_geom.py / heap_geom_off.py(v12 堆積快照)、dato_match.py、rel32_callers.py;本檔由 ev_s73.py 重算",
+  "process": [
+   "v11:k = 4(線性 7 = 0x89)開框動畫返回後 DOSBox-X 以 'E_Exit: JMP Illegal descriptor type 14' 結束(r1_crash_pane.txt,轉錄);驅動之後讀到的全 0 紀錄(eip -0x19c000)本檔濾掉。k = 5(0xf0)改在 v14 單獨跑。",
+   "v12:先做 heap_geom(第一次 geo0 用未檢查的 enter-debugger,停在 DOS 呼叫裡,描述讀到全 0,作廢;geo1 用 Live.halt() 重跑),再做強制 free f0 / f1,最後『離開戰場』p1。f0 第一次等了 120 秒沒有自然 free(只按方向鍵),改按『轉盤 → Down → Return』才觸發。",
+   "v13:驅動 p1 的按鍵沒完成待機,手動中止並清斷點時遊戲已戰敗回標題,標題流程沒有斷點 → 只做事後堆積檢查(posthoc_title.txt),斷點歸因改由 v15 重跑。",
+   "v15:先手動(無斷點)Escape、Return、Down、Return、Down 讓悠妮停在待機前,再啟動 t_v12 改壞標頭、下斷點,送最後的 Return。"
+  ],
+  "dato_duplicates": [
+   [
+    5,
+    55
+   ],
+   [
+    6,
+    118
+   ],
+   [
+    15,
+    47,
+    65
+   ],
+   [
+    17,
+    49,
+    67
+   ],
+   [
+    32,
+    50
+   ],
+   [
+    40,
+    58
+   ],
+   [
+    41,
+    52,
+    59
+   ],
+   [
+    42,
+    60
+   ],
+   [
+    43,
+    61
+   ],
+   [
+    44,
+    62
+   ],
+   [
+    45,
+    63
+   ],
+   [
+    46,
+    64
+   ],
+   [
+    57,
+    105,
+    127
+   ],
+   [
+    104,
+    121
+   ]
+  ]
+ },
+ "A_v9b_portrait_source": {
+  "question": "續七十二仍未驗證:v9b 第二次觸發(f1)亂碼畫面左下角鏡像的索爾,是哪一次載入的",
+  "v9b_f1_sequence": {
+   "steps_with_stops": [
+    [
+     0,
+     "Return",
+     [
+      "0x12cea",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da",
+      "0x1d9da"
+     ]
+    ],
+    [
+     1,
+     "-",
+     [
+      "0x12cea"
+     ]
+    ],
+    [
+     24,
+     "Return",
+     [
+      "0x12cea"
+     ]
+    ],
+    [
+     30,
+     "Return",
+     [
+      "0x12cea"
+     ]
+    ],
+    [
+     34,
+     "-",
+     [
+      "0x1d87e",
+      "0x1d890",
+      "0x34531",
+      "0x112a5",
+      "0x34543"
+     ]
+    ],
+    [
+     36,
+     "Return",
+     [
+      "0x1636c",
+      "0x165ac",
+      "0x12cea",
+      "0x165db"
+     ]
+    ]
+   ],
+   "reading": "第 24 步 Return 時 0x12cea 以索爾紀錄(ESI = 單位 0)返回 0x18a2b;f1_26~29 截圖是索爾的狀態畫面,第 33 步截圖是對龍人戰士施放的戰鬥場景(MP 805 → 781),第 34 步在單位 0 的分派檢查觸發事件 0。與 v10a a2 前 5 個 Return 的順序相同(狀態畫面 → 聖光彈 → 敵方回合)"
+  },
+  "v10a_writers_before_trigger": [
+   [
+    "0x17f30",
+    32,
+    "0xc88"
+   ],
+   [
+    "0x1967e",
+    32,
+    "0x9017"
+   ]
+  ],
+  "v11_flip": {
+   "sol_plus7": [
+    32,
+    20
+   ],
+   "writers_before_trigger": [
+    [
+     "0x17f30",
+     20,
+     "0xc88"
+    ],
+    [
+     "0x1967e",
+     20,
+     "0x9017"
+    ]
+   ],
+   "garble_entry": {
+    "n": 55,
+    "0x53c67": "0x9017",
+    "a85_buf_match": [
+     20
+    ]
+   },
+   "screen": "r1_g0_054.png:亂碼畫面左下角是頭像 20(綠髮女性),不是索爾"
+  },
+  "v9b_pixel_similarity_lower_left": {
+   "f1_34_-.png": {
+    "best_v10a_k0_sol32": [
+     0.9874,
+     "a2_g0_018.png"
+    ],
+    "best_v11_k0_portrait20": [
+     0.2786,
+     "r1_g0_018.png"
+    ]
+   },
+   "f1_35_-.png": {
+    "best_v10a_k0_sol32": [
+     0.9553,
+     "a2_g0_018.png"
+    ],
+    "best_v11_k0_portrait20": [
+     0.2783,
+     "r1_g0_018.png"
+    ]
+   }
+  },
+  "conclusion": "亂碼畫面的頭像是『索爾行動後 open_dialog_box 0x1967e 依單位 +7 載入、[0x53c67] = 0x9017』留下的:v11 把 +7 改成 20,0x17f30 與 0x1967e 都跟著載入 20,亂碼畫面就變成頭像 20(DOSBox-X)。v9b 當時沒有斷 [0x53a85],它的操作順序與 v10a / v11 相同,左下區域與 v10a k=0(索爾 32)像素 98.7% 相同、與 v11 k=0(頭像 20)只有 27.9% → 同一個來源(推論:v9b 本身沒有寫入點停點)"
+ },
+ "B_speaker_lookup_and_linear7": {
+  "static": "0x12c60:先清 [0x53c1b],掃戰場 +8 == id 就把 [0x53c1b] 設成那筆,0x34894(索引)(= +5 & 1)為 0 才回索引,否則繼續掃;掃完 [0x53c1b] 仍是 0 才掃名冊,而且掃到底(最後一筆同 id 勝出);沒回索引就回 -1。dialog 0x16174..0x161dc:回 -1 → 旗標 0;id ≠ 0x27 時頭像 = [[0x53c1b] + 7],座標 = [[0x53c1b] + 0 / + 1] → 0x165ac(x, y, 旗標)",
+  "setup": {
+   "roster_added": [
+    {
+     "index": 16,
+     "addr": "0x1fcbc0",
+     "char_id": 2,
+     "+7": 10,
+     "xy": [
+      5,
+      40
+     ]
+    },
+    {
+     "index": 17,
+     "addr": "0x1fcc10",
+     "char_id": 2,
+     "+7": 11,
+     "xy": [
+      6,
+      41
+     ]
+    },
+    {
+     "index": 18,
+     "addr": "0x1fcc60",
+     "char_id": 3,
+     "+7": 12,
+     "xy": [
+      7,
+      42
+     ]
+    }
+   ],
+   "X_Z_A": [
+    2,
+    3,
+    5
+   ],
+   "U": 61,
+   "U_before": {
+    "xy": [
+     10,
+     7
+    ],
+    "+5": 0,
+    "+7": 125,
+    "+8": 125
+   },
+   "ivt_0_8": "60ca00f00e007000",
+   "roster_count": [
+    16,
+    19
+   ]
+  },
+  "v11_line3": {
+   "0": {
+    "patched": {
+     "mode": "roster_dup",
+     "char_id": 2,
+     "l7": null
+    },
+    "ivt_at_patch": "60ca00f00e007000",
+    "lookup_ret": -1,
+    "c1b_is": [
+     "roster",
+     17
+    ],
+    "c1b_rec16": "062900020000020b0200401f40a380c9",
+    "portrait_idx_ebp": 11,
+    "ivt_at_161b1": "60ca00f00e007000",
+    "load": {
+     "file": "0x51a70",
+     "res_idx": 11
+    },
+    "writer": {
+     "portrait_idx": 11,
+     "size": 14826,
+     "buf": "r1_63_portrait_buf.bin",
+     "l7_restored": null
+    },
+    "box": [
+     6,
+     41,
+     0
+    ],
+    "line_end": 65
+   },
+   "1": {
+    "patched": {
+     "mode": "dead_battlefield",
+     "char_id": 3,
+     "l7": null
+    },
+    "ivt_at_patch": "60ca00f00e007000",
+    "lookup_ret": -1,
+    "c1b_is": [
+     "unit",
+     61
+    ],
+    "c1b_rec16": "0a0719000001000d03004056408380ff",
+    "portrait_idx_ebp": 13,
+    "ivt_at_161b1": "60ca00f00e007000",
+    "load": {
+     "file": "0x51a70",
+     "res_idx": 13
+    },
+    "writer": {
+     "portrait_idx": 13,
+     "size": 14227,
+     "buf": "r1_79_portrait_buf.bin",
+     "l7_restored": null
+    },
+    "box": [
+     10,
+     7,
+     0
+    ],
+    "line_end": 81
+   },
+   "2": {
+    "patched": {
+     "mode": "absent",
+     "char_id": 5,
+     "l7": null
+    },
+    "ivt_at_patch": "60ca00f00e007000",
+    "lookup_ret": -1,
+    "c1b_is": [
+     "other",
+     0
+    ],
+    "c1b_rec16": null,
+    "portrait_idx_ebp": 0,
+    "ivt_at_161b1": "60ca00f00e007000",
+    "load": {
+     "file": "0x51a70",
+     "res_idx": 0
+    },
+    "writer": {
+     "portrait_idx": 0,
+     "size": 14670,
+     "buf": "r1_95_portrait_buf.bin",
+     "l7_restored": null
+    },
+    "box": [
+     96,
+     202,
+     0
+    ],
+    "line_end": 97
+   },
+   "3": {
+    "patched": {
+     "mode": "absent_l7",
+     "char_id": 5,
+     "l7": 75
+    },
+    "ivt_at_patch": "60ca00f00e00704b",
+    "lookup_ret": -1,
+    "c1b_is": [
+     "other",
+     0
+    ],
+    "c1b_rec16": null,
+    "portrait_idx_ebp": 75,
+    "ivt_at_161b1": "60ca00f00e00704b",
+    "load": {
+     "file": "0x51a70",
+     "res_idx": 75
+    },
+    "writer": {
+     "portrait_idx": 75,
+     "size": 14831,
+     "buf": "r1_111_portrait_buf.bin",
+     "l7_restored": "60ca00f00e007000"
+    },
+    "box": [
+     96,
+     202,
+     0
+    ],
+    "line_end": 113
+   },
+   "4": {
+    "patched": {
+     "mode": "absent_l7",
+     "char_id": 5,
+     "l7": 137
+    },
+    "ivt_at_patch": "60ca00f00e007089",
+    "lookup_ret": -1,
+    "c1b_is": [
+     "other",
+     0
+    ],
+    "c1b_rec16": null,
+    "portrait_idx_ebp": 137,
+    "ivt_at_161b1": "60ca00f00e007089",
+    "load": {
+     "file": "0x51a70",
+     "res_idx": 137
+    },
+    "writer": {
+     "portrait_idx": 137,
+     "size": 3654,
+     "buf": "r1_127_portrait_buf.bin",
+     "l7_restored": "60ca00f00e007000"
+    },
+    "box": [
+     96,
+     202,
+     0
+    ]
+   }
+  },
+  "k0_rival": "若是第一筆同 id 勝出,會載入 10、開框 (5, 40);實測 11、(6, 41)",
+  "k1_rival": "若陣亡的戰場單位不算、改掃名冊,會載入 12、開框 (7, 42);實測 13、(10, 7) = U 的座標",
+  "k4_dato_offsets": {
+   "entry_0x89": [
+    "0x10",
+    "0xe56"
+   ],
+   "loaded": "DATO.DAT[0x10:0xe56](3654 bytes,逐 byte 相同)= 偏移表後段 0x10..0x22a(538 bytes)+ 第 0 條開頭 3116 bytes;第 0x89 個「偏移」位在 0x22a,其實是第 0 條資料的前 8 bytes(0x10、0xe56)",
+   "after": "0x165ac(96, 202, 0) 返回後、第 3 條結束前,DOSBox-X 以 'E_Exit: JMP Illegal descriptor type 14' 結束(r1_crash_pane.txt);確切在哪一條指令沒有定位"
+  },
+  "v14_f0": {
+   "patched": {
+    "mode": "absent_l7",
+    "char_id": 5,
+    "l7": 240
+   },
+   "portrait_idx_ebp": 240,
+   "entry_0xf0_offsets": [
+    "0x4e4fc2fe",
+    "0x4d4cc24d"
+   ],
+   "size_53bff": 4277993295,
+   "size_signed": -16974001,
+   "screen": "r1_oom_060.png:圖形畫面左上印出『Out of Memory at Load DATO.DAT Number:240!!』,接著是 C:\\> 提示字元"
+  },
+  "conclusion": "名冊重複 id → 最後一筆;戰場上同 id 但已陣亡(+5 bit0)→ 用那筆戰場紀錄、不看名冊,回 -1、旗標 0;兩邊都沒有 → 讀線性 7 / 0 / 1。線性 7 = 0x4b 就載入頭像 75(證明讀的是線性 7);0x89 把偏移表後段 + 第 0 條開頭當頭像載入,之後模擬器結束;0xf0 算出的大小為負 → 印 Out of Memory 結束程式(DOSBox-X)"
+ },
+ "C_title_path": {
+  "static": "main 0x25bf4:0x25db1 起 call 0x25ebb(標題 / 讀檔 / 繼續的分流)→ 0x25dce call 0x117e7(戰場迴圈),回傳 0 再進戰場、-1 → 結束程式(0x25e97 AIL_shutdown …)、其他值 → 回 0x25db1 再進 0x25ebb。[0x53ecc] == 1 時先 0x22e5c(FDOTHER #79)再當成 1。0x25ebb 只有這一個呼叫端(位元組掃描 rel32);它內含 [0x53a65] 的 0x25ef5(新遊戲)、0x25f7c(讀檔),標題序列 0x1f894 內含 0x1f77a … 0x1fce4 共 11 處;0x26130(CONTINUE)呼叫 0x10010。離開戰場 YES:0x1a301 mov eax, -1 → 戰場迴圈回 -1 → 結束程式,不經標題",
+  "v12_leave_battle": "標頭改壞後『離開戰場 → YES』:斷點 0x111ba / 0x25ebb / 0x1f894 / 13 個調色盤寫入點 0 次停;p1_01 起畫面是 DOS 提示字元 C:\\>(程式結束,沒有當掉)",
+  "v15_defeat": {
+   "pre": {
+    "pal": "0x1fd0c4",
+    "pal_hdr": "05030000",
+    "roster": "0x1fc6c0",
+    "units_ptr": "0x26ea0c",
+    "chapter": 24,
+    "pal_hdr_after_sm": "102b0400"
+   },
+   "first_stops": [
+    [
+     "0x111ba",
+     "0x22e90",
+     79
+    ],
+    [
+     "0x111ba",
+     "0x259ff",
+     18
+    ],
+    [
+     "0x25ebb",
+     "0x25dc2",
+     null
+    ],
+    [
+     "0x1f894",
+     null,
+     null
+    ],
+    [
+     "0x111ba",
+     "0x1f8e3",
+     77
+    ],
+    [
+     "0x111ba",
+     "0x1f90f",
+     76
+    ],
+    [
+     "0x3d67f",
+     null,
+     null
+    ],
+    [
+     "0x111d5",
+     null,
+     null
+    ],
+    [
+     "0x1f912",
+     null,
+     null
+    ]
+   ],
+   "watched_palette_frees": [
+    {
+     "n": 5,
+     "ret": "0x1f90f",
+     "old": "0x1fd0c4",
+     "old_hdr": "102b0400",
+     "path": [
+      "0x3d67f"
+     ],
+     "real_free": false
+    },
+    {
+     "n": 10,
+     "ret": "0x1f982",
+     "old": "0x207c30",
+     "old_hdr": "05030000",
+     "path": [
+      "0x3d67f",
+      "0x3d685",
+      "0x3d693",
+      "0x3d72e"
+     ],
+     "real_free": true
+    },
+    {
+     "n": 17,
+     "ret": "0x1f9e4",
+     "old": "0x207c30",
+     "old_hdr": "05030000",
+     "path": [
+      "0x3d67f",
+      "0x3d685",
+      "0x3d693",
+      "0x3d72e"
+     ],
+     "real_free": true
+    },
+    {
+     "n": 29,
+     "ret": "0x1fbeb",
+     "old": "0x207c30",
+     "old_hdr": "05030000",
+     "path": [
+      "0x3d67f",
+      "0x3d685",
+      "0x3d693",
+      "0x3d72e"
+     ],
+     "real_free": true
+    },
+    {
+     "n": 36,
+     "ret": "0x1fc21",
+     "old": "0x207c30",
+     "old_hdr": "05030000",
+     "path": [
+      "0x3d67f",
+      "0x3d685",
+      "0x3d693",
+      "0x3d72e"
+     ],
+     "real_free": true
+    },
+    {
+     "n": 43,
+     "ret": "0x1f777",
+     "old": "0x207c30",
+     "old_hdr": "05030000",
+     "path": [
+      "0x3d67f",
+      "0x3d685",
+      "0x3d693",
+      "0x3d72e"
+     ],
+     "real_free": true
+    }
+   ],
+   "new_game_reload": {
+    "ret": "0x25ef2",
+    "old": "0x207c30",
+    "res_idx": 0,
+    "new_pal": "0x207c30"
+   },
+   "screens": "p1_04_-.png 標題(START / LOAD / CONTINUE)、p1_05_Return.png 之後新遊戲的城堡序章,色彩正常"
+  },
+  "v13_posthoc": "續七十三 v13:索爾 +5 設 bit0、調色盤區塊標頭改成 0x00042b10 後,驅動 p1 只在狀態畫面記到一個停點就被手動中止(p1_aborted.log),\n清掉斷點、按 Escape 時遊戲已戰敗回到標題(q0.png,標題動畫)。斷點沒有記到標題流程,所以只做事後檢查(逐字轉錄自該次輸出):\n\n停住後(EIP 0x11dc1)讀:[0x53a65] = 0x207c30、[0x53bf7] = 0x1fc6c0、H = 0x1fd0c0 的標頭 102b0400。\n堆積描述 0x527b0:+8 rover 0x233cb0、+0x18 空閒數 0x1a = 26;t_desc.bin / t_heap.bin(linear 0x1e0000..0x320000)。\n空閒串列從 +0x24 走到回到假頭:26 個節點(= 空閒數),每個標頭最低位都是 0;H(0x1fd0c0)不在串列裡。\nH 附近的節點:0x1f6d2c、0x1f6e38、0x1fd3c4、0x1fee2c、0x207f30、0x20fc34。\n實體鏈:0x1f7014 (0x36a5) → 0x1fa6b8 (0x2005) → 0x1fc6bc (0xa05) → 0x1fd0c0 (0x42b10) → 0x23fbd0(標頭 0xfec15d5c,越過 H 之後是錯的鏈)。\n\n結論(事後,未以斷點歸因):舊調色盤區塊沒有進空閒串列(洩漏),新調色盤配到 0x207c30。斷點歸因見 v15。\n",
+  "conclusion": "戰敗(索爾陣亡)回標題時,標題序列第一次重新載入調色盤(0x1f90a,i = 76)就 free 那塊改壞的區塊:0x3d67f 讀到 102b0400 → 不經 0x3d685 直接返回 → 洩漏;新調色盤配到 0x207c30,之後 5 次 free 都真的釋放,新遊戲的 0x25eed 也照常。和 v10b 讀取戰況(0x10010)的結果相同(DOSBox-X)"
+ },
+ "D_free_forward_walk": {
+  "static": "heap_free_block 0x3d670(ebx 固定 = 0x527b0 描述):標頭最低位 0 → 返回;否則清掉最低位,下一塊空閒就合併(0x3d68b);否則用 rover [ebx+8] 與首 / 尾節點判斷能不能直接插入,不能才走 0x3d6d8:計數 = 依 [ebx+0x14] / [ebx+0x18] 算出(本輪兩次都是 0,dec 後回捲 = 不設上限),從被釋放的區塊往後逐塊跳過最低位 1 的區塊,第一個最低位 0 的區塊就當成空閒串列節點(0x3d72e),讀它的 +4 當前一節點並寫 [前一節點 + 8] = 被釋放的區塊。走訪只往後,所以只有位址在假標頭之前、而且中間沒有真正空閒區塊的區塊被釋放時才會走到它;名冊區塊緊接在它前面,但名冊從不被 free(續七十二),所以合併那一支走不到",
+  "v12_geometry_geo1": {
+   "free_nodes": 23,
+   "numfree": 23,
+   "free_nodes_before_H": [
+    "0x1f6c88",
+    "0x1f6e38"
+   ],
+   "their_segment_end_marker": "0x1f6ff8(0xffffffff)",
+   "segment_chain_to_H": [
+    [
+     "0x1f7014",
+     "0x36a5"
+    ],
+    [
+     "0x1fa6b8",
+     "0x2005"
+    ],
+    [
+     "0x1fc6bc",
+     "0xa05"
+    ],
+    [
+     "0x1fd0c0",
+     "0x305"
+    ]
+   ],
+   "next_after_H": "0x1fd3c4",
+   "owners_byte_scan_0x53a00_0x54000": {
+    "0x1f7014": [
+     "0x53ed0"
+    ],
+    "0x1fa6b8": [],
+    "0x1fc6bc": [
+     "0x53bf7"
+    ],
+    "0x1fd0c0": [
+     "0x53a65"
+    ],
+    "0x1fd3c4": [
+     "0x53a18"
+    ]
+   },
+   "pointer_to_0x1fa6bc_in_heap_dump": [
+    "0x1ef8ac",
+    "0x1f1344",
+    "0x1f1350",
+    "0x1f6360"
+   ],
+   "owner_code": {
+    "0x53ed0": "0x25c26 開機時存入(AIL 音樂序列控制代碼,之後只傳給 AIL 函式)",
+    "0x538ac": "函式庫程式 0x49770 存入(0x2000 bytes 的緩衝區)"
+   },
+   "candidates": "0x1f7014 與 0x1fa6b8:位址在 H 之前、同一段、中間沒有空閒區塊 —— 只有它們被釋放時走訪會先遇到 H"
+  },
+  "free_call_sites": "[0x53ed0] 的 9 處參照(指令 0x17380、0x259aa、0x259d2、0x25a1e、0x25a2c、0x25a55、0x25a74、0x25a86、0x25c26)只傳給 AIL 函式或存入;[0x538ac] 只有指令 0x49770(存入)、0x4977d(讀出);沒有一處傳給 free。0x3777e 另有函式庫內的 0x3da31、0x4d021,0x3d670 只有 0x37794",
+  "forced": {
+   "f0_control": {
+    "geo": {
+     "S": "0x1fa6b8",
+     "S_hdr": "0x2005",
+     "roster_blk": "0x1fc6bc",
+     "roster_hdr": "0xa05",
+     "H": "0x1fd0c0",
+     "H_hdr": "0x305",
+     "N": "0x1fd3c4",
+     "N_hdr": "0x2fc",
+     "rover": "0x26c458",
+     "rover_prev": "0x26a698",
+     "numalloc_14": 42,
+     "numfree_18": 23,
+     "H_hdr_set": "0x305"
+    },
+    "natural_eax_skipped": "0x1f6c8c",
+    "stops": [
+     {
+      "eip": "0x3d68b",
+      "esi": "0x1fa6b8",
+      "edi": "0x1fc6bc",
+      "eax": "0x2004"
+     },
+     {
+      "eip": "0x3d6f5",
+      "esi": "0x1fa6b8",
+      "edi": "0x1f6cac",
+      "eax": "0x0"
+     },
+     {
+      "eip": "0x3d72e",
+      "esi": "0x1fa6b8",
+      "edi": "0x1fd3c4",
+      "eax": "0xfffffffe",
+      "edi_is": "N",
+      "S_hdr_at_stop": "0x2004",
+      "eip_after_sr": "0x3d776",
+      "S_hdr_restored": "0x2005"
+     }
+    ],
+    "in_use_blocks_passed": 2
+   },
+   "f1_corrupt": {
+    "geo": {
+     "S": "0x1fa6b8",
+     "S_hdr": "0x2005",
+     "roster_blk": "0x1fc6bc",
+     "roster_hdr": "0xa05",
+     "H": "0x1fd0c0",
+     "H_hdr": "0x305",
+     "N": "0x1fd3c4",
+     "N_hdr": "0x2fc",
+     "rover": "0x26c458",
+     "rover_prev": "0x26a698",
+     "numalloc_14": 42,
+     "numfree_18": 23,
+     "H_hdr_set": "0x42b10"
+    },
+    "natural_eax_skipped": "0x26b018",
+    "stops": [
+     {
+      "eip": "0x3d68b",
+      "esi": "0x1fa6b8",
+      "edi": "0x1fc6bc",
+      "eax": "0x2004"
+     },
+     {
+      "eip": "0x3d6f5",
+      "esi": "0x1fa6b8",
+      "edi": "0x1ee7cc",
+      "eax": "0x0"
+     },
+     {
+      "eip": "0x3d72e",
+      "esi": "0x1fa6b8",
+      "edi": "0x1fd0c0",
+      "eax": "0xffffffff",
+      "edi_is": "H",
+      "S_hdr_at_stop": "0x2004",
+      "eip_after_sr": "0x3d776",
+      "S_hdr_restored": "0x2005"
+     }
+    ],
+    "in_use_blocks_passed": 1
+   }
+  },
+  "conclusion": "把一次自然 free 的指標換成 0x1fa6b8:H 標頭完好時走訪越過名冊與 H 兩個使用中區塊,停在真正的空閒區塊 0x1fd3c4;H 改成 0x00042b10 時只越過名冊就停在 H,把假標頭當成空閒串列節點(DOSBox-X,停在 0x3d72e 後撤銷,沒有讓它寫入)。所以假標頭只會被 0x1f7014 / 0x1fa6b8 的釋放走到;遊戲碼不會釋放它們,函式庫會不會(例如結束時)沒有確認"
+ },
+ "not_covered": [
+  "0x89 之後 DOSBox-X 結束的確切指令(推論:把錯位的資料當頭像影格,0x161e3 起的貼圖或之後的逐字動畫讀到錯的位移)",
+  "函式庫 free(0x3da31、0x4d021)與 AIL_shutdown 會不會釋放 0x1f7014 / 0x1fa6b8;v12 改壞標頭後離開戰場回到 DOS 沒有當掉,但那次沒有斷 free",
+  "假標頭被當成節點之後真正寫入 [前一節點 + 8] 的結果(本輪在 0x3d72e 撤銷,沒有讓它發生)",
+  "標題的 CONTINUE(0x26130 → 0x10010)與 LOAD(0x25f7c)兩條沒有在改壞標頭的狀態下實測;它們同樣經 0x111ba 的 free(靜態)",
+  "v9b 本身沒有 [0x53a85] 寫入點停點(只能以順序與像素歸因)"
+ ]
+}
