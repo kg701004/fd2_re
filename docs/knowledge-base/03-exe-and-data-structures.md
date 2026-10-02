@@ -190,6 +190,8 @@
 > (含 growth/unit/職業魔抗/職業暴擊/裝備相容/索菲亞初始物品等既有斷言)。`tools/test_dump_exe_tables.py`
 > 裡硬寫舊版 `0x55445` 的 `test_native_movement_cost_rows_have_exact_29_by_20_boundary` 同步改
 > 為新版 `0x7A659`，4/4 單元測試通過。
+>
+> **2026-10-02 更正(上文保留原樣)**:`dump_native_movement_cost_rows` 的新版 file offset `0x7A659` 錯一個 byte,正確是 `0x7A65A`(obj3 從 file `0x79014` 起算,linear `0x61646` → `0x7A65A`;DOSBox-X 活記憶體 `0x1f3646` 逐 byte 佐證)。舊 `native_movement_cost_rows.json` 每列錯位一個 byte;「兩表首尾相接、零間隙」是兩個同向錯一個 byte 的位址互證(`0x7A89D` = linear `0x61889`,原生列起點是 `0x6188a`),不構成證據。`class_equip_types` 的 `types` 值不受影響。工具已改由 LE header 換算並重產 JSON,詳見 doc32 §1.2 的 2026-10-02 更正。
 
 ### 各表欄位語意
 

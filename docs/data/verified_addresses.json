@@ -419,24 +419,24 @@
       "notes": "舊版 offset 0x558F9,位移 +0x25214。表為「每級成長值」,出場即時 HP/MP = 該列數值×等級(非 base+(LV-1)×growth)。大惡魔(0x7ACB1 列)AP 成長值正確為 33,非外部表格轉錄的 31。"
     },
     {
-      "address": "0x7A659",
+      "address": "0x7A65A",
       "linear_or_file_offset": "file_offset",
-      "semantic": "native_movement_cost_rows(terrain-cost)表起點。20B/selector,29 個 selector,對應 linear 0x61646-0x61889。",
+      "semantic": "native_movement_cost_rows(terrain-cost)表起點。20B/selector,29 個 selector,對應 linear 0x61646-0x61889(accessor 0x4e8a5)。",
       "confidence": "verified",
       "source_doc": "tools/dump_exe_tables.py",
       "source_section": "dump_native_movement_cost_rows",
-      "verified_date": "2026-08-20",
-      "notes": "舊版 offset 0x55445,位移 +0x25214,2026-08-20 修正(先前寫死舊版 offset,未經 ANCHORS 間接引用)。與 0x7A89D(class_equip_types)恰好首尾相接、零間隙,佐證位移量正確。"
+      "verified_date": "2026-10-02",
+      "notes": "2026-10-02 更正:先前登記為 0x7A659(舊版 0x55445 + 固定位移 +0x25214),但 obj3(base 0x60000)在新版從 file 0x79014 起算,linear 0x61646 = file 0x7A65A;0x7A659 讓 29 列每列錯一個 byte。DOSBox-X 活記憶體 0x1f3646 與 LE header 換算逐 byte 相同。dump_exe_tables.py 現由 lin2file() 換算,不再寫死。原「與 0x7A89D 零間隙」的佐證是兩個同向錯一個 byte 的位址互證,不構成證據。"
     },
     {
       "address": "0x7A89D",
       "linear_or_file_offset": "file_offset",
-      "semantic": "class_equip_types(職業×item.type 六欄白名單)表起點,對應原版 0x1c1c3 讀取邏輯。7B/職業(首 byte 常數 1,後六個 item.type slots),29 職業。",
+      "semantic": "class_equip_types 匯出視圖起點 = linear 0x61889。原版 accessor 0x4e88e 回傳 linear 0x6188a + cls*7(file 0x7A89E 起),0x1c1c3 掃該列 byte 0..5;匯出 raw 早一個 byte,types = raw[1:] = 原生列 byte 0..5,raw[0] = 上一列原生 byte 6(cls 0 為移動成本表末 byte),canonical EXE 中皆為 1。29 職業。",
       "confidence": "verified",
       "source_doc": "tools/dump_exe_tables.py",
       "source_section": "dump_class_equip_types",
       "verified_date": "2026-08-20",
-      "notes": "舊版 offset 0x55689,位移 +0x25214,2026-08-20 修正(同上,先前寫死舊版 offset)。"
+      "notes": "2026-10-02 更正位址敘述:舊敘述把 0x7A89D 當成原生列起點(0x6188a),實為其前一個 byte;types 數值經逐列對照 object_bytes(0x6188a + cls*7) 全部正確,匯出 JSON 位元組不變。舊版 offset 0x55689,位移 +0x25214。"
     },
     {
       "address": "0x602AD",

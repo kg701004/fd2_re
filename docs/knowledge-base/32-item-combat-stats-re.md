@@ -134,6 +134,11 @@ anchor 失敗。本輪逐表核對 `03-exe-and-data-structures.md` §B 第 60-70
 `tools/test_dump_exe_tables.py` 裡 `test_native_movement_cost_rows_have_exact_29_by_20_boundary`
 原本硬寫舊版 `base = 0x55445`，同步改為新版 `0x7A659`；4/4 單元測試通過。
 
+> **2026-10-02 更正(上文保留原樣,不改寫)**:上表 `dump_native_movement_cost_rows` 的新版 offset `0x7A659` 錯一個 byte,正確是 `0x7A65A`。
+> 依據:LE header 中 obj3(base `0x60000`)從 file `0x79014`(data_off `0x36014` + (first page 68 − 1) × `0x1000`)起算,accessor `0x4e8a5` 回傳的 linear `0x61646` 因此對應 file `0x7A65A`;`0x25214` 只是舊版 file ↔ 新版 file 的經驗位移,不是 linear ↔ file 換算。DOSBox-X 活記憶體 `0x1f3646`(= `0x61646` + obj3 位移 `0x192000`,doc98 續六十四)與 `disasm_le.object_bytes(0x61646, 580)` 逐 byte 相同;舊 JSON 每列 `raw[i]` == 真實 `raw[i-1]`(29 列中 28 列有差,row 0 全 1 不受影響)。
+> 「`+29*20` 恰好接上 `0x7A89D`、零間隙」不構成佐證:`0x7A89D` 是 linear `0x61889`,比 accessor `0x4e88e` 回傳的原生列起點 `0x6188a` 也早一個 byte,兩個同向錯位互相印證。`class_equip_types` 的 `types` 欄位逐列對照 `0x6188a + cls*7` 全部正確(匯出視圖本來就早一 byte,`raw[0]` 是上一列原生 byte 6,canonical EXE 中都是 1),JSON 位元組不變。「4/4 單元測試通過」的那題把合成資料寫在工具自己的 file_base 再讀回,任何位移都會通過。
+> 修正:`tools/dump_exe_tables.py` 改由 `lin2file()` 從 LE header 換算,重產 `native_movement_cost_rows.json`;單元測試與工具自驗改對照活記憶體 row 7 / row 19。真實列(欄位 = terrain byte1 移動代碼,列出前 8 欄,其餘欄皆 1):多數職業 `[1,20,1,2,2,20,1,1]`、selector 3/11 `[1,20,2,3,3,20,1,1]`、15/19 `[1,1,1,1,1,20,1,1]`、28 `[20,20,20,20,1,20,1,1]`、0 全 1。與 doc01 §5 一致(代碼 1/5 不可通行、代碼 2 只讓騎士減速);舊 JSON 等於把代碼 2/6 當成不可通行。勘誤已登記於 `known_address_errata.json`。
+
 ### 1.3 2026-08-24 獨立複驗(回應 worklist L366/L1354，不重新推導，只核對既有結論)[驗]
 
 > 背景：worklist 上這兩行的原始措辭仍是「base/stride/215-row prefix 仍未閉合」，但 §1.1/§1.2/

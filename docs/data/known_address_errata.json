@@ -4560,6 +4560,38 @@
           "SESSION-HANDOFF-2026-07-06.md": 5
         }
       }
+    },
+    {
+      "wrong_address": "0x7A659 (dump_native_movement_cost_rows 的 file_base)",
+      "correct_address": "0x7A65A",
+      "wrong_semantic_claimed": "native_movement_cost_rows 在新版 canonical FD2.EXE 的 file offset(= linear 0x61646)",
+      "discovered_date": "2026-10-01",
+      "discovery_method": "DOSBox-X 活記憶體 0x1f3646(= 0x61646 + obj3 位移 0x192000)與 disasm_le.object_bytes(0x61646) 逐 byte 相同,JSON 每列 raw[i] == 真實 raw[i-1];用真實列重算 0x4e390/0x4e4be flood-fill 重現 6 組活記憶體可達集合,用 JSON 列則在 class 7 盜賊站在 code 1 地形時失敗。LE header:obj3 起點 = data_off 0x36014 + (68-1)*0x1000 = 0x79014。",
+      "root_cause": "2026-08-20 以「舊版 file + 0x25214」換算,固定位移是其他表的經驗值,不是 linear↔file 換算;另以「0x7A659 + 29*20 = 0x7A89D 零間隙」互證,但 0x7A89D 本身也比原生列 0x6188a 早一個 byte,兩個同向錯位互相印證。單元測試把合成資料放在工具自己的 file_base 再讀回,無法偵測位移。",
+      "affected_docs": [
+        "tools/dump_exe_tables.py",
+        "tools/test_dump_exe_tables.py",
+        "docs/data/exe_tables/native_movement_cost_rows.json",
+        "docs/data/verified_addresses.json",
+        "docs/knowledge-base/03-exe-and-data-structures.md",
+        "docs/knowledge-base/32-item-combat-stats-re.md",
+        "docs/knowledge-base/42-re-vs-remake-gap-audit.md",
+        "docs/knowledge-base/58-remake-live-verification-log.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "§1.2 2026-10-02 更正",
+      "still_pending": "工具已改用 lin2file() 從 LE header 換算並重產 JSON;單元測試與工具自驗以活記憶體 row 7/19 為地面真相。知識庫原文保留,另加日期更正註記。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x7A659"
+        ],
+        "note": "新版 file offset 錯一個 byte;同行寫出 0x7A65A 或勘誤標記者豁免。",
+        "baseline": {
+          "03-exe-and-data-structures.md": 2,
+          "32-item-combat-stats-re.md": 3
+        }
+      }
     }
   ]
 }

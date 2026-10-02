@@ -136,6 +136,8 @@ kind 的效果公式是新發現,查核後發現**其中至少 9 個(5,0xd,6,7,8
 | SFX(命中/陣亡/選單音) | doc36 | ✅(池對照為近似值,doc36 已註記真實 attack_id→sfx 池對照未 RE 完成) | `audio.go loadSFX/playSFX`,`main.go` 多處呼叫 | — |
 | 出場人數上限(前27章16人/末3章20人) | doc02 §4.6、native `0x2d093→0x318ad` | 🟡 | remake 已把可選人數門檻資料化為一般 `party_limit=15`、末路線 `party_limit=19`；外層已證實小名冊完全略過選人，超過門檻才進全零勾選表。這是 native 0-based cap 的目前證據，不把持久記錄總數16/20與可選上限15/19混為同一欄。仍待完整 native deployment cursor／overflow 行為與實機 UI 對照 | 中 |
 
+> **2026-10-02 更正(上表「移動地形成本」列保留原樣)**:該列引用的 `docs/data/exe_tables/native_movement_cost_rows.json`(及當時入庫的 `remake/assets/data/` 副本)每列錯一個 byte——產生器 file_base 寫成 `0x7A659`,正確是 `0x7A65A`(linear `0x61646`,obj3 從 file `0x79014` 起算)。selector 推導(class / row19 / row1)不受影響,受影響的是 column:多數職業的舊列把移動代碼 2/6 當成不可通行,真實列是代碼 1/5 不可通行(與 doc01 §5 一致)。因此該列的 ✅ 只對 selector 邏輯成立,當時 `nativeMoveCost()` 與 `NativeRelocationDestinationAllowed` 吃到的成本值是錯位的。JSON 已由 LE header 換算重產,詳見 doc32 §1.2 的 2026-10-02 更正;remake 目錄已移除,未另行修正。
+
 ## RE 側也需要補的缺口(非 remake 落差,附帶記錄)
 
 - **施法入口已找到，但 producer 必須分開**：`0x154D1` 仍不是入口；

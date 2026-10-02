@@ -27,6 +27,37 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from le_xref import parse_le
+
+
+def lin2file(d: bytes, lin: int) -> int:
+    """LE linear 位址 → FD2.EXE 檔案位移,由 LE header 逐 object 換算。
+
+    2026-10-02 新增。`dump_native_movement_cost_rows` 原本寫死 file 0x7A659
+    (舊版 0x55445 + 固定位移 0x25214),但 obj3(base 0x60000)在新版從
+    file 0x79014(data_off 0x36014 + (first page 68 - 1) * 0x1000)起算,
+    linear 0x61646 其實是 file 0x7A65A——整張表錯一個 byte。固定位移只是
+    「舊版 file ↔ 新版 file」的經驗值,不是 linear ↔ file 的換算;凡是由
+    原版程式碼的 linear 位址(accessor 的 `lea edx, [...]`)出發的表,一律用
+    這個函式換算,不要再寫死 file offset。
+
+    Args:
+        d: 完整 FD2.EXE 位元組。
+        lin: LE linear 位址。
+
+    Returns:
+        對應的檔案位移。
+
+    Raises:
+        ValueError: linear 位址不落在任何 LE object 內。
+    """
+    meta = parse_le(d)
+    for o in meta["objs"]:
+        if o["base"] <= lin < o["base"] + o["vsize"]:
+            return meta["data_off"] + (o["first"] - 1) * meta["page_size"] + lin - o["base"]
+    raise ValueError(f"linear 位址 {lin:#x} 不落在任何 LE object 內")
+
 # 錨定特徵(用於確認版本對齊;偵測不到就警告)。新版 offset = 舊版 offset + 0x25214,
 # 除 crit 外(該表新版位置由 anchor byte 全檔搜尋鎖定,見上方模組說明)。
 ANCHORS = {
@@ -206,14 +237,19 @@ def dump_native_item_effect_rows(d, count=0xD7):
 def dump_native_movement_cost_rows(d):
     """0x4e555 selector→20-byte terrain-cost rows.
 
-    The linear table is 0x61646..0x61889. In the current canonical (新版)
-    executable this maps to file 0x7A659 (舊版 0x55445 + 固定位移
-    0x25214,2026-08-20 修正); 0x6188a begins the separately exported
-    compatibility table (file 0x7A89D, 即 class_equip_types 起點),
-    proving an exact 29-row boundary with zero gap.
+    The linear table is 0x61646..0x61889 (accessor 0x4e8a5:
+    `selector*0x14 + 0x61646`). 0x6188a begins the class×item.type table
+    returned by 0x4e88e, so the 29-row boundary has zero gap.
+
+    2026-10-02 修正:file_base 原本寫死 0x7A659(舊版 0x55445 + 固定位移
+    0x25214),但新版 linear 0x61646 對應 file 0x7A65A,每一列都錯一個 byte
+    (舊 JSON raw[i] == 真實 raw[i-1])。DOSBox-X 活記憶體 0x1f3646(= 0x61646 +
+    obj3 位移 0x192000)與 LE header 換算的 0x7A65A 逐 byte 相同;詳見
+    docs/knowledge-base/32-item-combat-stats-re.md §1.2 的 2026-10-02 更正。
+    現在由 `lin2file` 從 LE header 換算,不再寫死 file offset。
     """
-    file_base = 0x7A659
     linear_base = 0x61646
+    file_base = lin2file(d, linear_base)
     stride = 20
     rows = []
     for selector in range(29):
@@ -247,9 +283,18 @@ def dump_resist_crit(d):
 
 
 def dump_class_equip_types(d):
-    """原版 0x1c1c3 的 class×item.type 六欄白名單（file 0x7A89D,舊版 0x55689 +
-    固定位移 0x25214,2026-08-20 修正）。"""
-    base, stride = 0x7A89D, 7
+    """原版 0x1c1c3 的 class×item.type 六欄白名單。
+
+    2026-10-02 更正位址說明:原版 accessor 0x4e88e 回傳 linear
+    `0x6188a + cls*7`,0x1c1c3 掃該列 byte 0..5。本函式讀的 `raw` 從
+    linear 0x61889(file 0x7A89D)起算,是**比原生列早一個 byte** 的視圖
+    (同 dump_item 對 0x602ad 的 normalized 視圖):`types = raw[1:]` 正是
+    原生列 byte 0..5,`raw[0]` 是上一列原生 byte 6(cls 0 則是
+    movement 表最後一個 byte)。這三種 byte 在 canonical EXE 全都是 1,
+    所以舊說法「首 byte 是常數 1」數值上成立、位址敘述(0x7A89D = 0x6188a)
+    錯一個 byte。輸出格式維持不變;起點改由 `lin2file` 換算。
+    """
+    base, stride = lin2file(d, 0x6188A) - 1, 7
     rows = []
     for cls in range(29):
         o = base + cls * stride
@@ -281,7 +326,15 @@ UNIT_CHECK = {
 }
 
 
-def selftest(growth, command_learn, unit, characters, resist, equip):
+# 2026-10-02 DOSBox-X 活記憶體 0x1f3646 傾印(doc98 續六十四)的移動成本列:
+# row 7(盜賊)code 1/5 不可通行;row 19 只有 code 5 不可通行。
+MOVEMENT_ROW_CHECK = {
+    7: "0114010202140101010101010101010101010101",
+    19: "0101010101140101010101010101010101010101",
+}
+
+
+def selftest(growth, command_learn, unit, characters, resist, equip, movement=None):
     ok = True
     for i, exp in GROWTH_CHECK.items():
         got = growth[i]["raw"]
@@ -317,6 +370,14 @@ def selftest(growth, command_learn, unit, characters, resist, equip):
         m = equip[cls]["types"] == exp
         ok &= m
         print(f"  裝備相容[職業{cls}] {'✓' if m else '✗ 期望 '+str(exp)} {equip[cls]['types']}")
+    # 2026-10-02:移動成本表的列值以 DOSBox-X 活記憶體(0x1f3646)為地面真相。
+    # 舊版 file_base 錯一個 byte 時 row 7 會變成 0101140102021401...,這兩題必失敗。
+    if movement is not None:
+        for sel, exp in MOVEMENT_ROW_CHECK.items():
+            got = movement[sel]["raw"] if sel < len(movement) else None
+            m = got == exp
+            ok &= m
+            print(f"  移動成本[selector {sel}] {'✓' if m else '✗ 期望 '+exp} {got}")
     return ok
 
 
@@ -356,7 +417,8 @@ def main(argv):
         print(f"  -> {name}.json  ({len(rows)} 列)")
 
     print("數值自驗(對照青衫攻略字面值):")
-    ok = selftest(growth, command_learn, unit, characters, rc, equip)
+    ok = selftest(growth, command_learn, unit, characters, rc, equip,
+                  native_movement_cost_rows)
     print("自驗結果:", "全部通過 ✓" if ok else "有不符 ✗")
     return 0 if ok else 2
 

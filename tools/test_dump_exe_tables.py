@@ -1,6 +1,12 @@
 import unittest
+from pathlib import Path
 
 import dump_exe_tables
+from disasm_le import object_bytes
+from le_xref import parse_le
+
+REPO = Path(__file__).resolve().parent.parent
+EXE = REPO / "org_game" / "炎龍騎士團" / "FLAME2" / "FD2.EXE"
 
 
 class NativeItemEffectRowsTest(unittest.TestCase):
@@ -43,20 +49,58 @@ class NativeItemEffectRowsTest(unittest.TestCase):
             [],
         )
 
-    def test_native_movement_cost_rows_have_exact_29_by_20_boundary(self):
-        # 2026-08-20: file base 位移 +0x25214(舊版 0x55445 → 新版 0x7A659),
-        # 對齊 dump_exe_tables.dump_native_movement_cost_rows 的 file_base 修正。
-        base = 0x7A659
-        data = bytearray(base + 29 * 20)
-        for selector in range(29):
-            data[base + selector * 20:base + (selector + 1) * 20] = bytes([selector] * 20)
+class NativeLinearTablesOnCanonicalExeTest(unittest.TestCase):
+    """用真正的 canonical FD2.EXE 檢查由 linear 位址出發的表。
 
-        rows = dump_exe_tables.dump_native_movement_cost_rows(data)
+    2026-10-02:舊版本測試把合成資料放在工具自己寫死的 file_base(0x7A659)上,
+    再從同一個位置讀回來——工具錯幾個 byte 測試都會過,所以整張移動成本表錯一個
+    byte 一直沒被抓到。現在改成對照活記憶體傾印(DOSBox-X 0x1f3646,doc98
+    續六十四)與 LE header 換算這兩個獨立來源。
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        if not EXE.exists():
+            raise unittest.SkipTest(f"找不到原版 EXE:{EXE}")
+        cls.raw = EXE.read_bytes()
+        cls.meta = parse_le(cls.raw)
+
+    def test_native_movement_cost_rows_have_exact_29_by_20_boundary(self):
+        rows = dump_exe_tables.dump_native_movement_cost_rows(self.raw)
 
         self.assertEqual(len(rows), 29)
         self.assertEqual(rows[0]["linear"], "0x61646")
+        self.assertEqual(rows[0]["off"], "0x7a65a")
         self.assertEqual(rows[28]["linear"], hex(0x61646 + 28 * 20))
-        self.assertEqual(rows[17]["costs"], [17] * 20)
+        # 活記憶體地面真相:錯一個 byte 時 row 7 會讀成 0101140102021401...
+        self.assertEqual(
+            bytes.fromhex(rows[7]["raw"]),
+            bytes.fromhex("0114010202140101010101010101010101010101"),
+        )
+        self.assertEqual(
+            bytes.fromhex(rows[19]["raw"]),
+            bytes.fromhex("0101010101140101010101010101010101010101"),
+        )
+        table = object_bytes(self.raw, self.meta, 0x61646, 29 * 20)
+        self.assertEqual(b"".join(bytes.fromhex(r["raw"]) for r in rows), table)
+
+    def test_class_equip_types_match_native_rows_scanned_by_0x1c1c3(self):
+        # 0x4e88e 回傳 linear 0x6188a + cls*7;0x1c1c3 掃該列 byte 0..5。
+        rows = dump_exe_tables.dump_class_equip_types(self.raw)
+
+        self.assertEqual(len(rows), 29)
+        for cls, row in enumerate(rows):
+            native = object_bytes(self.raw, self.meta, 0x6188A + cls * 7, 7)
+            self.assertEqual(bytes(row["types"]), native[:6], cls)
+            prev = object_bytes(self.raw, self.meta, 0x6188A + cls * 7 - 1, 1)
+            self.assertEqual(row["raw"][0], prev[0], cls)
+
+    def test_lin2file_matches_obj3_page_mapping(self):
+        self.assertEqual(dump_exe_tables.lin2file(self.raw, 0x61646), 0x7A65A)
+        self.assertEqual(dump_exe_tables.lin2file(self.raw, 0x602AD),
+                         dump_exe_tables.ANCHORS["item"][0] + 1)
+        with self.assertRaises(ValueError):
+            dump_exe_tables.lin2file(self.raw, 0x0)
 
 
 if __name__ == "__main__":
