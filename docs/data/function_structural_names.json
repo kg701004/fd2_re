@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 150,
+  "total": 151,
   "by_kind": {
    "thunk": 4,
    "ail_only": 30,
-   "wrapper": 95,
+   "wrapper": 96,
    "leaf_global": 5,
    "leaf_ptr": 8,
    "leaf_pure": 8
@@ -670,6 +670,13 @@
    "kind": "leaf_pure",
    "name": "leaf_pure",
    "round": 0,
+   "callers": 3,
+   "argc": 1
+  },
+  "0x3777e": {
+   "kind": "wrapper",
+   "name": "wrapper(heap_free_block())",
+   "round": 1,
    "callers": 3,
    "argc": 1
   },

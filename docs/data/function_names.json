@@ -148,7 +148,7 @@
   {
    "addr": "0x16559",
    "name": "draw_dialog_cell",
-   "summary": "(idx):資源指標 [0x53a85](開頭即 offset 表,cell = res + dword[res + idx*4])的第 idx 格,以 RLE blit 畫到 0xa0000 + [0x53c67](stride 320);位置為 0x9017 時改用水平鏡像版。知識庫記載該資源為 FDOTHER#5 對話框格。",
+   "summary": "(idx):資源指標 [0x53a85](開頭即 offset 表,cell = res + dword[res + idx*4])的第 idx 格,以 RLE blit 畫到 0xa0000 + [0x53c67](stride 320);位置為 0x9017 時改用水平鏡像版。知識庫記載該資源為 FDOTHER#5 對話框格。 續七十二(靜態 + DOSBox-X):[0x53a85] 只由 0x111ba(0x51a70 = 'DATO.DAT', old, i)寫入(9 處),內容是 DATO.DAT 第 i 條頭像,不是 FDOTHER;v10a 每次寫入的緩衝區都與 DATO 第 i 條相同(第 0 條整條;第 26、32 條比對傾印到的前 16384 bytes)。亂碼畫面上的頭像就是本函式畫的。",
    "confidence": "static_re",
    "date": "2026-09-18",
    "evidence": [
@@ -1068,7 +1068,7 @@
   {
    "addr": "0x1956b",
    "name": "open_dialog_box",
-   "summary": "(res_idx):配置三塊 0xfa00 緩衝([0x53c5b] 工作、[0x53c5f] 存檔、[0x53c63] 樣板),把目前 VGA 畫面存進存檔並複製到樣板,以 0x168b6 在樣板畫框;依 res_idx 0x80..0x84 設繪製位置 [0x53c67](其他值 0x9017),以 load_res(res_idx, 0x51a70 的檔名, [0x53a85]) 載入並鏡像繪入樣板;最後由下往上滑入(present_box_at_row 由 i=5 遞減)。close_box_slide_down 是它的反向。",
+   "summary": "(res_idx):配置三塊 0xfa00 緩衝([0x53c5b] 工作、[0x53c5f] 存檔、[0x53c63] 樣板),把目前 VGA 畫面存進存檔並複製到樣板,以 0x168b6 在樣板畫框;依 res_idx 0x80..0x84 設繪製位置 [0x53c67](其他值 0x9017),以 load_res(res_idx, 0x51a70 的檔名, [0x53a85]) 載入並鏡像繪入樣板;最後由下往上滑入(present_box_at_row 由 i=5 遞減)。close_box_slide_down 是它的反向。 續七十二(DOSBox-X):它設的 [0x53c67] 與載入的 [0x53a85] 在框關閉後都不還原;v10a 索爾行動的戰鬥場景結束後本函式以頭像 32(索爾)、[0x53c67] = 0x9017 開框,之後事件 0 的亂碼對白就在左下角鏡像畫索爾。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -2014,7 +2014,7 @@
   {
    "addr": "0x164e8",
    "name": "typewriter_tick",
-   "summary": "dialog 逐字顯示時每個字元後呼叫一次:每 2 次推進嘴型影格 [0x53a10](0..3,3 畫成 1)並以 draw_dialog_cell 重貼,再以 play_sfx 播一次打字音、wait_ticks(1)。",
+   "summary": "dialog 逐字顯示時每個字元後呼叫一次:每 2 次推進嘴型影格 [0x53a10](0..3,3 畫成 1)並以 draw_dialog_cell 重貼,再以 play_sfx 播一次打字音、wait_ticks(1)。 續七十二(DOSBox-X):dialog 的 arg8 ≠ 0 時每個字模後都呼叫本函式(0x1647f 起),所以沒有開框碼的亂碼字碼流也會每兩個字模重貼一次「目前的」頭像 [0x53a85] 到 0xa0000 + [0x53c67]。v10a:入口 [0x53c67] = 0x9017 → 左下鏡像;改成 0 以外 → 跟著移;arg8 改 0 → 0 次、畫面沒有頭像。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -9420,7 +9420,7 @@
   {
    "addr": "0x12c60",
    "name": "find_unit_by_char_id",
-   "summary": "(char_id):先把 [0x53c1b] 清 0,逐筆掃戰場單位 [0x53a45](0..[0x53beb]),+8 相同就把 [0x53c1b] 設成該筆;0x34894(索引) 回 0(活著)時回傳索引,否則繼續掃。掃完沒回傳:[0x53c1b] 仍是 0 才改掃名冊 [0x53bf7](0..[0x53bfb]),設成最後一筆同 id 的名冊紀錄;回 -1。所以回 -1 時 [0x53c1b] 可能是死掉的戰場單位、名冊紀錄或 0。dialog(0x15f84)的開框碼 0xFFEF / 0xFFEE 用它找說話者:回非 -1 時旗標 2 / 0x70(移鏡頭),回 -1 時旗標 0(不移),頭像與座標都從 [0x53c1b] 讀(doc98 續七十一)。",
+   "summary": "(char_id):先把 [0x53c1b] 清 0,逐筆掃戰場單位 [0x53a45](0..[0x53beb]),+8 相同就把 [0x53c1b] 設成該筆;0x34894(索引) 回 0(活著)時回傳索引,否則繼續掃。掃完沒回傳:[0x53c1b] 仍是 0 才改掃名冊 [0x53bf7](0..[0x53bfb]),設成最後一筆同 id 的名冊紀錄;回 -1。所以回 -1 時 [0x53c1b] 可能是死掉的戰場單位、名冊紀錄或 0。dialog(0x15f84)的開框碼 0xFFEF / 0xFFEE 用它找說話者:回非 -1 時旗標 2 / 0x70(移鏡頭),回 -1 時旗標 0(不移),頭像與座標都從 [0x53c1b] 讀(doc98 續七十一)。 續七十二(DOSBox-X):把第 25 章事件 0 第 3 條的開框碼改成 0xFFEF、運算元 2(戰場與名冊都沒有)→ 回 -1、[0x53c1b] = 0;頭像索引讀線性位址 7、開框座標讀線性 0 / 1(DOSBox-X 的中斷向量表 60 ca .. .. .. .. 70 00 → 頭像 0、(96, 202)、旗標 0),載入 DATO 第 0 條照常開框,沒有當掉。",
    "confidence": "static_re",
    "date": "2026-10-02",
    "evidence": [
@@ -9480,6 +9480,31 @@
     {
      "at": "0x1a1cb",
      "insn": "push 0x19d"
+    }
+   ]
+  },
+  {
+   "addr": "0x3d670",
+   "name": "heap_free_block",
+   "summary": "(eax = ptr, edx = 段, ebx = 堆積描述):free(0x3776e → 0x3777e)的核心。esi = ptr - 4 是區塊標頭(大小 | 使用中位元 1);最低位是 0 就直接返回(0x3d683),不做任何事。真的釋放時清掉使用中位元,下一塊標頭最低位是 0 就合併並以它的 +4 / +8 解鏈(0x3d68b..0x3d6ad);否則往後走過使用中的區塊,把遇到的第一個空閒區塊當串列節點插入(0x3d6f5..0x3d72e)。DOSBox-X(doc98 續七十二):把調色盤快取 [0x53a65] 的標頭改成 0x00042b10(續七十一戰後寫回的實測值)後讀取戰況,這一塊走 0x3d683 返回、沒有走到 0x3d685,新調色盤配到別處;對照組(標頭 0x00000305)釋放後配回原位址。",
+   "confidence": "verified_dynamic",
+   "date": "2026-10-02",
+   "evidence": [
+    {
+     "at": "0x3d67f",
+     "insn": "mov eax, dword ptr [esi]"
+    },
+    {
+     "at": "0x3d681",
+     "insn": "test al, 1"
+    },
+    {
+     "at": "0x3d683",
+     "insn": "je 0x3d66b"
+    },
+    {
+     "at": "0x3d68b",
+     "insn": "test dword ptr [edi], 1"
     }
    ]
   }
