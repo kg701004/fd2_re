@@ -7129,3 +7129,73 @@ v12 改壞標頭後離開戰場回到 DOS 沒有當掉,但那次沒有斷 free�
 
 **登錄。** 新增 title_menu_dispatch(0x25ebb),verified_dynamic;find_unit_by_char_id、heap_free_block、open_dialog_box、battle_system_submenu 補註。
 `disasm_le.py` 把「# 來源檔案 …」檔頭印到 stderr;在 bash 用 `| sed 1d` 去檔頭時,刪掉的其實是 stdout 的第一筆結果。本輪因此一度誤判 `calls 10010` 漏了 0x1a251、`refs 53ed0` 只有 8 處(實際 9 處);要去檔頭用 `2>/dev/null`。
+
+## 2026-10-03 續七十四:續七十三的四個未驗證項目 —— 0x89 的失控 blit、離開戰場時 AIL_shutdown 的 free、假節點插入的後果、標題 CONTINUE / LOAD(DOSBox-X + 靜態)
+
+證據 `evidence/runaway_blit_exit_frees_fake_node_title_reload_20261003.json`(DOSBox-X,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,第 25 章戰場 = map 24)。
+原始紀錄在 `.wsl_build/ctr/v16`~`v19`(v20 作廢,原因見下面的作業紀錄)。證據由 ev_s74.py 從原始紀錄重算並逐項 assert;把判準改掉的 8 個變異全部失敗。
+
+**線性 7 = 0x89 之後怎麼結束(DOSBox-X v16 + 靜態)。** dialog 開框(0x165ac)之後,0x161e3 讀 [0x53a85],以 `movzx eax, byte ptr [edi]`、`add edi, eax`(0x161e9 / 0x161ec)算出第一格,
+在 0x16200 直接呼叫 blit_rle_image 0x4ebff,不經 draw_dialog_cell。正常頭像 res[0] = 0x10,畫的是第 0 格(80 × 80);0x89 載入的假資源是 DATO.DAT[0x10:0xe56],res[0] = 0,src 就是 res 本身,開頭兩個 word 是寬 0、高 0xaa32。
+v16 的停點:0x4ebff(返回 0x16205、dst 0xa0728 = 0xa0000 + [0x53c67] 0x728、src 0x26c45c、stride 320)→ 0x4ec16 讀到寬 0、高 43570。
+blit 在 0x4ec16 `xor ecx, ecx`、0x4ec1c `mov cx, bp`,寬 0 時 ECX = 0;0x4ec1f..0x4ec25 的 `loop` 用 32 位元 ECX,先減成 0xffffffff,第一列要寫 2^32 個 byte。
+每列結束 0x4ec2a 的斷點一次都沒停,之後也沒有任何遊戲斷點再停。結束的樣子兩次不同:
+
+| 實例 | 結束方式 |
+|---|---|
+| v11 | DOSBox-X 本身 `E_Exit: JMP Illegal descriptor type 14` 結束 |
+| v16 | 模擬器沒有結束;CPU 在實際模式,於 C3FF:35F7(`63 B9 4F 4F` = arpl,無效指令,線性 0xc75e7)與 INT 6 的 BIOS 預設處理常式 F000:CA60 之間循環,輸出一直印 `Illegal Unhandled Interrupt Called 6` |
+
+所以遊戲最後執行的是 0x4ec1f..0x4ec25 這個迴圈(stosb 在 0x4ec24),從 0xa0728 一路往高位址寫;模擬器以哪一條指令出事取決於寫壞了什麼,不是固定的一條。
+v16 停住時 EDI = 0x17602b、ESI = 0x2a14b3,但循環中的亂碼程式有 `dec di`,不能當寫到哪裡的證據;那之後除錯器停不住,MEMDUMPBIN 與 D 指令都不被接受。
+
+**離開戰場時誰釋放 0x1f7014 / 0x1fa6b8(DOSBox-X v17 + 靜態)。** H(名冊 + 0xa00 = 0x1fd0c0)的標頭改成 0x00042b10,「離開戰場」YES 之後記下每一次 free:
+
+| 階段 | 被釋放的區塊 | 呼叫端 | 走法 |
+|---|---|---|---|
+| YES 之後 | 3 塊 0xfa00 緩衝(標頭 0xfa05) | close_box_slide_down(返回 0x19721 / 0x1972f / 0x1973d) | 一般釋放 |
+| 0x1a301 回 −1 → main 0x25e97 → AIL_shutdown 0x37ed8(返回 0x25e9c) | | | |
+| AIL_shutdown 內 | 0x1fa6bc([0x538ac],標頭 0x2005) | 0x364fb 的 `call [0x5275c]`(返回 0x3651d) | 往後走訪 0x3d6f5 → 節點 = H → 0x3d737 讀 [0x3f000000] |
+| AIL_shutdown 內 | 0x1f7018([0x53ed0],標頭 0x36a5) | 同上 | 下一塊 0x1fa6b8 已標成空閒 → 合併成 0x56a8,解鏈時沿它的 +8 拿到 H → 同樣讀 [0x3f000000] |
+| 其餘 | 經 0x3651d 再 5 次(連同上面兩次共 7 次),接著經 0x3dc31 7 次 | | 選到的節點都不是 H |
+
+調色盤的前 4 bytes(P = 0x3f000000)被當成前一節點,遠超 16 MB:讀到 0xffffffff(0x3d739 的 EAX = 0x3effffff),沒有錯誤,寫 [0x3f000008] 也沒有效果。程式照常回到 C:\>(x1_11)。
+函式庫的 0x3da31 與 0x4d021 都沒有停。靜態上 0x3da31 是堆積擴充(0x3da0e 寫結尾標記後釋放新段),0x4d021 只在 0x4cfbb 第二次 malloc 失敗時釋放剛配置的環境字串,兩者都只釋放自己剛配置的區塊。
+續七十三說的「除非函式庫自己釋放這兩塊」因此確實會發生:AIL_shutdown 會釋放這兩塊。標頭改壞時,正常結束程式的路上就會把假標頭當成節點,只是不會當掉。
+
+**假節點插入真的執行之後(DOSBox-X v18)。** 照 v12f 的方法把一次自然 free 的指標換成 S = 0x1fa6b8(H 改壞),這次不撤銷:
+0x3d72e EDI = H → 0x3d737 EDI = P = 0x3f000000 → 0x3d739 EAX = 0x3effffff → 0x3d74d..0x3d776 照常返回。寫入結果是 [S] = 0x2004、[S+4] = P、[S+8] = H、[H+4] = S;[P+8] 落在 16 MB 外,中斷向量表沒變。
+離線走插入後的堆積傾印:真正的空閒串列仍是 23 個節點、首尾相接、反向連結一致;S 標成空閒卻不在串列裡(8196 bytes 洩漏),描述的空閒數 24 多算 1,+0xc 的最大空閒提示變成 0x2004。
+看得到的後果在調色盤:緩衝前 4 bytes 變成 b8 a6 1f 00。0x11d40(first, last, darken)以 outp 0x3c8 / 0x3c9 把 [0x53a65] 送進 DAC,戰鬥場景開始時在 0x1f50b 呼叫它(darken 0、1、2…)。
+DAC 只留低 6 位,預測第 0 色 = (0x38, 0x26, 0x1f),畫面上是 (227, 154, 125);第 1 色的 R 由 0x3f 變 0。外框取遊戲畫面左側 (194, 400),它就是第 0 色:
+
+| 畫面 | 調色盤緩衝前 8 bytes | 第 0 色 |
+|---|---|---|
+| b2_00(上傳之前) | b8a61f00 3c273f33 | 外框 (0, 0, 0) |
+| b2_02(戰鬥場景) | 同上 | 原本黑色的背景是 (227, 154, 125),38482 點 |
+| c1_00(緩衝寫回 0000003f,還沒上傳) | 0000003f 3c273f33 | 外框 (227, 154, 125)(DAC 還是上一次的值) |
+| c2_00(對照的戰鬥場景,淡出中) | 同上 | (0, 0, 0) 最多,(227, 154, 125) 0 點 |
+| c2_05(對照場景之後) | 同上 | 外框 (0, 0, 0) |
+
+所以假節點寫入不會讓遊戲當掉;後果是 S 洩漏、空閒數多 1,以及調色盤第 0 / 1 色在下一次上傳時被改掉(戰鬥場景的黑色背景變成橘粉色)。
+
+**標題的 CONTINUE / LOAD(DOSBox-X v19 + 靜態)。** 戰場上改壞的標頭在戰敗回標題時就被標題序列吃掉:v19 d1 重現續七十三 v15,返回 0x1f90f 的那次 free 在 0x3d67f 讀到 102b0400 → 0x111d5(洩漏);
+同一輪下一次(返回 0x1f982,標頭 05030000)走 0x3d67f → 0x3d685 → 0x3d693 → 0x3d72e,真的釋放。標題畫面每一輪都以 0x111ba 重載調色盤(i = 101 / 102 交替,返回 0x1fbeb / 0x1fc21)並 free 舊區塊,
+在標題上改壞的標頭也會先被動畫吃掉。這次改在 0x25ecd(標題序列返回、EAX = 選項)才把當下調色盤的標頭寫成 0x00042b10:
+
+| 選項 | 路徑 | 調色盤的 free | 新調色盤 | 之後 |
+|---|---|---|---|---|
+| CONTINUE(EAX = 2) | 0x26130 → 0x10010 → 0x10136 的 0x111ba(返回 0x1013b) | 0x3d67f 讀到 102b0400 → 0x111d5,沒有 0x3d685 | 0x1013e 寫入 0x20fc38,舊的 0x207c30 洩漏 | 回到記錄戰況時的戰場,色彩正常 |
+| LOAD(EAX = 1) | 0x25f55 先載 FDOTHER #13,再 0x25f74 的 0x111ba(返回 0x25f79) | 同上 | 0x25f7c 寫入 0x22841c,舊的 0x20fc38 洩漏 | 0x29bcb 選槽 → 「要記錄戰況嗎?」NO → 出戰人數畫面,色彩正常 |
+
+兩條路徑都和讀取戰況(續七十二 v10b)、標題序列(續七十三 v15)同一個結果:舊區塊洩漏、新調色盤配到別處,不當掉。
+
+**作業紀錄。** v20 在標題上 enter-debugger 一次沒停住就 resume,resume 送出的「RUN + Enter」被遊戲當成按鍵選了 START(進序章,[0x53c03] = 32),作廢。
+改成在戰場內(Live.halt 停得住)先下好 0x25ecd,再戰敗回標題,標題上只送選單鍵。
+v18 第一次攻擊時,轉盤記住的是狀態項,Return 打開狀態畫面;Escape ×3 之後 [0x53c57] = 0 才是攻擊。
+PowerShell 以 `CommandLine -like '*t_v16.py v16*'` 結束驅動時也比對到執行這行指令的 shell 自己,後面的 teardown 沒跑到,另外重跑。
+
+**仍未驗證。** v11 的 E_Exit 是哪一條模擬指令觸發的:DOSBox-X v16 同樣的條件以 INT 6 迴圈收場,之後讀不到記憶體,失控寫入寫到哪裡沒有量到。
+CONTINUE / LOAD 沒有另跑標頭完好的對照,完好標頭的走法以同一輪標題重載(返回 0x1f982)為對照。
+
+**登錄。** heap_free_block、blit_rle_image、draw_dialog_cell、title_menu_dispatch 補註。

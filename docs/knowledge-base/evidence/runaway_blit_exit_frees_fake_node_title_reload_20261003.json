@@ -1,0 +1,481 @@
+{
+ "_meta": {
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "dato": "org_game/炎龍騎士團/FLAME2/DATO.DAT",
+  "dato_md5": "f15093e5bff4e5f3334a076ab2a7d130",
+  "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV);v16 另套 v9_setup.py + v11_setup.py",
+  "raw_dirs": [
+   ".wsl_build/ctr/v16/ch25",
+   ".wsl_build/ctr/v17/ch25",
+   ".wsl_build/ctr/v18/ch25",
+   ".wsl_build/ctr/v19/ch25"
+  ],
+  "drivers": "scratchpad t_v16.py(由 mk_t_v16.py 從 t_v11.py 產生,加 blit 斷點)、t_v17.py、t_v18.py、t_v18b.py、t_v12.py(v19 戰敗回標題)、t_v19b.py、walk_after.py;本檔由 ev_s74.py 重算",
+  "process": [
+   "v16:t_v11 設定 4(線性 7 = 0x89)單獨跑;0x161c5 讀完假頭像後掛 0x16559 / 0x1657c / 0x4ebff / 0x4ec31 / 0x4ec0c..0x4ec48 斷點,讀到寬高後改掛每列結束 0x4ec2a / 0x4ec5e。之後模擬器不再停在任何遊戲斷點;手動 enter-debugger 兩次,面板存成 r1_halt_pane.txt / r1_end_pane.txt;此後 Alt+Pause 停不住、MEMDUMPBIN 與 D 指令都不被接受(堆積寫到哪裡因此無法傾印)。驅動記到的 eip -0x198a09(= 實際模式 0x35f7)停點本檔濾掉。",
+   "v17:手動(無斷點)開系統選單 → 子選單 Down = 離開戰場 → 停在 YES / NO,再啟動 t_v17 改壞 H、下斷點、送 Left, Return。",
+   "v18:w1 用預設推一下的按鍵(Return, Down, Return)120 秒內沒有自然 free(轉盤停在第三個 Return 前)→ 停住、把 H 標頭寫回 0x305、清斷點;w2 改用 Return, Escape, Return 重跑。b1 第一次攻擊:轉盤記住的是狀態項,Return 打開狀態畫面,沒有戰鬥場景(作廢);Escape ×3 後 [0x53c57] = 0,b2 把敵兵 22 搬到 (8, 43) 再 Return ×3 → 戰鬥場景。對照 c1 / c2:把調色盤前 4 bytes 寫回 0000003f、索爾 +5 清 0、敵兵 23 搬到 (6, 43),Left, Return ×3 停在目標選擇,c2 再 Return。",
+   "v19:戰況記錄(Up, Up, Return, Up, Return, Left, Return, Left, Return)→ 索爾 +5 |= 1 → Escape, Return, Up, Return 開悠妮轉盤 → t_v12 d1(改壞 H)送 Down, Return;標題動畫每輪以 0x111ba 重載調色盤,驅動永遠不閒置,600 秒逾時被終止(d1.json 沒存到停點,本檔讀 d1.log 的逐行 JSON),之後手動清斷點。c1:標題上 t_v19b(自己 enter-debugger)送 Down, Down, Return。",
+   "v20 作廢:戰敗回標題後 t_v19b 在標題上 enter-debugger,一次沒停住就 resume,送出的『RUN + Enter』被遊戲當成按鍵選了 START(之後 [0x53c03] = 32、名冊 0),0x25ecd 一次都沒停。改在 v19 回到戰場後先停住(戰場內 Live.halt 可靠)下好 0x25ecd 再戰敗回標題(l2,prearmed),標題上只送選單鍵。"
+  ]
+ },
+ "A_linear7_0x89_runaway_blit": {
+  "load": {
+   "stop": "0x161c5",
+   "portrait_idx": 137,
+   "size": 3654,
+   "buffer": "0x26c45c",
+   "buffer_equals": "DATO.DAT[0x10:0xe56]",
+   "res_first_bytes": "000032aa00001de1"
+  },
+  "open_box_0x165ac": {
+   "ret": "0x161dc",
+   "xy_flag": [
+    96,
+    202,
+    0
+   ],
+   "returned": true
+  },
+  "draw_call": {
+   "call_site": "0x16200(0x161e3 讀 [0x53a85]、0x161e9 movzx byte、0x161ec add)",
+   "ret": "0x16205",
+   "dst": "0xa0728",
+   "dst_is": "0xa0000 + [0x53c67] 0x728",
+   "src": "0x26c45c",
+   "src_rule": "res + byte[res];res[0] = 0 → src = res 本身",
+   "stride": 320
+  },
+  "header_at_0x4ec16": {
+   "width_bp": 0,
+   "height_dx": 43570,
+   "esi": "0x26c460",
+   "edi": "0xa0728"
+  },
+  "loop": "0x4ec16 xor ecx, ecx;0x4ec1c mov cx, bp(= 0);0x4ec1f..0x4ec25 call 0x4ec66 / stosb / loop 0x4ec1f —— 32 位元 loop 用 ECX:0 先減成 0xffffffff,所以第一列要寫 2^32 個 byte 才結束;每列結束 0x4ec2a 的斷點一次都沒停",
+  "normal_control_static": "DATO 第 0 條 res[0] = 0x10 → src = res + 0x10 = 第 0 格,寬高 (80, 80);0x89 的假資源 res[0] = 0",
+  "static_insns": {
+   "0x161e3": "mov edi, dword ptr [0x3a85]",
+   "0x161e9": "movzx eax, byte ptr [edi]",
+   "0x161ec": "add edi, eax",
+   "0x16200": "call 0x4ebff",
+   "0x4ec16": "xor ecx, ecx",
+   "0x4ec1c": "mov cx, bp",
+   "0x4ec1f": "call 0x4ec66",
+   "0x4ec24": "stosb byte ptr es:[edi], al",
+   "0x4ec25": "loop 0x4ec1f",
+   "0x4ec2a": "dec dx"
+  },
+  "end_state_v16": {
+   "stops_after_0x4ec16": 0,
+   "pane": "r1_halt_pane.txt / r1_end_pane.txt",
+   "cpu": "實際模式(Real),CS:IP F000:CA60(= 中斷向量表第 0 項 60ca00f0 那個 BIOS 預設處理常式)",
+   "code_overview": "C3FF:35F7 63 B9 4F 4F = arpl [illegal],線性 0xc75e7(視訊 BIOS 區)",
+   "output": "ERROR CPU:Illegal Unhandled Interrupt Called 6 不斷重複(INT 6 = 無效指令),模擬器沒有結束",
+   "regs_unreliable": {
+    "ESI": "0x2a14b3",
+    "EDI": "0x17602b",
+    "ECX": "0xfff3fffc"
+   },
+   "regs_note": "EDI / ESI 看似是 blit 的寫入 / 讀取指標(0x17602b / 0x2a14b3),但亂碼程式裡有 dec di,不能當寫到哪裡的證據"
+  },
+  "end_state_v11": "E_Exit: JMP Illegal descriptor type 14(DOSBox-X 本身結束,r1_crash_pane.txt)",
+  "conclusion": "遊戲最後執行的是 blit_rle_image 第一列的 0x4ec1f..0x4ec25 迴圈(由 0x16200 呼叫),從 0xa0728 一路往高位址寫;DOSBox-X 何時、以哪一條指令出事取決於寫壞了什麼:v11 以 E_Exit 結束,v16 停在實際模式的 INT 6 迴圈,不是同一條指令"
+ },
+ "B_exit_path_frees": {
+  "setup": {
+   "H": "0x1fd0c0",
+   "H_hdr": "0x305 → 0x00042b10",
+   "P = 調色盤前 4 bytes": "0x3f000000",
+   "[0x53ed0]": "0x1f7018(標頭 0x36a5)",
+   "[0x538ac]": "0x1fa6bc(標頭 0x2005)"
+  },
+  "sequence": "YES → 0x1a301(回 −1)→ main 0x25e97 → AIL_shutdown 0x37ed8(返回 0x25e9c)→ 回 DOS",
+  "frees_before_ail_shutdown": [
+   {
+    "ret_game": "0x19721",
+    "ptr": "0x2d2018",
+    "hdr": "0xfa05"
+   },
+   {
+    "ret_game": "0x1972f",
+    "ptr": "0x2e2018",
+    "hdr": "0xfa05"
+   },
+   {
+    "ret_game": "0x1973d",
+    "ptr": "0x30b018",
+    "hdr": "0xfa05"
+   }
+  ],
+  "frees_after_ail_shutdown": [
+   {
+    "n": 15,
+    "ptr": "0x1ff018",
+    "hdr": "0x8945",
+    "ret_game": "0x3651d"
+   },
+   {
+    "n": 20,
+    "ptr": "0x1fa6bc",
+    "hdr": "0x2005",
+    "ret_game": "0x3651d",
+    "known": "lib_buf_538ac"
+   },
+   {
+    "n": 25,
+    "ptr": "0x1f6310",
+    "hdr": "0x8d",
+    "ret_game": "0x3651d"
+   },
+   {
+    "n": 29,
+    "ptr": "0x1f6e10",
+    "hdr": "0x2d",
+    "ret_game": "0x3651d"
+   },
+   {
+    "n": 33,
+    "ptr": "0x1f7018",
+    "hdr": "0x36a5",
+    "ret_game": "0x3651d",
+    "known": "ail_seq_53ed0"
+   },
+   {
+    "n": 37,
+    "ptr": "0x1f613c",
+    "hdr": "0x1d5",
+    "ret_game": "0x3651d"
+   },
+   {
+    "n": 41,
+    "ptr": "0x1f6110",
+    "hdr": "0x2d",
+    "ret_game": "0x3651d"
+   },
+   {
+    "n": 45,
+    "ptr": "0x1f60b8",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 49,
+    "ptr": "0x1f60c4",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 54,
+    "ptr": "0x1f60d0",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 59,
+    "ptr": "0x1f60dc",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 64,
+    "ptr": "0x1f60e8",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 69,
+    "ptr": "0x1f6104",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   },
+   {
+    "n": 73,
+    "ptr": "0x1f6c80",
+    "hdr": "0xd",
+    "ret_game": "0x3dc31"
+   }
+  ],
+  "known_blocks": {
+   "lib_buf_538ac": {
+    "free_stop_n": 20,
+    "path": [
+     "0x3d6f5",
+     "0x3d72e",
+     "0x3d737",
+     "0x3d739"
+    ],
+    "freed_blk": "0x1fa6b8",
+    "node": "0x1fd0c0",
+    "eax_at_0x3d72e": "0xffffffff",
+    "read_[P]": "0xffffffff(0x3effffff − 0x3f000000)"
+   },
+   "ail_seq_53ed0": {
+    "free_stop_n": 33,
+    "path": [
+     "0x3d72e",
+     "0x3d737",
+     "0x3d739"
+    ],
+    "freed_blk": "0x1f7014",
+    "node": "0x1fd0c0",
+    "eax_at_0x3d72e": "0x56a8",
+    "read_[P]": "0xffffffff(0x3effffff − 0x3f000000)"
+   }
+  },
+  "node_is_H_stops": {
+   "n": [
+    22,
+    34
+   ],
+   "of_0x3d72e_stops": 17,
+   "note": "17 次 free 只有這兩次把 H 當節點,其餘選到的都是真正的空閒區塊"
+  },
+  "ail_free_path": "0x3651d 是 0x364fb(ptr, size)裡 call [0x5275c] 的返回位址;0x364fb 先 0x36683(ptr, size)再經函式指標 [0x5275c] 呼叫 free 包裝 0x3776e",
+  "library_free_call_sites": "0x3da31 / 0x4d021 都沒有停:0x3da31 是堆積擴充(0x3da0e 寫結尾標記後釋放新段的本體),0x4d021 只在 0x4cfbb 第二次 malloc 失敗(0x4cfc5 je 0x4d020)時釋放剛配置的環境字串(靜態)",
+  "static_insns": {
+   "0x364fb": "push esi",
+   "0x3650a": "call 0x36683",
+   "0x36517": "call dword ptr [0x275c]",
+   "0x3651d": "add esp, 4",
+   "0x3da0e": "mov dword ptr [eax], 0xffffffff",
+   "0x3da31": "call 0x3777e",
+   "0x4cfbb": "call 0x3707e",
+   "0x4cfc5": "je 0x4d020",
+   "0x4d020": "push edi",
+   "0x4d021": "call 0x3777e",
+   "0x3776e": "push ebp",
+   "0x37774": "call 0x3777e"
+  },
+  "end": "x1_11_-.png 是 C:\\> 提示字元畫面(遊戲區 98% 以上為黑);模擬器沒有結束(state.emulator_gone = false)",
+  "conclusion": "AIL_shutdown 會釋放 0x1fa6b8 與 0x1f7014 這兩塊;標頭改壞時兩次都把假標頭 H 當成空閒串列節點,讀 [0x3f000000] 得到 0xffffffff(16 MB 以外讀到全 1,沒有錯誤),程式照常回到 DOS"
+ },
+ "C_fake_node_insert_executed": {
+  "setup": {
+   "S": "0x1fa6b8(標頭 0x2005)",
+   "roster_blk": "0x1fc6bc",
+   "H": "0x1fd0c0(0x305 → 0x00042b10)",
+   "P": "0x3f000000",
+   "forced": "自然 free 的 EAX 0x26b018(標頭 0x1445)換成 0x1fa6bc;那一塊因此洩漏"
+  },
+  "path": [
+   {
+    "eip": "0x3d6f5",
+    "edi": "0x1f6cac",
+    "eax": "0x0"
+   },
+   {
+    "eip": "0x3d72e",
+    "edi": "0x1fd0c0",
+    "eax": "0xffffffff"
+   },
+   {
+    "eip": "0x3d737",
+    "edi": "0x3f000000",
+    "eax": "0x3f000000"
+   },
+   {
+    "eip": "0x3d739",
+    "edi": "0x3f000000",
+    "eax": "0x3effffff"
+   },
+   {
+    "eip": "0x3d74d",
+    "edi": "0x3f000000",
+    "eax": "0x3effffff"
+   },
+   {
+    "eip": "0x3d756",
+    "edi": "0x3f000000",
+    "eax": "0x3effffff"
+   },
+   {
+    "eip": "0x3d75b",
+    "edi": "0x1fd0c0",
+    "eax": "0x3effffff"
+   },
+   {
+    "eip": "0x3d75e",
+    "edi": "0x1fd0c0",
+    "eax": "0x3effffff"
+   },
+   {
+    "eip": "0x3d776",
+    "edi": "0x1fd0c0",
+    "eax": "0x3effffff"
+   }
+  ],
+  "writes": {
+   "[S]": "0x2004(清掉使用中位元)",
+   "[S+4]": "0x3f000000(P)",
+   "[S+8]": "0x1fd0c0(H)",
+   "[H+4]": "0x1fa6b8(S)",
+   "[P+8] = [0x3f000008]": "16 MB 以外,寫入無效(中斷向量表前 16 bytes 不變)"
+  },
+  "free_list_after": {
+   "nodes": 23,
+   "numfree_desc_18": 24,
+   "closed": true,
+   "contains": {
+    "0x1fa6b8": false,
+    "0x1fd0c0": false,
+    "0x1fd3c4": true
+   },
+   "desc_c": "0x2004"
+  },
+  "free_list_meaning": "真正的空閒串列仍是 23 個節點、首尾相接;S 標成空閒卻不在串列裡(8196 bytes 洩漏),描述的空閒數 24 多算 1,+0xc 的最大空閒提示變成 0x2004",
+  "palette_upload": {
+   "function": "0x11d40(first, last, darken):outp 0x3c8 / 0x3c9,把 [0x53a65] 的 RGB 減 darken 後送進 DAC",
+   "call": "0x1f50b(返回 0x1f510),戰鬥場景開始時 darken 0、1、2 ...",
+   "corrupted_buffer_first8": "b8a61f003c273f33",
+   "control_buffer_first8": "0000003f3c273f33",
+   "predicted_color0": [
+    227,
+    154,
+    125
+   ],
+   "predicted_rule": "DAC 只留低 6 位:0xb8→0x38、0xa6→0x26、0x1f;8 位顯示 = v<<2 | v>>4",
+   "b2_02_Return.png": {
+    "most_common": [
+     227,
+     154,
+     125
+    ],
+    "count": 38482,
+    "black": 17780
+   },
+   "c2_00_Return.png(對照)": {
+    "most_common": [
+     0,
+     0,
+     0
+    ],
+    "count_black": 225316,
+    "count_pred0": 0
+   },
+   "map_border_pixel_194_400": {
+    "b2_00_Return.png(改壞的緩衝上傳之前)": [
+     0,
+     0,
+     0
+    ],
+    "c1_00_Left.png(改壞的緩衝上傳之後)": [
+     227,
+     154,
+     125
+    ],
+    "c2_hit1.png(寫回 0000003f、上傳之前)": [
+     227,
+     154,
+     125
+    ],
+    "c2_05_-.png(寫回後的緩衝上傳之後)": [
+     0,
+     0,
+     0
+    ]
+   },
+   "border_note": "地圖外框是 DAC 第 0 色:改壞的緩衝上傳後變橘粉色並一直留著;把緩衝寫回 0000003f 後,下一次上傳(c2 的戰鬥場景)才變回黑色"
+  },
+  "static_insns": {
+   "0x3d72e": "mov edx, dword ptr [edi + 4]",
+   "0x3d733": "xchg edi, edx",
+   "0x3d737": "add eax, dword ptr [edi]",
+   "0x3d74d": "inc dword ptr [ebx + 0x18]",
+   "0x3d750": "mov dword ptr [esi + 8], edx",
+   "0x3d753": "mov dword ptr [esi + 4], edi",
+   "0x3d756": "mov dword ptr [edi + 8], esi",
+   "0x3d75b": "mov dword ptr [edi + 4], esi",
+   "0x11d8d": "movzx eax, byte ptr [edx + eax]",
+   "0x11d9a": "push 0x3c9",
+   "0x1f50b": "call 0x11d40"
+  },
+  "conclusion": "假節點插入照常完成、不會當掉:S 洩漏、空閒數多 1、調色盤緩衝前 4 bytes 被寫成 S 的位址;下一次 0x11d40 上傳時第 0 色變成 (227, 154, 125)、第 1 色的 R 變成 0,戰鬥場景原本黑色的背景變成橘粉色"
+ },
+ "D_title_continue_load": {
+  "carried_from_battle(v19 d1)": {
+   "title_ret": "0x25dc2",
+   "leak_free": "0x111ba 返回 0x1f90f(i = 76),0x3d67f 讀到 102b0400 → 0x111d5,沒有 0x3d685;新調色盤 0x207c30",
+   "healthy_control_same_run": "下一次(返回 0x1f982,標頭 05030000)走 0x3d67f → 0x3d685 → 0x3d693 → 0x3d72e,真的釋放",
+   "note": "與續七十三 v15 相同:戰場上改壞的標頭在標題序列 0x1f90a 那次就洩漏,輪不到 CONTINUE / LOAD"
+  },
+  "title_animation": "標題畫面每一輪都以 0x111ba 重載調色盤(i = 101 / 102 交替,返回 0x1fbeb / 0x1fc21)並 free 舊區塊;在標題上改壞的標頭會先被這裡吃掉,所以改在 0x25ecd(標題序列返回、EAX = 選項)才改",
+  "CONTINUE(c1)": {
+   "choice_eax": 2,
+   "pal_at_0x25ecd": "0x207c30",
+   "hdr": "05030000 → 102b0400",
+   "before_reload": [
+    {
+     "eip": "0x26130",
+     "ret": "-0x19c000"
+    },
+    {
+     "eip": "0x10010",
+     "ret": "0x26135"
+    }
+   ],
+   "reload_free": {
+    "ret": "0x1013b",
+    "path": [
+     "0x3d67f(讀到 102b0400)",
+     "0x111d5"
+    ],
+    "no_0x3d685": true
+   },
+   "new_palette": {
+    "writer": "0x1013e",
+    "addr": "0x20fc38"
+   },
+   "after": []
+  },
+  "LOAD(l2)": {
+   "choice_eax": 1,
+   "pal_at_0x25ecd": "0x20fc38",
+   "hdr": "05030000 → 102b0400",
+   "before_reload": [
+    {
+     "eip": "0x111ba",
+     "ret": "0x25f5a"
+    }
+   ],
+   "reload_free": {
+    "ret": "0x25f79",
+    "path": [
+     "0x3d67f(讀到 102b0400)",
+     "0x111d5"
+    ],
+    "no_0x3d685": true
+   },
+   "new_palette": {
+    "writer": "0x25f7c",
+    "addr": "0x22841c"
+   },
+   "after": [
+    {
+     "eip": "0x29bcb",
+     "ret": "0x2601e"
+    }
+   ]
+  },
+  "screens": {
+   "c1_08_-.png": "回到戰況記錄當時的戰場(索爾在原位、游標停在記錄時的空格),色彩正常",
+   "l2 / n_04_-.png": "選槽清單 → 『要記錄戰況嗎?』→ NO → 出戰人數選擇畫面,色彩正常"
+  },
+  "static_insns": {
+   "0x25ec8": "call 0x1f894",
+   "0x25ecd": "test eax, eax",
+   "0x25f74": "call 0x111ba",
+   "0x25f7c": "mov dword ptr [0x3a65], eax",
+   "0x26130": "call 0x10010",
+   "0x10136": "call 0x111ba",
+   "0x1013e": "mov dword ptr [0x3a65], eax"
+  },
+  "conclusion": "CONTINUE(0x26130 → 0x10010 → 0x10136)與 LOAD(0x25f74)的第一次調色盤重載,舊區塊標頭被改壞時都在 0x3d67f 判定未使用而直接返回:舊區塊洩漏、新調色盤配到別處,遊戲照常進行;和讀取戰況(續七十二 v10b)、標題序列(續七十三 v15)同一個結果"
+ },
+ "not_covered": [
+  "v11 的 E_Exit 是哪一條模擬指令觸發的:v16 同樣的條件以 INT 6 迴圈收場,而且之後除錯器停不住,記憶體傾印也不被接受,寫到哪裡沒有量到。",
+  "CONTINUE / LOAD 沒有另跑標頭完好的對照;完好標頭走 0x3d685 的路徑以同一輪 d1 的標題重載(返回 0x1f982)為對照。",
+  "AIL_shutdown 之後回 DOS 的假節點寫入只在結束時發生,後果只看到『沒有當掉』。"
+ ]
+}

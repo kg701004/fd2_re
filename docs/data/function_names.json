@@ -64,7 +64,7 @@
   {
    "addr": "0x4ebff",
    "name": "blit_rle_image",
-   "summary": "(dst, src, stride):src 開頭是 u16 寬、u16 高,之後是 PCX 式 RLE 像素;逐列由左到右寫入 dst,每列結束 dst += stride。",
+   "summary": "(dst, src, stride):src 開頭是 u16 寬、u16 高,之後是 PCX 式 RLE 像素;逐列由左到右寫入 dst,每列結束 dst += stride。 續七十四(靜態 + DOSBox-X v16):寬為 0 時 0x4ec1c `mov cx, bp` 讓 ECX = 0,0x4ec25 的 32 位元 loop 先減成 0xffffffff,第一列要寫 2^32 個 byte。線性 7 = 0x89 的假頭像從 0x16200 以 src = res(res[0] = 0)呼叫本函式,寬 0、高 0xaa32,從 0xa0728 一路往高位址寫,每列結束 0x4ec2a 從未到達;DOSBox-X 之後以 E_Exit(v11)或實際模式 INT 6 迴圈(v16)收場。",
    "confidence": "static_re",
    "date": "2026-09-18",
    "evidence": [
@@ -148,7 +148,7 @@
   {
    "addr": "0x16559",
    "name": "draw_dialog_cell",
-   "summary": "(idx):資源指標 [0x53a85](開頭即 offset 表,cell = res + dword[res + idx*4])的第 idx 格,以 RLE blit 畫到 0xa0000 + [0x53c67](stride 320);位置為 0x9017 時改用水平鏡像版。知識庫記載該資源為 FDOTHER#5 對話框格。 續七十二(靜態 + DOSBox-X):[0x53a85] 只由 0x111ba(0x51a70 = 'DATO.DAT', old, i)寫入(9 處),內容是 DATO.DAT 第 i 條頭像,不是 FDOTHER;v10a 每次寫入的緩衝區都與 DATO 第 i 條相同(第 0 條整條;第 26、32 條比對傾印到的前 16384 bytes)。亂碼畫面上的頭像就是本函式畫的。",
+   "summary": "(idx):資源指標 [0x53a85](開頭即 offset 表,cell = res + dword[res + idx*4])的第 idx 格,以 RLE blit 畫到 0xa0000 + [0x53c67](stride 320);位置為 0x9017 時改用水平鏡像版。知識庫記載該資源為 FDOTHER#5 對話框格。 續七十二(靜態 + DOSBox-X):[0x53a85] 只由 0x111ba(0x51a70 = 'DATO.DAT', old, i)寫入(9 處),內容是 DATO.DAT 第 i 條頭像,不是 FDOTHER;v10a 每次寫入的緩衝區都與 DATO 第 i 條相同(第 0 條整條;第 26、32 條比對傾印到的前 16384 bytes)。亂碼畫面上的頭像就是本函式畫的。 續七十四(靜態 + DOSBox-X v16):dialog 開框後的第一次頭像繪製不經本函式 —— 0x161e3 讀 [0x53a85],src = res + byte[res](0x161e9 movzx),在 0x16200 直接呼叫 blit_rle_image;正常頭像 res[0] = 0x10 = 第 0 格。",
    "confidence": "static_re",
    "date": "2026-09-18",
    "evidence": [
@@ -9486,7 +9486,7 @@
   {
    "addr": "0x3d670",
    "name": "heap_free_block",
-   "summary": "(eax = ptr, edx = 段, ebx = 堆積描述):free(0x3776e → 0x3777e)的核心。esi = ptr - 4 是區塊標頭(大小 | 使用中位元 1);最低位是 0 就直接返回(0x3d683),不做任何事。真的釋放時清掉使用中位元,下一塊標頭最低位是 0 就合併並以它的 +4 / +8 解鏈(0x3d68b..0x3d6ad);否則往後走過使用中的區塊,把遇到的第一個空閒區塊當串列節點插入(0x3d6f5..0x3d72e)。DOSBox-X(doc98 續七十二):把調色盤快取 [0x53a65] 的標頭改成 0x00042b10(續七十一戰後寫回的實測值)後讀取戰況,這一塊走 0x3d683 返回、沒有走到 0x3d685,新調色盤配到別處;對照組(標頭 0x00000305)釋放後配回原位址。 續七十三(DOSBox-X v12):往後走訪的步數本輪算出 0(dec 後回捲 = 不設上限)。強制把一次自然 free 的指標換成 0x1fa6b8(名冊前一塊),停在 0x3d72e:調色盤區塊標頭完好時越過名冊與調色盤兩塊、選真正的空閒區塊 0x1fd3c4;標頭改成 0x00042b10 時只越過名冊就選調色盤區塊當節點(之後會讀它的 +4、寫 [+4] + 8;本輪撤銷沒讓它寫)。同一段裡位址在它之前的只有 0x1f7014([0x53ed0] AIL 序列)與 0x1fa6b8([0x538ac])。v15 戰敗回標題時,標題序列 0x1f90a 的那次 free 讀到改壞的標頭直接返回(洩漏)。",
+   "summary": "(eax = ptr, edx = 段, ebx = 堆積描述):free(0x3776e → 0x3777e)的核心。esi = ptr - 4 是區塊標頭(大小 | 使用中位元 1);最低位是 0 就直接返回(0x3d683),不做任何事。真的釋放時清掉使用中位元,下一塊標頭最低位是 0 就合併並以它的 +4 / +8 解鏈(0x3d68b..0x3d6ad);否則往後走過使用中的區塊,把遇到的第一個空閒區塊當串列節點插入(0x3d6f5..0x3d72e)。DOSBox-X(doc98 續七十二):把調色盤快取 [0x53a65] 的標頭改成 0x00042b10(續七十一戰後寫回的實測值)後讀取戰況,這一塊走 0x3d683 返回、沒有走到 0x3d685,新調色盤配到別處;對照組(標頭 0x00000305)釋放後配回原位址。 續七十三(DOSBox-X v12):往後走訪的步數本輪算出 0(dec 後回捲 = 不設上限)。強制把一次自然 free 的指標換成 0x1fa6b8(名冊前一塊),停在 0x3d72e:調色盤區塊標頭完好時越過名冊與調色盤兩塊、選真正的空閒區塊 0x1fd3c4;標頭改成 0x00042b10 時只越過名冊就選調色盤區塊當節點(之後會讀它的 +4、寫 [+4] + 8;本輪撤銷沒讓它寫)。同一段裡位址在它之前的只有 0x1f7014([0x53ed0] AIL 序列)與 0x1fa6b8([0x538ac])。v15 戰敗回標題時,標題序列 0x1f90a 的那次 free 讀到改壞的標頭直接返回(洩漏)。 續七十四(DOSBox-X v17):調色盤區塊標頭改壞後「離開戰場」YES,AIL_shutdown 0x37ed8 經 0x364fb 的 call [0x5275c](返回 0x3651d)釋放 0x1fa6bc([0x538ac])與 0x1f7018([0x53ed0]),兩次都把假標頭當成節點;0x3d737 讀 [0x3f000000](調色盤前 4 bytes)得 0xffffffff,程式照常回到 DOS。v18:讓強制的插入真的執行 → [S+4] = 0x3f000000、[S+8] = H、[H+4] = S,[0x3f000008] 的寫入落在 16 MB 外;空閒串列仍完整(23 節點),S 不在串列裡(洩漏 8196 bytes)、描述的空閒數多 1。",
    "confidence": "verified_dynamic",
    "date": "2026-10-02",
    "evidence": [
@@ -9511,7 +9511,7 @@
   {
    "addr": "0x25ebb",
    "name": "title_menu_dispatch",
-   "summary": "()→ 0 / 非 0:main 0x25bf4 唯一的呼叫點 0x25dbd(位元組掃描 rel32);戰場迴圈 0x117e7 回 0 / −1 以外的值時 main 回 0x25db1 再呼叫本函式。先跑標題序列 0x1f894(START / LOAD / CONTINUE),依回傳:0 = 新遊戲(0x25eed 以 load_res(FDOTHER, [0x53a65], 0) 重載調色盤、名冊人數清 0、章節 0、call [章節*4 + 0x51d71]);1 = 讀檔槽(0x25f74 重載調色盤、讀 FD2.SAV 0x59cb bytes、0x29bcb 選槽、把該槽 0xa00 bytes 複製進名冊 [0x53bf7] 與中繼資料);其他 = 0x26130 呼叫 0x10010 從 FD2.SAV 的戰況區恢復戰鬥。DOSBox-X(doc98 續七十三 v15):索爾 +5 設 bit0 後戰敗 → 0x22e5c(FDOTHER #79)→ 本函式(返回位址 0x25dc2),標題序列 0x1f90a 那次重載調色盤時 free 了被改壞標頭的舊區塊(0x3d67f 讀到 0x00042b10、沒有 0x3d685 → 洩漏),選 START 後 0x25eed 以 i = 0 重載,進新遊戲序章。『離開戰場』YES 回 −1,直接結束程式,不經本函式(v12)。",
+   "summary": "()→ 0 / 非 0:main 0x25bf4 唯一的呼叫點 0x25dbd(位元組掃描 rel32);戰場迴圈 0x117e7 回 0 / −1 以外的值時 main 回 0x25db1 再呼叫本函式。先跑標題序列 0x1f894(START / LOAD / CONTINUE),依回傳:0 = 新遊戲(0x25eed 以 load_res(FDOTHER, [0x53a65], 0) 重載調色盤、名冊人數清 0、章節 0、call [章節*4 + 0x51d71]);1 = 讀檔槽(0x25f74 重載調色盤、讀 FD2.SAV 0x59cb bytes、0x29bcb 選槽、把該槽 0xa00 bytes 複製進名冊 [0x53bf7] 與中繼資料);其他 = 0x26130 呼叫 0x10010 從 FD2.SAV 的戰況區恢復戰鬥。DOSBox-X(doc98 續七十三 v15):索爾 +5 設 bit0 後戰敗 → 0x22e5c(FDOTHER #79)→ 本函式(返回位址 0x25dc2),標題序列 0x1f90a 那次重載調色盤時 free 了被改壞標頭的舊區塊(0x3d67f 讀到 0x00042b10、沒有 0x3d685 → 洩漏),選 START 後 0x25eed 以 i = 0 重載,進新遊戲序章。『離開戰場』YES 回 −1,直接結束程式,不經本函式(v12)。 續七十四(DOSBox-X v19):標題畫面每一輪都以 0x111ba 重載調色盤(i = 101 / 102 交替)並 free 舊區塊。在 0x25ecd(本函式取得 0x1f894 的回傳值)把當下調色盤標頭改成 0x00042b10:CONTINUE(EAX 2)→ 0x26130 → 0x10010 的重載(返回 0x1013b)、LOAD(EAX 1)→ 0x25f74 的重載(返回 0x25f79)都在 0x3d67f 讀到改壞的標頭而直接返回(洩漏),新調色盤配到別處,之後回到戰場 / 選槽與出戰人數畫面,色彩正常。",
    "confidence": "verified_dynamic",
    "date": "2026-10-02",
    "evidence": [
