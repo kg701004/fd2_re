@@ -14,7 +14,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
+from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 SCR = GEN_DIR
 sys.path.insert(0, str(SCR))
@@ -32,7 +32,7 @@ def md5(p: Path) -> str:
 assert md5(EXE) == "33464c81e6a364fd0660141139aa8e6e"
 assert DATO.read_bytes() == DM.DATO, "dato_match 讀的 DATO.DAT 與倉庫內的不同"
 ev: dict = {"_meta": {
-    "exe": str(EXE.relative_to(ROOT)), "exe_md5": md5(EXE), "dato": str(DATO.relative_to(ROOT)), "dato_md5": md5(DATO),
+    "exe": rel(EXE), "exe_md5": md5(EXE), "dato": rel(DATO), "dato_md5": md5(DATO),
     "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV md5 e6d9a357…;v10a 另套 v9_setup.py,同續七十一)",
     "raw_dirs": [".wsl_build/ctr/v10a/ch25", ".wsl_build/ctr/v10b/ch25"],
     "drivers": "evidence/generators/:t_v10a.py / t_v10b.py / dato_match.py(本檔由 ev_s72.py 從原始紀錄重算)",

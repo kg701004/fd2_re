@@ -15,7 +15,7 @@ import struct
 import sys
 from pathlib import Path
 
-from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
+from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 SCR = GEN_DIR
 sys.path.insert(0, str(ROOT / "tools"))
@@ -59,7 +59,7 @@ def stops_json(path: Path) -> list[dict]:
 
 
 ev: dict = {"_meta": {
-    "exe": str(EXE.relative_to(ROOT)), "exe_md5": md5(EXE),
+    "exe": rel(EXE), "exe_md5": md5(EXE),
     "chapter": "第 25 章戰場 = map 24(來源存檔 source_ch27.SAV 經 prepare_chapter_save,單位設定同續六十八~七十)",
     "raw_dirs": [".wsl_build/ctr/v9a/ch25", ".wsl_build/ctr/v9b/ch25", ".wsl_build/ctr/v9c/ch25", ".wsl_build/ctr/v9d"],
     "drivers": "evidence/generators/:t_v9.py / v9_setup.py / sim_dialog.py(本檔由 ev_s71.py 從原始紀錄重算)"}}

@@ -23,8 +23,15 @@ def _run(script: Path, out_dir: Path) -> subprocess.CompletedProcess:
                           capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
-def run_mutants(gen: str, mutants: list[tuple[str, str, str]]) -> int:
-    """執行 gen 的變異測試;全部被殺且對照通過才回傳 0。"""
+def run_mutants(gen: str, mutants: list[tuple[str, ...]]) -> int:
+    """執行 gen 的變異測試;全部被殺且對照通過才回傳 0。
+
+    Args:
+        gen: 產生器名稱(不含 .py)。
+        mutants: (名稱, 原字串, 變異字串) 改產生器本身;或 (名稱, 原字串, 變異字串, 模組檔名)
+            改產生器匯入的分析模組 —— 變異版模組與未變異的產生器放在同一個暫存目錄,
+            產生器的 sys.path[0] 就是那個目錄,所以會先載入變異版。
+    """
     src = (GEN_DIR / f"{gen}.py").read_text(encoding="utf-8")
     outputs = json.loads(MANIFEST.read_text(encoding="utf-8"))["generators"][gen]["outputs"]
     with tempfile.TemporaryDirectory(prefix=f"mut_{gen}_") as tdn:
@@ -39,12 +46,18 @@ def run_mutants(gen: str, mutants: list[tuple[str, str, str]]) -> int:
             return 1
         print(f"CONTROL ok   {gen}: 未變異版重算與已提交檔案相同")
         killed = 0
-        for i, (name, old, new) in enumerate(mutants):
-            assert src.count(old) == 1, (name, src.count(old))
+        for i, (name, old, new, *target) in enumerate(mutants):
             d = td / f"m{i}"
             d.mkdir()
             script = d / f"{gen}.py"   # 檔名同產生器:require_inputs 依檔名查清單
-            script.write_text(src.replace(old, new), encoding="utf-8")
+            if target:
+                msrc = (GEN_DIR / target[0]).read_text(encoding="utf-8")
+                assert msrc.count(old) == 1, (name, target[0], msrc.count(old))
+                (d / target[0]).write_text(msrc.replace(old, new), encoding="utf-8")
+                script.write_text(src, encoding="utf-8")
+            else:
+                assert src.count(old) == 1, (name, src.count(old))
+                script.write_text(src.replace(old, new), encoding="utf-8")
             r = _run(script, d)
             ok = r.returncode != 0 and "AssertionError" in r.stderr and "Traceback" in r.stderr
             killed += ok

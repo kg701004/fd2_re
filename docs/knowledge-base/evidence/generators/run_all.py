@@ -6,7 +6,7 @@
     MISSING_INPUT  產生器的輸入與 inputs_manifest.json 不符(缺檔或內容不同),沒有重算。
     ERROR          產生器執行失敗(含 assert 失敗)、或沒有產生清單上的輸出。
 
-限制:有 3 份證據把 `str(Path)` 寫進 JSON(Windows 路徑分隔字元),逐 byte 相同只在 Windows 成立。
+證據裡的檔案路徑一律經 `_evpaths.rel()`(`/` 分隔,不隨作業系統或遊戲目錄位置改變)。
 原始紀錄(`.wsl_build/`)與原版遊戲檔不在 git 裡(著作權與大小),其他機器上會是 MISSING_INPUT。
 
 用法:
@@ -17,12 +17,13 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from _evpaths import EVIDENCE, GEN_DIR, MANIFEST, MISSING_INPUT_RC
+from _evpaths import EVIDENCE, GEN_DIR, MANIFEST, MISSING_INPUT_RC, resolve
 
 
 def run_one(gen: str, outputs: list[str], out_dir: Path, env_extra: dict[str, str] | None = None,
@@ -101,6 +102,17 @@ def selftest() -> int:
         r = run_one(gen, outs, td / "d", env_extra={"FD2_EVIDENCE_MANIFEST": str(bad_man)})
         if r["verdict"] != "MISSING_INPUT" or not any("內容不符" in x for x in r["detail"]):
             fails.append(f"sha256 不符應為 MISSING_INPUT(內容不符),得到 {r}")
+        # 5. 遊戲目錄放在倉庫外(把 ev_s71 要的遊戲檔複製到暫存目錄)→ 仍 IDENTICAL;
+        #    證據裡的路徑不隨遊戲目錄位置或作業系統改變(舊寫法 relative_to(ROOT) 在這裡會 ValueError)
+        game = td / "game"
+        game.mkdir()
+        g_inputs = [k for k in man["ev_s71"]["inputs"] if k.startswith("{GAME}/")]
+        for k in g_inputs:
+            shutil.copyfile(resolve(k), game / k[len("{GAME}/"):])
+        (td / "e").mkdir()
+        r = run_one("ev_s71", man["ev_s71"]["outputs"], td / "e", env_extra={"FD2_GAME_DIR": str(game)})
+        if not g_inputs or r["verdict"] != "IDENTICAL":
+            fails.append(f"遊戲目錄在倉庫外應為 IDENTICAL({len(g_inputs)} 個遊戲檔),得到 {r}")
     for f in fails:
         print("FAIL", f)
     print("selftest", "PASS" if not fails else f"FAIL ({len(fails)})")

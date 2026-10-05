@@ -21,7 +21,9 @@ meta = disasm_le.parse_le(exe)
 ob = lambda a, n: bytes(disasm_le.object_bytes(exe, meta, a, n))
 
 # ---------- selector ----------
-sel_rows = json.load(open(ROOT + "/.wsl_build/ctr/sel/analyze.json", encoding="utf-8"))
+# 原本讀 sel_analyze.py 寫進 .wsl_build/ctr/sel/ 的 analyze.json;改為直接從傾印重算(經 JSON 來回,與當時寫檔再讀回相同)
+from sel_analyze import TAGS as SEL_TAGS, analyse as sel_analyse  # noqa: E402
+sel_rows = json.loads(json.dumps([sel_analyse(t) for t in SEL_TAGS], ensure_ascii=False))
 assert all(r["count_match"] and r["list_match"] and r["marks_match_recompute"] for r in sel_rows)
 spells = [ob(0x619FD + i * 7, 7) for i in range(36)]
 items = [ob(0x602AD + i * 0x17, 0x17) for i in range(215)]

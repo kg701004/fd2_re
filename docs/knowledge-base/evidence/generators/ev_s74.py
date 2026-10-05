@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
+from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 SCR = GEN_DIR
 sys.path.insert(0, str(ROOT / "tools"))
@@ -37,10 +37,6 @@ def md5(p: Path) -> str:
 
 def J(p: Path) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
-
-
-def rel(p: Path) -> str:
-    return str(p.relative_to(ROOT)).replace("\\", "/")
 
 
 assert md5(EXE) == "33464c81e6a364fd0660141139aa8e6e"

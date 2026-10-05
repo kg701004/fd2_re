@@ -1,8 +1,8 @@
 {
  "_meta": {
-  "exe": "org_game\\炎龍騎士團\\FLAME2\\FD2.EXE",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
   "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
-  "dato": "org_game\\炎龍騎士團\\FLAME2\\DATO.DAT",
+  "dato": "org_game/炎龍騎士團/FLAME2/DATO.DAT",
   "dato_md5": "f15093e5bff4e5f3334a076ab2a7d130",
   "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV md5 e6d9a357…;v10a 另套 v9_setup.py,同續七十一)",
   "raw_dirs": [

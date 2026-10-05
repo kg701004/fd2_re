@@ -7319,3 +7319,44 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
   (`scratchpad …` → `evidence/generators/:…`);重算後與移植前的差異逐份只有那一行。
 - 限制:`ev_s71~73` 的輸出含 Windows 路徑分隔字元,逐 byte 相同只在 Windows 成立;原始紀錄另有一份本機備份(倉庫外,xz 壓縮 1.5 MB,
   解開後 530 筆 sha256 全部相符),不隨倉庫散布。
+
+## 2026-10-05 證據產生器收進倉庫(續四十六~六十四)
+
+上一節之後,`evidence/` 其餘 19 份證據(續四十六~六十四)的產生器也從 session scratchpad 移進
+[`evidence/generators/`](evidence/generators/README.md):19 個產生器(`ev_<證據名>.py`)、4 個分析模組
+(`pa_analyze` / `tr_analyze` / `sl_analyze` / `sel_analyze`)、2 個變異測試、28 個驅動腳本存檔。33 份證據現在全部可重算。
+
+- `python run_all.py`:32/32 IDENTICAL;`--selftest` 通過。輸入清單 32 個產生器、1636 個不重複輸入。
+- 原腳本後段一次性更新 `docs/data/function_names.json` 的補丁(13 支)移植時刪除,產生器不再改登錄檔。
+- 分析模組原本把結果寫成 `.wsl_build` 裡的 `analyze*.json`,證據腳本再讀回 —— 計算本身不在倉庫裡。
+  現在產生器直接呼叫分析模組重算(經 JSON 來回,輸出逐 byte 不變)。上一節的 `ev_s65` 也有同樣的問題
+  (讀 `.wsl_build/ctr/sel/analyze.json`),一併改為呼叫 `sel_analyze`;它的清單少了那個 JSON、多了 45 個原始傾印。
+- `ev_ai_physical_candidate`、`ev_ai_physical_untested_branches` 原本沒有任何 `assert`,補上判準(列舉、逐組分數、
+  每次比較後的全域、迴圈結束值都與重算相符;每條對照規則至少在一組上不同;活地圖等於 FDFIELD_003;
+  原本寫死 `True` 的「活成本列 = LE object 靜態 bytes」改成實際比對)。變異測試把分析模組的規則逐條換成對照規則,
+  7/7、11/11 以 AssertionError 失敗;`_mutrun.py` 為此支援變異產生器匯入的模組。
+- 移植後第一次重算 `ai_physical_untested_branches` 不同:證據記錄的是當時 `native_movement_cost_rows.json`
+  每列錯一個 byte(ae1ff0f3 已修正),而產生器讀的是工作樹。改由 `_evpaths.git_blob()` 以 blob sha
+  讀當時的版本(讀不到時 exit 3),並把 note 的主張「當時 JSON 與活記憶體不同」寫成 `assert`。
+- 限制:12 個產生器含當時從除錯器終端抄錄的斷點讀值(沒有存檔),只能與同一份程式裡由傾印算出的值互相檢查。
+
+## 2026-10-05 證據產生器:路徑、終端輸出、摘錄
+
+上兩節留下的限制逐項處理([`evidence/generators/README.md`](evidence/generators/README.md))。
+
+- **路徑**:`ev_s71~73` 把 `str(EXE.relative_to(ROOT))` 寫進證據(Windows 分隔字元);另外 `ev_s71~75` 在
+  `FD2_GAME_DIR` 指到倉庫外時會 `ValueError`(README 寫支援這個設定,實際跑不了)。改成共用的 `_evpaths.rel()`:
+  一律 `/` 分隔,遊戲目錄內的檔案記成預設位置(身分由旁邊的 md5 鎖定)。三份證據各改 1~2 行(`exe` / `dato` 欄位),
+  其餘逐 byte 不變。遊戲目錄放在倉庫外重算 32/32 IDENTICAL;`run_all.py --selftest` 加第 5 個對照
+  (遊戲檔複製到倉庫外重算 `ev_s71` → IDENTICAL;舊寫法在這個對照下是 ERROR)。
+- **終端輸出**:12 個產生器原本把除錯器終端印出的斷點讀值抄寫在程式裡,當時以為沒有存檔。這些輸出其實原樣留在
+  Claude Code 的對話紀錄(`toolUseResult.stdout`);匯出 52 組到 `.wsl_build/ctr/console/`(`.txt` 原樣 +
+  `.meta.json` 記指令與時間),產生器改由 `_console.py` 解析。換之前逐值比對:解析值 == 原抄寫值;另加交叉檢查,
+  同一段終端輸出印出的其他欄位(攻擊後 EX、HP、座標、旗標讀回等)必須等於同一案例的傾印。在記憶體中竄改終端文字
+  或交換案例段落的變異共 38 個(另有未變異對照,`mut_console_*.py`),全部以 AssertionError 失敗。`ev_attack_path_selection` 的 `hits` 表另加
+  AP / DP 對攻擊前傾印的檢查(地形修正仍是手算的預測)。
+- **摘錄**:7 個從 WSL 大型記錄(LOGCPU.TXT 每份約 5 GB)切出的摘錄,切法原本只有 2 個有存檔。從對話紀錄找回
+  其餘的切法(`sed -n` 行號範圍、`msg_s76.sh` / `reentry_s77.sh` / `logx_s76.sh`),寫成 `rebuild_excerpts.py`:
+  從完整記錄重切到 stdout 比對,7/7 IDENTICAL;`--selftest` 的反向對照(行號差一 → DIFFERENT、記錄不在 →
+  SOURCE_MISSING)通過。
+- 推論標記:`ev_level_up` 把 13:40 的 `dlg_step.sh LB 2` 依時間歸到 LA 對話的最後兩步(指令本身沒寫明)。

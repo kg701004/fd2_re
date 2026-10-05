@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
+from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 SCR = GEN_DIR
 sys.path.insert(0, str(SCR))
@@ -43,9 +43,9 @@ def J(p: Path) -> dict:
 assert md5(EXE) == "33464c81e6a364fd0660141139aa8e6e"
 assert DATO.read_bytes() == DM.DATO
 ev: dict = {"_meta": {
-    "exe": str(EXE.relative_to(ROOT)), "exe_md5": md5(EXE), "dato": str(DATO.relative_to(ROOT)), "dato_md5": md5(DATO),
+    "exe": rel(EXE), "exe_md5": md5(EXE), "dato": rel(DATO), "dato_md5": md5(DATO),
     "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV md5 e6d9a357…);v11 / v14 另套 v9_setup.py + v11_setup.py",
-    "raw_dirs": [str(p.relative_to(ROOT)).replace("\\", "/") for p in (V11, V12, V13, V14, V15)],
+    "raw_dirs": [rel(p) for p in (V11, V12, V13, V14, V15)],
     "drivers": "evidence/generators/:t_v11.py(v11、v14)、v11_setup.py、t_v12.py(v12 離開戰場、v13、v15)、t_v12f.py(v12 強制 free)、"
                "heap_geom.py / heap_geom_off.py(v12 堆積快照)、dato_match.py、rel32_callers.py;本檔由 ev_s73.py 重算",
     "process": [

@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "exe": "org_game\\炎龍騎士團\\FLAME2\\FD2.EXE",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
   "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
   "chapter": "第 25 章戰場 = map 24(來源存檔 source_ch27.SAV 經 prepare_chapter_save,單位設定同續六十八~七十)",
   "raw_dirs": [

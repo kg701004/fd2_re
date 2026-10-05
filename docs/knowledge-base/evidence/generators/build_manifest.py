@@ -23,7 +23,13 @@ from pathlib import Path
 from _evpaths import GAME, GEN_DIR, MANIFEST, ROOT, _sha256
 
 GENERATORS = ["ev_s65", "ev_s65b", "ev_s66", "ev_s67", "ev_s68", "ev_s69", "ev_s70", "ev_s71",
-              "ev_s72", "ev_s73", "ev_s74", "ev_s75", "ev_s76"]
+              "ev_s72", "ev_s73", "ev_s74", "ev_s75", "ev_s76",
+              # 2026-09-29~10-01(續四十六~六十四)
+              "ev_ai_action_choice", "ev_ai_heal_score", "ev_ai_item_score", "ev_ai_move_nearest",
+              "ev_ai_physical_candidate", "ev_ai_physical_untested_branches", "ev_ai_spell_path", "ev_ai_spell_score",
+              "ev_attack_exp", "ev_attack_path_selection", "ev_collect_targets_in_range", "ev_heal_spell_targets",
+              "ev_level_up", "ev_move_landing_select", "ev_real_kill_corpse", "ev_rest_recover", "ev_spell9_path",
+              "ev_terrain_modifier", "ev_terrain_types_3_5"]
 
 
 def _norm(p: str) -> str:

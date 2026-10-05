@@ -1,6 +1,6 @@
 """證據產生器共用的路徑與輸入檢查。
 
-產生器(`ev_s*.py`)由這裡取得倉庫根目錄、原版遊戲目錄與輸出目錄,啟動時呼叫
+產生器(`ev_*.py`)由這裡取得倉庫根目錄、原版遊戲目錄與輸出目錄,啟動時呼叫
 `require_inputs(__file__)`:依 `inputs_manifest.json` 逐一比對它要讀的、不在 git 裡的
 輸入(`.wsl_build/` 的 DOSBox-X 原始紀錄、`extracted/`、原版遊戲檔)的大小與 sha256。
 缺檔或內容不同時以 exit code 3 結束並列出每一筆 —— 不讓產生器拿錯的輸入算出
@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,7 +28,8 @@ GEN_DIR = Path(__file__).resolve().parent
 ROOT = GEN_DIR.parents[3]
 ROOT_S = ROOT.as_posix()
 TOOLS = ROOT / "tools"
-GAME = Path(os.environ.get("FD2_GAME_DIR") or ROOT / "org_game/炎龍騎士團/FLAME2")
+GAME_DEFAULT_REL = "org_game/炎龍騎士團/FLAME2"
+GAME = Path(os.environ.get("FD2_GAME_DIR") or ROOT / GAME_DEFAULT_REL)
 GAME_S = GAME.as_posix()
 EVIDENCE = ROOT / "docs/knowledge-base/evidence"
 MANIFEST = Path(os.environ.get("FD2_EVIDENCE_MANIFEST") or GEN_DIR / "inputs_manifest.json")
@@ -37,6 +39,28 @@ MISSING_INPUT_RC = 3
 def out_path(name: str) -> Path:
     """證據檔的輸出位置;平常是 `docs/knowledge-base/evidence/<name>`。"""
     return Path(os.environ.get("FD2_EVIDENCE_OUT_DIR") or EVIDENCE) / name
+
+
+def rel(p: Path) -> str:
+    """證據裡記錄檔案位置用的字串:一律 `/` 分隔,不隨作業系統或 `FD2_GAME_DIR` 改變。
+
+    遊戲目錄裡的檔案記成預設位置 `org_game/炎龍騎士團/FLAME2/<檔名>`(遊戲目錄放在倉庫外時
+    也一樣,檔案身分由證據裡同時記錄的 md5 鎖定);其餘記成相對倉庫根目錄的路徑。
+
+    Args:
+        p: 遊戲目錄或倉庫內的檔案 / 目錄路徑。
+
+    Returns:
+        `/` 分隔的相對路徑。
+
+    Raises:
+        ValueError: 路徑既不在遊戲目錄也不在倉庫內。
+    """
+    rp = Path(p).resolve()
+    try:
+        return GAME_DEFAULT_REL + "/" + rp.relative_to(GAME.resolve()).as_posix()
+    except ValueError:
+        return rp.relative_to(ROOT).as_posix()
 
 
 def resolve(entry: str) -> Path:
@@ -85,3 +109,29 @@ def require_inputs(script: str) -> None:
         for line in problems[:40]:
             print("  " + line, file=sys.stderr)
         sys.exit(MISSING_INPUT_RC)
+
+
+def git_blob(blob: str, path: str) -> bytes:
+    """讀倉庫歷史裡某個已追蹤檔案當時的內容(以 blob sha 鎖定)。
+
+    證據記錄的是「當時那份已追蹤檔案」的狀態、而該檔之後已修改時使用(例如證據就是在記錄
+    那份檔案當時的錯誤)。讀不到(沒有 git、淺層 clone 缺物件)或內容與 sha 不符時,
+    與缺輸入同樣以 exit code 3 結束。
+
+    Args:
+        blob: git blob 的完整 sha1。
+        path: 該 blob 對應的倉庫相對路徑,只用於錯誤訊息。
+
+    Returns:
+        blob 的原始 bytes。
+    """
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "cat-file", "blob", blob], capture_output=True, timeout=60)
+        data, ok = r.stdout, r.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        data, ok = b"", False
+    # git 的 blob sha1 = sha1("blob <長度>\0" + 內容);再算一次,確認拿到的就是這個版本
+    if not ok or hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest() != blob:
+        print(f"MISSING_INPUT 讀不到 git blob {blob}({path} 的舊版本)", file=sys.stderr)
+        sys.exit(MISSING_INPUT_RC)
+    return data
