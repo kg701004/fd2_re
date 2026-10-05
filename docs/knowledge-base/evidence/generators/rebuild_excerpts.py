@@ -4,24 +4,46 @@
 WSL 的 `~/fd2-run-harness-<run>/`,不搬到 Windows、不進 git。這裡記下每個摘錄的切法(與存檔的驅動腳本相同),
 重切到 stdout 比對,不寫任何檔案。只讀記錄檔,不啟動 DOSBox-X。
 
-結果:IDENTICAL / DIFFERENT / SOURCE_MISSING(WSL 裡的完整記錄已不在)/ ERROR。全部 IDENTICAL 才 exit 0。
+結果:IDENTICAL / DIFFERENT / SOURCE_MISSING(WSL 裡的完整記錄已不在)/ SOURCE_CHANGED(記錄大小與
+SOURCE_LOGS 不符,例如被新的執行覆寫)/ ERROR。全部 IDENTICAL 才 exit 0。
+
+完整記錄另有壓縮備份(倉庫外的本機備份夾,`full_logs_manifest.tsv` + 每份一個 `.xz`)。WSL 裡的記錄不在時用
+`--from-backup <備份夾>`:把需要的記錄解壓到 WSL 的暫存目錄,逐份以 SOURCE_LOGS 的大小與 sha256 驗證,
+再以同一組切法重切(切法裡的路徑都是 `$HOME/fd2-run-harness-…`,所以只把 HOME 指到暫存目錄),最後刪除暫存目錄。
 
 用法:python rebuild_excerpts.py [摘錄名稱 ...]     不給 = 全部(掃描約 30 GB,需數分鐘)
-      python rebuild_excerpts.py --selftest      反向對照(切法差一行 → DIFFERENT、記錄不在 → SOURCE_MISSING)
+      python rebuild_excerpts.py --from-backup <備份夾> [摘錄名稱 ...]
+      python rebuild_excerpts.py --selftest      反向對照(切法差一行 → DIFFERENT、記錄不在 → SOURCE_MISSING、
+                                                  大小不符 → SOURCE_CHANGED、備份內容不符 → 還原失敗)
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import lzma
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
 
-from _evpaths import GEN_DIR, MANIFEST, resolve
+from _evpaths import GEN_DIR, MANIFEST, ROOT, resolve
 
 # WSL 端看到的本目錄(存檔的驅動腳本可直接執行的那幾支用它)
 _drive, _rest = str(GEN_DIR).split(":", 1)
 GEN_WSL = "/mnt/" + _drive.lower() + _rest.replace("\\", "/")
 H = "$HOME/fd2-run-harness-"
+# 完整記錄的身分(相對 $HOME/fd2-run-harness- 的路徑 -> (bytes, sha256)),2026-10-05 備份時量得
+# (v21 的值另與 trace_excerpt.txt 切出當時印下的 bytes / sha256 相同)
+SOURCE_LOGS: dict[str, tuple[int, str]] = {
+    "v21/LOGCPU.TXT": (5402271701, "10d20cbdae4634c4f97d2b6993105ff6a24699fb541bac0be3095bf32999fdbb"),
+    "v30/LOGCPU.TXT": (5402271426, "c7da3eae26899450d38cbdc66c9825693c32989bc03aabb21d995b5357a0fcaa"),
+    "v31/LOGCPU.TXT": (5402271624, "73cbad19941e16e476f2811dedadc4daec2d0166e646408ec23beac8f704ee23"),
+    "v32/LOGCPU.TXT": (5419048933, "5cd1173a86564dd058e64cdb5d7efc99781531e7b58f098a8b58ae8937e256d1"),
+    "v33/LOGCPU.TXT": (5402270869, "386299bb885e3c8a306a73a82978ecb8c447e70a5c876de79b83b44724bde32f"),
+    "v33/dosbox-x.log": (193381323, "6c20a033cf32c8dfa2afc1eda2d729c0d69680ba39b0db01abd4923a6c7372de"),
+}
+# --from-backup 的暫存目錄(WSL 端);只會刪除本程式自己建立的這個目錄
+RESTORE_ROOT = "/tmp/fd2-excerpt-restore"
 
 # 名稱 -> (清單裡的路徑, 需要存在的完整記錄, 重切指令(bash,輸出到 stdout))
 EXCERPTS: dict[str, tuple[str, list[str], str]] = {
@@ -72,13 +94,68 @@ def _wsl(cmd: str, timeout: int) -> subprocess.CompletedProcess:
                           capture_output=True, timeout=timeout)
 
 
-def check(name: str, pinned: dict[str, list]) -> tuple[str, str]:
-    """重切一個摘錄並比對;回傳 (結果, 說明)。"""
+def _to_wsl(path: Path) -> str:
+    """Windows 路徑 -> WSL 的 /mnt/<磁碟>/… 路徑。"""
+    drive, rest = str(path.resolve()).split(":", 1)
+    return "/mnt/" + drive.lower() + rest.replace("\\", "/")
+
+
+def _home(home: str | None) -> str:
+    """指令前綴:把 HOME 指到還原目錄(None = 不改,用 WSL 裡原本的記錄)。"""
+    return f"export HOME='{home}'; " if home else ""
+
+
+class RestoreError(Exception):
+    """備份不完整,或還原出的記錄與 SOURCE_LOGS 不符。"""
+
+
+def restore(backup: Path, keys: list[str]) -> None:
+    """把 keys 指定的完整記錄從備份夾解壓到 RESTORE_ROOT,逐份驗證大小與 sha256。
+
+    Args:
+        backup: 備份夾(Windows 路徑,含 full_logs_manifest.tsv 與 .xz)。
+        keys: SOURCE_LOGS 的鍵(例如 "v21/LOGCPU.TXT")。
+
+    Raises:
+        RestoreError: 備份清單缺項、與 SOURCE_LOGS 不一致,或還原內容不符。
+    """
+    rows = {}
+    for line in (backup / "full_logs_manifest.tsv").read_text(encoding="utf-8").splitlines()[1:]:
+        path, size, sha, xzname, _ = line.split("\t")
+        rows[path.removeprefix("fd2-run-harness-")] = (int(size), sha, xzname)
+    for k in keys:
+        if k not in rows:
+            raise RestoreError(f"備份清單沒有 {k}")
+        # 備份清單只是備份的一部分;身分以本程式的 SOURCE_LOGS 為準,兩者不一致就不還原
+        if rows[k][:2] != SOURCE_LOGS[k]:
+            raise RestoreError(f"備份清單的 {k} 與 SOURCE_LOGS 不一致")
+        size, sha, xzname = rows[k]
+        dst = f"{RESTORE_ROOT}/fd2-run-harness-{k}"
+        r = _wsl(f"set -euo pipefail; mkdir -p \"$(dirname '{dst}')\"; xz -dc '{_to_wsl(backup / xzname)}' > '{dst}'; "
+                 f"stat -c %s '{dst}'; sha256sum '{dst}' | cut -c1-64", 3600)
+        out = r.stdout.decode().split()
+        if r.returncode != 0 or out != [str(size), sha]:
+            raise RestoreError(f"還原的 {k} 不符:rc={r.returncode} {out} {r.stderr.decode(errors='replace')[-200:]}")
+
+
+def cleanup_restore() -> None:
+    """刪除 RESTORE_ROOT(只有本程式建立的暫存目錄)。"""
+    _wsl(f"rm -rf '{RESTORE_ROOT}'", 600)
+
+
+def check(name: str, pinned: dict[str, list], home: str | None = None) -> tuple[str, str]:
+    """重切一個摘錄並比對;回傳 (結果, 說明)。home 不為 None 時從那個目錄下的記錄重切。"""
     rel, sources, cmd = EXCERPTS[name]
-    missing = _wsl(" ; ".join(f'test -f "{s}" || echo "{s}"' for s in sources), 60).stdout.decode().split()
+    pre = _home(home)
+    missing = _wsl(pre + " ; ".join(f'test -f "{s}" || echo "{s}"' for s in sources), 60).stdout.decode().split()
     if missing:
         return "SOURCE_MISSING", " ".join(missing)
-    r = _wsl("set -o pipefail; " + cmd, 3600)
+    # 記錄大小必須等於 SOURCE_LOGS(便宜的身分檢查;完整的 sha256 在還原時驗)
+    sizes = _wsl(pre + " ; ".join(f'stat -c %s "{s}"' for s in sources), 60).stdout.decode().split()
+    want = [str(SOURCE_LOGS[s.removeprefix(H)][0]) for s in sources]
+    if sizes != want:
+        return "SOURCE_CHANGED", f"大小 {sizes} != {want}"
+    r = _wsl(pre + "set -o pipefail; " + cmd, 3600)
     if r.returncode != 0:
         return "ERROR", f"rc={r.returncode} {r.stderr.decode(errors='replace')[-200:]}"
     size, sha = pinned[rel]
@@ -102,7 +179,36 @@ def selftest(pinned: dict[str, list]) -> int:
         got, detail = check("_selftest", pinned)
         fails += got != want
         print(f"{'ok  ' if got == want else 'FAIL'} {label}: {got}(應為 {want}) {detail}")
-    del EXCERPTS["_selftest"]
+    # 記錄大小與 SOURCE_LOGS 不符(模擬被新的執行覆寫)→ SOURCE_CHANGED
+    k = "v21/LOGCPU.TXT"
+    orig = SOURCE_LOGS[k]
+    SOURCE_LOGS[k] = (orig[0] + 1, orig[1])
+    EXCERPTS["_selftest"] = (rel, sources, cmd)
+    try:
+        got, detail = check("_selftest", pinned)
+    finally:
+        SOURCE_LOGS[k] = orig
+        del EXCERPTS["_selftest"]
+    fails += got != "SOURCE_CHANGED"
+    print(f"{'ok  ' if got == 'SOURCE_CHANGED' else 'FAIL'} 記錄大小不符: {got}(應為 SOURCE_CHANGED) {detail}")
+    # 備份還原:.xz 內容不是那份記錄、備份清單與 SOURCE_LOGS 不一致 → 都必須 RestoreError(不能還原成功)。
+    # 暫存備份夾放在 .wsl_build(gitignore、WSL 看得到)
+    (ROOT / ".wsl_build").mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=ROOT / ".wsl_build") as td:
+        b = Path(td)
+        (b / "x.xz").write_bytes(lzma.compress(b"not the log\n"))
+        for label, (size, sha) in (("備份內容不符", orig), ("備份清單與 SOURCE_LOGS 不一致", (orig[0], "0" * 64))):
+            (b / "full_logs_manifest.tsv").write_text(
+                f"path\tsize\tsha256\txz\txz_size\nfd2-run-harness-{k}\t{size}\t{sha}\tx.xz\t0\n", encoding="utf-8")
+            try:
+                restore(b, [k])
+                got, detail = "RESTORED", ""
+            except RestoreError as e:
+                got, detail = "RestoreError", str(e)[:120]
+            finally:
+                cleanup_restore()
+            fails += got != "RestoreError"
+            print(f"{'ok  ' if got == 'RestoreError' else 'FAIL'} {label}: {got}(應為 RestoreError) {detail}")
     print("selftest", "PASS" if not fails else f"FAIL ({fails})")
     return 1 if fails else 0
 
@@ -112,20 +218,40 @@ def main(argv: list[str]) -> int:
     pinned = {k: v for g in man.values() for k, v in g["inputs"].items()}
     if argv[:1] == ["--selftest"]:
         return selftest(pinned)
+    backup = None
+    if argv[:1] == ["--from-backup"]:
+        if len(argv) < 2:
+            raise SystemExit("--from-backup 需要備份夾路徑")
+        backup, argv = Path(argv[1]), argv[2:]
     names = argv or list(EXCERPTS)
     unknown = [n for n in names if n not in EXCERPTS]
     if unknown:
         raise SystemExit(f"沒有這個摘錄:{unknown}")
     # 鎖定的摘錄本身也要與清單相符,否則比對沒有意義
-    bad = 0
     for n in names:
         rel = EXCERPTS[n][0]
         assert rel in pinned, f"{rel} 不在 inputs_manifest.json"
         local = resolve(rel).read_bytes()
         assert hashlib.sha256(local).hexdigest() == pinned[rel][1], f"{rel} 與清單不符"
-        verdict, detail = check(n, pinned)
-        bad += verdict != "IDENTICAL"
-        print(f"{verdict:15s} {n}  {detail}", flush=True)
+    home = None
+    bad = 0
+    try:
+        if backup is not None:
+            keys = sorted({s.removeprefix(H) for n in names for s in EXCERPTS[n][1]})
+            print(f"從備份還原 {len(keys)} 份完整記錄到 WSL {RESTORE_ROOT}(逐份驗 sha256)…", flush=True)
+            try:
+                restore(backup, keys)
+            except RestoreError as e:
+                print(f"RESTORE_FAILED  {e}")
+                return 1
+            home = RESTORE_ROOT
+        for n in names:
+            verdict, detail = check(n, pinned, home)
+            bad += verdict != "IDENTICAL"
+            print(f"{verdict:15s} {n}  {detail}", flush=True)
+    finally:
+        if backup is not None:
+            cleanup_restore()
     print(f"{len(names) - bad}/{len(names)} IDENTICAL")
     return 1 if bad else 0
 

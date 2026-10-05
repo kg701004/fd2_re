@@ -24,6 +24,11 @@ MUTS = [
     ("ev_level_up.py", 'ALIAS = {"LB": "LA"}', "ALIAS = {}", "屬性指標"),
     ("ev_level_up.py", '    prints.setdefault(tag, [])', '    prints.setdefault({"LC": "LE", "LE": "LC"}.get(tag, tag), [])', "攻方欄位"),
     ("ev_level_up.py", "        if s[\"EIP\"] == 0x1CBAB9:", "        if s[\"EIP\"] == 0x1CBA9F:", "pending"),
+    # 模擬「LB 那段其實是另一次升級」的兩種輸出:成長停點從 unit+0x37 開始、或含攻擊停點
+    ("ev_level_up.py", "    st = GAIN_LINE.findall(text)\n",
+     '    st = GAIN_LINE.findall(text.replace("(unit+0x46)", "(unit+0x37)"))\n', "併入段從頭開始"),
+    ("ev_level_up.py", "for t_, before, text in alias_out:",
+     'for t_, before, text in [(a, b, c + "\\nstop 1: EIP=001CBAB9 EAX=00000015") for a, b, c in alias_out]:', "併入段含攻擊"),
 ]
 bad = 0
 for fn, old, new, label in MUTS:

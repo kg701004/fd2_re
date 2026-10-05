@@ -10,9 +10,8 @@ require_inputs(__file__)
 import _console  # noqa: E402
 EVI = out_path("terrain_modifier_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
-W = 27
-A = [5, 0, -5, -5, -5, 0]
-B = [0, 0, 10, 10, -5, 0]
+# 地形規則與修正表寫在 _terrain.py(ev_attack_path_selection 共用);本產生器以斷點讀值逐案驗證
+from _terrain import AP_PCT as A, DP_PCT as B, gated, modifier, terrain_type  # noqa: E402
 
 cells = (D / "t_map.bin").read_bytes()
 tt = (D / "t_tt.bin").read_bytes()
@@ -22,21 +21,7 @@ assert [struct.unpack_from("<i", mods, 0x18 + 4 * k)[0] for k in range(6)] == B
 
 
 def ttype(x: int, y: int) -> int:
-    tile = struct.unpack_from("<H", cells, 4 + 4 * (y * W + x))[0] & 0x3FF
-    return tt[tile * 4 + 1]
-
-
-def gated(r: bytes) -> bool:
-    """unit_uses_move_cost_row19 的靜態規則。"""
-    if r[7] == 0x1C:
-        return False
-    return r[0x20] == 0x13 or r[0x1F] in (4, 5)
-
-
-def tdiv(a: int, b: int) -> int:
-    """idiv:向零截斷。"""
-    q = abs(a) // abs(b)
-    return q if (a >= 0) == (b > 0) else -q
+    return terrain_type(cells, tt, x, y)
 
 
 # 斷點讀值由當時 terr_test.sh 的終端輸出(原始紀錄,見 _console.py)解析;None = 該斷點沒有觸發
@@ -71,8 +56,8 @@ for tag, (bap, bdp, bdmg) in bp.items():
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
     ap, dp = w(a, 0x48), w(d, 0x4A)
     ta, td = ttype(a[0], a[1]), ttype(d[0], d[1])
-    apm = None if gated(a) else tdiv(ap * A[ta], 100)
-    dpm = None if gated(d) else tdiv(dp * B[td], 100)
+    apm = modifier(ap, A, ta, a)
+    dpm = modifier(dp, B, td, d)
     dmg = max(0, ((ap + (apm or 0)) - (dp + (dpm or 0))) * 9 // 10)
     assert dmg < 18  # 亂數項為 0
     hp_drop = w(d, 0x40) - w(post[11 * 80:12 * 80], 0x40)

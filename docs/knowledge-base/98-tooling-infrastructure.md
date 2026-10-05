@@ -7360,3 +7360,28 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
   從完整記錄重切到 stdout 比對,7/7 IDENTICAL;`--selftest` 的反向對照(行號差一 → DIFFERENT、記錄不在 →
   SOURCE_MISSING)通過。
 - 推論標記:`ev_level_up` 把 13:40 的 `dlg_step.sh LB 2` 依時間歸到 LA 對話的最後兩步(指令本身沒寫明)。
+
+## 2026-10-05 證據產生器:地形修正改由 DOSBox-X 傾印計算、LB 歸屬改由斷點輸出內容確認
+
+上一節留下的兩個推論逐項處理([`evidence/generators/README.md`](evidence/generators/README.md))。
+
+- **`ev_attack_path_selection` 的地形修正**:原本是依 doc 規則手寫的表。M3 攻擊後同一個指令其實傾印了地圖格
+  (`m_map3.bin`),並以地形表印出每個變動單位所在格的類型;`m_map3.bin` 與地形測試開始前的 `t_map.bin` 逐 byte 相同,
+  所以 M1~M3 期間地圖沒變。地形規則抽成共用的 `_terrain.py`(`ev_terrain_modifier` 以斷點讀值驗證同一份程式碼),
+  產生器改為從傾印計算每一擊的修正,並檢查:攻擊前後位置的類型相同(結果不取決於在哪一格出手)、終端印出的類型等於計算值、
+  跳過判定的欄位攻擊前後相同。另加對照:只有 M3 的 DOSBox-X HP 實測能區分有無地形修正(盜賊 AP 24 站類型 0,+1);M1、M2 兩種預測相同。
+  計算結果找出手寫表的一個錯:三輪第一擊(索爾攻擊盜賊)的 `attacker_terrain_mod` 記成 0,但索爾種族 5、`+7` = 0x20,
+  修正被跳過,應為 null;AP 19 × 5% 向零截斷也是 0,所以傷害與 DOSBox-X HP 驗證都不受影響,錯誤一直沒被擋下。證據檔更正這 3 個欄位與說明。
+  `mut_terrain_rules.py`:規則的 7 個變異全被 `ev_terrain_modifier` 擋下,產生器的 4 個變異全被 `ev_attack_path_selection` 擋下;
+  「攻方修正改看守方的格子」在後者存活(出手與被打的單位全站類型 0,這份資料無法區分),不列入。
+- **`ev_level_up` 的 LB 歸屬**:改由 DOSBox-X 斷點輸出內容確認,不再只靠時間。`dlg_step.sh LB 2` 的輸出沒有攻擊停點;唯一的成長停點是
+  `unit+0x46`(MaxMP),新一次升級會從 `unit+0x37` 開始;成長列指標 0x1f4209 與訊息序號 0x1ee 接續 LA 前一段
+  (0x1f4201..0x1f4207、0x1ea..0x1ed);`post_LA.bin` 的 MaxMP 增量 2 等於它。產生器新增這些斷言與訊息序號連續的檢查;
+  `mut_console_level_terrain.py` 加兩個模擬「其實是另一次升級」的變異(成長停點從 `unit+0x37` 開始、含攻擊停點),都被擋下。
+- **摘錄的完整記錄**:`rebuild_excerpts.py` 原本只能在 WSL 的 `~/fd2-run-harness-*` 還在時執行。6 份完整 DOSBox-X 記錄
+  (約 27 GB)以 xz 壓縮備份到倉庫外的本機備份夾(約 134 MB,備份時逐份解壓比對 sha256、來源大小與 mtime 前後不變);
+  v21 的大小與 sha256 另與 `trace_excerpt.txt` 切出當時印下的值相同。程式加上 `SOURCE_LOGS`(每份的大小與 sha256)、
+  大小不符時回報 `SOURCE_CHANGED`,以及 `--from-backup`:還原到 WSL 暫存目錄、逐份驗 sha256、以同一組切法重切後刪除暫存目錄。
+  從 WSL 原記錄與從備份各重切一次,都是 7/7 IDENTICAL;把 HOME 指到空目錄時 7 個都是 SOURCE_MISSING(證明備份模式讀的是還原的那份)。
+  `--selftest` 加 3 個反向對照(大小不符 → SOURCE_CHANGED;備份內容不符、備份清單與 `SOURCE_LOGS` 不一致 → 拒絕還原),6/6 通過。
+- 仍然成立的限制:v11 當次 `0018` 寫成哪個 byte 維持 INFERRED(當時沒有傾印)。

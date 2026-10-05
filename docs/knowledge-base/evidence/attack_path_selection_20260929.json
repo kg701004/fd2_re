@@ -1,5 +1,5 @@
 {
- "note": "DOSBox-X 斷點停點(函式入口,[ESP] 返回位址、[ESP+4]/[ESP+8] 前兩個參數)與攻擊前後單位記錄的 HP 差;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每回合前:玩家其餘 4 人設已行動,索爾攻擊盜賊 #11 後自動進入友軍與敵方回合。predicted 依 (AP+地形修正-DP-地形修正)*9//10,攻守數值皆 <= 17 或整除使亂數項為 0;地形修正 null = 該方種族 5 被跳過。",
+ "note": "DOSBox-X 斷點停點(函式入口,[ESP] 返回位址、[ESP+4]/[ESP+8] 前兩個參數)與攻擊前後單位記錄的 HP 差;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每回合前:玩家其餘 4 人設已行動,索爾攻擊盜賊 #11 後自動進入友軍與敵方回合。predicted 依 (AP+地形修正-DP-地形修正)*9//10,攻守數值皆 <= 17 或整除使亂數項為 0。地形修正由 M3 同一指令傾印的地圖格(m_map3.bin,與地形測試的 t_map.bin 相同)、地形表與修正表依 unit_uses_move_cost_row19 與 scene_attack_resolve 的規則算出(ev_terrain_modifier 以斷點驗證);null = 該方被跳過(索爾種族 5)。只有 M3 的 HP 實測能區分有無地形修正。",
  "rounds": {
   "M1": {
    "flag_53af9": 1,
@@ -40,7 +40,7 @@
      "attacker": 0,
      "defender": 11,
      "attacker_ap": 19,
-     "attacker_terrain_mod": 0,
+     "attacker_terrain_mod": null,
      "defender_dp": 0,
      "defender_terrain_mod": 0,
      "predicted": 17
@@ -108,7 +108,7 @@
      "attacker": 0,
      "defender": 11,
      "attacker_ap": 19,
-     "attacker_terrain_mod": 0,
+     "attacker_terrain_mod": null,
      "defender_dp": 0,
      "defender_terrain_mod": 0,
      "predicted": 17
@@ -230,7 +230,7 @@
      "attacker": 0,
      "defender": 11,
      "attacker_ap": 19,
-     "attacker_terrain_mod": 0,
+     "attacker_terrain_mod": null,
      "defender_dp": 0,
      "defender_terrain_mod": 0,
      "predicted": 17

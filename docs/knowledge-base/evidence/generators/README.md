@@ -34,7 +34,7 @@
 | `ev_ai_spell_path.py` | `ai_spell_path_20260929.json` | — |
 | `ev_ai_spell_score.py` | `ai_spell_score_20260930.json` | — |
 | `ev_attack_exp.py` | `attack_exp_20260929.json` | — |
-| `ev_attack_path_selection.py` | `attack_path_selection_20260929.json` | — |
+| `ev_attack_path_selection.py` | `attack_path_selection_20260929.json` | `mut_terrain_rules.py`(4) |
 | `ev_collect_targets_in_range.py` | `collect_targets_in_range_20260929.json` | — |
 | `ev_heal_spell_targets.py` | `heal_spell_targets_20260929.json` | — |
 | `ev_level_up.py` | `level_up_20260929.json` | — |
@@ -42,7 +42,7 @@
 | `ev_real_kill_corpse.py` | `real_kill_corpse_20260930.json` | — |
 | `ev_rest_recover.py` | `rest_recover_20260930.json` | — |
 | `ev_spell9_path.py` | `spell9_path_20260930.json` | — |
-| `ev_terrain_modifier.py` | `terrain_modifier_20260929.json` | — |
+| `ev_terrain_modifier.py` | `terrain_modifier_20260929.json` | `mut_terrain_rules.py`(7) |
 | `ev_terrain_types_3_5.py` | `terrain_types_3_5_20260930.json` | — |
 
 這批原本的腳本後段還會更新 `docs/data/function_names.json`(一次性補丁,當時已套用並提交);
@@ -59,6 +59,7 @@ python run_all.py ev_s76       # 只跑一個
 python run_all.py --selftest   # 比對器與輸入檢查的正反對照
 python mut_s76.py              # 變異測試:先跑未變異對照,再逐一跑每個變異(都要以 AssertionError 失敗)
 python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清單逐 byte 比對(掃描約 30 GB)
+python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在時:從壓縮備份還原、驗 sha256 後重切
 ```
 
 `run_all.py` 與變異測試都不會覆寫已提交的證據檔。要更新證據時才直接執行產生器(`python ev_s76.py`),
@@ -89,12 +90,17 @@ python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清�
   換之前逐值比對,解析值等於原抄寫值;並加上交叉檢查:同一段終端輸出印出的其他欄位(攻擊後 EX、HP、座標等)
   必須等於同一案例的傾印,證明那段輸出與那份傾印是同一次執行,不是只靠順序對上。
   `mut_console_level_terrain.py`、`mut_console_spell_path.py`、`mut_console_ai_score.py`、`mut_console_action_rest.py`
-  在記憶體中竄改終端文字或交換案例段落(共 38 個變異),每一個都要讓產生器以 AssertionError 失敗。
+  在記憶體中竄改終端文字或交換案例段落(共 40 個變異),每一個都要讓產生器以 AssertionError 失敗。
 - **摘錄**:幾個輸入是從 WSL 裡的大型記錄(`~/fd2-run-harness-<run>/LOGCPU.TXT` 每份約 5 GB、`dosbox-x.log`)
   切出的摘錄(`exc_entries`、`stos_writes`、`trace_excerpt`、`post_reset_trace`、`post_reset_messages`、
   `guard_reentry_lines`、v33 的 `dosbox-x_log_excerpt`)。`python rebuild_excerpts.py` 依當時的切法從完整記錄
   重切到 stdout,與清單逐 byte 比對(只讀記錄檔,不啟動 DOSBox-X);`--selftest` 是反向對照。
-  完整記錄不在時回報 `SOURCE_MISSING`。
+  完整記錄不在時回報 `SOURCE_MISSING`,大小與程式裡的 `SOURCE_LOGS` 不符(例如被新的執行覆寫)時回報 `SOURCE_CHANGED`。
+  6 份完整記錄(5 份 LOGCPU.TXT、v33 的 dosbox-x.log,約 27 GB)另以 xz 壓縮備份在倉庫外的本機備份夾
+  (`fd2_re_evidence_raw_backup/full_logs_20261005/`,約 134 MB,`full_logs_manifest.tsv` 記大小與 sha256;
+  備份時逐份解壓比對)。WSL 裡的記錄不在時改用 `python rebuild_excerpts.py --from-backup <備份夾>`:解壓到 WSL 暫存目錄、
+  逐份以 `SOURCE_LOGS` 驗 sha256,再用同一組切法重切,結束後刪除暫存目錄。v21 的大小與 sha256 另與 `trace_excerpt.txt`
+  切出當時印下的值相同。
 
 ## 限制
 
@@ -105,14 +111,20 @@ python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清�
 - `ev_ai_physical_untested_branches` 記錄的是 2026-10-01 當時 `docs/data/exe_tables/native_movement_cost_rows.json`
   每列錯一個 byte 的狀態(ae1ff0f3 已修正),所以 `tr_analyze.py` 以 `_evpaths.git_blob()` 讀當時的 blob,
   不讀工作樹;讀不到(例如淺層 clone)時 exit 3。
-- `ev_level_up`:13:40 那次 `dlg_step.sh LB 2` 依時間與 `post_LA.bin` 的寫入時間歸到 LA 對話的最後兩步
-  (程式裡的 `ALIAS`),另以「5 個屬性指標各出現一次」把關;這是推論,指令本身沒有寫明。
-- `ev_attack_path_selection` 的 `hits` 表:攻守雙方由停點、AP / DP 由攻擊前傾印把關;地形修正是依 doc 規則
-  手算的預測,不由傾印讀出。
+- `ev_level_up`:13:40 那次 `dlg_step.sh LB 2` 的標籤寫錯(程式裡的 `ALIAS` 把它歸到 LA),歸屬由 DOSBox-X 斷點輸出內容確認:
+  沒有攻擊停點;唯一的成長停點是 `unit+0x46`(MaxMP),不是新一次升級的開頭 `unit+0x37`;成長列指標與訊息序號
+  接續 LA 前一段;`post_LA.bin` 的 MaxMP 增量等於它。`mut_console_level_terrain.py` 模擬「其實是另一次升級」的
+  兩種輸出(從 `unit+0x37` 開始、含攻擊停點),都會被擋下。
+- `ev_attack_path_selection` 的 `hits` 表:攻守雙方由停點、AP / DP 由攻擊前傾印把關;地形修正由 M3 同一指令傾印的
+  地圖格 `m_map3.bin`(與地形測試的 `t_map.bin` 逐 byte 相同)依 `_terrain.py` 的規則算出,並比對那次終端輸出
+  印出的地形類型。只有 M3 的 DOSBox-X HP 實測能區分有無地形修正(產生器以對照斷言);M1、M2 與 null(跳過)欄位是規則的
+  套用,規則本身由 `ev_terrain_modifier` 的斷點讀值驗證(`mut_terrain_rules.py`)。原本手寫的表把 3 擊的
+  `attacker_terrain_mod` 記成 0(索爾種族 5,應為 null;傷害不受影響),已更正。
 
 ## 其他腳本
 
-- 共用模組:`_evpaths.py`(路徑、輸入檢查、`rel()`、`git_blob()`)、`_console.py`(終端輸出)、`_mutrun.py`(變異測試)。
+- 共用模組:`_evpaths.py`(路徑、輸入檢查、`rel()`、`git_blob()`)、`_console.py`(終端輸出)、`_mutrun.py`(變異測試)、
+  `_terrain.py`(地形修正規則,`ev_terrain_modifier` 與 `ev_attack_path_selection` 共用)。
 - 輔助模組(產生器會匯入或執行):`an_f.py`、`an_ev.py`、`live.py`、`rng.py`、`sim_path.py`、`sim_dialog.py`、
   `dato_match.py`、`walk_after.py`;分析模組 `pa_analyze.py`、`tr_analyze.py`、`sl_analyze.py`、`sel_analyze.py`
   (原本把結果寫成 `.wsl_build` 裡的 `analyze*.json` 再由證據腳本讀回,現在產生器直接呼叫重算)。

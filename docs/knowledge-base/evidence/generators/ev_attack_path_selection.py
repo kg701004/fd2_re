@@ -8,6 +8,7 @@ from pathlib import Path
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
+from _terrain import AP_PCT, DP_PCT, gated, modifier, terrain_type  # noqa: E402
 EVI = out_path("attack_path_selection_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
 
@@ -64,45 +65,82 @@ for tag, info in rounds.items():
             assert flag_rb == [f"{info['flag_53af9']:02x}"], (tag, flag_rb)
         info["stops"] += bp_stops(stem)
 
-# 每一擊的預測:(攻方, 守方, 攻方 AP, 攻方地形修正, 守方 DP, 守方地形修正)
+# 每一擊的(攻方, 守方);AP / DP 讀攻擊前傾印,地形修正由地圖傾印依 _terrain.py 的規則算出
 hits = {
-    "M1": [(0, 11, 19, 0, 0, 0), (11, 0, 19, 0, 0, None), (11, 5, 19, 0, 8, 0)],
-    "M2": [(0, 11, 19, 0, 0, 0), (11, 0, 19, 0, 0, None), (11, 6, 19, 0, 11, 0)],
-    "M3": [(0, 11, 19, 0, 0, 0), (11, 0, 19, 0, 0, None), (11, 0, 19, 0, 0, None), (0, 11, 19, None, 0, 0),
-           (13, 9, 24, 1, 8, 0), (17, 9, 24, 1, 8, 0)],
+    "M1": [(0, 11), (11, 0), (11, 5)],
+    "M2": [(0, 11), (11, 0), (11, 6)],
+    "M3": [(0, 11), (11, 0), (11, 0), (0, 11), (13, 9), (17, 9)],
 }
-_ROW = re.compile(r"(?m)^(\d+) (?:side \d+ )?\((\d+), (\d+)\) -> \((\d+), (\d+)\) .*?HP (\d+) -> (\d+)\b")
+# 地圖:M3 攻擊後同一個指令傾印的 m_map3.bin;與地形測試開始前的 t_map.bin 逐 byte 相同,所以 M1~M3 期間地圖沒變。
+# 地形表與修正表沿用地形測試的傾印(ev_terrain_modifier 以斷點驗證過同一組傾印與規則)。
+cells = (D / "m_map3.bin").read_bytes()
+assert cells == (D / "t_map.bin").read_bytes()
+tt = (D / "t_tt.bin").read_bytes()
+mods = (D / "t_mods.bin").read_bytes()
+assert [struct.unpack_from("<i", mods, 4 * k)[0] for k in range(6)] == AP_PCT
+assert [struct.unpack_from("<i", mods, 0x18 + 4 * k)[0] for k in range(6)] == DP_PCT
+_ROW = re.compile(r"(?m)^(\d+) (?:side \d+ )?\((\d+), (\d+)\) -> \((\d+), (\d+)\) (?:terr (\d+) )?.*?HP (\d+) -> (\d+)\b")
 _PRE = re.compile(r"(?m)^(\d+) \((\d+), (\d+)\) f5 (0x[0-9a-f]+) \+26 (\d+) HP (\d+) AP DP HIT EV (\d+) (\d+) (\d+) (\d+)$")
 out = {}
 for tag, info in rounds.items():
     pre = (D / info["pre"]).read_bytes()
     post = (D / info["post"]).read_bytes()
     w = lambda b, i, o: struct.unpack_from("<H", b, i * 80 + o)[0]
-    loss = {}
-    for (a, d, ap, apm, dp, dpm) in hits[tag]:
-        # 表裡的 AP / DP 必須等於攻擊前傾印(+0x48 / +0x4A);地形修正是依 doc 規則手算的預測,不由傾印讀出
-        assert (ap, dp) == (w(pre, a, 0x48), w(pre, d, 0x4A)), (tag, a, d, ap, dp)
+
+    def terr(i: int) -> int:
+        """單位 i 出手 / 被打時所在格的地形類型。
+
+        出手或被打的位置是攻擊前或攻擊後的位置之一(移動後才攻擊,攻擊後不再移動);兩處類型必須相同,
+        結果才不取決於是哪一處。
+        """
+        t0 = terrain_type(cells, tt, pre[i * 80], pre[i * 80 + 1])
+        assert t0 == terrain_type(cells, tt, post[i * 80], post[i * 80 + 1]), (tag, i)
+        return t0
+
+    loss, loss_no_terrain, rows_hit = {}, {}, []
+    for (a, d) in hits[tag]:
+        ra, rd = pre[a * 80:(a + 1) * 80], pre[d * 80:(d + 1) * 80]
+        # 跳過與否看的欄位(+7、種族、職業)在攻擊前後相同
+        assert gated(ra) == gated(post[a * 80:(a + 1) * 80]) and gated(rd) == gated(post[d * 80:(d + 1) * 80]), (tag, a, d)
+        ap, dp = w(pre, a, 0x48), w(pre, d, 0x4A)
+        apm, dpm = modifier(ap, AP_PCT, terr(a), ra), modifier(dp, DP_PCT, terr(d), rd)
         dmg = max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)
         assert dmg < 18
         loss[d] = loss.get(d, 0) + dmg
+        loss_no_terrain[d] = loss_no_terrain.get(d, 0) + max(0, (ap - dp) * 9 // 10)
+        rows_hit.append((a, d, ap, apm, dp, dpm))
     measured = {}
     for d in loss:
         measured[d] = w(pre, d, 0x40) - w(post, d, 0x40)
     # M1 前 #11 是新設的 999;M2 前 #11 的 HP 在設定時重設為 999
     assert measured == loss, (tag, measured, loss)
+    # 對照:只有 M3(AP 24 的盜賊站類型 0,+1)的實測能區分「有 / 沒有地形修正」;M1、M2 兩種預測相同,
+    # 所以那兩輪的地形修正欄位只是規則的套用,不是實測結果
+    assert (loss_no_terrain != measured) == (tag == "M3"), (tag, loss_no_terrain, measured)
     # 交叉檢查 1:停點紀錄裡每次結算(scene_attack_resolve / map_attack_resolve)的 (arg1, arg2) 依序就是
     # hits 的 (攻方, 守方) —— 預測傷害逐擊對到實際被呼叫的結算,而 HP 差由傾印量得
     assert [(x, y) for f, r, x, y in info["stops"] if f in ("scene_attack_resolve", "map_attack_resolve")] == \
-        [(h[0], h[1]) for h in hits[tag]], tag
+        hits[tag], tag
     # 交叉檢查 2:攻擊後傾印那次的終端輸出(同一次執行)印出的座標與 HP 必須等於兩份傾印,
     # 且每個受傷單位都在其中(證明這兩份傾印就是該次執行的攻擊前後)
     pmeta, ptext = _console.load(RUNS[tag]["post_print"])
     assert f"--out $D/{info['post']}" in pmeta["cmd"] and info["pre"] in pmeta["cmd"], tag
-    rows = {int(m[0]): [int(v) for v in m[1:]] for m in _ROW.findall(ptext)}
+    rows = {int(m[0]): [int(v) for v in m[1:5] + m[6:]] for m in _ROW.findall(ptext)}
+    printed_terr = {int(m[0]): int(m[5]) for m in _ROW.findall(ptext) if m[5]}
     assert set(loss) <= set(rows), (tag, sorted(rows))
     for i, (x0, y0, x1, y1, h0, h1) in rows.items():
         assert [x0, y0, x1, y1, h0, h1] == [pre[i * 80], pre[i * 80 + 1], post[i * 80], post[i * 80 + 1],
                                               w(pre, i, 0x40), w(post, i, 0x40)], (tag, i)
+    # M3 那次指令同時傾印 m_map3.bin 並以 t_tt.bin 印出每個變動單位攻擊後所在格的地形類型(terr):
+    # 必須等於本產生器從同一組傾印算出的類型。那次只印位置或 HP 有變的單位,所以沒印出的出手 / 被打單位
+    # 必須是位置與 HP 都沒變的(例如 M3 的 #17)
+    assert (tag == "M3") == bool(printed_terr), tag
+    if printed_terr:
+        assert f"--out $D/m_map3.bin" in pmeta["cmd"] and "t_tt.bin" in pmeta["cmd"], tag
+        for i in {i for h in hits[tag] for i in h} - set(printed_terr):
+            assert pre[i * 80:i * 80 + 2] == post[i * 80:i * 80 + 2] and w(pre, i, 0x40) == w(post, i, 0x40), (tag, i)
+        for i, t in printed_terr.items():
+            assert t == terrain_type(cells, tt, post[i * 80], post[i * 80 + 1]), (tag, i)
     if tag == "M1":
         # M1 的停點紀錄同一個指令在傾印 m_pre.bin 後立即印出 #0~#4、#11 的記錄
         pre_rows = _PRE.findall(_console.load(RUNS[tag]["stops"][0][1])[1])
@@ -117,7 +155,7 @@ for tag, info in rounds.items():
         "breakpoint_stops": [{"function": f, "return_static": r, "arg1": x, "arg2": y} for f, r, x, y in info["stops"]],
         "hits": [{"attacker": a, "defender": d, "attacker_ap": ap, "attacker_terrain_mod": apm, "defender_dp": dp,
                   "defender_terrain_mod": dpm, "predicted": max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)}
-                 for (a, d, ap, apm, dp, dpm) in hits[tag]],
+                 for (a, d, ap, apm, dp, dpm) in rows_hit],
         "hp_loss_predicted": {str(k): v for k, v in loss.items()},
         "hp_loss_measured": {str(k): v for k, v in measured.items()},
     }
@@ -131,7 +169,9 @@ for tag, info in rounds.items():
 EVI.write_bytes((json.dumps({
     "note": "DOSBox-X 斷點停點(函式入口,[ESP] 返回位址、[ESP+4]/[ESP+8] 前兩個參數)與攻擊前後單位記錄的 HP 差;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。"
             "每回合前:玩家其餘 4 人設已行動,索爾攻擊盜賊 #11 後自動進入友軍與敵方回合。predicted 依 (AP+地形修正-DP-地形修正)*9//10,"
-            "攻守數值皆 <= 17 或整除使亂數項為 0;地形修正 null = 該方種族 5 被跳過。",
+            "攻守數值皆 <= 17 或整除使亂數項為 0。地形修正由 M3 同一指令傾印的地圖格(m_map3.bin,與地形測試的 t_map.bin 相同)、"
+            "地形表與修正表依 unit_uses_move_cost_row19 與 scene_attack_resolve 的規則算出(ev_terrain_modifier 以斷點驗證);"
+            "null = 該方被跳過(索爾種族 5)。只有 M3 的 HP 實測能區分有無地形修正。",
     "rounds": out,
 }, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 print("evidence ok", {k: v["hp_loss_measured"] for k, v in out.items()})

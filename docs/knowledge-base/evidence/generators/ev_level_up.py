@@ -20,22 +20,27 @@ CONSOLE = ["20260929T133650_toolu_01NcNakKdj9hduDCDcgLM6pB", "20260929T133839_to
            "20260929T134310_toolu_01Ad1S5cqftdutFkekBpeMkx", "20260929T134429_toolu_01Hq2Z1fZYtkSS22HyCgtksx",
            "20260929T134636_toolu_01YUqzkmyKQkZgZseDBpnfvp", "20260929T134803_toolu_01RxMYwma4U2gJQgXvZPDgyy"]
 # 每段輸出所屬的案例 = lvl_test.sh / run_case.sh 的最後一個參數、dlg_step.sh / lvl_print.py 的第一個參數。
-# 例外:13:40:00 的 `dlg_step.sh LB 2` 是 LA 升級對話的最後兩步(LB 只用在截圖檔名;LA 的對話 3 步在 13:39:39、
-# post_LA.bin 在 13:40:20 才傾印,中間沒有其他攻擊),併入 LA;下面另以屬性指標恰好各出現一次確認。
+# 例外:13:40:00 的 `dlg_step.sh LB 2` 是 LA 升級對話的最後兩步(LB 只用在截圖檔名),併入 LA。
+# 歸屬由輸出內容確認(見下方 alias_out 的檢查):那段輸出沒有攻擊停點;唯一的成長停點是 unit+0x46(MaxMP),
+# 不是新一次升級的開頭 unit+0x37;成長列指標與訊息序號接續 LA 前一段;post_LA.bin 的 MaxMP 增量等於它。
 ALIAS = {"LB": "LA"}
 SCRIPTS = (("lvl_test.sh", -1), ("run_case.sh", -1), ("dlg_step.sh", 0), ("lvl_print.py", 0))
 STAT_OFF = [0x37, 0x39, 0x3E, 0x42, 0x46]  # 基礎 AP、DP、DX、MaxHP、MaxMP
 GAIN_LINE = re.compile(r"(?m)^  stop: EIP=001BA55A gain\(EBP\)=(\d+) stat_ptr=0x([0-9a-f]+) \(unit\+0x([0-9a-f]+)\) "
-                       r"growth_ptr=0x([0-9a-f]+) ")
+                       r"growth_ptr=0x([0-9a-f]+) msg=0x([0-9a-f]+) ")
 PRINT_LINE = re.compile(r"(?m)^(pre|post) (\d+) lv (\d+) EX (\d+) base AP/DP/DX (\d+) (\d+) (\d+) HP (\d+) (\d+) "
                         r"MP (\d+) (\d+) derived AP DP HIT EV (\d+) (\d+) (\d+) (\d+) bits ([0-9a-f]+) ")
 ORIG_LINE = re.compile(r"(?m)^(\d+) port 0x[0-9a-f]+ class \d+ lv \d+ EX \d+ base AP/DP/DX (\d+) (\d+) (\d+) HP .* "
                        r"derived AP DP HIT EV (\d+) (\d+) (\d+) (\d+) bits ")
 pending, gain_stops, prints, hexrow, orig = {}, {}, {}, {}, {}
+alias_out = []  # (歸入的案例, 該段之前已累積的成長停點數, 該段輸出)
 for stem in CONSOLE:
     meta, text = _console.load(stem)
-    tags = {ALIAS.get(a[k], a[k]) for line in meta["cmd"].splitlines() for s, k in SCRIPTS
-            for a in _console.invocations(line, s)}
+    raw_tags = {a[k] for line in meta["cmd"].splitlines() for s, k in SCRIPTS for a in _console.invocations(line, s)}
+    tags = {ALIAS.get(t, t) for t in raw_tags}
+    if raw_tags & set(ALIAS):
+        (t_,) = tags
+        alias_out.append((t_, len(gain_stops.get(t_, [])), text))
     hexrow |= {m[0]: m[1] for m in re.findall(r"(?m)^(growth now|learn now|growth row 0x1e live) ([0-9a-f ]+)$", text)}
     if not tags:  # 攻擊前原始讀值(L0.bin 傾印的同一次指令)
         orig |= {int(m[0]): tuple(int(v) for v in m[1:]) for m in ORIG_LINE.findall(text)}
@@ -53,9 +58,19 @@ for tag, st in gain_stops.items():
     if st:
         assert [int(m[2], 16) for m in st] == STAT_OFF, (tag, st)
         assert [int(m[3], 16) - int(st[0][3], 16) for m in st] == [0, 2, 4, 6, 8], (tag, st)  # 成長列連續 5 對
+        assert [int(m[4], 16) - int(st[0][4], 16) for m in st] == [0, 1, 2, 3, 4], (tag, st)  # 訊息序號連續
         gains[tag] = [int(m[0]) for m in st]
         gain_unit[tag] = {(int(m[1], 16) - 0x26BDC8) // 0x50 for m in st}  # 屬性指標所在的單位序號
 assert sorted(gains) == ["LA", "LB2", "LD"], gains
+# 併入的輸出必須是同一次升級對話的接續,而不是另一次升級:沒有攻擊停點(0x2fa9f / 0x2fab9),
+# 有成長停點、且接在前段之後(不是從 unit+0x37 重新開始);上面已確認併入後 5 個停點的屬性、成長列與訊息序號連續,
+# 後面再以 post 傾印的屬性增量等於這 5 個成長值確認
+assert [t for t, _, _ in alias_out] == ["LA"], alias_out
+for t_, before, text in alias_out:
+    assert "EIP=001CBA9F" not in text and "EIP=001CBAB9" not in text, t_
+    st = GAIN_LINE.findall(text)
+    assert st and before > 0 and int(st[0][2], 16) != STAT_OFF[0], (t_, before, st)
+    assert gain_stops[t_][before:before + len(st)] == st, t_
 # 成長列上下限(每屬性 [lo, hi) 兩個 byte;上下限相等 = 固定值):LA/LB2 為測試寫入後讀回,LD 為原始列 0x1e
 row = lambda h: [tuple(bytes.fromhex(h)[2 * k:2 * k + 2]) for k in range(5)]
 ORIG_BOUNDS = {"LA": row(hexrow["growth now"]), "LB2": row(hexrow["growth now"]), "LD": row(hexrow["growth row 0x1e live"])}
