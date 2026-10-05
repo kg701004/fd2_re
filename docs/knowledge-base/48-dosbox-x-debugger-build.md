@@ -575,6 +575,11 @@ default server 完全分開,不只是換 session 名字)、自己的工作目錄
 流程捕捉)見 `docs/knowledge-base/58-remake-live-verification-log.md` 續六十六與
 `docs/knowledge-base/35-battle-animation-rendering.md` §9.15。
 
+**續七十五(2026-10-05)補充:當機現場的錄法。** `FD2_TRACE_MODE=LOGL` 讓 `dosbox_exec_trace.sh arm` 改用 LOGL(每行含暫存器、旗標、VM、CR0,約 330 bytes);
+每行都 `endl`,模擬器 E_Exit 時檔案最後一行就是當時的指令,`heavylog` 另外讓 E_Exit 寫出最後 20000 條到 `LOGCPU_INT_CD.TXT`。
+失控之後 Alt+Pause 停不住時,計數用完由 DOSBox-X 自己進除錯器仍然有效。`tools/dosbox_cpulog_escape.py` 從 LOGCPU.TXT 找出最後一次離開指定迴圈的指令。
+退回實際模式後 MEMDUMPBIN 的選擇器是段落(段 × 16 + 位址),`fd2_dosbox_live_helper.sh mem-dump` 現在會依 Register Overview 的模式擋下誤用。實例見 doc98 續七十五。
+
 ## 11. DOSBox-vs-remake byte-exact pixel diff harness(`tools/dosbox_diff_harness.sh`,2026-08-26)
 
 §9 的 `tools/dosbox_harness.sh` 是給互動式/視覺檢查用的通用 N-way harness,`screenshot`子指令

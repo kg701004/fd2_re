@@ -52,6 +52,28 @@
 #       workdir defaults to ~/fd2-run (doc48 §8.4 canonical single-instance dir);
 #       pass a harness instance's workdir (~/fd2-run-harness-<name>) if using
 #       tools/dosbox_harness.sh instead.
+#       FD2_TRACE_MODE=LOGC|LOGS|LOG|LOGL picks the debugger log variant (default
+#       LOGC). LOGL writes, per instruction, a PIC timestamp, CS:EIP, disassembly,
+#       instruction bytes, all GP registers, DS/ES/FS/GS/SS, the flags, VM and CR0
+#       (debug.cpp LogInstruction, cpuLogType 2) -- ~300 bytes/line instead of 14,
+#       so size the count accordingly. Every variant ends each line with `endl`, so
+#       the file is flushed per instruction: if dosbox-x dies (E_Exit) mid-trace,
+#       the last line on disk is the instruction it was executing. The count is a
+#       C int in debug.cpp: at most 7FFFFFFF.
+#       Breakpoints stay armed during the trace (ActivateBreakpointsExceptAt), so
+#       BPDEL * first unless you want the trace interrupted by one.
+#       Crash capture (續七十五): when the guest is expected to run away (a CPU
+#       spinning in a real-mode INT 6 loop no longer halts on Alt+Pause, and
+#       MEMDUMPBIN / D are then ignored), arm LOGL *before* the runaway starts.
+#       When the count runs out, dosbox-x itself re-enters the debugger from inside
+#       the CPU loop, which works even in that state.
+#
+#   dosbox_exec_trace.sh heavylog <tmux-session>
+#       Sends HEAVYLOG (a toggle: run it once to switch on). With it on, dosbox-x
+#       keeps the last 20000 instructions (LOGCPUMAX) in a ring and E_Exit writes
+#       them to LOGCPU_INT_CD.TXT in the workdir before exiting -- an independent
+#       second record of the instructions that led to an emulator abort. Same
+#       debugger-console precondition as `arm`; send it before `arm` (arm resumes).
 #
 #   dosbox_exec_trace.sh wait-done <tmux-session> <expected-decimal-count> [timeout-s]
 #       Polls LOGCPU.TXT's line count (cheap `wc -l`) every 0.5s until it reaches
@@ -107,13 +129,25 @@ cmd_arm() {
     local session=${1:?usage: arm <tmux-session> <hex-count> [workdir]}
     local hexcount=${2:?usage: arm <tmux-session> <hex-count> [workdir]}
     local workdir=${3:-$HOME/fd2-run}
+    local mode=${FD2_TRACE_MODE:-LOGC}
+    [[ "$mode" =~ ^(LOGC|LOGS|LOG|LOGL)$ ]] || die "FD2_TRACE_MODE must be LOGC, LOGS, LOG or LOGL -- got: $mode"
     [[ "$hexcount" =~ ^[0-9A-Fa-f]+$ ]] || die "hex-count must be plain hex digits, no 0x prefix (debugger console syntax) -- got: $hexcount"
+    # debug.cpp: cpuLogCounter = (int)GetHexValue(...) -- anything above 7FFFFFFF wraps negative and logs nothing
+    (( ${#hexcount} <= 8 && 16#$hexcount >= 1 && 16#$hexcount <= 0x7FFFFFFF )) || die "hex-count must be 1..7FFFFFFF -- got: $hexcount"
     tmux_cmd has-session -t "$session" 2>/dev/null || die "no such tmux session: $session"
     rm -f "$workdir/LOGCPU.TXT"
-    tmux_cmd send-keys -t "$session" -l "LOGC $hexcount"
+    tmux_cmd send-keys -t "$session" -l "$mode $hexcount"
     tmux_cmd send-keys -t "$session" -l $'\r'
-    echo "armed: LOGC $hexcount ($((16#$hexcount)) instructions) on session '$session', workdir $workdir"
+    echo "armed: $mode $hexcount ($((16#$hexcount)) instructions) on session '$session', workdir $workdir"
     echo "game is live again -- send your trigger/advance keys now"
+}
+
+cmd_heavylog() {
+    local session=${1:?usage: heavylog <tmux-session>}
+    tmux_cmd has-session -t "$session" 2>/dev/null || die "no such tmux session: $session"
+    tmux_cmd send-keys -t "$session" -l "HEAVYLOG"
+    tmux_cmd send-keys -t "$session" -l $'\r'
+    echo "sent HEAVYLOG (toggle) to '$session' -- confirm 'Heavy cpu logging on' in the debugger output"
 }
 
 cmd_wait_done() {
@@ -145,6 +179,10 @@ cmd_status() {
     fi
     ls -la "$workdir/LOGCPU.TXT"
     echo "lines: $(wc -l < "$workdir/LOGCPU.TXT")"
+    if [[ -f "$workdir/LOGCPU_INT_CD.TXT" ]]; then
+        ls -la "$workdir/LOGCPU_INT_CD.TXT"
+        echo "heavylog ring lines: $(wc -l < "$workdir/LOGCPU_INT_CD.TXT")"
+    fi
 }
 
 cmd_dedup() {
@@ -163,11 +201,12 @@ main() {
     shift || true
     case "$sub" in
         arm) cmd_arm "$@" ;;
+        heavylog) cmd_heavylog "$@" ;;
         wait-done) cmd_wait_done "$@" ;;
         status) cmd_status "$@" ;;
         dedup) cmd_dedup "$@" ;;
         *)
-            echo "usage: $0 {arm|wait-done|status|dedup} ..." >&2
+            echo "usage: $0 {arm|heavylog|wait-done|status|dedup} ..." >&2
             echo "  see the header comment in this file for full usage" >&2
             exit 2
             ;;

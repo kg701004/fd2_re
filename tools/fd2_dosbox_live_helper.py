@@ -65,8 +65,8 @@ WHAT'S NEW HERE vs. calling tools/dosbox_harness.sh directly
    58-remake-live-verification-log.md, and this project's own
    fd2-dosbox-live-memory-extraction memory reference) into a reusable
    command, with the two sharpest documented footguns baked in as hard/soft
-   guards in the .sh companion: a zero/empty selector is refused outright
-   (doc58: silently returns garbage, not an error -- selectors this project
+   guards in the .sh companion: a zero/empty selector is refused in protected
+   mode (doc58: silently returns garbage, not an error -- selectors this project
    has seen for FD2.EXE are 0170/0178, but per doc58 續四十 do NOT assume
    stability across a fresh boot), and a missing output file after the
    debugger reported success is surfaced as the KNOWN DOSBox-X upstream bug
@@ -1448,7 +1448,9 @@ def build_parser():
     sp.add_argument("--instance", required=True)
     sp.add_argument("--selector", required=True, help="flat selector, hex, NO leading 0x (e.g. 0170) -- "
                                                         "read this from the debugger's Register Overview/GDT; "
-                                                        "0/empty is refused (known garbage-not-error footgun, see module docstring point 3)")
+                                                        "0/empty is refused in protected mode (known garbage-not-error footgun, see module docstring point 3); "
+                                                        "when the Register Overview shows Real/VM86, 0 is the flat read and a non-zero value "
+                                                        "is refused (it would be a paragraph segment: seg*16 + linear)")
     sp.add_argument("--linear", required=True, help="linear address, hex, no leading 0x")
     sp.add_argument("--bytecount", required=True, help="byte count, hex, no leading 0x")
     sp.add_argument("--out", default=None, help="output .bin path; default under .wsl_build/dosbox_live_helper/<instance>/")

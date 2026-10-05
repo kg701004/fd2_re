@@ -7199,3 +7199,52 @@ PowerShell 以 `CommandLine -like '*t_v16.py v16*'` 結束驅動時也比對到�
 CONTINUE / LOAD 沒有另跑標頭完好的對照,完好標頭的走法以同一輪標題重載(返回 0x1f982)為對照。
 
 **登錄。** heap_free_block、blit_rle_image、draw_dialog_cell、title_menu_dispatch 補註。
+
+## 2026-10-05 續七十五:續七十四的兩個未驗證項目 —— 0x89 失控 blit 的三重錯誤路徑、CONTINUE / LOAD 的完好標頭對照(DOSBox-X + 工具改善)
+
+證據 `evidence/runaway_blit_triple_fault_continue_load_control_20261005.json`(DOSBox-X,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,第 25 章戰場 = map 24)。
+原始紀錄在 `.wsl_build/ctr/v21`、`v22`、`v30`~`v32`;LOGL 追蹤檔(每份約 5.4 GB)留在 WSL 的 `~/fd2-run-harness-<名>/LOGCPU.TXT`,不複製。
+證據由 ev_s75.py 重算並逐項 assert;把判準改掉的 10 個變異全部失敗。
+
+**未驗證是不是工具造成的。** 第一項是:續七十四 v16 在失控寫入之後 CPU 掉進實際模式的 INT 6 迴圈,Alt+Pause 停不住,MEMDUMPBIN / D 也不被接受,事後什麼都讀不到。
+第二項不是,只是沒跑。這輪改了三個工具,新增一個:
+
+| 工具 | 改了什麼 | 為什麼 |
+|---|---|---|
+| `tools/dosbox_exec_trace.sh` | `FD2_TRACE_MODE=LOGC/LOGS/LOG/LOGL`;新子指令 `heavylog`;計數限 1..7FFFFFFF;`status` 也列 `LOGCPU_INT_CD.TXT` | 原本只能 LOGC(只有 CS:EIP)。LOGL 每行有暫存器、旗標、VM、CR0,而且每行 `endl`,模擬器死掉時最後一行就是正在執行的指令;計數用完時 DOSBox-X 從 CPU 迴圈內自己停住,INT 6 迴圈裡也停得住 |
+| `tools/dosbox_cpulog_escape.py`(新) | 串流讀 LOGCPU.TXT,找最後一次離開 `--home` 的那一條(中斷出差不算)、出差入口、家裡最後的 stos EDI、逃逸後的模式變化與熱點 | 失控迴圈有幾百次計時器中斷出差,「第一條不在迴圈裡的指令」會被它們騙;selftest 13 組,窮舉突變可達的全部抓到 |
+| `tools/fd2_dosbox_live_helper.sh` `mem-dump` | 讀 Register Overview 的模式:Real / VM86 時選擇器 0 = 平坦讀取、非 0 拒絕(`FD2_MEMDUMP_REAL_SEGMENT=1` 可強制);保護模式照舊拒絕 0 | 退回實際模式後用 `0170` 讀,MEMDUMPBIN 把它當段落讀 0x1700 + 位址(IVT 讀成全 0),看起來像成功 |
+| scratchpad `reach_battle.py` | 截圖確認標題選單才選 LOAD;載入後全黑就報錯 | 固定 30 次 Escape 後盲選,DOSBox-X 開機變慢時按到 START 開成新遊戲(v23~v27 五次);標題在第 27 次 Escape 才出現 |
+
+**0x89 之後發生了什麼(v21:在 0x4ec16 讀到寬 0 時 BPDEL、heavylog、arm LOGL 0x1000000,55 秒錄滿後自停)。**
+
+| 步驟 | 證據 |
+|---|---|
+| blit 的 `stosb` 從 0xa0728 寫到 0x170657,共 851,760 次,每次 EDI 恰好加 1 | LOGL 的 EDI / AL |
+| 期間計時器 IRQ 332 次,全部進 0070:42D1(IDT 0x18a150 的閘),約每 21,600 行一次;最後一次成功時 EDI = 0x16fbab | 中斷出差入口 |
+| 途中蓋掉 0xc4000 的 XMS 入口(原本 `eb 03 90 90 90 fe 38 43 00 cb`,DOSBox-X callback 0x43) | 事前傾印 vs 寫入值 = 事後讀回值 |
+| 0x170010 起是 DOS/4GW 的 GDT(事前傾印裡唯一一組平坦 code + data 描述子在 +0x170 / +0x178);0070 由 `cf5730e0189b0000` 變成 `2424242424242424`(不存在) | 事後以段 0 讀回,1608 bytes 與追蹤還原逐 byte 相同 |
+| 遊戲自己的段暫存器有描述子快取,blit 照跑;下一個 IRQ 要載入 CS 0070 時失敗。第 7,060,957 行(0x4ec6a,CR0 0x11)的下一行就是實際模式 0C5C:0B94(CR0 0x10),中間沒有任何指令 | LOGL |
+| DOSBox-X:三重錯誤 → `On_Software_CPU_Reset`;CMOS 關機碼 9 的路徑以 [40:67] 為堆疊彈出 ES、DS、16 位元 POPA 再 IRET。[40:67] = 0823:09DB,框架是 ES DS 0、POPA 全 0、IP 0B94、CS 0C5C、FLAGS 0200;0x9DB + 26 = 逃逸行的 ESP 0x9F5,32 位元暫存器只有低 16 位變 0 | 原始碼 + 事後讀回 + 算術(關機碼本身沒讀,INFERRED) |
+| DOS/4GW 實際模式碼在 0C5C:1DFE 以 AH = 0Dh `call far [0AEC]` = C3FF:0010 = 0xc4000(XMS 入口,已是 `4c 4c …`)→ 當成程式執行 → C3FF:94C8 的 `63 b9 4b 4b`(arpl,blit 寫的)→ INT 6 → F000:CA60 → iret,循環 3,227,611 次直到計數用完 | LOGL |
+
+**取樣。** 寫入內容隨 blit 讀過頭的來源而變(資源只有 3654 bytes,v21 讀到 0x2a3b30):v16 終點 C3FF:35F7 的 `63 b9 4f 4f` 不是 v21 在那裡寫的值。
+v30、v31(只跑 k = 4)與 v32(照 v11 跑 k = 0..4)的寫入前緣是 0x170152 / 0x170231 / 0x170843,0070 分別被寫成 access 0x5c / 0x5c / 0xfd(0xfd 仍存在,但成了 DPL 3 的 conforming 程式碼段,中斷閘不允許),
+下一條指令都是 0C5C:0B94、ESP 0x9F5,都以 INT 6 迴圈收場。合計 INT 6 五次(v16、v21、v30、v31、v32),E_Exit 只有 v11 一次。
+
+**CONTINUE / LOAD 的完好標頭對照(v22)。** 戰況記錄後在戰場內先下 0x25ecd,戰敗回標題,標頭不改:
+
+| 選項 | 第一次重載的 free | 新調色盤 |
+|---|---|---|
+| CONTINUE(返回 0x1013b) | 0x3d67f → 0x3d685 → 0x3d693 → 0x3d72e → 0x111d5,舊塊標頭變 00060000 | 0x1013e 寫入 0x1fd0c4(同一塊) |
+| LOAD(返回 0x25f79) | 同上 | 0x25f7c 寫入 0x1fd0c4(同一塊) |
+
+續七十四 v19 改壞標頭時兩者都在 0x3d67f 直接返回、新調色盤配到別處(0x20fc38 / 0x22841c)。差別只在標頭。
+
+**作業紀錄。** 突變工具 `verify_selftest_discrimination.py` 啟動時偵測到上一輪留下的 `tools/dump_chapter_beats.py.premutation`,自動還原了 `dump_chapter_beats.py`(另一個 agent 的工作檔,還原後與 HEAD 相同;還原前的內容無法取回)。
+v28 / v29 在暫停期間 WSL 重啟而中斷,作廢。
+
+**仍未驗證。** DOSBox-X v11 那一支(E_Exit「JMP Illegal descriptor type 14」)的確切指令:5 次取樣都沒重現,連照 v11 設定重跑的 v32 也一樣;若再出現,LOGL + heavylog 會記下最後一條指令。
+計時器 IRQ 送不進去時是 #NP 還是 #GP、雙重錯誤用哪個閘,DOSBox-X 在 C++ 裡處理,追蹤看不到。CMOS 關機碼 9 沒有直接讀。
+
+**登錄。** blit_rle_image、title_menu_dispatch 補註。

@@ -529,15 +529,8 @@ cmd_mem_dump() {
     [[ -n "$name" && -n "$selector" && -n "$linear" && -n "$bytecount" && -n "$out" ]] \
         || die "usage: mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>"
 
-    # Footgun #1 (doc58, e.g. line ~2445/~23 of the fd2-dosbox-live-memory-
-    # extraction project-memory reference): a selector of 0 (or empty) does
-    # NOT error -- it silently resolves to an invalid/null selector and
-    # MEMDUMPBIN returns garbage that LOOKS like a successful dump. Refuse
-    # it outright rather than let that happen quietly.
     local sel_clean; sel_clean=$(echo "$selector" | tr '[:upper:]' '[:lower:]' | sed 's/^0x//')
-    if [[ -z "$sel_clean" || "$sel_clean" =~ ^0+$ ]]; then
-        die "selector '$selector' is zero/empty -- this is a KNOWN failure mode, not a typo you can safely ignore: MEMDUMPBIN with selector 0 silently returns garbage instead of erroring (doc58's fd2-dosbox-live-memory-extraction reference, and 58-remake-live-verification-log.md's own record of this exact mistake). Read the REAL flat selector from the debugger's Register Overview or GDT after entering the debugger (this project has seen 0170/0178 for FD2.EXE, but per doc58 續四十 do not assume it is stable across a fresh boot -- verify it this session, every session)."
-    fi
+    [[ -n "$sel_clean" ]] || die "selector is empty"
 
     load_state "$name"
 
@@ -549,6 +542,33 @@ cmd_mem_dump() {
     pane=$(tmux -L "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION" -p 2>/dev/null || true)
     if ! echo "$pane" | grep -q "Code Overview"; then
         echo "WARNING: tmux pane for $name does not currently show the debugger TUI ('Code Overview' not found) -- MEMDUMPBIN will do nothing useful if sent to the normal DOS console. Run 'debugger-status $name' to confirm, or 'dosbox_harness.sh enter-debugger $name' first if you haven't. Proceeding anyway." >&2
+    fi
+
+    # The selector means different things per CPU mode (debug.cpp GetAddress):
+    # protected mode -> descriptor base + offset; real mode / VM86 -> seg*16 +
+    # offset. The Register Overview prints the mode right after SS=xxxx
+    # (Real / Pr16 / Pr32 / VM86).
+    local cpu_mode
+    cpu_mode=$(echo "$pane" | grep -oE 'SS=[0-9A-Fa-f]{4} +(Real|Pr16|Pr32|VM86)' | head -1 | awk '{print $2}')
+    if [[ "$cpu_mode" == "Real" || "$cpu_mode" == "VM86" ]]; then
+        # 續七十五 (doc98): after a runaway write triple-faulted FD2 back to real
+        # mode, `--selector 0170` silently read 0x1700 + linear (paragraph
+        # 0170), i.e. garbage that looked like a successful dump. In real mode
+        # selector 0 IS the flat read; a non-zero value is almost certainly a
+        # protected-mode selector carried over by mistake.
+        if [[ ! "$sel_clean" =~ ^0+$ && "${FD2_MEMDUMP_REAL_SEGMENT:-0}" != "1" ]]; then
+            die "CPU is in $cpu_mode mode: MEMDUMPBIN treats '$selector' as a paragraph segment (address = 0x$sel_clean*16 + linear), not a descriptor. Use selector 0 for a flat linear read, or set FD2_MEMDUMP_REAL_SEGMENT=1 if you really mean seg:off."
+        fi
+        echo "NOTE: CPU is in $cpu_mode mode -- address = 0x$sel_clean*16 + 0x$linear" >&2
+    else
+        # Footgun #1 (doc58, e.g. line ~2445/~23 of the fd2-dosbox-live-memory-
+        # extraction project-memory reference): in protected mode a selector of
+        # 0 does NOT error -- it silently resolves to the null selector and
+        # MEMDUMPBIN returns garbage that LOOKS like a successful dump. Refuse it
+        # outright (also when the mode could not be read from the pane).
+        if [[ "$sel_clean" =~ ^0+$ ]]; then
+            die "selector '$selector' is zero/empty (CPU mode: ${cpu_mode:-unknown}) -- this is a KNOWN failure mode, not a typo you can safely ignore: in protected mode MEMDUMPBIN with selector 0 silently returns garbage instead of erroring (doc58's fd2-dosbox-live-memory-extraction reference, and 58-remake-live-verification-log.md's own record of this exact mistake). Read the REAL flat selector from the debugger's Register Overview or GDT after entering the debugger (this project has seen 0170/0178 for FD2.EXE, but per doc58 續四十 do not assume it is stable across a fresh boot -- verify it this session, every session). Selector 0 is accepted only when the Register Overview shows Real or VM86."
+        fi
     fi
 
     # Always exactly 3 positional args to MEMDUMPBIN (selector, linear,
