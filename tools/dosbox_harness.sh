@@ -267,6 +267,20 @@ cmd_launch() {
         echo "[$name] mapper: ${FD2_HARNESS_MAPPER}"
     fi
 
+    # Optional DOSBox-X message log (FD2_HARNESS_LOGFILE=1 -> $workdir/dosbox-x.log).
+    #
+    # DOSBox-X's own LOG_MSG lines (debug/debug_gui.cpp DEBUG_ShowMsg) otherwise only reach
+    # the debugger TUI's message pane, which scrolls and dies with teardown. With
+    # [log] logfile set, every line is also fprintf'd + fflush'd to the file, so the
+    # messages a crash prints survive it: the CPU_Exception double/triple-fault lines
+    # (cpu/cpu.cpp, they name the exception number), the CMOS shutdown-byte reset lines
+    # (hardware/memory.cpp On_Software_286_*), and the final E_Exit text.
+    local log_arg=()
+    if [[ "${FD2_HARNESS_LOGFILE:-0}" != "0" ]]; then
+        log_arg=(-set "log logfile=$workdir/dosbox-x.log")
+        echo "[$name] dosbox-x log: $workdir/dosbox-x.log"
+    fi
+
     local audio_env=""
     if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
         local audio_raw="$workdir/sdlaudio.raw"
@@ -282,7 +296,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 

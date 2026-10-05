@@ -1,0 +1,589 @@
+{
+ "_meta": {
+  "topic": "續七十六~七十七:續七十五的三個未驗證項目 —— 計時器 IRQ 失敗的例外種類、CMOS 關機碼、v11 E_Exit 那一支",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "runs": [
+   "v21",
+   "v30",
+   "v31",
+   "v32",
+   "v33"
+  ],
+  "generator": "scratchpad ev_s76.py(變異測試 mut_s76.py)",
+  "raw": ".wsl_build/ctr/v21、v30~v33(v33 = 新跑,FD2_HARNESS_LOGFILE=1)、inj/g1~g4(受控注入);.wsl_build/dosbox_src_6fb8c07"
+ },
+ "A_dosbox_x_source": {
+  "tree": "~/fd2-dosbox-build/dosbox-x(build_timestamp.h GIT_COMMIT_HASH 6fb8c07;執行中二進位 md5 b3084f20ce4b095674e5bc3014573de8,訊息字串都在二進位裡)",
+  "files_sha256": {
+   "cpu.cpp": "34443709c39ec7b796474e2b7da8043190b7fda02a863f8fb5f69196e4088e79",
+   "memory.cpp": "5b6a2449291ad5f6db380cfa916c4eec8b9ba5c48d1f7ace5f8a19878d5e877b",
+   "cmos.cpp": "97184c558680461cba89ad9dfe74603f7cf437a9491df78b6dcf313f7241a878",
+   "debug_gui.cpp": "19441787100eeee57e24fdb850017b940346ef0988038728dbd795035b2207a9",
+   "prefix_none.h": "41015eac74307d6817cf1bb9a2f6f8bde34d8e6038e1cbf5fb05be6468b3e4a9",
+   "prefix_66.h": "baec26694bfdad8a7778da2ab10056214ac10abde07a570433e033172a0fe431",
+   "cpu.h": "78f91868568223d174af552836179baf90ac85eff22e2609a48cb0428b47025f"
+  },
+  "interrupt_gate_order": {
+   "cs_dpl_gt_cpl_GP": 1352,
+   "inner_level_not_present_NP": 1360,
+   "same_level_not_present_NP": 1437,
+   "non_code_E_Exit": 1457,
+   "meaning": "CPU_CHECK_EXCEPT 有效時,閘的 CS 描述子 DPL > CPL 先丟 #GP,輪不到 present 檢查(#NP)"
+  },
+  "double_triple": {
+   "double": 1160,
+   "triple": 1149
+  },
+  "shutdown_dispatch": {
+   "0x05_0x0A": "On_Software_286_reset_vector:CS:IP = [40:67],EAX 0x2010000、ESP 0x4F8、DS 0040",
+   "0x09": "On_Software_286_int15_block_move_return:SS:SP = [40:67],彈出 ES、DS、POPA、IRET,共 26 bytes",
+   "other": "throw int(3) = 整機重置"
+  },
+  "jmp_e_exit": {
+   "line": 1913,
+   "callers": {
+    "prefix_none.h": [
+     "CASE_W(0xea)",
+     "case 0x05:"
+    ],
+    "prefix_66.h": [
+     "CASE_D(0xea)",
+     "case 0x05:"
+    ]
+   },
+   "meaning": "只有保護模式(非 V86)的遠跳 JMP Ap / JMP Ep 會走到;印出的 14 是十六進位,= DESC_DATA_ED_RO_NA(資料段、向下擴展、唯讀),CPU_JMP 的 switch 沒有資料段的 case"
+  }
+ },
+ "B_fault_class": {
+  "runs": {
+   "v21": {
+    "idt_gates_0x08_0x0d": {
+     "0x08": {
+      "selector": "0070",
+      "access": "0x8e"
+     },
+     "0x0d": {
+      "selector": "0070",
+      "access": "0x8e"
+     }
+    },
+    "descriptors": {
+     "0018": {
+      "pre": {
+       "raw": "ffffc0c5009b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "2525252525252525",
+       "access": "0x25",
+       "p": 0,
+       "dpl": 1,
+       "type": "0x05"
+      }
+     },
+     "0070": {
+      "pre": {
+       "raw": "cf5730e0189b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "2424242424242424",
+       "access": "0x24",
+       "p": 0,
+       "dpl": 1,
+       "type": "0x04"
+      }
+     },
+     "0080": {
+      "pre": {
+       "raw": "3f5e2048179a0000",
+       "access": "0x9a",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1a"
+      },
+      "post": {
+       "raw": "5c5c5c5c5c5c5c5c",
+       "access": "0x5c",
+       "p": 0,
+       "dpl": 2,
+       "type": "0x1c"
+      }
+     }
+    },
+    "cpl": 0,
+    "predicted_fault": "GP(13)",
+    "escape_line": 7060958,
+    "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"
+   },
+   "v30": {
+    "idt_gates_0x08_0x0d": {
+     "0x08": {
+      "selector": "0070",
+      "access": "0x8e"
+     },
+     "0x0d": {
+      "selector": "0070",
+      "access": "0x8e"
+     }
+    },
+    "descriptors": {
+     "0018": {
+      "pre": {
+       "raw": "ffffc0c5009b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "2424242424242424",
+       "access": "0x24",
+       "p": 0,
+       "dpl": 1,
+       "type": "0x04"
+      }
+     },
+     "0070": {
+      "pre": {
+       "raw": "cf5730e0189b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "5c5c5c5c5c5c5c5b",
+       "access": "0x5c",
+       "p": 0,
+       "dpl": 2,
+       "type": "0x1c"
+      }
+     },
+     "0080": {
+      "pre": {
+       "raw": "3f5e2048179a0000",
+       "access": "0x9a",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1a"
+      },
+      "post": {
+       "raw": "5d5d5d5d5d5d5d5d",
+       "access": "0x5d",
+       "p": 0,
+       "dpl": 2,
+       "type": "0x1d"
+      }
+     }
+    },
+    "cpl": 0,
+    "predicted_fault": "GP(13)",
+    "escape_line": 7024284,
+    "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"
+   },
+   "v31": {
+    "idt_gates_0x08_0x0d": {
+     "0x08": {
+      "selector": "0070",
+      "access": "0x8e"
+     },
+     "0x0d": {
+      "selector": "0070",
+      "access": "0x8e"
+     }
+    },
+    "descriptors": {
+     "0018": {
+      "pre": {
+       "raw": "ffffc0c5009b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "2424242424242424",
+       "access": "0x24",
+       "p": 0,
+       "dpl": 1,
+       "type": "0x04"
+      }
+     },
+     "0070": {
+      "pre": {
+       "raw": "cf5730e0189b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "5c5c5c5c5c5c5c5c",
+       "access": "0x5c",
+       "p": 0,
+       "dpl": 2,
+       "type": "0x1c"
+      }
+     },
+     "0080": {
+      "pre": {
+       "raw": "3f5e2048179a0000",
+       "access": "0x9a",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1a"
+      },
+      "post": {
+       "raw": "5d5d5d5d5d5d5d5d",
+       "access": "0x5d",
+       "p": 0,
+       "dpl": 2,
+       "type": "0x1d"
+      }
+     }
+    },
+    "cpl": 0,
+    "predicted_fault": "GP(13)",
+    "escape_line": 7047177,
+    "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"
+   },
+   "v32": {
+    "idt_gates_0x08_0x0d": {
+     "0x08": {
+      "selector": "0070",
+      "access": "0x8e"
+     },
+     "0x0d": {
+      "selector": "0070",
+      "access": "0x8e"
+     }
+    },
+    "descriptors": {
+     "0018": {
+      "pre": {
+       "raw": "ffffc0c5009b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     },
+     "0070": {
+      "pre": {
+       "raw": "cf5730e0189b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     },
+     "0080": {
+      "pre": {
+       "raw": "3f5e2048179a0000",
+       "access": "0x9a",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1a"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     }
+    },
+    "cpl": 0,
+    "predicted_fault": "GP(13)",
+    "escape_line": 7051374,
+    "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"
+   },
+   "v33": {
+    "idt_gates_0x08_0x0d": {
+     "0x08": {
+      "selector": "0070",
+      "access": "0x8e"
+     },
+     "0x0d": {
+      "selector": "0070",
+      "access": "0x8e"
+     }
+    },
+    "descriptors": {
+     "0018": {
+      "pre": {
+       "raw": "ffffc0c5009b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     },
+     "0070": {
+      "pre": {
+       "raw": "cf5730e0189b0000",
+       "access": "0x9b",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1b"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     },
+     "0080": {
+      "pre": {
+       "raw": "3f5e2048179a0000",
+       "access": "0x9a",
+       "p": 1,
+       "dpl": 0,
+       "type": "0x1a"
+      },
+      "post": {
+       "raw": "fdfdfdfdfdfdfdfd",
+       "access": "0xfd",
+       "p": 1,
+       "dpl": 3,
+       "type": "0x1d"
+      }
+     }
+    },
+    "cpl": 0,
+    "predicted_fault": "GP(13)",
+    "escape_line": 7019474,
+    "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"
+   }
+  },
+  "v33_log": {
+   "source": ".wsl_build/ctr/v33/ch25/dosbox-x_log_excerpt.txt(全檔 3,330,262 行,INT 6 迴圈 3,247,840 行)",
+   "sequence": [
+    "CPU_Exception: Exception 13 already in progress, triggering double fault instead",
+    "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
+    "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db. Only weirdos like Windows 3.1 use this... NOT WELL TESTED!"
+   ],
+   "last_rom_write": "ERROR CPU:Write 3 to rom at lin=fffff phys=fffff",
+   "bda_40_67": "0823:09DB",
+   "reset_frame": "0000000000000000000000000000000000000000940b5c0c0002",
+   "prediction_vs_log": "原始碼對 0xfd(DPL 3)預測 #GP(13),記錄檔是 Exception 13;v21(0x24,DPL 1)、v30 / v31(0x5c,DPL 2)同一條判斷也是 #GP,但那幾次沒開記錄檔(預測,未逐字讀到)"
+  }
+ },
+ "C_dos16m_involuntary_switch_guard": {
+  "message": "DOS/16M error: [0]  involuntary switch to real mode",
+  "printed_per_run": {
+   "v21": 2,
+   "v30": 2,
+   "v31": 2,
+   "v32": 2,
+   "v33": 2
+  },
+  "printer": "INT 21h AH=40h,BX=2(stderr),DS=0823;DOSBox-X 再經 INT 10h 印到畫面(v21 r1_trace_end.png 看得到)",
+  "string_in_exe": "FD2.EXE 內嵌的 DOS/4GW(DOS/16M 核心)錯誤表第一條",
+  "segment_0C5C_file_offset": "0x1dd0(v21 重置後執行過的 365 條指令,362 條逐 byte 相同;其餘 3 條是 MZ 重定位 0000 → 0823 兩條、執行期 3e → 66 前綴一條)",
+  "after_message": "0C5C:1DEC~1E11 依序對 8 個 XMS handle 做 AH=0Dh(解鎖)、AH=0Ah(釋放)—— DOS/4GW 的結束清理;第一個 call far [0AEC] 就進了被蓋掉的 XMS 入口 0xc4000",
+  "meaning": "[40:67] 與關機碼 9 是 DOS/4GW 預先設好的防護:CPU 被重置時回到自己的實際模式碼、印錯誤、清理後結束。INT 6 迴圈只是因為清理時呼叫的 XMS 入口已被 blit 蓋掉"
+ },
+ "D_guard_reentry_jmp_0018": {
+  "site": "0C5C:031A~032D smsw / or al,1 / lgdt / lidt / lmsw / jmp 0018:0334(FD2.EXE 位移 0x20EA~0x2101)",
+  "runs": {
+   "v21": {
+    "0018_post": "2525252525252525",
+    "type": "0x05",
+    "predicted_at_jmp": "NP",
+    "entry_lines": [
+     7060958,
+     7063972
+    ],
+    "jmp_0018_between_entries": [
+     7063971
+    ],
+    "xms_call_line": [
+     7064625
+    ],
+    "jmp_0018_before_crash": 51
+   },
+   "v30": {
+    "0018_post": "2424242424242424",
+    "type": "0x04",
+    "predicted_at_jmp": "NP",
+    "entry_lines": [
+     7024284,
+     7027298
+    ],
+    "jmp_0018_between_entries": [
+     7027297
+    ],
+    "xms_call_line": [
+     7027951
+    ],
+    "jmp_0018_before_crash": 53
+   },
+   "v31": {
+    "0018_post": "2424242424242424",
+    "type": "0x04",
+    "predicted_at_jmp": "NP",
+    "entry_lines": [
+     7047177,
+     7050190
+    ],
+    "jmp_0018_between_entries": [
+     7050189
+    ],
+    "xms_call_line": [
+     7050843
+    ],
+    "jmp_0018_before_crash": 56
+   },
+   "v32": {
+    "0018_post": "fdfdfdfdfdfdfdfd",
+    "type": "0x1d",
+    "predicted_at_jmp": "GP",
+    "entry_lines": [
+     7051374,
+     7054385
+    ],
+    "jmp_0018_between_entries": [
+     7054384
+    ],
+    "xms_call_line": [
+     7055038
+    ],
+    "jmp_0018_before_crash": 54
+   },
+   "v33": {
+    "0018_post": "fdfdfdfdfdfdfdfd",
+    "type": "0x1d",
+    "predicted_at_jmp": "GP",
+    "entry_lines": [
+     7019474,
+     7022487
+    ],
+    "jmp_0018_between_entries": [
+     7022486
+    ],
+    "xms_call_line": [
+     7023140
+    ],
+    "jmp_0018_before_crash": 51
+   }
+  },
+  "meaning": "第一次重置後,防護碼印完訊息就照平常的方式回保護模式:jmp 0018:0334。0018 的描述子(0x170028)早被 blit 蓋掉,所以結果完全由那個 byte 的型別決定:v21 0x25(task gate)、v30 / v31 0x24(call gate)不存在 → #NP;v32 / v33 0xfd(DPL 3 conforming)→ #GP;都再三重錯誤 → 第二次重置 → 第二次印訊息 → XMS 清理 → INT 6。若那個 byte 的型別是 0x14,CPU_JMP 直接 E_Exit「JMP Illegal descriptor type 14」—— v11 的訊息"
+ },
+ "E_tools": {
+  "tools/dosbox_harness.sh": "FD2_HARNESS_LOGFILE=1 → -set \"log logfile=<workdir>/dosbox-x.log\";DOSBox-X 的 LOG_MSG 會 fflush 到檔案,當機時的例外 / 重置 / E_Exit 訊息不再只在會被拆掉的除錯器面板裡",
+  "tools/fd2_dosbox_live_helper.sh mem-dump": "續七十五加的模式判斷在 v33 實際擋下了實際模式下的 0170 傾印(r1.json post_dumps = error)"
+ },
+ "F_fault_injection": {
+  "method": "reach_battle.py 進第 25 章戰場 → 除錯器 BP 0070:42D1(計時器 IRQ 入口)→ 刪斷點 → 確認 GDT / IDT 與五次取樣相同 → SM 0170:<描述子線性位址> 寫 8 個相同 byte → 放開。不改 FD2.EXE、不改存檔",
+  "raw": ".wsl_build/ctr/inj/g1~g4",
+  "runs": {
+   "g1": {
+    "selector": "0070",
+    "byte_x8": "0x24",
+    "access": {
+     "p": 0,
+     "dpl": 1,
+     "type": "0x04"
+    },
+    "log": [
+     "CPU_Exception: Exception 13 already in progress, triggering double fault instead",
+     "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
+     "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db"
+    ]
+   },
+   "g2": {
+    "selector": "0070",
+    "byte_x8": "0x5c",
+    "access": {
+     "p": 0,
+     "dpl": 2,
+     "type": "0x1c"
+    },
+    "log": [
+     "CPU_Exception: Exception 13 already in progress, triggering double fault instead",
+     "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
+     "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db"
+    ]
+   },
+   "g3": {
+    "selector": "0018",
+    "byte_x8": "0x54",
+    "access": {
+     "p": 0,
+     "dpl": 2,
+     "type": "0x14"
+    },
+    "log": [
+     "CPU_Exception: Exception 11 already in progress, triggering double fault instead",
+     "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
+     "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db",
+     "E_Exit: JMP Illegal descriptor type 14"
+    ],
+    "heavylog": {
+     "first_fault": "0070:522F mov ds,dx(DX = 0018)× 3:IRQ、#NP 處理、雙重錯誤處理",
+     "cmos": "0C5C:08CA~08D3 out 70,0F;out 71,[10EE] = 09 —— 關機碼 9 是 DOS/4GW 自己每次切回保護模式前寫的",
+     "printed": "DOS/16M error: [0]  involuntary switch to real mode",
+     "last": "0C5C:032D jmp 0018:0334",
+     "same_path_as_v21_steps": 2552
+    }
+   },
+   "g4": {
+    "selector": "0018",
+    "byte_x8": "0x24",
+    "access": {
+     "p": 0,
+     "dpl": 1,
+     "type": "0x04"
+    },
+    "log": [
+     "E_Exit: Illegal descriptor type 1F for int D"
+    ]
+   }
+  },
+  "g4_control": "0018 改成 0x24(call gate、不存在)時是另一個 E_Exit(IDT 0x0D 的閘被後續亂跑的程式碼弄壞),不是「JMP Illegal descriptor type 14」—— 這句只對應型別 0x14"
+ },
+ "G_v11_branch": {
+  "constraint_from_source": "E_Exit 字串只在 CPU_JMP 的 default:保護模式(非 V86)下以 JMP Ap / JMP Ep 跳到 access & 0x1f = 0x14 的描述子",
+  "mechanism": "每次 0x89 當機都會走到 0C5C:032D jmp 0018:0334(五份追蹤都在第一、二次重置之間各一次);0018 被蓋成型別 0x14 的 byte(0x14、0x34、0x54 … 0xf4)時,這一跳就是 v11 的 E_Exit",
+  "reproduced": "g3:只把 0018 改成 0x54 × 8,DOSBox-X 依序記下 #NP(11)→ 雙重 → 三重 → 關機碼 0x09 → 印訊息一次 → jmp 0018:0334 → 「E_Exit: JMP Illegal descriptor type 14」,與 v11 逐字相同",
+  "verdict": "成因 LOG CONFIRMED(受控重現,路徑與 v21 逐步相同)。v11 那一次 0018 實際被寫成哪個 byte 沒有讀到(當時沒有傾印),這一點是 INFERRED;另外 6 次取樣裡 1 次落在型別 0x14 只是與「8 / 256 個 byte 值」量級相符,不是統計檢定"
+ },
+ "status": {
+  "fault_class": "LOG CONFIRMED:0x24(g1)、0x5c(g2)、0xfd(v33)三種被蓋成的值都是 Exception 13(#GP)",
+  "cmos_shutdown_byte": "LOG CONFIRMED(v33、g1~g3 記錄檔 0x09,0823:09db;g3 逐指令看到 DOS/4GW 自己寫 CMOS 0x0F = 09)",
+  "dos16m_guard": "LOG CONFIRMED(五份追蹤 + g3 的列印內容)",
+  "v11_e_exit": "成因 LOG CONFIRMED(g3 受控重現);v11 當次 0018 的實際 byte INFERRED(沒有傾印)"
+ }
+}

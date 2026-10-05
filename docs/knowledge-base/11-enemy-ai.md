@@ -1130,6 +1130,7 @@ doc98 續六十一以真實擊殺重測(DOSBox-X):敵人 #11 打死 NPC #7 後,#
 **續七十三(DOSBox-X + 靜態)**:說話者只在名冊時,名冊裡同 id 的最後一筆勝出;同 id 的戰場單位已陣亡時用那筆陣亡紀錄、不看名冊。兩邊都沒有時頭像索引真的讀線性位址 7(改成 0x4b 就載入頭像 75),≥ 136 時讀到偏移表外的資料:0x89 讓 DOSBox-X 當掉,0xf0 印 Out of Memory 結束。調色盤區塊標頭改壞後,戰敗回標題的那次重新載入同樣只洩漏、不當掉;free 的往後走訪只有在釋放兩塊開機時配置的 AIL 記憶體時才會碰到假標頭。
 **續七十四(DOSBox-X + 靜態)**:線性 7 = 0x89 時,dialog 在 0x16200 直接以 blit_rle_image 畫假資源;寬 0 讓 32 位元 loop 跑 2^32 次,第一列寫不完,記憶體一路被寫壞,DOSBox-X 的結束方式每次不同(E_Exit,或卡在 INT 6)。調色盤區塊標頭改壞時,「離開戰場」結束程式的路上 AIL_shutdown 會釋放開機時配置的兩塊 AIL 記憶體,走訪因此把假標頭當成空閒節點,但只讀到 16 MB 外的 0xffffffff,不當掉。同樣的插入在遊戲中發生時,後果是洩漏一塊 8 KB、空閒數多 1,以及調色盤第 0 色在下一次上傳時變成橘粉色。標題選 CONTINUE / LOAD 的第一次調色盤重載遇到改壞的標頭,同樣只是洩漏。
 **續七十五(DOSBox-X LOGL 追蹤)**:0x89 的失控 blit 先蓋掉 DOSBox-X 的 XMS 入口(0xc4000),再蓋掉 DOS/4GW 的 GDT(0x170010);下一次計時器中斷載入 CS 0070 失敗 → 三重錯誤 → CPU 重置退回 DOS/4GW 的實際模式碼 → 它呼叫已被蓋掉的 XMS 入口 → INT 6 迴圈。CONTINUE / LOAD 在標頭完好時會真的釋放舊調色盤、配回同一塊。詳見 doc98 續七十五。
+**續七十六~七十七(DOSBox-X 記錄檔 + 原始碼 + 受控注入)**:續七十五的計時器中斷失敗是 #GP(0070 被蓋成的 DPL 都 > 0;0x24、0x5c、0xfd 三種值都讀到 Exception 13)→ 三重錯誤 → CMOS 關機碼 0x09(DOS/4GW 自己預先寫的);重置後回到 DOS/4GW 的防護碼,印出「DOS/16M error: [0]  involuntary switch to real mode」,再以 jmp 0018:0334 回保護模式 —— 0018 被 blit 蓋成型別 0x14 時就是 v11 的「JMP Illegal descriptor type 14」(注入 g3 逐字重現),其他型別則再重置一次後 INT 6。詳見 doc98 續七十六~七十七。
 
 **訂正(同一天稍晚)**：最初接線時漏查了單位自己的 mode 值就套用 mode 0 邏輯，
 是真的 bug，已修正——`ApplyNativeAIMovementFallback` 現在會先檢查

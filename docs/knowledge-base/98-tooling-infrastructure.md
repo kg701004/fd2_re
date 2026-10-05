@@ -7246,5 +7246,58 @@ v28 / v29 在暫停期間 WSL 重啟而中斷,作廢。
 
 **仍未驗證。** DOSBox-X v11 那一支(E_Exit「JMP Illegal descriptor type 14」)的確切指令:5 次取樣都沒重現,連照 v11 設定重跑的 v32 也一樣;若再出現,LOGL + heavylog 會記下最後一條指令。
 計時器 IRQ 送不進去時是 #NP 還是 #GP、雙重錯誤用哪個閘,DOSBox-X 在 C++ 裡處理,追蹤看不到。CMOS 關機碼 9 沒有直接讀。
+(續七十六~七十七:三項都已由 DOSBox-X 記錄檔 / 受控注入確認 —— 例外是 #GP、關機碼 9 由 DOS/4GW 自己寫、v11 是防護碼回保護模式時 jmp 0018:0334 遇到型別 0x14,見下一節。)
 
 **登錄。** blit_rle_image、title_menu_dispatch 補註。
+
+## 2026-10-05 續七十六~七十七:續七十五的三個未驗證項目全部確認 —— 例外種類、CMOS 關機碼、v11 的 E_Exit(DOSBox-X 記錄檔 + 原始碼 + 受控注入)
+
+證據 `evidence/runaway_blit_fault_class_dos16m_guard_20261005.json`(DOSBox-X,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e)。
+原始紀錄:`.wsl_build/ctr/v21`、`v30`~`v33`(v33 新跑,開 `FD2_HARNESS_LOGFILE=1`)、`inj/g1`~`g4`(受控注入);引用的 DOSBox-X 原始碼複製在
+`.wsl_build/dosbox_src_6fb8c07`(執行中二進位那一棵樹:`build_timestamp.h` 的 GIT_COMMIT_HASH 6fb8c07,引用的訊息字串都在二進位裡)。
+證據由 ev_s76.py 重算並逐項 assert;19 個判準 / 預測變異全部失敗。
+
+**工具。** `tools/dosbox_harness.sh` 加 `FD2_HARNESS_LOGFILE=1`:啟動時 `-set "log logfile=<workdir>/dosbox-x.log"`。
+DOSBox-X 的 LOG_MSG 平常只進除錯器面板(會捲走、teardown 就沒了),設了 logfile 後每行都 fflush 到檔案,
+所以 CPU_Exception 的雙重 / 三重錯誤訊息(會寫出例外編號)、CMOS 關機碼的重置訊息、E_Exit 原文都留得下來;
+E_Exit 時若開了 heavylog,最後 20000 條指令也會寫到 `LOGCPU_INT_CD.TXT`。續七十五加的 `mem-dump` 模式判斷在 v33 實際擋下了實際模式下用 0170 的傾印。
+
+**受控注入(g1~g4)。** 為了不靠運氣等 blit 寫出特定 byte,直接在原版 FD2.EXE 裡造出同樣的狀態:`reach_battle.py` 進第 25 章戰場 →
+除錯器 `BP 0070:42D1`(保護模式的計時器 IRQ 入口;標題選單時 CPU 幾乎都在實際模式,停不到)→ 刪斷點 → 確認 GDT / IDT 與五次取樣相同 →
+`SM 0170:<描述子線性位址>` 寫 8 個相同 byte → 放開,讀 DOSBox-X 記錄檔。不改 FD2.EXE、不改存檔。
+
+| 注入 | 對應 | DOSBox-X 記錄檔 |
+|---|---|---|
+| g1:0070 ← 0x24 × 8 | v21 | Exception 13 → 雙重 → 三重 → CMOS 0x09 |
+| g2:0070 ← 0x5c × 8 | v30 / v31 | Exception 13 → 雙重 → 三重 → CMOS 0x09 |
+| g3:0018 ← 0x54 × 8(型別 0x14) | v11 | Exception 11 → 雙重 → 三重 → CMOS 0x09 → **`E_Exit: JMP Illegal descriptor type 14`** |
+| g4:0018 ← 0x24 × 8(對照) | — | 另一個 E_Exit(`Illegal descriptor type 1F for int D`),不是 v11 那一句 |
+
+**1. 計時器 IRQ 失敗是 #GP(DOSBox-X 記錄檔 LOG CONFIRMED,三種值都讀到)。** DOSBox-X 原始碼 `CPU_Interrupt` 在 `CPU_CHECK_EXCEPT` 下先比閘的 CS 描述子 DPL(> CPL → #GP),
+之後才輪到 present(#NP)。五次取樣的 IDT 向量 8(計時器,也是雙重錯誤)與 0x0D(#GP)的閘都是 0070;CPL 0(迴圈的 CS 0170,RPL 0)。
+0070 被蓋成 0x24(DPL 1,g1)、0x5c(DPL 2,g2)、0xfd(DPL 3,v33)都記下 `Exception 13 already in progress, triggering double fault instead`。
+續七十五寫 0x24 / 0x5c「不存在」沒錯,但失敗的原因是 DPL,不是 present 位元。
+
+**2. CMOS 關機碼是 9,而且是 DOS/4GW 自己寫的(DOSBox-X 記錄檔 LOG CONFIRMED)。** v33、g1~g3 都記下 `CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db`。
+原始碼的分派:0x05 / 0x0A 跳到 [40:67] 並把 EAX 設成 0x2010000;0x09 以 [40:67] 為堆疊彈 ES、DS、POPA、IRET(26 bytes);其他值整機重置。
+g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D3 做 `out 70,0F` / `out 71,[10EE]`(= 09)—— 關機碼 9 是它預先布好的。
+
+**重置後回到的是 DOS/4GW 自己的防護碼。** 五份追蹤(v21、v30~v33)重置後都經 INT 21h AH=40h(BX = 2,stderr)印出
+`DOS/16M error: [0]  involuntary switch to real mode`(v21 的結束截圖看得到)。這串字在 FD2.EXE 內嵌的 DOS/4GW(DOS/16M 核心)錯誤表裡。
+0C5C 段 = FD2.EXE 檔案位移 + 0x1DD0(v21 重置後執行過的 365 條指令,362 條逐 byte 相同,另 3 條是 MZ 重定位 0000 → 0823 兩條、執行期 3e → 66 前綴一條)。
+
+**3. DOSBox-X v11 的 E_Exit:成因確認(g3 受控重現)。** 防護碼印完訊息後,照平常的方式回保護模式:0C5C:031A~032D `lgdt / lidt / lmsw / jmp 0018:0334`
+(這一跳平常每次切回保護模式都會走,每份追蹤當機前約 50 次)。0018 的描述子在 0x170028,早被 blit 蓋掉,所以結果由那個 byte 的型別決定:
+
+| 0018 被蓋成 | DOSBox-X `CPU_JMP` | 之後 |
+|---|---|---|
+| v21 0x25(task gate)、v30 / v31 0x24(call gate),都不存在 | #NP | 第二次三重錯誤 → 第二次重置 → 第二次印訊息 → XMS 清理(入口已被蓋)→ INT 6 |
+| v32 / v33 0xfd(DPL 3 conforming) | #GP | 同上 |
+| 型別 0x14(0x14、0x34、0x54 … 0xf4) | default:`E_Exit("JMP Illegal descriptor type %X")` | DOSBox-X 結束 —— v11 |
+
+五份追蹤都是「兩次重置之間恰好一次 jmp 0018:0334」,之後才呼叫 XMS。DOSBox-X 原始碼裡這句 E_Exit 只在 `CPU_JMP` 的 default 分支,
+`CPU_JMP` 只由 JMP Ap(0xEA)與 JMP Ep(FF /5)呼叫,實際 / V86 模式不檢查描述子。g3 只把 0018 改成型別 0x14:IRQ 處理在 0070:522F `mov ds,0018`
+→ #NP → #NP 處理再 `mov ds,0018` → 雙重錯誤 → 再一次 → 三重錯誤 → 重置 → 印訊息一次 → `jmp 0018:0334` → 與 DOSBox-X v11 逐字相同的 E_Exit;
+重置後的路徑與 v21 逐步相同(2552 步)。續七十六原本推的「IRQ 往下切時的 jmp 0018:092C、83 bytes 時間窗」不需要,作廢。
+
+**仍未驗證。** DOSBox-X v11 那一次 0018 實際被寫成哪個 byte:當時沒有傾印,是 INFERRED。6 次裡 1 次落在型別 0x14 只是與「256 個 byte 值裡 8 個」的量級相符,不是統計檢定。

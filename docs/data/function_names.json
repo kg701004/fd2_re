@@ -64,7 +64,7 @@
   {
    "addr": "0x4ebff",
    "name": "blit_rle_image",
-   "summary": "(dst, src, stride):src 開頭是 u16 寬、u16 高,之後是 PCX 式 RLE 像素;逐列由左到右寫入 dst,每列結束 dst += stride。 續七十四(靜態 + DOSBox-X v16):寬為 0 時 0x4ec1c `mov cx, bp` 讓 ECX = 0,0x4ec25 的 32 位元 loop 先減成 0xffffffff,第一列要寫 2^32 個 byte。線性 7 = 0x89 的假頭像從 0x16200 以 src = res(res[0] = 0)呼叫本函式,寬 0、高 0xaa32,從 0xa0728 一路往高位址寫,每列結束 0x4ec2a 從未到達;DOSBox-X 之後以 E_Exit(v11)或實際模式 INT 6 迴圈(v16)收場。 續七十五(DOSBox-X LOGL 追蹤 v21 / v30~v32):0x89 那次的 stosb 每次 EDI + 1,從 0xa0728 寫過 DOSBox-X 的 XMS 入口 0xc4000,再寫進 DOS/4GW 的 GDT(base 0x170010);下一次計時器 IRQ 載入 CS 0070 失敗 → 三重錯誤 → CPU 重置(CMOS 關機碼 9 的 INT 15h 返回路徑)退回 0C5C:0B94 → call far XMS 入口 → 執行被寫進去的像素資料 → INT 6 迴圈。五次取樣都是這一支,v11 的 E_Exit 沒重現。",
+   "summary": "(dst, src, stride):src 開頭是 u16 寬、u16 高,之後是 PCX 式 RLE 像素;逐列由左到右寫入 dst,每列結束 dst += stride。 續七十四(靜態 + DOSBox-X v16):寬為 0 時 0x4ec1c `mov cx, bp` 讓 ECX = 0,0x4ec25 的 32 位元 loop 先減成 0xffffffff,第一列要寫 2^32 個 byte。線性 7 = 0x89 的假頭像從 0x16200 以 src = res(res[0] = 0)呼叫本函式,寬 0、高 0xaa32,從 0xa0728 一路往高位址寫,每列結束 0x4ec2a 從未到達;DOSBox-X 之後以 E_Exit(v11)或實際模式 INT 6 迴圈(v16)收場。 續七十五(DOSBox-X LOGL 追蹤 v21 / v30~v32):0x89 那次的 stosb 每次 EDI + 1,從 0xa0728 寫過 DOSBox-X 的 XMS 入口 0xc4000,再寫進 DOS/4GW 的 GDT(base 0x170010);下一次計時器 IRQ 載入 CS 0070 失敗 → 三重錯誤 → CPU 重置(CMOS 關機碼 9 的 INT 15h 返回路徑)退回 0C5C:0B94 → call far XMS 入口 → 執行被寫進去的像素資料 → INT 6 迴圈。五次取樣都是這一支,v11 的 E_Exit 沒重現。 續七十六~七十七(DOSBox-X 記錄檔 + 原始碼 + 受控注入):計時器 IRQ 的失敗是 #GP(0070 被蓋成的 DPL 都 > CPL 0)→ 三重錯誤 → CMOS 關機碼 0x09(DOS/4GW 自己預先寫的);重置後回到 DOS/4GW 的防護碼,印出「DOS/16M error: [0]  involuntary switch to real mode」,再以 jmp 0018:0334 回保護模式 —— 0018 被蓋成型別 0x14 時就是 v11 的「JMP Illegal descriptor type 14」(注入重現),否則再重置一次後 INT 6。",
    "confidence": "static_re",
    "date": "2026-09-18",
    "evidence": [

@@ -580,6 +580,11 @@ default server 完全分開,不只是換 session 名字)、自己的工作目錄
 失控之後 Alt+Pause 停不住時,計數用完由 DOSBox-X 自己進除錯器仍然有效。`tools/dosbox_cpulog_escape.py` 從 LOGCPU.TXT 找出最後一次離開指定迴圈的指令。
 退回實際模式後 MEMDUMPBIN 的選擇器是段落(段 × 16 + 位址),`fd2_dosbox_live_helper.sh mem-dump` 現在會依 Register Overview 的模式擋下誤用。實例見 doc98 續七十五。
 
+**續七十六(2026-10-05)補充:把 DOSBox-X 自己的訊息存下來。** `FD2_HARNESS_LOGFILE=1 bash tools/dosbox_harness.sh launch <name>`
+會加上 `-set "log logfile=<workdir>/dosbox-x.log"`;從 Windows 端用 `WSLENV=FD2_HARNESS_LOGFILE` 把變數帶進 WSL。
+LOG_MSG(`debug/debug_gui.cpp` DEBUG_ShowMsg)每行 fflush,所以雙重 / 三重錯誤(寫出例外編號)、CMOS 關機碼重置、E_Exit 原文都留在檔案裡。
+INT 6 迴圈每圈一行,檔案會很大(v33 約 333 萬行),讀時先濾掉 `Unhandled Interrupt Called 6`。實例見 doc98 續七十六。
+
 ## 11. DOSBox-vs-remake byte-exact pixel diff harness(`tools/dosbox_diff_harness.sh`,2026-08-26)
 
 §9 的 `tools/dosbox_harness.sh` 是給互動式/視覺檢查用的通用 N-way harness,`screenshot`子指令
