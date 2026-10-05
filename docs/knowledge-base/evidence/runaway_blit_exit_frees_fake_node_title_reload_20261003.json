@@ -11,7 +11,7 @@
    ".wsl_build/ctr/v18/ch25",
    ".wsl_build/ctr/v19/ch25"
   ],
-  "drivers": "scratchpad t_v16.py(由 mk_t_v16.py 從 t_v11.py 產生,加 blit 斷點)、t_v17.py、t_v18.py、t_v18b.py、t_v12.py(v19 戰敗回標題)、t_v19b.py、walk_after.py;本檔由 ev_s74.py 重算",
+  "drivers": "evidence/generators/:t_v16.py(由 mk_t_v16.py 從 t_v11.py 產生,加 blit 斷點)、t_v17.py、t_v18.py、t_v18b.py、t_v12.py(v19 戰敗回標題)、t_v19b.py、walk_after.py;本檔由 ev_s74.py 重算",
   "process": [
    "v16:t_v11 設定 4(線性 7 = 0x89)單獨跑;0x161c5 讀完假頭像後掛 0x16559 / 0x1657c / 0x4ebff / 0x4ec31 / 0x4ec0c..0x4ec48 斷點,讀到寬高後改掛每列結束 0x4ec2a / 0x4ec5e。之後模擬器不再停在任何遊戲斷點;手動 enter-debugger 兩次,面板存成 r1_halt_pane.txt / r1_end_pane.txt;此後 Alt+Pause 停不住、MEMDUMPBIN 與 D 指令都不被接受(堆積寫到哪裡因此無法傾印)。驅動記到的 eip -0x198a09(= 實際模式 0x35f7)停點本檔濾掉。",
    "v17:手動(無斷點)開系統選單 → 子選單 Down = 離開戰場 → 停在 YES / NO,再啟動 t_v17 改壞 H、下斷點、送 Left, Return。",

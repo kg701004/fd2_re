@@ -9,7 +9,7 @@
    "v32",
    "v33"
   ],
-  "generator": "scratchpad ev_s76.py(變異測試 mut_s76.py)",
+  "generator": "evidence/generators/ev_s76.py(變異測試 mut_s76.py)",
   "raw": ".wsl_build/ctr/v21、v30~v33(v33 = 新跑,FD2_HARNESS_LOGFILE=1)、inj/g1~g4(受控注入);.wsl_build/dosbox_src_6fb8c07"
  },
  "A_dosbox_x_source": {

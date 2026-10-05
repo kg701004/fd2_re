@@ -9,7 +9,7 @@
    ".wsl_build/ctr/v9c/ch25",
    ".wsl_build/ctr/v9d"
   ],
-  "drivers": "scratchpad t_v9.py / v9_setup.py / sim_dialog.py(本檔由 ev_s71.py 從原始紀錄重算)"
+  "drivers": "evidence/generators/:t_v9.py / v9_setup.py / sim_dialog.py(本檔由 ev_s71.py 從原始紀錄重算)"
  },
  "A_garbled_dialog": {
   "static": {

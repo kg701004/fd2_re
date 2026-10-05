@@ -7301,3 +7301,21 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
 重置後的路徑與 v21 逐步相同(2552 步)。續七十六原本推的「IRQ 往下切時的 jmp 0018:092C、83 bytes 時間窗」不需要,作廢。
 
 **仍未驗證。** DOSBox-X v11 那一次 0018 實際被寫成哪個 byte:當時沒有傾印,是 INFERRED。6 次裡 1 次落在型別 0x14 只是與「256 個 byte 值裡 8 個」的量級相符,不是統計檢定。
+
+## 2026-10-05 證據產生器收進倉庫(續六十五~七十七)
+
+續六十五~七十七的 14 份證據 JSON 原本只能用 session scratchpad 裡的 `ev_s*.py` 重算,session 結束就無法再驗。
+現在產生器、它們匯入的輔助模組、變異測試與當時的 DOSBox-X 驅動腳本都在
+[`evidence/generators/`](evidence/generators/README.md)(13 個產生器、8 個輔助模組、3 個變異測試、33 個驅動腳本存檔)。
+
+- `python run_all.py`:全部重算到暫存目錄,與已提交檔案逐 byte 比對(IDENTICAL / DRIFT / MISSING_INPUT / ERROR),不覆寫已提交檔案。
+  本輪 13/13 IDENTICAL;`--selftest` 的四個對照(原樣 → IDENTICAL、改縮排 → DRIFT、遊戲目錄為空 → MISSING_INPUT 且點名 FD2.EXE、
+  清單 sha256 改一字 → MISSING_INPUT)全部通過。
+- 變異測試 `mut_s74~76.py` 先跑未變異對照(必須重算出相同 bytes),再逐一變異:8/8、10/10、19/19 以 AssertionError 失敗。
+- 原始紀錄(`.wsl_build/`,約 27 MB)、`extracted/` 與原版遊戲檔不進 git(著作權與大小)。每個產生器啟動時依 `inputs_manifest.json`
+  比對 530 筆輸入的大小與 sha256(清單由 `build_manifest.py` 以 audit hook 記錄實際開啟的檔案產生),不符就 exit 3 並列出每一筆;
+  另以追蹤確認 13 個產生器都在讀任何輸入之前先讀清單。
+- 移植只改路徑(倉庫根目錄、`org_game/` 遊戲目錄、輸出目錄改由 `_evpaths.py` 提供)與六份證據的 `drivers` / `generator` 欄位
+  (`scratchpad …` → `evidence/generators/:…`);重算後與移植前的差異逐份只有那一行。
+- 限制:`ev_s71~73` 的輸出含 Windows 路徑分隔字元,逐 byte 相同只在 Windows 成立;原始紀錄另有一份本機備份(倉庫外,xz 壓縮 1.5 MB,
+  解開後 530 筆 sha256 全部相符),不隨倉庫散布。

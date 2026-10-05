@@ -10,7 +10,7 @@
    ".wsl_build/ctr/v31/ch25",
    ".wsl_build/ctr/v32/ch25"
   ],
-  "drivers": "scratchpad t_v21.py(由 mk_t_v21.py 從 t_v16.py 產生)、t_v19b.py(nocorrupt prearmed)、v21_exc.sh、v21_gdt.sh、v21_c4000.sh、v21_excerpt.sh;本檔由 ev_s75.py 重算",
+  "drivers": "evidence/generators/:t_v21.py(由 mk_t_v21.py 從 t_v16.py 產生)、t_v19b.py(nocorrupt prearmed)、v21_exc.sh、v21_gdt.sh、v21_c4000.sh、v21_excerpt.sh;本檔由 ev_s75.py 重算",
   "trace": {
    "file": "~/fd2-run-harness-v21/LOGCPU.TXT(WSL,不複製)",
    "header": "lines 16777216 bytes 5402271701 sha256 10d20cbdae4634c4f97d2b6993105ff6a24699fb541bac0be3095bf32999fdbb",

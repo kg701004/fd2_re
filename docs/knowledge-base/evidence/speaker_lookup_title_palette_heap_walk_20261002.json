@@ -12,7 +12,7 @@
    ".wsl_build/ctr/v14/ch25",
    ".wsl_build/ctr/v15/ch25"
   ],
-  "drivers": "scratchpad t_v11.py(v11、v14)、v11_setup.py、t_v12.py(v12 離開戰場、v13、v15)、t_v12f.py(v12 強制 free)、heap_geom.py / heap_geom_off.py(v12 堆積快照)、dato_match.py、rel32_callers.py;本檔由 ev_s73.py 重算",
+  "drivers": "evidence/generators/:t_v11.py(v11、v14)、v11_setup.py、t_v12.py(v12 離開戰場、v13、v15)、t_v12f.py(v12 強制 free)、heap_geom.py / heap_geom_off.py(v12 堆積快照)、dato_match.py、rel32_callers.py;本檔由 ev_s73.py 重算",
   "process": [
    "v11:k = 4(線性 7 = 0x89)開框動畫返回後 DOSBox-X 以 'E_Exit: JMP Illegal descriptor type 14' 結束(r1_crash_pane.txt,轉錄);驅動之後讀到的全 0 紀錄(eip -0x19c000)本檔濾掉。k = 5(0xf0)改在 v14 單獨跑。",
    "v12:先做 heap_geom(第一次 geo0 用未檢查的 enter-debugger,停在 DOS 呼叫裡,描述讀到全 0,作廢;geo1 用 Live.halt() 重跑),再做強制 free f0 / f1,最後『離開戰場』p1。f0 第一次等了 120 秒沒有自然 free(只按方向鍵),改按『轉盤 → Down → Return』才觸發。",

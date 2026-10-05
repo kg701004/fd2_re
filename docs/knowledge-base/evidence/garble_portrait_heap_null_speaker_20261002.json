@@ -9,7 +9,7 @@
    ".wsl_build/ctr/v10a/ch25",
    ".wsl_build/ctr/v10b/ch25"
   ],
-  "drivers": "scratchpad t_v10a.py / t_v10b.py / dato_match.py(本檔由 ev_s72.py 從原始紀錄重算)",
+  "drivers": "evidence/generators/:t_v10a.py / t_v10b.py / dato_match.py(本檔由 ev_s72.py 從原始紀錄重算)",
   "dato_layout": "6 bytes 'LLLLLL' + 137 個 dword 偏移 → 136 條;0x111ba(檔名, old, i) = free(old)、讀第 i 條整段進 malloc 的緩衝區",
   "dato_duplicates": [
    [
