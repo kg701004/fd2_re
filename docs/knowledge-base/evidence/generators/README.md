@@ -93,6 +93,13 @@ python sweep_literals.py --selftest
   必須等於同一案例的傾印,證明那段輸出與那份傾印是同一次執行,不是只靠順序對上。
   `mut_console_level_terrain.py`、`mut_console_spell_path.py`、`mut_console_ai_score.py`、`mut_console_action_rest.py`
   在記憶體中竄改終端文字或交換案例段落(共 40 個變異),每一個都要讓產生器以 AssertionError 失敗。
+  `tx_console.py` 負責 DOSBox-X 終端輸出的匯出與再驗證:`check --transcript <對話紀錄>` 對每份 `.txt` 在對話紀錄裡找同一個
+  tool_use_id,要求 stdout 逐 byte 相同、`.meta.json` 的指令 / 說明 / 時間 / stderr 也相同
+  (同一 id 有多筆結果紀錄時只取非空的,非空的必須彼此相同);`export <id> ...` 只寫新檔,遇到內容不同的既有檔就失敗;
+  `extract` 把這些 id(另可加 id)在對話紀錄裡的原始紀錄行原樣抽成 `.jsonl.xz`,對話紀錄被清掉後
+  `check --transcript <抽出檔>` 仍可比對。2026-10-06:對原始對話紀錄與抽出檔各跑一次,59/59 IDENTICAL;
+  複製 console 目錄後改一個 byte、改一份 meta 的說明,分別判為 DIFFERENT、META_DIFFERENT(exit 1);
+  `--selftest` 以合成紀錄涵蓋全部判定。
 - **摘錄**:幾個輸入是從 WSL 裡的大型記錄(`~/fd2-run-harness-<run>/LOGCPU.TXT` 每份約 5 GB、`dosbox-x.log`)
   切出的摘錄(`exc_entries`、`stos_writes`、`trace_excerpt`、`post_reset_trace`、`post_reset_messages`、
   `guard_reentry_lines`、v33 的 `dosbox-x_log_excerpt`)。`python rebuild_excerpts.py` 依當時的切法從完整記錄
@@ -132,6 +139,10 @@ python sweep_literals.py --selftest
 - `IDENTICAL` 證明可重現,不證明正確;正確性由產生器裡的 `assert` 與變異測試負責。
 - 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261006.tar.xz`
   含清單上全部 1759 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
+- 終端輸出的原始來源是 Claude Code 對話紀錄(本機 `~/.claude/projects/` 下約 1.7 GB 的 jsonl),可能被 Claude Code 依保留期限清除。
+  同一備份夾的 `transcript_records_20261006.jsonl.xz`(旁有 `.sha256`)保留 86 個 id 的 291 行原始紀錄:
+  59 份終端輸出,加上切出摘錄的 27 個指令(`rebuild_excerpts.py` 的切法出處);只能證明匯出與紀錄一致,
+  不能證明紀錄之後沒有被改過。抽出檔含原版程式的讀值,不進 git。
 - `ev_s68`、`ev_s69` 以子行程執行 `an_f.py` / `an_ev.py`,每次都把 `f_calls.json` / `e2_lookup_rows.json` 重寫回 `.wsl_build/`
   (內容相同);其他產生器已改為直接呼叫分析模組。
 - 證據裡的檔案路徑一律經 `_evpaths.rel()` 寫成 `/` 分隔(遊戲目錄內的檔案記成預設位置
@@ -156,6 +167,8 @@ python sweep_literals.py --selftest
 
 - 共用模組:`_evpaths.py`(路徑、輸入檢查、`rel()`、`git_blob()`)、`_console.py`(終端輸出)、`_mutrun.py`(變異測試)、
   `_terrain.py`(地形修正規則,`ev_terrain_modifier` 與 `ev_attack_path_selection` 共用)。
+- `tx_console.py`:終端輸出與對話紀錄的匯出、比對、抽出(見「終端輸出與摘錄」);取代當時在 scratchpad 的
+  `tx_index.py` / `tx_export.py`。
 - 輔助模組(產生器會匯入或執行):`an_f.py`、`an_ev.py`、`live.py`、`rng.py`、`sim_path.py`、`sim_dialog.py`、
   `dato_match.py`、`walk_after.py`;分析模組 `pa_analyze.py`、`tr_analyze.py`、`sl_analyze.py`、`sel_analyze.py`
   (原本把結果寫成 `.wsl_build` 裡的 `analyze*.json` 再由證據腳本讀回,現在產生器直接呼叫重算)。

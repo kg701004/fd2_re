@@ -7406,3 +7406,9 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
 - **v11 的 `0018`**:WSL 的 `~/fd2-run-harness-v11` 在那次執行後只多了 16 bytes 的 `MEMDUMP.BIN`(堆疊參數)與 `FD2.TMP`,沒有 GDT 的傾印,
   維持 INFERRED。
 - 原始紀錄的本機備份更新為 `evidence_inputs_all_20261006.tar.xz`(1759 個檔,解壓後逐檔 sha256 相符);仍只有同一顆硬碟上的一份。
+- **終端輸出的匯出工具進倉庫**:59 份 DOSBox-X 斷點終端輸出原本由 scratchpad 的腳本從對話紀錄匯出,session 結束後就無法再驗證「原樣」。
+  新增 `generators/tx_console.py`(`check` / `export` / `extract` / `--selftest`):對原始對話紀錄 59/59 IDENTICAL(stdout 逐 byte、
+  meta 欄位都相同);複製後改一個 byte、改一份 meta 分別判 DIFFERENT、META_DIFFERENT。比對時發現同一 id 在紀錄裡會有 stdout 為空的
+  額外結果紀錄,只取非空那筆(第一次手寫比對因此誤判 35 筆不同,不是資料問題)。
+- **對話紀錄的備份**:對話紀錄可能被 Claude Code 依保留期限清除,`extract` 把 59 份輸出與切出摘錄的 27 個指令(共 86 個 id、291 行)
+  原樣抽成備份夾的 `transcript_records_20261006.jsonl.xz`(67 KB,旁有 `.sha256`);以抽出檔重跑 `check` 也是 59/59 IDENTICAL。
