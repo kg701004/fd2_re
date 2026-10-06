@@ -6,14 +6,35 @@
 import json
 import re
 import struct
+import sys
 from pathlib import Path
 
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
 D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_heal_score_20260930.json")
-SPELL13 = {"value": 70, "cast": 4, "area": 0, "mp": 3, "sel": 1, "row": "46 00 00 04 00 03 01"}
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
+
+
+def spell_row(sid: int) -> dict:
+    """由 FD2.EXE 讀法術列(linear 0x619fd + id*7,經 disasm_le 換算檔案位置)並解碼。
+
+    Args:
+        sid: 法術編號。
+
+    Returns:
+        {"value": +0 u16, "cast": +3 施放距離, "area": +4 範圍, "mp": +5, "sel": +6 選擇子, "row": 7 bytes 十六進位}。
+    """
+    r = bytes(dl.object_bytes(_EXE, _META, 0x619FD + sid * 7, 7))
+    return {"value": struct.unpack_from("<H", r, 0)[0], "cast": r[3], "area": r[4], "mp": r[5], "sel": r[6], "row": r.hex(" ")}
+
+
+SPELL_ID = 13  # 盜賊 #11 只會法術 13(下面以每次入口傾印的已學法術位元欄核對)
+SPELL13 = spell_row(SPELL_ID)
 CASTER = 11
 # 當時 sc_log.sh 的終端輸出(原始紀錄,見 _console.py),每輪一個工具呼叫。H2 當時以 grep 濾掉 unit 12..17 的行;
 # H3 在對話框間反覆呼叫 sc_log.sh(標籤 h3_1..h3_14),只有 h3_11 那次有停點;實際標籤由輸出裡的單位表檔名取得。
@@ -131,7 +152,9 @@ def units(name: str) -> list[dict]:
         r = b[i * 80:(i + 1) * 80]
         w = lambda o: struct.unpack_from("<H", r, o)[0]
         out.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "hp": w(0x40), "maxhp": w(0x42),
-                    "b34": r[0x34], "mp": w(0x44)})
+                    "b34": r[0x34], "mp": w(0x44),
+                    # 已學法術位元欄 +0x1a..+0x1e(bit k = 法術 k,低位元在前)
+                    "spells": [k for k in range(40) if r[0x1A + k // 8] >> (k % 8) & 1]})
     return out
 
 
@@ -152,6 +175,8 @@ for run, ftag, unames, eaxs, stopsets, exits in RUNS:
     for uname, eax_list, stops, ex in zip(unames, eaxs, stopsets, exits):
         us = units(uname)
         c = us[CASTER]
+        # 施法者只學會 SPELL_ID(入口傾印的法術位元欄),所以候選清單只會出現這一個法術
+        assert c["spells"] == [SPELL_ID], (run, uname, c["spells"])
         calls = []
         for n, eax in zip(stops, eax_list):
             b = (D / f"sc_call_{ftag}_{n}.bin").read_bytes()
@@ -165,17 +190,25 @@ for run, ftag, unames, eaxs, stopsets, exits in RUNS:
                           "target_state": [{"unit": i, "hp": us[i]["hp"], "maxhp": us[i]["maxhp"], "b34": us[i]["b34"]} for i in tg]})
             if pred != eax:
                 mism.append((run, n, eax, pred))
-        # 候選清單:距施法者 <= 4 的格上有 +6 == 0、+5 bit0 清除的單位(範圍 0),依 y 再 x
-        occ = {(u["x"], u["y"]): u["i"] for u in us if u["side"] == 0 and not (u["f5"] & 1)}
-        pred_list = [(13, (x, y), [occ[(x, y)]]) for y in range(21) for x in range(27)
-                     if abs(x - c["x"]) + abs(y - c["y"]) <= SPELL13["cast"] and (x, y) in occ]
+        # 候選清單:距施法者 <= 列 +3 的格,目標 = 距該格 <= 列 +4、+5 bit0 清除、選擇子相符的單位(序號序),依 y 再 x。
+        # 列 +6 非 0 → 選擇子 0(+6 == 0,同陣營);0 → 選擇子 1(+6 != 0)
+        camp0 = SPELL13["sel"] != 0
+        pred_list = []
+        for y in range(21):
+            for x in range(27):
+                if abs(x - c["x"]) + abs(y - c["y"]) > SPELL13["cast"]:
+                    continue
+                tg = [u["i"] for u in us if (u["side"] == 0) == camp0 and not (u["f5"] & 1)
+                      and abs(u["x"] - x) + abs(u["y"] - y) <= SPELL13["area"]]
+                if tg:
+                    pred_list.append((SPELL_ID, (x, y), tg))
         obs_list = [(g["spell"], tuple(g["cast_point"]), g["targets"]) for g in calls]
         if obs_list != pred_list:
             mism.append((run, "candidate list", obs_list, pred_list))
         best, sel = 0, None
         for g in calls:
             if g["score_eax"] > best:
-                best, sel = g["score_eax"], (g["score_eax"], g["cast_point"][0], g["cast_point"][1], 13)
+                best, sel = g["score_eax"], (g["score_eax"], g["cast_point"][0], g["cast_point"][1], SPELL_ID)
         bb = struct.unpack("<iiii", (D / f"sc_best_{ftag}_{ex}.bin").read_bytes()[:16])
         assert CON[(ftag, ex)] == bb, (run, ex, CON[(ftag, ex)])  # 終端印出的 best = 出口傾印
         if sel != bb:
@@ -189,7 +222,8 @@ for run, t in (("h1", 13), ("h2", 14)):
     pre, post = units(f"hl_pre_{run}"), units(f"hl_post_{run}")
     heal[run] = {"target": t, "hp": [pre[t]["hp"], post[t]["hp"]], "maxhp": pre[t]["maxhp"],
                  "caster_mp": [pre[CASTER]["mp"], post[CASTER]["mp"]]}
-    assert post[t]["hp"] == pre[t]["maxhp"] and pre[CASTER]["mp"] - post[CASTER]["mp"] == 3, heal[run]
+    # MP 消耗 = 法術列 +5(由 EXE 讀出,與實測的扣點互相核對)
+    assert post[t]["hp"] == pre[t]["maxhp"] and pre[CASTER]["mp"] - post[CASTER]["mp"] == SPELL13["mp"], heal[run]
 
 print("calls", sum(len(r["calls"]) for r in runs_out), "mismatches", mism)
 assert not mism

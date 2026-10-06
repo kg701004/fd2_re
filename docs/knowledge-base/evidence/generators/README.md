@@ -60,6 +60,8 @@ python run_all.py --selftest   # 比對器與輸入檢查的正反對照
 python mut_s76.py              # 變異測試:先跑未變異對照,再逐一跑每個變異(都要以 AssertionError 失敗)
 python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清單逐 byte 比對(掃描約 30 GB)
 python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在時:從壓縮備份還原、驗 sha256 後重切
+python sweep_literals.py [ev_s65b ...]   # 每個數字常數 +1 重算:找出寫進證據卻沒有判準擋得住的手寫值
+python sweep_literals.py --selftest
 ```
 
 `run_all.py` 與變異測試都不會覆寫已提交的證據檔。要更新證據時才直接執行產生器(`python ev_s76.py`),
@@ -102,9 +104,36 @@ python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在�
   逐份以 `SOURCE_LOGS` 驗 sha256,再用同一組切法重切,結束後刪除暫存目錄。v21 的大小與 sha256 另與 `trace_excerpt.txt`
   切出當時印下的值相同。
 
+## 手寫值掃描(`sweep_literals.py`)
+
+`IDENTICAL` 只證明可重現。寫進證據、卻不影響任何 DOSBox-X 實測結果的手寫值,錯了也不會被發現(例:`ev_attack_path_selection` 的
+`attacker_terrain_mod`)。`sweep_literals.py` 把產生器裡每個數字常數 +1 重算:以 AssertionError 失敗是 `KILLED`(有判準),
+成功但輸出不同是 `ESCAPED`(寫進證據卻沒有判準);`ESCAPED` 再依語法位置分組,`data`(只經 dict / list 就寫出的手寫資料)
+是要逐筆看的那一組。`--selftest` 檢查改寫位置、判定器、語法分組,並在 `ev_s65b` 把一個算出的欄位換回等值手寫常數,
+確認它被點名。
+
+2026-10-06 全部 32 個產生器掃一遍:`data` 組 251 個常數(98 行)。逐行對照輸入,**沒有值是錯的**,但有這些缺口,已補:
+
+- `ev_s67` 對結論(泛洪 / 路徑搜尋逐格相同、打幾下等於預測、模擬器變異被擋下)完全沒有斷言,現在都有。
+- `ev_heal_spell_targets` 的亂數 `roll`(斷點 0x1c971 的 EDX)與 `ev_real_kill_corpse` 的死亡旗標寫入點沒有存檔;當時的終端輸出
+  從對話紀錄匯出到 `.wsl_build/ctr/console/`(5 份),改為解析並與傾印交叉比對。
+- 法術 / 道具列、會心門檻、地形修正表原本手抄:改從 FD2.EXE 或執行期傾印讀。
+- 多數 `data` 常數是把已經斷言過的值再手寫一次(斷言只管住其中一份):改成引用同一個變數或計算式。
+- `ev_s76` 的 IDT 檢查對所有向量都成立(全是 0070 / 0x8e):改比向量 8 的閘入口與記錄裡計時器出差的入口;`GDT_DUMP` 加
+  「前緣之後事後傾印與事前相同」。
+- `ev_terrain_types_3_5` 自己有一份地形規則:改用 `_terrain.py`。
+
+修正後 `data` 組剩 18 個,全是實驗設定(`TIE_ACTOR`、`ev_s76` 選來展示的向量 / 選擇器、截圖裁切框)、迴圈計數器,
+以及兩個資料本身分不出來的值:`ev_heal_spell_targets` 的經驗值係數 40 / 36 / 32(取自 doc98 續四十七,規則未明)、
+`ev_real_kill_corpse` 0x1dc61 那列的回合(#7 在第 1、2 回合都被重寫)。`KILLED` 1596 → 1857。
+
 ## 限制
 
 - `IDENTICAL` 證明可重現,不證明正確;正確性由產生器裡的 `assert` 與變異測試負責。
+- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261006.tar.xz`
+  含清單上全部 1759 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
+- `ev_s68`、`ev_s69` 以子行程執行 `an_f.py` / `an_ev.py`,每次都把 `f_calls.json` / `e2_lookup_rows.json` 重寫回 `.wsl_build/`
+  (內容相同);其他產生器已改為直接呼叫分析模組。
 - 證據裡的檔案路徑一律經 `_evpaths.rel()` 寫成 `/` 分隔(遊戲目錄內的檔案記成預設位置
   `org_game/炎龍騎士團/FLAME2/…`,身分由旁邊的 md5 鎖定),不隨作業系統或 `FD2_GAME_DIR` 改變;
   `run_all.py --selftest` 的第 5 個對照把遊戲目錄放到倉庫外重算。
@@ -118,7 +147,9 @@ python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在�
 - `ev_attack_path_selection` 的 `hits` 表:攻守雙方由停點、AP / DP 由攻擊前傾印把關;地形修正由 M3 同一指令傾印的
   地圖格 `m_map3.bin`(與地形測試的 `t_map.bin` 逐 byte 相同)依 `_terrain.py` 的規則算出,並比對那次終端輸出
   印出的地形類型。只有 M3 的 DOSBox-X HP 實測能區分有無地形修正(產生器以對照斷言);M1、M2 與 null(跳過)欄位是規則的
-  套用,規則本身由 `ev_terrain_modifier` 的斷點讀值驗證(`mut_terrain_rules.py`)。原本手寫的表把 3 擊的
+  套用,規則本身由 `ev_terrain_modifier` 的斷點讀值驗證(`mut_terrain_rules.py`)。M1~M3 出手與被打的單位都站在類型 0,
+  「攻方修正看守方的格子」這種錯在這份資料上分不出來,所以「哪一方看哪一格」寫在兩者共用的 `_terrain.exchange()`,
+  由 `ev_terrain_modifier` 的 T3~T5、T7(攻守雙方站在不同類型)擋下。原本手寫的表把 3 擊的
   `attacker_terrain_mod` 記成 0(索爾種族 5,應為 null;傷害不受影響),已更正。
 
 ## 其他腳本
@@ -135,12 +166,21 @@ python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在�
   - 續四十六~六十四(依各檔標頭說明與輸出路徑歸類,未逐一重跑):
     通用斷點記錄 `bp_log.sh`、`bp_loop.sh`、`dlg_step.sh`;
     單次攻擊 / 施法受控測試 `exp_test.sh`、`lvl_test.sh`、`terr_test.sh`、`spell_cast.sh`;
-    `dump_collect.sh`(collect_targets_in_range)、`sel_setup.sh`、`sel_dump.sh`(`ev_s65` 的 selector);
+    `dump_collect.sh` + `collect_check.py`(collect_targets_in_range)、`sel_setup.sh`、`sel_dump.sh`(`ev_s65` 的 selector);
     `mix_setup.sh`(ai_action_choice)、`it_setup.sh`(ai_item_score)、`mv_setup.sh`(ai_move_nearest)、
     `sc_setup.sh`(ai_spell_score)、`rg_setup.sh`、`rg_setup2.sh`(rest_recover)、`kc_setup.sh`(real_kill_corpse)、
     `s9_setup.sh`(spell9_path);`pa_setup.sh`、`pa_setup2.sh`、`pa_log.sh`(ai_physical_candidate);
     `tr_setup.sh`、`tr_setup2.sh`、`tr_setup3.sh`、`tr_log.sh`(ai_physical_untested_branches);
     `sl_setup.sh`、`sl_tie_setup.sh`、`sl_log.sh`(move_landing_select);
-    終端輸出裡的記錄腳本 `sc_log.sh`(ai_spell_score)、`hl_setup.sh`(ai_heal_score)、`it_log.sh`(ai_item_score)、
+    終端輸出裡的記錄腳本 `sc_log.sh`(ai_spell_score)、`hl_setup.sh` + `hl_gen.py`(ai_heal_score)、`it_log.sh`(ai_item_score)、
     `mix_log.sh`(ai_action_choice)、`rg_log.sh`(rest_recover)、`s9_log.sh`(spell9_path)、
     `run_case.sh`、`lvl_print.py`(level_up)、`units_print.py`(傾印欄位列印)。
+  - 2026-10-06 補收:當時在 DOSBox-X 上用過、但原本沒收進來的腳本(由對話紀錄裡每次 Bash 呼叫的指令比對出來):
+    `kc_log.sh`(real_kill_corpse)、`mv_log.sh`(ai_move_nearest)、`sc_exp.sh`(ai_spell_score)、`hl_recompute.py`(ai_heal_score)、
+    `collect_check.py`(`dump_collect.sh` 呼叫)、`hl_gen.py`(`hl_setup.sh` 呼叫);續六十五的 `terr_dump.sh`、`terr_attack.sh`、
+    `map_atk.sh`、`phase_log.sh`、`ev_state.sh`、`skip_turn.sh`、`end_turn_once.sh`、`terrain_map.py`、`names_terrain.py`;
+    續六十六的 `mode8.py`、`tp_step.py`;續六十八~六十九的 `v5_setup.py`、`v7_setup.py`、`t_ev.py`、`t_hang.py`。
+  - 2026-10-06 靜態檢查(沒有在 DOSBox-X 上重跑):55 個 `.sh` 過 `bash -n`;37 個 `.py` 驅動可解析、沒有未定義名稱、
+    匯入的模組都找得到;用到的 `tools/fd2_dosbox_live_helper.py` 子命令(`mem dump`、`mem read-global`、`debugger-cmd`、
+    `key`、`resume` 等)與旗標都還存在;腳本與證據 JSON 提到的每個 `.py` / `.sh` 都在本目錄或 `tools/`。
+    腳本裡指向 scratchpad 的路徑(`S=…/scratchpad`)照原樣保留,重跑前要改成本目錄。

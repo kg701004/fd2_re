@@ -186,14 +186,16 @@ ev: dict = {"_meta": {
         "v30 ~ v32 的 escape.json 同樣由 dosbox_cpulog_escape.py 在 WSL 端算,事後記憶體以段 0 讀(r1_post0_*.bin)。"]}}
 
 ev["A_triple_fault_chain_v21"] = {
-    "blit_writes": {"stosb": 851760, "from": "0xa0728", "to": "0x170657", "step": "+1(每次 EDI 恰好加 1,沒有跳)"},
-    "timer_irq_excursions": {"count": 332, "entry": "0070:000042D1(IDT 0x18a150 的閘,type 0x8e)",
-                             "period_lines": [min(gaps), max(gaps)], "last_ok": {"line": 7039301, "edi": "0x16fbab"},
-                             "escape_gap_lines": 7060958 - last_irq[0]},
+    "blit_writes": {"stosb": len(writes), "from": hex(min(writes)), "to": hex(max(writes)), "step": "+1(每次 EDI 恰好加 1,沒有跳)"},
+    "timer_irq_excursions": {"count": len(irq), "entry": "0070:000042D1(IDT 0x18a150 的閘,type 0x8e)",
+                             "period_lines": [min(gaps), max(gaps)], "last_ok": {"line": last_irq[0], "edi": hex(last_irq[2])},
+                             "escape_gap_lines": esc["escape"]["line"] - last_irq[0]},
     "gdt": {"base": hex(GDT), "found_by": "事前傾印裡唯一一組平坦 code + data 描述子(+0x170 / +0x178)",
             "before": gdt_pre, "written_by_blit": gdt_written, "post_read_back_equals_trace": "0x170010..0x170657 共 1608 bytes 全同;0x170658 之後與事前相同"},
-    "escape": {"last_in_loop": {"line": 7060957, "at": "0x4ec6a dec ah", "cr0": "0x11", "edi": "0x170658"},
-               "next": {"line": 7060958, "at": "0C5C:0B94 mov ax, 0823", "cr0": "0x10", "ss_esp": "0823:09F5"},
+    "escape": {"last_in_loop": {"line": esc["last_home"]["line"], "at": "0x4ec6a dec ah", "cr0": hex(last_home["regs"]["CR0"]),
+                                "edi": hex(last_home["regs"]["EDI"])},
+               "next": {"line": esc["escape"]["line"], "at": "0C5C:0B94 mov ax, 0823", "cr0": hex(escape["regs"]["CR0"]),
+                        "ss_esp": f'{escape["regs"]["SS"]:04X}:{escape["regs"]["ESP"]:04X}'},
                "registers": {k: [hex(last_home["regs"][k]), hex(escape["regs"][k])] for k in ("EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP")},
                "between": "沒有任何一條指令被記下(DOSBox-X 在 C++ 裡處理三重錯誤與重置)"},
     "reset_path(DOSBox-X 原始碼,~/fd2-dosbox-build/dosbox-x/src)": {
@@ -206,7 +208,7 @@ ev["A_triple_fault_chain_v21"] = {
     "after_reset": {"real_mode_code": "DOS/4GW 0C5C 段", "xms_call": "0C5C:1DFE call far word [0AEC](AH = 0Dh,XMS 解鎖 EMB)→ C3FF:0010 = 0xc4000",
                     "xms_entry_before": xms_pre.hex(" ") + "(jmp +3 / nop×3 / DOSBox-X callback 0x43 / retf)",
                     "xms_entry_written": xms_post.hex(" ") + "(blit 寫入值 = 事後讀回值;被當成 dec sp … 執行)",
-                    "first_C3FF_line": 7064626, "first_int6_line": 7094386,
+                    "first_C3FF_line": int(ex[1].split()[2]), "first_int6_line": int(ex[1].split()[4]),
                     "int6_insn": "C3FF:94C8 = 0xcd4b8 的 63 b9 4b 4b(arpl,實際模式無效指令),也是 blit 寫的",
                     "loop": "C3FF:94C8 → F000:CA60(BIOS 預設 INT 6 處理常式 callback)→ iret 各 3,227,611 次直到計數用完"},
     "conclusion": "0x89 的假頭像讓 blit 從 0xa0728 一路往上寫;途中先蓋掉 DOSBox-X 在 0xc4000 的 XMS 入口,再在 0x170010 蓋掉 DOS/4GW 的 GDT。"
@@ -264,8 +266,8 @@ ev["D_continue_load_control_v22"] = {
                   "改壞時在 0x3d67f 直接返回而洩漏、新調色盤配到別處。差別只在標頭。"}
 
 # ---------------- E. 取樣:v30 / v31(只跑 k = 4)、v32(照 v11 跑 k = 0..4) ----------------
-samples = {"v21": {"cfg": "4", "escape_line": 7060958, "frontier": 0x170657, "gdt_0070_after": post_gdt[0x80:0x88].hex(),
-                   "gdt_0070_access": hex(post_gdt[0x85]), "gdt_0070_present": bool(post_gdt[0x85] & 0x80), "excursions": 332}}
+samples = {"v21": {"cfg": "4", "escape_line": esc["escape"]["line"], "frontier": max(writes), "gdt_0070_after": post_gdt[0x80:0x88].hex(),
+                   "gdt_0070_access": hex(post_gdt[0x85]), "gdt_0070_present": bool(post_gdt[0x85] & 0x80), "excursions": esc["excursions"]}}
 for v, cfg, line, front in (("v30", "4", 7024284, 0x170152), ("v31", "4", 7047177, 0x170231),
                             ("v32", "0,1,2,3,4", 7051374, 0x170843)):
     d = C / f"{v}/ch25"

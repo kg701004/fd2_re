@@ -8,17 +8,35 @@ EAX(分數)只出現在終端輸出:由當時 sc_log.sh 與 R6 讀值迴圈的�
 import json
 import re
 import struct
+import sys
 from pathlib import Path
 
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
 D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_spell_score_20260930.json")
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
 
-# 法術列 0x619fd + id*7(靜態 disasm_le data 619fd):+0 value、+3 施放距離、+4 範圍、+5 MP、+6 選擇子
-SPELL = {8: {"value": 440, "cast": 8, "area": 0, "mp": 24, "sel": 0, "row": "b8 01 64 08 00 18 00"},
-         12: {"value": 340, "cast": 0, "area": 9, "mp": 80, "sel": 0, "row": "54 01 5a 00 09 50 00"}}
+
+def spell_row(sid: int) -> dict:
+    """由 FD2.EXE 讀法術列(linear 0x619fd + id*7,經 disasm_le 換算檔案位置)並解碼。
+
+    Args:
+        sid: 法術編號。
+
+    Returns:
+        {"value": +0 u16, "cast": +3 施放距離, "area": +4 範圍, "mp": +5, "sel": +6 選擇子, "row": 7 bytes 十六進位}。
+    """
+    r = bytes(dl.object_bytes(_EXE, _META, 0x619FD + sid * 7, 7))
+    return {"value": struct.unpack_from("<H", r, 0)[0], "cast": r[3], "area": r[4], "mp": r[5], "sel": r[6], "row": r.hex(" ")}
+
+
+# 盜賊 #11 只會法術 8、12(下面以每次入口傾印的已學法術位元欄核對)
+SPELL = {sid: spell_row(sid) for sid in (8, 12)}
 
 CASTER = 11
 # 當時 sc_log.sh 的終端輸出(原始紀錄,見 _console.py),每輪一個工具呼叫。R3 是在對話框間反覆呼叫
@@ -99,7 +117,9 @@ def units(name: str) -> list[dict]:
         r = b[i * 80:(i + 1) * 80]
         w = lambda o: struct.unpack_from("<H", r, o)[0]
         out.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "p7": r[7], "p8": r[8], "race": r[0x1F],
-                    "cls": r[0x20], "hp": w(0x40), "mp": w(0x44)})
+                    "cls": r[0x20], "level": r[0x21], "ex": r[0x3C], "hp": w(0x40), "mp": w(0x44),
+                    # 已學法術位元欄 +0x1a..+0x1e(bit k = 法術 k,低位元在前)
+                    "spells": [k for k in range(40) if r[0x1A + k // 8] >> (k % 8) & 1]})
     return out
 
 
@@ -124,15 +144,18 @@ def score(spell: int, targets: list[int], us: list[dict]) -> int:
     return total
 
 
-def eligible(us: list[dict], x: int, y: int, rng: int) -> list[int]:
-    """collect_targets_in_range 選擇子 1(+6 != 0)、+5 bit0 清除、曼哈頓距離 <= rng。"""
-    return [u["i"] for u in us if u["side"] != 0 and not (u["f5"] & 1) and abs(u["x"] - x) + abs(u["y"] - y) <= rng]
+def eligible(us: list[dict], x: int, y: int, rng: int, sel: int) -> list[int]:
+    """collect_targets_in_range:列 +6 為 0 → 選擇子 1(+6 != 0),否則選擇子 0(+6 == 0);+5 bit0 清除、曼哈頓距離 <= rng。"""
+    return [u["i"] for u in us if (u["side"] != 0) == (sel == 0) and not (u["f5"] & 1)
+            and abs(u["x"] - x) + abs(u["y"] - y) <= rng]
 
 
 result, mismatches = [], []
 for run, uname, calls, exit_stop, ftag in RUNS:
     us = units(uname)
     c = us[CASTER]
+    # 施法者學會的法術恰為 SPELL 的鍵(入口傾印的法術位元欄)
+    assert c["spells"] == sorted(SPELL), (run, uname, c["spells"])
     cx, cy, mp = c["x"], c["y"], c["mp"]
     got_calls, pred_calls = [], []
     for n, eax in calls:
@@ -153,7 +176,7 @@ for run, uname, calls, exit_stop, ftag in RUNS:
             continue
         cells = [(x, y) for y in range(21) for x in range(27) if abs(x - cx) + abs(y - cy) <= s["cast"]]
         for (x, y) in cells:
-            tg = eligible(us, x, y, s["area"])
+            tg = eligible(us, x, y, s["area"], s["sel"])
             if tg:
                 pred_calls.append((sp, (x, y), sorted(tg)))
     obs = [(g["spell"], tuple(g["cast_point"]), sorted(g["targets"])) for g in got_calls]
@@ -186,11 +209,15 @@ for m in re.finditer(r"(?m)^iter (\d+): EIP=([0-9A-F]+) \[0x53ec8\]=(-?\d+)$", _
     # 同一停點傾印的 [0x53ec8](sc_ec8_r6_<iter>.bin)必須等於終端印出的值
     assert struct.unpack("<i", (D / f"sc_ec8_r6_{m[1]}.bin").read_bytes()[:4])[0] == int(m[3]), m[0]
 assert sorted(r6_obs) == [0x1546A, 0x15474], r6_obs
-r6 = {"target": 6, "target_+7": pre[6]["p7"], "target_level": 3, "row_0x61d83": "01 1b 0c 00 00 01 03 01 04 01",
-      "predicted_53ec8": 1 * 3, "observed_at_0x1546a": r6_obs[0x1546A], "observed_at_0x15474": r6_obs[0x15474],
-      "caster_ex_before": 0, "caster_ex_after": (D / "sc_post_r6.bin").read_bytes()[11 * 80 + 0x3C],
-      "caster_mp": [pre[11]["mp"], post[11]["mp"]]}
+tgt = killed[0]
+row_r6 = bytes(dl.object_bytes(_EXE, _META, 0x61D83, 10))  # high_class_row10_ptr 指向的列;+9 = 靜態 0x61d8c
+r6 = {"target": tgt, "target_+7": pre[tgt]["p7"], "target_level": pre[tgt]["level"], "row_0x61d83": row_r6.hex(" "),
+      "predicted_53ec8": row_r6[9] * pre[tgt]["level"], "observed_at_0x1546a": r6_obs[0x1546A], "observed_at_0x15474": r6_obs[0x15474],
+      "caster_ex_before": pre[CASTER]["ex"], "caster_ex_after": (D / "sc_post_r6.bin").read_bytes()[CASTER * 80 + 0x3C],
+      "caster_mp": [pre[CASTER]["mp"], post[CASTER]["mp"]]}
 assert r6["caster_ex_after"] == 0 and r6["caster_mp"] == [79, 55]
+# 預測的經驗值累加器 = 0x1546a 停點實測的 [0x53ec8]
+assert r6["predicted_53ec8"] == r6["observed_at_0x1546a"], r6
 
 print("calls checked", sum(len(r["calls"]) for r in result), "mismatches", mismatches)
 assert not mismatches

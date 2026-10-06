@@ -323,6 +323,10 @@
     ".wsl_build/ctr/sc_units_h3_11_33.bin": [
      1680,
      "f675102269a4901e55d91395fc2366aef817a2a081f2b2ae92d625a6f8375767"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -578,6 +582,10 @@
     ".wsl_build/ctr/it_pre.bin": [
      1680,
      "37464f7a50e34511ec794b747a0911d7750fdc30169f636f6f0d94067347d974"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -1144,6 +1152,10 @@
     ".wsl_build/ctr/pa/tt.bin": [
      4096,
      "cdea23bd7fde4a7ecc7f9f955af57afb58fba92b9722eda48b5da098aaa59cec"
+    ],
+    ".wsl_build/ctr/sl/tie_002_001B0B78.units.bin": [
+     1680,
+     "32c3bd65548554144ec1e5923ed85a77f67c18265335f70fe3dc446e46730fbf"
     ],
     "{GAME}/FD2.EXE": [
      509158,
@@ -3373,6 +3385,10 @@
     ".wsl_build/ctr/sc_units_r4_6.bin": [
      1680,
      "edf4d24f3c232c2af4f1e74e1edc5a32c3e921a35d6adb6edbee9ab018c4ad15"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -3602,6 +3618,22 @@
     "heal_spell_targets_20260929.json"
    ],
    "inputs": {
+    ".wsl_build/ctr/console/20260929T123903_toolu_01VUEimRvguo6gZ1twzq9aE7.meta.json": [
+     711,
+     "119e7c9ed1fa6b61e5b5dfbd78ac10c6fbce1132692c50058b94e0cbefb56243"
+    ],
+    ".wsl_build/ctr/console/20260929T123903_toolu_01VUEimRvguo6gZ1twzq9aE7.txt": [
+     1067,
+     "252712084535066dd12dcffad846bfc8229e86ce48b8479da14a841671442d0f"
+    ],
+    ".wsl_build/ctr/console/20260929T124135_toolu_01Ya8jPmYNHMPRnSXYw2oCqB.meta.json": [
+     1103,
+     "20bd5ee2724fba1685e5cf69ee1c38d87b65189332e0e7533327ab22a0fad9a9"
+    ],
+    ".wsl_build/ctr/console/20260929T124135_toolu_01Ya8jPmYNHMPRnSXYw2oCqB.txt": [
+     855,
+     "9f3717d3404cfb0c1448aed8ec2d421a2bc0f5dbd7e20e1365270d847769bebe"
+    ],
     ".wsl_build/ctr/h0.bin": [
      1680,
      "5a36c3789b60165e0ae579e0898c794d4a1b5c2d325a1466dcdf82a6a2d75cee"
@@ -4559,6 +4591,30 @@
     "real_kill_corpse_20260930.json"
    ],
    "inputs": {
+    ".wsl_build/ctr/console/20260930T055354_toolu_0175yP4sSuptYm8UmCMssNTi.meta.json": [
+     802,
+     "48698c7ec4067cc53ebdb750ab228e07baa241d03aacdffe8da8eb06bbfeeb18"
+    ],
+    ".wsl_build/ctr/console/20260930T055354_toolu_0175yP4sSuptYm8UmCMssNTi.txt": [
+     235,
+     "258f185e38d91db8ae73f057aba7454110541f9e79f3080ca361aa38846a1c9e"
+    ],
+    ".wsl_build/ctr/console/20260930T055525_toolu_019SxLDLZG5Bk8cKwU12ZjaY.meta.json": [
+     745,
+     "a5050ef958af48b03694b76bc5e5c45feb116112ffa2fcb228eee227f739da26"
+    ],
+    ".wsl_build/ctr/console/20260930T055525_toolu_019SxLDLZG5Bk8cKwU12ZjaY.txt": [
+     503,
+     "bdd68dec2ac1b05926973a7df948685196f3969dad6d0ae969e7b3c335ae9980"
+    ],
+    ".wsl_build/ctr/console/20260930T055822_toolu_01DQV8rtBgHgud7toNy3XbLo.meta.json": [
+     785,
+     "ac7b94fa1ec3deffe6a2935f3aa43c6e4fa2deb6e12e9990082e487c53ee689a"
+    ],
+    ".wsl_build/ctr/console/20260930T055822_toolu_01DQV8rtBgHgud7toNy3XbLo.txt": [
+     1026,
+     "0d2501ed43a7feeb43b3ffcad0186c8cfe531b37173e70be29dda7e30c50881a"
+    ],
     ".wsl_build/ctr/kc_pre.bin": [
      1680,
      "cf5b1af8dd13a9ed242dae29cc29eafd7875314ec7130ee417915e4dd5074ce5"
@@ -4866,6 +4922,10 @@
      5120,
      "8adb65147dbbaff2c899af5b94c05c8136bba46be49270a84785ab6eb0cad16c"
     ],
+    ".wsl_build/ctr/terr/ch19/mods.bin": [
+     48,
+     "9f86545eae6b4f177436caf4476f9de870b2ca71a48bb92b20de5c96e0eefa8c"
+    ],
     ".wsl_build/ctr/terr/ch19/t2_post_units.bin": [
      2160,
      "a2feaa6f9ef4d9c226914fbfee227715b66fece0c6c2ee06629ec0c9f0e4f394"
@@ -4889,6 +4949,10 @@
     ".wsl_build/ctr/terr/ch20/d0_units.bin": [
      6640,
      "8114749764e79ae474d116c15ce7c99c91190c565a41d7eff4fc87f92f152bde"
+    ],
+    ".wsl_build/ctr/terr/ch20/mods.bin": [
+     48,
+     "9f86545eae6b4f177436caf4476f9de870b2ca71a48bb92b20de5c96e0eefa8c"
     ],
     ".wsl_build/ctr/terr/ch20/t3_post_units.bin": [
      2000,
@@ -4937,6 +5001,10 @@
     ".wsl_build/ctr/terr/ch29/d0_units.bin": [
      6080,
      "b9f72e077ada659f2e1d4520af169c83a855f9251fc856b754352abb05485b32"
+    ],
+    ".wsl_build/ctr/terr/ch29/mods.bin": [
+     48,
+     "9f86545eae6b4f177436caf4476f9de870b2ca71a48bb92b20de5c96e0eefa8c"
     ],
     ".wsl_build/ctr/terr/ch29/t4_post_units.bin": [
      6080,
@@ -5021,6 +5089,14 @@
     "terrain_events_map_attack_20261001.json"
    ],
    "inputs": {
+    ".wsl_build/ctr/terr/ch29/d0_grid.bin": [
+     7940,
+     "77bf0ecf116d294a612dcd47733bffc47c9aab1ac27325aed2b978241284d8ec"
+    ],
+    ".wsl_build/ctr/terr/ch29/d0_tt.bin": [
+     4096,
+     "ce8c1fc637794d59235e21697ab62e708a16a7bd625f3a07835c066984453ff8"
+    ],
     ".wsl_build/ctr/terr2/ch19/x3b_post_units.bin": [
      5120,
      "52ef4126eb2661c08b00e8b37f6f8c5c33cf676fb681c0c97c58b672d0af2a68"
@@ -5643,9 +5719,17 @@
      4096,
      "57a904d66515b56ddea336aedfe1427751ba319fc03a9b187d14c23e7ef2fb72"
     ],
+    ".wsl_build/ctr/v4/ch25/d0_units.bin": [
+     4960,
+     "b4d383f25d5083a7f4b13314c6c4cba1595151f9b4ea55a7b120ea75fa175c95"
+    ],
     ".wsl_build/ctr/v4/ch25/sol.bin": [
      80,
      "b4dd4234fc664f853cd54d6c7efdd93c76085aeb760f90ab412c945ac16cd5c2"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -5654,6 +5738,10 @@
     "ai_seek_opponent_rand_trace_20261001.json"
    ],
    "inputs": {
+    ".wsl_build/ctr/v3/ch29/c0_pre_units.bin": [
+     6320,
+     "47dd7791433bef96194ea4358badf20bc61b7b2c04ab1f91d552dce39af77c5e"
+    ],
     ".wsl_build/ctr/v5/ch25/f3.json": [
      8957,
      "c9ff329d9fac1f5922dec7280795905ddd86faa6fb0ebbad52bf4f62860a97be"
@@ -5749,6 +5837,10 @@
     ".wsl_build/ctr/v5/ch25/tt.bin": [
      4096,
      "3a8e220ff753bd1cb309863fd3b470445d3f2ed873bbffc1061f19e354429bc7"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },

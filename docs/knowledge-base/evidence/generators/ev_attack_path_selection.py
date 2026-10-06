@@ -8,7 +8,7 @@ from pathlib import Path
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
-from _terrain import AP_PCT, DP_PCT, gated, modifier, terrain_type  # noqa: E402
+from _terrain import AP_PCT, DP_PCT, exchange, gated, terrain_type  # noqa: E402
 EVI = out_path("attack_path_selection_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
 
@@ -103,8 +103,8 @@ for tag, info in rounds.items():
         # 跳過與否看的欄位(+7、種族、職業)在攻擊前後相同
         assert gated(ra) == gated(post[a * 80:(a + 1) * 80]) and gated(rd) == gated(post[d * 80:(d + 1) * 80]), (tag, a, d)
         ap, dp = w(pre, a, 0x48), w(pre, d, 0x4A)
-        apm, dpm = modifier(ap, AP_PCT, terr(a), ra), modifier(dp, DP_PCT, terr(d), rd)
-        dmg = max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)
+        terr(a), terr(d)  # 攻擊前後所在格類型相同(下面以攻擊前的位置計算)
+        apm, dpm, dmg = exchange(ap, dp, ra, rd, lambda r: terrain_type(cells, tt, r[0], r[1]))
         assert dmg < 18
         loss[d] = loss.get(d, 0) + dmg
         loss_no_terrain[d] = loss_no_terrain.get(d, 0) + max(0, (ap - dp) * 9 // 10)

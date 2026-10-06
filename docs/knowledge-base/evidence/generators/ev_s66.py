@@ -60,8 +60,12 @@ def ad5_ctl(tag: str) -> dict:
             "rows_turn_event_camp": [[c[3 + 3 * k], c[4 + 3 * k], c[5 + 3 * k]] for k in range(3)]}
 
 
+# 事件 76 放出 3 個頭目後把 +0x15 設成「單位數 - 3」:傾印的筆數與 +0x15 互相印證,頭目是最後 3 筆
+b2u = (C29 / "b2_units.bin").read_bytes()
+n_after = len(b2u) // 80
+assert len(b2u) % 80 == 0 and n_after == ad5_ctl("b2")["ad5_0x15"] + 3, (len(b2u), ad5_ctl("b2"))
 spawned = []
-for i in (76, 77, 78):
+for i in range(n_after - 3, n_after):
     r = rec(C29 / "b2_units.bin", i)
     r["terrain"] = ter(*r["xy"])
     spawned.append({"unit": i, **{k: r[k] for k in ("xy", "terrain", "key_0x7", "race", "class", "mv", "b34", "hp")}})
@@ -84,7 +88,8 @@ pred = {
     "base_sol_to_dragon": base(sol["ap"], drg["dp"]), "base_dragon_to_sol": base(drg["ap"], sol["dp"]),
 }
 rivals = {}
-for name, t in (("terrain5_as_4", 4), ("terrain5_as_3", 3)):
+for name in ("terrain5_as_4", "terrain5_as_3"):
+    t = int(name.rsplit("_", 1)[1])  # 對照假設:地形 5 其實照類型 4 / 3 修正
     dpm = mod(drg["dp"], t, DP_PCT)[0]
     apm = mod(drg["ap"], t, AP_PCT)[0]
     rivals[name] = {"dragon_dp_mod": dpm, "dragon_ap_mod": apm,
@@ -98,6 +103,8 @@ assert scene[0]["ebp_unit"] == 0 and scene[0]["edi_unit"] == 76 and [scene[0]["e
 assert scene[1]["eax"] == pred["base_sol_to_dragon"]
 assert scene[2]["ebp_unit"] == 76 and scene[2]["edi_unit"] == 0 and [scene[2]["eax"], scene[2]["edx"]] == pred["dragon_ap_mod"]
 assert scene[3]["eax"] == pred["base_dragon_to_sol"]
+# 對照假設有鑑別力:兩個對照的火龍 DP 修正都和斷點讀值不同
+assert all(r["dragon_dp_mod"] != scene[0]["eax"] for r in rivals.values()), rivals
 assert [s["eip"] for s in mapst] == ["0x1edbf", "0x1efce", "0x1ee04", "0x1efce", "0x1ee04", "0x1efce"]
 assert mapst[0]["edi_unit"] == 76 and [mapst[0]["eax"], mapst[0]["edx"]] == pred["dragon_ap_mod"]
 assert all(s["esi_unit"] == 76 and [s["eax"], s["edx"]] == pred["dragon_dp_mod"] for s in (mapst[2], mapst[4]))
@@ -124,7 +131,7 @@ assert post == {"0": hp_writes[0]["new_hp"], "76": hp_writes[2]["new_hp"]}
 A = {
     "setup": ("ch29 戰場(map 28)第 1 回合以 SM 設 [0x53ad5]+0x11 = 4、控制段列 1(事件 76、陣營 2)回合 = 2,不經悠妮與事件 75;"
               "其他敵人麻痺 9,索爾休息結束回合。第 2 回合事件 76 走 == 4 分支放出頭目。"),
-    "armed": ad5_ctl("b1"), "after_turn2_event76": ad5_ctl("b2"), "unit_count_after": 79, "spawned_group1": spawned,
+    "armed": ad5_ctl("b1"), "after_turn2_event76": ad5_ctl("b2"), "unit_count_after": n_after, "spawned_group1": spawned,
     "note_shortcut": "事件 76(0x360b6)只讀 +0x11:!= 4 時 unit_set_flag5_bit7(1)、+0x11 加 1、列 1 回合 = 目前回合 + 1;== 4 時對話、spawn(1)、+0x15 = 單位數 - 3、列 2 = 目前回合",
     "exchange_setup": ("第 2..3 回合清事件 79 對話時多按的 Return 讓回合前進(那段沒有斷點,不採計)。第 4 回合:索爾 #0 已在 (13,13)(地形 %d)、火龍 #76 在 (13,12)(地形 5);"
                        "SM 設索爾 HP 999、AP 700、DP 900、HIT 250、EV 0,火龍 HP 999、AP 950、DP 560、HIT 250、EV 0,第二格道具移除、法術與 MP 清 0;"

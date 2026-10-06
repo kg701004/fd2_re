@@ -54,7 +54,12 @@ assert sum(1 for b in block_checks if b["cells_removed"]) == 4, block_checks
 tie = [c for c in calls["tie"] if c["args"][2] == 13]
 assert len(tie) == 1
 t = tie[0]
-fellow = [[24, 18], [24, 17], [23, 18], [25, 18], [24, 19]]
+# t' 與它的上、左、右、下四格:在 #13 那次呼叫的單位傾印裡都站著與 #13 同陣營、+5 bit0 未設的單位
+tp = t["t_prime_at_select"]
+fellow = [tp] + [[tp[0] + dx, tp[1] + dy] for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1))]
+tus = (D / "tie_036_001B0B78.units.bin").read_bytes()
+occ = {(tus[i * 80], tus[i * 80 + 1]): i for i in range(len(tus) // 80) if not tus[i * 80 + 5] & 1}
+assert all(tuple(c) in occ and occ[tuple(c)] != 13 and tus[occ[tuple(c)] * 80 + 6] == tus[13 * 80 + 6] for c in fellow), fellow
 assert t["mode0"] == 4 and t["t_prime_at_select"] == [24, 18] and t["chosen_live"] == [23, 17]
 assert not [c for c in t["list_live"] if list(c) in fellow]
 last_full_tie = [25, 17]  # 同分(距離 2、abs 差 0)的另一格;「同分取最後一個」會選它
@@ -74,9 +79,9 @@ EVI.write_bytes((json.dumps({
             "(c) 曼哈頓距離 T' 最小、同距 abs(|dx|-|dy|) 嚴格較小才換、完全同分保留先出現者。r1 = 第 1 回合重播續六十 R1;tie = 第 2 回合平手場景"
             "(#13 在 (24,14),NPC #7 屍體與麻痺夥伴 #14 在 T = (24,18),麻痺夥伴 #15..#18 站四鄰)。",
     "calls": calls,
-    "tie_case": {"actor": 13, "t_prime": [24, 18], "fellow_cells_not_landable": fellow, "chosen_live": [23, 17],
-                 "rival_first_in_list": [24, 16], "rival_last_full_tie": last_full_tie},
-    "r1_replay": {"actor": 13, "from": [1, 1], "target": [1, 7], "mv": r["mv"], "mode0": r["mode0"], "mode1_dirs": r["dirs"],
+    "tie_case": {"actor": t["args"][2], "t_prime": t["t_prime_at_select"], "fellow_cells_not_landable": fellow,
+                 "chosen_live": t["chosen_live"], "rival_first_in_list": t["chosen_rival_first"], "rival_last_full_tie": last_full_tie},
+    "r1_replay": {"actor": r["args"][2], "from": r["actor_xy"], "target": r["args"][:2], "mv": r["mv"], "mode0": r["mode0"], "mode1_dirs": r["dirs"],
                   "t_prime": r["t_prime_live"], "chosen": r["chosen_live"]},
     "map_block_cells_of_side_checks": block_checks,
 }, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))

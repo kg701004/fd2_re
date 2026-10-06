@@ -151,17 +151,19 @@ def sc(x: int, y: int) -> list[int]:
 allrows = e1 + e2rows
 ing = [r for r in allrows if r["in_grid"]]
 assert all(sc(r["x"], r["y"])[:3] == r["cell"][:3] for r in ing)
-assert {r["cell"][3] for r in ing} == {255}
+byte3_live = sorted({r["cell"][3] for r in ing})
+assert byte3_live == [255]
 assert not any(r["pred_write"] for r in e1) and all(r["in_grid"] and r["slot"] == 0 for r in e1)
 walk1 = [r for r in e1 if r["ret"] == "0x1317a"]
 D = {
     "e1_lookups": len(e1), "e1_rets": dict(Counter(r["ret"] for r in e1)),
     "e1_unit53_walk_first_last": [[walk1[0]["x"], walk1[0]["y"]], [walk1[-1]["x"], walk1[-1]["y"]]],
-    "e1_in_grid": sum(r["in_grid"] for r in e1), "e1_nonzero_slot": 0, "e1_predicted_writes": 0,
+    "e1_in_grid": sum(r["in_grid"] for r in e1), "e1_nonzero_slot": sum(r["slot"] != 0 for r in e1),
+    "e1_predicted_writes": sum(bool(r["pred_write"]) for r in e1),
     "e2_first": [e2rows[0]["x"], e2rows[0]["y"]],
     "in_grid_live_cells_e1_e2": len(ing),
     "bytes_0_2_equal_FDFIELD_072": len(ing),
-    "byte3_live": 255, "byte3_static": sorted({sc(r["x"], r["y"])[3] for r in ing}),
+    "byte3_live": byte3_live[0], "byte3_static": sorted({sc(r["x"], r["y"])[3] for r in ing}),
     "map24_static_cells_with_slot": [[x, y, sc(x, y)[2] & 0x1F] for y in range(H) for x in range(W) if sc(x, y)[2] & 0x1F],
 }
 

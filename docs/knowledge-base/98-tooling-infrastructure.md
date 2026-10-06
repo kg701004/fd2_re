@@ -7385,3 +7385,24 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
   從 WSL 原記錄與從備份各重切一次,都是 7/7 IDENTICAL;把 HOME 指到空目錄時 7 個都是 SOURCE_MISSING(證明備份模式讀的是還原的那份)。
   `--selftest` 加 3 個反向對照(大小不符 → SOURCE_CHANGED;備份內容不符、備份清單與 `SOURCE_LOGS` 不一致 → 拒絕還原),6/6 通過。
 - 仍然成立的限制:v11 當次 `0018` 寫成哪個 byte 維持 INFERRED(當時沒有傾印)。
+
+## 2026-10-06 證據產生器:手寫值掃描、地形規則的攻守格子、驅動腳本補收
+
+上一節留下的待處理項目逐項處理([`evidence/generators/README.md`](evidence/generators/README.md))。
+
+- **手寫值掃描**:新增 `sweep_literals.py`,把 32 個產生器裡每個數字常數 +1 重算,分成有判準擋下(KILLED)與寫進證據卻沒有判準
+  (ESCAPED),ESCAPED 再依語法位置分組。只經 dict / list 就寫出的手寫資料共 251 個常數(98 行),逐行對照 DOSBox-X 傾印、
+  斷點終端輸出與 FD2.EXE:沒有值是錯的,但 `ev_s67` 對結論完全沒有斷言、heal 的亂數(斷點 0x1c971 的 EDX)與擊殺的旗標寫入點
+  沒有存檔、法術 / 道具列與會心門檻是手抄、多數常數是把已斷言的值再寫一次。終端輸出從對話紀錄匯出 5 份,其餘改為從傾印、EXE 計算
+  或引用已斷言的變數;`inputs_manifest.json` 只新增輸入(17 筆,沒有既有輸入變動)。修正後該組剩 18 個(實驗設定、迴圈計數器,
+  以及 doc 續四十七的經驗值係數、0x1dc61 那列的回合兩個資料分不出的值),KILLED 1596 → 1857;32/32 IDENTICAL,10 個變異測試全過。
+  `--selftest` 在 `ev_s65b` 把由 DOSBox-X 傾印算出的欄位換回等值手寫常數,確認會被點名。
+- **攻方 / 守方各看哪一格**:`ev_attack_path_selection` 的 DOSBox-X 資料裡出手與被打的單位都站類型 0,分不出「攻方修正看守方的格子」。
+  這條規則移到 `_terrain.exchange()`,三個地形產生器共用;`ev_terrain_modifier` 的 T3~T5、T7(斷點讀值,攻守雙方站在不同類型)
+  擋下兩方格子對調的兩個變異,`mut_terrain_rules.py` 10/10、4/4。不需要新的 DOSBox-X 實驗。
+- **驅動腳本補收**:用對話紀錄裡每次 Bash 呼叫的指令比對,找到當時在 DOSBox-X 上用過、但沒收進 `generators/` 的 21 個腳本
+  (含 `dump_collect.sh` 呼叫的 `collect_check.py`、`hl_setup.sh` 呼叫的 `hl_gen.py`),以「存檔」標頭補上。靜態檢查:55 個 `.sh`
+  過 `bash -n`、37 個 `.py` 沒有未定義名稱、`fd2_dosbox_live_helper.py` 的子命令與旗標都還存在;檢查器先以反向樣本確認三種錯都會報(都是靜態檢查,沒有在 DOSBox-X 上重跑)。
+- **v11 的 `0018`**:WSL 的 `~/fd2-run-harness-v11` 在那次執行後只多了 16 bytes 的 `MEMDUMP.BIN`(堆疊參數)與 `FD2.TMP`,沒有 GDT 的傾印,
+  維持 INFERRED。
+- 原始紀錄的本機備份更新為 `evidence_inputs_all_20261006.tar.xz`(1759 個檔,解壓後逐檔 sha256 相符);仍只有同一顆硬碟上的一份。

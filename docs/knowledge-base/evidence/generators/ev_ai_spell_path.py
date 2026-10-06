@@ -17,6 +17,7 @@ D = ROOT / ".wsl_build" / "ctr"
 # 函式名稱依入口位址(執行期 = 靜態 + 0x19c000)對到證據沿用的名稱,不採用終端上的暫名。
 DELTA = 0x19C000
 UNITS, REC = 0x26BDC8, 0x50  # 單位表 [0x53a45] 的位址與每筆記錄長度
+CASTER = 11  # 盜賊;下面核對每回合唯一一次 ai_spell_execute 的 arg1 就是它
 ENTRY = {0x15311: "ai_spell_execute", 0x2FF01: "0x2ff01", 0x1C75E: "spell_damage_resolve"}
 _ARGS = re.compile(r" ret=(0x[0-9a-f]+) \(static (0x[0-9a-f]+)\) arg1=(\d+) arg2=(\d+) ")
 # 每回合:設定(印出 / 讀回施法前狀態)、停點紀錄、施法後傾印(印出前後 HP / MP)三次終端輸出
@@ -65,6 +66,8 @@ for tag, r in rounds.items():
     (hit,) = [s for s in r["stops"] if s["function"] == "0x1c7fe"]
     (roll,) = [s for s in r["stops"] if s["function"] == "0x1c87f"]
     (sdr,) = [s for s in r["stops"] if s["function"] == "spell_damage_resolve"]
+    # 施法者 = 本回合唯一一次 ai_spell_execute 的 arg1
+    assert [s["arg1"] for s in r["stops"] if s["function"] == "ai_spell_execute"] == [CASTER], (tag, r["stops"])
     t, rem = divmod(int(roll["esi_target_record"], 16) - UNITS, REC)
     assert rem == 0 and 0 <= t < 21, (tag, roll)
     # 交叉檢查(終端輸出內部):目標記錄位址換算的單位 = spell_damage_resolve 的 arg1(目標);arg2 = 法術 8
@@ -82,14 +85,14 @@ for tag, r in rounds.items():
     dmg = r["base"] * 9 // 10 + r["damage_roll"] * r["base"] // 1000
     hp0, hp1 = w(pre, t, 0x40), w(post, t, 0x40)
     assert hp1 == max(0, hp0 - dmg), (tag, hp0, hp1, dmg)
-    assert w(pre, 11, 0x44) - w(post, 11, 0x44) == 24, tag
-    rec = (D / r["pre"]).read_bytes()[11 * 80:12 * 80]
+    assert w(pre, CASTER, 0x44) - w(post, CASTER, 0x44) == 24, tag
+    rec = (D / r["pre"]).read_bytes()[CASTER * 80:(CASTER + 1) * 80]
     assert rec[0x1A:0x1F].hex() == "0001000000" and rec[0xA] == 0, tag
     # 交叉檢查(終端輸出 ↔ 傾印):施法後傾印那次印出的前後座標 / HP / MP 必須等於兩份傾印,且含施法者與目標
     pmeta, ptext = _console.load(RUNS[tag]["post_print"])
     assert f"--out $D/{r['post']}" in pmeta["cmd"] and r["pre"] in pmeta["cmd"], tag
     rows = {int(m[0]): [int(v) for v in m[1:]] for m in _ROW.findall(ptext)}
-    assert {11, t} <= set(rows), (tag, sorted(rows))
+    assert {CASTER, t} <= set(rows), (tag, sorted(rows))
     for i, v in rows.items():
         assert v == [pre[i * 80], pre[i * 80 + 1], post[i * 80], post[i * 80 + 1], w(pre, i, 0x40), w(post, i, 0x40),
                      w(pre, i, 0x44), w(post, i, 0x44)], (tag, i, v)
@@ -103,8 +106,8 @@ for tag, r in rounds.items():
                 [b[0], b[1], b[5], w(pre, i, 0x40), w(pre, i, 0x44), w(pre, i, 0x46), b[0x1A:0x1F].hex(), b[0xA], b[0xB]], (tag, i)
     out[tag] = {
         "flag_53af9": r["flag_53af9"], "breakpoint_stops": r["stops"],
-        "caster": {"unit": 11, "spell_bits": rec[0x1A:0x1F].hex(), "weapon_slot0_flag": rec[0xA], "mp_before": w(pre, 11, 0x44),
-                   "mp_after": w(post, 11, 0x44), "xy": [rec[0], rec[1]]},
+        "caster": {"unit": CASTER, "spell_bits": rec[0x1A:0x1F].hex(), "weapon_slot0_flag": rec[0xA],
+                   "mp_before": w(pre, CASTER, 0x44), "mp_after": w(post, CASTER, 0x44), "xy": [rec[0], rec[1]]},
         "target": {"unit": t, "xy": [pre[t * 80], pre[t * 80 + 1]], "hp_before": hp0, "hp_after": hp1, "predicted_damage": dmg},
     }
 EVI.write_bytes((json.dumps({

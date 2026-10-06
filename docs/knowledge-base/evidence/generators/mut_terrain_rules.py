@@ -3,7 +3,8 @@
 每條規則的變異至少要被一個產生器以 AssertionError 擋下:`ev_terrain_modifier` 以斷點讀值逐案比對(T1~T7),
 `ev_attack_path_selection` 只有 M3 的 HP 實測對地形修正有鑑別力(AP 24 → +1),所以「跳過規則」類的變異
 只在前者被擋下 —— 這正是後者證據裡 null 欄位只是規則套用、不是實測的原因。另外 M1~M3 出手與被打的單位
-全都站在類型 0,所以「攻方修正改看守方的格子」這種變異在後者不可能被擋下(已試過:存活),不列入。變異版與輸出都在暫存目錄
+全都站在類型 0,所以「攻方修正改看守方的格子」這種變異在後者擋不下;這條規則因此寫在 _terrain.exchange(),
+兩個產生器共用,由前者 T3~T5、T7(攻守雙方站在不同類型)擋下。變異版與輸出都在暫存目錄
 (見 _mutrun.py),先跑未變異的對照。
 """
 from __future__ import annotations
@@ -21,10 +22,13 @@ MUTANTS_TERRAIN_MODIFIER = [
     ("跳過規則不生效", "return None if gated(r) else tdiv", "return tdiv", T),
     ("地形表取 byte 0", "return tt[tile * 4 + 1]", "return tt[tile * 4]", T),
     ("地圖寬高對調", "w, h = map_size(cells)", "h, w = map_size(cells)", T),
+    ("攻方修正改看守方的格子", "modifier(ap, AP_PCT, type_of(ra), ra)", "modifier(ap, AP_PCT, type_of(rd), ra)", T),
+    ("守方修正改看攻方的格子", "modifier(dp, DP_PCT, type_of(rd), rd)", "modifier(dp, DP_PCT, type_of(ra), rd)", T),
+    ("傷害不乘 9/10", "* 9 // 10", "* 10 // 10", T),
 ]
 MUTANTS_ATTACK_PATH = [
     ("一律跳過地形修正", "return None if gated(r) else tdiv", "return None if True else tdiv", T),
-    ("攻方套 DP 修正表", "modifier(ap, AP_PCT, terr(a), ra)", "modifier(ap, DP_PCT, terr(a), ra)"),
+    ("攻方套 DP 修正表", "modifier(ap, AP_PCT, type_of(ra), ra)", "modifier(ap, DP_PCT, type_of(ra), ra)", T),
     ("對照改成 M2 才有鑑別力", '(loss_no_terrain != measured) == (tag == "M3")', '(loss_no_terrain != measured) == (tag == "M2")'),
     ("印出的地形類型改比 (y, x)", "assert t == terrain_type(cells, tt, post[i * 80], post[i * 80 + 1])",
      "assert t == terrain_type(cells, tt, post[i * 80 + 1], post[i * 80])"),

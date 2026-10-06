@@ -112,8 +112,8 @@ ev["A_v9b_portrait_source"] = {
                                    "第 33 步截圖是對龍人戰士施放的戰鬥場景(MP 805 → 781),第 34 步在單位 0 的分派檢查觸發事件 0。"
                                    "與 v10a a2 前 5 個 Return 的順序相同(狀態畫面 → 聖光彈 → 敵方回合)"},
     "v10a_writers_before_trigger": w10,
-    "v11_flip": {"sol_plus7": [32, 20], "writers_before_trigger": [(s["eip"], s["portrait_idx"], s["c67"]) for s in w11],
-                 "garble_entry": {"n": g0["n"], "0x53c67": g0["0x53c67"], "a85_buf_match": [20]},
+    "v11_flip": {"sol_plus7": [plan["sol_plus7_before"], plan["sol_plus7_after"]], "writers_before_trigger": [(s["eip"], s["portrait_idx"], s["c67"]) for s in w11],
+                 "garble_entry": {"n": g0["n"], "0x53c67": g0["0x53c67"], "a85_buf_match": full_match(V11 / g0["a85_dump"])},
                  "screen": "r1_g0_054.png:亂碼畫面左下角是頭像 20(綠髮女性),不是索爾"},
     "v9b_pixel_similarity_lower_left": pix,
     "conclusion": "亂碼畫面的頭像是『索爾行動後 open_dialog_box 0x1967e 依單位 +7 載入、[0x53c67] = 0x9017』留下的:"
@@ -218,7 +218,7 @@ ev["B_speaker_lookup_and_linear7"] = {
     "k4_dato_offsets": {"entry_0x89": [hex(x) for x in off], "loaded": "DATO.DAT[0x10:0xe56](3654 bytes,逐 byte 相同)= 偏移表後段 0x10..0x22a(538 bytes)+ 第 0 條開頭 3116 bytes;第 0x89 個「偏移」位在 0x22a,其實是第 0 條資料的前 8 bytes(0x10、0xe56)",
                         "after": "0x165ac(96, 202, 0) 返回後、第 3 條結束前,DOSBox-X 以 'E_Exit: JMP Illegal descriptor type 14' 結束"
                                  "(r1_crash_pane.txt);確切在哪一條指令沒有定位"},
-    "v14_f0": {"patched": p14["patched"], "portrait_idx_ebp": 240, "entry_0xf0_offsets": [hex(x) for x in offf],
+    "v14_f0": {"patched": p14["patched"], "portrait_idx_ebp": eb["portrait_idx_ebp"], "entry_0xf0_offsets": [hex(x) for x in offf],
                "size_53bff": oom["size_53bff"], "size_signed": oom["size_53bff"] - (1 << 32),
                "screen": "r1_oom_060.png:圖形畫面左上印出『Out of Memory at Load DATO.DAT Number:240!!』,接著是 C:\\> 提示字元"},
     "conclusion": "名冊重複 id → 最後一筆;戰場上同 id 但已陣亡(+5 bit0)→ 用那筆戰場紀錄、不看名冊,回 -1、旗標 0;"
@@ -265,7 +265,7 @@ ev["C_title_path"] = {
                         "p1_01 起畫面是 DOS 提示字元 C:\\>(程式結束,沒有當掉)",
     "v15_defeat": {"pre": p15["pre"], "first_stops": seq,
                    "watched_palette_frees": watched,
-                   "new_game_reload": {"ret": ng["ret"], "old": ng["old"], "res_idx": 0, "new_pal": ng_w["new_pal"]},
+                   "new_game_reload": {"ret": ng["ret"], "old": ng["old"], "res_idx": ng["res_idx"], "new_pal": ng_w["new_pal"]},
                    "screens": "p1_04_-.png 標題(START / LOAD / CONTINUE)、p1_05_Return.png 之後新遊戲的城堡序章,色彩正常"},
     "v13_posthoc": (V13 / "posthoc_title.txt").read_text(encoding="utf-8"),
     "conclusion": "戰敗(索爾陣亡)回標題時,標題序列第一次重新載入調色盤(0x1f90a,i = 76)就 free 那塊改壞的區塊:"

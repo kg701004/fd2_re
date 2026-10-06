@@ -8,6 +8,8 @@ from pathlib import Path
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
+# 地形規則與「哪一方看哪一格」寫在 _terrain.py(ev_terrain_modifier 以斷點驗證、ev_attack_path_selection 共用)
+from _terrain import AP_PCT, DP_PCT, exchange, gated  # noqa: E402
 EVI = out_path("terrain_types_3_5_20260930.json")
 D = ROOT / ".wsl_build" / "ctr"
 W = 27
@@ -16,7 +18,7 @@ cells = (D / "t3_map.bin").read_bytes()
 mods = (D / "t3_mods.bin").read_bytes()
 A = [struct.unpack_from("<i", mods, 4 * k)[0] for k in range(6)]
 B = [struct.unpack_from("<i", mods, 0x18 + 4 * k)[0] for k in range(6)]
-assert A == [5, 0, -5, -5, -5, 0] and B == [0, 0, 10, 10, -5, 0], (A, B)
+assert A == AP_PCT and B == DP_PCT, (A, B)
 tt0 = (D / "t3_tt.bin").read_bytes()
 
 
@@ -26,19 +28,6 @@ def tile(x: int, y: int) -> int:
 
 TA, TB = tile(20, 14), tile(19, 14)
 assert (TA, TB) == (0x6E, 0x6D) and tt0[TA * 4 + 1] == 0 and tt0[TB * 4 + 1] == 0
-
-
-def tdiv(a: int, b: int) -> int:
-    """idiv:向零截斷。"""
-    q = abs(a) // abs(b)
-    return q if (a >= 0) == (b > 0) else -q
-
-
-def gated(r: bytes) -> bool:
-    """unit_uses_move_cost_row19 的靜態規則。"""
-    if r[7] == 0x1C:
-        return False
-    return r[0x20] == 0x13 or r[0x1F] in (4, 5)
 
 
 # 斷點讀值(EAX;EDX = idiv 餘數)由當時 terr_test.sh 的終端輸出(原始紀錄,見 _console.py)解析;None = 該斷點沒有觸發。
@@ -98,9 +87,7 @@ for tag, obs in bp.items():
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
     assert (a[0], a[1]) == (20, 14) and (d[0], d[1]) == (19, 14), tag
     ap, dp = w(a, 0x48), w(d, 0x4A)
-    apm = None if gated(a) else tdiv(ap * A[ta], 100)
-    dpm = None if gated(d) else tdiv(dp * B[tb], 100)
-    dmg = max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)
+    apm, dpm, dmg = exchange(ap, dp, a, d, lambda r: tt[tile(r[0], r[1]) * 4 + 1])
     assert dmg < 18, "亂數項必須為 0"
     got_ap = None if obs["ap"] is None else obs["ap"][0]
     got_dp = None if obs["dp"] is None else obs["dp"][0]
@@ -117,8 +104,8 @@ for tag, obs in bp.items():
     floor_dp = None if dpm is None else (dp * B[tb]) // 100
     cases.append({
         "case": tag,
-        "attacker": {"xy": [20, 14], "tile": hex(TA), "terrain_type": ta, "race": a[0x1F], "ap": ap, "gated": gated(a)},
-        "defender": {"xy": [19, 14], "tile": hex(TB), "terrain_type": tb, "race": d[0x1F], "dp": dp, "gated": gated(d)},
+        "attacker": {"xy": [a[0], a[1]], "tile": hex(TA), "terrain_type": ta, "race": a[0x1F], "ap": ap, "gated": gated(a)},
+        "defender": {"xy": [d[0], d[1]], "tile": hex(TB), "terrain_type": tb, "race": d[0x1F], "dp": dp, "gated": gated(d)},
         "predicted": {"ap_mod": apm, "dp_mod": dpm, "damage": dmg},
         "breakpoints": {"ap_mod_0x2f8dc_eax_edx": obs["ap"], "dp_mod_0x2f921_eax_edx": obs["dp"], "damage_0x2f9fc": obs["dmg"]},
         "defender_hp_drop": drop,

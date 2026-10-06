@@ -161,6 +161,13 @@ for v in RUNS:
     esc = J(d / "escape.json")
     # CPL:迴圈裡 CS = 0170,RPL 0(DOSBox-X 把 CS 值設成 選擇器 | CPL)
     assert " 0170:" in esc["last_home"]["text"]
+    # IDT 基址:向量 8 的閘 = 記錄裡計時器出差實際進入的 0070:000042D1(全部向量都是 0070 / 0x8e,只比選擇器分不出向量)
+    g8 = pre[IDT - EXT + 8 * 8: IDT - EXT + 8 * 8 + 8]
+    entry8 = f"{struct.unpack_from('<H', g8, 2)[0]:04X}:{struct.unpack_from('<H', g8, 6)[0] << 16 | struct.unpack_from('<H', g8, 0)[0]:08X}"
+    assert entry8 == esc["excursion_entries"][0][0], (v, entry8)
+    # GDT_DUMP:前緣(blit 最後寫到的位址)之後,事後傾印與事前傾印逐 byte 相同 → 事後傾印的起點對齊
+    front = int(esc["last_home_stos"]["edi"], 16)
+    assert all(post[a - GDT_DUMP] == pre[a - EXT] for a in range(front + 1, GDT_DUMP + len(post))), v
     cpl = 0x0170 & 3
     o = D["0070"]["post"]
     assert o["raw"] != D["0070"]["pre"]["raw"]

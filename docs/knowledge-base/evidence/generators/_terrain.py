@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import struct
+from collections.abc import Callable
 
 # AP / DP 地形修正百分比表(依地形類型索引);產生器另以執行期傾印 t_mods.bin 驗證
 AP_PCT = [5, 0, -5, -5, -5, 0]
@@ -62,3 +63,25 @@ def modifier(value: int, pct: list[int], ttype: int, r: bytes) -> int | None:
         r: 該方的單位記錄。
     """
     return None if gated(r) else tdiv(value * pct[ttype], 100)
+
+
+def exchange(ap: int, dp: int, ra: bytes, rd: bytes, type_of: Callable[[bytes], int]) -> tuple[int | None, int | None, int]:
+    """一次攻擊的地形修正與不含亂數項的傷害。
+
+    「攻方修正看攻方所在格、守方修正看守方所在格」寫在這裡,兩個產生器共用:
+    `ev_terrain_modifier` 的 T3~T5、T7 攻守雙方站在不同類型的格子,把兩方的格子對調會被斷點讀值擋下;
+    `ev_attack_path_selection` 的資料裡雙方都站在類型 0,自己擋不下這種錯。
+
+    Args:
+        ap: 攻方 AP。
+        dp: 守方 DP。
+        ra: 攻方單位記錄。
+        rd: 守方單位記錄。
+        type_of: 單位記錄 → 該單位出手 / 被打時所在格的地形類型。
+
+    Returns:
+        (攻方修正, 守方修正, 傷害);修正被跳過時為 None。
+    """
+    apm = modifier(ap, AP_PCT, type_of(ra), ra)
+    dpm = modifier(dp, DP_PCT, type_of(rd), rd)
+    return apm, dpm, max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)

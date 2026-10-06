@@ -1,10 +1,12 @@
 """把 pa_analyze.py 的結果整理成 docs/knowledge-base/evidence/ai_physical_candidate_20260930.json。"""
 import json
 
-from _evpaths import out_path, require_inputs  # noqa: E402
+from _evpaths import ROOT, out_path, require_inputs  # noqa: E402
 require_inputs(__file__)
-from pa_analyze import analyze  # noqa: E402
+from pa_analyze import DP_PCT, adj, analyze, rec, uses_row19, w  # noqa: E402
 DST = str(out_path("ai_physical_candidate_20260930.json"))
+TIE_UNITS = ROOT / ".wsl_build/ctr/sl/tie_002_001B0B78.units.bin"  # 續六十二 tie 場景的 0x14b78 入口單位表傾印
+TIE_ACTOR = 12  # 實驗者挑的複查對象(該場景沒有斷 0x14237,無法由停點確認)
 
 # 原本讀分析腳本寫進 .wsl_build 的 analyze.json;改為直接從傾印重算(經 JSON 來回,與當時寫檔再讀回相同)
 a = json.loads(json.dumps({t: analyze(t) for t in ("r1", "r2")}, ensure_ascii=False))
@@ -36,6 +38,29 @@ for tag, rs in a.items():
 for k in ("rival_doc_skip_le2", "rival_terrain_like_attack", "rival_debe_actor", "rival_floor_x15"):
     assert any(p[k] != p["recomputed"] for rs in a.values() for r in rs for p in r["pairs"]), k
 
+# tie 場景複查:由傾印取施動者、相鄰對手(+6 != 0、+5 bit0 清除、曼哈頓距離 1)與活著的 NPC(+6 == 1)
+tu = TIE_UNITS.read_bytes()
+tn = len(tu) // 80
+ta = rec(tu, TIE_ACTOR)
+assert ta[6] == 0 and not uses_row19(ta), "施動者須為敵方且 0x1f183 回 0(AP' = 原始 +0x48)"
+opp = [i for i in range(tn) if rec(tu, i)[6] != 0 and not rec(tu, i)[5] & 1
+       and abs(rec(tu, i)[0] - ta[0]) + abs(rec(tu, i)[1] - ta[1]) == 1]
+npcs = [i for i in range(tn) if rec(tu, i)[6] == 1 and not rec(tu, i)[5] & 1]
+occupied = {(rec(tu, i)[0], rec(tu, i)[1]) for i in range(tn) if rec(tu, i)[6] != 0 and not rec(tu, i)[5] & 1}
+for i in npcs:  # 「四鄰全是對手格」:每個 NPC 的四鄰不是界外就是 +6 != 0 的活單位
+    x, y = rec(tu, i)[0], rec(tu, i)[1]
+    assert all(not (0 <= nx < 27 and 0 <= ny < 21) or (nx, ny) in occupied
+               for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))), (i, x, y)
+# 可達配對的原始分數(攻方 AP' - 目標 DP')全為負:目標不論站哪種地形(DP 取最不利的百分比)都成立;
+# 0x1debe 若成立會再加 攻方 DP' - 目標 AP',同樣為負,只會更小
+assert all(w(ta, 0x48) - adj(w(rec(tu, i), 0x4A), min(DP_PCT)) < 0 and w(ta, 0x4A) < w(rec(tu, i), 0x48) for i in opp), opp
+tie_check = {
+    f"actor_{TIE_ACTOR}": {"xy": [ta[0], ta[1]], "ap": w(ta, 0x48)},
+    "adjacent_opponents": {("sol_0" if i == 0 else f"unit_{i}"): {"xy": [rec(tu, i)[0], rec(tu, i)[1]], "dp": w(rec(tu, i), 0x4A)}
+                           for i in opp},
+    "npcs_boxed_in": {**{f"unit_{i}": [rec(tu, i)[0], rec(tu, i)[1]] for i in npcs}, "blocked_by": "四鄰全是對手格(0x40 不可進入)"},
+}
+
 out = {
     "note": ("DOSBox-X 斷點與記憶體傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。0x14237 內 4 個斷點(執行期 +0x19c000):"
              "入口 0x14237(參數、單位表)、0x14368(0x14b16 候選格清單)、0x144c5(每組 (格, 目標) 比較前:ESI 分數、EDI 優先級、"
@@ -48,9 +73,7 @@ out = {
     "runs": runs,
     "tie_run_12_no_attack_recheck": {
         "source": "續六十二第 2 回合 tie 場景的 0x14b78 入口傾印(.wsl_build/ctr/sl/tie_002_001B0B78.units.bin),本輪沒有在該場景下斷 0x14237",
-        "actor_12": {"xy": [3, 0], "ap": 24},
-        "adjacent_opponents": {"sol_0": {"xy": [2, 0], "dp": 724}, "unit_4": {"xy": [3, 1], "dp": 671}},
-        "npcs_boxed_in": {"unit_5": [0, 0], "unit_6": [1, 0], "blocked_by": "四鄰全是對手格(0x40 不可進入)"},
+        **tie_check,
         "conclusion": "可達配對的原始分數全部為負 → 優先級 0 且不大於 0,不記錄 → P = 0 → 0x14121 / 0x13e9c 備援(以本輪規則重算,推論)",
     },
 }

@@ -9,6 +9,7 @@ import struct
 
 from _evpaths import ROOT_S, out_path, require_inputs  # noqa: E402
 require_inputs(__file__)
+from _terrain import terrain_type  # noqa: E402
 ROOT = ROOT_S
 T = ROOT + "/.wsl_build/ctr/terr2/"
 OUT = str(out_path("terrain_events_map_attack_20261001.json"))
@@ -68,16 +69,28 @@ chain = [{"when": w, **state(t)} for w, t in [
 u = open(f"{T}ch29/sp_units_all.bin", "rb").read()
 cnt = open(f"{T}ch29/sp_cnt.bin", "rb").read()[0]
 spawned = []
-for i in (84, 85, 86):
+for i in range(cnt - 3, cnt):  # 生成的 3 個頭目是單位表的最後 3 筆(sp_cnt = 生成後的單位數)
     r = u[i * 80:(i + 1) * 80]
     spawned.append({"unit": i, "xy": [r[0], r[1]], "side_0x6": r[6], "raw_key_0x7": r[7], "race": r[0x1F], "class": r[0x20],
                     "mv": r[0x3B], "hp": struct.unpack_from("<H", r, 0x40)[0]})
+# 觸發格的事件 slot = 地圖格 byte2 低 5 位(1-based),控制段 +0x33 起每 slot 2 bytes (event_id, selector);
+# 生成格的地形類型由同一張地圖(map 28)的地圖格與地形表傾印算出
+G29 = ROOT + "/.wsl_build/ctr/terr/ch29/"
+grid29, tt29 = open(G29 + "d0_grid.bin", "rb").read(), open(G29 + "d0_tt.bin", "rb").read()
+TRIG = (15, 21)
+slot1 = grid29[4 + 4 * (TRIG[1] * struct.unpack_from("<H", grid29, 0)[0] + TRIG[0]) + 2] & 0x1F
+ctl0 = open(f"{T}ch29/s0_ctl.bin", "rb").read()
+ev_id, ev_sel = ctl0[0x33 + 2 * (slot1 - 1)], ctl0[0x34 + 2 * (slot1 - 1)]
+assert (ev_id, ev_sel) == (75, 1), (slot1, ev_id, ev_sel)  # 事件 75、選擇子 1(玩家行動結束後呼叫)
+spawn_types = {terrain_type(grid29, tt29, *s["xy"]) for s in spawned}
+assert len(spawn_types) == 1, spawn_types
 b = {"setup": "悠妮(+8 = 9)MV 改 45;除 #69..#72(麻痺 40)外的敵人 +5 bit0 並移到 (0,0);其餘不改",
-     "trigger_cell": [15, 21], "field_event_slot_1based": 2, "field_event": {"slot": 1, "event_id": 75, "selector": 1},
+     "trigger_cell": list(TRIG), "field_event_slot_1based": slot1,
+     "field_event": {"slot": slot1 - 1, "event_id": ev_id, "selector": ev_sel},
      "dialogue_event75": "『就是這裡了!系統識別碼..』…『中樞撤銷最高級系統防護需要一些時間…』",
      "dialogue_event76_spawn": "『奇怪,終端竟然抗拒我的命令,有人對防衛系統動了手腳!』",
      "states": chain, "unit_count_after_spawn": cnt, "spawned_group1": spawned,
-     "terrain_of_spawn_cells": 5}
+     "terrain_of_spawn_cells": next(iter(spawn_types))}
 assert [c["ad5_0x11"] for c in chain] == [0, 1, 2, 3, 4, 4] and chain[-1]["ad5_0x15"] == cnt - 3
 assert all(s["xy"] in ([13, 12], [15, 12], [17, 12]) for s in spawned)
 
@@ -85,7 +98,8 @@ assert all(s["xy"] in ([13, 12], [15, 12], [17, 12]) for s in spawned)
 c19 = exchange("ch20", "x4b", 0x26D820, 24, 12, {
     "mods": [[-6, -50], [-5, -75], [-6, -50], [-5, -50]],
     "note": "#24(地形 4、MV 0)攻 #12(地形 4、DP 115):AP 130 → -6、DP → -5;#12 反擊:AP 130 → -6、#24 DP 110 → -5;傷害 12 / 17"})
-c19["hp_write"] = {"P_new_hp": 987, "E_new_hp": 982}
+assert [h["defender"] for h in c19["hp_write_stops"]] == [12, 24]  # 先寫 #12(P)、再寫 #24(E)
+c19["hp_write"] = {"P_new_hp": c19["hp_write_stops"][0]["new_hp"], "E_new_hp": c19["hp_write_stops"][1]["new_hp"]}
 c19["extra_poison"] = "攻方攻擊種類讓 #12 中毒(+0x25 = 3),下一個我方回合開始扣 MaxHP/10 = 99;第一次跑的 -111 = 12 + 99"
 assert c19["modifiers_match"] and [h["new_hp"] for h in c19["hp_write_stops"]] == [987, 982]
 c18 = exchange("ch19", "x3b", 0x26BFC0, 23, 5, {

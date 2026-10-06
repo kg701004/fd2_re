@@ -11,7 +11,7 @@ import _console  # noqa: E402
 EVI = out_path("terrain_modifier_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
 # 地形規則與修正表寫在 _terrain.py(ev_attack_path_selection 共用);本產生器以斷點讀值逐案驗證
-from _terrain import AP_PCT as A, DP_PCT as B, gated, modifier, terrain_type  # noqa: E402
+from _terrain import AP_PCT as A, DP_PCT as B, exchange, gated, terrain_type  # noqa: E402
 
 cells = (D / "t_map.bin").read_bytes()
 tt = (D / "t_tt.bin").read_bytes()
@@ -56,9 +56,7 @@ for tag, (bap, bdp, bdmg) in bp.items():
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
     ap, dp = w(a, 0x48), w(d, 0x4A)
     ta, td = ttype(a[0], a[1]), ttype(d[0], d[1])
-    apm = modifier(ap, A, ta, a)
-    dpm = modifier(dp, B, td, d)
-    dmg = max(0, ((ap + (apm or 0)) - (dp + (dpm or 0))) * 9 // 10)
+    apm, dpm, dmg = exchange(ap, dp, a, d, lambda r: ttype(r[0], r[1]))
     assert dmg < 18  # 亂數項為 0
     hp_drop = w(d, 0x40) - w(post[11 * 80:12 * 80], 0x40)
     # 同一段終端輸出印出的雙方欄位必須等於該案例的傾印(證明這段輸出與傾印是同一次執行)

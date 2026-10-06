@@ -69,16 +69,20 @@ for i in range(len(pre) // 80):
     if d:
         diff.append({"unit": i, "side": b[6], "xy_before": [a[0], a[1]], "xy_after": [b[0], b[1]],
                      "changed_offsets": d})
+# 地圖寬高取自 e2 停點記下的 [0x53a51] 標頭(每個停點都相同)
+whs = {tuple(s["wh"]) for s in e2 if "wh" in s}
+assert len(whs) == 1, whs
+W, H = next(iter(whs))
 B = {
-    "map": {"W": 25, "H": 53, "grid_bytes": 4 + 4 * 25 * 53},
+    "map": {"W": W, "H": H, "grid_bytes": 4 + 4 * W * H},
     "rule": "0x1317a(逐步移動共用收尾 0x1314f)以游標 [0x53ab1]/[0x53ab5] 呼叫 field_event_lookup(x, y, 0);"
             "格子位址 grid + 4 + 4*(y*W + x) 不檢查邊界。寫入條件:地形表 [tile*4] & 0x60 == 0、slot = byte2 & 0x1f != 0、"
             "事件表 [0x53a55] + 0x33 + (slot-1)*2 的 (id, sel) 中 id != 0xff 且 sel == 參數。",
     "event_table_slots_1_32": [[evtbl[2 * i], evtbl[2 * i + 1]] for i in range(32)],
-    "lookups_logged": len(rows), "off_grid": len(off), "in_grid_x_ge_W": sum(1 for r in rows if r["in_grid"] and r["x"] >= 25),
+    "lookups_logged": len(rows), "off_grid": len(off), "in_grid_x_ge_W": sum(1 for r in rows if r["in_grid"] and r["x"] >= W),
     "first_off_grid": [off[0]["x"], off[0]["y"]],
     "writes": [{k: r[k] for k in ("x", "y", "sel", "cell", "tile", "slot", "tt_b0", "event_id")} for r in writes],
-    "prediction_mismatches": 0,
+    "prediction_mismatches": len(mism),
     "dispatch": disp,
     "units_changed_excluding_0x26": diff,
     "unit_count_before_after": [len(pre) // 80, len(post) // 80],

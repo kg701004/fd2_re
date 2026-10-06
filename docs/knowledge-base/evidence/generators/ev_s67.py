@@ -15,11 +15,17 @@ require_inputs(__file__)
 S = GEN_DIR
 sys.path.insert(0, str(S))
 from sim_path import Grid, bfs_rival, flood1, search  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
 
 D = ROOT / ".wsl_build/ctr/v4/ch25"
 OUT = out_path("path_search_hits_friendly_mode8_20261001.json")
 UB = 0x26EA0C
 tt = (D / "d0_tt.bin").read_bytes()
+# 道具表(EXE 0x602AD,215 列 × 0x17 bytes):+9 是武器類型,供 B 段的靜態值重算
+_exe = (GAME / "FD2.EXE").read_bytes()
+_meta = dl.parse_le(_exe)
+ITEMS = [bytes(dl.object_bytes(_exe, _meta, 0x602AD + i * 0x17, 0x17)) for i in range(215)]
 
 
 def stops_of(tag: str) -> list[dict]:
@@ -133,6 +139,15 @@ for name, (old, new) in MUT.items():
     mutations[name] = {"calls_that_fail": bad, "killed": bool(bad)}
 
 sol_after_ff = (D / "sol.bin").read_bytes()
+# a4:游標 = 0x1894d 的起點往右(第一個 Return 之前的 Right 次數),該格在 d0 傾印裡站著陣營 2 的隊員;
+# 被拒後再往右一格,才是 0x189f8 確認的目標
+a4_st, a4_keys = stops_of("a4"), [k["key"] for k in keys_of("a4")]
+a4_start = next(s["args"][1:3] for s in a4_st if s["eip"] == "0x1894d")
+cursor = [a4_start[0] + a4_keys[:a4_keys.index("Return")].count("Right"), a4_start[1]]
+assert next(s["args"] for s in a4_st if s["eip"] == "0x189f8")[5:7] == [cursor[0] + 1, cursor[1]], cursor
+d0u = (D / "d0_units.bin").read_bytes()
+occ = [i for i in range(len(d0u) // 80) if [d0u[i * 80], d0u[i * 80 + 1]] == cursor]
+assert len(occ) == 1 and d0u[occ[0] * 80 + 6] == 2, occ
 A = {
     "static": {
         "signature": "0x4e4f6(costRow, startX, startY, budget, outBuf, tgtX, tgtY, mode, grid, terrainTable);格子 4 bytes:c0/c1 圖塊字(c1 高 6 bits 存方向段數×4)、c2 旗標、c3 記號",
@@ -148,7 +163,7 @@ A = {
     "flood1_0x4e390_recompute": floods,
     "path_search_recompute": search_rows,
     "simulator_mutations": mutations,
-    "target_loop_reject_occupied": {"run": "a4", "cursor_cell": [9, 43], "occupied_by": "隊員 #1",
+    "target_loop_reject_occupied": {"run": "a4", "cursor_cell": cursor, "occupied_by": f"隊員 #{occ[0]}",
                                     "keys": keys_of("a4")},
     "after_forced_0xff": {"sol_xy": [sol_after_ff[0], sol_after_ff[1]], "sol_f5": sol_after_ff[5],
                           "screen": "a4 之後回到地圖游標,沒有指令環"},
@@ -207,17 +222,18 @@ for tag in ("b1b", "b2b", "b3b", "b4b", "b5b", "b6b", "b6d", "b6e"):
         i += 1
 
 c66 = (ROOT / ".wsl_build/ctr/v3/ch29/bx_pre_units.bin").read_bytes()
+assert c66[0xB] == 31  # 索爾第一格是武器 31(鍵名 weapon31_row9)
 B = {
     "static": {
         "map_0x1e856": "下數預設 1;攻方武器(find_equipped_slot(攻方, 0))道具列 +9 == 3 → 2;rand()%100 < 3 → 2(不疊加,最多 2)",
         "scene_0x2ebe1": "下數預設 1;rand()%100 < 3 → 2;每一擊後若 scene_attack_resolve 的 out+0x10 != 0(武器列 +9 == 3 時設 1)且還沒加過,下數 +1(只加一次)→ 最多 3",
-        "row9_eq_3_items": [71],
+        "row9_eq_3_items": [i for i, r in enumerate(ITEMS) if r[9] == 3],
         "item71_name_on_status_screen": "魔龍爪",
         "ai_attack_execute_counter_calls": "0x1548e 只有一個反擊呼叫點 0x1560e(不在迴圈內)",
     },
     "sequences": seqs,
     "s66_double_counter": {
-        "sol_slot0": [c66[0xA], c66[0xB]], "weapon31_row9": 0,
+        "sol_slot0": [c66[0xA], c66[0xB]], "weapon31_row9": ITEMS[c66[0xB]][9],
         "conclusion": "續六十六索爾(武器 31,類型 0)在地圖路徑反擊打 2 下:靜態上只剩 rand()%100 < 3 這一支;該次亂數沒記錄,屬推論",
     },
     "note_ai_used_weapon_as_item": "E #18 原武器 60 的道具列 +0xd = 20,ai_choose_action 走道具執行 0x15055(把武器當道具用)而不是物理攻擊;換成武器 8(+0xd = 0)後才走 0x1548e。道具列 +0xd != 0 的武器:11, 29, 38, 40, 51, 56, 57, 58, 60, 61, 79, 94, 95, 96, 99, 101, 102",
@@ -241,6 +257,8 @@ for tag, m17 in (("b1b", 8), ("b2b", 3), ("b3b", 8), ("b4b", 8)):
             fr.append({"run": tag, "unit": u, "mode_eax": s["eax"], "set_mode17": m17 if u == 17 else None,
                        "phase": "friendly" if prev == "0x1d874" else ("enemy" if prev in ("0x1d942", "0x1d9d2") else prev),
                        "after_until_next_dispatch": [x for x in nxt if x != "0x1d874"][:8]})
+# SM 設定的 #17 模式(低四位)必須等於 ai_mode_dispatch 停點讀到的值
+assert any(f["unit"] == 17 for f in fr) and all(f["mode_eax"] & 0xF == f["set_mode17"] for f in fr if f["unit"] == 17), fr
 C = {
     "static": "0x1d80b:單一趟,條件 +6 == 1、+5 & 0x81 == 0、+0x26 == 0,呼叫 ai_mode_dispatch(unit, 1);模式比對不看 a2,所以模式 8 同樣在 0x13d97 跳到結尾",
     "shipped_data": "map 24 友軍 NPC #17(10,0)出貨就是模式 8、MV 0",
@@ -251,6 +269,12 @@ doc = {"note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章
                "斷點位址為 Ghidra 位址,執行期 +0x19c000。受控設定:[0x53af9] = 1、敵 E 搬到索爾正上方 (7,42)、MV 0、清法術/MP/第二格,雙方 AP 300 / DP 200 / HIT 250 / EV 0 / HP 999,其他敵人與隊員麻痺 9。"
                "強制亂數用偵錯器 SR EDX 0,並讀回 pane 確認。",
        "A_path_search_0x4e4f6": A, "B_hit_count": B, "C_friendly_phase_mode8": C}
+# 結論的判準:泛洪與路徑搜尋逐格 / 逐值重現、每一段打幾下都等於預測、每個模擬器變異都至少有一次呼叫不符
+assert floods and all(f["grid_diff"] == 0 for f in floods), [f["grid_diff"] for f in floods]
+assert search_rows and all(r["match"] for r in search_rows), [r["match"] for r in search_rows]
+assert seqs and all(x["match"] for x in seqs), [x["match"] for x in seqs]
+assert mutations and all(m["killed"] for m in mutations.values()), mutations
+assert B["static"]["row9_eq_3_items"] == [71] and B["s66_double_counter"]["weapon31_row9"] == 0
 OUT.write_bytes((json.dumps(doc, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 print("floods", [f["grid_diff"] for f in floods])
 print("search", [(r["run"], r["mode"], r["live_eax"], r["sim"], r["grid_diff"], r["match"]) for r in search_rows])

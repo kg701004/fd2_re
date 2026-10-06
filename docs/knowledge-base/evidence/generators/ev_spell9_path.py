@@ -88,6 +88,10 @@ for tag, r in rounds.items():
     (hit,) = [s for s in r["stops"] if s[0] == "0x1c7fe"]
     dmg_stops = [s for s in r["stops"] if s[0] == "0x1c87f"]
     assert len(dmg_stops) <= 1, tag
+    # 交叉檢查(終端輸出內部):第一個函式入口停點(玩家 handler 0x214ad 或 ai_spell_execute)的 a1 = 本回合施法者;
+    # 玩家選單那次的 a1 沒有收錄進證據,這裡直接讀終端輸出原文
+    first = next(m for line in _console.load(RUNS[tag]["log"])[1].splitlines() if (m := _ENTRY.match(line)))
+    assert int(first[3]) == r["caster"], (tag, first[0])
     (sdr,) = [s for s in r["stops"] if s[0] == "spell_damage_resolve"]
     # 交叉檢查(終端輸出內部):spell_damage_resolve 的 (目標, 法術) = (本回合目標, 9)
     assert sdr[2:] == [r["target"], 9], (tag, sdr)

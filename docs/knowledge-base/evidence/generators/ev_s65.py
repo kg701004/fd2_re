@@ -12,6 +12,7 @@ require_inputs(__file__)
 sys.path.insert(0, str(TOOLS))
 import disasm_le  # noqa: E402
 import parse_field  # noqa: E402
+from _terrain import AP_PCT, DP_PCT, gated, tdiv, terrain_type  # noqa: E402
 
 ROOT = ROOT_S
 EV = out_path("").as_posix() + "/"
@@ -92,6 +93,12 @@ open(EV + "collect_targets_selector_20261001.json", "a", encoding="utf-8", newli
 terrain = json.load(open(ROOT + "/docs/data/exe_tables/terrain.json", encoding="utf-8"))
 T = ROOT + "/.wsl_build/ctr/terr/"
 RUNS = [(19, "ch19", "d0"), (20, "ch20", "d0"), (25, "ch25", "d0"), (26, "ch26", "d1"), (29, "ch29", "d0")]
+# 受控攻擊的三個戰場各在 0x1eda12(執行期)讀一次 AP / DP 修正表(各 6 個 int32):三份相同、與 EXE 靜態表相同
+live_mods = {d: open(f"{T}{d}/mods.bin", "rb").read() for d in ("ch19", "ch20", "ch29")}
+assert len(set(live_mods.values())) == 1 and live_mods["ch19"] == ob(0x51A12, 48)
+LIVE_AP = [struct.unpack_from("<i", live_mods["ch19"], 4 * k)[0] for k in range(6)]
+LIVE_DP = [struct.unpack_from("<i", live_mods["ch19"], 0x18 + 4 * k)[0] for k in range(6)]
+assert (LIVE_AP, LIVE_DP) == (AP_PCT, DP_PCT)
 
 
 def stops(path: str) -> list:
@@ -135,6 +142,8 @@ for chap, d, tag in RUNS:
         "static_start_cells_type_ge3": [{"xy": list(c), "type": ty(*c), "entries": pos_count[c], "occupied_by": occ.get(c)}
                                         for c in hi_static],
     })
+# 章節 byte → 地圖編號的對應:活地圖的圖塊與該地圖的 FDFIELD 逐格相同
+assert all(mp["tiles_equal_FDFIELD"] == mp["cells"] for mp in maps), [(mp["map"], mp["tiles_equal_FDFIELD"], mp["cells"]) for mp in maps]
 
 ATTACKS = [
     {"map": 18, "file": "ch19/t2", "attacker": 5, "attacker_cell": [16, 36], "attacker_type": 3, "attacker_race_class": [1, 6],
@@ -153,6 +162,51 @@ ATTACKS = [
      "predicted": {"ap_mod": 6, "ap_rem": 25, "dp_mod": 0, "dp_rem": 0, "damage": 14},
      "rival_type5_as_4": {"dp_mod": -5, "damage": 18}, "rival_type5_as_3": {"dp_mod": 11, "damage": 4}},
 ]
+
+# ATTACKS 的每個欄位都由傾印重算:地圖 = 章節 byte(RUNS);攻方位置取攻擊後傾印(自己走過去)、守方取攻擊前;
+# 地形類型由該戰場的 d0 地圖格 + 地形表;AP / DP = 攻擊前傾印 +0x48 / +0x4A;守方被 SM 搬過 = d0 位置不同。
+# 預測與對照(向下取整、地形 5 當 4 / 3)依修正表與規則重算,對照必須和斷點讀值不同(有鑑別力)。
+DIR_MAP = {d: chap - 1 for chap, d, _ in RUNS}
+DIR_D0 = {d: tag for _, d, tag in RUNS}
+u16 = lambda b, o: struct.unpack_from("<H", b, o)[0]
+
+
+def pm(v: int, pct: list, ty: int) -> tuple:
+    """(商, 餘數);idiv 向零截斷、餘數與被除數同號。"""
+    q = tdiv(v * pct[ty], 100)
+    return q, v * pct[ty] - 100 * q
+
+
+for a in ATTACKS:
+    d, t = a["file"].split("/")
+    rdb = lambda name: open(f"{T}{d}/{name}.bin", "rb").read()
+    pre_u, post_u = rdb(f"{t}_pre_units"), rdb(f"{t}_post_units")
+    g0, tt0, u0 = rdb(f"{DIR_D0[d]}_grid"), rdb(f"{DIR_D0[d]}_tt"), rdb(f"{DIR_D0[d]}_units")
+    ra, rd = pre_u[a["attacker"] * 80:(a["attacker"] + 1) * 80], pre_u[a["defender"] * 80:(a["defender"] + 1) * 80]
+    pa = post_u[a["attacker"] * 80:(a["attacker"] + 1) * 80]
+    assert a["map"] == DIR_MAP[d], a["map"]
+    assert a["attacker_cell"] == [pa[0], pa[1]] and a["defender_cell"] == [rd[0], rd[1]], a["map"]
+    assert a["attacker_type"] == terrain_type(g0, tt0, *a["attacker_cell"]), a["map"]
+    assert a["defender_type"] == terrain_type(g0, tt0, *a["defender_cell"]), a["map"]
+    assert a["attacker_race_class"] == [ra[0x1F], ra[0x20]] and a["defender_race_class"] == [rd[0x1F], rd[0x20]], a["map"]
+    assert (a["AP"], a["DP"]) == (u16(ra, 0x48), u16(rd, 0x4A)), a["map"]
+    assert a["defender_moved_by_SM"] == ([u0[a["defender"] * 80], u0[a["defender"] * 80 + 1]] != a["defender_cell"])
+    assert not gated(ra) and not gated(rd), a["map"]
+    apm, aprm = pm(a["AP"], LIVE_AP, a["attacker_type"])
+    dpm, dprm = pm(a["DP"], LIVE_DP, a["defender_type"])
+    dmg = max(0, (a["AP"] + apm - a["DP"] - dpm) * 9 // 10)
+    assert a["predicted"] == {"ap_mod": apm, "ap_rem": aprm, "dp_mod": dpm, "dp_rem": dprm, "damage": dmg}, a["map"]
+    for k, r in a.items():
+        if not k.startswith("rival_"):
+            continue
+        if k == "rival_floor":
+            fa, fd = a["AP"] * LIVE_AP[a["attacker_type"]] // 100, a["DP"] * LIVE_DP[a["defender_type"]] // 100
+            exp = {"ap_mod": fa, "dp_mod": fd, "damage": max(0, (a["AP"] + fa - a["DP"] - fd) * 9 // 10)}
+        else:  # rival_type5_as_N:守方的地形 5 照類型 N 修正
+            fd = pm(a["DP"], LIVE_DP, int(k[-1]))[0]
+            exp = {"dp_mod": fd, "damage": max(0, (a["AP"] + apm - a["DP"] - fd) * 9 // 10)}
+        assert r == {kk: exp[kk] for kk in r}, (a["map"], k, r, exp)
+        assert any(r[kk] != {"ap_mod": apm, "dp_mod": dpm, "damage": dmg}[kk] for kk in r), (a["map"], k)
 for a in ATTACKS:
     d, t = a["file"].split("/")
     st = stops(f"{T}{d}/{t}_stops.txt")
@@ -174,7 +228,7 @@ ter_out = {
              "攻方都用自己的移動走到格子上(以 SM 瞬移的攻方在 ch19 無法確認移動,改用正常移動);守方以 SM 搬到相鄰的同類地形格。"),
     "maps": maps,
     "attacks": ATTACKS,
-    "terrain_modifier_tables_live": {"ap_pct_0x51a12": [5, 0, -5, -5, -5, 0], "dp_pct_0x51a2a": [0, 0, 10, 10, -5, 0],
+    "terrain_modifier_tables_live": {"ap_pct_0x51a12": LIVE_AP, "dp_pct_0x51a2a": LIVE_DP,
                                      "read_at": "每個戰場各讀一次 0x1eda12(執行期),三章相同"},
     "hud_readout": "游標停在地形 3 / 4 / 5 格時左下角資訊框分別顯示 A-05 D+10、A-05 D-05、A+00 D+00(截圖 t1_cursor / t3_moved / t4_aim)",
     "terrain5_start_placement": ("map 24(第 25 章)開場時 #17(陣營 1、raw key 0x68、種族 10、職業 26、MV 0)站在地形 5 的 (10,0);"

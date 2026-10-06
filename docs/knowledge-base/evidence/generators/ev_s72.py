@@ -132,7 +132,8 @@ ev["C_null_speaker"] = {
     "linear_0_8": i3["ivt_0_8"],
     "linear_0_8_meaning": "DOS 中斷向量表:int0 = F000:CA60、int1 = 0070:000E;byte 7 = int1 段址的高位 0x00(DOSBox-X 的值,實機 DOS 可能不同)",
     "portrait_idx": por["portrait_idx_ebp"], "loader": {"ret": ld["ret"], "res_idx": ld["res_idx"], "size_0x53bff": st5["size_53bff"],
-                                                         "len_DATO_000": len(DM.ENTS[0]), "buf_dato_full_match": [0]},
+                                                         "len_DATO_000": len(DM.ENTS[0]),
+                                                         "buf_dato_full_match": DM.match((A_ / st5["buf_dump"]).read_bytes(), DM.ENTS)},
     "box_anim": {"x": box["x"], "y": box["y"], "flag": box["flag"], "cursor": box["cursor"]},
     "screen": "a2_s007_pre_Return.png:頂端開框,頭像是 DATO_000(doc01:索爾),台詞照常顯示,鏡頭沒動,遊戲沒有當掉",
     "roster_branch_control": {"attempted_k1": k1_3.get("patched"), "reason": "名冊 18 筆的 id 全都在戰場上,沒有只在名冊的角色;驅動照設計不改碼,第 3 條走原本的 0xFFED",
@@ -197,7 +198,7 @@ b_prompt = [s for s in json.loads((B_ / "c0.json").read_text(encoding="utf-8"))[
             if s["eip"] == "0x111ba" and s["ret"] == "0x1967b"]
 assert [s["res_idx"] for s in b_prompt] == [75]
 ev["A_garble_portrait"]["battle_state_prompt_portrait"] = {
-    "v10b_c0_open_dialog_box_load": {"n": b_prompt[0]["n"], "ret": "0x1967b", "res_idx": 75},
+    "v10b_c0_open_dialog_box_load": {"n": b_prompt[0]["n"], "ret": b_prompt[0]["ret"], "res_idx": b_prompt[0]["res_idx"]},
     "save_prompt_screen": ".wsl_build/ctr/v10b/ch25/m_06_Return.png(記錄戰況提示框,頭像不是索爾)",
     "consequence": "續七十一 v9b 第二次觸發的索爾頭像不是記錄戰況提示框留下的;來源未確認"}
 ev["_meta"]["not_covered"] = ("B 只驗證戰場初始化這條路徑(讀取戰況 → 0x10010);0x25ebb(標題 / 新遊戲)沒有實測。"

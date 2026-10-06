@@ -7,19 +7,43 @@
 import json
 import re
 import struct
+import sys
 from pathlib import Path
 
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402,F401
 require_inputs(__file__)
 import _console  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
 D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_item_score_20260930.json")
-# 道具列(0x602ad + id*0x17,靜態 disasm_le data):+0xd type、+0xe word、+0x10 距離、+0x11 選擇子旗標、+0x12 範圍
-ITEM = {
-    58: {"type": 0x0D, "e": 300, "range": 2, "sel11": 1, "area": 0, "row": "06 b4 00 5a 00 00 00 00 00 00 00 01 01 0d 2c 01 02 01 00 10 27 01 00"},
-    38: {"type": 0x15, "e": 1, "range": 2, "sel11": 0, "area": 1, "row": "04 b4 00 64 00 00 00 00 00 00 00 01 01 15 01 00 02 00 01 d4 30 00 00"},
-}
-SPELL_VALUE = {1: 120}  # 法術列 0x619fd + 1*7 = 78 00 5a 05 00 06 00
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
+
+
+def item_row(item: int) -> dict:
+    """由 FD2.EXE 讀道具列(linear 0x602ad + id*0x17,經 disasm_le 換算檔案位置)並解碼。
+
+    Args:
+        item: 道具編號。
+
+    Returns:
+        {"type": +0xd, "e": +0xe u16, "range": +0x10 距離, "sel11": +0x11 選擇子旗標, "area": +0x12 範圍, "row": 0x17 bytes 十六進位}。
+    """
+    r = bytes(dl.object_bytes(_EXE, _META, 0x602AD + item * 0x17, 0x17))
+    return {"type": r[0xD], "e": struct.unpack_from("<H", r, 0xE)[0], "range": r[0x10], "sel11": r[0x11], "area": r[0x12],
+            "row": r.hex(" ")}
+
+
+def spell_value(sid: int) -> int:
+    """法術列(linear 0x619fd + id*7)的 +0 u16 數值。"""
+    return struct.unpack_from("<H", bytes(dl.object_bytes(_EXE, _META, 0x619FD + sid * 7, 2)))[0]
+
+
+# 本場景施法者帶的道具(下面核對評分停點傾印裡出現的道具恰為這兩種)
+ITEM = {i: item_row(i) for i in (58, 38)}
+# type 0x14/0x15 的道具以 +0xe 當法術編號,評分取該法術列 +0
+SPELL_VALUE = {it["e"]: spell_value(it["e"]) for it in ITEM.values() if it["type"] in (0x14, 0x15)}
 # 斷點讀值由當時 it_log.sh 的終端輸出(原始紀錄,見 _console.py)解析;每行格式見該腳本的 echo
 CONSOLE = "20260930T032134_toolu_01519RpeB7CB8YBCE2fah1WV"
 EXEC = {"physical 0x1548e": "physical", "spell 0x15311": "spell", "item 0x15055": "item"}
@@ -116,6 +140,8 @@ for n in sorted(SCORE):
     calls.append({"stop": n, "actor": ACTOR[n], "item": item, "slot": slot, "cast_point": list(pt), "targets": tg,
                   "target_state": [{"unit": t, "hp": us[t]["hp"], "maxhp": us[t]["maxhp"], "b34": us[t]["b34"]} for t in tg],
                   "score_eax": SCORE[n], "score_recomputed": pred})
+# ITEM 只解碼 58、38 兩列:評分停點用到的道具必須正好是這兩個
+assert {c["item"] for c in calls} == set(ITEM), sorted({c["item"] for c in calls})
 # 候選清單:每個施法者兩次呼叫(第一遍掃描、ai_choose_action)各自與重算相同
 for actor, item in ((11, 58), (17, 38), (18, 38), (19, 38)):
     exp = [(pt, tg) for pt, tg in candidates(actor, item)]

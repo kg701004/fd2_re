@@ -113,18 +113,18 @@ regs = {k: int(v, 16) for k, v in re.findall(r"(EDI|ESI|ECX)=([0-9A-F]{8})", hal
 crash11 = (V11 / "r1_crash_pane.txt").read_text(encoding="utf-8")
 assert "E_Exit: JMP Illegal descriptor type 14" in crash11
 ev["A_linear7_0x89_runaway_blit"] = {
-    "load": {"stop": "0x161c5", "portrait_idx": 137, "size": 3654, "buffer": load["new"],
+    "load": {"stop": load["eip"], "portrait_idx": load["portrait_idx"], "size": load["size_53bff"], "buffer": load["new"],
              "buffer_equals": "DATO.DAT[0x10:0xe56]", "res_first_bytes": res[:8].hex()},
-    "open_box_0x165ac": {"ret": box["ret"], "xy_flag": [96, 202, 0], "returned": True},
+    "open_box_0x165ac": {"ret": box["ret"], "xy_flag": [box["x"], box["y"], box["flag"]], "returned": True},
     "draw_call": {"call_site": "0x16200(0x161e3 讀 [0x53a85]、0x161e9 movzx byte、0x161ec add)", "ret": blit["ret"],
                   "dst": blit["dst"], "dst_is": "0xa0000 + [0x53c67] 0x728", "src": blit["src"],
-                  "src_rule": "res + byte[res];res[0] = 0 → src = res 本身", "stride": 320},
+                  "src_rule": "res + byte[res];res[0] = 0 → src = res 本身", "stride": blit["stride"]},
     "header_at_0x4ec16": {"width_bp": w, "height_dx": h, "esi": hex(s16["esi"]), "edi": hex(s16["edi"])},
     "loop": "0x4ec16 xor ecx, ecx;0x4ec1c mov cx, bp(= 0);0x4ec1f..0x4ec25 call 0x4ec66 / stosb / loop 0x4ec1f —— "
             "32 位元 loop 用 ECX:0 先減成 0xffffffff,所以第一列要寫 2^32 個 byte 才結束;每列結束 0x4ec2a 的斷點一次都沒停",
     "normal_control_static": "DATO 第 0 條 res[0] = 0x10 → src = res + 0x10 = 第 0 格,寬高 (80, 80);0x89 的假資源 res[0] = 0",
     "static_insns": {hex(k): v for k, v in static_a.items()},
-    "end_state_v16": {"stops_after_0x4ec16": 0, "pane": "r1_halt_pane.txt / r1_end_pane.txt",
+    "end_state_v16": {"stops_after_0x4ec16": len(after) - 1 - after.index(s16), "pane": "r1_halt_pane.txt / r1_end_pane.txt",
                       "cpu": "實際模式(Real),CS:IP F000:CA60(= 中斷向量表第 0 項 60ca00f0 那個 BIOS 預設處理常式)",
                       "code_overview": "C3FF:35F7 63 B9 4F 4F = arpl [illegal],線性 0xc75e7(視訊 BIOS 區)",
                       "output": "ERROR CPU:Illegal Unhandled Interrupt Called 6 不斷重複(INT 6 = 無效指令),模擬器沒有結束",
@@ -186,7 +186,7 @@ ev["B_exit_path_frees"] = {
     "frees_after_ail_shutdown": [{"n": s["n"], "ptr": s["ptr"], "hdr": s["hdr"], "ret_game": s["ret_game"],
                                   **({"known": s["known"]} if "known" in s else {})} for s in afterail],
     "known_blocks": kn,
-    "node_is_H_stops": {"n": nodes_h, "of_0x3d72e_stops": 17, "note": "17 次 free 只有這兩次把 H 當節點,其餘選到的都是真正的空閒區塊"},
+    "node_is_H_stops": {"n": nodes_h, "of_0x3d72e_stops": sum(1 for s in s17 if s["eip"] == "0x3d72e"), "note": "17 次 free 只有這兩次把 H 當節點,其餘選到的都是真正的空閒區塊"},
     "ail_free_path": "0x3651d 是 0x364fb(ptr, size)裡 call [0x5275c] 的返回位址;0x364fb 先 0x36683(ptr, size)再經函式指標 [0x5275c] 呼叫 free 包裝 0x3776e",
     "library_free_call_sites": "0x3da31 / 0x4d021 都沒有停:0x3da31 是堆積擴充(0x3da0e 寫結尾標記後釋放新段的本體),"
                                "0x4d021 只在 0x4cfbb 第二次 malloc 失敗(0x4cfc5 je 0x4d020)時釋放剛配置的環境字串(靜態)",
@@ -267,7 +267,7 @@ ev["C_fake_node_insert_executed"] = {
                        "corrupted_buffer_first8": b2["pre"]["pal8"], "control_buffer_first8": c2["pre"]["pal8"],
                        "predicted_color0": list(pred0), "predicted_rule": "DAC 只留低 6 位:0xb8→0x38、0xa6→0x26、0x1f;8 位顯示 = v<<2 | v>>4",
                        "b2_02_Return.png": {"most_common": list(cb.most_common(1)[0][0]), "count": cb[pred0], "black": cb[(0, 0, 0)]},
-                       "c2_00_Return.png(對照)": {"most_common": [0, 0, 0], "count_black": cc[(0, 0, 0)], "count_pred0": cc[pred0]},
+                       "c2_00_Return.png(對照)": {"most_common": list(cc.most_common(1)[0][0]), "count_black": cc[(0, 0, 0)], "count_pred0": cc[pred0]},
                        "map_border_pixel_194_400": {k: list(v) for k, v in border.items()},
                        "border_note": "地圖外框是 DAC 第 0 色:改壞的緩衝上傳後變橘粉色並一直留著;把緩衝寫回 0000003f 後,下一次上傳(c2 的戰鬥場景)才變回黑色"},
     "static_insns": {hex(k): v for k, v in static_c.items()},

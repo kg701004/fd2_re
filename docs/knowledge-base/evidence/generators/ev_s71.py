@@ -101,8 +101,9 @@ ev["A_garbled_dialog"] = {
     "files": {"FDTXT_001_entries": struct.unpack_from("<H", f01, 0)[0] // 2, "FDTXT_025_entries": struct.unpack_from("<H", f25, 0)[0] // 2,
               "FDTXT_025_len": len(f25), "font_glyphs_FDOTHER_004": font_n},
     "ch1_control_idx11": {"start": s_ch1["start"], "events": s_ch1["events"], "text": "哈諾:『老爸!老爸!』(decode_story_text)"},
-    "ch25_idx11_static": {"table_word_offset": 22, "start": s_file11["start"], "start_odd": s_file11["start_odd"],
-                          "codes_until_file_end": s_file11["events"][-1]["glyphs_before"], "control_codes_in_file": 0},
+    "ch25_idx11_static": {"table_word_offset": s_file11["table_word_offset"], "start": s_file11["start"], "start_odd": s_file11["start_odd"],
+                          "codes_until_file_end": s_file11["events"][-1]["glyphs_before"],
+                          "control_codes_in_file": sum(e["kind"] != "past_file" for e in s_file11["events"])},
     "live_v9a": {"dialog_entry": {k: la[i0][k] for k in ("ret", "table", "idx", "0x53c67", "0x53a79")},
                  "runtime_buffer_equals": "FDTXT_025(3350 bytes 全同;FDTXT_034 是 0 byte,不計)",
                  "stops_between_entry_and_end": seg, "idx3_control_stops": live3},
@@ -129,7 +130,8 @@ ev["B_duplicate_persists"] = {
     "battle_save_v9a": {
         "path": "系統選單第 0 項 → 子選單 0x19df7 第 1 項 → 文字 0x19a「要記錄戰況嗎?」→ YES",
         "static": "0x19ffd..0x1a0b0:0xa00 bytes 名冊 [0x53bf7] 拷到 buffer +0x8a3,[0x53bfb] 的低 byte 存到 +0x30c3+9",
-        "changed_bytes": len(changed), "changed_outside_0..0x312b_and_checksum": 0,
+        "changed_bytes": len(changed),
+        "changed_outside_0..0x312b_and_checksum": sum(F.SLOT_OFFSET <= i < F.CHECKSUM_OFFSET for i in changed),
         "snapshot_count_byte": sa[M + 9], "snapshot_roster_equals_memory": sa[R:R + 0xA00] == memr,
         "snapshot_char_ids": [sa[R + i * 0x50 + 8] for i in range(sa[M + 9])],
         "rec16_portrait_+7": sa[R + 16 * 0x50 + 7], "before_snapshot_count_chapter": [sb[M + 9], sb[M + 2]]},
@@ -203,12 +205,14 @@ ev["D_roster_full"] = {
     "tavern_save_35": {"memory_count": len(m35) // 0x50, "memory_ids_32_34": [m35[i * 0x50 + 8] for i in (32, 33, 34)],
                        "slot_count_byte": t35[o + 0xA01], "slot_chapter": t35[o + 0xA00],
                        "slot_roster_equals_memory_first_0xa00": t35[o:o + 0xA00] == m35[:0xA00]},
-    "fresh_load_v9d": {"count": 35, "ids_0_31": [fresh[i * 0x50 + 8] for i in range(32)],
+    "fresh_load_v9d": {"count": len(fresh) // 0x50, "ids_0_31": [fresh[i * 0x50 + 8] for i in range(32)],
                        "rec32_34_+7_+8": [[fresh[i * 0x50 + 7], fresh[i * 0x50 + 8]] for i in (32, 33, 34)],
                        "rec32_first16": fresh[0xA00:0xA10].hex(), "header_after_roster": fresh[0xA00:0xA04].hex(),
                        "screen": "酒店隊員清單底部:圖示是雜訊,出現「約拿」(id 21)、「凱麗」(id 12)與一筆名稱亂碼(c3_bottom.png);讀檔與清單都沒有當掉"},
 }
 assert ev["D_roster_full"]["fresh_load_v9d"]["rec32_34_+7_+8"] == [[63, 60], [25, 21], [20, 12]]
+# 讀檔後的隊員表傾印恰為整數筆,筆數等於酒店存檔的筆數 byte
+assert len(fresh) % 0x50 == 0 and len(fresh) // 0x50 == t35[o + 0xA01], (len(fresh), t35[o + 0xA01])
 
 # ---------------- E ----------------
 ev["E_static_roster_count"] = {
