@@ -2,14 +2,14 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 151,
+  "total": 341,
   "by_kind": {
-   "thunk": 4,
-   "ail_only": 30,
-   "wrapper": 96,
-   "leaf_global": 5,
-   "leaf_ptr": 8,
-   "leaf_pure": 8
+   "thunk": 7,
+   "ail_only": 55,
+   "wrapper": 101,
+   "leaf_global": 88,
+   "leaf_ptr": 63,
+   "leaf_pure": 27
   },
   "wrapper_rounds": 2,
   "disasm_available": true
@@ -610,6 +610,62 @@
    "callers": 5,
    "argc": 1
   },
+  "0x335a0": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x33674": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x34fc2": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x350be": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x36439": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x36440": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x36447": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x3644e": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
   "0x364d4": {
    "kind": "ail_only",
    "name": "ail_only",
@@ -639,18 +695,11 @@
    "argc": 3
   },
   "0x36647": {
-   "kind": "ail_only",
-   "name": "ail_only",
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
    "round": 0,
    "callers": 7,
    "argc": null
-  },
-  "0x36683": {
-   "kind": "ail_only",
-   "name": "ail_only",
-   "round": 0,
-   "callers": 29,
-   "argc": 2
   },
   "0x36c56": {
    "kind": "ail_only",
@@ -666,6 +715,62 @@
    "callers": 2,
    "argc": 1
   },
+  "0x36e3d": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52766]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36e57": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52766]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36ea7": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52766]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36ee0": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52760, 0x52762]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36f08": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52760, 0x52762]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36f69": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52762]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36f82": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52762]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x36fac": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x52762]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
   "0x375ec": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
@@ -679,6 +784,20 @@
    "round": 1,
    "callers": 3,
    "argc": 1
+  },
+  "0x37b13": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 2
+  },
+  "0x37b8c": {
+   "kind": "wrapper",
+   "name": "wrapper(dpmi_lock_region(0x27b8c, 0x2ca23), dpmi_lock_range(0x4174, 4), dpmi_lock_range(0x4170, 4), dpmi_lock_range(0x4164, 4), dpmi_lock_range(0x4168, 4), dpmi_lock_range(0x416c, 4), dpmi_lock_range(0x4160, 4), dpmi_lock_range(0x415c, 4), dpmi_lock_range(0x4158, 4))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
   },
   "0x3806a": {
    "kind": "thunk",
@@ -700,6 +819,13 @@
    "round": 0,
    "callers": 2,
    "argc": null
+  },
+  "0x382db": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 4,
+   "argc": 1
   },
   "0x3845e": {
    "kind": "thunk",
@@ -736,6 +862,34 @@
    "callers": 2,
    "argc": 0
   },
+  "0x3cf1c": {
+   "kind": "thunk",
+   "name": "thunk->0x46186",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3cf21": {
+   "kind": "thunk",
+   "name": "thunk->0x46306",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3d5be": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x3da97": {
+   "kind": "wrapper",
+   "name": "wrapper(fputc(_, _))",
+   "round": 1,
+   "callers": 0,
+   "argc": 2
+  },
   "0x3db31": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
@@ -764,6 +918,13 @@
    "callers": 2,
    "argc": 1
   },
+  "0x3dfef": {
+   "kind": "leaf_global",
+   "name": "leaf_set[0x541b0]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
   "0x3e103": {
    "kind": "wrapper",
    "name": "wrapper(lseek(_, 0, 1))",
@@ -785,11 +946,32 @@
    "callers": 1,
    "argc": 0
   },
+  "0x3ea81": {
+   "kind": "leaf_global",
+   "name": "leaf_rw[0x52bea]",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x3ea8e": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
   "0x3ebb4": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 2,
+   "argc": null
+  },
+  "0x3edf8": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
    "argc": null
   },
   "0x3f0a8": {
@@ -806,11 +988,32 @@
    "callers": 159,
    "argc": 0
   },
+  "0x3f446": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
   "0x3f48b": {
    "kind": "wrapper",
    "name": "wrapper(strlen(_), strnicmp(_, _, _))",
    "round": 1,
    "callers": 5,
+   "argc": 1
+  },
+  "0x3f4e0": {
+   "kind": "wrapper",
+   "name": "wrapper(dpmi_lock_region(0x2f4e0, 0x2fddc), dpmi_lock_range(0x41b4, 0x40), dpmi_lock_range(0x430c, 0x48), dpmi_lock_range(0x41f4, 0x100), dpmi_lock_range(0x42f4, 0x18), dpmi_lock_range(0x3604, 4), dpmi_lock_range(0x4354, 4))",
+   "round": 1,
+   "callers": 1,
+   "argc": 0
+  },
+  "0x3f565": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
    "argc": 1
   },
   "0x3f5b4": {
@@ -834,11 +1037,25 @@
    "callers": 3,
    "argc": 2
   },
+  "0x40100": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
   "0x40240": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 4,
+   "argc": 1
+  },
+  "0x404c0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
    "argc": 1
   },
   "0x40b40": {
@@ -848,6 +1065,13 @@
    "callers": 3,
    "argc": null
   },
+  "0x40c40": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
+  },
   "0x40cf0": {
    "kind": "ail_only",
    "name": "ail_only",
@@ -855,11 +1079,32 @@
    "callers": 2,
    "argc": 1
   },
+  "0x41a40": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x41af4": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
   "0x41b1c": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 5,
+   "argc": 1
+  },
+  "0x41b26": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
    "argc": 1
   },
   "0x41b84": {
@@ -869,12 +1114,33 @@
    "callers": 3,
    "argc": 1
   },
+  "0x41ddb": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
+  },
   "0x41deb": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 2,
    "argc": null
+  },
+  "0x420e1": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x42110": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
   },
   "0x42270": {
    "kind": "ail_only",
@@ -883,12 +1149,26 @@
    "callers": 4,
    "argc": 1
   },
+  "0x422c0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 21,
+   "argc": 4
+  },
   "0x424b0": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 4,
    "argc": 1
+  },
+  "0x42980": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 24,
+   "argc": 5
   },
   "0x42f50": {
    "kind": "ail_only",
@@ -911,12 +1191,26 @@
    "callers": 2,
    "argc": 1
   },
+  "0x43270": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
+  },
   "0x439a0": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 3,
    "argc": 2
+  },
+  "0x43a70": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
   },
   "0x43ad0": {
    "kind": "ail_only",
@@ -925,23 +1219,79 @@
    "callers": 2,
    "argc": 1
   },
+  "0x45380": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x45670": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
   "0x4584d": {
-   "kind": "leaf_ptr",
-   "name": "leaf_ptr_get",
+   "kind": "ail_only",
+   "name": "ail_only",
    "round": 0,
    "callers": 3,
    "argc": 3
   },
   "0x45880": {
-   "kind": "wrapper",
-   "name": "wrapper(AIL_set_sample_volume(?), AIL_set_sample_pan(?))",
-   "round": 1,
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
    "callers": 2,
    "argc": 2
+  },
+  "0x458f0": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 3,
+   "argc": 2
+  },
+  "0x459f5": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 3
+  },
+  "0x45a20": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": null
+  },
+  "0x45fed": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x46170": {
+   "kind": "leaf_global",
+   "name": "leaf_set[0x537f4, 0x537f8]",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
   },
   "0x4627f": {
    "kind": "leaf_pure",
    "name": "leaf_pure",
+   "round": 0,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x462e6": {
+   "kind": "leaf_global",
+   "name": "leaf_rw[0x53730]",
    "round": 0,
    "callers": 2,
    "argc": 0
@@ -952,6 +1302,20 @@
    "round": 0,
    "callers": 2,
    "argc": 0
+  },
+  "0x463db": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
+  },
+  "0x463e7": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 1
   },
   "0x466f4": {
    "kind": "leaf_global",
@@ -973,6 +1337,20 @@
    "round": 1,
    "callers": 2,
    "argc": 1
+  },
+  "0x46c48": {
+   "kind": "wrapper",
+   "name": "wrapper(nmalloc(8))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x46e91": {
+   "kind": "leaf_global",
+   "name": "leaf_ref[0x516cc]",
+   "round": 0,
+   "callers": 0,
+   "argc": null
   },
   "0x46f3a": {
    "kind": "leaf_pure",
@@ -1009,6 +1387,748 @@
    "callers": 2,
    "argc": 2
   },
+  "0x47d88": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47d99": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47da5": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47dc4": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47dd8": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47df7": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e0b": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e28": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e3a": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e57": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e69": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e7d": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47e8c": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47ea2": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47eb3": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47ed4": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47eea": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f0b": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f21": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f46": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f60": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f85": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47f9f": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47fc2": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47fda": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x47ffd": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48015": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4803c": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48058": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4807f": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4809b": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x480c8": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48384": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x483b4": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x483df": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48411": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_rw",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x489c6": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x489e7": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48a0b": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48a37": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48a69": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48a95": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48ac7": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48aeb": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48b12": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48b40": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48b74": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48ba2": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48bd6": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48bf2": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48c11": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48c32": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48c59": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48c7a": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48ca1": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48cc0": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48ce2": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48d05": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48d2e": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48d51": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48d7a": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48da6": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48dd5": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48e0f": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48e4f": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48e89": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48ec9": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48efb": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48f30": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x48fae": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4902c": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49053": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4907d": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x490ac": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x490e1": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49110": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49145": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49172": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x491a2": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x491d3": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4920a": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4923b": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49272": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4928e": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x492b4": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x492d5": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49300": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49321": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4934c": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4936b": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49394": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x493b6": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x493e2": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49404": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49430": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49457": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49488": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x494b7": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x494f0": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4951f": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49558": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49585": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x495bc": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x495ec": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49626": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x49656": {
+   "kind": "leaf_global",
+   "name": "leaf_get[0x538a8, 0x538b0, 0x538b4, 0x538b8]+ptr",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
   "0x49891": {
    "kind": "ail_only",
    "name": "ail_only",
@@ -1023,12 +2143,187 @@
    "callers": 5,
    "argc": 1
   },
+  "0x4994f": {
+   "kind": "ail_only",
+   "name": "ail_only",
+   "round": 0,
+   "callers": 1,
+   "argc": 0
+  },
   "0x4997e": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
    "callers": 8,
    "argc": 3
+  },
+  "0x4a362": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a368": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a36e": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a374": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a37a": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a382": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a388": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a38e": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a394": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a39c": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3a4": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3ac": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3b4": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3be": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3c8": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3d0": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3d8": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3e1": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3ea": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3f3": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a3fc": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a407": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a412": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4a41b": {
+   "kind": "leaf_ptr",
+   "name": "leaf_ptr_get",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
   },
   "0x4b81a": {
    "kind": "leaf_ptr",
@@ -1051,6 +2346,34 @@
    "callers": 5,
    "argc": 0
   },
+  "0x4ced6": {
+   "kind": "wrapper",
+   "name": "wrapper(ld_mul_core(), ~0x4ce84(), ld_mul_core())",
+   "round": 2,
+   "callers": 2,
+   "argc": 0
+  },
+  "0x4cf1e": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4cf4d": {
+   "kind": "wrapper",
+   "name": "wrapper(nmalloc(_), nmalloc(_), memset(_, 0, _), ~0x3777e(_))",
+   "round": 2,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x4d690": {
+   "kind": "thunk",
+   "name": "thunk->0x4dc3a",
+   "round": 0,
+   "callers": 0,
+   "argc": 0
+  },
   "0x4d695": {
    "kind": "wrapper",
    "name": "wrapper(ioalloc(_), fputc(_, _), stdio_flush(_))",
@@ -1063,6 +2386,13 @@
    "name": "wrapper(errno_ptr())",
    "round": 1,
    "callers": 3,
+   "argc": 0
+  },
+  "0x4dc3a": {
+   "kind": "leaf_pure",
+   "name": "leaf_pure",
+   "round": 0,
+   "callers": 0,
    "argc": 0
   },
   "0x4e71f": {

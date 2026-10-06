@@ -15,9 +15,21 @@
 * `call`          直接 `E8 rel32` 的目標(`derive_native_argcounts._scan` 的位元組掃描,附呼叫端位址)
 * `ail`           `docs/data/ail_entry_points.json` 的 105 個進入點(多半經指標表呼叫,沒有直接 CALL)
 * `thunk_target`  某個入口的第一個位元組是 `E9`,它跳去的位址(`delay` 的本體 `0x3e01d` 只能這樣抵達)
+* `fnptr`         函式指標的目標(2026-10-06,見下)
 
-`grade`:有 prologue / ail / thunk_target,或被 CALL 兩次以上 = `strong`;只被 CALL 一次 = `weak`
+`grade`:有 prologue / ail / thunk_target / fnptr,或被 CALL 兩次以上 = `strong`;只被 CALL 一次 = `weak`
 (E8 位元組掃描會接受資料位元組的偶然命中,單一命中不足以當函式)。
+
+`fnptr`(`pointer_refs` -> `pointer_evidence` -> `fnptr_targets`):只經函式指標抵達、又沒有序頭的函式
+(事件表裡 `push 0x28 ; jmp` 的共用本體入口、FLI 解碼表、遮罩繪製的二維表、中斷處理常式、CRT 初始化表)
+不會有直接 CALL。從入口做可達反組譯,看每條可達指令裡的 fixup 怎麼被用:
+  正向  `call [表(+reg*k)]` 的表內每格(表可夾值為 0 的空槽,遇到別的表頭、入口、程式碼起點就停)、
+        `push`/`mov` 的立即值、不帶暫存器的 `lea`、obj1 以外物件裡指向 obj1 的槽(不屬於任何 `jmp` 表)
+  反向  `jmp [表+reg*k]` 的表內每格(case 標籤)、其他記憶體運算元(資料)、取址後幾條指令內被當記憶體
+        base/index 解參考(資料指標,例:數學函式庫的係數表 `lea esi, [..]` 後讀 `cs:[esi + 8]`)
+有正向、沒有反向,而且本體解碼得通(`implausible`:不在可達指令中間、不是字串、線性解碼到 `ret`/`jmp` 之前
+沒有解不出的位元組、`00 00`、跳出 obj1 的直接分支)才算。新入口與 `jmp` 表的 case 標籤再當可達反組譯的種子
+(case 標籤只用來走進 case 本體,不當入口),反覆到不動點。
 
 呼叫端先經**可達反組譯**過濾(`contradicted_sites`,2026-10-06):從序頭入口、AIL 進入點、指向 obj1 的 fixup
 目標遞迴反組譯(`callgraph_le.CG.build`),呼叫端落在某條可達指令內部的剔除。實測剔除 7 個,全部人工判讀確認
@@ -70,8 +82,10 @@ EXE 換版或位址抄錯,檢查就會失敗。其他規則:`addr` 必須是本�
 
 誠實邊界
 --------
-* 只經跳表/函式指標抵達、又沒有 Watcom 序頭的函式看不到(fixup 目標大多是函式內的 case 標籤,
-  單獨不當入口訊號)。`--ghidra-export` 會列出「Ghidra 有、這裡沒有」的起點供人工判斷。
+* 函式指標只認 fixup:執行期算出來的位址(`push`+`ret` 跳進中斷樁表、只有表頭被引用的樁陣列)看不到。
+  2026-10-06 對參考版 EXE 逐類手動核對過(doc98 續七十九):樁表是 0x46915 本體的片段,沒有 fixup 的間接呼叫的目標
+  都已是入口或在 DOS extender 裡 —— 但那是一次性的追蹤,不是本工具的檢查。
+  `--ghidra-export` 會列出「Ghidra 有、這裡沒有」的起點供人工判斷。
 * `span_upper` 以下一個入口為界,中間若夾資料表或漏掉的函式,會高估。
 * `callees`/`globals` 以 `span_upper` 歸屬,因此繼承同樣的高估。
 
@@ -166,14 +180,38 @@ def direct_callers(entries: list[dict]) -> dict[int, set[int]]:
 
 
 def closed_under_callers(entries: list[dict], seeds: set[int]) -> set[int]:
-    """所有直接呼叫端都在集合內的入口,逐輪加入到不動點;回傳**新加入**的(不含 seeds)。沒有呼叫端的不算。"""
-    callers = direct_callers(entries)
-    inside = set(seeds)
+    """只經 seeds 抵達的入口(不含 seeds):從 seeds 沿「引用」走得到,且每個引用者(直接呼叫端與取址者
+    `takers`)都在 seeds 或這個集合裡。沒有引用者的不算。
+
+    取址者也要算:AIL 以 `mov [eax + 0x20], 0x40c40` 登記的回呼沒有直接呼叫端,只有 AIL 取它的位址;
+    不算的話,回呼本體裡的呼叫會讓被呼叫者(`0x364fb`)看起來有非 AIL 的呼叫端。
+
+    用**最大**不動點(從候選全集逐輪剔除有外部引用者的),不是由下往上逐輪加入:互相取址的一對
+    (`0x40100` 與 `0x41a40` 互相 `push` 對方的位址)由下往上會兩邊互等、永遠加不進來。
+    限定「從 seeds 走得到」,孤立的互相引用(兩段沒人用的程式碼)才不會被當成只經 seeds 抵達。
+    """
+    refs = direct_callers(entries)
+    for e in entries:
+        # 自己取自己不必排除:自環不增加可達性,自己也一定在集合裡(最大不動點下無作用,2026-10-06 突變確認)
+        for t in e.get("takers", []):
+            refs.setdefault(int(e["addr"], 16), set()).add(int(t, 16))
+    fwd: dict[int, set[int]] = {}
+    for a, rs in refs.items():
+        for r in rs:
+            fwd.setdefault(r, set()).add(a)
+    reach, todo = set(), list(seeds)
+    while todo:
+        for b in fwd.get(todo.pop(), ()):
+            if b not in reach:
+                reach.add(b)
+                todo.append(b)
+    inside = reach - set(seeds)         # 走得到的必有引用者
+
     while True:
-        new = {a for a, cs in callers.items() if a not in inside and cs <= inside}
-        if not new:
-            return inside - set(seeds)
-        inside |= new
+        out = {a for a in inside if not refs[a] <= inside | set(seeds)}
+        if not out:
+            return inside
+        inside -= out
 
 
 MEM = re.compile(r"\[([^\]]*)\]")
@@ -342,12 +380,232 @@ def contradicted_sites(call_index: dict[int, tuple[int, ...]], insns: dict[int, 
     return frozenset(bad)
 
 
+PTR_POSITIVE = frozenset({"calltab", "imm", "lea", "data_slot"})
+PTR_NEGATIVE = frozenset({"jmptab", "mem", "deref", "jmpslot"})
+TABLE_MAX_SLOTS = 1024      # 稀疏 call 表最多走幾格(實測最大的二維表 0x47988 約 256 格)
+DEREF_WINDOW = 12           # 取址後往後看幾條指令(跨條件跳的落空路徑;實測 0x4cd39 的解參考在第 11 條)
+PLAUSIBLE_MAX = 4096        # implausible 線性解碼找結尾的最大 bytes
+STRING_OPS = ("lods", "movs", "stos", "scas", "cmps")
+
+
+def table_slots(start: int, fixups: dict[int, int], base: int, hi: int, stops: set[int],
+                zero_at=None) -> list[int]:
+    """表頭 `start` 起,連續 4-byte 槽中「是 fixup 來源且指向 [base, hi)」的那些槽。
+
+    `zero_at(addr) -> bool` 給了就允許值為 0 的空槽(稀疏的 call 表);遇到第一個不是指標也不是空槽的格停。
+    `stops`(別的表頭、入口、程式碼起點)在表頭以外出現就停 —— 相鄰的表不會被併進來
+    (`0x51b19` 的表緊接著事件表 `0x51b91`)。
+    """
+    out: list[int] = []
+    a = start
+    for _ in range(TABLE_MAX_SLOTS):
+        if a != start and a in stops:
+            break
+        if a in fixups and base <= fixups[a] < hi:
+            out.append(a)
+        elif not (zero_at and zero_at(a)):
+            break
+        a += 4
+    return out
+
+
+def ref_role(mn: str, op: str, raw: int) -> tuple[str, bool] | None:
+    """一條指令裡、未重定位值為 `raw` 的 fixup 是怎麼被用的:(角色, 方括號裡有沒有暫存器)。
+
+    角色:`imm`(`push`/`mov` 的立即值)、`lea`、`call`/`jmp`(記憶體運算元)、`mem`(其他記憶體運算元)。
+    其他指令的立即值(`cmp eax, 位址` 之類)回 None —— 不是正向也不是反向證據。
+    以運算元文字判斷:`raw` 出現在方括號內是位移,否則是立即值。
+    """
+    h = hex(raw)
+    for m in MEM.finditer(op):
+        if re.search(r"(?<![0-9a-fx])" + h + r"\b", m.group(1)):
+            has_reg = bool(re.search(r"\b(?:e?[abcd]x|e?[sd]i|e?[bs]p)\b", m.group(1)))
+            if mn == "lea":
+                return "lea", has_reg
+            if mn in ("call", "jmp"):
+                return mn, has_reg
+            return "mem", has_reg
+    if re.search(r"(?<![0-9a-fx\[])" + h + r"\b(?![^\[]*\])", op) and mn in ("push", "mov"):
+        return "imm", False
+    return None
+
+
+def bare(mn: str) -> str:
+    """去掉前綴的助記符:capstone 把 `3E` 前綴印成 `notrack jmp`、`F3` 印成 `rep movsd`。"""
+    return mn.split()[-1] if mn else mn
+
+
+def slot_of(op: str) -> str | None:
+    """記憶體運算元的方括號部分(去掉 `dword ptr`、段前綴),當作「槽」的識別;沒有回 None。"""
+    m = MEM.search(op)
+    return m.group(0) if m else None
+
+
+def pointer_use(reg: str, after: list[tuple[str, str]]) -> tuple[bool, str | None]:
+    """取址到 `reg` 之後([(助記符, 運算元)]),被改寫或碰到無條件轉移之前:(有沒有被當記憶體 base/index, 存進哪個槽)。
+
+    條件跳只走落空路徑(繼續往下看);`call`/`jmp`/`ret`/`int` 結束。esi/edi 另外算字串指令的隱含解參考。
+    槽 = 第一個 `mov [..], reg` 的方括號(之後由 `jmp_only_slots` 判斷那個槽是不是只被間接 jmp 用)。
+    """
+    pat = re.compile(r"\b" + reg + r"\b")
+    slot = None
+    for mn, op in after:
+        mn = bare(mn)
+        if any(pat.search(m.group(1)) for m in MEM.finditer(op)):
+            return True, slot
+        if reg in ("esi", "edi") and mn.startswith(STRING_OPS):
+            return True, slot
+        dst, _, src = op.partition(",")
+        if mn == "mov" and src.strip() == reg and slot is None:
+            slot = slot_of(dst)
+        if dst.strip() == reg and mn not in ("cmp", "test", "push"):
+            break
+        if mn in ("call", "jmp", "int") or mn.startswith("ret"):
+            break
+    return False, slot
+
+
+def jmp_only_slots(ops: list[tuple[str, str]]) -> set[str]:
+    """可達指令([(助記符, 運算元)])裡,經 `jmp [槽]` 間接轉移、卻從來沒有 `call [槽]` 的槽。
+
+    取址後存進這種槽的位址是續行點(例:浮點模擬器把捨入常式存進 `[ebp + 0x76]`,只以 `jmp` 抵達),不是函式。
+    """
+    calls = {slot_of(op) for mn, op in ops if bare(mn) == "call"} - {None}
+    jmps = {slot_of(op) for mn, op in ops if bare(mn) == "jmp"} - {None}
+    return jmps - calls
+
+
+def pointer_refs(reached: list[int], insn_at, fixups: dict[int, int], code: bytes, base: int, hi: int
+                 ) -> list[tuple[int, int, str, bool, bool, str | None]]:
+    """可達指令裡每個 fixup 的用法:[(指令位址, fixup 目標, 角色, 方括號裡有暫存器, 取址後被解參考, 存進的槽)]。
+
+    `insn_at(addr) -> (長度, 助記符, 運算元) | None`。只看來源在 obj1 內的 fixup(未重定位值從 `code` 讀)。
+    槽:`mov [槽], 立即值` 的目的地,或取址到暫存器後第一個 `mov [槽], 暫存器`(`pointer_use`)。
+    """
+    srcs = sorted(s for s in fixups if base <= s < hi)
+    out = []
+    for st in reached:
+        i = bisect.bisect_left(srcs, st)
+        if i >= len(srcs) or srcs[i] >= st + 15:
+            continue
+        got = insn_at(st)
+        if got is None:
+            continue
+        size, mn, op = got
+        mn = bare(mn)
+        for s in srcs[i:]:
+            if s >= st + size:
+                break
+            raw = int.from_bytes(code[s - base:s - base + 4], "little")
+            role = ref_role(mn, op, raw)
+            if role is None:
+                continue
+            deref, slot = False, None
+            reg = op.split(",")[0].strip()
+            if role[0] in ("imm", "lea") and re.fullmatch(r"e(?:[abcd]x|[sd]i|bp)", reg):
+                after, a = [], st + size
+                for _ in range(DEREF_WINDOW):
+                    g = insn_at(a)
+                    if g is None:
+                        break
+                    after.append((g[1], g[2]))
+                    a += g[0]
+                deref, slot = pointer_use(reg, after)
+            elif role[0] == "imm" and mn == "mov":
+                slot = slot_of(reg)
+            out.append((st, fixups[s], role[0], role[1], deref, slot))
+    return out
+
+
+def pointer_evidence(refs: list[tuple[int, int, str, bool, bool, str | None]], fixups: dict[int, int],
+                     base: int, hi: int, stops: set[int], zero_at=None,
+                     jmp_only: set[str] = frozenset()) -> tuple[dict[int, set[str]], set[int]]:
+    """({obj1 內的目標: 證據集合}, jmp 表的槽)。證據見 `PTR_POSITIVE` / `PTR_NEGATIVE`。
+
+    `stops` 是表的邊界(入口、指向 obj1 的 fixup 目標);所有被 call/jmp 引用的表頭會自動加進去。
+    `zero_at` 只給 call 表用(jmp 表不夾空槽)。obj1 以外的 fixup 來源是資料槽,除非它屬於某張 jmp 表。
+    `jmp_only`(`jmp_only_slots`):取址後存進這些槽的是續行點,記 `jmpslot`(反向)。
+    """
+    ev: dict[int, set[str]] = {}
+
+    def add(t: int, k: str) -> None:
+        if base <= t < hi:
+            ev.setdefault(t, set()).add(k)
+
+    heads = {r[1] for r in refs if r[2] in ("call", "jmp")}
+    stops = set(stops) | heads
+    jmp_slots: set[int] = set()
+    for _, t, role, has_reg, deref, slot in refs:
+        if slot is not None and slot in jmp_only:
+            add(t, "jmpslot")
+        if role in ("call", "jmp"):
+            add(t, "mem")                       # 表頭本身是資料
+            if has_reg:
+                slots = table_slots(t, fixups, base, hi, stops, zero_at if role == "call" else None)
+            else:
+                slots = [t] if t in fixups and base <= fixups[t] < hi else []
+            for s in slots:
+                add(fixups[s], "calltab" if role == "call" else "jmptab")
+            if role == "jmp":
+                jmp_slots.update(slots)
+        elif role == "imm":
+            add(t, "deref" if deref else "imm")
+        elif role == "lea":
+            add(t, "mem" if has_reg else ("deref" if deref else "lea"))
+        else:
+            add(t, "mem")
+    for s, t in fixups.items():
+        if not base <= s < hi and s not in jmp_slots:
+            add(t, "data_slot")
+    return ev, jmp_slots
+
+
+def implausible(t: int, code: bytes, base: int, hi: int, insn_at, inside_insn) -> str | None:
+    """`t` 不像函式起點的理由;像就回 None。
+
+    `inside_insn(addr) -> bool`:落在某條可達指令中間。依序檢查:中間 / 字串(>= 3 個可印字元接 NUL)/
+    線性解碼到 `ret*` 或無條件 `jmp` 之前遇到解不出的位元組、`00 00`、跳出 [base, hi) 的直接分支、
+    `PLAUSIBLE_MAX` bytes 內沒有結尾。
+    """
+    if inside_insn(t):
+        return "misaligned"
+    b = code[t - base:t - base + 16]
+    n = next((i for i, c in enumerate(b) if not 0x20 <= c < 0x7F), len(b))
+    if 3 <= n < len(b) and b[n] == 0:
+        return "string"
+    a = t
+    while a < min(hi, t + PLAUSIBLE_MAX):
+        got = insn_at(a)
+        if got is None:
+            return "bad_decode"
+        size, mn, op = got
+        mn = bare(mn)
+        if code[a - base:a - base + 2] == b"\x00\x00":
+            return "zero_bytes"
+        if (mn == "call" or mn.startswith("j")) and op.startswith("0x") and not base <= int(op, 16) < hi:
+            return "branch_out"
+        if mn.startswith("ret") or mn.startswith("iret") or mn == "jmp":
+            return None
+        a += size
+    return "no_terminal"
+
+
+def table_stops(entries: set[int], fixups: dict[int, int], base: int, hi: int) -> set[int]:
+    """表範圍的邊界:入口與所有指向 [base, hi) 的 fixup 目標(程式碼起點;被引用的表頭另由 `pointer_evidence` 加入)。"""
+    return set(entries) | {t for t in fixups.values() if base <= t < hi}
+
+
+def fnptr_targets(ev: dict[int, set[str]], reject) -> set[int]:
+    """有正向證據、沒有反向證據、`reject(t)` 為 None 的目標。"""
+    return {t for t, k in ev.items() if k & PTR_POSITIVE and not k & PTR_NEGATIVE and reject(t) is None}
+
+
 def entry_signals(prologue: set[int], callers: dict[int, int], ail: set[int],
-                  thunks: dict[int, int]) -> dict[int, list[str]]:
+                  thunks: dict[int, int], fnptr: set[int] = frozenset()) -> dict[int, list[str]]:
     """{入口: 訊號名稱(固定順序)}。"""
     out: dict[int, list[str]] = {}
     for name, members in (("prologue", prologue), ("call", set(callers)), ("ail", ail),
-                          ("thunk_target", set(thunks))):
+                          ("thunk_target", set(thunks)), ("fnptr", set(fnptr))):
         for a in members:
             out.setdefault(a, []).append(name)
     return out
@@ -402,11 +660,16 @@ def globals_by_owner(addrs: list[int], fixups: dict[int, int], base: int, hi: in
 
 def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: set[int], code: bytes,
              base: int, hi: int, fixups: dict[int, int], stack_probe: int,
-             argc_of=None, bad_sites: frozenset[int] | None = None) -> dict:
+             argc_of=None, bad_sites: frozenset[int] | None = None,
+             fnptr: set[int] | None = None, ptr_sites: dict[int, set[int]] | None = None) -> dict:
     """由各訊號組出整份清單。`argc_of(addr) -> int | None`;不給就全部 null。
 
     `bad_sites`(`contradicted_sites` 的結果)先從呼叫端索引剔除,再算 callers / callees;
     不給(反組譯器不可用)就不剔除,並在 `_meta.call_sites_validated` 標 false。
+    `fnptr`(`fnptr_targets` 的結果)是額外的入口訊號;不給就沒有,`_meta.fnptr_available` 標 false。
+    `ptr_sites` = {目標: 以 `push`/`mov`/`lea` 取它位址的指令位址};換算成所屬入口記在 `takers`。
+    取址不只是登記回呼:AIL 的 `push 終點 ; push 起點 ; call dpmi_lock_region` 鎖住一段程式碼,終點是下一個函式的起點
+    (實測 0x41af4 鎖 [0x41af4, 0x420e1)),所以鎖定者也記成終點那個函式的 takers。
     """
     # 只列會改變清單的剔除(目標在 obj1 內、不是 __STK);目標在 obj1 外的命中本來就不成入口,實測有數百個
     dropped = sorted(s for t, ss in call_index.items() if base <= t < hi and t != stack_probe
@@ -414,9 +677,10 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
     if bad_sites:
         call_index = {t: kept for t, ss in call_index.items() if (kept := tuple(s for s in ss if s not in bad_sites))}
     callers = {t: len(s) for t, s in call_index.items() if base <= t < hi and t != stack_probe}
-    seeds = set(prologue) | set(callers) | set(ail)
+    fp = {a for a in (fnptr or ()) if base <= a < hi and a != stack_probe}
+    seeds = set(prologue) | set(callers) | set(ail) | fp
     thunks = thunk_targets(seeds, code, base, hi)
-    sig = entry_signals(set(prologue), callers, set(ail), thunks)
+    sig = entry_signals(set(prologue), callers, set(ail), thunks, fp)
     addrs = sorted(sig)
     span = spans(addrs, hi)
     callee = callees_by_owner(addrs, call_index, {stack_probe}, base, hi)
@@ -429,13 +693,15 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
             "span_upper": span[a], "argc": argc_of(a) if argc_of else None,
             "callees": [hex(t) for t in callee.get(a, [])],
             "globals": [hex(t) for t in glob.get(a, [])],
+            "takers": [hex(o) for o in sorted({owner(addrs, s) for s in (ptr_sites or {}).get(a, ())} - {None})],
         })
     strong = sum(1 for e in entries if e["grade"] == "strong")
     return {"_meta": {"generator": "tools/function_inventory.py", "image_range": [hex(base), hex(hi)],
                       "entries": len(entries), "strong": strong, "weak": len(entries) - strong,
                       "by_signal": {k: sum(1 for e in entries if k in e["signals"])
-                                    for k in ("prologue", "call", "ail", "thunk_target")},
+                                    for k in ("prologue", "call", "ail", "thunk_target", "fnptr")},
                       "argc_available": argc_of is not None,
+                      "fnptr_available": fnptr is not None,
                       "call_sites_validated": bad_sites is not None,
                       "call_sites_dropped": [hex(s) for s in dropped]},
             "entries": entries}
@@ -609,7 +875,56 @@ def build(with_argc: bool = True) -> dict:
             argc_of = lambda a: DNA.callee_argc(cg, a, ents)[0]   # noqa: E731
     except ImportError:
         pass
-    return assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, argc_of, bad_sites)
+    fnptr, ptr_sites = None, None
+    if bad_sites is not None:
+        # 函式指標的可達反組譯只從**入口**出發(不拿全部 fixup 目標當種子:資料被當程式碼解,會長出假的引用)
+        pre = assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, None, bad_sites)
+        fnptr, ptr_sites = discover_fnptr(lambda: CG(CC.EXE), {int(e["addr"], 16) for e in pre["entries"]},
+                                          code, base, hi, fixups, insn_decoder(code, base))
+    return assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, argc_of, bad_sites,
+                    fnptr, ptr_sites)
+
+
+FNPTR_MAX_ROUNDS = 10
+
+
+def discover_fnptr(new_cg, entries: set[int], code: bytes, base: int, hi: int, fixups: dict[int, int],
+                   insn_at, trace: dict | None = None) -> tuple[set[int], dict[int, set[int]]]:
+    """函式指標目標的不動點:種子 = 入口 + 上一輪的函式指標 + jmp 表的 case 標籤,直到兩者都不再變。
+
+    回傳 (函式指標目標, {目標: 以 push/mov/lea 取它位址的指令位址})。
+    `new_cg() -> callgraph_le.CG`。case 標籤只當種子(走進 case 本體才看得到裡面的取址),不回傳。
+    `trace` 給了就填入最後一輪的 `reached`(可達指令集合)、`cases`、`rounds`,給 selftest 驗證種子真的有作用。
+    """
+    stops = table_stops(entries, fixups, base, hi)
+    zero_at = lambda a: base <= a and a + 4 <= hi and code[a - base:a - base + 4] == bytes(4)   # noqa: E731
+    fp: set[int] = set()
+    cases: set[int] = set()
+    for rnd in range(1, FNPTR_MAX_ROUNDS + 1):
+        rd = new_cg()
+        rd.build(sorted(set(entries) | fp | cases))
+        reached = sorted(rd.reached)
+        size = {a: insn_at(a)[0] for a in reached}
+
+        def inside(t: int) -> bool:
+            i = bisect.bisect_right(reached, t) - 1
+            return i >= 0 and reached[i] < t < reached[i] + size[reached[i]]
+
+        ops = [(g[1], g[2]) for g in map(insn_at, reached) if g and bare(g[1]) in ("call", "jmp")]
+        refs = pointer_refs(reached, insn_at, fixups, code, base, hi)
+        ev, jslots = pointer_evidence(refs, fixups, base, hi, stops, zero_at, jmp_only_slots(ops))
+        nfp = fnptr_targets(ev, lambda t: implausible(t, code, base, hi, insn_at, inside))
+        ncases = {fixups[s] for s in jslots} - nfp
+        if (nfp, ncases) == (fp, cases):
+            sites: dict[int, set[int]] = {}
+            for st, t, role, _, _, _ in refs:
+                if t in fp and role in ("imm", "lea"):     # 被解參考的目標本來就進不了 fp
+                    sites.setdefault(t, set()).add(st)
+            if trace is not None:
+                trace.update(reached=set(reached), cases=cases, rounds=rnd)
+            return fp, sites
+        fp, cases = nfp, ncases
+    raise RuntimeError(f"函式指標的不動點 {FNPTR_MAX_ROUNDS} 輪內沒有收斂")
 
 
 def load_function_names() -> list[dict]:
@@ -901,7 +1216,7 @@ def _selftest_pure(fails: list[str]) -> None:
           (["0x1010", "0x1020"], ["0x1020"], ["0x9000"]))
     check("_meta 計數", {k: inv["_meta"][k] for k in ("entries", "strong", "weak", "by_signal", "argc_available")},
           {"entries": 5, "strong": 4, "weak": 1, "argc_available": True,
-           "by_signal": {"prologue": 1, "call": 2, "ail": 1, "thunk_target": 1}})
+           "by_signal": {"prologue": 1, "call": 2, "ail": 1, "thunk_target": 1, "fnptr": 0}})
     none = assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038)
     check("不給 argc_of:argc 為 null 且 _meta 如實標示", (none["entries"][0]["argc"], none["_meta"]["argc_available"]), (None, False))
     check("dump:穩定、結尾換行、中文原樣", (dump(none) == dump(none), dump(none).endswith("}\n"), "\\u" in dump({"名": 1})),
@@ -927,6 +1242,79 @@ def _selftest_pure(fails: list[str]) -> None:
           (inv5["_meta"]["call_sites_validated"], inv5["_meta"]["call_sites_dropped"],
            none["_meta"]["call_sites_validated"], none["_meta"]["call_sites_dropped"]),
           (True, ["0x1004", "0x1006"], False, []))
+
+    print("(5c) 函式指標:表的範圍、fixup 的用法、取址後的去向、證據合成、本體合理性")
+    fx5 = {0x2000: 0x1010, 0x2004: 0x1020, 0x2010: 0x1030, 0x2014: 0x9000}
+    z5 = lambda a: a in (0x2008, 0x200c)   # noqa: E731
+    check("table_slots:不夾空槽時停在第一個空槽;夾空槽時越過、停在指向 obj1 外的格;別的表頭擋住;表頭自己在 stops 裡不擋",
+          [table_slots(0x2000, fx5, 0x1000, 0x1040, set()), table_slots(0x2000, fx5, 0x1000, 0x1040, set(), z5),
+           table_slots(0x2000, fx5, 0x1000, 0x1040, {0x2010}, z5), table_slots(0x2010, fx5, 0x1000, 0x1040, {0x2010})],
+          [[0x2000, 0x2004], [0x2000, 0x2004, 0x2010], [0x2000, 0x2004], [0x2010]])
+    check("table_slots:夾空槽時,非 0 又不是指標的格(0x2014 指向 obj1 外)照樣停,後面的指標(0x2018)不收",
+          table_slots(0x2000, {**fx5, 0x2018: 0x1038}, 0x1000, 0x1040, set(), z5), [0x2000, 0x2004, 0x2010])
+    check("table_stops:入口 + 指向 [base, hi) 的 fixup 目標(範圍外的不算)",
+          sorted(table_stops({0x1000}, {0x2000: 0x1010, 0x2004: 0x9000, 0x2008: 0x1000}, 0x1000, 0x1040)), [0x1000, 0x1010])
+    check("ref_role:立即值 / 位移 / lea 帶不帶暫存器 / call、jmp 表 / 段前綴 / 其他指令的立即值不算 / 不吃較長的十六進位",
+          [ref_role("push", "0x2ca23", 0x2CA23), ref_role("mov", "dword ptr [0x37f4], 0x39ad8", 0x39AD8),
+           ref_role("mov", "dword ptr [0x37f4], 0x39ad8", 0x37F4), ref_role("lea", "edx, [0x3a0c4]", 0x3A0C4),
+           ref_role("lea", "ebx, [ebx*4 + 0x2cae6]", 0x2CAE6), ref_role("call", "dword ptr cs:[ebx*4 + 0x39e04]", 0x39E04),
+           ref_role("call", "dword ptr [0x27d8]", 0x27D8), ref_role("jmp", "dword ptr cs:[eax*4 + 0x30684]", 0x30684),
+           ref_role("fld", "xword ptr cs:[0x2cac8]", 0x2CAC8), ref_role("cmp", "eax, 0x3cf1c", 0x3CF1C),
+           ref_role("push", "0x12ca23", 0x2CA23)],
+          [("imm", False), ("imm", False), ("mem", False), ("lea", False), ("lea", True), ("call", True),
+           ("call", False), ("jmp", True), ("mem", False), None, None])
+    check("pointer_use:跨條件跳仍追、字串指令(含 rep 前綴)算解參考、cmp 不算改寫、改寫 / int 就停、記下存進的槽",
+          [pointer_use("esi", [("or", "ecx, ecx"), ("je", "0x10"), ("mov", "ax, word ptr cs:[esi + 8]")]),
+           pointer_use("esi", [("rep movsd", "dword ptr es:[edi], dword ptr [esi]")]),
+           pointer_use("esi", [("rep movsd", "")]),
+           pointer_use("edx", [("cmp", "edx, 0"), ("mov", "eax, dword ptr [edx]")]),
+           pointer_use("edx", [("mov", "edx, 5"), ("mov", "eax, dword ptr [edx]")]),
+           pointer_use("edx", [("int", "0x21"), ("mov", "eax, dword ptr [edx]")]),
+           pointer_use("edx", [("mov", "dword ptr ds:[ebp + 0x76], edx"), ("jmp", "0x1000")])],
+          [(True, None), (True, None), (True, None), (True, None), (False, None), (False, None), (False, "[ebp + 0x76]")])
+    check("jmp_only_slots:只被 jmp(含 notrack 前綴)用的槽;同時被 call 的不算;直接 jmp 沒有槽",
+          jmp_only_slots([("notrack jmp", "dword ptr ds:[ebp + 0x76]"), ("call", "dword ptr [0x37f4]"),
+                          ("jmp", "dword ptr [0x37f4]"), ("jmp", "0x1000")]), {"[ebp + 0x76]"})
+    # obj1 = [0x1000, 0x1100);call 表 0x1080(0x1084 是空槽)、jmp 表 0x1090;obj2 的槽 0x5000、obj2 的 jmp 槽 0x5010
+    # 0x1098 也是 0 槽、0x109c 有指標:jmp 表不夾空槽,0x1038 不該成 case 標籤
+    fxe = {0x1080: 0x1010, 0x1088: 0x1020, 0x1090: 0x1030, 0x1094: 0x1034, 0x109c: 0x1038, 0x5000: 0x1040, 0x5010: 0x1044}
+    refs = [(0x1000, 0x1080, "call", True, False, None), (0x1002, 0x1090, "jmp", True, False, None),
+            (0x1004, 0x1050, "imm", False, False, None), (0x1006, 0x1054, "imm", False, True, None),
+            (0x1008, 0x1058, "lea", False, False, "[ebp + 0x76]"), (0x100a, 0x105c, "lea", True, False, None),
+            (0x100c, 0x1060, "mem", False, False, None), (0x100e, 0x5010, "jmp", False, False, None)]
+    ev, js = pointer_evidence(refs, fxe, 0x1000, 0x1100, set(), lambda a: a in (0x1084, 0x1098), {"[ebp + 0x76]"})
+    check("pointer_evidence:call 表越過空槽、jmp 表成 case、取址後解參考 / 存進只被 jmp 的槽 / 帶暫存器的 lea 都是反向、"
+          "表頭是資料、obj2 的槽是資料槽(jmp 槽除外)",
+          ({hex(t): sorted(k) for t, k in sorted(ev.items())}, sorted(js)),
+          ({"0x1010": ["calltab"], "0x1020": ["calltab"], "0x1030": ["jmptab"], "0x1034": ["jmptab"],
+            "0x1040": ["data_slot"], "0x1044": ["jmptab"], "0x1050": ["imm"], "0x1054": ["deref"],
+            "0x1058": ["jmpslot", "lea"], "0x105c": ["mem"], "0x1060": ["mem"], "0x1080": ["mem"], "0x1090": ["mem"]},
+           [0x1090, 0x1094, 0x5010]))
+    ev0, _ = pointer_evidence(refs, fxe, 0x1000, 0x1100, set(), None, set())
+    check("pointer_evidence:不給 zero_at 時 call 表停在空槽;不給 jmp_only 時存進槽的 lea 是正向",
+          (sorted(k for k, v in ev0.items() if "calltab" in v), sorted(ev0[0x1058])), ([0x1010], ["lea"]))
+    check("fnptr_targets:有正向、沒有反向、reject 為 None",
+          [sorted(fnptr_targets(ev, lambda t: None)), sorted(fnptr_targets(ev, lambda t: "x" if t == 0x1050 else None))],
+          [[0x1010, 0x1020, 0x1040, 0x1050], [0x1010, 0x1020, 0x1040]])
+    code_i = bytearray(b"\x90" * 0x100)    # 預設非 0:否則每個案例都先被 00 00 判掉,其他理由測不到
+    code_i[0x00:0x04] = b"abc\x00"
+    code_i[0x08:0x0b] = b"ab\x00"
+    code_i[0x30:0x32] = b"\x00\x00"
+    fake = {0x1008: (1, "push", "ebx"), 0x1009: (1, "ret", ""), 0x1010: (1, "push", "ebx"), 0x1011: (1, "ret", ""),
+            0x1030: (2, "add", "byte ptr [eax], al"), 0x1040: (5, "jmp", "0x9abaaf91"), 0x1050: (5, "jmp", "0x1000"),
+            0x1060: (2, "notrack jmp", "dword ptr [eax]"), 0x1068: (5, "call", "0x1000"), 0x106d: (1, "iretd", "")}
+    fake.update({a: (1, "nop", "") for a in range(0x1080, 0x1100)})
+    imp = lambda t: implausible(t, bytes(code_i), 0x1000, 0x1100, fake.get, lambda x: x == 0x1070)   # noqa: E731
+    check("implausible:字串(>= 3 個可印字元接 NUL;2 個不算)/ 正常 / 解不出 / 00 00 / 分支出界 / 範圍內 jmp 與 "
+          "notrack jmp 是結尾 / call 不是結尾、iretd 是 / 在指令中間 / 走到 hi 沒有結尾",
+          [imp(t) for t in (0x1000, 0x1008, 0x1010, 0x1020, 0x1030, 0x1040, 0x1050, 0x1060, 0x1068, 0x1070, 0x1080)],
+          ["string", None, None, "bad_decode", "zero_bytes", "branch_out", None, None, None, "misaligned", "no_terminal"])
+    inv5c = assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038, fnptr={0x1010, 0x1038, 0x9000},
+                     ptr_sites={0x1010: {0x1004, 0x1012, 0x0f00}})
+    got5c = {e["addr"]: (e["signals"], e["grade"], e["takers"]) for e in inv5c["entries"]}
+    check("assemble:fnptr 成 strong 入口、__STK 與範圍外的不收;takers 換算成所屬入口(含自己,第一個入口之前的不算)",
+          (got5c, inv5c["_meta"]["by_signal"]["fnptr"], inv5c["_meta"]["fnptr_available"], none["_meta"]["fnptr_available"]),
+          ({"0x1000": (["prologue"], "strong", []), "0x1010": (["fnptr"], "strong", ["0x1000", "0x1010"])}, 1, True, False))
 
     print("(6) tier / coverage_counts:命名表優先於文件記載;strong_only 真的只數 strong")
     ents6 = [{"addr": "0x10", "grade": "strong"}, {"addr": "0x20", "grade": "strong"},
@@ -985,6 +1373,14 @@ def _selftest_structural(fails: list[str]) -> None:
           closed_under_callers(es, {0x10}), {0x20})
     check("把 0x50 也放進種子,0x30 與 0x40 才逐輪加入", closed_under_callers(es, {0x10, 0x50}), {0x20, 0x30, 0x40})
     check("種子本身不回傳", closed_under_callers(es, {0x10, 0x20}), set())
+    # 互相取址:0x10(種子)呼叫 0x20;0x20 與 0x30 互取位址;0x30 也取自己(不算)。0x60 與 0x70 互取但沒人用;
+    # 0x80 與 0x90 互取,0x90 另被集合外的 0xa0 呼叫。
+    ent2 = lambda a, cs=(), tk=(): {**ent(a, list(cs)), "takers": [hex(t) for t in tk]}   # noqa: E731
+    cyc = [ent2(0x10, [0x20]), ent2(0x20, [], [0x30]), ent2(0x30, [], [0x20, 0x30]), ent2(0x60, [], [0x70]),
+           ent2(0x70, [], [0x60]), ent2(0x80, [], [0x90]), ent2(0x90, [], [0x80]), ent2(0xa0, [0x90])]
+    check("互相取址的一對只經種子抵達 -> 兩個都加入;沒人用的一對、有集合外引用者的一對都不加入",
+          closed_under_callers(cyc, {0x10}), {0x20, 0x30})
+    check("集合外引用者也成種子時,那一對才加入", closed_under_callers(cyc, {0x10, 0xa0}), {0x20, 0x30, 0x80, 0x90})
 
     print("(11) body_insns:乾淨結尾、往前分支延後結尾、解不出來與走到 limit 都是 None")
     def decoder(table):
@@ -1223,8 +1619,10 @@ def _selftest_live(fails: list[str]) -> bool:
           {"0x135dd", "0x10b4e"} <= set(e.get("callees", [])), str(e.get("callees")))
     check("0x26b91(debits gold)的 globals 含金幣全域 0x53bf3", "0x53bf3" in by.get(0x26b91, {}).get("globals", []),
           str(by.get(0x26b91, {}).get("globals")))
-    check("回歸釘值:strong 858 / weak 237(參考版 EXE 固定,數字變了就是判準變了;2026-10-06 剔除 7 個被反證的 weak)",
-          (m["strong"], m["weak"]) == (858, 237), f"{m['strong']}/{m['weak']}")
+    check("回歸釘值:entries 1313 / strong 1085 / weak 228 / fnptr 422(參考版 EXE 固定,數字變了就是判準變了;"
+          "2026-10-06 剔除 7 個被反證的 weak,再加函式指標 215 個新入口 + 3 個經它們抵達的 thunk_target)",
+          (m["entries"], m["strong"], m["weak"], m["by_signal"]["fnptr"], m["fnptr_available"]) == (1313, 1085, 228, 422, True),
+          f"{m['entries']}/{m['strong']}/{m['weak']}/{m['by_signal'].get('fnptr')}")
     # 剔除清單逐一人工判讀過(2026-10-06,doc98 續七十八):每個 E8 都落在另一條指令裡
     #   0x2ff40 mov [esp+0xe8],0 的位移 / 0x3cdcb mov eax,gs(8c e8)/ 0x4bf50 shr eax,8(c1 e8 08)/
     #   0x4ca93、0x4cac4 mov ecx,[ebp-0x18](8b 4d e8)/ 0x4ddcc、0x4de10 資料區
@@ -1239,6 +1637,43 @@ def _selftest_live(fails: list[str]) -> bool:
           str(got))
     check("正向控制:0x4b75f 的 call 0x4c4bd 沒被剔除(線性解碼會失步的區段)",
           by.get(0x4c4bd, {}).get("callers", 0) == 2, str(by.get(0x4c4bd, {}).get("callers")))
+    # 函式指標(doc98 續七十九)。正向:每種證據各一個;反向:每個都曾是候選(有正向證據),理由逐一獨立重現。
+    pos = {0x4a0c4: "lea edx 後 int 21h AX=2504h 安裝的中斷處理", 0x335a0: "指令表 0x51d01 的 push 0x28;jmp 樁",
+           0x49ad8: "mov [0x537f4], 立即值(之後 call [0x537f4])", 0x47d88: "稀疏二維 call 表 0x47988 第 0 格",
+           0x37028: "CRT 初始化表(obj2,6 bytes 一筆)", 0x4a362: "call cs:[ebx*4 + 0x49e04] 的表"}
+    check("正向控制:各種證據各一個都成 fnptr 入口", all("fnptr" in by.get(a, {}).get("signals", []) for a in pos),
+          str([hex(a) for a in pos if "fnptr" not in by.get(a, {}).get("signals", [])]))
+    neg = (0x3cd2a, 0x4c646, 0x4cb9c, 0x4a238, 0x47988, 0x40761)
+    check("反向控制:字串 / 解碼出界 / 取址後解參考 / 只被 jmp 的槽 / 表頭 / jmp 表的 case 標籤都不是入口",
+          not any(a in by for a in neg), str([hex(a) for a in neg if a in by]))
+    import disasm_le as D
+    code_r, base_r, hi_r = img[2], img[3], img[4]
+    fx_r = D.build_fixups(*CC.load_image()[:2])
+    no_inside = lambda t: False   # noqa: E731
+    check("反向理由可獨立重現:0x3cd2a 是字串(int 21h AH=3Dh 開檔的檔名)、0x4c646 解碼後跳出 obj1",
+          dec is not None and [implausible(t, code_r, base_r, hi_r, dec, no_inside) for t in (0x3cd2a, 0x4c646)]
+          == ["string", "branch_out"])
+    r1 = pointer_refs([0x49915, 0x4a5fe, 0x4cd39], dec, fx_r, code_r, base_r, hi_r) if dec else []
+    check("反向理由可獨立重現:0x4cd39 的 lea esi 取 0x4cb9c 後被解參考;0x4a5fe 的 lea edx 存進 [ebp + 0x76];"
+          "0x49915 以 call [eax*4 + 0x47988] 把表頭當記憶體運算元",
+          [(hex(t), role, reg, deref, slot) for _, t, role, reg, deref, slot in r1]
+          == [("0x47988", "call", True, False, None), ("0x4a238", "lea", False, False, "[ebp + 0x76]"),
+              ("0x4cb9c", "lea", False, True, None)], str(r1))
+    ops_r = [(g[1], g[2]) for g in (dec(0x4a47c), dec(0x4a64a))] if dec else []
+    check("[ebp + 0x76] 只被 notrack jmp 使用(0x4a47c、0x4a64a 等),是續行點的槽", "[ebp + 0x76]" in jmp_only_slots(ops_r),
+          str(ops_r))
+    check("takers:AIL 以 mov [eax + 0x20], 立即值登記的回呼 0x40c40 只被 0x40cf0 取址",
+          by.get(0x40c40, {}).get("takers") == ["0x40cf0"], str(by.get(0x40c40, {}).get("takers")))
+    from callgraph_le import CG
+    tr: dict = {}
+    discover_fnptr(lambda: CG(CC.EXE), {a for a, x in by.items() if x["signals"] != ["fnptr"]} - {0x46186, 0x46306, 0x4dc3a},
+                   code_r, base_r, hi_r, fx_r, dec, tr)
+    check("case 標籤真的當了種子:0x4a5fe(0x40684 那類 jmp 表之後的 case 本體)只有經 case 標籤才走得到;"
+          "0x40761 在 case 集合;3 輪收斂",
+          0x4a5fe in tr.get("reached", ()) and 0x40761 in tr.get("cases", ()) and tr.get("rounds") == 3,
+          f"rounds={tr.get('rounds')} cases={len(tr.get('cases', ()))}")
+    check("0x46186 只能經 fnptr 入口 0x3cf1c 的 jmp 抵達:以 thunk_target 收進來",
+          by.get(0x46186, {}).get("signals") == ["thunk_target"] and by.get(0x3cf1c, {}).get("signals") == ["fnptr"])
     check("每筆 span_upper > 0 且總和 = 最後入口之後到 hi 的整段",
           all(x["span_upper"] > 0 for x in inv["entries"])
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
@@ -1247,8 +1682,9 @@ def _selftest_live(fails: list[str]) -> bool:
     # 釘值用「不含 function_names.json」的版本:登錄新名字會改變誰是 wrapper、誰已有真名,那是預期中的變動,
     # 不該每登一批就來改釘值;含登錄表的版本由下面「已提交產物逐位元組相同」那一條管。
     sd = build_structural(include_registry=False)
-    check("回歸釘值(不含登錄表):thunk 4 / ail_only 30 / wrapper 105 / leaf_global 16 / leaf_ptr 16 / leaf_pure 11",
-          sd["_meta"]["by_kind"] == {"thunk": 4, "ail_only": 30, "wrapper": 105, "leaf_global": 16, "leaf_ptr": 16, "leaf_pure": 11},
+    check("回歸釘值(不含登錄表):thunk 7 / ail_only 55 / wrapper 104 / leaf_global 99 / leaf_ptr 71 / leaf_pure 30"
+          "(2026-10-06 加函式指標入口、ail_only 改最大不動點後;舊值 4/30/105/16/16/11)",
+          sd["_meta"]["by_kind"] == {"thunk": 7, "ail_only": 55, "wrapper": 104, "leaf_global": 99, "leaf_ptr": 71, "leaf_pure": 30},
           str(sd["_meta"]["by_kind"]))
     check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
           sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
@@ -1297,7 +1733,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 25 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 33 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

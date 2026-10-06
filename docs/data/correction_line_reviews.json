@@ -59,6 +59,13 @@
    "excerpt": "(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1",
    "verdict": "not_address_erratum",
    "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "bb6d1349532dbec4cf12d066cc19931615c3265b",
+   "excerpt": "- 0x36683 失去 ail_only(0x36647 改為 leaf_pure):它的三個呼叫端以前被算給 AIL 進入點 0x3fdaf / 0x419e0 / 0x452f0,",
+   "verdict": "not_address_erratum",
+   "note": "呼叫端歸屬(span 高估)的訂正,不是位址抄錯:五個位址都是現行版正確的入口"
   }
  ]
 }

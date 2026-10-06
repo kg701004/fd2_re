@@ -120,7 +120,8 @@ class CG:
                 if ins is None:
                     break
                 self.reached.add(a)
-                m = ins.mnemonic
+                # 去掉前綴:capstone 把 3E 印成 `notrack jmp`、F3 C3 印成 `repz ret`(見 selftest 第 7 題)
+                m = ins.mnemonic.split()[-1]
                 op = ins.op_str
                 nxt = a + ins.size
                 if m == 'call':
@@ -298,13 +299,28 @@ def selftest():
     if not ok6:
         fails.append("fixup_target_base 的邊界不對")
 
+    print("\n(7) 帶前綴的控制轉移(合成位元組):`3E` 前綴的間接 jmp 是終點、`F3 C3` 是 ret")
+    # capstone 把 3E FF 24 85 印成 `notrack jmp`、F3 C3 印成 `repz ret`;只比對整個助記符的話,
+    # 兩者都落到「普通指令」分支,可達反組譯會越過它們往下解碼(2026-10-06 實測 0x4a47c 等 51 處)。
+    syn = (bytes.fromhex("3eff248500200000")             # 0x1000 notrack jmp [eax*4 + 0x2000]
+           + bytes.fromhex("9090") + bytes.fromhex("e80c000000") + b"\xc3"   # 0x1008 nop nop ; call 0x101b ; ret
+           + b"\x90" * 0x10 + b"\xc3"                   # 0x1010..0x1020:只有落空才走得到
+           + b"\x90" * 0xf + bytes.fromhex("f3c3") + bytes.fromhex("e8ebffffff"))  # 0x1030 repz ret ; call 0x1022
+    cg7 = CG(exe)
+    cg7.code, cg7.base, cg7.end = syn, 0x1000, 0x1000 + len(syn)
+    cg7.build([0x1000, 0x1030])
+    ok7 = cg7.reached == {0x1000, 0x1030} and not cg7.calls
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 可達 {sorted(hex(a) for a in cg7.reached)[:6]},calls {cg7.calls}")
+    if not ok7:
+        fails.append(f"帶前綴的 jmp/ret 沒被當終點:reached={sorted(hex(a) for a in cg7.reached)[:6]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(不變量 + 跨工具獨立實作對照 + 已知錨點 + "
-          "故障注入 + 非空控制 + fixup 後備分支邊界)。")
+          "故障注入 + 非空控制 + fixup 後備分支邊界 + 帶前綴的控制轉移)。")
     return 0
 
 
