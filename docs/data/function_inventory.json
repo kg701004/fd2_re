@@ -5,16 +5,26 @@
    "0x10000",
    "0x4ef29"
   ],
-  "entries": 1102,
+  "entries": 1095,
   "strong": 858,
-  "weak": 244,
+  "weak": 237,
   "by_signal": {
    "prologue": 541,
-   "call": 848,
+   "call": 841,
    "ail": 105,
    "thunk_target": 5
   },
-  "argc_available": true
+  "argc_available": true,
+  "call_sites_validated": true,
+  "call_sites_dropped": [
+   "0x2ff40",
+   "0x3cdcb",
+   "0x4bf50",
+   "0x4ca93",
+   "0x4cac4",
+   "0x4ddcc",
+   "0x4de10"
+  ]
  },
  "entries": [
   {
@@ -9995,22 +10005,8 @@
    ],
    "callers": 2,
    "grade": "strong",
-   "span_upper": 68,
+   "span_upper": 3876,
    "argc": 4,
-   "callees": [
-    "0x2ff45"
-   ],
-   "globals": []
-  },
-  {
-   "addr": "0x2ff45",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 3808,
-   "argc": null,
    "callees": [
     "0x111ba",
     "0x11cac",
@@ -16170,7 +16166,6 @@
    "argc": 0,
    "callees": [
     "0x3cc77",
-    "0x40b36",
     "0x4609b",
     "0x460ea"
    ],
@@ -17843,7 +17838,7 @@
    ],
    "callers": 1,
    "grade": "weak",
-   "span_upper": 1158,
+   "span_upper": 1168,
    "argc": 1,
    "callees": [
     "0x382e9",
@@ -17860,18 +17855,6 @@
     "0x5432c",
     "0x54350"
    ]
-  },
-  {
-   "addr": "0x40b36",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 10,
-   "argc": null,
-   "callees": [],
-   "globals": []
   },
   {
    "addr": "0x40b40",
@@ -20799,9 +20782,7 @@
    "grade": "strong",
    "span_upper": 127,
    "argc": 0,
-   "callees": [
-    "0x4cc5d"
-   ],
+   "callees": [],
    "globals": []
   },
   {
@@ -20977,9 +20958,7 @@
     "0x4bc86",
     "0x4c523",
     "0x4ce84",
-    "0x4ced6",
-    "0x4d353",
-    "0x4d384"
+    "0x4ced6"
    ],
    "globals": []
   },
@@ -21032,21 +21011,7 @@
    ],
    "callers": 1,
    "grade": "weak",
-   "span_upper": 153,
-   "argc": null,
-   "callees": [
-    "0x4b852"
-   ],
-   "globals": []
-  },
-  {
-   "addr": "0x4cc5d",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 315,
+   "span_upper": 468,
    "argc": null,
    "callees": [
     "0x4b852",
@@ -21176,42 +21141,17 @@
    ],
    "callers": 1,
    "grade": "weak",
-   "span_upper": 248,
+   "span_upper": 577,
    "argc": 9,
    "callees": [
     "0x37910",
     "0x37af4",
-    "0x4d731",
-    "0x4d7a0",
-    "0x4d81b"
-   ],
-   "globals": []
-  },
-  {
-   "addr": "0x4d353",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 49,
-   "argc": null,
-   "callees": [],
-   "globals": []
-  },
-  {
-   "addr": "0x4d384",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 280,
-   "argc": 8,
-   "callees": [
     "0x4d0d0",
     "0x4d174",
     "0x4d1f0",
+    "0x4d731",
+    "0x4d7a0",
+    "0x4d81b",
     "0x4d88c",
     "0x4d966"
    ],
@@ -21517,24 +21457,11 @@
    ],
    "callers": 1,
    "grade": "weak",
-   "span_upper": 49,
+   "span_upper": 57,
    "argc": null,
    "callees": [
-    "0x4ddd4",
     "0x4de58"
    ],
-   "globals": []
-  },
-  {
-   "addr": "0x4ddd4",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 8,
-   "argc": null,
-   "callees": [],
    "globals": []
   },
   {
@@ -21544,21 +21471,7 @@
    ],
    "callers": 1,
    "grade": "weak",
-   "span_upper": 57,
-   "argc": null,
-   "callees": [
-    "0x4de15"
-   ],
-   "globals": []
-  },
-  {
-   "addr": "0x4de15",
-   "signals": [
-    "call"
-   ],
-   "callers": 1,
-   "grade": "weak",
-   "span_upper": 67,
+   "span_upper": 124,
    "argc": null,
    "callees": [
     "0x4dddc"

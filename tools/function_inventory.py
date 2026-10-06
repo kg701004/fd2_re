@@ -19,6 +19,11 @@
 `grade`:有 prologue / ail / thunk_target,或被 CALL 兩次以上 = `strong`;只被 CALL 一次 = `weak`
 (E8 位元組掃描會接受資料位元組的偶然命中,單一命中不足以當函式)。
 
+呼叫端先經**可達反組譯**過濾(`contradicted_sites`,2026-10-06):從序頭入口、AIL 進入點、指向 obj1 的 fixup
+目標遞迴反組譯(`callgraph_le.CG.build`),呼叫端落在某條可達指令內部的剔除。實測剔除 7 個,全部人工判讀確認
+是別的指令裡的 `E8` 位元組(例:`mov dword ptr [esp + 0xe8], 0` 的位移),入口 1102 -> 1095;剔除清單記在
+`_meta.call_sites_dropped`。沒走到的呼叫端不判,所以仍可能留有假入口,只是沒有反證。
+
 每個入口的機械事實:`callers`(直接呼叫端數)、`span_upper`(到下一個入口的距離,是大小的**上界**)、
 `argc`(`derive_native_argcounts.callee_argc`:本體讀到第幾個參數,判不出來為 null)、
 `callees`(本體範圍內直接 CALL 的目標,不含 `__STK`)、`globals`(本體範圍內的 fixup 指向 obj1 之外的位址)。
@@ -313,6 +318,30 @@ def structural_doc(entries: list[dict], named: dict[int, dict]) -> dict:
             "names": {hex(a): {**v, "callers": by[a]["callers"], "argc": by[a]["argc"]} for a, v in sorted(named.items())}}
 
 
+def contradicted_sites(call_index: dict[int, tuple[int, ...]], insns: dict[int, int],
+                       calls: set[int]) -> frozenset[int]:
+    """位元組掃描找到的呼叫端裡,被可達反組譯否定的那些。
+
+    `insns`:可達指令 {起點: 長度};`calls`:其中是直接 CALL 的起點。呼叫端落在某條可達指令的**內部**
+    (起點 < 呼叫端 < 起點+長度)就不可能是指令起點;剛好是可達指令起點、卻不是 CALL,也不可能是 CALL。
+    可達反組譯沒走到的呼叫端不判(保留),所以這只會剔除**有反證**的命中。
+
+    2026-10-06 實測:`0x2ff01`(spell_cast_scene)的 `mov dword ptr [esp + 0xe8], 0` 位移裡的 `E8 00 00 00 00`
+    被當成呼叫 `0x2ff45`,憑空多出一個 weak 入口,還把 spell_cast_scene 的 span 截成 68 bytes。
+    """
+    starts = sorted(insns)
+    bad: set[int] = set()
+    for sites in call_index.values():
+        for s in sites:
+            i = bisect.bisect_right(starts, s) - 1
+            if i < 0:
+                continue
+            st = starts[i]
+            if (st == s and s not in calls) or st < s < st + insns[st]:
+                bad.add(s)
+    return frozenset(bad)
+
+
 def entry_signals(prologue: set[int], callers: dict[int, int], ail: set[int],
                   thunks: dict[int, int]) -> dict[int, list[str]]:
     """{入口: 訊號名稱(固定順序)}。"""
@@ -373,8 +402,17 @@ def globals_by_owner(addrs: list[int], fixups: dict[int, int], base: int, hi: in
 
 def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: set[int], code: bytes,
              base: int, hi: int, fixups: dict[int, int], stack_probe: int,
-             argc_of=None) -> dict:
-    """由各訊號組出整份清單。`argc_of(addr) -> int | None`;不給就全部 null。"""
+             argc_of=None, bad_sites: frozenset[int] | None = None) -> dict:
+    """由各訊號組出整份清單。`argc_of(addr) -> int | None`;不給就全部 null。
+
+    `bad_sites`(`contradicted_sites` 的結果)先從呼叫端索引剔除,再算 callers / callees;
+    不給(反組譯器不可用)就不剔除,並在 `_meta.call_sites_validated` 標 false。
+    """
+    # 只列會改變清單的剔除(目標在 obj1 內、不是 __STK);目標在 obj1 外的命中本來就不成入口,實測有數百個
+    dropped = sorted(s for t, ss in call_index.items() if base <= t < hi and t != stack_probe
+                     for s in ss if s in (bad_sites or ()))
+    if bad_sites:
+        call_index = {t: kept for t, ss in call_index.items() if (kept := tuple(s for s in ss if s not in bad_sites))}
     callers = {t: len(s) for t, s in call_index.items() if base <= t < hi and t != stack_probe}
     seeds = set(prologue) | set(callers) | set(ail)
     thunks = thunk_targets(seeds, code, base, hi)
@@ -397,7 +435,9 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
                       "entries": len(entries), "strong": strong, "weak": len(entries) - strong,
                       "by_signal": {k: sum(1 for e in entries if k in e["signals"])
                                     for k in ("prologue", "call", "ail", "thunk_target")},
-                      "argc_available": argc_of is not None},
+                      "argc_available": argc_of is not None,
+                      "call_sites_validated": bad_sites is not None,
+                      "call_sites_dropped": [hex(s) for s in dropped]},
             "entries": entries}
 
 
@@ -553,16 +593,23 @@ def build(with_argc: bool = True) -> dict:
     prologue = CC.prologue_entries(code, base)
     call_index, _ = DNA._scan(types.SimpleNamespace(code=code, base=base))
     fixups = D.build_fixups(data, meta)
+    ail = set(load_ail())
     argc_of = None
-    if with_argc:
-        try:
-            from callgraph_le import CG
+    bad_sites = None
+    try:
+        from callgraph_le import CG
+        # 可達反組譯的種子:序頭入口、AIL 進入點、指向 obj1 的 fixup 目標(函式指標與 case 標籤)。
+        # fixup 目標只當「這裡是指令起點」的種子,不當入口訊號(見模組說明的誠實邊界)。
+        rd = CG(CC.EXE)
+        rd.build(sorted(a for a in set(prologue) | ail | set(fixups.values()) if base <= a < hi))
+        bad_sites = contradicted_sites(call_index, {a: rd._insn(a).size for a in rd.reached}, set(rd.calls))
+        if with_argc:
             cg = CG(CC.EXE)
             ents = frozenset(prologue)
             argc_of = lambda a: DNA.callee_argc(cg, a, ents)[0]   # noqa: E731
-        except ImportError:
-            argc_of = None
-    return assemble(prologue, call_index, set(load_ail()), code, base, hi, fixups, CC.STACK_PROBE, argc_of)
+    except ImportError:
+        pass
+    return assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, argc_of, bad_sites)
 
 
 def load_function_names() -> list[dict]:
@@ -686,7 +733,12 @@ def report_coverage() -> int:
     print(f"  結構性命名 {sd['_meta']['total']} 個 {sd['_meta']['by_kind']};扣掉之後 strong 裡仍完全無描述的:{left}")
     have = {int(e["addr"], 16) for e in inv["entries"]}
     stray = sorted(a for a in names if a not in have and int(m["image_range"][0], 16) <= a < int(m["image_range"][1], 16))
-    print(f"  命名表裡不是任何入口的 obj1 位址:{len(stray)} 個" + (f"(前 12:{[hex(a) for a in stray[:12]]})" if stray else ""))
+    # 只有位址的來源(verified_addresses、勘誤)多半引用函式中間的一條指令,不是入口很正常;
+    # 有名稱字串卻不是入口的才需要看(舊版位址、__STK 這類刻意不當入口的,或真的抄錯)
+    named_stray = [f"{a:#x}={names[a]['name']}" for a in stray if names[a]["name"]]
+    print(f"  命名表裡不是任何入口的 obj1 位址:{len(stray)} 個;其中有名稱 {len(named_stray)} 個"
+          + (f":{named_stray}" if named_stray else "")
+          + f";其餘 {len(stray) - len(named_stray)} 個只有位址(指令層引用)")
     return 0
 
 
@@ -854,6 +906,27 @@ def _selftest_pure(fails: list[str]) -> None:
     check("不給 argc_of:argc 為 null 且 _meta 如實標示", (none["entries"][0]["argc"], none["_meta"]["argc_available"]), (None, False))
     check("dump:穩定、結尾換行、中文原樣", (dump(none) == dump(none), dump(none).endswith("}\n"), "\\u" in dump({"名": 1})),
           (True, True, False))
+
+    print("(5b) contradicted_sites:可達指令內部 / 非 CALL 的起點才剔除;邊界與沒走到的保留")
+    # 可達指令:0x1000(長 11)、0x100b(CALL,長 5)、0x1010(長 2)
+    ins5 = {0x1000: 11, 0x100b: 5, 0x1010: 2}
+    idx5 = {0x2000: (0x1003,), 0x2100: (0x100b,), 0x2200: (0x1010,), 0x2300: (0x1012,),
+            0x2400: (0x1001, 0x100a), 0x2500: (0x0fff,), 0x2600: (0x1100,)}
+    check("內部(0x1003/0x1001/0x100a)與非 CALL 起點(0x1010)剔除;CALL 起點、緊接最後一條之後、"
+          "第一條之前、沒走到的保留",
+          sorted(contradicted_sites(idx5, ins5, {0x100b})), [0x1001, 0x1003, 0x100a, 0x1010])
+    check("起點 + 長度那一格不算內部(屬於下一條)", sorted(contradicted_sites({0x1: (0x100b,)}, {0x1000: 11}, set())), [])
+    inv5 = assemble({0x1000}, {0x1010: (0x1002,), 0x1020: (0x1004, 0x1012), 0x1030: (0x1006,), 0x9000: (0x1008,),
+                              0x1038: (0x100a,)},
+                    set(), bytes(0x40), base, hi, {}, 0x1038, bad_sites=frozenset({0x1004, 0x1006, 0x1008, 0x100a}))
+    got5 = {e["addr"]: (e["callers"], e["grade"]) for e in inv5["entries"]}
+    check("剔除後:0x1020 降為 weak、0x1030 消失、0x1010 不受影響;callees 也跟著少",
+          (got5, inv5["entries"][0]["callees"]), ({"0x1000": (0, "strong"), "0x1010": (1, "weak"), "0x1020": (1, "weak")},
+                                                  ["0x1010"]))
+    check("_meta 標示已驗並列出剔除的呼叫端(目標在 obj1 外、目標是 __STK 的不列);沒給 bad_sites 時標 false、清單空",
+          (inv5["_meta"]["call_sites_validated"], inv5["_meta"]["call_sites_dropped"],
+           none["_meta"]["call_sites_validated"], none["_meta"]["call_sites_dropped"]),
+          (True, ["0x1004", "0x1006"], False, []))
 
     print("(6) tier / coverage_counts:命名表優先於文件記載;strong_only 真的只數 strong")
     ents6 = [{"addr": "0x10", "grade": "strong"}, {"addr": "0x20", "grade": "strong"},
@@ -1150,7 +1223,22 @@ def _selftest_live(fails: list[str]) -> bool:
           {"0x135dd", "0x10b4e"} <= set(e.get("callees", [])), str(e.get("callees")))
     check("0x26b91(debits gold)的 globals 含金幣全域 0x53bf3", "0x53bf3" in by.get(0x26b91, {}).get("globals", []),
           str(by.get(0x26b91, {}).get("globals")))
-    check("回歸釘值:strong 858 / weak 244(參考版 EXE 固定,數字變了就是判準變了)", (m["strong"], m["weak"]) == (858, 244), f"{m['strong']}/{m['weak']}")
+    check("回歸釘值:strong 858 / weak 237(參考版 EXE 固定,數字變了就是判準變了;2026-10-06 剔除 7 個被反證的 weak)",
+          (m["strong"], m["weak"]) == (858, 237), f"{m['strong']}/{m['weak']}")
+    # 剔除清單逐一人工判讀過(2026-10-06,doc98 續七十八):每個 E8 都落在另一條指令裡
+    #   0x2ff40 mov [esp+0xe8],0 的位移 / 0x3cdcb mov eax,gs(8c e8)/ 0x4bf50 shr eax,8(c1 e8 08)/
+    #   0x4ca93、0x4cac4 mov ecx,[ebp-0x18](8b 4d e8)/ 0x4ddcc、0x4de10 資料區
+    check("剔除的呼叫端 = 人工判讀的 7 個", m["call_sites_validated"] and m["call_sites_dropped"]
+          == ["0x2ff40", "0x3cdcb", "0x4bf50", "0x4ca93", "0x4cac4", "0x4ddcc", "0x4de10"], str(m["call_sites_dropped"]))
+    check("0x2ff45 不再是入口;spell_cast_scene 0x2ff01 的 span 不再被截在 68 bytes",
+          0x2ff45 not in by and by.get(0x2ff01, {}).get("span_upper", 0) > 68, str(by.get(0x2ff01, {}).get("span_upper")))
+    img = CC.load_image()
+    dec = insn_decoder(img[2], img[3])
+    got = dec(0x2ff3d) if dec else None
+    check("反證本身可獨立重現:0x2ff3d 解出 11 bytes 的 mov,蓋住 0x2ff40", got is not None and got[0] == 11 and got[1] == "mov",
+          str(got))
+    check("正向控制:0x4b75f 的 call 0x4c4bd 沒被剔除(線性解碼會失步的區段)",
+          by.get(0x4c4bd, {}).get("callers", 0) == 2, str(by.get(0x4c4bd, {}).get("callers")))
     check("每筆 span_upper > 0 且總和 = 最後入口之後到 hi 的整段",
           all(x["span_upper"] > 0 for x in inv["entries"])
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
@@ -1209,7 +1297,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 21 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 25 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 
