@@ -45,13 +45,15 @@
 `docs/data/function_inventory.json` **只含由 EXE 算得出的東西**(加 AIL 表,它本身也是 EXE 導出的產物),
 所以可以逐位元組重生比對。「有沒有名字/文件有沒有記載」會隨文件與命名表變動,不進產物,
 由 `--coverage` 現算:名稱來源是 PRIM(`dump_chapter_beats`、`event_handler_dump`)、`DOC_OP_NAMES`、
-AIL、`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為入口」取
+AIL、`function_names.json`、Watcom 函式庫比對(`watcom_lib_matches.json`,單一符號名才算名稱)、
+`verified_addresses.json`、勘誤的 `correct_address`;「文件記載為入口」取
 `verify_address_claim_coverage.classify_all()` 的有訊號集合。
 
 結構性自動命名(`--structural`)
 ------------------------------
 有些函式不需要人讀:本體的**結構**就是它的描述。只用本清單的機械事實加上**有真名**的命名表
-(PRIM、`DOC_OP_NAMES`、AIL;`verified_addresses`/勘誤只有位址沒有名稱字串,不算)。依序判定,先中先贏:
+(PRIM、`DOC_OP_NAMES`、AIL、`function_names.json`、Watcom 函式庫比對;`verified_addresses`/勘誤只有位址
+沒有名稱字串,不算)。依序判定,先中先贏:
   * `thunk`         入口即 `jmp`:`thunk->目標`
   * `ail_only`      所有直接呼叫端都是 AIL 進入點或已判定的 ail_only(不動點;自己呼叫自己不算呼叫端)。
                     名稱只說工具能證明的事:它可能是 AIL 的內部輔助(實測 `0x364d4`/`0x364fb` 是配置後鎖定、
@@ -123,6 +125,7 @@ AIL_JSON = ROOT / "docs" / "data" / "ail_entry_points.json"
 VERIFIED_JSON = ROOT / "docs" / "data" / "verified_addresses.json"
 ERRATA_JSON = ROOT / "docs" / "data" / "known_address_errata.json"
 FUNCTION_NAMES_JSON = ROOT / "docs" / "data" / "function_names.json"
+WATCOM_JSON = ROOT / "docs" / "data" / "watcom_lib_matches.json"
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 CONFIDENCES = ("static_re", "verified_dynamic")
 JMP_REL32 = 0xE9
@@ -328,6 +331,10 @@ def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int
             if a in out or not cs or e["span_upper"] > WRAPPER_MAX_SPAN or not all(t in label for t in cs):
                 continue
             calls = call_args(bodies[a], argc, skip) if bodies and bodies.get(a) else []
+            if bodies and bodies.get(a) and not calls:
+                # 本體乾淨收尾、裡面沒有任何 call:清單的 callees 來自 span 蓋到的下一段(沒列入口的函式),
+                # 不是這個函式在呼叫(2026-10-06:0x37028 的 span 蓋到 __CHK 0x3702f 的 `call __STK`)
+                continue
             if {t for t, _ in calls} == set(cs):
                 inner = ", ".join(f"{label[t]}({'?' if args is None else ', '.join(args)})" for t, args in calls)
             else:
@@ -708,10 +715,12 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
 
 
 def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int, str], insn_at,
-                fixups: dict[int, int] | None = None) -> list[str]:
+                fixups: dict[int, int] | None = None, lib_names: dict[int, str] | None = None) -> list[str]:
     """驗 function_names.json 的每一筆;回傳錯誤訊息(空 = 全過)。`insn_at` 為 None 時證據無法驗,算錯誤。
 
     `spans_` = {入口: span_upper};`other_names` = 其他命名表的 {位址: 名稱};`fixups` = {fixup 來源: 目標}。
+    `lib_names` = Watcom 函式庫比對的 {位址: 符號名}(2026-10-06):它是另一種來源 —— 同一位址人讀的描述名與函式庫
+    符號名並存是正常的(`ld_add` 與 `__FLDA`),不算重複命名;但**同一個名稱落在不同位址**就是其中一邊錯了。
 
     證據有兩種(2026-09-28 加第二種):
     * `{"at", "insn"}`:本體裡的一條指令,逐字比對反組譯。
@@ -743,6 +752,9 @@ def check_names(items: list[dict], spans_: dict[int, int], other_names: dict[int
             errs.append(f"{tag}: 名稱須為 snake_case")
         if name in seen_name or name in taken:
             errs.append(f"{tag}: 名稱重複或與其他命名表撞名")
+        lib_at = [b for b, n in (lib_names or {}).items() if n == name and b != a]
+        if lib_at:
+            errs.append(f"{tag}: 與 Watcom 函式庫比對在 {lib_at[0]:#x} 的同名符號撞名")
         seen_addr.add(a)
         seen_name.add(name)
         if not str(it.get("summary", "")).strip():
@@ -933,6 +945,19 @@ def load_function_names() -> list[dict]:
     return json.loads(FUNCTION_NAMES_JSON.read_text(encoding="utf-8"))["names"]
 
 
+def load_watcom() -> dict[int, str | None]:
+    """`watcom_lib_match.py` 的認定:{位址: 符號名}。別名組(`a|b`)與模組內 static(`模組+0x偏移`)
+    不是單一名稱,記成 None(來源留著,不算有名稱)。"""
+    if not WATCOM_JSON.exists():
+        return {}
+    return watcom_names(json.loads(WATCOM_JSON.read_text(encoding="utf-8"))["matches"])
+
+
+def watcom_names(matches: dict[str, dict]) -> dict[int, str | None]:
+    """`watcom_lib_matches.json` 的 `matches` -> {位址: 單一符號名或 None}。"""
+    return {int(a, 16): None if "|" in r["name"] or "+" in r["name"] else r["name"] for a, r in matches.items()}
+
+
 def insn_decoder(code: bytes, base: int):
     """`insn_at(addr) -> (長度, 助記符, 運算元) | None`;沒有 capstone 回 None。"""
     try:
@@ -950,8 +975,9 @@ def insn_decoder(code: bytes, base: int):
 
 
 def other_real_names() -> dict[int, str]:
-    """function_names.json 以外、有名稱字串的命名表(PRIM、DOC_OP_NAMES、AIL)。"""
-    return {a: v["name"] for a, v in load_names(include_registry=False).items() if v["name"]}
+    """function_names.json 以外、有名稱字串的命名表(PRIM、DOC_OP_NAMES、AIL)。Watcom 函式庫比對另外由
+    `check_names` 的 `lib_names` 驗(同址並存可以、異址同名不行)。"""
+    return {a: v["name"] for a, v in load_names(include_registry=False, include_watcom=False).items() if v["name"]}
 
 
 def run_check_names() -> list[str]:
@@ -962,10 +988,10 @@ def run_check_names() -> list[str]:
     import disasm_le as D
     data, meta = CC.load_image()[:2]
     return check_names(load_function_names(), spans_, other_real_names(), insn_decoder(code, base),
-                       D.build_fixups(data, meta))
+                       D.build_fixups(data, meta), {a: n for a, n in load_watcom().items() if n})
 
 
-def load_names(include_registry: bool = True) -> dict[int, dict]:
+def load_names(include_registry: bool = True, include_watcom: bool = True) -> dict[int, dict]:
     """{位址: {"name": 第一個可用名稱或 None, "sources": [...]}}。"""
     import dump_chapter_beats as DCB
     import event_handler_dump as EHD
@@ -988,6 +1014,9 @@ def load_names(include_registry: bool = True) -> dict[int, dict]:
         add(a, "AIL", v)
     for it in load_function_names() if include_registry else []:
         add(int(it["addr"], 16), "function_names", it["name"])
+    # 排在人讀的名稱之後:同一位址已有名稱時只多記一個來源
+    for a, v in load_watcom().items() if include_watcom else []:
+        add(a, "watcom_lib", v)
     for e in json.loads(VERIFIED_JSON.read_text(encoding="utf-8"))["entries"]:
         for h in HEX.findall(str(e.get("address", ""))):
             add(int(h, 16), "verified_addresses", None)
@@ -1490,6 +1519,10 @@ def _selftest_structural(fails: list[str]) -> None:
           (8, {"thunk": 2, "ail_only": 1, "wrapper": 4, "leaf_global": 0, "leaf_ptr": 0, "leaf_pure": 1}, 3,
            {"kind": "wrapper", "name": "wrapper(spawn(5), pan(?))", "round": 1, "callers": 0, "argc": None}))
     check("空輸入", (structural([], {}, {}, set()), structural_doc([], {})["_meta"]["wrapper_rounds"]), ({}, 0))
+    span_only = [ent(0x40, [0x200]), ent(0x200)]
+    check("本體乾淨且沒有 call、callees 只來自 span -> 不是 wrapper;沒有本體可看才退回 wrapper",
+          (0x40 in structural(span_only, names, {}, set(), {0x40: [ret]}), structural(span_only, names, {}, set())[0x40]["name"]),
+          (False, "wrapper(spawn)"))
 
 
 def _selftest_names(fails: list[str]) -> None:
@@ -1515,6 +1548,14 @@ def _selftest_names(fails: list[str]) -> None:
           [x for x in bad(addr="0x1010", evidence=[{"at": "0x1010", "insn": "nop"}])], ["0x1010 draw_wait_marker: 其他命名表已命名為 spawn"])
     check("名稱格式", bad(name="DrawMarker"), ["0x1000 DrawMarker: 名稱須為 snake_case"])
     check("與其他命名表撞名", bad(name="pan"), ["0x1000 pan: 名稱重複或與其他命名表撞名"])
+    check("watcom_names:單一符號名照收,別名組與模組內 static 記成 None",
+          watcom_names({"0x10": {"name": "strcmp"}, "0x20": {"name": "sin|cos"}, "0x30": {"name": "stk+0x0"}}),
+          {0x10: "strcmp", 0x20: None, 0x30: None})
+    check("Watcom 符號名在同一位址並存:不算錯",
+          check_names([ok], spans_, {}, insn_at, None, {0x1000: "__FLDA", 0x500: "strlen"}), [])
+    check("Watcom 符號名落在別的位址:撞名",
+          check_names([{**ok, "name": "strlen"}], spans_, {}, insn_at, None, {0x500: "strlen"}),
+          ["0x1000 strlen: 與 Watcom 函式庫比對在 0x500 的同名符號撞名"])
     check("summary 空白", bad(summary="  "), ["0x1000 draw_wait_marker: summary 不得空"])
     check("confidence 不在清單", bad(confidence="guess"), ["0x1000 draw_wait_marker: confidence 須為 static_re/verified_dynamic"])
     check("verified_dynamic 也合格", bad(confidence="verified_dynamic"), [])
@@ -1682,17 +1723,23 @@ def _selftest_live(fails: list[str]) -> bool:
     # 釘值用「不含 function_names.json」的版本:登錄新名字會改變誰是 wrapper、誰已有真名,那是預期中的變動,
     # 不該每登一批就來改釘值;含登錄表的版本由下面「已提交產物逐位元組相同」那一條管。
     sd = build_structural(include_registry=False)
-    check("回歸釘值(不含登錄表):thunk 7 / ail_only 55 / wrapper 104 / leaf_global 99 / leaf_ptr 71 / leaf_pure 30"
-          "(2026-10-06 加函式指標入口、ail_only 改最大不動點後;舊值 4/30/105/16/16/11)",
-          sd["_meta"]["by_kind"] == {"thunk": 7, "ail_only": 55, "wrapper": 104, "leaf_global": 99, "leaf_ptr": 71, "leaf_pure": 30},
+    # 2026-10-06 第二次:加 Watcom 函式庫名稱 -> wrapper +10(被呼叫者有了名字,例 0x370f0 = segread + int386x)、
+    # leaf -3(0x37af4/0x37b55/0x3cf26 改有真名);「本體乾淨且沒有 call」不算 wrapper -> wrapper -1(0x4670c)
+    check("回歸釘值(不含登錄表):thunk 7 / ail_only 55 / wrapper 113 / leaf_global 99 / leaf_ptr 69 / leaf_pure 29"
+          "(2026-10-06 加 Watcom 函式庫名稱後;前一版 7/55/104/99/71/30,更早 4/30/105/16/16/11)",
+          sd["_meta"]["by_kind"] == {"thunk": 7, "ail_only": 55, "wrapper": 113, "leaf_global": 99, "leaf_ptr": 69, "leaf_pure": 29},
           str(sd["_meta"]["by_kind"]))
+    check("span 蓋到下一個沒列入口的函式的不算 wrapper:0x37028(蓋到 __CHK 0x3702f)、0x4670c",
+          "0x37028" not in sd["names"] and "0x4670c" not in sd["names"],
+          str((sd["names"].get("0x37028"), sd["names"].get("0x4670c"))))
     check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
           sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
     check("0x20707 的常數參數讀得出來(兩次 unit_inactive 的單位編號)",
           sd["names"].get("0x20707", {}).get("name") == "wrapper(raw_result_code_0_1_2(), unit_inactive(0x32), unit_inactive(0x33))",
           str(sd["names"].get("0x20707")))
     plain = [a for a, v in sd["names"].items() if v["kind"] == "wrapper" and "(" not in v["name"][len("wrapper("):]]
-    check("退回不帶參數的 wrapper 只有 1 個(本體的 CALL 與 callees 不一致)", len(plain) == 1, str(plain))
+    # 原本唯一的一個是 0x4670c(本體沒有 call,callees 全來自 span),2026-10-06 起不算 wrapper
+    check("退回不帶參數的 wrapper 為 0 個(本體的 CALL 與 callees 不一致)", len(plain) == 0, str(plain))
     check("反組譯器可用時 _meta 如實標示", sd["_meta"]["disasm_available"] is True)
     check("0x364fb(解鎖後釋放的記憶體輔助,24 個呼叫端全在 AIL 內)= ail_only", sd["names"].get("0x364fb", {}).get("kind") == "ail_only")
     full = build_structural()
@@ -1733,7 +1780,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 33 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 34 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

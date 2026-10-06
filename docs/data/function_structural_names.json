@@ -2,11 +2,11 @@
  "_meta": {
   "generator": "tools/function_inventory.py --structural",
   "caution": "結構性描述,不是語意;不得當成 verified 引用",
-  "total": 341,
+  "total": 338,
   "by_kind": {
    "thunk": 7,
    "ail_only": 55,
-   "wrapper": 101,
+   "wrapper": 98,
    "leaf_global": 88,
    "leaf_ptr": 63,
    "leaf_pure": 27
@@ -864,14 +864,14 @@
   },
   "0x3cf1c": {
    "kind": "thunk",
-   "name": "thunk->0x46186",
+   "name": "thunk->__sys_init_387_emulator",
    "round": 0,
    "callers": 0,
    "argc": 0
   },
   "0x3cf21": {
    "kind": "thunk",
-   "name": "thunk->0x46306",
+   "name": "thunk->__sys_fini_387_emulator",
    "round": 0,
    "callers": 0,
    "argc": 0
@@ -897,24 +897,10 @@
    "callers": 2,
    "argc": 1
   },
-  "0x3dbe7": {
-   "kind": "wrapper",
-   "name": "wrapper(heap_free)",
-   "round": 1,
-   "callers": 2,
-   "argc": 1
-  },
   "0x3dd8a": {
    "kind": "ail_only",
    "name": "ail_only",
    "round": 0,
-   "callers": 2,
-   "argc": 1
-  },
-  "0x3df03": {
-   "kind": "wrapper",
-   "name": "wrapper(~0x3e103(_))",
-   "round": 2,
    "callers": 2,
    "argc": 1
   },
@@ -924,13 +910,6 @@
    "round": 0,
    "callers": 0,
    "argc": 0
-  },
-  "0x3e103": {
-   "kind": "wrapper",
-   "name": "wrapper(lseek(_, 0, 1))",
-   "round": 1,
-   "callers": 2,
-   "argc": 1
   },
   "0x3e493": {
    "kind": "leaf_ptr",
@@ -1028,6 +1007,13 @@
    "name": "leaf_pure",
    "round": 0,
    "callers": 5,
+   "argc": 1
+  },
+  "0x3ff35": {
+   "kind": "wrapper",
+   "name": "wrapper(_localtime(_, 0x4370))",
+   "round": 1,
+   "callers": 2,
    "argc": 1
   },
   "0x400cc": {
@@ -1324,13 +1310,6 @@
    "callers": 3,
    "argc": 2
   },
-  "0x4670c": {
-   "kind": "wrapper",
-   "name": "wrapper(errno_ptr, ~0x467c5)",
-   "round": 2,
-   "callers": 2,
-   "argc": 0
-  },
   "0x467c5": {
    "kind": "wrapper",
    "name": "wrapper(errno_ptr())",
@@ -1341,6 +1320,13 @@
   "0x46c48": {
    "kind": "wrapper",
    "name": "wrapper(nmalloc(8))",
+   "round": 1,
+   "callers": 0,
+   "argc": 0
+  },
+  "0x46c8d": {
+   "kind": "wrapper",
+   "name": "wrapper(docloseall(0))",
    "round": 1,
    "callers": 0,
    "argc": 0
@@ -2357,13 +2343,6 @@
    "kind": "leaf_pure",
    "name": "leaf_pure",
    "round": 0,
-   "callers": 0,
-   "argc": 0
-  },
-  "0x4cf4d": {
-   "kind": "wrapper",
-   "name": "wrapper(nmalloc(_), nmalloc(_), memset(_, 0, _), ~0x3777e(_))",
-   "round": 2,
    "callers": 0,
    "argc": 0
   },

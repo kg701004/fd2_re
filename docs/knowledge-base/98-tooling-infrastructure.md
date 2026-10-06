@@ -7507,3 +7507,61 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
     核對腳本第一版往回找 `push` 時沒對齊,回報「0 個回呼」;改成對齊解碼並以已讀到的兩個呼叫端當控制才得出上面結果。
 
 **未完成**:上面的核對是一次性的手動追蹤,沒有寫成工具;新版 EXE 或新的間接呼叫型態要重做。
+
+## 2026-10-06 續八十:Watcom 函式庫比對 —— 72 個入口找回原始符號名
+
+**結論**:新工具 `tools/watcom_lib_match.py` 拿 Watcom 11.0c 的 C / 數學 / 浮點模擬函式庫目的碼,在**指令層**比對 FD2.EXE
+的清單入口,認定 72 個(本體 59、被呼叫者傳播 13),遊戲區 0 個落點、最終一致性 0 衝突。strong 有名稱或記載 716 -> 751(69%),
+仍完全無描述的 strong 89 -> 68。產物 `docs/data/watcom_lib_matches.json`(只記位址、符號名、分數,不含函式庫的任何位元組)。
+
+- **來源與授權**:FD2 的 CRT 字串是 `WATCOM C/C++32 Run-Time system ... 1988-1993`(9.5/10.0)。能合法取得最舊的是 open-watcom
+  官方 GitHub `open-watcom-1.9` 的 `w11.0c-zips`(`clib_d32.zip` 485 KB、`clib_a32.zip` 99 KB;使用者同意下載,原估的 150 MB OW 2.0
+  不需要)。11.0c 條款不許散布,函式庫放 repo 外(`FD2_WATCOM_LIBS`,預設 `~/fd2-watcom-libs/w11.0c/lib386`),產物記 sha256。
+  FD2 序頭是 `push imm32 ; call 0x3702f`(堆疊傳參),所以用 `clib3s` / `math3s` / `math387s` / `emu387`。
+- **逐位元組比對不可行(實測,FD2.EXE 反組譯比對)**:模組程式碼段(fixup 處萬用)對 obj1 找完全相同:clib3s 979 個模組只有 13 個唯一命中、全部很短;
+  `memset` 只有前 12 bytes 相同。新了約五年,多數函式被改寫或重排。
+- **方法**:每條指令正規化成 token(分支目標 `L`、`call` 一律 `call F`、fixup 蓋到的指令其數值與 >= 0x1000 的常數 `X`);
+  函式庫端以公開符號、模組內 `call` 的目標(static 函式,記成 `模組+0x偏移`)、段首切函式;兩邊都只取**從入口走得到**的指令
+  (範圍內別人共用的尾段不算)。相似度 `difflib` ratio。
+  - 第一級:ratio >= 0.8、token >= 8。第二級:ratio >= 0.6,而且至少 1 個對齊的 `call` 與目標已認定的名稱一致,不收別名組。
+  - 一致性:對齊 `call` 的函式庫符號與 FD2 目標已認定的名稱不同 = 衝突,候選淘汰;接近同分以一致數決勝;長函式先定。
+  - 被呼叫者傳播:已認定函式在對齊位置呼叫 S,FD2 該處目標若是清單入口、只被隱含成 S、而且**它自己的本體也最像 S**(嚴格第一,
+    不套長度過濾)才命名。一個名稱只能在一個位址。
+- **零假設**:遊戲區(0x10100..0x3702f,573 個入口)也參加比對。最佳 ratio 最高 0.686(< 0.8);第二級的「有一致數」最佳 ratio
+  為 0 —— 遊戲函式幾乎不在對齊位置呼叫已認定的函式庫函式,這個統計是退化的,第二級真正的保護是一致數本身。門檻 0.6 的依據:
+  試過 0.5,遊戲區出現 1 個落點(0x1a7f1 被認成 `__Fini_Argv`,ratio 0.533),0.6 為 0。
+- **被擋下的被呼叫者傳播(7 個,記在 `_meta.callee_unconfirmed`;FD2.EXE 反組譯比對)**:新版 `__setenvp` 在對齊位置改呼叫模組內的 `allocate`,
+  舊版那裡是 0x3707e(現名 `nmalloc`)—— 本體與 `allocate` 的 ratio 0.115,排名第 1072;`free` 被兩個不同位址隱含(0x3776e、0x3777e);
+  `__RmTmpFile`、`getenv`(輸給寬字元版 `_wgetenv`)、`initrandnext`(2 個 token,多名同分)、`__log87_err`(排第 3)。
+  沒有本體旁證這一關時它們會被命名(兩個 `free` 由唯一性留下先到的那個),其中 `allocate` 與至少一個 `free` 確定是錯的。
+- **對照組**:已有名稱的 9 個(`memset`、`strlen`、`memcpy`、`segread`、`lseek`、`__CHP`=chp_truncate、`___LDA/___LDD/___LDM`=
+  ld_*_core)全部一致;人讀名稱與符號名並存的另有 `ld_add`=`__FLDA`、`ld_add_by_value`=`__FLDAC`、`ld_div`=`__FLDD`、
+  `ld_mul`=`__FLDM`、`close`=`__close`、`stdio_flush`=`__flush`、`flush_streams_matching`=`__flushall`,語意都吻合。
+  陷阱 0x4ba87:token 與 `__FLDA`/`__FLDS` 完全相同(1.0),只有被呼叫者 0x4bab1=`___LDD` 能分出它是 `__FLDD`(selftest 釘住)。
+- **順帶確認的事實**:
+  - 0x3702f(各工具與文件稱 `__STK`)在 Watcom 的命名裡是 **`__CHK`**:堆疊傳參版,`xchg [esp+4], eax ; call __STK ; ... ; ret 4`;
+    暫存器傳參的 `__STK` 是 0x37042,`__GRO` 是 0x3703f(函式庫 `stk` 模組 +0x8/+0x1b/+0x18,FD2 相對位置相同)。
+    名稱沒改(命名表維持原樣),只在這裡記下對應。
+  - **0x37028 不是遊戲函式**:它是 `stk` 模組段首的 static(`mov [0x2794], ss ; ret`,XI 初始化存 SS)。續七十九列的
+    「遊戲側無描述 3 個」實為 2 個(0x36683、0x36e65)。
+  - 0x46915(`int N` 樁表的分派,續七十九)是 `int386xa` 模組的 static(+0xaa),呼叫它的是 `_DoINTR_` = **0x468cb**
+    (`pushal ; push gs ; ... ; call 0x46915`),而 0x468cb **不是清單入口**:沒有序頭、沒有直接 CALL、沒有 fixup 指向它。
+    函式庫連進來但沒人呼叫的函式,位元組訊號看不到 —— 分母的另一個缺口類別。
+  - 0x370f0(登錄名 `int386`)在不含登錄表的結構性命名裡成了 `wrapper(segread(_), int386x(_, _, _, _))`,正是 Watcom `int386` 的寫法。
+- **函式清單的配合修改**:`load_names` 收 Watcom 名稱(排在人讀名稱之後;別名組與 static 記 None,不算有名稱);
+  `--check-names` 對 Watcom 名稱的規則是「同址並存可以、異址同名不行」(`lib_names`)。結構性命名加一條:本體乾淨收尾、
+  裡面沒有任何 `call` 的不算 wrapper —— 0x37028 的 span 蓋到 __CHK 的 `call __STK`、0x4670c 同類,原本被叫成 wrapper。
+  不含登錄表的釘值 7/55/104/99/71/30 -> 7/55/113/99/69/29,逐筆對過(wrapper +10 因被呼叫者有名、-1 為 0x4670c;
+  leaf -3 因 0x37af4/0x37b55/0x3cf26 有了真名)。
+- **自我測試與突變**:`watcom_lib_match.py --selftest`:合成 OMF 函式庫(頁面對齊、THREAD + 顯式 fixup、LIDATA)、函式切分與
+  可達指令、token 規則、判定規則 21 題(兩級、決勝、衝突、傳播三個擋點、唯一性、`final_conflicts`)、真實比對 10 項(遊戲區 0 落點、
+  0 衝突、零假設兩個上限、對照 9 個、strcmp、int386xa、`__FLDD` 陷阱、0x4a314 不命名、0x3707e 不被傳播成 allocate)。
+  定點突變 30 個(以含真實比對的 `--selftest` 判定):第一輪 4 個存活(傳播取第一個隱含名、傳播不檢查名稱已用、旁證同分也算、
+  第二級收別名組),各補一題純函式案例後全部 KILLED。`function_inventory.py` 本輪新增的 5 處(本體無 call 不算 wrapper、
+  `watcom_names`、`other_real_names` 不含 Watcom、異址同名檢查、`load_names` 收 Watcom)突變 5 個全部 KILLED。
+- **剩下 68 個無描述 strong 的組成**:0x480f0..0x48970 的 24 個是 AIL 數位混音輸出的樣本格式轉換(32 位元累加值夾到 16 位元、
+  有號/無號、單/雙聲道的組合,`fnptr` 抵達),沒有函式庫可比,要人讀;0x4a424(5110 bytes)是浮點模擬器主體,11.0c 的 `emu387`
+  已改寫;其餘是比不到的 CRT(時間函式群 0x472b3..0x47952、printf 內部、`ltoa`/`itoa` 兩個 0.79 的雙胞胎)與 2 個遊戲側。
+
+**未完成**:(1) 用模組版面(同一模組的公開符號在 FD2 依序相鄰)找出像 0x468cb 這種沒有位元組訊號的死函式,補進分母;
+(2) 7 個被擋下的被呼叫者傳播與比不到的 CRT 要人讀;(3) AIL 混音轉換 24 個可依結構一次描述。

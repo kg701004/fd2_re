@@ -1,0 +1,902 @@
+{
+ "_meta": {
+  "source": "https://github.com/open-watcom/open-watcom-1.9/releases/tag/w11.0c-zips (clib_d32.zip, clib_a32.zip)",
+  "libs_sha256": {
+   "dos/clib3s.lib": "98413d0248740b0f038203155287b921306eafa6b3953cdf4054ba54e5c7def4",
+   "math3s.lib": "39c38de0e955541c3463fe03ad6df6b076ad7edef7e492f73561bd5ddefa9a45",
+   "math387s.lib": "5bc911f153d324c5a6f5ffa9fbff6c5072a0ea17b4b67c9fdda50ae807e9354c",
+   "dos/emu387.lib": "5983a6f3f51e8de69075a29c74b0bc61c8eb350f764ce7ad652222d2a94e1c44"
+  },
+  "lib_functions": 1800,
+  "fd2_entries_compared": 1312,
+  "thresholds": {
+   "T_HI": 0.8,
+   "T_LO": 0.6,
+   "AGREE_MIN": 1,
+   "MIN_TOK": 8,
+   "MARGIN": 0.05
+  },
+  "null_region": [
+   "0x10100",
+   "0x3702f"
+  ],
+  "null_entries": 573,
+  "names_in_null_region": [],
+  "null_best_ratio_max": 0.686,
+  "null_best_ratio_with_agree_max": 0.0,
+  "final_conflicts": [],
+  "matched": 72,
+  "by_via": {
+   "body": 59,
+   "callee": 13
+  },
+  "body_tier2": 8,
+  "ambiguous_alias": 3,
+  "callee_unconfirmed": {
+   "0x3707e": {
+    "name": "allocate",
+    "callers": [
+     "0x4cf4d"
+    ],
+    "body_ratio": 0.115
+   },
+   "0x3776e": {
+    "name": "free",
+    "callers": [
+     "0x3767e"
+    ],
+    "body_ratio": 0.5
+   },
+   "0x3777e": {
+    "name": "free",
+    "callers": [
+     "0x4cf4d"
+    ],
+    "body_ratio": 0.222
+   },
+   "0x3cc77": {
+    "name": "initrandnext",
+    "callers": [
+     "0x3cc7d"
+    ],
+    "body_ratio": 1.0
+   },
+   "0x3df37": {
+    "name": "__RmTmpFile",
+    "callers": [
+     "0x3767e"
+    ],
+    "body_ratio": 0.261
+   },
+   "0x3f48b": {
+    "name": "getenv",
+    "callers": [
+     "0x4726f"
+    ],
+    "body_ratio": 0.644
+   },
+   "0x4dc41": {
+    "name": "__log87_err",
+    "callers": [
+     "0x4d7b4"
+    ],
+    "body_ratio": 0.391
+   }
+  }
+ },
+ "matches": {
+  "0x37042": {
+   "name": "__STK",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.909,
+   "tokens": 11,
+   "lib": "clib3s.lib",
+   "module": "stk",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x375c8": {
+   "name": "__shutdown_stream",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.6,
+   "tokens": 15,
+   "lib": "clib3s.lib",
+   "module": "fclose",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x3767e": {
+   "name": "__doclose",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.661,
+   "tokens": 56,
+   "lib": "clib3s.lib",
+   "module": "fclose",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x37910": {
+   "name": "memset",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.87,
+   "tokens": 11,
+   "lib": "clib3s.lib",
+   "module": "memset",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x37af4": {
+   "name": "__CHP",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.923,
+   "tokens": 14,
+   "lib": "math387s.lib",
+   "module": "fchop",
+   "agree": 0,
+   "rivals": [
+    "__87LDI2_",
+    "__87LDI4_"
+   ]
+  },
+  "0x37b55": {
+   "name": "strlen",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.848,
+   "tokens": 18,
+   "lib": "clib3s.lib",
+   "module": "strlen",
+   "agree": 0,
+   "rivals": [
+    "__p5_profile_reset",
+    "_fstrlen",
+    "_mbsset"
+   ]
+  },
+  "0x3ca4c": {
+   "name": "sqrt",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 20,
+   "lib": "math387s.lib",
+   "module": "sqrt387",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3cba9": {
+   "name": "trig387+0x14",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.955,
+   "tokens": 22,
+   "lib": "math387s.lib",
+   "module": "trig387",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3cbd5": {
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log|log10|log2|sin|sinh|tan|tanh",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "trigh387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acosl_",
+    "asinl_"
+   ]
+  },
+  "0x3cbe8": {
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log|log10|log2|sin|sinh|tan|tanh",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "trigh387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acosl_",
+    "asinl_"
+   ]
+  },
+  "0x3cc7d": {
+   "name": "rand",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.857,
+   "tokens": 10,
+   "lib": "clib3s.lib",
+   "module": "rand",
+   "agree": 0,
+   "rivals": [
+    "srand"
+   ]
+  },
+  "0x3cf26": {
+   "name": "memcpy",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.8,
+   "tokens": 24,
+   "lib": "clib3s.lib",
+   "module": "memcpy",
+   "agree": 0,
+   "rivals": [
+    "_fmemcpy",
+    "movedata"
+   ]
+  },
+  "0x3cf50": {
+   "name": "lseek",
+   "via": "callee",
+   "callers": [
+    "0x3d3a6"
+   ],
+   "body_ratio": 0.526
+  },
+  "0x3d2c0": {
+   "name": "strcmp",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 72,
+   "lib": "clib3s.lib",
+   "module": "_strcmp",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3d36c": {
+   "name": "__close",
+   "via": "callee",
+   "callers": [
+    "0x3767e"
+   ],
+   "body_ratio": 0.52
+  },
+  "0x3d3a6": {
+   "name": "filelength",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.915,
+   "tokens": 31,
+   "lib": "clib3s.lib",
+   "module": "filelen",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3da49": {
+   "name": "segread",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.857,
+   "tokens": 19,
+   "lib": "clib3s.lib",
+   "module": "segread",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3da76": {
+   "name": "int386x",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.606,
+   "tokens": 17,
+   "lib": "clib3s.lib",
+   "module": "intx386",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x3dbe7": {
+   "name": "__freefp",
+   "via": "callee",
+   "callers": [
+    "0x375c8"
+   ],
+   "body_ratio": 0.667
+  },
+  "0x3de66": {
+   "name": "__flush",
+   "via": "callee",
+   "callers": [
+    "0x3767e"
+   ],
+   "body_ratio": 0.431
+  },
+  "0x3df03": {
+   "name": "ftell",
+   "via": "callee",
+   "callers": [
+    "0x3767e"
+   ],
+   "body_ratio": 0.462
+  },
+  "0x3e060": {
+   "name": "__STOSB",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 24,
+   "lib": "clib3s.lib",
+   "module": "__stos",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x3e097": {
+   "name": "__STOSD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 48,
+   "lib": "clib3s.lib",
+   "module": "__stos",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x3e103": {
+   "name": "tell",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.625,
+   "tokens": 9,
+   "lib": "clib3s.lib",
+   "module": "tell",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x3fee0": {
+   "name": "_localtime",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.762,
+   "tokens": 32,
+   "lib": "clib3s.lib",
+   "module": "localtim",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x46013": {
+   "name": "__math87_err",
+   "via": "callee",
+   "callers": [
+    "0x3ca4c"
+   ],
+   "body_ratio": 0.417
+  },
+  "0x46186": {
+   "name": "__sys_init_387_emulator",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.981,
+   "tokens": 27,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x461b7": {
+   "name": "dosinite+0x30",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.981,
+   "tokens": 53,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4627f": {
+   "name": "dosinite+0xfb",
+   "via": "callee",
+   "callers": [
+    "0x461b7"
+   ],
+   "body_ratio": 0.778
+  },
+  "0x4629a": {
+   "name": "dosinite+0x118",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 25,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x462e6": {
+   "name": "dosinite+0x165",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 9,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x46306": {
+   "name": "__sys_fini_387_emulator",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 40,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x46380": {
+   "name": "dosinite+0x1ff",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 17,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x463ba": {
+   "name": "dosinite+0x23a",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 10,
+   "lib": "math387s.lib",
+   "module": "dosinite",
+   "agree": 0,
+   "rivals": [
+    "dosinite+0x165"
+   ]
+  },
+  "0x46870": {
+   "name": "__int386x_",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 28,
+   "lib": "clib3s.lib",
+   "module": "int386xa",
+   "agree": 0,
+   "rivals": [
+    "intdosx"
+   ]
+  },
+  "0x468a7": {
+   "name": "int386xa+0x38",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.923,
+   "tokens": 13,
+   "lib": "clib3s.lib",
+   "module": "int386xa",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x46915": {
+   "name": "int386xa+0xaa",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.944,
+   "tokens": 18,
+   "lib": "clib3s.lib",
+   "module": "int386xa",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x46ca7": {
+   "name": "docloseall",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.693,
+   "tokens": 34,
+   "lib": "clib3s.lib",
+   "module": "ioexit",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x46d00": {
+   "name": "__flushall",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.792,
+   "tokens": 27,
+   "lib": "clib3s.lib",
+   "module": "flushall",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x4726f": {
+   "name": "tzset",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 9,
+   "lib": "clib3s.lib",
+   "module": "tzset",
+   "agree": 0,
+   "rivals": [
+    "__Null_Argv",
+    "_dosretax",
+    "_heapgrow",
+    "_wctime",
+    "calloc"
+   ]
+  },
+  "0x47488": {
+   "name": "__parse_tz",
+   "via": "callee",
+   "callers": [
+    "0x4726f"
+   ],
+   "body_ratio": 0.496
+  },
+  "0x47525": {
+   "name": "__brktime",
+   "via": "callee",
+   "callers": [
+    "0x3fee0"
+   ],
+   "body_ratio": 0.549
+  },
+  "0x476c1": {
+   "name": "__isindst",
+   "via": "callee",
+   "callers": [
+    "0x3fee0"
+   ],
+   "body_ratio": 0.469
+  },
+  "0x49c26": {
+   "name": "__hook387",
+   "via": "callee",
+   "callers": [
+    "0x461b7"
+   ],
+   "body_ratio": 0.702
+  },
+  "0x49cf5": {
+   "name": "__unhook387",
+   "via": "callee",
+   "callers": [
+    "0x46306"
+   ],
+   "body_ratio": 0.648
+  },
+  "0x4a0c4": {
+   "name": "__int7_pl3",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 14,
+   "lib": "emu387.lib",
+   "module": "emu387",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4b828": {
+   "name": "__FLDA",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 18,
+   "lib": "math3s.lib",
+   "module": "flda386",
+   "agree": 1,
+   "rivals": [
+    "__FLDAC"
+   ]
+  },
+  "0x4b852": {
+   "name": "__FLDAC",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 18,
+   "lib": "math3s.lib",
+   "module": "flda386",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x4b882": {
+   "name": "___LDA",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.951,
+   "tokens": 149,
+   "lib": "math3s.lib",
+   "module": "flda386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4b9ee": {
+   "name": "__FLDC",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 61,
+   "lib": "math3s.lib",
+   "module": "fldc386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4ba87": {
+   "name": "__FLDD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 18,
+   "lib": "math3s.lib",
+   "module": "fldd386",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x4bab1": {
+   "name": "___LDD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.952,
+   "tokens": 177,
+   "lib": "math3s.lib",
+   "module": "fldd386",
+   "agree": 0,
+   "rivals": [
+    "__FDD"
+   ]
+  },
+  "0x4bc5c": {
+   "name": "__FLDM",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 18,
+   "lib": "math3s.lib",
+   "module": "fldm386",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x4bc86": {
+   "name": "___LDM",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.96,
+   "tokens": 108,
+   "lib": "math3s.lib",
+   "module": "fldm386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4bddc": {
+   "name": "__LDU4",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 49,
+   "lib": "math3s.lib",
+   "module": "ldi4386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4be46": {
+   "name": "__I4LD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math3s.lib",
+   "module": "i4ld386",
+   "agree": 0,
+   "rivals": [
+    "__I4FD"
+   ]
+  },
+  "0x4be57": {
+   "name": "__U4LD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 25,
+   "lib": "math3s.lib",
+   "module": "i4ld386",
+   "agree": 0,
+   "rivals": [
+    "__U4FD"
+   ]
+  },
+  "0x4be8c": {
+   "name": "__iFDLD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.911,
+   "tokens": 48,
+   "lib": "math3s.lib",
+   "module": "fdld386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4bf0c": {
+   "name": "__iLDFS",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.99,
+   "tokens": 48,
+   "lib": "math3s.lib",
+   "module": "ldfs386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4bf8b": {
+   "name": "__iLDFD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.935,
+   "tokens": 74,
+   "lib": "math3s.lib",
+   "module": "ldfd386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4c052": {
+   "name": "__iFSLD",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.981,
+   "tokens": 26,
+   "lib": "math3s.lib",
+   "module": "fsld386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4cd98": {
+   "name": "__sqrt",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 87,
+   "lib": "math3s.lib",
+   "module": "sqrt386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4cf4d": {
+   "name": "__setenvp",
+   "via": "body",
+   "tier": 2,
+   "ratio": 0.612,
+   "tokens": 86,
+   "lib": "clib3s.lib",
+   "module": "setenvp",
+   "agree": 1,
+   "rivals": []
+  },
+  "0x4d7b4": {
+   "name": "IF@DLOG",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 37,
+   "lib": "math387s.lib",
+   "module": "log387",
+   "agree": 0,
+   "rivals": [
+    "IF@ACOSH",
+    "IF@ATANH",
+    "__@DSQRT"
+   ]
+  },
+  "0x4d81b": {
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log|log10|log2|sin|sinh|tan|tanh",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "trigh387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acosl_",
+    "asinl_"
+   ]
+  },
+  "0x4db9c": {
+   "name": "__ZBuf2F",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 40,
+   "lib": "clib3s.lib",
+   "module": "amodf386",
+   "agree": 0,
+   "rivals": [
+    "__ZBuf2LD"
+   ]
+  },
+  "0x4dbe7": {
+   "name": "amodf386+0xdb",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 26,
+   "lib": "clib3s.lib",
+   "module": "amodf386",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4dc8c": {
+   "name": "__CmpBigInt",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 26,
+   "lib": "clib3s.lib",
+   "module": "i64tos",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4dcc6": {
+   "name": "__Rnd2Int",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 48,
+   "lib": "clib3s.lib",
+   "module": "i64tos",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4dd31": {
+   "name": "__Bin2String",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 55,
+   "lib": "clib3s.lib",
+   "module": "i64tos",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4dda3": {
+   "name": "i64tos+0x10f",
+   "via": "callee",
+   "callers": [
+    "0x4dc8c"
+   ],
+   "body_ratio": 0.574
+  },
+  "0x4deb4": {
+   "name": "modf",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 15,
+   "lib": "math387s.lib",
+   "module": "modf387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acos",
+    "acosh"
+   ]
+  }
+ }
+}

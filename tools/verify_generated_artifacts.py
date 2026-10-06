@@ -104,6 +104,10 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 結構性自動命名:輸入是上面那份清單加有真名的命名表(PRIM、DOC_OP_NAMES、AIL)。命名表改了就要重生 ——
     # 與 native_argcounts.json 對 DOC_OP_NAMES 的相依同一種。不看文件,所以文件 commit 不會讓它漂移。
     ("docs/data/function_structural_names.json", "function_inventory.py", ["--structural", "{out}"], "bytes"),
+    # 2026-10-06:Watcom 11.0c 函式庫 × FD2 的指令層比對。函式庫檔授權不許散布,放在 repo 外
+    # (`FD2_WATCOM_LIBS`,預設 ~/fd2-watcom-libs/w11.0c/lib386);缺檔時產生器回 2,這裡報 ERROR。
+    # 上面的結構性命名讀這份產物的名稱,所以它變了要接著重生 function_structural_names.json。
+    ("docs/data/watcom_lib_matches.json", "watcom_lib_match.py", ["{out}"], "bytes"),
     # 2026-09-08 新增。加進來的第一次執行就抓到真東西:treasure 那支把一個
     # **已經是新版位址**的常數又加了一次版本位移(+0x356),輸出 `0x35baa`——
     # 落在指令中段,根本不是函式。已改成從事件跳表 0x51b91 讀(且走 fixup),
