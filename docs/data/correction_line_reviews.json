@@ -17,6 +17,48 @@
    "excerpt": "第二批的 0x4e040/0x4e555/0x4e63d 也都有 +0x350 候選 —— 但那兩筆勘誤的 root_cause 寫「個別誤記」。第二批",
    "verdict": "not_address_erratum",
    "note": "這一行是 +0x350 為尾段版本差的假說陳述(列出第二批要驗的三個位址),不是位址訂正;訂正若成立會登進 known_address_errata.json。"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "excerpt_sha1": "ba9bdc8c3ae17ef9ccce660357f245d80ab68517",
+   "excerpt": "(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "excerpt_sha1": "6da764e3843f6d74dc546201bab0f2a491342f30",
+   "excerpt": "(2026-10-02 補註:上段「先用其中兩個呼叫 `0x12cea`」的兩個,是 wrapper 的第 2、3 個引數——`0x33f82`/`0x33f86` 兩次 `push dword ptr [esp + 0xc]` 依序推 a",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "excerpt_sha1": "ba9bdc8c3ae17ef9ccce660357f245d80ab68517",
+   "excerpt": "(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "91-worklist.md",
+   "excerpt_sha1": "557435b723eb36659ebac1c92b37fabcaba35584",
+   "excerpt": "(2026-10-02 訂正:上句 DOC_SIGNATURES 摘要中的 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "91-worklist.md",
+   "excerpt_sha1": "ba9bdc8c3ae17ef9ccce660357f245d80ab68517",
+   "excerpt": "(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "excerpt_sha1": "ba9bdc8c3ae17ef9ccce660357f245d80ab68517",
+   "excerpt": "(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1",
+   "verdict": "not_address_erratum",
+   "note": "被訂正的是 0x12cea 的參數列((slot,x) 改為 (x,y)),位址 0x12cea/0x33f78/0x22253 本身都正確;依據 0x33f78 反組譯 push 序與 0x12cea 本體比對游標 X/Y,見 doc98 2026-10-01 續六十九。"
   }
  ]
 }

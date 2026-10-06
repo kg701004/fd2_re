@@ -514,7 +514,9 @@ DOC_SIGNATURES = {
     0x11df2: (3, "`0x11df2(0,255,delta)`"),
     0x35b78: (3, "`0x35b78(5,7,0)`"),
     0x25052: (2, "`0x25052(start,delay_ms)`"),
-    0x12cea: (2, "`0x12cea(slot,x)`"),
+    # 2026-10-02:引文原為 doc31/50/91 的 `0x12cea(slot,x)`,那是抄錄誤記;
+    # 0x33f78 以 (a2,a3)=(x,y) 呼叫它(doc98 續六十九)。參數個數 2 不受影響。
+    0x12cea: (2, "`0x12cea(x,y)`(doc98 續六十九;舊引文 `(slot,x)` 為誤記)"),
     # doc99 L4171 `FUN_0002aedb(char_idx, item_id)` 註明「decompile確認」,
     # doc58 L3158 的 thunk `0x31860(unit,item)` 也是兩個參數。
     # doc58 L2291 寫成 `0x2aedb(index)` 是**不精確的簡寫**——本工具推得 2,

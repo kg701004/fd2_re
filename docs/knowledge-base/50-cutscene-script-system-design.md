@@ -733,6 +733,7 @@ D3/D5 不採「搬走敵人全部 inventory」的猜法，而使用上述特殊�
 `0x12cea(slot,x)`，再精確轉交 `0x22253(slot,x,y,x,y)`。因此 compiler 保存
 `native_staging_present` 的 slot/x/y 與 focus payload；`0x22253` 已可見 11+6+10 個
 indexed presentation pass，但 renderer 尚未完成，仍必須 fail-closed，不能降成 spawn 或 pan。
+(2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1,a2,a3,a2,a3)`,raw push-order `[y,x,slot]` 即 a1=slot、a2=x、a3=y;`0x12cea` 本體把 arg1 與游標 X `[0x53ab1]`、arg2 與游標 Y `[0x53ab5]` 比較(靜態,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e)。見 doc98「2026-10-01 續六十九」。原句保留作歷史紀錄。)
 
 ## 4. 未解(低優先)+ 工具紀律
 

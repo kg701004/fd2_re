@@ -258,6 +258,7 @@ adapter / Ebiten adapter 仍缺」的說法精確落在**這一層**,而不是�
    `VisualX/VisualY` **相同**,即這個 caller 沒有「假離場座標」,是單純的**鏡頭跟拍 + 單位就地演出**
    (7 個 call-site 均在 ch29 pre-battle handler,對應終局戰前把角色一一擺上場的分鏡)。視覺語意:
    **鏡頭聚焦某單位所在格,播放一次完整 27-present 進場特效(indexed radial reveal)**。
+   (2026-10-02 訂正:上句 `0x12cea(slot,x)` 為抄錄誤記,應為 `0x12cea(x,y)`(地圖格座標)。`0x33f78(a1,a2,a3)` 呼叫 `0x12cea(a2,a3)` 與 `0x22253(a1,a2,a3,a2,a3)`,raw push-order `[y,x,slot]` 即 a1=slot、a2=x、a3=y;`0x12cea` 本體把 arg1 與游標 X `[0x53ab1]`、arg2 與游標 Y `[0x53ab5]` 比較(靜態,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e)。見 doc98「2026-10-01 續六十九」。原句保留作歷史紀錄。)
 
 2. **`0x2218A→0x22253`(native command 23 / item type23 relocation)**:已由 `RE-ITEM-TYPE23-RELOCATION`
    閉合觸發條件——**戰鬥中道具 ID101** 的效果,gate 是目標 raw identity `+8==24` 且 max MP `+0x46>=20`,
@@ -371,6 +372,7 @@ routine 刻意支援「離場」與「進場/就地」兩種語意的共用機�
 **所以那個 5 是 `0x22253` 的**:`0x33f78` 這個 wrapper 收 3 個引數,先用其中兩個呼叫 `0x12cea` 做鏡頭步進,
 再把 3 個引數加上另外 2 個值湊成 5 個 push 交給 `0x22253`。`NativeStagingPresent` 五個欄位
 描述的是**下游那一層**的資料形狀,不是 wrapper 的呼叫慣例;§9.5 把兩者記成同一件事。
+(2026-10-02 補註:上段「先用其中兩個呼叫 `0x12cea`」的兩個,是 wrapper 的第 2、3 個引數——`0x33f82`/`0x33f86` 兩次 `push dword ptr [esp + 0xc]` 依序推 a3、a2,所以是 `0x12cea(x,y)`,不含 slot。§9.4 第 1 項寫的 `0x12cea(slot,x)` 是誤記,訂正見該處與 doc98「2026-10-01 續六十九」。)
 
 **這筆是被工具反過來抓到的**:`tools/derive_native_argcounts.py` 的 op 名稱入場規則要求
 「文件記載的參數個數必須與呼叫端推導相符」,`0x33f78` 因為 5≠3 被擋下,才回頭查出本節。
