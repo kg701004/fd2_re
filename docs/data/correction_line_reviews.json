@@ -66,6 +66,13 @@
    "excerpt": "- 0x36683 失去 ail_only(0x36647 改為 leaf_pure):它的三個呼叫端以前被算給 AIL 進入點 0x3fdaf / 0x419e0 / 0x452f0,",
    "verdict": "not_address_erratum",
    "note": "呼叫端歸屬(span 高估)的訂正,不是位址抄錯:五個位址都是現行版正確的入口"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "f9ae3668e1f5481cf24c8af24c65a3b5eaf17a0b",
+   "excerpt": "0x43160 多了死函式 0x43210 這個呼叫端,不再「只被 AIL 呼叫」,由 `ail_only` 改為 `wrapper(memset(_, -1, 0x440))`。",
+   "verdict": "not_address_erratum",
+   "note": "改的是結構性命名的分類(ail_only -> wrapper),兩個位址本身都正確"
   }
  ]
 }

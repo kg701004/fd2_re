@@ -13,12 +13,24 @@
 ----------------------------------------
 * `prologue`      Watcom `push imm32 ; call __STK`(`verify_address_claim_coverage.prologue_entries`,541 個)
 * `call`          直接 `E8 rel32` 的目標(`derive_native_argcounts._scan` 的位元組掃描,附呼叫端位址)
-* `ail`           `docs/data/ail_entry_points.json` 的 105 個進入點(多半經指標表呼叫,沒有直接 CALL)
+* `ail`           `docs/data/ail_entry_points.json` 的 104 個進入點(多半經指標表呼叫,沒有直接 CALL;AIL_startup 未解析)
 * `thunk_target`  某個入口的第一個位元組是 `E9`,它跳去的位址(`delay` 的本體 `0x3e01d` 只能這樣抵達)
 * `fnptr`         函式指標的目標(2026-10-06,見下)
+* `eip`           LE 標頭的程式進入點(`le_entry_point`;參考版 0x3ccb4 = `_cstart_`,2026-10-07 前漏列)
+* `island`        走不到的死函式(`island_entries`,2026-10-07,見下)
 
-`grade`:有 prologue / ail / thunk_target / fnptr,或被 CALL 兩次以上 = `strong`;只被 CALL 一次 = `weak`
-(E8 位元組掃描會接受資料位元組的偶然命中,單一命中不足以當函式)。
+* `call_reached`  對 `call` 的佐證(2026-10-07):唯一的呼叫端是「從 strong 入口可達反組譯走到的 `call` 指令」
+                  (`confirm_reached_calls`,確認的再當種子到不動點;種子不含 weak 自己,避免循環論證)
+
+`grade`:有 prologue / ail / thunk_target / fnptr / eip / call_reached,或被 CALL 兩次以上 = `strong`;只被 CALL 一次而呼叫端
+沒走到、或只有 island = `weak`(E8 位元組掃描會接受資料位元組的偶然命中;island 只靠解碼,沒有執行路徑或引用佐證)。
+
+`island`:函式庫連進來但沒人呼叫的函式(例 `_DoINTR_` 0x468cb)沒有 CALL、序頭、fixup,上面的訊號全部看不到。
+以函式指標不動點最後一輪的可達指令為「走得到」:可達指令的無條件結尾之後若接著一段走不到、而且一路延伸到下一個入口的
+位元組(中間夾著可達指令的是函式內部走不到的程式碼,只記 `_meta.island_interior_gaps`),就從段首依序剝:跳過對齊填充
+(`00`/`90`/`cc`、`lea r, [r]`、`mov r, r`),`implausible` 為 None、不是 fixup 的來源或目標、`local_body` 解得出不重疊
+且有結尾的本體才收;第一個剝不出來的就停。fixup 目標不收:是函式的話 `fnptr` 早收了,沒收的是被反證的資料指標或計算式
+跳躍的落點(`int386xa` 的 `int N ; ret` 樁表)。
 
 `fnptr`(`pointer_refs` -> `pointer_evidence` -> `fnptr_targets`):只經函式指標抵達、又沒有序頭的函式
 (事件表裡 `push 0x28 ; jmp` 的共用本體入口、FLI 解碼表、遮罩繪製的二維表、中斷處理常式、CRT 初始化表)
@@ -607,19 +619,159 @@ def fnptr_targets(ev: dict[int, set[str]], reject) -> set[int]:
     return {t for t, k in ev.items() if k & PTR_POSITIVE and not k & PTR_NEGATIVE and reject(t) is None}
 
 
+def le_entry_point(data: bytes, meta: dict) -> int | None:
+    """LE 標頭的程式進入點(EIP 物件 + 偏移)換成線性位址;不在 obj1 回 None。
+
+    載入器直接跳進來,沒有 CALL、序頭或 fixup 指向它 —— 參考版是 0x3ccb4(`_cstart_`),2026-10-07 前不在清單裡。
+    """
+    le = meta["le"]
+    obj, off = int.from_bytes(data[le + 0x18:le + 0x1C], "little"), int.from_bytes(data[le + 0x1C:le + 0x20], "little")
+    return meta["objs"][0]["base"] + off if obj == 1 else None
+
+
+def filler_len(a: int, code: bytes, base: int, insn_at) -> int:
+    """`a` 處對齊填充的長度(不是填充回 0):`00`/`90`/`cc` 單一位元組,或 Watcom 的 `lea r, [r]` / `mov r, r`。"""
+    if code[a - base] in (0x00, 0x90, 0xCC):
+        return 1
+    got = insn_at(a)
+    if got is None or bare(got[1]) not in ("lea", "mov"):
+        return 0
+    ops = [o.strip() for o in got[2].split(",")]
+    return got[0] if len(ops) == 2 and ops[1] in (ops[0], f"[{ops[0]}]") else 0
+
+
+def local_body(t: int, end: int, insn_at, base: int, hi: int) -> tuple[int, int] | None:
+    """從 `t` 沿控制流走、只走 [t, end) 之內(call 不跟進):(本體終點, 指令數);不像一個完整函式回 None。
+
+    不像 = 解不出的位元組、指令彼此重疊(把資料當程式碼解的典型徵狀)、跳出 [base, hi) 的直接分支、沒有任何
+    `ret*`/`iret*`/`jmp` 結尾。跳到 [t, end) 之外但仍在 obj1 內的分支允許(Watcom 的共用尾段,例 `__RLDU4` 跳進 `__RLDI4`)。
+    """
+    seen: dict[int, int] = {}
+    work, terms = [t], 0
+    while work:
+        a = work.pop()
+        if a in seen or not t <= a < end:
+            continue
+        got = insn_at(a)
+        if got is None:
+            return None
+        size, mn, op = got
+        seen[a] = size
+        mn = bare(mn)
+        direct = op.startswith("0x") and (mn == "call" or mn.startswith("j") or mn.startswith("loop"))
+        if direct and not base <= int(op, 16) < hi:
+            return None
+        if mn.startswith("ret") or mn.startswith("iret") or mn == "jmp":
+            terms += 1
+            if mn == "jmp" and direct:
+                work.append(int(op, 16))
+            continue
+        if direct and mn != "call":
+            work.append(int(op, 16))
+        work.append(a + size)
+    starts = sorted(seen)
+    if not terms or any(x + seen[x] > y for x, y in zip(starts, starts[1:])):
+        return None
+    return max(x + seen[x] for x in starts), len(starts)
+
+
+def island_entries(reached: set[int], insn_at, code: bytes, base: int, hi: int, entries: set[int],
+                   fixups: dict[int, int]) -> tuple[set[int], int]:
+    """走不到的死函式:(入口集合, 跳過的內部空隙數)。
+
+    函式庫連進來但沒人呼叫的函式(例 `_DoINTR_` 0x468cb)沒有 CALL、序頭、fixup,位元組訊號看不到。
+    做法:可達指令的無條件結尾(`ret*`/`iret*`/`jmp`)之後若接著一段**走不到**的位元組,而且這段一路延伸到下一個入口
+    (中間沒有任何可達指令 —— 否則是函式內部走不到的程式碼,只計數不收),就從段首依序剝:跳過對齊填充,
+    `implausible` 為 None、不是 fixup 來源(資料表)也不是 fixup 目標、`local_body` 解得出完整本體的位址算入口,
+    下一個從本體終點接著剝;第一個剝不出來的就停(後面當資料)。
+    fixup 目標若是函式,`fnptr` 早就收了;沒收的是被反證的(資料指標,例數學係數表 0x4cb9c)或計算式跳躍的落點
+    (`int386xa` 的 `int N ; ret` 樁表 0x46948 起 256 格、`jmp cs:[ebx]` 的 case 0x3cb9b)—— 都不是函式。
+    """
+    sizes = {a: insn_at(a)[0] for a in reached}
+    starts = sorted(sizes)
+    ents = sorted(entries)
+    fx_src = {s + k for s in fixups for k in range(4)}
+    fx_tgt = set(fixups.values())
+    no_inside = lambda _t: False   # noqa: E731  段內沒有可達指令
+    found: set[int] = set()
+    interior = 0
+    for r in starts:
+        mn = bare(insn_at(r)[1])
+        if not (mn.startswith("ret") or mn.startswith("iret") or mn == "jmp"):
+            continue
+        g = r + sizes[r]
+        i = bisect.bisect_left(starts, g)
+        if g >= hi or (i < len(starts) and starts[i] == g) or g in entries:
+            continue
+        nxt_r = starts[i] if i < len(starts) else hi
+        j = bisect.bisect_right(ents, g)
+        nxt_e = ents[j] if j < len(ents) else hi
+        if nxt_r < nxt_e:
+            interior += 1
+            continue
+        pos = g
+        while pos < nxt_e:
+            f = filler_len(pos, code, base, insn_at)
+            if f:
+                pos += f
+                continue
+            if pos in fx_src or pos in fx_tgt or implausible(pos, code, base, hi, insn_at, no_inside) is not None:
+                break
+            body = local_body(pos, nxt_e, insn_at, base, hi)
+            if body is None:
+                break
+            found.add(pos)
+            pos = body[0]
+    return found, interior
+
+
+CONFIRM_MAX_ROUNDS = 10
+
+
+def confirm_reached_calls(new_cg, strong: set[int], weak: set[int], call_index: dict[int, tuple[int, ...]],
+                          insn_at) -> set[int]:
+    """weak 入口裡,呼叫端是「從 strong 入口可達反組譯走到的 `call` 指令」的那些(不動點:確認的再當種子)。
+
+    weak 的疑慮是 E8 位元組掃描命中資料位元組;呼叫端若是可達的 call 指令,就不是偶然命中。種子刻意只用 strong:
+    拿 weak 自己當種子會循環論證(實測從全部入口出發 218 個,只從 strong 出發 208 個)。
+    `new_cg() -> callgraph_le.CG`。
+    """
+    seeds, confirmed = set(strong), set()
+    for _ in range(CONFIRM_MAX_ROUNDS):
+        rd = new_cg()
+        rd.build(sorted(seeds))
+        reached = set(rd.reached)
+        new = {a for a in weak - confirmed
+               if any(s in reached and (g := insn_at(s)) is not None and bare(g[1]) == "call"
+                      for s in call_index.get(a, ()))}
+        if not new:
+            return confirmed
+        confirmed |= new
+        seeds |= new
+    raise RuntimeError(f"呼叫端確認的不動點 {CONFIRM_MAX_ROUNDS} 輪內沒有收斂")
+
+
 def entry_signals(prologue: set[int], callers: dict[int, int], ail: set[int],
-                  thunks: dict[int, int], fnptr: set[int] = frozenset()) -> dict[int, list[str]]:
-    """{入口: 訊號名稱(固定順序)}。"""
+                  thunks: dict[int, int], fnptr: set[int] = frozenset(),
+                  eip: set[int] = frozenset(), island: set[int] = frozenset(),
+                  call_reached: set[int] = frozenset()) -> dict[int, list[str]]:
+    """{入口: 訊號名稱(固定順序)}。`call_reached` 只標在已經有 `call` 訊號的入口上(它是對 call 的佐證,不是新入口)。"""
     out: dict[int, list[str]] = {}
     for name, members in (("prologue", prologue), ("call", set(callers)), ("ail", ail),
-                          ("thunk_target", set(thunks)), ("fnptr", set(fnptr))):
+                          ("thunk_target", set(thunks)), ("fnptr", set(fnptr)),
+                          ("eip", set(eip)), ("island", set(island)),
+                          ("call_reached", set(call_reached) & set(callers))):
         for a in members:
             out.setdefault(a, []).append(name)
     return out
 
 
+WEAK_SIGNALS = ("call", "island")
+
+
 def grade(signals: list[str], n_callers: int) -> str:
-    if any(s != "call" for s in signals) or n_callers >= STRONG_CALLERS:
+    """`call` 只一次可能是資料位元組的偶然命中;`island` 只靠解碼,沒有任何執行路徑或引用佐證 —— 兩者單獨都是 weak。"""
+    if any(s not in WEAK_SIGNALS for s in signals) or n_callers >= STRONG_CALLERS:
         return "strong"
     return "weak"
 
@@ -668,7 +820,9 @@ def globals_by_owner(addrs: list[int], fixups: dict[int, int], base: int, hi: in
 def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: set[int], code: bytes,
              base: int, hi: int, fixups: dict[int, int], stack_probe: int,
              argc_of=None, bad_sites: frozenset[int] | None = None,
-             fnptr: set[int] | None = None, ptr_sites: dict[int, set[int]] | None = None) -> dict:
+             fnptr: set[int] | None = None, ptr_sites: dict[int, set[int]] | None = None,
+             eip: int | None = None, island: set[int] | None = None, island_interior: int | None = None,
+             call_reached: set[int] | None = None, call_implausible: list[int] | None = None) -> dict:
     """由各訊號組出整份清單。`argc_of(addr) -> int | None`;不給就全部 null。
 
     `bad_sites`(`contradicted_sites` 的結果)先從呼叫端索引剔除,再算 callers / callees;
@@ -677,6 +831,10 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
     `ptr_sites` = {目標: 以 `push`/`mov`/`lea` 取它位址的指令位址};換算成所屬入口記在 `takers`。
     取址不只是登記回呼:AIL 的 `push 終點 ; push 起點 ; call dpmi_lock_region` 鎖住一段程式碼,終點是下一個函式的起點
     (實測 0x41af4 鎖 [0x41af4, 0x420e1)),所以鎖定者也記成終點那個函式的 takers。
+    `eip`(`le_entry_point`)與 `island`(`island_entries` 的結果)也是入口訊號;`island` 不給就標 `island_available` false,
+    `island_interior` 是跳過的函式內部空隙數(只記數)。`call_reached`(`confirm_reached_calls` 的結果)標在呼叫端已被可達
+    反組譯確認的 call 入口上,使它成 strong;不給就標 `call_reached_available` false。`call_implausible` 只記進
+    `_meta.call_implausible_dropped`(剔除由呼叫端在 build 先做,這裡不再過濾);不給記 null。
     """
     # 只列會改變清單的剔除(目標在 obj1 內、不是 __STK);目標在 obj1 外的命中本來就不成入口,實測有數百個
     dropped = sorted(s for t, ss in call_index.items() if base <= t < hi and t != stack_probe
@@ -685,9 +843,11 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
         call_index = {t: kept for t, ss in call_index.items() if (kept := tuple(s for s in ss if s not in bad_sites))}
     callers = {t: len(s) for t, s in call_index.items() if base <= t < hi and t != stack_probe}
     fp = {a for a in (fnptr or ()) if base <= a < hi and a != stack_probe}
-    seeds = set(prologue) | set(callers) | set(ail) | fp
+    ep = {eip} if eip is not None and base <= eip < hi else set()
+    isl = {a for a in (island or ()) if base <= a < hi}
+    seeds = set(prologue) | set(callers) | set(ail) | fp | ep | isl
     thunks = thunk_targets(seeds, code, base, hi)
-    sig = entry_signals(set(prologue), callers, set(ail), thunks, fp)
+    sig = entry_signals(set(prologue), callers, set(ail), thunks, fp, ep, isl, set(call_reached or ()))
     addrs = sorted(sig)
     span = spans(addrs, hi)
     callee = callees_by_owner(addrs, call_index, {stack_probe}, base, hi)
@@ -706,9 +866,15 @@ def assemble(prologue: set[int], call_index: dict[int, tuple[int, ...]], ail: se
     return {"_meta": {"generator": "tools/function_inventory.py", "image_range": [hex(base), hex(hi)],
                       "entries": len(entries), "strong": strong, "weak": len(entries) - strong,
                       "by_signal": {k: sum(1 for e in entries if k in e["signals"])
-                                    for k in ("prologue", "call", "ail", "thunk_target", "fnptr")},
+                                    for k in ("prologue", "call", "ail", "thunk_target", "fnptr", "eip", "island",
+                                              "call_reached")},
                       "argc_available": argc_of is not None,
                       "fnptr_available": fnptr is not None,
+                      "island_available": island is not None,
+                      "island_interior_gaps": island_interior,
+                      "call_reached_available": call_reached is not None,
+                      "call_implausible_dropped": (None if call_implausible is None
+                                                   else [hex(a) for a in call_implausible]),
                       "call_sites_validated": bad_sites is not None,
                       "call_sites_dropped": [hex(s) for s in dropped]},
             "entries": entries}
@@ -887,14 +1053,39 @@ def build(with_argc: bool = True) -> dict:
             argc_of = lambda a: DNA.callee_argc(cg, a, ents)[0]   # noqa: E731
     except ImportError:
         pass
-    fnptr, ptr_sites = None, None
+    eip = le_entry_point(data, meta)
+    fnptr, ptr_sites, island, interior, reached_calls = None, None, None, None, None
+    implausible_calls: list[int] = []
     if bad_sites is not None:
         # 函式指標的可達反組譯只從**入口**出發(不拿全部 fixup 目標當種子:資料被當程式碼解,會長出假的引用)
-        pre = assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, None, bad_sites)
+        pre = assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, None, bad_sites, eip=eip)
+        insn_at = insn_decoder(code, base)
+        trace: dict = {}
         fnptr, ptr_sites = discover_fnptr(lambda: CG(CC.EXE), {int(e["addr"], 16) for e in pre["entries"]},
-                                          code, base, hi, fixups, insn_decoder(code, base))
+                                          code, base, hi, fixups, insn_at, trace)
+        # 死函式:以函式指標不動點最後一輪的可達指令(含 case 本體)為「走得到」,下一個入口以加入 fnptr 後的清單為界
+        mid = assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, None, bad_sites,
+                       fnptr, None, eip)
+        island, interior = island_entries(trace["reached"], insn_at, code, base, hi,
+                                          {int(e["addr"], 16) for e in mid["entries"]}, fixups)
+        # weak 的 call 入口:呼叫端若是從 strong 入口走得到的 call 指令就確認(種子只用 strong,避免循環論證)
+        late = assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, None, bad_sites,
+                        fnptr, None, eip, island, interior)
+        grades = {int(e["addr"], 16): (e["grade"], e["signals"]) for e in late["entries"]}
+        # 不必先剔除 bad_sites:它們不是落在可達指令中間(不在 reached 的指令起點裡)就是非 call 的起點,確認條件本來就擋掉
+        reached_calls = confirm_reached_calls(lambda: CG(CC.EXE), {a for a, (g, _) in grades.items() if g == "strong"},
+                                              {a for a, (g, s) in grades.items() if g == "weak" and "call" in s},
+                                              call_index, insn_at)
+        # 沒被確認、又只有 call 訊號的 weak:本體解碼不合理(implausible)就不收 —— 呼叫端與本體都沒有佐證,
+        # 只剩 E8 位元組命中(實測只有 0x4dddc:embedded_const_table 0x4dda3 之後常數資料裡的偶然命中)。
+        # 已確認的不套這條:0x4dda3 自己(call 一個 pop/ret 取位址,後面接資料)也會被 implausible 判成 zero_bytes。
+        implausible_calls = sorted(a for a, (g, s) in grades.items() if g == "weak" and s == ["call"]
+                                   and a not in reached_calls
+                                   and implausible(a, code, base, hi, insn_at, lambda _t: False) is not None)
+        call_index = {t: ss for t, ss in call_index.items() if t not in implausible_calls}
     return assemble(prologue, call_index, ail, code, base, hi, fixups, CC.STACK_PROBE, argc_of, bad_sites,
-                    fnptr, ptr_sites)
+                    fnptr, ptr_sites, eip, island, interior, reached_calls,
+                    implausible_calls if bad_sites is not None else None)
 
 
 FNPTR_MAX_ROUNDS = 10
@@ -1207,6 +1398,31 @@ def _selftest_pure(fails: list[str]) -> None:
           [grade(["call"], 1), grade(["call"], 2), grade(["prologue"], 0), grade(["ail"], 0),
            grade(["thunk_target"], 0), grade(["prologue", "call"], 1)],
           ["weak", "strong", "strong", "strong", "strong", "strong"])
+    check("grade:island 單獨 = weak(只靠解碼);island + call 一次仍 weak;eip = strong;island + 其他訊號 = strong",
+          [grade(["island"], 0), grade(["call", "island"], 1), grade(["eip"], 0), grade(["fnptr", "island"], 0)],
+          ["weak", "weak", "strong", "strong"])
+    check("entry_signals:call_reached 只標在有 call 的入口上(不憑空生入口);call + call_reached 一次呼叫也是 strong",
+          (entry_signals(set(), {0x10: 1}, set(), {}, call_reached={0x10, 0x20}), grade(["call", "call_reached"], 1)),
+          ({0x10: ["call", "call_reached"]}, "strong"))
+
+    class FakeCG:
+        """可達反組譯的替身:build(種子) 後 reached = 各種子可達集合的聯集。"""
+        REACH = {0x100: {0x100, 0x105, 0x106}, 0x200: {0x200, 0x205}, 0x300: {0x300}, 0x400: {0x400, 0x405}}
+
+        def __init__(self) -> None:
+            self.reached: set[int] = set()
+
+        def build(self, seeds) -> None:
+            self.reached = set().union(*(self.REACH.get(s, set()) for s in seeds))
+    fake_c = {0x105: (5, "call", "0x200"), 0x205: (5, "call", "0x300"), 0x405: (5, "call", "0x400"),
+              0x106: (2, "mov", "eax, ebx")}
+    idx_c = {0x200: (0x105,), 0x300: (0x205,), 0x400: (0x405,), 0x500: (0x106,), 0x600: (0x999,)}
+    check("confirm_reached_calls:由 strong 出發逐輪確認(0x200 -> 0x300);只被自己走到的呼叫端(0x400)、"
+          "呼叫端不是 call(0x500)、沒走到(0x600)都不確認",
+          confirm_reached_calls(FakeCG, {0x100}, {0x200, 0x300, 0x400, 0x500, 0x600}, idx_c, fake_c.get), {0x200, 0x300})
+    check("entry_signals:eip、island 排在 fnptr 之後",
+          entry_signals({0x10}, {}, set(), {}, {0x10}, {0x10, 0x20}, {0x20}), {0x10: ["prologue", "fnptr", "eip"],
+                                                                           0x20: ["eip", "island"]})
 
     print("(3) spans / owner")
     check("spans:中間到下一個入口,最後一個到 hi", spans([0x10, 0x18, 0x30], 0x40), {0x10: 8, 0x18: 0x18, 0x30: 0x10})
@@ -1245,7 +1461,8 @@ def _selftest_pure(fails: list[str]) -> None:
           (["0x1010", "0x1020"], ["0x1020"], ["0x9000"]))
     check("_meta 計數", {k: inv["_meta"][k] for k in ("entries", "strong", "weak", "by_signal", "argc_available")},
           {"entries": 5, "strong": 4, "weak": 1, "argc_available": True,
-           "by_signal": {"prologue": 1, "call": 2, "ail": 1, "thunk_target": 1, "fnptr": 0}})
+           "by_signal": {"prologue": 1, "call": 2, "ail": 1, "thunk_target": 1, "fnptr": 0, "eip": 0, "island": 0,
+                         "call_reached": 0}})
     none = assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038)
     check("不給 argc_of:argc 為 null 且 _meta 如實標示", (none["entries"][0]["argc"], none["_meta"]["argc_available"]), (None, False))
     check("dump:穩定、結尾換行、中文原樣", (dump(none) == dump(none), dump(none).endswith("}\n"), "\\u" in dump({"名": 1})),
@@ -1344,6 +1561,81 @@ def _selftest_pure(fails: list[str]) -> None:
     check("assemble:fnptr 成 strong 入口、__STK 與範圍外的不收;takers 換算成所屬入口(含自己,第一個入口之前的不算)",
           (got5c, inv5c["_meta"]["by_signal"]["fnptr"], inv5c["_meta"]["fnptr_available"], none["_meta"]["fnptr_available"]),
           ({"0x1000": (["prologue"], "strong", []), "0x1010": (["fnptr"], "strong", ["0x1000", "0x1010"])}, 1, True, False))
+
+    print("(5d) 死函式島與 LE 進入點")
+    le_img = bytearray(0x40)
+    le_img[0x28:0x2C] = (1).to_bytes(4, "little")
+    le_img[0x2C:0x30] = (0x2CCB4).to_bytes(4, "little")
+    le_meta = {"le": 0x10, "objs": [{"base": 0x10000}]}
+    le_img2 = bytearray(le_img)
+    le_img2[0x28] = 2
+    check("le_entry_point:obj1 的 EIP 換成線性位址;EIP 在別的物件回 None",
+          (le_entry_point(bytes(le_img), le_meta), le_entry_point(bytes(le_img2), le_meta)), (0x3CCB4, None))
+    code_f = bytes([0x00, 0x90, 0xCC, 0x8D, 0x89, 0x89, 0x8D, 0x55])
+    fake_f = {0x1003: (3, "lea", "eax, [eax]"), 0x1004: (2, "mov", "ecx, ecx"), 0x1005: (2, "mov", "eax, ecx"),
+              0x1006: (3, "lea", "eax, [eax + 1]")}
+    check("filler_len:00/90/cc 各 1;lea r,[r] 與 mov r,r 取指令長;不同暫存器、帶位移、解不出都不是填充",
+          [filler_len(0x1000 + k, code_f, 0x1000, fake_f.get) for k in range(8)], [1, 1, 1, 3, 2, 0, 0, 0])
+    lb = {"overlap": {0x2000: (3, "mov", "eax, 1"), 0x2003: (2, "jne", "0x2001"), 0x2001: (2, "add", "al, 1"),
+                      0x2005: (1, "ret", "")},
+          "no_term": {0x2000: (16, "nop", "")},      # 走出段外仍沒有結尾(不是解不出)
+          "out": {0x2000: (5, "call", "0x9000"), 0x2005: (1, "ret", "")},
+          "bad": {0x2000: (2, "jne", "0x2008"), 0x2002: (1, "ret", "")},
+          "ok": {0x2000: (2, "jne", "0x2800"), 0x2002: (2, "jmp", "0x2006"), 0x2004: (1, "int3", ""),
+                 0x2006: (2, "loop", "0x2000"), 0x2008: (1, "iretd", "")}}
+    check("local_body:重疊 / 沒有結尾 / call 出 obj1 / 走到解不出的位元組都是 None;跳出段外但在 obj1 內可以、"
+          "jmp 跟進、跳過的位元組不算、loop 的落空路徑照走",
+          {k: local_body(0x2000, 0x2010, v.get, 0x1000, 0x3000) for k, v in lb.items()},
+          {"overlap": None, "no_term": None, "out": None, "bad": None, "ok": (0x2009, 4)})
+    code_d = bytearray(b"\x55" * 0x100)     # 預設非填充、非 0、無 NUL(不會被當字串)
+    code_d[0x02] = 0x90
+    code_d[0x03] = 0x8D
+    fake_d = {0x1000: (1, "push", "ebx"), 0x1001: (1, "ret", ""), 0x1003: (3, "lea", "eax, [eax]"),
+              0x1006: (1, "push", "ebp"), 0x1007: (2, "jne", "0x100a"), 0x1009: (1, "ret", ""), 0x100a: (1, "pop", "ebp"),
+              0x100b: (1, "ret", ""), 0x100c: (5, "mov", "eax, 1"), 0x1011: (5, "jmp", "0x1000"),
+              0x1016: (1, "inc", "eax"), 0x1017: (1, "ret", ""),       # fixup 目標:不收,而且整串就停在這裡
+              0x1040: (1, "ret", ""), 0x1041: (1, "inc", "eax"), 0x1042: (1, "ret", ""),   # 內部空隙:只計數
+              0x1050: (1, "ret", ""),                                  # 之後 0x1051 解不出 -> 停
+              0x1080: (1, "ret", ""), 0x1081: (1, "inc", "eax"), 0x1082: (1, "ret", ""),
+              0x1083: (1, "inc", "eax"), 0x1084: (1, "ret", ""),       # fixup 來源(資料表):不收
+              0x10c0: (1, "jmp", "eax"), 0x10c1: (1, "inc", "eax"), 0x10c2: (1, "ret", ""),   # 緊接入口:不算空隙
+              0x10e0: (5, "call", "0x1000"), 0x10e5: (1, "inc", "eax"), 0x10e6: (1, "ret", "")}   # call 不是結尾
+    reached_d = {0x1000, 0x1001, 0x1040, 0x1050, 0x1080, 0x10c0, 0x10e0}
+    got_d = island_entries(reached_d, fake_d.get, bytes(code_d), 0x1000, 0x1100,
+                           {0x1000, 0x1040, 0x1080, 0x10c0, 0x10c1, 0x10d0}, {0x2000: 0x1016, 0x1083: 0x9000})
+    check("island_entries:結尾之後跳過填充依序剝出 0x1006、0x100c,停在 fixup 目標;內部空隙只計數;"
+          "解不出就停;fixup 來源不收;緊接入口與 call 之後都不算",
+          (sorted(got_d[0]), got_d[1]), ([0x1006, 0x100c, 0x1081], 1))
+    # 2026-10-07 突變存活補的兩題:停點來自 local_body(線性解碼看似合理、可達走法重疊)與 implausible(字串)。
+    # 兩題都在停點之後放一個本身合格的本體,不停的話會被收進來。
+    code_o = bytearray(b"\x55" * 0x40)
+    fake_o = {0x1000: (1, "ret", ""), 0x1001: (2, "jne", "0x1002"), 0x1002: (1, "inc", "eax"), 0x1003: (1, "ret", "")}
+    code_s = bytearray(b"\x55" * 0x40)
+    code_s[0x01:0x05] = b"abc\x00"
+    fake_s = {0x1000: (1, "ret", ""), 0x1001: (3, "inc", "eax"), 0x1004: (1, "ret", ""),
+              0x1005: (1, "inc", "eax"), 0x1006: (1, "ret", "")}
+    check("island_entries:local_body 不成立(跳進自己中間)就停,不往下一個位元組找;字串(implausible)也停",
+          [island_entries({0x1000}, f.get, bytes(c), 0x1000, 0x1040, {0x1000, 0x1020}, {})
+           for f, c in ((fake_o, code_o), (fake_s, code_s))], [(set(), 0), (set(), 0)])
+    inv5d = assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038, eip=0x1010, island={0x1020, 0x9000},
+                     island_interior=3)
+    got5d = {e["addr"]: (e["signals"], e["grade"]) for e in inv5d["entries"]}
+    check("assemble:eip 成 strong、island 成 weak、範圍外的不收;_meta 計數與 island 旗標",
+          (got5d, inv5d["_meta"]["by_signal"]["eip"], inv5d["_meta"]["by_signal"]["island"],
+           inv5d["_meta"]["island_available"], inv5d["_meta"]["island_interior_gaps"], none["_meta"]["island_available"]),
+          ({"0x1000": (["prologue"], "strong"), "0x1010": (["eip"], "strong"), "0x1020": (["island"], "weak")},
+           1, 1, True, 3, False))
+    inv5e = assemble({0x1000}, {0x1010: (0x1002,), 0x1020: (0x1004,)}, set(), bytes(0x40), base, hi, {}, 0x1038,
+                     call_reached={0x1010, 0x1030}, call_implausible=[0x1030])
+    check("assemble:call_reached 讓只被 CALL 一次的入口成 strong、沒確認的維持 weak、沒有 call 的位址不成入口;旗標如實;"
+          "call_implausible 只記錄(給了記清單、沒給記 null)",
+          ({e["addr"]: (e["signals"], e["grade"]) for e in inv5e["entries"]}, inv5e["_meta"]["call_reached_available"],
+           none["_meta"]["call_reached_available"], inv5e["_meta"]["call_implausible_dropped"],
+           none["_meta"]["call_implausible_dropped"]),
+          ({"0x1000": (["prologue"], "strong"), "0x1010": (["call", "call_reached"], "strong"), "0x1020": (["call"], "weak")},
+           True, False, ["0x1030"], None))
+    check("assemble:eip 在 obj1 之外不收",
+          [e["addr"] for e in assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038, eip=hi)["entries"]], ["0x1000"])
 
     print("(6) tier / coverage_counts:命名表優先於文件記載;strong_only 真的只數 strong")
     ents6 = [{"addr": "0x10", "grade": "strong"}, {"addr": "0x20", "grade": "strong"},
@@ -1652,7 +1944,9 @@ def _selftest_live(fails: list[str]) -> bool:
     m, by = inv["_meta"], {int(e["addr"], 16): e for e in inv["entries"]}
     check("Watcom 序頭入口 541(與 verify_findings 的 584-entries 同一數字)", m["by_signal"]["prologue"] == 541, str(m["by_signal"]))
     ail = load_ail()
-    check("AIL 105 個進入點全部在清單裡且 strong", len(ail) == 105 and all(by.get(a, {}).get("grade") == "strong" for a in ail))
+    check("AIL 104 個進入點全部在清單裡且 strong(AIL_startup 沒有標準前導,列未解析;它的真入口 0x37d3e 由 call 收進來)",
+          len(ail) == 104 and all(by.get(a, {}).get("grade") == "strong" for a in ail)
+          and 0x37eb7 not in by and by.get(0x37d3e, {}).get("grade") == "strong")
     check("__STK 本身不是入口", CC.STACK_PROBE not in by)
     check("delay 的本體 0x3e01d 只由 thunk 抵達,要以 thunk_target 收進來", "thunk_target" in by.get(0x3e01d, {}).get("signals", []))
     e = by.get(0x35b78, {})
@@ -1660,10 +1954,43 @@ def _selftest_live(fails: list[str]) -> bool:
           {"0x135dd", "0x10b4e"} <= set(e.get("callees", [])), str(e.get("callees")))
     check("0x26b91(debits gold)的 globals 含金幣全域 0x53bf3", "0x53bf3" in by.get(0x26b91, {}).get("globals", []),
           str(by.get(0x26b91, {}).get("globals")))
-    check("回歸釘值:entries 1313 / strong 1085 / weak 228 / fnptr 422(參考版 EXE 固定,數字變了就是判準變了;"
-          "2026-10-06 剔除 7 個被反證的 weak,再加函式指標 215 個新入口 + 3 個經它們抵達的 thunk_target)",
-          (m["entries"], m["strong"], m["weak"], m["by_signal"]["fnptr"], m["fnptr_available"]) == (1313, 1085, 228, 422, True),
-          f"{m['entries']}/{m['strong']}/{m['weak']}/{m['by_signal'].get('fnptr')}")
+    check("回歸釘值:entries 1356 / strong 1293 / weak 63 / fnptr 422 / eip 1 / island 44 / 內部空隙 15 / call_reached 208"
+          "(參考版 EXE 固定,數字變了就是判準變了;2026-10-06 剔除 7 個被反證的 weak,再加函式指標 215 個新入口 + 3 個經它們抵達的 "
+          "thunk_target;2026-10-07 加 LE 進入點 1 個與死函式島 44 個,再以呼叫端可達確認 208 個 weak -> strong,"
+          "AIL_startup 的假入口 0x37eb7 移除,未確認又解碼不合理的 weak 0x4dddc 移除)",
+          (m["entries"], m["strong"], m["weak"], m["by_signal"]["fnptr"], m["fnptr_available"], m["by_signal"]["eip"],
+           m["by_signal"]["island"], m["island_available"], m["island_interior_gaps"], m["by_signal"].get("call_reached"),
+           m["call_reached_available"])
+          == (1356, 1293, 63, 422, True, 1, 44, True, 15, 208, True),
+          f"{m['entries']}/{m['strong']}/{m['weak']}/{m['by_signal']}/{m.get('island_interior_gaps')}")
+    # 呼叫端確認(doc98 續八十四)。正向:有真名、原本只被 CALL 一次的;反向:唯一呼叫端在死函式裡的
+    cr_pos = {0x372f9: "fsopen", 0x3cc7d: "rand", 0x3d3a6: "filelength", 0x3da76: "int386x"}
+    check("正向控制:只被 CALL 一次但呼叫端可達的有名函式都升為 strong(call + call_reached)",
+          all(by.get(a, {}).get("signals") == ["call", "call_reached"] and by[a]["grade"] == "strong" for a in cr_pos),
+          str({hex(a): by.get(a, {}).get("signals") for a in cr_pos}))
+    cr_neg = {0x46915: "int386xa+0xaa,唯一呼叫端 0x468d3 在死函式 _DoINTR_ 裡", 0x3669a: "唯一呼叫端 0x36822 在死函式 0x367d1 裡",
+              0x4d7b4: "IF@DLOG,唯一呼叫端 0x4d80c 在死函式 log 0x4d808 裡"}
+    check("未確認又解碼不合理的 weak call 入口不收:只有 0x4dddc(0x4dda3 之後常數資料裡的 E8 命中);"
+          "0x4dda3 自己 implausible 也不合格,但已確認(call_reached)所以保留",
+          m["call_implausible_dropped"] == ["0x4dddc"] and 0x4dddc not in by
+          and "call_reached" in by.get(0x4dda3, {}).get("signals", []),
+          str((m["call_implausible_dropped"], by.get(0x4dda3, {}).get("signals"))))
+    check("反向控制:唯一呼叫端在死函式裡的維持 weak",
+          all(by.get(a, {}).get("grade") == "weak" and "call_reached" not in by[a]["signals"] for a in cr_neg),
+          str({hex(a): by.get(a, {}).get("signals") for a in cr_neg}))
+    # 死函式島與 LE 進入點(doc98 續八十一)。正向:進入點本身、Watcom 比對認得出的死函式;反向:每個都曾在原型裡被剝出來過
+    check("LE 進入點 0x3ccb4(_cstart_)是 eip 入口且 strong(載入器直接跳進來,沒有 CALL / 序頭 / fixup)",
+          by.get(0x3ccb4, {}).get("signals") == ["eip"] and by[0x3ccb4]["grade"] == "strong", str(by.get(0x3ccb4)))
+    isl_pos = {0x468cb: "_DoINTR_(int386xa 模組,沒人呼叫)", 0x4db0c: "__ModF", 0x4bd87: "__RLDI4", 0x3ca86: "__@DSQRT",
+               0x3703f: "__GRO(stk 模組 +0x18,`ret 4`)"}
+    check("正向控制:Watcom 函式庫比對認得出的死函式都以 island 收進來、weak",
+          all(by.get(a, {}).get("signals") == ["island"] and by[a]["grade"] == "weak" for a in isl_pos),
+          str([hex(a) for a in isl_pos if by.get(a, {}).get("signals") != ["island"]]))
+    isl_neg = {0x46948: "int386xa 的 `int N ; ret` 樁表第 0 格(fixup 目標,push+ret 計算式跳入)",
+               0x46c45: "樁表最後一格", 0x3cb9b: "`jmp cs:[ebx]` 的 case(fixup 目標)",
+               0x49de5: "0x49cf5 之後的資料(解碼會重疊、遇 00 00)"}
+    check("反向控制:計算式跳躍的落點、資料不是入口", not any(a in by for a in isl_neg),
+          str([hex(a) for a in isl_neg if a in by]))
     # 剔除清單逐一人工判讀過(2026-10-06,doc98 續七十八):每個 E8 都落在另一條指令裡
     #   0x2ff40 mov [esp+0xe8],0 的位移 / 0x3cdcb mov eax,gs(8c e8)/ 0x4bf50 shr eax,8(c1 e8 08)/
     #   0x4ca93、0x4cac4 mov ecx,[ebp-0x18](8b 4d e8)/ 0x4ddcc、0x4de10 資料區
@@ -1725,12 +2052,18 @@ def _selftest_live(fails: list[str]) -> bool:
     sd = build_structural(include_registry=False)
     # 2026-10-06 第二次:加 Watcom 函式庫名稱 -> wrapper +10(被呼叫者有了名字,例 0x370f0 = segread + int386x)、
     # leaf -3(0x37af4/0x37b55/0x3cf26 改有真名);「本體乾淨且沒有 call」不算 wrapper -> wrapper -1(0x4670c)
-    check("回歸釘值(不含登錄表):thunk 7 / ail_only 55 / wrapper 113 / leaf_global 99 / leaf_ptr 69 / leaf_pure 29"
-          "(2026-10-06 加 Watcom 函式庫名稱後;前一版 7/55/104/99/71/30,更早 4/30/105/16/16/11)",
-          sd["_meta"]["by_kind"] == {"thunk": 7, "ail_only": 55, "wrapper": 113, "leaf_global": 99, "leaf_ptr": 69, "leaf_pure": 29},
+    # 2026-10-07:死函式島成入口 -> 0x43160 多了死函式 0x43210 這個呼叫端,不再只被 AIL 呼叫(ail_only -1、wrapper +1);
+    # 0x4670c 的 span 被 island 0x46715 截到 9 bytes,成 leaf_get[0x52814](leaf_global +1)
+    # 同日再以呼叫端可達確認 208 個 weak -> strong:結構性命名只對 strong,AIL 內部只被呼叫一次的輔助大批進來(ail_only +115)
+    check("回歸釘值(不含登錄表):thunk 7 / ail_only 169 / wrapper 115 / leaf_global 119 / leaf_ptr 72 / leaf_pure 34"
+          "(2026-10-07 呼叫端確認後;死函式島後 7/54/114/100/69/29,前一版 7/55/113/99/69/29,再前 7/55/104/99/71/30,"
+          "更早 4/30/105/16/16/11)",
+          sd["_meta"]["by_kind"] == {"thunk": 7, "ail_only": 169, "wrapper": 115, "leaf_global": 119, "leaf_ptr": 72,
+                                     "leaf_pure": 34},
           str(sd["_meta"]["by_kind"]))
-    check("span 蓋到下一個沒列入口的函式的不算 wrapper:0x37028(蓋到 __CHK 0x3702f)、0x4670c",
-          "0x37028" not in sd["names"] and "0x4670c" not in sd["names"],
+    check("span 蓋到下一個沒列入口的函式的不算 wrapper:0x37028(蓋到 __CHK 0x3702f);0x4670c 的 span 改以死函式 0x46715 為界後"
+          "是 leaf_get[0x52814]",
+          "0x37028" not in sd["names"] and sd["names"].get("0x4670c", {}).get("name") == "leaf_get[0x52814]",
           str((sd["names"].get("0x37028"), sd["names"].get("0x4670c"))))
     check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
           sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
@@ -1779,8 +2112,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(7 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 34 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+    print("\n--selftest passed(8 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
+          + (" + 真實 EXE 的 41 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

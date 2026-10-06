@@ -885,6 +885,12 @@ def selftest(lib_dir: Path) -> int:
         # 陷阱:0x4ba87 的 token 與 __FLDA/__FLDS 完全相同(1.0),只有被呼叫者 ___LDD 能分辨
         check(got.get("0x4ba87", {}).get("name") == "__FLDD", f"0x4ba87 由被呼叫者決勝為 __FLDD {got.get('0x4ba87')}")
         check("0x4a314" not in got, "0x4a314 被不同呼叫端隱含成不同名稱 -> 不命名")
+        # 2026-10-07 函式清單加了 LE 進入點與死函式島(doc98 續八十一):_DoINTR_ 正是呼叫 int386xa+0xaa 的那個;
+        # 進入點的本體比得出 _cstart_,它呼叫的兩個也經傳播得名
+        want = {"0x468cb": "_DoINTR_", "0x3ccb4": "_cstart_", "0x4609b": "__CMain", "0x460ea": "__InitRtns",
+                "0x4db0c": "__ModF", "0x4bd87": "__RLDI4"}
+        bad = {a: got.get(a, {}).get("name") for a, n in want.items() if got.get(a, {}).get("name") != n}
+        check(not bad, f"進入點與死函式的名稱 {bad}")
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")
         for f in fails:

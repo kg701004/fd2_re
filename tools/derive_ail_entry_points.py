@@ -30,7 +30,9 @@ B. **程式端**:用 `le_xref.parse_le` 建立整份 image 的 fixup 表
    找**最近一次對 `0x54178` 的引用**——那是所有 AIL 進入點共用的前導
    (`mov edx,[0x54178]; inc edx; mov [0x54178],edx`,巢狀深度計數),`mov` 的
    opcode 在該引用位置前 2 個 byte;最後往前跨過連續的單 byte `push ebx/ebp/esi/edi`
-   就是函式進入點。
+   就是函式進入點。只認標準前導的讀(`8B 15` 且 7 bytes 後有配對的寫);找不到就列在
+   `_unresolved_trace_sites`(2026-10-07:`AIL_startup` 沒有標準前導,舊規則誤報本體中間的 0x37eb7,
+   真正的進入點是主程式呼叫的 0x37d3e,由 `function_names.json` 以位元組證據登錄)。
 
 判準與已知真值
 --------------
@@ -77,6 +79,8 @@ MOV_DISP_BACKSTEP = 2
 # 「往前找最近的一次」會抓到後面那個寫,算出來的進入點固定偏後 9~10 個 byte。
 # 抓到寫之後要退回配對的讀,才是前導真正的開頭。
 ANCHOR_PAIR_DELTA = 7
+# 標準前導讀的 opcode + ModRM:`mov edx, dword ptr [disp32]`。
+PREAMBLE_READ = b"\x8b\x15"
 # 前導與「push 自己的名字」之間最多隔多遠(實測最遠 ~0x80)。放寬到 0x200 仍遠小於
 # 相鄰兩個 AIL 進入點的距離,不會跨函式抓錯。
 MAX_PREAMBLE_DISTANCE = 0x200
@@ -122,11 +126,14 @@ def entry_for_reference(code: bytes, code_base: int, by_pos: dict[int, int],
     """從「push <字串>」的位置往回推函式進入點,見模組 docstring 的機制 B。"""
     anchors = [p for p in range(ref_pos - MAX_PREAMBLE_DISTANCE, ref_pos)
                if by_pos.get(p) == anchor]
-    if not anchors:
+    # 只認標準前導的「讀」:`8B 15 <disp>` 而且 7 bytes 後有配對的寫。2026-10-07:AIL_startup 沒有標準前導
+    # (它直接把 [0x54178] 設成 1),最近的引用是本體中間的 `mov [0x54178], esi`,舊規則因此回報 0x37eb7 ——
+    # 落在 0x37d3e 本體中間的假入口。找不到標準前導就回 None(未解析),不硬猜。
+    reads = [p for p in anchors if p + ANCHOR_PAIR_DELTA in anchors and p - MOV_DISP_BACKSTEP >= code_base
+             and code[p - MOV_DISP_BACKSTEP - code_base:p - code_base] == PREAMBLE_READ]
+    if not reads:
         return None
-    nearest = max(anchors)
-    if nearest - ANCHOR_PAIR_DELTA in anchors:      # 抓到的是寫,退回配對的讀
-        nearest -= ANCHOR_PAIR_DELTA
+    nearest = max(reads)
     entry = nearest - MOV_DISP_BACKSTEP
     while entry - 1 >= code_base and code[entry - 1 - code_base] in PUSH_OPCODES:
         entry -= 1
@@ -156,12 +163,18 @@ def build(exe: str | Path) -> dict:
     mapping = derive(exe)
     data, meta = read_exe(exe)
     strings = trace_strings(data, meta)
+    by_pos = build_fixups(data, meta)
+    named = set(mapping.values())
+    # 有追蹤字串、卻找不到標準前導的名字:記下 push 字串的位置,讓人工判讀有起點(不猜進入點)
+    unresolved = {name: sorted(f"{p:#07x}" for p, t in by_pos.items() if t == addr)
+                  for addr, name in strings.items() if name not in named}
     return {
         "_source": "fd2_re — 以 Miles AIL 自身的 AIL_DEBUG 追蹤字串命名音訊驅動進入點。",
         "_generator": "tools/derive_ail_entry_points.py",
         "_method": "追蹤字串(資料)+ LE fixup 反查 + 共用前導錨點 0x54178;函式名是資料不是推論。",
         "_trace_strings_found": len(strings),
         "_entry_points_resolved": len(mapping),
+        "_unresolved_trace_sites": unresolved,
         "entry_points": {f"{addr:#07x}": name for addr, name in sorted(mapping.items())},
     }
 
@@ -215,13 +228,39 @@ def selftest() -> int:
     # AIL 進入點離 code 開頭很遠。合成:錨點在 base+3,退 MOV_DISP_BACKSTEP 得 base+1,
     # code[0] 是 push ebx,應再退一格到 base。
     base5 = 0x1000
-    got5 = entry_for_reference(bytes([0x53, 0x90, 0x90, 0x90]), base5,
-                               {base5 + 1 + MOV_DISP_BACKSTEP: NEST_DEPTH_GLOBAL}, base5 + 0x10)
+    # 2026-10-07 起錨點必須是標準前導(8B 15 讀 + 7 bytes 後配對的寫),夾具照真實前導排:
+    # push ebx / 8B 15 <disp> / 42 / 89 15 <disp>
+    code5 = bytes([0x53, 0x8B, 0x15, 0, 0, 0, 0, 0x42, 0x89, 0x15, 0, 0, 0, 0, 0x90, 0x90])
+    read5 = base5 + 1 + MOV_DISP_BACKSTEP
+    got5 = entry_for_reference(code5, base5, {read5: NEST_DEPTH_GLOBAL, read5 + ANCHOR_PAIR_DELTA: NEST_DEPTH_GLOBAL},
+                               base5 + 0x10)
     ok5 = 0x53 in PUSH_OPCODES and got5 == base5
     print(f"    {'PASS' if ok5 else 'FAIL'}: 進入點 = {got5:#x}(應 {base5:#x})" if got5 is not None
           else "    FAIL: 找不到錨點")
     if not ok5:
         fails.append(f"code 開頭的 push 沒有被跨過:{got5}")
+
+    print("\n(6) 只認標準前導的讀(8B 15 且 7 bytes 後有配對的寫);沒有就未解析,不猜")
+    # 2026-10-07:AIL_startup 沒有標準前導,舊規則把本體中間的 `mov [0x54178], esi` 當錨點,回報 0x37eb7
+    # (落在 0x37d3e 本體中間)。合成:標準讀在 base+0x12(opcode 在 +0x10)、配對的寫在 +0x19;
+    # 之後 +0x30 有一個沒有配對的引用(opcode 89 35)。應取 +0x10;只有那個孤立引用時應為 None。
+    code6 = bytearray(b"\x90" * 0x40)
+    code6[0x10:0x12] = b"\x8b\x15"
+    code6[0x17:0x19] = b"\x89\x15"
+    code6[0x2e:0x30] = b"\x89\x35"
+    pos6 = {base5 + 0x12: NEST_DEPTH_GLOBAL, base5 + 0x19: NEST_DEPTH_GLOBAL, base5 + 0x30: NEST_DEPTH_GLOBAL}
+    got6 = entry_for_reference(bytes(code6), base5, pos6, base5 + 0x38)
+    lone = entry_for_reference(bytes(code6), base5, {base5 + 0x30: NEST_DEPTH_GLOBAL}, base5 + 0x38)
+    fake_read = bytearray(code6)
+    fake_read[0x10:0x12] = b"\x8b\x35"     # 有配對但不是 mov edx,[disp32]
+    wrong_op = entry_for_reference(bytes(fake_read), base5, pos6, base5 + 0x38)
+    unpaired = entry_for_reference(bytes(code6), base5, {base5 + 0x12: NEST_DEPTH_GLOBAL}, base5 + 0x38)
+    real_startup = mapping.get(0x37EB7)
+    ok6 = (got6, lone, wrong_op, unpaired, real_startup) == (base5 + 0x10, None, None, None, None)
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 合成 {got6!r} / 孤立引用 {lone!r} / 非 8B 15 {wrong_op!r} / "
+          f"8B 15 但沒有配對的寫 {unpaired!r};真實 EXE 0x37eb7 -> {real_startup!r}")
+    if not ok6:
+        fails.append(f"前導驗證:{(got6, lone, wrong_op, unpaired, real_startup)}")
 
     if fails:
         print("\nSELFTEST FAILED:")

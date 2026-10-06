@@ -7565,3 +7565,229 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
 
 **未完成**:(1) 用模組版面(同一模組的公開符號在 FD2 依序相鄰)找出像 0x468cb 這種沒有位元組訊號的死函式,補進分母;
 (2) 7 個被擋下的被呼叫者傳播與比不到的 CRT 要人讀;(3) AIL 混音轉換 24 個可依結構一次描述。
+
+## 2026-10-07 續八十一:分母補兩類漏網入口 —— LE 進入點與死函式島(1313 -> 1358)
+
+**結論**:函式清單漏了兩類「位元組訊號看不到」的入口,本輪補上,入口 1313 -> 1358(strong 1085 -> 1086、weak 228 -> 272)。
+
+1. **程式進入點本身不在清單裡**:LE 標頭的 EIP(物件 1 偏移 0x2ccb4)= **0x3ccb4**,Watcom 比對為 `_cstart_`。
+   載入器直接跳進來,沒有 CALL、序頭或 fixup 指向它;續七十九把 0x3cd2a 判為「字串(開檔的檔名)」時已經在它的本體裡。
+   新訊號 `eip`(`le_entry_point`),strong。
+2. **死函式島**:函式庫連進來但沒人呼叫的函式(續八十找到的 `_DoINTR_` 0x468cb 是第一例)。新訊號 `island`
+   (`island_entries`)收 44 個,weak(只靠解碼,沒有執行路徑或引用佐證;依據為 FD2.EXE 反組譯比對)。
+
+- **判準**(全部機械):以函式指標不動點最後一輪的可達指令(含 case 本體)為「走得到」。可達指令的無條件結尾
+  (`ret*`/`iret*`/`jmp`)之後若接著一段走不到、而且一路延伸到下一個入口的位元組,就從段首依序剝:
+  跳過對齊填充(`00`/`90`/`cc`、Watcom 的 `lea r, [r]`/`mov r, r`)→ `implausible` 為 None → 不是 fixup 的來源或目標 →
+  `local_body`(只在段內走、call 不跟進)解得出**不重疊、有結尾、沒有跳出 obj1** 的本體才收;下一個從本體終點接著剝,
+  第一個剝不出來的就停(後面當資料)。結尾後面接的段若夾著可達指令,是函式**內部**走不到的程式碼,不收,
+  只記 `_meta.island_interior_gaps`(15 個)。
+- **fixup 目標一律不收**:原型沒有這條時收了 304 個,多出的 260 個絕大多數是 `int386xa` 的 `int N ; ret` 樁表(0x46948..0x46c45,
+  `push`+`ret` 計算式跳入,續七十九已判為 0x46915 本體的片段)、數學係數表 0x4cb9c(續七十九的反向控制,原型把它解成
+  `adc eax, ... ; ret`)、`jmp cs:[ebx]` 的 case 0x3cb9b 等。fixup 目標若是函式,`fnptr` 早就收了;沒收的就是被反證的。
+- **名稱**:Watcom 比對重跑,認定 72 -> 82(本體 67、傳播 15),遊戲區 0 落點、0 衝突。新得名:`_cstart_`(0x3ccb4)與它呼叫的
+  `__CMain` 0x4609b、`__InitRtns` 0x460ea(傳播);死函式 `_DoINTR_` 0x468cb、`__@DSQRT` 0x3ca86、`__ModF` 0x4db0c、
+  `__RLDI4` 0x4bd87、`log` 0x4d808(由被呼叫者 `IF@DLOG` 決勝),0x3cc64/0x4d82e 是三角/指數函式的 8-token 包裝別名組。
+  0x3703f 是 `__GRO`(`ret 4`,續八十由 `stk` 模組版面對出)。其餘 37 個死函式島沒有可比的名字。
+- **遊戲區(< 0x3702f)的 6 個**都在 0x364b4..0x36dc7:這一段沒有 `__CHK` 序頭(不是遊戲本體的編譯方式),
+  0x364b4/0x364c4 是 `mov eax, [g] ; mov [g], arg ; ret` 的 setter 對,0x367d1 是 1151 bytes 的大函式,要人讀。
+- **連帶變動**:span 以新入口為界 —— 0x4670c 的 span 被死函式 0x46715 截到 9 bytes,成 `leaf_get[0x52814]`;
+  0x43160 多了死函式 0x43210 這個呼叫端,不再「只被 AIL 呼叫」,由 `ail_only` 改為 `wrapper(memset(_, -1, 0x440))`。
+  結構性命名(不含登錄表)7/55/113/99/69/29 -> 7/54/114/100/69/29。
+- **覆蓋率**:strong 1086 中有名稱或記載 753(69%),扣結構性命名後完全無描述仍是 68(進入點有了 `_cstart_`)。
+  全部 1358 中 802(59%)。
+- **自我測試與突變**:純函式案例新增 `le_entry_point`(物件 1 / 別的物件)、`filler_len`(8 種位元組)、`local_body`
+  (重疊 / 沒結尾 / call 出界 / 解不出 / 跳段外可以 + jmp 跟進 + loop 落空)、`island_entries`(填充、依序剝兩個、停在 fixup 目標、
+  內部空隙計數、解不出停、fixup 來源、緊接入口、call 之後)、`assemble` 的 eip/island;真實 EXE 新增進入點、5 個正向
+  (Watcom 認得出的死函式)、4 個反向(樁表頭尾、case、資料)。定點突變 25 個:第一輪 3 個存活(本體剝不出時不停而往下一個
+  位元組找、不檢查 `implausible`、`eip` 不限 obj1 範圍 —— 真實 EXE 上前兩個不改變結果,`local_body` 已擋下同樣的位址),
+  各補一題純函式案例(跳進自己中間的本體、字串位元組解得出 `inc ; ret`、`eip` 在 obj1 外)後全部 KILLED。
+  `watcom_lib_match.py --selftest` 新增一項:進入點與死函式的 6 個名稱。
+
+**未完成**:(1) 37 個沒名字的死函式島與遊戲區 0x36xxx 的 6 個要人讀(死函式不影響執行,優先序低);(2) 7 個被擋下的
+被呼叫者傳播與比不到的 CRT;(3) AIL 混音轉換 24 個可依結構一次描述。
+
+## 2026-10-07 續八十二:AIL 混音輸出轉換表 —— 60 格依索引位元命名
+
+**結論**:0x47d88..0x48970 的 60 個函式是 AIL 數位混音器把 32 位元有號累加緩衝區轉成硬體輸出格式的轉換常式,
+全部由 0x49915 的 `call dword ptr [eax*4 + 0x37988]`(fixup 後為表 0x47988)分派。表的索引由分派端依輸出格式逐位元組成,
+而每格本體的特徵與索引位元**逐格一致**(60/60,`function_names.json` 以 `mix_out_*` 登錄,每筆附位元組證據;
+依據為 FD2.EXE 反組譯比對,confidence `static_re`)。strong 完全無描述 68 -> 44,strong 有名稱或記載 69% -> 74%。
+
+- 分派端(0x49899..0x49915):`eax = [ebx+0x1c] & 0xf`;`[ebx+0x18]` 為 2/3 時 `or 0x10`、為 1/3 時 `or 0x20`;
+  `[ebx+0x64]` 非 0 時 `or 0x40`;`[ebx+0x1c] & 0x20` 時再 `or 8` 並把第二個輸出指標放進 ebx。
+- 位元與本體:0x01 有號(沒有 `xor eax, 0x8000`)/ 0x02 兩聲道對調(先寫 edx 那一個)/ 0x04 位元組交換
+  (`xchg ah, al`,只出現在 16 位元)/ 0x08 兩聲道分開緩衝區(edi 與 ebx 各寫一個)/ 0x10 立體聲(`add esi, 8`)/
+  0x20 16 位元(`mov word ptr`;8 位元立體聲交錯是把兩個高位元組 `mov dl, ah` 併成一個 word,不算 16 位元)/
+  0x40 夾值(`cmp eax, 0x7fff`、`0xffff8000`)。8 位元沒有 0x04、單聲道沒有 0x02/0x08,所以 128 格只用到 60 格。
+- 名稱形式 `mix_out_{8|16}_{mono|stereo}[_split][_swap][_be]_{u|s}[_clamp]`;`_swap` 只說「第二個 32 位元值排前面」,
+  第一個值是不是左聲道是推定,沒有驗證(FD2.EXE 反組譯只看得到暫存器順序;名稱刻意不寫 left/right)。
+- 與 doc35 §9.16.4 一致:0x4809b = `mix_out_8_mono_u_clamp`、0x47d88 = `mix_out_8_mono_u`(「同構但沒有 clamp」)。
+- 第 0x80/0x81 格(0x489c6、0x489e7)讀 `byte ptr [esi]`,是另一類(8 位元輸入),本輪未動。
+
+## 2026-10-07 續八十三:剩下 44 個無描述 strong 入口人讀 —— 登錄 47 筆,strong 完全無描述歸零
+
+**結論**:續八十二後 strong 完全無描述的 44 個逐一讀本體(依據為 FD2.EXE 反組譯比對,`static_re`),37 個登錄進
+`function_names.json`,另登 3 個它們依賴的輔助(`dpmi_unlock_region` 0x36647、`x87_cos_core` 0x3cb06、`x87_sin_core` 0x3cb1f),
+共 40 筆,每筆的證據都在 `--check-names` 對 FD2.EXE 反組譯逐字核過(525 筆全過)。strong 完全無描述 44 -> 7(最後 7 個見下),strong 有名稱或記載 74% -> 78%,
+全部 1358 中 66%。
+
+- **遊戲側唯一的一個**:0x4e29c `blit_rle_icon_24x24`(在 0x3702f 之後,但呼叫端全是遊戲的選單繪製:名冊兩欄、裝備比較、
+  復活候選等 5 個)。24 x 24 的 RLE 圖示:命令位元組高兩位 00 重複、01 隔一格寫同色(棋盤式)、10 原樣複製、11 以顏色 0x49 填,
+  n = 低 6 位 + 1。
+- **AIL / DPMI / 計時器**:`dpmi_unlock_range` 0x36683(續七十九列的「遊戲側無描述」之一,實為 AIL 的釋放路徑用的 DPMI 0x601 解鎖)、
+  `timer_code_unlock` 0x3ca23、`timer_slot_alloc` / `_start` / `_set_frequency`(0x3f236 / 0x3f2f0 / 0x3f3c8,AIL_register_timer 等的核心,
+  15 格狀態表 [0x52a94])、`timer_tick_stopwatch` 0x37c30(1/100 秒的碼錶回呼)、`mix_merge_16_stereo_u` / `_swap_u`
+  (0x48f6c / 0x48fea,16 位元立體聲來源以定點相位累加進 32 位元緩衝區)。
+- **圖像**:`pcx_rle_unpack_768` 0x36e65(續七十九列的另一個「遊戲側無描述」;PCX RLE 解 768 bytes 調色盤到 [0x52766])。
+  所以續八十所說的遊戲側 2 個(0x36683、0x36e65)都解了。
+- **Watcom CRT**:`stk_save_ss` 0x37028、`noop_hook` 0x3713b、`stdio_doopen` 0x37214、`cos` / `sin`(0x3cbd5 / 0x3cbe8;Watcom 比對只到
+  三角函式別名組,由核心裡的 `fcos` / `fsin` 決定)、`fmt_hex_zero_pad`、`str_toupper_inplace`、`asctime_put_2digits` / `asctime_into` /
+  `asctime`(星期 / 月份名表 0x51828 / 0x51804)、`fpu_detect_init`、`crt_init_argv`、`cmdline_split_args`、`io_get_mode`、
+  `itoa_via_utoa` / `ultoa` / `ltoa_via_ultoa`(續八十的 0.79 雙胞胎:兩者同構,只差呼叫 0x46e19 或 0x46ec2)、`tz_parse_name_offset` /
+  `tz_parse_rule`、`div`、`printf_fmt_float`、`scanf_store_double`、`fmt_fixed_digits`、`fmt_inf_nan`、`dbl_normalize_pack`。
+- **浮點模擬**:`emu387_int_entry` 0x4a0e8(中斷入口,sti / pushal / call 0x4a104 / iretd)、`emu_round_to_int` 0x4c117(依 x87 RC 欄位捨入)。
+- 推定(說明裡已標):0x3fe5f 是 isatty、累加緩衝區的第一個值是左聲道。
+- 有一題證據規則擋下來的錯:`cos` / `sin` 原本把 `fcos` / `fsin` 當證據,但那兩條在被呼叫者裡,超出函式範圍;改為把被呼叫者也登錄。
+
+**最後 7 個**(printf 浮點與浮點模擬的深處)也讀完登錄:`math_err_one_arg` 0x499b0、`emu_fprem_core` 0x4c523、`emu_trig_core` 0x4c980
+(以 π/4 取餘分象限;esi 0 / 1 / 2 各對應哪個 x87 指令未核對,所以包裝只叫 `emu_trig_sel0` 0x4cb77 / `emu_trig_sel2` 0x4cb81)、
+`fmt_scale_round_bigint` 0x4d841、`dbl_scale_pow10` 0x4d88c(0x519bc 起的 10 的冪表)。登錄表 532 筆全過,
+**strong 完全無描述 44 -> 0**,strong 有名稱或記載 79%(其餘 21% 是結構性命名:wrapper / leaf / ail_only / thunk)。
+下一個分母是 weak 入口(272 個,含 44 個死函式島)與結構性命名的 304 個要不要換成真名。
+
+## 2026-10-07 續八十四:weak 入口分類 —— 呼叫端可達(FD2.EXE 反組譯)確認 208 個 weak -> strong
+
+**結論**:weak 入口(只被 CALL 一次、沒有其他訊號)的疑慮是 E8 位元組掃描命中資料位元組。若唯一的呼叫端本身是**從 strong 入口
+可達反組譯走到的 `call` 指令**,這個疑慮就不成立。新訊號 `call_reached`(`confirm_reached_calls`)確認 208 個(依據為 FD2.EXE 反組譯比對),
+weak 272 -> 64、strong 1086 -> 1294。剩下的 64 個 weak = 44 個死函式島 + 20 個唯一呼叫端沒走到的。
+
+- **可達反組譯的種子只用 strong,確認的再當種子到不動點**:拿全部入口當種子會循環論證(weak 自己的本體被當可達,它呼叫的另一個 weak 就被確認)。
+  對 FD2.EXE 反組譯實測:從全部入口出發 218 個、只從 strong 出發 208 個(2 輪收斂);差的 10 個正是呼叫端只在 weak 本體裡的(FD2.EXE 反組譯)。
+- **剩下 20 個沒確認的**:唯一呼叫端在死函式裡(0x46915 = int386xa+0xaa 由 `_DoINTR_` 呼叫、0x3669a 由 0x367d1、0x4d7b4 `IF@DLOG` 由
+  `log` 0x4d808、0x37339 由 0x3739e、0x3cbfb 由 0x3cc64 等),以及浮點模擬器主體 0x4a424 裡沒走到的段(0x4ac05、0x4b044 等呼叫端;
+  推定經 `jmp` 表以外的計算式分派抵達,未逐一核對)。這 20 個本身多半是真函式,只是這個方法證明不了。
+- **連帶變動**:結構性命名只對 strong,新進來的 208 個裡大量是 AIL 內部只被呼叫一次的輔助 —— `ail_only` 54 -> 169;
+  結構性命名(含登錄表)303 -> 447。strong 有名稱或記載 701 + 168 = 869 / 1294(67%),扣結構性命名後**完全無描述 0 -> 33**
+  (分母變誠實了:這 33 個原本以 weak 身分躲在統計外)。
+- **自我測試與突變**(`--selftest`):純函式案例 `confirm_reached_calls`(可達反組譯的替身 CG:逐輪確認、只被自己走到的不確認、呼叫端不是 call 不確認、沒走到不確認)、
+  `entry_signals`(call_reached 只標在有 call 的入口)、`assemble`(成 strong / 旗標);真實 EXE 釘值與正反控制各一項
+  (正向 fsopen / rand / filelength / int386x;反向 0x46915 / 0x3669a / 0x4d7b4)。定點突變 10 個:8 個直接 KILLED;
+  「呼叫端索引先剔除被反證的呼叫端」拿掉後存活 —— 等價:被反證的呼叫端不是落在可達指令中間(不在指令起點集合)就是非 call 的起點,
+  確認條件(對 FD2.EXE 反組譯)本來就擋掉,所以把那段多餘的過濾刪掉(重生產物逐位元組相同,verify_generated_artifacts 21/21);「by_signal 不數 call_reached」原本讓真實 EXE 那項以 KeyError
+  崩潰而不是印 FAIL,改用 `.get` 後乾淨 KILLED。
+
+**下一步**:33 個新出現的完全無描述 strong 入口人讀。
+
+## 2026-10-07 續八十五:AIL 進入點表的 `AIL_startup` 錯位 —— 0x37eb7 是本體中間,真入口 0x37d3e
+
+**結論**:`derive_ail_entry_points.py` 把 `AIL_startup` 解析成 0x37eb7,但那是 0x37d3e 本體中間(印出 "AIL_startup()" 的地方)。
+`AIL_startup` 沒有其他 104 個 API 共用的標準前導(`mov edx, [0x54178] ; inc edx ; mov [0x54178], edx`),而是直接把 [0x54178] 設成 1;
+舊規則「往前找最近一次引用 0x54178」因此停在 0x37eb7 的 `mov dword ptr [0x4178], esi`。依據為 FD2.EXE 反組譯比對:
+主程式 0x25bf4 唯一呼叫的是 0x37d3e,0x37eb7 沒有任何呼叫端、也不是分支目標(續七十九已記下「AIL_startup 0x37eb7 反而沒有呼叫端」這個疑點)。
+
+- **修正**:錨點只認標準前導的讀(`8B 15` 且 7 bytes 後有配對的寫);找不到就不猜,名字與 push 字串的位置列在
+  `_unresolved_trace_sites`。重生後 104 個解析、1 個未解析,其餘 104 筆與舊表逐筆相同。
+- **真入口登錄**:0x37d3e 以 `ail_startup` 登錄進 `function_names.json`(8 條位元組證據:鎖定 0x37b8c、AIL_DEBUG / AIL_SYS_DEBUG 字串、
+  fopen、計時器三連、`mov [0x54178], esi`、"AIL_startup()" 字串)。它是 AIL 3.02 的除錯紀錄初始化:AIL_DEBUG 有設才以 "w+t"
+  開紀錄檔、寫標頭與 asctime 開始時間、以 100 Hz 啟動續八十三的碼錶回呼;沒設就直接返回。
+- **連帶**:清單入口 1358 -> 1357(假入口 0x37eb7 移除;0x37d3e 本來就以 call 收進來),strong 1294 -> 1293。
+  0x37d3e 原本是無描述的 strong,現在有名字,完全無描述 33 -> 32。
+- **自我測試與突變**(`--selftest`):原 (5) 的合成夾具改成真的標準前導;新增 (6):標準讀 + 配對寫取得到、孤立引用 / 非 `8B 15` /
+  `8B 15` 但沒有配對的寫都是 None、真實 EXE 不再有 0x37eb7。定點突變 4 個,第一輪「不驗配對的寫」存活(缺那一題),補題後全部 KILLED。
+
+## 2026-10-07 續八十六:call_reached 升上來的 32 個無描述 strong 入口人讀 —— 再次歸零
+
+**結論**:續八十四把 208 個 weak 升為 strong 後冒出 32 個完全無描述的(依據為 FD2.EXE 反組譯比對,`static_re`)。`ail_startup` 0x37d3e 已在續八十五
+登錄,其餘 32 個本輪讀完登錄(`function_names.json` 565 筆,`--check-names` 全過)。**strong 1293 個完全無描述 0**,有名稱或記載 72%
+(其餘是結構性命名);全部 1357 中 69%。
+
+- **遊戲側呼叫的繪圖常式**(位址在 0x3702f 之後,呼叫端是遊戲):`blit_rle_icon_24x24_remap` 0x4e0a2(redraw_map_cell;同續八十三的 24 x 24 RLE,
+  每個像素先經換色表,11 型命令是透明跳過)、`blit_mask_remap` 0x4e795(rising_particles_effect;遮罩非 0 處把目的像素經換色表替換,推定為陰影)、
+  `blit_image_rows` 0x4ec7c(draw_image_then_free)、`blit_rows_wave_offset` 0x4eee0(draw_terrain_layer;192 列,每列水平偏移取
+  [0x627c8 + 相位]、16 列一循環)。
+- **Watcom CRT**:`stdio_parse_mode`、`tmpfile_name`、`crt_exit_to_dos` / `crt_run_fini`(結束常式表 0x539e0)、近堆積 `heap_alloc_in_segment` /
+  `heap_grow` / `dpmi_alloc_block`、printf 一族(`printf_parse_spec` / `_flags` / `printf_fmt_arg` / `printf_call_float_hook` / `printf_g_strip_zeros` /
+  `fmt_double_core` / `fmt_exponent` / `dbl_to_digits`)、`strtod_core`、`frexp`、`utoa`、`time` / `dos_get_local_tm` / `tm_to_time_t`、
+  matherr(`math_err_build_exception` / `math_err_default`)、浮點模擬安裝(`emu387_install` / `emu387_hook_int7` / `emu387_unhook_int7`)。
+- **特例**:0x4dda3 `embedded_const_table` 不是一般函式 —— `call 0x4de58`(`pop edi ; ret`)取得緊接其後的常數資料位址;它之後的位元組是資料。
+  0x4d81b `x87_log_sel_b`(以 AL = 0xb 進 IF@DLOG 的共用體)推定為 log10,選擇子的意義未核對,所以名稱不寫 log10。
+- 說明裡的推定都已標註(0x3db31 推定 tolower、0x470b1 的回傳值推定為毫秒、0x51944 推定為月首日數表、time_t 紀元未核對、printf 轉換字元與被呼叫者的對應未逐一核對)。
+
+## 2026-10-07 續八十七:weak 入口人讀 —— 剔除 1 個假入口、登錄 52 個,全部 1356 個入口都有描述
+
+**結論**:剩下的 weak(44 個死函式島 + 20 個呼叫端未確認)逐一讀本體(依據為 FD2.EXE 反組譯比對,`static_re`)。
+其中 0x4dddc 是假入口,規則化剔除;其餘沒有名字的 52 個登錄進 `function_names.json`(617 筆全過)。清單 1357 -> 1356,
+**全部 1356 個入口:有名稱 824 / 文件記載 172 / 只有結構性命名 360,完全沒有描述的 0**(strong 1293 中有名稱或記載 72%)。
+
+- **假入口 0x4dddc**:解碼出來是 `sldt`、`lcall`、`00 00` 的垃圾,唯一的「呼叫端」在它自己的範圍裡 —— 位於 `embedded_const_table` 0x4dda3
+  之後的常數資料區,是 E8 位元組掃描在資料裡的偶然命中(反組譯)。新規則:**沒被 call_reached 確認、只有 call 訊號、`implausible` 不為 None 的不收**,
+  剔除清單記在 `_meta.call_implausible_dropped`。對全部只靠 call 的入口量測:不合理的只有兩個 —— 0x4dddc 與 0x4dda3 自己(call 一個
+  `pop edi ; ret` 取位址,後面接資料,所以線性反組譯遇到 00 00);後者已確認,所以規則限定在未確認的 weak。定點突變 4 個全部 KILLED。
+- **死碼裡的一條完整子系統**:0x367d1 `lx_load_file` 會把檔頭和字串 "LX" 比對 —— LX 執行檔載入器,連同它唯一呼叫的 0x3669a、
+  掛鉤設定 `swap_hook_52758` / `_5275c`、錯誤碼 `get_error_52754`、`file_save_creat` / `file_save_open` 都沒有任何呼叫端;
+  0x36xxx 這一段(沒有 `__CHK` 序頭)是連進來但 FD2 沒用到的載入器模組。
+- **其餘死函式**:CRT(`freopen`、`srand`、`tan`、`ctime` / `ctime_into`、`gmtime`、`fcloseall`、`flushall`、`fpreset`、`heap_enable`、
+  `io_set_mode` 等)、AIL 驅動呼叫(0x401 / 0x402 / 0x502)、`midi_msg_length`、`bswap32`、`blit_scaled_transparent`(最近鄰縮放的透明貼圖),
+  以及浮點模擬器的內部常式(`emu_fpatan_core` / `emu_atan_core` 推定、`emu_poly_series` 對應指令未核對)。
+- 0x4ec65 `lone_ret_4ec65` 只是一個 `ret`(接在另一個 ret 後面),是空函式還是組語多出來的一個 ret 無法區分,名稱照實寫。
+
+**下一步**:結構性命名的 360 個(wrapper / leaf / ail_only / thunk)是否逐步換成真名;以及 20 個呼叫端未確認的 weak 能否用可達反組譯以外的方法佐證。
+
+## 2026-10-07 續八十八:遊戲區只有結構性命名的 52 個換成機制名 —— 遊戲區全部有真名或記載
+
+**結論**:遊戲區(< 0x3702f)只有結構性命名(wrapper / leaf / ail_only)的 52 個入口逐一讀本體(依據為 FD2.EXE 反組譯比對,`static_re`),
+以「做什麼」的機制命名登錄進 `function_names.json`(669 筆全過)。**遊戲區沒有真名也沒有記載的入口:0**。全部 1356 中有名稱或記載 77%
+(strong 76%),其餘 308 個只有結構性命名的全在 0x3702f 之後(AIL 內部 164、CRT / 繪圖的 leaf / wrapper)。
+
+- **跳表的缺格補齊**:事件表 0x51b91 原本缺第 5、34、86..89 格、指令表 0x51d01 缺第 43 格的名字 —— 正是續七十九收進來的 `push N ; jmp` 樁。
+  以跳表 fixup 證據(`fixup_from` / `table` / `index`)登錄為 `event_handler_5` / `_34` / `_86` .. `_89`、`command_handler_43`。
+  86..89 四格都是 `push 4 ; jmp 0x36433`(`call __CHK ; ret`)的空 handler;5 / 34 / 43 是進入另一個 handler 本體中段的共用入口。
+- **戰鬥與選單**:`cast_heal_on_targets`(command_handler_13 的回復魔法)、`cast_fixed_heal_after_mp`(command_handler_20)、
+  `spell_damage_on_targets_flash`(有序頭但沒有任何呼叫端的傷害版,與回復版同構)、`unit_equip_slot`(同類裝備互斥:編號 < 0x80 / >= 0x80)、
+  `count_side_active_units`、`collect_inactive_units`、`roster_reorder_selected_first`、`menu_box_scroll_up_anim` / `_down_anim`、
+  `menu_transition_panel_a/b/c`、`battle_situation_slide_a..e`、`title_menu_draw_buttons`。
+- **畫面 / 調色盤**:`vga_fill_rect`、`vga_textbox_scroll_up`、`vga_palette_write_256`、`vga_palette_fade_range`、`map_save_72px_block` /
+  `map_restore_72px_block`(游標下 3 x 3 格的地圖區塊)、`decode_tileset_to_sheet`、`anim_draw_and_advance`、`anim_loop_over_cycling_bg`、
+  `wait_ticks_or_key`。
+- **0x36xxx 載入器模組(無 `__CHK` 序頭)**:`file_size_by_name`、`file_load_whole`、`ail_mem_unlock_free`、`dpmi_dos_alloc_locked` / `dpmi_dos_free`,
+  以及動畫區塊解碼表(函式指標槽 0x5276a..0x5278e)的 7 個 `fli_chunk_*`。
+- 名稱只說機制;推論與未核對處在說明裡標明(例:`vga_palette_write_256` 三個分量如何由參數算出未逐條核對)。
+
+## 2026-10-07 續八十九:函式庫區非 AIL 的結構性命名換成真名 —— 全部入口 89% 有名稱或記載
+
+**結論**:函式庫區(>= 0x3702f)只有結構性命名、又不屬於 AIL 內部(`ail_only`)的入口逐一讀本體(依據為 FD2.EXE 反組譯比對,`static_re`)。
+兩組以規則一次命名,其餘逐筆登錄。`function_names.json` 832 筆全過。全部 1356 中有名稱或記載 89%(strong 88%);
+剩下 145 個無名的都是 AIL 驅動內部的輔助(只被 AIL 呼叫),結構性命名已足以說明它們不屬於遊戲邏輯。
+
+- **AIL 混音累加表(0x47988 第 0x80..0xef 格,72 格)**:與續八十二的輸出轉換表同一張表的後半,索引位元逐格與本體一致(72/72):
+  0x01 目的雙聲道 / 0x02 來源雙聲道 / 0x04 來源兩聲道對調 / 0x08 16 位元來源 / 0x10 有號 / 0x20 重取樣(`[0x538b4]` 分數步進)/
+  0x40 經音量查表(16 位元來源只用高位元組)。以 `mix_merge_{8|16}_{mono|stereo}[_swap]_{u|s|vol}[_resample]_to_{mono|stereo}` 登錄 70 個;
+  續八十三已登錄的 0x48f6c `mix_merge_16_stereo_u` / 0x48fea `mix_merge_16_stereo_swap_u`(第 0xab / 0xaf 格:16 位元雙聲道、無號、重取樣、
+  目的雙聲道)依「不改登錄名」維持原名。doc35 §9.16.4 的 0x49430 是第 0xe0 格 `mix_merge_8_mono_vol_resample_to_mono`。
+- **浮點模擬的 ModRM 有效位址樁(24 個)**:由 `call cs:[ebx*4 + 0x49e04]` 分派,格位 = mod x 8 + rm(24 起為 SIB base);每個樁把存檔框
+  [ebp + 位移] 的暫存器值(加上 disp8 / disp32)放進 ebx。暫存器名稱由位移推得,並與 rm 編號交叉一致(pushal 版面:edi +0xc .. eax +0x28;
+  rm 4 帶 SIB,mod 1 / 2 的 rm 5 是 ebp),命名 `emu_ea_<reg>[_disp8|_disp32]`、`emu_ea_disp32_only`。
+- **其餘逐筆**:CRT(`getenv`、`isatty`、`setvbuf`、`strcpy`、`tolower` / `toupper`、`localtime`、`sbrk`、`remove` / `dos_unlink`、`is_leap_year`、
+  `stdio_alloc_file`、`register_float_formatters` 等)、浮點模擬安裝(`dosx_cr0_set_em` / `_restore`、`fpu_detect_type`、`fpu_fnsave` / `frstor`)、
+  `int386x_dispatch`(把 `int N ; ret` 樁表第 N 格的位址推上堆疊後 ret 進去)、AIL 的 `ail_lock_enter` / `leave`(遞增 / 遞減 [0x52bea])。
+- **訂正**:續八十三把 `timer_slot_alloc` / `_start` / `_set_frequency` 前後的 0x3806a / 0x3806f 說成「關 / 開中斷」;讀了 thunk 的目標才知道
+  是 `ail_lock_enter` / `ail_lock_leave`(遞增 / 遞減鎖定計數),三筆的說明已改。續八十三的「0x3fe5f 推定為 isatty」由 `isatty`(AX=4400h)確認。
+
+## 2026-10-07 續九十:AIL 內部 145 個 —— 全部 1356 個入口 100% 有名稱或記載
+
+**結論**:最後 145 個(全是只被 AIL 呼叫的內部常式)讀完登錄(依據為 FD2.EXE 反組譯比對,`static_re`),`function_names.json` 977 筆全過。
+**`function_inventory --coverage`:strong 1293 / 全部 1356 都是 100% 有名稱或記載,無名 0**。「求完整」的分母(續八十一 .. 八十四修正後)到此每個入口都有名字。
+
+- **95 個 API 實作(規則化)**:AIL 3 的每個公開 API(以 AIL_DEBUG 追蹤字串命名的 104 個)本體都是同一個形狀 —— 除錯前導 0x37c9c、
+  取 [0x52be6] 的 0x3f22a、追蹤輸出 0x3f46b,再加上**唯一一個**內部常式;那個內部常式唯一的呼叫端也就是該 API。這種一對一共 95 對
+  (沒有一對多),以 `ail_impl_<api>` 登錄(例:0x41630 `ail_impl_set_sample_volume`)。名稱由呼叫圖決定,本體未逐條讀,說明裡寫明。
+- **其餘 50 個逐筆**:計時器(`ail_timer_isr`、`pit_set_divisor` / `pit_set_period_us`(out 0x43, 0x36)、`ail_timer_reprogram`、`ail_timer_restore_int8`、
+  `ail_isr_nesting` = 0x3f22a 回傳的就是 ISR 遞增的巢狀計數)、驅動安裝核心(`ail_dig_install_core` / `ail_mdi_install_core` 與各自的 lock / probe)、
+  混音(`ail_mix_samples` 經累加表 0x47b88、`ail_mix_flush_output` 經輸出表 0x47988 —— 續八十二 / 八十九兩張表的使用端)、XMIDI(`ail_xmidi_event`、
+  `midi_read_varlen`、`xmidi_find_sequence` 走 FORM / CAT / XMID)、取樣檔解析(`voc_parse_blocks`、`wav_parse_chunks` 找 "fmt " / "data")、
+  波表合成器(`ail_wavesynth_*`)、`ail_use16_isr_template`(0x9999 佔位值的中斷樣板)。
+- 推定與未逐條讀之處都寫在說明裡(例:`ail_wavesynth_update_pitch` 的速率算法、`stdio_fgets` 的結束條件)。
+
+**整段(續八十一 .. 九十)的分母與覆蓋**:入口 1313 -> 1356(+1 LE 進入點、+44 死函式島、-1 AIL_startup 假入口、-1 資料裡的 E8 命中;
+208 個 weak 經呼叫端可達反組譯確認升 strong);名稱登錄 425 -> 977;strong 有名稱或記載 69% -> 100%。

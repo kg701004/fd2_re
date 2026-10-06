@@ -8,7 +8,7 @@
    "dos/emu387.lib": "5983a6f3f51e8de69075a29c74b0bc61c8eb350f764ce7ad652222d2a94e1c44"
   },
   "lib_functions": 1800,
-  "fd2_entries_compared": 1312,
+  "fd2_entries_compared": 1355,
   "thresholds": {
    "T_HI": 0.8,
    "T_LO": 0.6,
@@ -20,18 +20,18 @@
    "0x10100",
    "0x3702f"
   ],
-  "null_entries": 573,
+  "null_entries": 579,
   "names_in_null_region": [],
   "null_best_ratio_max": 0.686,
   "null_best_ratio_with_agree_max": 0.0,
   "final_conflicts": [],
-  "matched": 72,
+  "matched": 83,
   "by_via": {
-   "body": 59,
-   "callee": 13
+   "body": 68,
+   "callee": 15
   },
   "body_tier2": 8,
-  "ambiguous_alias": 3,
+  "ambiguous_alias": 5,
   "callee_unconfirmed": {
    "0x3707e": {
     "name": "allocate",
@@ -169,6 +169,19 @@
    "agree": 0,
    "rivals": []
   },
+  "0x3ca86": {
+   "name": "__@DSQRT",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.983,
+   "tokens": 30,
+   "lib": "math387s.lib",
+   "module": "sqrt387",
+   "agree": 0,
+   "rivals": [
+    "IF@ACOSH"
+   ]
+  },
   "0x3cba9": {
    "name": "trig387+0x14",
    "via": "body",
@@ -214,6 +227,23 @@
     "asinl_"
    ]
   },
+  "0x3cc64": {
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log|log10|log2|sin|sinh|tan|tanh",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "trigh387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acosl_",
+    "asinl_"
+   ]
+  },
   "0x3cc7d": {
    "name": "rand",
    "via": "body",
@@ -226,6 +256,17 @@
    "rivals": [
     "srand"
    ]
+  },
+  "0x3ccb4": {
+   "name": "_cstart_",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.851,
+   "tokens": 140,
+   "lib": "clib3s.lib",
+   "module": "cstart",
+   "agree": 0,
+   "rivals": []
   },
   "0x3cf26": {
    "name": "memcpy",
@@ -373,9 +414,26 @@
    "name": "__math87_err",
    "via": "callee",
    "callers": [
-    "0x3ca4c"
+    "0x3ca4c",
+    "0x3ca86"
    ],
    "body_ratio": 0.417
+  },
+  "0x4609b": {
+   "name": "__CMain",
+   "via": "callee",
+   "callers": [
+    "0x3ccb4"
+   ],
+   "body_ratio": 0.678
+  },
+  "0x460ea": {
+   "name": "__InitRtns",
+   "via": "callee",
+   "callers": [
+    "0x3ccb4"
+   ],
+   "body_ratio": 0.358
   },
   "0x46186": {
    "name": "__sys_init_387_emulator",
@@ -483,6 +541,17 @@
    "tier": 1,
    "ratio": 0.923,
    "tokens": 13,
+   "lib": "clib3s.lib",
+   "module": "int386xa",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x468cb": {
+   "name": "_DoINTR_",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 34,
    "lib": "clib3s.lib",
    "module": "int386xa",
    "agree": 0,
@@ -681,6 +750,17 @@
    "agree": 0,
    "rivals": []
   },
+  "0x4bd87": {
+   "name": "__RLDI4",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 36,
+   "lib": "math3s.lib",
+   "module": "ldi4386",
+   "agree": 0,
+   "rivals": []
+  },
   "0x4bddc": {
    "name": "__LDU4",
    "via": "body",
@@ -799,8 +879,19 @@
     "__@DSQRT"
    ]
   },
+  "0x4d808": {
+   "name": "log",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "log387",
+   "agree": 1,
+   "rivals": []
+  },
   "0x4d81b": {
-   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log|log10|log2|sin|sinh|tan|tanh",
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log10|log2|sin|sinh|tan|tanh",
    "via": "body",
    "tier": 1,
    "ratio": 1.0,
@@ -815,6 +906,34 @@
     "acosl_",
     "asinl_"
    ]
+  },
+  "0x4d82e": {
+   "name": "acos|acosh|asin|asinh|atan|atanh|cos|cosh|exp|log10|log2|sin|sinh|tan|tanh",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 8,
+   "lib": "math387s.lib",
+   "module": "trigh387",
+   "agree": 0,
+   "rivals": [
+    "_cosl",
+    "_sinl",
+    "_tanl",
+    "acosl_",
+    "asinl_"
+   ]
+  },
+  "0x4db0c": {
+   "name": "__ModF",
+   "via": "body",
+   "tier": 1,
+   "ratio": 0.968,
+   "tokens": 63,
+   "lib": "clib3s.lib",
+   "module": "amodf386",
+   "agree": 0,
+   "rivals": []
   },
   "0x4db9c": {
    "name": "__ZBuf2F",
@@ -848,7 +967,7 @@
    "tokens": 26,
    "lib": "clib3s.lib",
    "module": "i64tos",
-   "agree": 0,
+   "agree": 1,
    "rivals": []
   },
   "0x4dcc6": {
@@ -875,11 +994,22 @@
   },
   "0x4dda3": {
    "name": "i64tos+0x10f",
+   "via": "body",
+   "tier": 1,
+   "ratio": 1.0,
+   "tokens": 67,
+   "lib": "clib3s.lib",
+   "module": "i64tos",
+   "agree": 0,
+   "rivals": []
+  },
+  "0x4de58": {
+   "name": "i64tos+0x1c4",
    "via": "callee",
    "callers": [
-    "0x4dc8c"
+    "0x4dda3"
    ],
-   "body_ratio": 0.574
+   "body_ratio": 1.0
   },
   "0x4deb4": {
    "name": "modf",

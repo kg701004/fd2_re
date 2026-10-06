@@ -152,7 +152,8 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     ("docs/data/item_row_field_consumers.json", "derive_item_row_fields.py",
      ["--json", "{out}"], "bytes"),
     # 2026-09-11:Miles AIL 105 個 API 進入點,名字直接取自 binary 自帶的
-    # AIL_DEBUG 追蹤字串(是資料,不是推論);見 doc36。
+    # AIL_DEBUG 追蹤字串(是資料,不是推論);見 doc36。2026-10-07 起 104 個解析 + AIL_startup 列為未解析
+    # (沒有標準前導,舊規則誤報本體中間的 0x37eb7;doc98 續八十五)。
     ("docs/data/ail_entry_points.json", "derive_ail_entry_points.py",
      ["--exe", EXE, "--json", "{out}"], "bytes"),
     # 2026-09-11:事件跳表 58..89 的逐格入口判定,推翻 doc25 的「14 個 table artifact」。

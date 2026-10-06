@@ -3,9 +3,13 @@
  "_generator": "tools/derive_ail_entry_points.py",
  "_method": "追蹤字串(資料)+ LE fixup 反查 + 共用前導錨點 0x54178;函式名是資料不是推論。",
  "_trace_strings_found": 105,
- "_entry_points_resolved": 105,
+ "_entry_points_resolved": 104,
+ "_unresolved_trace_sites": {
+  "AIL_startup": [
+   "0x37ebe"
+  ]
+ },
  "entry_points": {
-  "0x37eb7": "AIL_startup",
   "0x37ed8": "AIL_shutdown",
   "0x37f70": "AIL_set_preference",
   "0x38074": "AIL_get_real_vect",
