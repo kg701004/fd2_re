@@ -21600,6 +21600,3190 @@
      "insn": "ret"
     }
    ]
+  },
+  {
+   "addr": "0x364d4",
+   "name": "ail_mem_alloc_lock",
+   "summary": "(大小) 以 [0x52758] 的配置函式取記憶體,成功再以 dpmi_lock_range 鎖住同樣大小後回傳;與 ail_mem_unlock_free 成對(FD2.EXE 反組譯)。AIL 驅動 / 合成器的控制塊都經它配置。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x364da",
+     "insn": "call dword ptr [0x2758]"
+    },
+    {
+     "at": "0x364ef",
+     "insn": "call 0x3666c"
+    }
+   ]
+  },
+  {
+   "addr": "0x3669a",
+   "name": "lx_image_size",
+   "summary": "(檔名或記憶體影像, 旗標) 讀 LX 執行檔頭:旗標 bit 0 為 0 時 open(檔名, 0x200);讀 0x3c 的新檔頭位移、比對簽名 \"LX\"(0x502f0),讀 0xac bytes 的 LX 標頭後逐一讀物件表(每筆 0x18 bytes)把各物件的虛擬大小相加,回傳 總和 + 物件數 x 15;不是 LX 回 0(FD2.EXE 反組譯)。只被 lx_load_file 呼叫(死函式鏈)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x366f9",
+     "insn": "push 0x3c"
+    },
+    {
+     "at": "0x36727",
+     "insn": "push 0x2f0"
+    },
+    {
+     "at": "0x3674b",
+     "insn": "push 0xac"
+    },
+    {
+     "at": "0x367c0",
+     "insn": "shl eax, 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x36e57",
+   "name": "anim_vm_op_palette",
+   "summary": "anim_vm 的操作:以 rep movsd 從串流複製 0xc0 個 dword(768 bytes = 256 色 RGB)到 [0x52766] 的調色盤緩衝(FD2.EXE 反組譯)。只經 anim_vm_run 的操作表 [0x5276a] 分派。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x36e57",
+     "insn": "mov edi, dword ptr [0x2766]"
+    },
+    {
+     "at": "0x36e5d",
+     "insn": "mov ecx, 0xc0"
+    }
+   ]
+  },
+  {
+   "addr": "0x36f24",
+   "name": "anim_vm_op_rle",
+   "summary": "anim_vm 的操作:把串流 RLE 解到 [0x52762] 的畫面緩衝,共 [0x52760] 個像素;控制 byte 高兩 bit 為 11 時低 6 bits 是游程長度(下一 byte 為顏色),否則是單一像素(FD2.EXE 反組譯)。只經操作表 [0x5276a] 分派。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x36f24",
+     "insn": "mov edi, dword ptr [0x2762]"
+    },
+    {
+     "at": "0x36f42",
+     "insn": "and ah, 0xc0"
+    },
+    {
+     "at": "0x36f4e",
+     "insn": "and al, 0x3f"
+    }
+   ]
+  },
+  {
+   "addr": "0x36fd3",
+   "name": "anim_vm_set_context",
+   "summary": "(像素數 word, 畫面緩衝, 調色盤緩衝) 設定 anim_vm 的目標:[0x52760] / [0x52762] / [0x52766](FD2.EXE 反組譯)。全螢幕動畫播放器 0x20421 呼叫(doc35 的 10-opcode 增量繪圖 VM)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x36fda",
+     "insn": "mov word ptr [0x2760], ax"
+    },
+    {
+     "at": "0x36fe3",
+     "insn": "mov dword ptr [0x2762], eax"
+    },
+    {
+     "at": "0x36feb",
+     "insn": "mov dword ptr [0x2766], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x36ff4",
+   "name": "anim_vm_run",
+   "summary": "(操作數, 串流) 逐一讀操作碼 byte,經表 [0x5276a + 碼*4] 呼叫對應操作(串流指標在 esi 前進),做 操作數 次(FD2.EXE 反組譯)。全螢幕動畫播放器 0x20421 每幀呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x37008",
+     "insn": "lodsb al, byte ptr [esi]"
+    },
+    {
+     "at": "0x37012",
+     "insn": "call dword ptr [ebx + 0x276a]"
+    }
+   ]
+  },
+  {
+   "addr": "0x3777e",
+   "name": "heap_free_near",
+   "summary": "(指標) 以 heap_free_block 從近堆積(0x527a8 / 0x527b0 的堆積描述)釋放,並清除 [0x5419c] 的快取旗標(FD2.EXE 反組譯)。heap_free / heap_grow / __setenvp 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x37794",
+     "insn": "call 0x3d670"
+    },
+    {
+     "at": "0x37799",
+     "insn": "mov byte ptr [0x419c], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x37940",
+   "name": "fseek",
+   "summary": "(FILE*, 位移, whence) 串流定位:旗標 +0xc 的 2 有設且位移為負、whence 為 0 時,有寫入緩衝(+0xd 0x10)先 stdio_flush,errno = 9 回 -1;其餘經 stdio_flush / stdio_fill_buffer / lseek / ftell / tell 完成定位(FD2.EXE 反組譯)。stdio_doopen(附加模式)與資源載入呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x37952",
+     "insn": "test byte ptr [ebx + 0xc], 2"
+    },
+    {
+     "at": "0x3796b",
+     "insn": "call 0x3de66"
+    },
+    {
+     "at": "0x37978",
+     "insn": "mov dword ptr [eax], 9"
+    }
+   ]
+  },
+  {
+   "addr": "0x37b13",
+   "name": "sprintf_putc_cb",
+   "summary": "printf_core 的輸出回呼(sprintf 用):把字元寫到 *ctx 並把指標加 1、計數 ctx[+0x10] 加 1(FD2.EXE 反組譯)。sprintf 把它的位址傳給 printf_core。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x37b21",
+     "insn": "mov byte ptr [edx], bl"
+    },
+    {
+     "at": "0x37b23",
+     "insn": "inc dword ptr [eax + 0x10]"
+    }
+   ]
+  },
+  {
+   "addr": "0x37b8c",
+   "name": "timer_code_lock",
+   "summary": "[0x527e4] 為 0 時以 dpmi_lock_region 鎖住 0x37b8c .. timer_code_unlock 的程式碼與碼錶全域(0x54158 .. 0x54174),再設 [0x527e4](FD2.EXE 反組譯)。ail_startup 呼叫;解鎖是 timer_code_unlock。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x37b8d",
+     "insn": "cmp dword ptr [0x27e4], 0"
+    },
+    {
+     "at": "0x37ba4",
+     "insn": "call 0x365da"
+    }
+   ]
+  },
+  {
+   "addr": "0x3da97",
+   "name": "fprintf_putc_cb",
+   "summary": "printf_core 的輸出回呼(vfprintf 用):fputc(字元, ctx 的 FILE*),計數 ctx[+0x10] 加 1(FD2.EXE 反組譯)。vfprintf 把它的位址傳給 printf_core。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3daa3",
+     "insn": "call 0x3df47"
+    },
+    {
+     "at": "0x3daab",
+     "insn": "inc dword ptr [ebx + 0x10]"
+    }
+   ]
+  },
+  {
+   "addr": "0x3dfef",
+   "name": "delay_calibrate",
+   "summary": "以 int 21h AH=2Ch 等秒數跳一次,再數下一秒內能呼叫幾次,存進 [0x541b0] 當 delay 的校準值(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3dff1",
+     "insn": "mov ah, 0x2c"
+    },
+    {
+     "at": "0x3e014",
+     "insn": "mov dword ptr [0x41b0], esi"
+    }
+   ]
+  },
+  {
+   "addr": "0x3e117",
+   "name": "printf_core",
+   "summary": "(輸出回呼, 回呼參數, 格式, 參數表) printf 家族的核心迴圈:逐字元走格式字串,轉換規格交 printf_parse_spec 解析、printf_fmt_arg 轉換,輸出經呼叫端給的回呼(call edi)(FD2.EXE 反組譯)。sprintf / vfprintf 呼叫(回呼分別是 sprintf_putc_cb / fprintf_putc_cb)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3e146",
+     "insn": "call 0x3e337"
+    }
+   ]
+  },
+  {
+   "addr": "0x3f4e0",
+   "name": "ail_api_lock_memory",
+   "summary": "[0x53608] 為 0 時以 dpmi_lock_region 鎖住 0x3f4e0 .. 0x3fddc 的程式碼與 AIL API 全域(驅動表 0x541b4、偏好值 0x5430c、錯誤字串 0x541f4 等)(FD2.EXE 反組譯)。ail_set_default_preferences 呼叫;解鎖是 ail_api_unlock_memory。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3f4e1",
+     "insn": "cmp dword ptr [0x3608], 0"
+    },
+    {
+     "at": "0x3f4f4",
+     "insn": "call 0x365da"
+    },
+    {
+     "at": "0x3f503",
+     "insn": "call 0x3666c"
+    }
+   ]
+  },
+  {
+   "addr": "0x3f950",
+   "name": "ail_driver_install_core",
+   "summary": "AIL_install_driver 的本體:以 ail_mem_alloc_lock 配 0x28 bytes 驅動控制塊(失敗設錯誤字串回 0),配 DOS 記憶體放驅動映像,存舊的 int 66h 向量並設新向量、以 AIL_call_driver 取驅動描述表,依需要 AIL_register_timer / AIL_set_timer_frequency / AIL_start_timer 註冊驅動的計時服務,把控制塊登記到驅動表 0x541b4(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3f953",
+     "insn": "push 0x28"
+    },
+    {
+     "at": "0x3f955",
+     "insn": "call 0x364d4"
+    }
+   ]
+  },
+  {
+   "addr": "0x3fca9",
+   "name": "ail_set_default_preferences",
+   "summary": "先 ail_api_lock_memory,再以 AIL_set_preference 設一串預設偏好值(0 = 200、1 = 1、2 = 0x8000、3 = 100、4 = 16 等)(FD2.EXE 反組譯)。ail_startup 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3fca9",
+     "insn": "call 0x3f4e0"
+    },
+    {
+     "at": "0x3fcb5",
+     "insn": "call 0x37f70"
+    }
+   ]
+  },
+  {
+   "addr": "0x3fddc",
+   "name": "ail_api_unlock_memory",
+   "summary": "[0x53608] 非 0 時以 dpmi_unlock_region / dpmi_unlock_range 解鎖 ail_api_lock_memory 鎖住的程式碼與全域(FD2.EXE 反組譯)。只以位址被 lock 函式引用(lock 範圍的終點)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x3fddd",
+     "insn": "cmp dword ptr [0x3608], 0"
+    },
+    {
+     "at": "0x3fdf0",
+     "insn": "call 0x36647"
+    }
+   ]
+  },
+  {
+   "addr": "0x404c0",
+   "name": "ail_dig_service_callback",
+   "summary": "(DIG 驅動) 數位音效的計時服務回呼:以 [0x5368c] 防重入、save_flags_cli 關中斷,驅動沒在跑([+0x54] 為 0)就直接返回;否則呼叫 ail_mix_clear_build_buffer / ail_mix_samples / ail_mix_flush_output 與 AIL_call_driver 完成一輪混音輸出(FD2.EXE 反組譯)。只經函式指標註冊。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x404c9",
+     "insn": "cmp dword ptr [0x368c], 0"
+    },
+    {
+     "at": "0x404ea",
+     "insn": "call 0x382d6"
+    }
+   ]
+  },
+  {
+   "addr": "0x40c40",
+   "name": "ail_dig_close_callback",
+   "summary": "(DIG 驅動) 驅動關閉回呼(登記在驅動控制塊 [+0x20]):驅動在跑時 AIL_call_driver(驅動, 0x402) 並清 [+0x54],ail_mix_clear_build_buffer 與 ail_mix_flush_output 清掉輸出,其後呼叫 AIL_delay、AIL_release_timer_handle、dpmi_dos_free、ail_mem_unlock_free 收尾(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x40c54",
+     "insn": "push 0x402"
+    },
+    {
+     "at": "0x40c64",
+     "insn": "mov dword ptr [esi + 0x54], 0"
+    },
+    {
+     "at": "0x40c6c",
+     "insn": "call 0x49923"
+    }
+   ]
+  },
+  {
+   "addr": "0x414e0",
+   "name": "ail_impl_init_sample",
+   "summary": "AIL_init_sample 的實作:取樣狀態 [S+4] 設 2(結束),各緩衝欄位清 0,迴圈次數 1、[S+0x2c] = -2,播放速率 0x2b11(11025 Hz)、聲相 0x40,清回呼,音量取預設 [0x54320],再 ail_sample_update_mix_params(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x414ec",
+     "insn": "mov dword ptr [eax + 4], 2"
+    },
+    {
+     "at": "0x4154e",
+     "insn": "mov dword ptr [eax + 0x3c], 0x2b11"
+    },
+    {
+     "at": "0x41555",
+     "insn": "mov dword ptr [eax + 0x44], 0x40"
+    }
+   ]
+  },
+  {
+   "addr": "0x415a0",
+   "name": "ail_impl_set_sample_address",
+   "summary": "AIL_set_sample_address 的實作:緩衝 0 的起點 [S+8]、長度 [S+0x10] 寫入,位置 [S+0xc] 與 [S+0x14] 清 0(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x415ba",
+     "insn": "mov dword ptr [eax + 8], edx"
+    },
+    {
+     "at": "0x415c1",
+     "insn": "mov dword ptr [eax + 0x10], edx"
+    }
+   ]
+  },
+  {
+   "addr": "0x416e0",
+   "name": "ail_impl_set_sample_loop_count",
+   "summary": "AIL_set_sample_loop_count 的實作:迴圈次數寫進 [S+0x30](FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x416ec",
+     "insn": "mov dword ptr [eax + 0x30], edx"
+    }
+   ]
+  },
+  {
+   "addr": "0x416f0",
+   "name": "ail_impl_start_sample",
+   "summary": "AIL_start_sample 的實作:S 不是空閒、目前緩衝有起點與長度時,位置清 0、狀態 [S+4] 設 4(播放中);驅動沒在跑([+0x54] 為 0)就 AIL_call_driver 啟動 DMA(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4171c",
+     "insn": "mov dword ptr [eax + 0x18], 0"
+    },
+    {
+     "at": "0x41723",
+     "insn": "mov dword ptr [esi + 4], 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x41a40",
+   "name": "ail_dig_unlock_memory",
+   "summary": "[0x53690] 非 0 時解鎖 ail_dig_lock_memory(0x40100 .. 0x41a40)鎖住的程式碼與 DIG 全域(0x5360c、0x5368c、0x543b0 ..)(FD2.EXE 反組譯)。只以位址被 lock 函式引用。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x41a41",
+     "insn": "cmp dword ptr [0x3690], 0"
+    },
+    {
+     "at": "0x41a58",
+     "insn": "call 0x36647"
+    }
+   ]
+  },
+  {
+   "addr": "0x41af4",
+   "name": "ail_file_sample_lock_memory",
+   "summary": "[0x53694] 為 0 時以 dpmi_lock_region 鎖住 0x41af4 .. 0x420e1(檔案取樣的 VOC / WAV 解析與回呼)並設旗標(FD2.EXE 反組譯)。ail_impl_allocate_file_sample 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x41b08",
+     "insn": "call 0x365da"
+    },
+    {
+     "at": "0x41b10",
+     "insn": "mov dword ptr [0x3694], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x41b26",
+   "name": "ail_file_sample_end_cb",
+   "summary": "檔案取樣的結束回呼(WAV 註冊為 EOS 回呼,VOC 解析到結尾時也呼叫):有 EOF 回呼 [S+0x874] 就呼叫,[S+0x88c] > 0 時 AIL_release_sample_handle,最後 [S+0x88c] 設 -1(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x41b35",
+     "insn": "call dword ptr [esi + 0x874]"
+    },
+    {
+     "at": "0x41b48",
+     "insn": "call 0x394b4"
+    },
+    {
+     "at": "0x41b50",
+     "insn": "mov dword ptr [esi + 0x88c], 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x41ddb",
+   "name": "ail_voc_next_block_cb",
+   "summary": "VOC 檔案取樣的 EOS 回呼:voc_parse_blocks(S, 1) 接著播下一個區塊(FD2.EXE 反組譯)。ail_impl_allocate_file_sample 註冊。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x41ddb",
+     "insn": "push 1"
+    },
+    {
+     "at": "0x41de2",
+     "insn": "call 0x41b84"
+    }
+   ]
+  },
+  {
+   "addr": "0x420e1",
+   "name": "ail_file_sample_unlock_memory",
+   "summary": "[0x53694] 非 0 時解鎖 ail_file_sample_lock_memory 鎖住的程式碼並清旗標(FD2.EXE 反組譯)。只以位址被 lock 函式引用。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x420f5",
+     "insn": "call 0x36647"
+    },
+    {
+     "at": "0x420ff",
+     "insn": "mov dword ptr [0x3694], ebx"
+    }
+   ]
+  },
+  {
+   "addr": "0x43160",
+   "name": "ail_seq_reset_state",
+   "summary": "(序列) 通道對映 [Q+0x90 + i*4] = i(16 個通道恆等對映),以 memset 把 [Q+0xd0] 起 0x440 bytes 設 -1(控制器狀態),[Q+0x80 .. +0x8c] 設 -1 等(FD2.EXE 反組譯)。配置 / 開始序列與 AIL_init_sequence 的實作呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x43170",
+     "insn": "mov dword ptr [edx + 0x90], eax"
+    },
+    {
+     "at": "0x4318d",
+     "insn": "call 0x37910"
+    }
+   ]
+  },
+  {
+   "addr": "0x43270",
+   "name": "ail_mdi_service_callback",
+   "summary": "(MDI 驅動) XMIDI 序列的計時服務回呼:驅動忙碌計數 [+0x14] 為 0 且 [0x53718] 沒有重入時,逐一處理狀態 4(播放中)的序列;本體呼叫 midi_read_varlen、ail_xmidi_event、ail_seq_resend_volume、memmove、AIL_stop_sequence、AIL_call_driver 與 ail_mdi_flush_messages(FD2.EXE 反組譯)。只經函式指標註冊。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x43284",
+     "insn": "cmp dword ptr [0x3718], 0"
+    },
+    {
+     "at": "0x432bf",
+     "insn": "cmp dword ptr [eax + 4], 4"
+    }
+   ]
+  },
+  {
+   "addr": "0x43a70",
+   "name": "ail_mdi_close_callback",
+   "summary": "(MDI 驅動) 驅動關閉回呼:對全部序列 AIL_end_sequence、AIL_release_timer_handle 釋放計時器,再釋放控制塊(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x43a89",
+     "insn": "call 0x3b035"
+    },
+    {
+     "at": "0x43aa2",
+     "insn": "call 0x38d77"
+    }
+   ]
+  },
+  {
+   "addr": "0x443d0",
+   "name": "ail_impl_init_sequence",
+   "summary": "AIL_init_sequence 的實作:狀態設 2,以 xmidi_find_sequence 在 XMIDI 檔找第 n 首(找不到設錯誤字串回 0);本體另呼叫 memcmp_n、sprintf、memmove、AIL_call_driver 與 ail_seq_reset_state(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x443ef",
+     "insn": "mov dword ptr [edx + 4], 2"
+    },
+    {
+     "at": "0x443f6",
+     "insn": "call 0x42520"
+    }
+   ]
+  },
+  {
+   "addr": "0x45380",
+   "name": "ail_mdi_unlock_memory",
+   "summary": "[0x5371c] 非 0 時解鎖 ail_mdi_lock_memory(0x42110 .. 0x45380)鎖住的程式碼與 MDI 全域(FD2.EXE 反組譯)。只以位址被 lock 函式引用。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x45381",
+     "insn": "cmp dword ptr [0x371c], 0"
+    },
+    {
+     "at": "0x45398",
+     "insn": "call 0x36647"
+    }
+   ]
+  },
+  {
+   "addr": "0x459f5",
+   "name": "ail_wavesynth_timbre_cb",
+   "summary": "(MDI 驅動, bank, patch) 波表合成器的 timbre 回呼:在合成器 [驅動+0x1b0] 的波表庫 [+8] 以 find_in_neg1_list 找 bank / patch,找到回 1(由合成器處理,不交驅動)(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x45a0d",
+     "insn": "call 0x4584d"
+    },
+    {
+     "at": "0x45a17",
+     "insn": "setne al"
+    }
+   ]
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "summary": "(MDI 驅動, 序列, 狀態 byte, 資料 1, 資料 2) 波表合成器的 event 回呼:控制器 / 音色變更 / 彎音(0xb0 / 0xc0 / 0xe0)交 ail_wavesynth_midi_event 更新通道參數,note on / off 時配置或結束聲部的取樣(AIL_init_sample / set_sample_address / set_sample_type / start_sample / end_sample),並以 ail_wavesynth_update_volume_pan / update_pitch 更新(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x45a36",
+     "insn": "and esi, 0xf0"
+    },
+    {
+     "at": "0x45a45",
+     "insn": "cmp esi, 0xb0"
+    },
+    {
+     "at": "0x45a4d",
+     "insn": "cmp esi, 0xc0"
+    }
+   ]
+  },
+  {
+   "addr": "0x46915",
+   "name": "int386xa_do_int",
+   "summary": "_DoINTR_ 的內部:把中斷號 al 換成樁表 0x46948 + 號 x 3 的位址當返回位址推上堆疊,從 REGS 結構載入 eax .. ebp 與 ds / es / fs / gs 後 ret 進 `int N ; ret` 樁(FD2.EXE 反組譯)。樁表 256 格到 0x46c48 為止。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4691a",
+     "insn": "lea eax, [eax + eax*2]"
+    },
+    {
+     "at": "0x4691d",
+     "insn": "lea eax, [eax + 0x36948]"
+    },
+    {
+     "at": "0x46946",
+     "insn": "pop ds"
+    }
+   ]
+  },
+  {
+   "addr": "0x46c48",
+   "name": "stdio_init_streams",
+   "summary": "把 0x52840 起的預設串流表(每筆 0x1a bytes)逐一以 nmalloc(8) 包成節點串進開啟串流鏈 [0x541ac](以 +0xc 為 0 的格結束);開始前把 [0x52881] 的低 3 位元清掉再 or 4,結束後清 [0x541a0](FD2.EXE 反組譯)。只經初始化表的函式指標呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x46c49",
+     "insn": "and byte ptr [0x2881], 0xf8"
+    },
+    {
+     "at": "0x46c60",
+     "insn": "call 0x3707e"
+    },
+    {
+     "at": "0x46c76",
+     "insn": "mov dword ptr [0x41ac], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x4a104",
+   "name": "emu387_dispatch",
+   "summary": "x87 模擬器的指令分派:從中斷框取 cs:eip 讀指令,略過 FWAIT(0x9b)與段 / 位址前綴,D8..DF 依 ModRM 分記憶體運算元(經 0x49e04 的位址樁算有效位址後 jmp [0x49ec4 + 索引])與暫存器運算元(jmp [0x49fc4 + 索引]),索引 = ModRM reg x 8 + opcode 低 3 位(FD2.EXE 反組譯)。__int7_pl3 與 emu387_int_entry 呼叫;處理常式以 jmp [ebp + 0x76] 回到這裡。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4a116",
+     "insn": "cmp al, 0x9b"
+    },
+    {
+     "at": "0x4a123",
+     "insn": "cmp bl, 0xd8"
+    },
+    {
+     "at": "0x4a14e",
+     "insn": "call dword ptr cs:[ebx*4 + 0x39e04]"
+    },
+    {
+     "at": "0x4a182",
+     "insn": "jmp dword ptr cs:[ebx*4 + 0x39ec4]"
+    },
+    {
+     "at": "0x4a22f",
+     "insn": "jmp dword ptr cs:[edx*4 + 0x39fc4]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4a314",
+   "name": "emu_raise_exception",
+   "summary": "浮點模擬的例外處理:把例外位元 or 進狀態字 [ebp+4],未遮罩時把模擬框複製到堆疊並呼叫 [0x5283c] 的例外處理函式(FD2.EXE 反組譯)。ld_div_core / __iFDLD / __iLDFD 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4a314",
+     "insn": "or byte ptr ds:[ebp + 4], al"
+    },
+    {
+     "at": "0x4a33b",
+     "insn": "call dword ptr [0x283c]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4c4bd",
+   "name": "emu_fprem",
+   "summary": "(被除數, 除數) fprem / fprem1 的前置:被除數為 0 直接回 0、除數為 0 時把結果設 0,否則交 emu_fprem_core(FD2.EXE 反組譯)。D9 F8 fprem 與 D9 F5 fprem1 的處理常式呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4c4bd",
+     "insn": "cmp word ptr [eax + 8], 0"
+    },
+    {
+     "at": "0x4c4d2",
+     "insn": "cmp word ptr [edx + 8], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x4dc3a",
+   "name": "return_zero",
+   "summary": "push ebp / xor eax, eax / pop ebp / ret:回傳 0 的空函式(FD2.EXE 反組譯)。經 thunk 抵達。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4dc3d",
+     "insn": "xor eax, eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x4de58",
+   "name": "pop_edi_ret",
+   "summary": "pop edi ; ret —— 被 call 時把返回位址(緊接 call 之後的常數資料)取進 edi(FD2.EXE 反組譯)。embedded_const_table 以此取得內嵌常數表的位址。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4de58",
+     "insn": "pop edi"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e016",
+   "name": "blit_tile24_rle_remap",
+   "summary": "(src, dst, stride, 換色表) 24 x 24 地圖格的 RLE 繪製,與 blit_tile24_rle 同格式,但每個像素都經換色表:控制 byte 高兩 bit 00 填色、01 隔一格寫、10 逐點複製、11 把目的原有像素過換色表(覆蓋陰影);低 6 bits + 1 為長度(FD2.EXE 反組譯)。draw_terrain_layer 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4e046",
+     "insn": "mov al, byte ptr [ebp + eax]"
+    },
+    {
+     "at": "0x4e08a",
+     "insn": "mov al, byte ptr [edi]"
+    },
+    {
+     "at": "0x4e08c",
+     "insn": "mov al, byte ptr [ebp + eax]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e5cc",
+   "name": "path_flood_recurse",
+   "summary": "grid_path_search 的遞迴步:把目前格與方向推進路徑堆疊(每步 8 bytes,步數 [0x60077]),依序朝四個方向以 path_flood_test_cell 試探,可走就遞迴呼叫自己(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4e5db",
+     "insn": "inc byte ptr [0x77]"
+    },
+    {
+     "at": "0x4e5ee",
+     "insn": "call 0x4e680"
+    },
+    {
+     "at": "0x4e5f5",
+     "insn": "call 0x4e5cc"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e680",
+   "name": "path_flood_test_cell",
+   "summary": "path_flood_recurse 的格子測試:以格子值經 [0x60060] 的表取類別、[esi + 類別] 取成本,從剩餘值 cl 扣掉,不夠就失敗;與格子已記錄的值比較,相等時([0x6017a] 為 1)以 count_distinct_runs_x4 比較;接受時呼叫 store_dx_if_flag40 / path_flood_record_best(FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4e68d",
+     "insn": "add eax, dword ptr [0x60]"
+    },
+    {
+     "at": "0x4e69a",
+     "insn": "sub cl, byte ptr [esi + eax]"
+    },
+    {
+     "at": "0x4e6b4",
+     "insn": "call 0x4e71f"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e751",
+   "name": "path_flood_record_best",
+   "summary": "目前格等於目標格([0x60071] / [0x60072])且步數 [0x60077] 不比最佳 [0x60078] 多時,更新最佳步數並把路徑堆疊的方向碼複製到輸出 [0x60073](FD2.EXE 反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4e751",
+     "insn": "cmp dl, byte ptr [0x71]"
+    },
+    {
+     "at": "0x4e76f",
+     "insn": "mov byte ptr [0x78], ah"
+    },
+    {
+     "at": "0x4e78a",
+     "insn": "stosb byte ptr es:[edi], al"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e8d3",
+   "name": "blit_rle_sprite_remap",
+   "summary": "(精靈, x, y, dst, stride, 換色表) 帶寬高標頭(兩個 word,存進 [0x627b4] / [0x627b6])的 RLE 精靈繪製到 dst + y x stride + x,像素經換色表;控制 byte 的編碼與 blit_tile24_rle 同族(11 為跳過)(FD2.EXE 反組譯)。施法場景 spell_cast_scene 與 play_command_cast_animation 呼叫;doc35 以 live 斷點確認它畫 CG1 的懸浮小島。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4e8dc",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4e8e4",
+     "insn": "lodsw ax, word ptr [esi]"
+    },
+    {
+     "at": "0x4e92c",
+     "insn": "mov al, byte ptr [eax + ebp]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4eb48",
+   "name": "event_seq_table_get",
+   "summary": "(索引) 回傳 [0x627d8 + 索引*4] 的演出序列指標(FD2.EXE 反組譯)。演出 driver act 0x1366a 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4eb51",
+     "insn": "mov eax, dword ptr [eax + 0x27d8]"
+    }
+   ]
+  },
+  {
+   "addr": "0x4eb59",
+   "name": "screen_zoom_blit",
+   "summary": "(倍率, dst, src) 整數倍率放大:從 src + 0x504 起每個像素橫向重複 倍率 次、每列縱向重複 倍率 次,寫滿 dst 的 0x138 x 0xc0 區域(FD2.EXE 反組譯)。0x1f1cc / 0x1f30a 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4eb74",
+     "insn": "mov ax, 0x140"
+    },
+    {
+     "at": "0x4eb85",
+     "insn": "mov cx, 0x138"
+    },
+    {
+     "at": "0x4eb8d",
+     "insn": "stosb byte ptr es:[edi], al"
+    }
+   ]
+  },
+  {
+   "addr": "0x10010",
+   "name": "save_load_restore",
+   "summary": "存檔的讀取 / 還原端:malloc(0x59cb) 當緩衝(失敗設 [0x53a8d] = 3),fopen / fread 讀檔,以 save_checksum_sum 與 save_xor_crypt 驗證解碼,把內容還原進各全域(含 doc11 記的四個存檔旗標),期間有對話框與調色盤淡入淡出;本體也呼叫 fwrite(FD2.EXE 反組譯)。battle_system_submenu 與 title_menu_dispatch 呼叫;寫入端是 0x19df7。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x10021",
+     "insn": "push 0x59cb"
+    },
+    {
+     "at": "0x10034",
+     "insn": "mov word ptr [0x3a8d], 3"
+    }
+   ]
+  },
+  {
+   "addr": "0x10c50",
+   "name": "field_unit_construct",
+   "summary": "(FDFIELD 記錄, ...) 戰場單位建構:依 FDFIELD 的 b0 直接寫陣營 +6(0 敵 / 1 友 / 2 我方)、以 fdicon_cache_load 取 +2 圖示格,查成長 / 職業表(growth_row11_ptr、lower_class_row24_ptr、high_class_row10_ptr)填能力,recalc_equipped_stats 重算裝備,並以 0x145cd 更新地圖阻擋標記(FD2.EXE 反組譯)。spawn 呼叫(doc03)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x10c61",
+     "insn": "mov dword ptr [esp + 0x30], 0xff"
+    },
+    {
+     "at": "0x10c69",
+     "insn": "mov ebx, dword ptr [0x3beb]"
+    }
+   ]
+  },
+  {
+   "addr": "0x11019",
+   "name": "fdicon_cache_load",
+   "summary": "(raw key, ...) 依 raw key 從 FDICON 檔 fseek / fread 讀一組單位圖示進 process-global 快取格,回傳格號(寫進單位 +2);CONTINUE 時依存檔的順序重建(FD2.EXE 反組譯)。doc26 / doc31 已驗證。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1103b",
+     "insn": "call 0x37940"
+    }
+   ]
+  },
+  {
+   "addr": "0x1145a",
+   "name": "roster_recalc_equipped_stats",
+   "summary": "(名冊索引) 名冊記錄([0x53bf7] + 索引 x 0x50)的裝備加成:以基礎值 +0x37 / +0x39 / +0x3e 起算,8 個物品欄(+0xa 起每格 2 bytes)中旗標 0x40(已裝備)的,以 item_effect_row_ptr 取物品列,把列的 +1 / +5 / +3 / +7 加上去,結果寫回 +0x48 / +0x4a / +0x4c / +0x4e(FD2.EXE 反組譯)。join 與 sync_party 呼叫;戰場版是 recalc_equipped_stats。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x11480",
+     "insn": "movsx eax, word ptr [edi + 0x37]"
+    },
+    {
+     "at": "0x114ad",
+     "insn": "test byte ptr [eax], 0x40"
+    },
+    {
+     "at": "0x114b7",
+     "insn": "call 0x4e8bc"
+    },
+    {
+     "at": "0x114e4",
+     "insn": "mov word ptr [edi + 0x48], ax"
+    }
+   ]
+  },
+  {
+   "addr": "0x117e7",
+   "name": "battle_main_input_loop",
+   "summary": "我方回合的主戰鬥迴圈:以 battle_main_key_poll 讀鍵,方向鍵走 cursor_step_*,確認鍵選單位或格子、進戰鬥行動(戰鬥行動 0x18890),另有地圖總覽、系統選單,回合結束檢查 0x13565(FD2.EXE 反組譯)。由主行程 0x25bf4 呼叫(doc11 的「主戰鬥迴圈讀鍵」)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x117f3",
+     "insn": "call 0x11aa8"
+    },
+    {
+     "at": "0x117fd",
+     "insn": "cmp eax, 0x2c"
+    }
+   ]
+  },
+  {
+   "addr": "0x11aa8",
+   "name": "battle_main_key_poll",
+   "summary": "主戰鬥迴圈用的阻塞讀鍵:鍵盤緩衝沒有鍵時每個 BIOS tick(0x46c)跑 palette_cycle_tick 並 redraw,有鍵時經 int386 讀鍵並回傳(FD2.EXE 反組譯)。只被 battle_main_input_loop 呼叫(doc25 / doc58)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x11ab3",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x11abc",
+     "insn": "call 0x4e31c"
+    },
+    {
+     "at": "0x11ac1",
+     "insn": "mov eax, 0x46c"
+    }
+   ]
+  },
+  {
+   "addr": "0x12263",
+   "name": "map_count_flagged_event_cells",
+   "summary": "掃描整張地圖([0x53ac1] x [0x53ac5]):以 map_cell_info 取格子資訊,事件類格子((旗標 & 0x60) == 0x20)且章節旗標表 [0x53ad5] 該事件號非 0 時,[0x53a51] + 4 + 格號 x 4 的 word 加 1、其後第 2 byte 清 0(FD2.EXE 反組譯)。事件處理(event_handler_55 / 58 / 61)、AI 與存檔還原呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x12291",
+     "insn": "call 0x12e38"
+    },
+    {
+     "at": "0x122a2",
+     "insn": "and al, 0x60"
+    },
+    {
+     "at": "0x122cd",
+     "insn": "inc word ptr [eax]"
+    }
+   ]
+  },
+  {
+   "addr": "0x122dc",
+   "name": "draw_move_range_overlay",
+   "summary": "依疊圖模式 [0x51a83](1 / 2 / 3 ..)選 FDOTHER #1 的圖格,對移動 / 攻擊範圍內的格子以 draw_map_overlay_cell 畫高亮(FD2.EXE 反組譯)。redraw 的第三層(地形之後、單位之前,doc25)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x122e6",
+     "insn": "cmp dword ptr [0x1a83], 1"
+    },
+    {
+     "at": "0x122fc",
+     "insn": "cmp dword ptr [0x1a83], 2"
+    }
+   ]
+  },
+  {
+   "addr": "0x12dac",
+   "name": "move_confirm_key_poll",
+   "summary": "移動確認迴圈用的阻塞讀鍵:沒有鍵時每個 BIOS tick 跑 palette_cycle_tick 並 redraw(0),有鍵時經 int386 讀鍵(FD2.EXE 反組譯)。只被 target_cursor_loop 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x12db8",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x12dc1",
+     "insn": "call 0x4e31c"
+    },
+    {
+     "at": "0x12dd4",
+     "insn": "call 0x11cac"
+    }
+   ]
+  },
+  {
+   "addr": "0x12eaa",
+   "name": "step_anim_down",
+   "summary": "(單位) 走位一格的動畫:朝下(Y + 1),pose +3 寫 0;逐幀 tick_anim_counters、draw_terrain_layer、draw_unit_layer、copy_rect 並 wait_next_tick(FD2.EXE 反組譯)。walk_path 依方向碼 0 呼叫(doc50)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x12edf",
+     "insn": "mov byte ptr [esi + 3], 0"
+    },
+    {
+     "at": "0x12fdd",
+     "insn": "mov byte ptr [esi + 1], al"
+    }
+   ]
+  },
+  {
+   "addr": "0x1300d",
+   "name": "step_anim_left",
+   "summary": "(單位) 走位一格的動畫:朝左(X - 1),pose +3 寫 1;逐幀重繪並 wait_next_tick,本體另呼叫 field_event_lookup(FD2.EXE 反組譯)。walk_path 依方向碼 1 呼叫(doc50)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x13040",
+     "insn": "mov byte ptr [esi + 3], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x13315",
+   "name": "step_anim_right",
+   "summary": "(單位) 走位一格的動畫:朝右(X + 1),pose +3 寫 3;逐幀重繪並 wait_next_tick(FD2.EXE 反組譯)。walk_path 依方向碼 3 呼叫(doc50)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x13349",
+     "insn": "mov byte ptr [esi + 3], 3"
+    }
+   ]
+  },
+  {
+   "addr": "0x13488",
+   "name": "walk_path",
+   "summary": "(單位, 路徑碼陣列, 長度) 逐格執行路徑:方向碼 0 / 1 / 2 / 其他分派 step_anim_down / step_anim_left / scroll_step / step_anim_right(FD2.EXE 反組譯)。move_unit_toward_point 與戰鬥行動呼叫(doc11 / doc50)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x13496",
+     "insn": "mov esi, dword ptr [esp + 0x14]"
+    },
+    {
+     "at": "0x134a7",
+     "insn": "cmp ebx, edi"
+    }
+   ]
+  },
+  {
+   "addr": "0x13565",
+   "name": "end_player_phase_if_all_acted",
+   "summary": "所有我方單位(+6 = 2)中只要有一個 +5 沒有 0x81 旗標且 +0x26 為 0 就不做;全部行動完畢時暫時把 [0x51aac] / [0x51a83] 設 0,呼叫 0x1a30b 推進到下一階段,再設回 1(FD2.EXE 反組譯)。battle_main_input_loop 呼叫(doc10 的 0x1a30b 共用呼叫點之一)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x13594",
+     "insn": "test byte ptr [eax + 5], 0x81"
+    },
+    {
+     "at": "0x1359e",
+     "insn": "cmp ebx, 2"
+    },
+    {
+     "at": "0x135c5",
+     "insn": "call 0x1a30b"
+    }
+   ]
+  },
+  {
+   "addr": "0x145cd",
+   "name": "mark_units_blocking",
+   "summary": "(選擇值) 掃描全部單位([0x53a45],每筆 0x50),依呼叫端的選擇值與陣營 +6 篩選後呼叫 0x14625 在地圖上標阻擋(FD2.EXE 反組譯)。AI 移動、單位建構與戰鬥行動呼叫(doc11 的物理落點第一步)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x145de",
+     "insn": "mov ebx, dword ptr [0x3a45]"
+    },
+    {
+     "at": "0x145e8",
+     "insn": "add ebx, 0x50"
+    }
+   ]
+  },
+  {
+   "addr": "0x14625",
+   "name": "mark_unit_cell_blocking",
+   "summary": "(值 1, 值 2) 非 0 的參數各以 map_cell_set_bit7 在對應格子設 bit 7(阻擋)(FD2.EXE 反組譯)。只被 mark_units_blocking 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1463e",
+     "insn": "lea eax, [ebx - 1]"
+    },
+    {
+     "at": "0x14642",
+     "insn": "call 0x146a7"
+    }
+   ]
+  },
+  {
+   "addr": "0x14742",
+   "name": "find_unit_near_cursor",
+   "summary": "(cursorX, cursorY, 距離門檻, 輸出, 陣營篩選) 掃描全部單位,找與游標距離(abs 加總)在門檻內且陣營符合者寫進輸出(FD2.EXE 反組譯)。target_cursor_loop 呼叫;doc13 以 5 個 PUSH 核對簽名。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x14753",
+     "insn": "mov esi, dword ptr [esp + 0x2c]"
+    },
+    {
+     "at": "0x14767",
+     "insn": "cmp eax, dword ptr [0x3beb]"
+    }
+   ]
+  },
+  {
+   "addr": "0x149f8",
+   "name": "build_target_candidates",
+   "summary": "(7 個參數) 目標候選建構:從起點朝目標格逐步前進 N 步建立候選格,以 unit_at_cursor 檢查格上單位,寫進輸出陣列(FD2.EXE 反組譯)。player_spell_select、ai_item_candidate_select 與 ai_item_action 呼叫(doc13 的 target-candidate builder;doc11 稱評分端的路徑建構器)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x14ac2",
+     "insn": "call 0x12c0d"
+    }
+   ]
+  },
+  {
+   "addr": "0x15055",
+   "name": "ai_item_action",
+   "summary": "(單位, ...) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x150f1",
+     "insn": "call 0x149f8"
+    },
+    {
+     "at": "0x15195",
+     "insn": "call 0x2dfc8"
+    },
+    {
+     "at": "0x152f0",
+     "insn": "call 0x20c6f"
+    }
+   ]
+  },
+  {
+   "addr": "0x15df3",
+   "name": "find_event_cell",
+   "summary": "(事件號, &輸出) 雙層迴圈掃描地圖格,以 map_cell_info 取格子資訊,找地形控制旗標 & 0x60 == 0x20 且事件號相符的格子,座標寫進輸出(FD2.EXE 反組譯)。ai_mode_dispatch 呼叫(doc11 / doc25 的開寶箱邏輯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x15e3a",
+     "insn": "call 0x12e38"
+    },
+    {
+     "at": "0x15e4b",
+     "insn": "and dl, 0x60"
+    }
+   ]
+  },
+  {
+   "addr": "0x15f0e",
+   "name": "draw_res_image_frame",
+   "summary": "(資源, ..., 幀號, ...) 取資源 + [資源 + 幀號*4 + 6] 的幀,讀寬高後 malloc 緩衝,以 decode_image_with_header 解碼、blit_rle_c0_transparent 透明繪製(FD2.EXE 反組譯)。回合數字跑馬燈、HP 面板、武器命中特效等 8 處呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x15f27",
+     "insn": "add esi, dword ptr [esi + edi*4 + 6]"
+    },
+    {
+     "at": "0x15f2b",
+     "insn": "movsx ebx, word ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x168b6",
+   "name": "draw_box_frame_grid",
+   "summary": "(dst, stride, x, y, 寬, 高) 以 [0x53a81](FDOTHER #5 的框格圖)的格子,經 blit_raw_cell 拼出對話 / 資訊框的邊框與底(寬高以格計)(FD2.EXE 反組譯)。open_dialog_box、dialog_box_open_anim、info_card_build 等呼叫(doc13 的 5 x 5 框例)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x16910",
+     "insn": "call 0x1685c"
+    },
+    {
+     "at": "0x16936",
+     "insn": "call 0x1685c"
+    }
+   ]
+  },
+  {
+   "addr": "0x16f55",
+   "name": "field_command_ring",
+   "summary": "主戰鬥迴圈的指令環(doc11 的 selector 0 / 2 入口):複製 0x51e9f 的環項目表,以 action_ring_open / action_ring_select / action_ring_close 讀選擇,依選項進 options_ring(0x1728c)、battle_system_submenu(含存檔)、yes_no_prompt 確認結束回合後呼叫 0x1a30b 推進階段(FD2.EXE 反組譯)。battle_main_input_loop 呼叫(doc10 / doc11)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x16f6c",
+     "insn": "mov esi, 0x1e9f"
+    },
+    {
+     "at": "0x16f71",
+     "insn": "rep movsd dword ptr es:[edi], dword ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1728c",
+   "name": "options_ring",
+   "summary": "指令環的子選單:4 個環項目依 [0x51e61] / [0x51e62] / [0x53af9] / [0x51aab] 四個旗標決定是否反白,以 action_ring_open / select / close 讀選擇並切換旗標,其中一項以 AIL_set_sequence_volume 調整音樂音量(FD2.EXE 反組譯)。只被 field_command_ring 呼叫(doc11 的 selector2)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x172a5",
+     "insn": "mov esi, 0x1eaf"
+    },
+    {
+     "at": "0x172aa",
+     "insn": "rep movsd dword ptr es:[edi], dword ptr [esi]"
+    }
+   ]
+  },
+  {
+   "addr": "0x173e7",
+   "name": "ring_select_first_enabled",
+   "summary": "(4 格啟用表) 把環選擇 [0x53c57] 設成第一個啟用項的索引(都沒啟用時為 4)(FD2.EXE 反組譯)。player_action_ring 與 player_item_action 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x173f5",
+     "insn": "mov dword ptr [0x3c57], 0"
+    },
+    {
+     "at": "0x17415",
+     "insn": "cmp dword ptr [edx + eax*4], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x1741c",
+   "name": "action_ring_open",
+   "summary": "(項目表, ...) 建指令環:以 map_save_72px_block 存下游標周圍 72 px 區塊,依項目表畫四個圖示(blit_image_transparent)與單位(draw_unit_sprite)、重繪地圖層,播放開環音效(FD2.EXE 反組譯)。指令環家族的「建環」(doc11),5 個選單呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17431",
+     "insn": "call 0x12c0d"
+    },
+    {
+     "at": "0x1743f",
+     "insn": "imul edx, dword ptr [0x3ab9], 0x18"
+    }
+   ]
+  },
+  {
+   "addr": "0x176b4",
+   "name": "action_ring_close",
+   "summary": "(項目表, ...) 收指令環:play_sfx(8)、map_restore_72px_block 還原區塊、重畫單位並清鍵盤緩衝(FD2.EXE 反組譯)。指令環家族的收尾(doc11 / doc36)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x176c9",
+     "insn": "push 1"
+    },
+    {
+     "at": "0x176d3",
+     "insn": "call 0x25a96"
+    }
+   ]
+  },
+  {
+   "addr": "0x177fc",
+   "name": "action_ring_select",
+   "summary": "(項目表, ...) 以 action_ring_key_poll 讀環上的選擇,回傳 1(取消)時改回 -1,否則回傳選擇索引(FD2.EXE 反組譯)。指令環家族的讀鍵(doc11 的取消 = -1)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17810",
+     "insn": "call 0x17898"
+    },
+    {
+     "at": "0x1781d",
+     "insn": "mov eax, 0xffffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x17898",
+   "name": "action_ring_key_poll",
+   "summary": "(項目表, ...) 指令環的讀鍵迴圈:沒有鍵時每 tick 跑 palette_cycle_tick、tick_anim_counters 並重繪地形 / 單位 / HUD(0x1acf3)與環圖示(action_ring_draw),有鍵時經 int386 讀鍵並更新選擇 [0x53c57](FD2.EXE 反組譯)。只被 action_ring_select 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x178ad",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x178ba",
+     "insn": "call 0x4e31c"
+    }
+   ]
+  },
+  {
+   "addr": "0x179d5",
+   "name": "action_ring_draw",
+   "summary": "(項目表, ...) 畫指令環:以 unit_at_cursor 取單位、在畫面緩衝 [0x53a49] + 0x8088 一帶以 blit_image_transparent 依選擇 [0x53c57] 畫四個圖示(FD2.EXE 反組譯)。只被 action_ring_key_poll 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x179e6",
+     "insn": "call 0x12c0d"
+    },
+    {
+     "at": "0x179f4",
+     "insn": "add eax, 0x8088"
+    }
+   ]
+  },
+  {
+   "addr": "0x17aed",
+   "name": "unit_info_cards",
+   "summary": "(單位) 非互動的資訊卡序列:info_card_open_anim 開卡、wait_key_with_marker 等鍵,有法術才加演法術列表卡,接著播裝備 / 道具資訊卡(0x1ceed 取文字),以 menu_transition_panel_a / b / c 轉場後關閉;本體完全不讀選擇(FD2.EXE 反組譯)。battle_main_input_loop 與 0x29620 呼叫(doc13 §2)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17afc",
+     "insn": "call 0x17e0b"
+    },
+    {
+     "at": "0x17b06",
+     "insn": "call 0x16c57"
+    }
+   ]
+  },
+  {
+   "addr": "0x17d6f",
+   "name": "draw_stat_bar_cells",
+   "summary": "(x, y, 長度, 色格) 逐欄畫數值條:前 長度 欄以 blit_raw_cell 畫傳入的色格,其餘到 101 欄畫空槽格 0x1d,端點以 0x1e / 0x5d 收尾(FD2.EXE 反組譯)。0x18795 呼叫(doc06 / doc35)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17de0",
+     "insn": "push 0x1d"
+    },
+    {
+     "at": "0x17df4",
+     "insn": "push 0x1e"
+    }
+   ]
+  },
+  {
+   "addr": "0x17e0b",
+   "name": "info_card_open_anim",
+   "summary": "(單位) 資訊卡的開卡演出:malloc 三個 64000 bytes 畫面緩衝([0x53c5b] / [0x53c5f] / [0x53c63]),以 info_card_build 組卡,0x184c0 / 0x18409 合成,依 frame 11 -> 0 逐幀展開(FD2.EXE 反組譯)。unit_info_cards、0x1b932 與 equip_menu 呼叫(doc13 的 opening schedule)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17e16",
+     "insn": "push 0xfa00"
+    },
+    {
+     "at": "0x17e23",
+     "insn": "mov dword ptr [0x3c5b], eax"
+    },
+    {
+     "at": "0x17e35",
+     "insn": "mov dword ptr [0x3c5f], eax"
+    }
+   ]
+  },
+  {
+   "addr": "0x17eef",
+   "name": "info_card_build",
+   "summary": "(單位, ...) 組資訊卡:[0x53c67] 設 0xc88,依單位 +7 以 load_res 載入 DATO 頭像到 [0x53a85],以 draw_box_frame_grid 畫框、blit_rle_image 畫頭像,再 draw_unit_status_panel(FD2.EXE 反組譯)。info_card_open_anim、equip_menu、player_spell_select 呼叫(doc13 / doc35)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x17efa",
+     "insn": "mov dword ptr [0x3c67], 0xc88"
+    },
+    {
+     "at": "0x17f17",
+     "insn": "movzx eax, byte ptr [ebx + eax + 7]"
+    }
+   ]
+  },
+  {
+   "addr": "0x17fc0",
+   "name": "draw_unit_status_panel",
+   "summary": "(單位, ...) 單位狀態面板:兩條數值條(0x18795)、四個比較數字與八個原始數字(draw_number / 0x1875d)、以 dialog 取 FDTXT 標籤(FD2.EXE 反組譯)。info_card_build 與 draw_roster_pick_grid 呼叫(doc13 / doc32)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x18015",
+     "insn": "call 0x18795"
+    },
+    {
+     "at": "0x180b3",
+     "insn": "call 0x187d6"
+    }
+   ]
+  },
+  {
+   "addr": "0x18409",
+   "name": "info_card_present_frame",
+   "summary": "(幀號, 目的, 來源, ...) 資訊卡的逐幀合成:memmove 64000 bytes 底圖,依幀號(與 2 / 6 / 9 比較)以 menu_transition_panel_a / b / c 組三塊 320 跨距區域後輸出(FD2.EXE 反組譯)。開卡 / 關卡排程與各選單呼叫(doc13 的 present compositor)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1841d",
+     "insn": "push 0xfa00"
+    },
+    {
+     "at": "0x1842f",
+     "insn": "cmp ebx, 6"
+    },
+    {
+     "at": "0x18452",
+     "insn": "call 0x182ad"
+    }
+   ]
+  },
+  {
+   "addr": "0x184c0",
+   "name": "draw_item_panel",
+   "summary": "(單位, 選擇, 目的) 道具 / 裝備面板:兩欄四列的道具格,以 dialog 取 FDTXT 標籤、item_effect_row_ptr 取物品列、blit_res_cell_sprite 畫圖示、draw_number 畫數值(FD2.EXE 反組譯)。info_card_open_anim、item_grid_select 與 equip_menu 呼叫(doc13 / doc32)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x18587",
+     "insn": "call 0x15f84"
+    },
+    {
+     "at": "0x186d7",
+     "insn": "call 0x16886"
+    },
+    {
+     "at": "0x1873d",
+     "insn": "call 0x4e8bc"
+    }
+   ]
+  },
+  {
+   "addr": "0x1875d",
+   "name": "draw_number_full_color",
+   "summary": "(x, 目前值, 最大值, ...) 目前值等於最大值用色 0x1f、否則 0x2a,再以 draw_number 畫目前值(FD2.EXE 反組譯)。HP / MP 數字用(doc35:滿血 / 非滿血換色)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x18767",
+     "insn": "mov eax, 0x2a"
+    },
+    {
+     "at": "0x18770",
+     "insn": "cmp edx, dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x18776",
+     "insn": "mov eax, 0x1f"
+    }
+   ]
+  },
+  {
+   "addr": "0x18795",
+   "name": "draw_stat_bar",
+   "summary": "(x, dst, 列, 目前值, 最大值) 最大值為 0 不畫;目前值為 0 時長度 0,否則長度 = 目前值 x 101 / 最大值 + 1,交 draw_stat_bar_cells 畫(FD2.EXE 反組譯)。HP 條(列 0x17)與 MP 條(列 0x1a)用(doc35)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1879f",
+     "insn": "cmp dword ptr [esp + 0x14], 0"
+    },
+    {
+     "at": "0x187ad",
+     "insn": "imul edx, dword ptr [esp + 0x10], 0x65"
+    },
+    {
+     "at": "0x187b7",
+     "insn": "idiv dword ptr [esp + 0x14]"
+    }
+   ]
+  },
+  {
+   "addr": "0x18b84",
+   "name": "battle_idle_redraw_tick",
+   "summary": "(單位) 戰鬥行動等待時的閒置動畫:依 [0x53ab9] 選面板位置,鍵盤緩衝沒有鍵時逐 tick 重畫地形、移動範圍疊圖、單位層、HUD 與 draw_unit_panel;本身不讀鍵(FD2.EXE 反組譯)。戰鬥行動呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x18b96",
+     "insn": "cmp dword ptr [0x3ab9], 7"
+    },
+    {
+     "at": "0x18bab",
+     "insn": "call 0x10620"
+    },
+    {
+     "at": "0x18c14",
+     "insn": "call 0x18c6d"
+    }
+   ]
+  },
+  {
+   "addr": "0x190ac",
+   "name": "field_cell_treasure_check",
+   "summary": "(單位) 原地休息(指令環 case 3)時檢查腳下格子:以 map_cell_info 取 FDFIELD 寶物控制列,三位元組 {種類, payload} 中 0 = 物品(unit_add_item,滿了以 item_panel_session 換)、1 = 金錢,其他種類以 payload 索引 0x51b91 事件表直接呼叫;有對話框與 yes_no_prompt(FD2.EXE 反組譯)。player_action_ring 呼叫(doc13 / doc25 §6.3)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x19239",
+     "insn": "call 0x1bb8c"
+    },
+    {
+     "at": "0x19304",
+     "insn": "call 0x1b932"
+    },
+    {
+     "at": "0x19511",
+     "insn": "call dword ptr [eax*4 + 0x1b91]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1a30b",
+   "name": "battle_phase_advance",
+   "summary": "戰鬥階段推進(doc10 的 NativeBattleEntryStep 共用 primitive):清行動旗標、turn_event_dispatch 與 turn_status_tick 收束、友軍階段 friendly_phase_dispatch、敵軍階段 enemy_phase_dispatch,回合數字演出(draw_res_image_frame / draw_number)與 BGM 切換(FD2.EXE 反組譯)。end_player_phase_if_all_acted 與 field_command_ring 呼叫;doc11 記 0x1a4eb 的呼叫順序。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1a4c7",
+     "insn": "call 0x1a813"
+    },
+    {
+     "at": "0x1a4d1",
+     "insn": "call 0x1a866"
+    },
+    {
+     "at": "0x1a4eb",
+     "insn": "call 0x1d80b"
+    }
+   ]
+  },
+  {
+   "addr": "0x1a866",
+   "name": "turn_status_tick",
+   "summary": "(階段) 回合的狀態結算:先對 +0x25 非 0 的單位扣 最大 HP / 10(中毒,doc42),再遞減各狀態計數,最後 unit_death_sweep 清掉陣亡單位;期間有對話框(FD2.EXE 反組譯)。battle_phase_advance 呼叫(doc11 的 0x1a866(0) / 0x1a866(1))。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1a897",
+     "insn": "movzx eax, byte ptr [esi + 0x25]"
+    },
+    {
+     "at": "0x1a8c1",
+     "insn": "idiv ebx"
+    },
+    {
+     "at": "0x1a941",
+     "insn": "call 0x1db65"
+    }
+   ]
+  },
+  {
+   "addr": "0x1aa1d",
+   "name": "grant_reward_rows",
+   "summary": "(單位, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1ab12",
+     "insn": "call 0x1bb8c"
+    },
+    {
+     "at": "0x1ac1a",
+     "insn": "call dword ptr [eax*4 + 0x1b91]"
+    }
+   ]
+  },
+  {
+   "addr": "0x1acf3",
+   "name": "draw_map_hud",
+   "summary": "(dst, ...) 地圖的地形 / 單位 HUD:旗標 [0x51aab] 決定是否顯示,以 map_cell_info 取游標格,blit_tile24_rle 畫地形圖格、draw_signed_number2 畫地形加成,單位格再畫圖示與 HP 數字(draw_number_full_color)(FD2.EXE 反組譯)。redraw 與指令環家族呼叫(doc10)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1ad0c",
+     "insn": "movzx eax, byte ptr [0x1aab]"
+    },
+    {
+     "at": "0x1ad9d",
+     "insn": "call 0x12e38"
+    },
+    {
+     "at": "0x1adc4",
+     "insn": "call 0x4e22a"
+    },
+    {
+     "at": "0x1ade4",
+     "insn": "call 0x1aeb1"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b6b7",
+   "name": "collect_unit_reward_rows",
+   "summary": "(輸出) 掃描全部單位,把符合 raw record gate 的執行期 +0x31 .. +0x33(三位元組 {種類, payload})以 memmove 複製成獎勵列(FD2.EXE 反組譯)。攻擊 / 法術收尾呼叫,結果交 grant_reward_rows(doc25)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1b6f3",
+     "insn": "movzx edx, byte ptr [eax + 0x31]"
+    },
+    {
+     "at": "0x1b709",
+     "insn": "add eax, 0x31"
+    },
+    {
+     "at": "0x1b717",
+     "insn": "call 0x3771c"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b932",
+   "name": "item_panel_session",
+   "summary": "(單位, ...) 道具面板的一次操作:info_card_open_anim 開卡、[0x53c57] 清 0、item_grid_select 選道具,再依 0 -> 11 逐幀以 info_card_present_frame 關卡(每幀從保存的 64000 bytes 緩衝重建)並釋放緩衝(FD2.EXE 反組譯)。格子寶物、獎勵發放與 player_item_action 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1b948",
+     "insn": "call 0x17e0b"
+    },
+    {
+     "at": "0x1b950",
+     "insn": "mov dword ptr [0x3c57], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b9de",
+   "name": "item_grid_select",
+   "summary": "(單位, ...) 兩欄四列的道具選擇:以 draw_item_panel 畫面板,wait_key_with_marker 讀鍵,依方向鍵(含上下 0x48 / 0x50)移動選擇 [0x53c57],確認 / 取消回傳(FD2.EXE 反組譯)。item_panel_session 與 equip_menu 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1b9fc",
+     "insn": "call 0x184c0"
+    },
+    {
+     "at": "0x1ba32",
+     "insn": "call 0x16c57"
+    },
+    {
+     "at": "0x1ba3d",
+     "insn": "cmp eax, 0x48"
+    }
+   ]
+  },
+  {
+   "addr": "0x1c9dd",
+   "name": "item_mp_restore",
+   "summary": "(單位, 量) 回復 MP:目前 MP +0x44 加上回復量(含 prng_next 的亂數),不超過上限 +0x46(FD2.EXE 反組譯)。物品效果分派 0x20c6f 呼叫(doc13 / doc11 的 MP 回復)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1ca04",
+     "insn": "movzx edi, word ptr [esi + 0x44]"
+    },
+    {
+     "at": "0x1ca08",
+     "insn": "movzx eax, word ptr [esi + 0x46]"
+    },
+    {
+     "at": "0x1ca28",
+     "insn": "call 0x4ebe3"
+    }
+   ]
+  },
+  {
+   "addr": "0x1cac7",
+   "name": "type21_effect_presentation",
+   "summary": "(..., ...) 物品效果 type 21 的另一套呈現:draw_units_with_list_overlay 畫單位與清單疊圖,malloc 0x25680 bytes 保存畫面,逐幀 copy_rect / delay 後釋放;不改遊戲狀態(FD2.EXE 反組譯)。0x2111a 與 0x213b7 呼叫(doc13 / doc32:presentation helper,不是 MP 扣除)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1cae3",
+     "insn": "call 0x1cb94"
+    },
+    {
+     "at": "0x1caeb",
+     "insn": "push 0x25680"
+    }
+   ]
+  },
+  {
+   "addr": "0x1ceed",
+   "name": "draw_command_list",
+   "summary": "(單位, 選擇, 目的) 畫指令 / 法術清單:unit_list_bits_1a 取單位可用的指令,每項以 dialog([0x53a7d], 0x1b9 + 指令號) 取 FDTXT 標籤,另以 row7_ptr_619fd 取表、draw_number 畫數值(FD2.EXE 反組譯)。unit_info_cards、player_spell_select 與 command_grid_select 呼叫(doc13 / doc36 的 command_labels)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1cf05",
+     "insn": "call 0x1c269"
+    },
+    {
+     "at": "0x1cf3e",
+     "insn": "add eax, 0x1b9"
+    },
+    {
+     "at": "0x1cf4a",
+     "insn": "call 0x15f84"
+    }
+   ]
+  },
+  {
+   "addr": "0x1d4f6",
+   "name": "play_loaded_sfx_and_free",
+   "summary": "play_sfx([0x53b13], -1, 1) 播放已載入的音效,再尾跳 0x1a80a 以 heap_free 釋放 [0x53b13](FD2.EXE 反組譯)。法術 / 物品效果與 ai_spell_execute 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1d502",
+     "insn": "push -1"
+    },
+    {
+     "at": "0x1d50a",
+     "insn": "call 0x25a96"
+    },
+    {
+     "at": "0x1d518",
+     "insn": "jmp 0x1a80a"
+    }
+   ]
+  },
+  {
+   "addr": "0x1d51d",
+   "name": "command_grid_select",
+   "summary": "(單位) 指令網格選擇:每欄四列、欄數可變,以 draw_command_list 畫、wait_key_with_marker 讀鍵,上下(0x48 / 0x50)在線性索引上移動、左右(0x4b / 0x4d)跨欄(FD2.EXE 反組譯)。player_spell_select 呼叫(doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1d53c",
+     "insn": "call 0x1ceed"
+    },
+    {
+     "at": "0x1d569",
+     "insn": "call 0x16c57"
+    },
+    {
+     "at": "0x1d574",
+     "insn": "cmp eax, 0x48"
+    },
+    {
+     "at": "0x1d60b",
+     "insn": "cmp eax, 0x4b"
+    }
+   ]
+  },
+  {
+   "addr": "0x1d6c8",
+   "name": "spell_palette_flicker",
+   "summary": "(指令號) 法術施放前的四輪調色盤閃爍:play_sfx([0x53b13]),以 outp 寫 VGA DAC(埠 0x3c8 / 0x3c9)閃爍並 wait_ticks(FD2.EXE 反組譯)。player_spell_select 對指令號 0x09..0x17 與 0x19..0x1b 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1d6e2",
+     "insn": "call 0x25a96"
+    },
+    {
+     "at": "0x1d6f3",
+     "insn": "push 0x3c8"
+    },
+    {
+     "at": "0x1d708",
+     "insn": "push 0x3c9"
+    }
+   ]
+  },
+  {
+   "addr": "0x1df58",
+   "name": "action_finish_effect",
+   "summary": "動作收尾的畫面效果:複製 0x5202c 的 25 項曲線表(15, 15, 15, 15, 7, 3, 1, 0, 0, 1, 3, 7, 15 ..),malloc 0x25680 bytes 保存畫面,逐幀以 copy_rect 輸出並 delay,最後 blit_rle_c0_transparent 畫回、釋放緩衝並 delay(500)(FD2.EXE 反組譯)。單一目標傷害動作(command_handler_9)、地震法術等 8 處的收尾呼叫(doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1df70",
+     "insn": "mov esi, 0x202c"
+    },
+    {
+     "at": "0x1df85",
+     "insn": "push 0x25680"
+    },
+    {
+     "at": "0x1e0c9",
+     "insn": "push 0x1f4"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f04a",
+   "name": "face_toward_unit",
+   "summary": "(攻方, 守方) 依兩者 +0 / +1(X / Y)的差以 abs 比較主軸,把攻方面向 +3 寫成 0 / 1 / 2 / 3;不播演出(FD2.EXE 反組譯)。攻擊、AI 攻擊與 AI 道具行動呼叫(doc13 訂正:它不呼叫 0x28a6c)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f085",
+     "insn": "call 0x37932"
+    },
+    {
+     "at": "0x1f0b0",
+     "insn": "mov byte ptr [ebx + 3], 1"
+    },
+    {
+     "at": "0x1f0cc",
+     "insn": "mov byte ptr [ebx + 3], 2"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f1cc",
+   "name": "phase_banner_zoom_in",
+   "summary": "(圖格) 階段切換演出:malloc 64000 bytes,先以 phase_banner_split_slide 分割滑入標題,再把放大倍率 ebp 從 1 遞增、以 screen_zoom_blit 放大畫面並 palette_brightness_ramp 調亮度(FD2.EXE 反組譯)。battle_phase_advance 以 0x52 呼叫(doc56 / doc57)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f1da",
+     "insn": "mov ebp, 1"
+    },
+    {
+     "at": "0x1f210",
+     "insn": "call 0x1f42d"
+    },
+    {
+     "at": "0x1f26c",
+     "insn": "call 0x4eb59"
+    },
+    {
+     "at": "0x1f2ec",
+     "insn": "inc ebp"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f30a",
+   "name": "phase_banner_zoom_out",
+   "summary": "(圖格) 階段切換演出的另一半:放大倍率 ebp 從 0x11 遞減、以 screen_zoom_blit 還原畫面並調亮度,最後 phase_banner_split_slide 畫標題(FD2.EXE 反組譯)。battle_phase_advance 以 0x52 呼叫(doc57)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f318",
+     "insn": "mov ebp, 0x11"
+    },
+    {
+     "at": "0x1f34e",
+     "insn": "call 0x4eb59"
+    },
+    {
+     "at": "0x1f3ce",
+     "insn": "dec ebp"
+    },
+    {
+     "at": "0x1f41a",
+     "insn": "call 0x1f42d"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f42d",
+   "name": "phase_banner_split_slide",
+   "summary": "(圖格, 位移) 分割滑入的階段標題:FDOTHER #5 的圖格(0x52),兩半分別畫在 (0x55 - 位移, 82) 與 (165 + 位移, 81),跨距 0x1c8(456)(FD2.EXE 反組譯)。phase_banner_zoom_in / zoom_out 以位移 100、75、50、25、0 逐幀呼叫(doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f43d",
+     "insn": "push 0x52"
+    },
+    {
+     "at": "0x1f43f",
+     "insn": "mov ebx, 0x55"
+    },
+    {
+     "at": "0x1f449",
+     "insn": "push 0x1c8"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f73f",
+   "name": "show_fdother_static_screen",
+   "summary": "(.., .., 索引 A, 索引 B) FDOTHER 靜態全螢幕畫面:palfade_in 後清 VGA(memset 0xa0000),以 load_res 載入並 blit_rle_image_at_xy 畫,wait_ticks 停留後 palfade(FD2.EXE 反組譯)。title_seq 呼叫(doc23 §2.4 ⑥:獨立於 ANI / AFM VM 的第二套顯示機制)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f74a",
+     "insn": "call 0x1f882"
+    },
+    {
+     "at": "0x1f756",
+     "insn": "push 0xa0000"
+    },
+    {
+     "at": "0x1f75b",
+     "insn": "call 0x37910"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f81e",
+   "name": "title_anim_or_still",
+   "summary": "(.., .., FDOTHER 索引) 第 3 參數不是 -1 時清 VGA 並以該 FDOTHER 索引直接顯示,否則以 ani_player 播動畫;另以 palette_brightness_ramp 調亮度(FD2.EXE 反組譯)。title_seq 呼叫(doc39)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f828",
+     "insn": "cmp dword ptr [esp + 0xc], -1"
+    },
+    {
+     "at": "0x1f836",
+     "insn": "push 0xa0000"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f894",
+   "name": "title_seq",
+   "summary": "開機動畫、標題畫面與主選單:以 ani_player / title_anim_or_still / show_fdother_static_screen 播開場,title_menu_draw_buttons 畫選單,讀鍵選擇;讀取存檔時以 fopen / fread、save_checksum_sum / save_xor_crypt 檢查,回傳選擇(FD2.EXE 反組譯)。title_menu_dispatch 呼叫(doc12 / doc23 的 boot 鏈 main 0x25bf4 -> 0x25ebb -> 0x1f894)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x1f8a5",
+     "insn": "mov dword ptr [esp + 0x50], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20421",
+   "name": "ani_player",
+   "summary": "(動畫號, ..., ...) 全螢幕動畫播放器:fopen / fseek / fread 讀 ANI 動畫,幀數取 [緩衝 + 0xa5],每幀以 anim_vm_set_context 設目標、anim_vm_run 跑 10-opcode 的增量繪圖位元組碼,期間依需要 play_sfx,有鍵可跳過(FD2.EXE 反組譯)。title_seq、play_fullscreen_animation 等 4 處呼叫(doc35 / doc39)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2043a",
+     "insn": "call 0x4e381"
+    },
+    {
+     "at": "0x2043f",
+     "insn": "cmp dword ptr [esp + 0x28], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x205b4",
+   "name": "battle_result_check_default",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26) 的預設:做完堆疊檢查直接落進 raw_result_code_0_1_2(掃 +6 == 0 且 +5 & 1 == 0 的單位、另查記錄 0 bit 0)(FD2.EXE 反組譯)。doc26:表索引 0、2 .. 8、10、13、23 共用。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x205b4",
+     "insn": "push 4"
+    },
+    {
+     "at": "0x205b9",
+     "insn": "call 0x3702f"
+    }
+   ]
+  },
+  {
+   "addr": "0x206c5",
+   "name": "battle_result_check_1",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後檢查單位群 5 .. 10 的狀態(FD2.EXE 反組譯)。doc26 表索引 1。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x206d0",
+     "insn": "call 0x205be"
+    },
+    {
+     "at": "0x206d5",
+     "insn": "mov edx, 5"
+    },
+    {
+     "at": "0x206dd",
+     "insn": "cmp edx, 0xb"
+    }
+   ]
+  },
+  {
+   "addr": "0x20707",
+   "name": "battle_result_check_9",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後以 unit_inactive 查單位 0x32 / 0x33(FD2.EXE 反組譯)。doc26 表索引 9。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20716",
+     "insn": "push 0x32"
+    },
+    {
+     "at": "0x20718",
+     "insn": "call 0x34894"
+    },
+    {
+     "at": "0x20724",
+     "insn": "push 0x33"
+    }
+   ]
+  },
+  {
+   "addr": "0x2073d",
+   "name": "battle_result_check_11",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(0xe) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 11。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2074c",
+     "insn": "push 0xe"
+    },
+    {
+     "at": "0x2075a",
+     "insn": "mov dword ptr [0x3ecc], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20765",
+   "name": "battle_result_check_12",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後掃單位 0 .. 11,並查另兩個單位,有對話(FD2.EXE 反組譯)。doc26 表索引 12(多段事件)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20777",
+     "insn": "call 0x205be"
+    },
+    {
+     "at": "0x20781",
+     "insn": "cmp ebx, 0xc"
+    }
+   ]
+  },
+  {
+   "addr": "0x20822",
+   "name": "battle_result_check_14",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(0x40) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 14。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20831",
+     "insn": "push 0x40"
+    },
+    {
+     "at": "0x2083f",
+     "insn": "mov dword ptr [0x3ecc], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x2084a",
+   "name": "battle_result_check_15",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(0x41) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 15。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20859",
+     "insn": "push 0x41"
+    },
+    {
+     "at": "0x20867",
+     "insn": "mov dword ptr [0x3ecc], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20872",
+   "name": "battle_result_check_16",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):roster_has(0x12) 為假時再查 unit_inactive(0x34),有對話(FD2.EXE 反組譯)。doc26 表索引 16。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20881",
+     "insn": "push 0x12"
+    },
+    {
+     "at": "0x20883",
+     "insn": "call 0x33499"
+    },
+    {
+     "at": "0x2088f",
+     "insn": "push 0x34"
+    }
+   ]
+  },
+  {
+   "addr": "0x208cf",
+   "name": "battle_result_check_17",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):依序 unit_inactive(0)、(0x10) .. 決定 [0x53ecc] 為 1 或 2(FD2.EXE 反組譯)。doc26 表索引 17(§3 有完整反組譯)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x208d9",
+     "insn": "push 0"
+    },
+    {
+     "at": "0x208e7",
+     "insn": "push 0x10"
+    }
+   ]
+  },
+  {
+   "addr": "0x20926",
+   "name": "battle_result_check_18",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):回合 [0x53bef] > 6 且 unit_inactive(0x40) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 18(回合觸發)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20935",
+     "insn": "cmp dword ptr [0x3bef], 6"
+    },
+    {
+     "at": "0x2093e",
+     "insn": "push 0x40"
+    }
+   ]
+  },
+  {
+   "addr": "0x20957",
+   "name": "battle_result_check_19",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後掃單位 0x26 .. 0x2d,再查另一單位決定 1 或 2,有對話(FD2.EXE 反組譯)。doc26 表索引 19。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2096e",
+     "insn": "mov ebx, 0x26"
+    },
+    {
+     "at": "0x20976",
+     "insn": "cmp ebx, 0x2e"
+    }
+   ]
+  },
+  {
+   "addr": "0x20a51",
+   "name": "battle_result_check_20",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後查 unit_inactive(0x10) / (0x11)(FD2.EXE 反組譯)。doc26 表索引 20。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20a60",
+     "insn": "push 0x10"
+    },
+    {
+     "at": "0x20a6e",
+     "insn": "push 0x11"
+    }
+   ]
+  },
+  {
+   "addr": "0x20a87",
+   "name": "battle_result_check_21",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(1) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 21 / 26 / 27 共用;doc25 §3.1:實際條件是場上的敵方全滅。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20a96",
+     "insn": "push 1"
+    },
+    {
+     "at": "0x20aa4",
+     "insn": "mov dword ptr [0x3ecc], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20aaf",
+   "name": "battle_result_check_22",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):依序 unit_inactive(0)、(1) .. 決定 [0x53ecc] 為 1 或 2(FD2.EXE 反組譯)。doc26 表索引 22。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20ab9",
+     "insn": "push 0"
+    },
+    {
+     "at": "0x20ac7",
+     "insn": "push 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20b14",
+   "name": "battle_result_check_24",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(0x10) 時 [0x53ecc] = 1(FD2.EXE 反組譯)。doc26 表索引 24。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20b23",
+     "insn": "push 0x10"
+    },
+    {
+     "at": "0x20b31",
+     "insn": "mov dword ptr [0x3ecc], 1"
+    }
+   ]
+  },
+  {
+   "addr": "0x20b3c",
+   "name": "battle_result_check_25",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):raw_result_code_0_1_2 後依序查 unit_inactive(1)、(2) ..(FD2.EXE 反組譯)。doc26 表索引 25。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20b4b",
+     "insn": "push 1"
+    },
+    {
+     "at": "0x20b59",
+     "insn": "push 2"
+    }
+   ]
+  },
+  {
+   "addr": "0x20b72",
+   "name": "battle_result_check_28",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):章節旗標表 [0x53ad5] 的 +0x12 / +0x13 / +0x14 都非 0 時 [0x53ecc] = 2,否則再查單位,有對話(FD2.EXE 反組譯)。doc26 表索引 28(結局關,doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20b81",
+     "insn": "cmp byte ptr [eax + 0x12], 0"
+    },
+    {
+     "at": "0x20b87",
+     "insn": "cmp byte ptr [eax + 0x13], 0"
+    },
+    {
+     "at": "0x20b93",
+     "insn": "mov dword ptr [0x3ecc], 2"
+    }
+   ]
+  },
+  {
+   "addr": "0x20bf5",
+   "name": "battle_result_check_29",
+   "summary": "勝負判定 handler(戰場跳表 0x51b19 的格,結果寫進 [0x53ecc];doc25 / doc26):unit_inactive(0x14) 時 [0x53ecc] = 2,再查 unit_inactive(0) ..,有對話(FD2.EXE 反組譯)。doc26 表索引 29(結局關)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20bff",
+     "insn": "push 0x14"
+    },
+    {
+     "at": "0x20c0d",
+     "insn": "mov dword ptr [0x3ecc], 2"
+    },
+    {
+     "at": "0x20c17",
+     "insn": "push 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x20c6f",
+   "name": "item_effect_dispatch",
+   "summary": "(使用者, 道具, ...) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x20c87",
+     "insn": "call 0x1d4cb"
+    },
+    {
+     "at": "0x20c8c",
+     "insn": "mov dword ptr [0x3ec4], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x21082",
+   "name": "item_effect_stat_up",
+   "summary": "(7 個參數) 道具 type 8 / 9 / 0xa 的效果:play_map_effect_animation 演出、提升能力後 recalc_equipped_stats 重算,remove_inventory_slot 消耗道具,queue_unit_number_popup 顯示數值(FD2.EXE 反組譯)。只被 item_effect_dispatch 呼叫(doc13:與 raw table 全表對齊)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2109e",
+     "insn": "call 0x1c4cc"
+    }
+   ]
+  },
+  {
+   "addr": "0x2111a",
+   "name": "item_effect_type21_damage",
+   "summary": "(使用者, 數量, 目標, ...) 道具 type 0x15 的傷害效果:play_map_effect_animation,對每個目標 spell_damage_resolve,以 type21_effect_presentation 呈現,傷害 0 時 queue_unit_fixed_popup、否則 queue_unit_number_popup,收尾 action_finish_effect(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc13 / doc32)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x21128",
+     "insn": "mov edi, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x2112c",
+     "insn": "mov ebp, dword ptr [esp + 0x20]"
+    }
+   ]
+  },
+  {
+   "addr": "0x211a4",
+   "name": "item_effect_heal",
+   "summary": "(使用者, 數量, 目標 bytes, 回復量) 回復效果:play_map_effect_animation 演出,對每個目標 heal_hp_apply、present_effect_on_targets 與 queue_unit_number_popup 顯示(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc32:ABI 已由 IDA 閉合)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x211b2",
+     "insn": "mov edi, dword ptr [esp + 0x18]"
+    },
+    {
+     "at": "0x211b6",
+     "insn": "mov ebp, dword ptr [esp + 0x1c]"
+    }
+   ]
+  },
+  {
+   "addr": "0x21227",
+   "name": "command_generic_damage",
+   "summary": "(使用者, 指令號, ...) 一般指令(指令處理表第 0 格)的傷害路線:[0x53ec4] 清 0,建好目標陣列後 unit_spend_mp 扣 MP,逐目標 spell_damage_resolve,以 play_map_effect_animation / flash_listed_units_band_cycle 演出並跳數字(FD2.EXE 反組譯)。command_handler_0 呼叫(doc56 / doc91 的 MP 交易)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2123d",
+     "insn": "mov dword ptr [0x3ec4], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x213b7",
+   "name": "command_generic_damage_type21",
+   "summary": "(使用者, 指令號, ...) 指令處理表第 4 格的傷害路線:與 command_generic_damage 相同(unit_spend_mp、spell_damage_resolve),呈現改用 type21_effect_presentation(FD2.EXE 反組譯)。command_handler_4 呼叫(doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x213cd",
+     "insn": "mov dword ptr [0x3ec4], 0"
+    }
+   ]
+  },
+  {
+   "addr": "0x22470",
+   "name": "unit_present_intro_frames",
+   "summary": "(單位, ...) 單位出現演出的前段:FDOTHER #6 的圖格 0x72 .. 0x7c 逐張以 blit_rle_c0_transparent 畫到 0x8088 + 24 x (x - 鏡頭 X) + 0x1c8 x 24 x (y - 鏡頭 Y) + 0x1c8,每張後 draw_unit_layer 重畫、copy_rect 輸出 320 x 192 並 wait_ticks(1),共 11 幀(FD2.EXE 反組譯)。unit_present 呼叫(doc31)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x224f5",
+     "insn": "call 0x4ebab"
+    },
+    {
+     "at": "0x224fd",
+     "insn": "call 0x127a9"
+    },
+    {
+     "at": "0x22526",
+     "insn": "call 0x11eb0"
+    }
+   ]
+  },
+  {
+   "addr": "0x22721",
+   "name": "effect_ap_percent_buff",
+   "summary": "(使用者, 數量, 目標) AP% 增益效果:對每個目標以 prng_next 與 chp_truncate 算出增量,寫回並 queue_unit_number_popup 顯示,經驗累加到 [0x53ec8](FD2.EXE 反組譯)。道具效果(type 0x10)、command_handler_17 與 0x2d80d 呼叫(doc11 舊位址 0x47935)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x22740",
+     "insn": "call 0x1c4cc"
+    },
+    {
+     "at": "0x227bc",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x227e9",
+     "insn": "call 0x37af4"
+    }
+   ]
+  },
+  {
+   "addr": "0x22866",
+   "name": "effect_dp_percent_buff",
+   "summary": "(使用者, 數量, 目標) DP% 增益效果:與 effect_ap_percent_buff 同結構(prng_next、chp_truncate、跳數字、經驗累加)(FD2.EXE 反組譯)。道具效果(type 0xf)、command_handler_18 與 0x2d80d 呼叫(doc11 舊位址 0x47a7a)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x22885",
+     "insn": "call 0x1c4cc"
+    },
+    {
+     "at": "0x22901",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x2292e",
+     "insn": "call 0x37af4"
+    }
+   ]
+  },
+  {
+   "addr": "0x22997",
+   "name": "effect_hit_ev_buff",
+   "summary": "(使用者, 數量, 目標) HIT / EV 增益效果:對每個目標以 prng_next 決定增量並跳數字;type 12 重用時目標標記 +0x24 非 0 就跳過且不耗亂數(FD2.EXE 反組譯)。道具效果、command_handler_19 與 0x2d80d 呼叫(doc11 舊位址 0x47bab、doc13)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x229b6",
+     "insn": "call 0x1c4cc"
+    },
+    {
+     "at": "0x22a30",
+     "insn": "call 0x4ebe3"
+    },
+    {
+     "at": "0x22a59",
+     "insn": "call 0x1e0db"
+    }
+   ]
+  },
+  {
+   "addr": "0x22af6",
+   "name": "effect_cure_status_flag",
+   "summary": "(使用者, 數量, 目標 bytes, 狀態欄位偏移, ...) 解除狀態:對每個目標,單位記錄在指定偏移的狀態 byte 非 0 時呼叫 heal_hp_apply(目標, 0xa)、queue_unit_number_popup(0x69),把該 byte 清 0,並以 等級(職業 9 .. 0x18 再加 30)x 4 累加經驗 [0x53ec8];狀態 byte 為 0 時 queue_unit_fixed_popup(FD2.EXE 反組譯)。道具效果(type 6 / 7)與 cast_fixed_heal_after_mp 呼叫(doc11 的「狀態清除」)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x22b7f",
+     "insn": "movzx eax, byte ptr [esi]"
+    },
+    {
+     "at": "0x22b92",
+     "insn": "call 0x1c916"
+    },
+    {
+     "at": "0x22ba9",
+     "insn": "mov byte ptr [esi], 0"
+    },
+    {
+     "at": "0x22baf",
+     "insn": "add dword ptr [0x3ec8], ebp"
+    }
+   ]
+  },
+  {
+   "addr": "0x22e5c",
+   "name": "show_result_resource_79",
+   "summary": "戰役迴圈在 pending 碼 [0x53ecc] = 1 時的固定呈現:以 load_res 載入資源 #79,bgm 換曲,blit_anim_frame 逐幀播放並淡入淡出(FD2.EXE 反組譯)。game_main 呼叫(doc23:1 -> 資源 #79,2 -> 章節戰後表)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x22e8b",
+     "insn": "call 0x111ba"
+    },
+    {
+     "at": "0x22eb8",
+     "insn": "call 0x2eb9f"
+    }
+   ]
+  },
+  {
+   "addr": "0x25b45",
+   "name": "play_digital_sample",
+   "summary": "(3 個參數) 以 DIG 取樣 handle [0x53ee8] 播放一段數位音效:AIL_stop_sample 後 AIL_init_sample / set_sample_address / set_sample_loop_count / start_sample;本體另讀 [0x51e62] 旗標(FD2.EXE 反組譯)。標題、格子寶物、AI 與 TAI 階段 handler 等 11 處呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x25b7c",
+     "insn": "call 0x39805"
+    },
+    {
+     "at": "0x25bc7",
+     "insn": "call 0x39694"
+    },
+    {
+     "at": "0x25be7",
+     "insn": "call 0x39798"
+    }
+   ]
+  },
+  {
+   "addr": "0x25bf4",
+   "name": "game_main",
+   "summary": "遊戲主行程:安裝 AIL(ail_startup、AIL_install_DIG_INI / MDI_INI、配置取樣與序列 handle),配置畫面緩衝、載入資源,進入戰役迴圈 ——title_menu_dispatch 選單、城鎮 town_hub_main、battle_main_input_loop 戰鬥,依 pending 碼 [0x53ecc] 分歧(1 -> show_result_resource_79),結束時 AIL_shutdown(FD2.EXE 反組譯)。__CMain 呼叫(doc10 / doc23 的 boot 鏈起點)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x25c01",
+     "insn": "call 0x37d3e"
+    },
+    {
+     "at": "0x25c2b",
+     "insn": "call 0x3908b"
+    },
+    {
+     "at": "0x25dce",
+     "insn": "call 0x117e7"
+    }
+   ]
+  },
+  {
+   "addr": "0x26152",
+   "name": "town_hub_main",
+   "summary": "城鎮的每幀主迴圈:讀鍵、以環繞方式更新選擇 [0x53f4a] 與脈動計數 [0x53f52],town_hub_redraw 重畫,Enter / Space 時呼叫 town_hub_select;另處理進城對話與出擊前的選人(sortie_member_select)(FD2.EXE 反組譯)。game_main 與 title_menu_dispatch 呼叫(doc56 / doc58)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x26425",
+     "insn": "call 0x265ec"
+    },
+    {
+     "at": "0x265af",
+     "insn": "call 0x2670e"
+    }
+   ]
+  },
+  {
+   "addr": "0x2670e",
+   "name": "town_hub_select",
+   "summary": "城鎮選擇的確認分派:依 [0x53f4a] 進酒館 tavern_menu(0x29300)、商店家族 shop_menu(0x279bc)或教會 church_menu(0x29daa),另有出擊確認(sortie_member_select);進出時 bgm 換曲(FD2.EXE 反組譯)。town_hub_main 呼叫(doc12 的 track 13、doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2691d",
+     "insn": "call 0x29300"
+    },
+    {
+     "at": "0x26966",
+     "insn": "call 0x279bc"
+    },
+    {
+     "at": "0x2693a",
+     "insn": "call 0x29daa"
+    }
+   ]
+  },
+  {
+   "addr": "0x26ce4",
+   "name": "carousel_menu_open",
+   "summary": "(項目數) 開圓弧選單:malloc 保存畫面 [0x53a49] 的區塊,以 blit_image_transparent 畫圖示(FD2.EXE 反組譯)。shop_menu、tavern_menu、church_menu 呼叫(doc98 續:教會主函式呼叫它開選單)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x26d08",
+     "insn": "call 0x3706e"
+    },
+    {
+     "at": "0x26df5",
+     "insn": "call 0x4ed34"
+    }
+   ]
+  },
+  {
+   "addr": "0x26e38",
+   "name": "carousel_menu_select",
+   "summary": "以 menu_read_key 讀圓弧選單的選擇 [0x53c57],移動時 play_sfx(FD2.EXE 反組譯)。shop_menu、tavern_menu、church_menu 呼叫(讀選擇)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x26e47",
+     "insn": "call 0x26eda"
+    },
+    {
+     "at": "0x26e5e",
+     "insn": "call 0x25a96"
+    }
+   ]
+  },
+  {
+   "addr": "0x279bc",
+   "name": "shop_menu",
+   "summary": "(店種) 商店家族的選單:圓弧選單(carousel_menu_open / select,10 點 sin / cos 圓弧以 carousel_icon_blit 畫)依 [0x53c57] 0 .. 3 分派 —— 0x2872b 購買、0x28cbd 等;collect_town_shop_items 取該城的商品(FD2.EXE 反組譯)。town_hub_select 呼叫(doc35 / doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x27b64",
+     "insn": "call 0x26a0d"
+    },
+    {
+     "at": "0x27b38",
+     "insn": "call 0x26ce4"
+    },
+    {
+     "at": "0x27b95",
+     "insn": "call 0x2872b"
+    }
+   ]
+  },
+  {
+   "addr": "0x2872b",
+   "name": "shop_buy",
+   "summary": "(店種, ...) 購買流程:選商品與對象,檢查持有數(unit_item_count)與能否裝備(unit_can_equip_item),以 unit_add_item 加入,可當場裝備(unit_equip_slot、recalc_equipped_stats)(FD2.EXE 反組譯)。shop_menu 呼叫(doc91:同函式內 11 個寫入點都有定值)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x289db",
+     "insn": "call 0x1b8a6"
+    },
+    {
+     "at": "0x2879b",
+     "insn": "call 0x1c1c3"
+    },
+    {
+     "at": "0x28a78",
+     "insn": "call 0x1bb8c"
+    }
+   ]
+  },
+  {
+   "addr": "0x28f65",
+   "name": "item_storage_service",
+   "summary": "道具寄放服務:item_list_select 選道具,在單位與寄放處之間移動(unit_add_item / remove_inventory_slot),之後 recalc_equipped_stats(FD2.EXE 反組譯)。church_menu 依 [0x53c57] = 1 呼叫(doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x290db",
+     "insn": "call 0x275e6"
+    },
+    {
+     "at": "0x29204",
+     "insn": "call 0x1bb8c"
+    },
+    {
+     "at": "0x291f5",
+     "insn": "call 0x1b8e7"
+    }
+   ]
+  },
+  {
+   "addr": "0x2921a",
+   "name": "carousel_icon_blit",
+   "summary": "(4 個參數) 圓弧選單圖示的縮放繪製到 [0x53a49] 畫面緩衝(本體先以 memset 清區塊)(doc35 的仿射 / 縮放 blit)(FD2.EXE 反組譯)。town_hub_select、shop_menu、tavern_menu、church_menu 呼叫。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2925e",
+     "insn": "call 0x37910"
+    }
+   ]
+  },
+  {
+   "addr": "0x29300",
+   "name": "tavern_menu",
+   "summary": "(..) 酒館的選單:圓弧選單依 [0x53c57] 分派 —— 0 狀態(status_service)、另有存檔(0x2968d,經 INT 21h AH=40h 寫檔)與離開(FD2.EXE 反組譯)。town_hub_select 呼叫(doc25 / doc56)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x293b6",
+     "insn": "call 0x26ce4"
+    },
+    {
+     "at": "0x293be",
+     "insn": "call 0x26e38"
+    },
+    {
+     "at": "0x293fb",
+     "insn": "call 0x29620"
+    }
+   ]
+  },
+  {
+   "addr": "0x29620",
+   "name": "status_service",
+   "summary": "狀態服務:choice_box_left_right 在名冊成員間左右切換,依成員 +7 以 load_res 載頭像,unit_info_cards 播資訊卡(FD2.EXE 反組譯)。tavern_menu 與 church_menu 依選擇 0 呼叫(doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x29637",
+     "insn": "call 0x27d33"
+    },
+    {
+     "at": "0x29656",
+     "insn": "call 0x17aed"
+    }
+   ]
+  },
+  {
+   "addr": "0x29daa",
+   "name": "church_menu",
+   "summary": "(..) 教會主函式:圓弧選單依 [0x53c57] 分派四個服務 —— 0 status_service、1 item_storage_service、2 revive_service、3 class_change_service;進出時淡入淡出(FD2.EXE 反組譯)。town_hub_select 呼叫(doc91 / doc98)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x29f19",
+     "insn": "call 0x29620"
+    },
+    {
+     "at": "0x29f28",
+     "insn": "call 0x28f65"
+    },
+    {
+     "at": "0x29f38",
+     "insn": "call 0x2a43e"
+    },
+    {
+     "at": "0x29f48",
+     "insn": "call 0x2aa00"
+    }
+   ]
+  },
+  {
+   "addr": "0x2a43e",
+   "name": "revive_service",
+   "summary": "復活服務:列出陣亡成員(0x2a07a),選擇後扣金(gold_sub_with_counter_anim)並 service_success_anim,有 yes_no_prompt 確認;同函式內 0x2a681 推 track 11(教會)(FD2.EXE 反組譯)。church_menu 依選擇 2 呼叫(doc12 / doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2a450",
+     "insn": "call 0x2a07a"
+    },
+    {
+     "at": "0x2a60f",
+     "insn": "call 0x26b91"
+    },
+    {
+     "at": "0x2a678",
+     "insn": "call 0x28b41"
+    }
+   ]
+  },
+  {
+   "addr": "0x2a694",
+   "name": "draw_class_change_options",
+   "summary": "(5 個參數) 畫轉職候選:至多 3 個,以 promoted_row2_ptr_615fe 取上位職業列、blit_rle_icon_24x24 畫圖示、dialog 取名稱(FD2.EXE 反組譯)。class_change_candidate_select 呼叫(doc27:不是大型 presentation dispatcher)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2a782",
+     "insn": "call 0x4e7dd"
+    },
+    {
+     "at": "0x2a827",
+     "insn": "call 0x4e29c"
+    },
+    {
+     "at": "0x2a710",
+     "insn": "call 0x15f84"
+    }
+   ]
+  },
+  {
+   "addr": "0x2aa00",
+   "name": "class_change_service",
+   "summary": "轉職服務:class_change_candidate_select 選對象與職業,確認後消耗道具(remove_inventory_slot)、class_change_apply 重算、fdicon_cache_load 換圖示;同函式內 0x2abd8 推 track 11(FD2.EXE 反組譯)。church_menu 依選擇 3 呼叫(doc32 / doc12)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2aade",
+     "insn": "call 0x2a857"
+    },
+    {
+     "at": "0x2ac63",
+     "insn": "call 0x2ac7d"
+    },
+    {
+     "at": "0x2ac48",
+     "insn": "call 0x11019"
+    }
+   ]
+  },
+  {
+   "addr": "0x2ac7d",
+   "name": "class_change_apply",
+   "summary": "(單位) 轉職重算:以 promoted_row2_ptr_615fe / growth_row11_ptr 取新職業與成長列,apply_stat_growth 套用、recalc_equipped_stats 重算,對話框顯示結果(FD2.EXE 反組譯)。class_change_service 呼叫(doc32 §6.3.1,舊位址 0x2a2e8)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2ad7b",
+     "insn": "call 0x4e7dd"
+    },
+    {
+     "at": "0x2ad14",
+     "insn": "call 0x1e529"
+    },
+    {
+     "at": "0x2ade0",
+     "insn": "call 0x1b750"
+    }
+   ]
+  },
+  {
+   "addr": "0x2af28",
+   "name": "sortie_member_select",
+   "summary": "出擊選人主迴圈:目標人數 ebp 預設 15(章節 > 26 時 19),以 draw_roster_pick_grid 畫名冊格,Enter 以 xor 切換 32 bytes 選取陣列,人數(0x2b749)等於目標才離開;有 yes_no_prompt 與 info_card_present_frame(FD2.EXE 反組譯)。town_hub_main 與 town_hub_select 呼叫(doc58 / doc99)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2af39",
+     "insn": "mov ebp, 0xf"
+    },
+    {
+     "at": "0x2b047",
+     "insn": "call 0x2b4fb"
+    },
+    {
+     "at": "0x2b0e3",
+     "insn": "cmp eax, ebp"
+    }
+   ]
+  },
+  {
+   "addr": "0x2b439",
+   "name": "sortie_required_member_check",
+   "summary": "(選取陣列, ...) 出擊的必須出場檢查:掃描單位([0x53a45],每筆 0x50,+8 為 id)找本章必須出場的角色,沒選到時開對話框顯示「本章XX必須出場!」並等鍵,回傳是否通過(FD2.EXE 反組譯)。sortie_member_select 呼叫(doc99 / doc91)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2b488",
+     "insn": "call 0x1956b"
+    },
+    {
+     "at": "0x2b4bd",
+     "insn": "call 0x15f84"
+    }
+   ]
+  },
+  {
+   "addr": "0x2cf30",
+   "name": "derived_strike_scene",
+   "summary": "(4 個參數) 衍生攻擊(derived strike)的場景宿主:load_fd2_tmp / load_res 載入資源,figure_fade_in 與 blit_anim_frame 演出,pan_view_left_to_panel、draw_unit_panel_by_side 畫面板,spell_damage_apply 寫回傷害(FD2.EXE 反組譯)。spell_cast_scene 在指令號 0x18 或 > 0x1b 時呼叫(doc13 / doc27 兩條獨立路徑收斂到此)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2d7cb",
+     "insn": "call 0x2e95b"
+    },
+    {
+     "at": "0x2d479",
+     "insn": "call 0x1c81f"
+    }
+   ]
+  },
+  {
+   "addr": "0x2d80d",
+   "name": "spell_scene_effects",
+   "summary": "(2 個參數) 法術場景內的效果階段:load_fdother_80_to_53b13 載入效果音,依法術呼叫 item_effect_heal / item_effect_type21_damage / effect_ap_percent_buff / effect_dp_percent_buff / effect_hit_ev_buff / apply_status_spell_to_targets 等,play_loaded_sfx_and_free 收尾(FD2.EXE 反組譯)。spell_cast_scene 呼叫(doc25)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2ddbe",
+     "insn": "call 0x1d4cb"
+    },
+    {
+     "at": "0x2de31",
+     "insn": "call 0x211a4"
+    },
+    {
+     "at": "0x2de4b",
+     "insn": "call 0x22721"
+    }
+   ]
+  },
+  {
+   "addr": "0x2dfc8",
+   "name": "ai_item_scene",
+   "summary": "(單位) AI 道具 / 法術行動的場景呈現:載入資源(load_res)、figure_fade_in 與 blit_anim_frame、draw_unit_panel_by_side,以 fdother_nested_resource_load 載入巢狀資源(FD2.EXE 反組譯)。只被 ai_item_action 呼叫(doc35)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2e080",
+     "insn": "call 0x111ba"
+    },
+    {
+     "at": "0x2e137",
+     "insn": "call 0x2e9a8"
+    },
+    {
+     "at": "0x2e113",
+     "insn": "call 0x314de"
+    }
+   ]
+  },
+  {
+   "addr": "0x2e2b0",
+   "name": "attack_scene_orchestrator",
+   "summary": "(攻方, 守方) 攻擊的場景 orchestrator:載入資源與 figure_fade_in 淡入,以 scene_attack_sequence 做多幀受擊與 HP 寫回(命中率與傷害在其內;doc13 記為 3 次),另以 defender_can_counter 判斷能否反擊(FD2.EXE 反組譯)。player_action_ring 攻擊、ai_attack_execute、scene_charcard_orchestrator 與 event_handler_55 呼叫(doc13 / doc11)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2e6de",
+     "insn": "call 0x2ebe1"
+    },
+    {
+     "at": "0x2e53b",
+     "insn": "call 0x1f0dc"
+    }
+   ]
+  },
+  {
+   "addr": "0x2e9a8",
+   "name": "figure_fade_in",
+   "summary": "(11 個參數) figure / 台座淡入的共用 helper:8 迴圈以 palette_brightness_ramp 調亮度、blit_anim_frame / blit_rle_image_at_xy 畫、copy_rect 輸出,依單位 +6 的陣營選邊(FD2.EXE 反組譯)。攻擊 / 法術 / 道具場景等 6 處呼叫(doc35 §4.0 / §9.2)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2ea48",
+     "insn": "call 0x11d40"
+    },
+    {
+     "at": "0x2ea35",
+     "insn": "call 0x11eb0"
+    },
+    {
+     "at": "0x2ea13",
+     "insn": "call 0x2eb9f"
+    }
+   ]
+  },
+  {
+   "addr": "0x2fb2c",
+   "name": "class_change_ceremony_anim",
+   "summary": "(2 個參數) 轉職儀式演出:載入 3 個資源,以 anim_loop_over_cycling_bg、blit_anim_frame 與調色盤漸變跑 8 迴圈的 blit + 色盤(FD2.EXE 反組譯)。只被 class_change_service 呼叫(doc35 的「戰鬥選單家族第 4 個情境」、doc25 的 party 動畫)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x2fb58",
+     "insn": "call 0x111ba"
+    },
+    {
+     "at": "0x2fcdc",
+     "insn": "call 0x2fe14"
+    }
+   ]
+  },
+  {
+   "addr": "0x314de",
+   "name": "fdother_nested_resource_load",
+   "summary": "(p) p 非空且 p[+4] 非 0 時,以 0x526e3 的 6 bytes 表(30 31 32 33 34 35)選 FDOTHER 資源 48 .. 53 之一用 load_res 載入並回傳,否則回 0;這六個資源都是巢狀 LLLLLL 容器(FD2.EXE 反組譯)。攻擊 / 道具 / 衍生攻擊場景呼叫(doc27)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x31517",
+     "insn": "call 0x111ba"
+    }
+   ]
+  },
+  {
+   "addr": "0x31c49",
+   "name": "scene_charcard_text_stage",
+   "summary": "角色卡場景的文字階段(配置 92 bytes 堆疊框):依 [0x53a79] / [0x53a7d] 的文字表以 dialog 印 5 段文字(索引 10 / 7 / 11 / 153 / 18),draw_box_frame_grid 畫框、anim_step_and_draw 與 figure_fade_in 演出,期間 loadch、bgm(FD2.EXE 反組譯)。只被 scene_charcard_orchestrator 呼叫(doc35 §9.11.2 與 doc58 的 live 捕捉一致)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x31ccc",
+     "insn": "call 0x15f84"
+    },
+    {
+     "at": "0x3200b",
+     "insn": "call 0x168b6"
+    }
+   ]
+  },
+  {
+   "addr": "0x32230",
+   "name": "play_step_sfx",
+   "summary": "(單位) 走位一步的音效:依 unit_uses_move_cost_row19 判斷單位的移動類別,選音效以 play_sfx([0x53eec], ..) 播放(FD2.EXE 反組譯)。step_anim_down / left / right、scroll_step 與演出 driver act 呼叫(doc35)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x32252",
+     "insn": "call 0x1f183"
+    },
+    {
+     "at": "0x32307",
+     "insn": "call 0x25a96"
+    }
+   ]
+  },
+  {
+   "addr": "0x33674",
+   "name": "command_handler_46",
+   "summary": "push 0x28 ; jmp 0x33470 —— 指令處理表 0x51d01 的第 46 / 47 / 48 格共用的本體樁(堆疊檢查大小 0x28 後跳進共用本體)(FD2.EXE 反組譯)。只經表格引用(doc98 續七十九)。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "fixup_from": "0x51db9",
+     "table": "0x51d01",
+     "index": 46
+    },
+    {
+     "at": "0x33674",
+     "insn": "push 0x28"
+    },
+    {
+     "at": "0x33679",
+     "insn": "jmp 0x33470"
+    }
+   ]
   }
  ]
 }

@@ -7864,3 +7864,27 @@ case 只來自本輪可達的 jmp)後:**strong 1293 -> 1304、weak 63 -> 52、ca
   指數部分加 e x ln2,ln2 拆成 0.693359375 與 -2.1219444e-4 兩段(兩者相加 = 0.6931471806)。名稱沿用(登錄表名稱不改),摘要寫明實際算的是 ln。
 - **`emu_trig_core` 0x4c980 後段**:八分象限為奇數時 r 改成 π/4 - r;cos 級數套表 0x4c914、sin 級數套表 0x4c8ba,項數依指數查 0x4c96e,|r| < 2^-32 時直接取 1.0 / r;
   依象限選 sin 或 cos,cos 由 esi 的 bit 1 把象限移 2;tan 再相除,分母 0 時給無限大(指數 0x7fff)。
+
+## 2026-10-07 續九十四:只有文件記載的 171 個入口登錄進名稱表 —— 全部 1356 個入口都有登錄表名稱(FD2.EXE 反組譯)
+
+**結論**:`--coverage` 原本的「文件記載為入口」171 個(strong 169)只在知識文件裡被提到,沒有進 `function_names.json`。逐筆讀本體與文件上下文後登錄,
+依據是 FD2.EXE 反組譯比對,每筆附位元組證據;`function_names.json` 978 -> 1149 筆,`--check-names` 全過。
+**`--coverage`:strong 1304 / 全部 1356 都是「有名稱」,文件記載為入口 0、無名 0**;結構性命名(含登錄表)因此降到 0 筆 —— 沒有 strong 入口需要自動命名了。
+
+- **函式庫區 49 個**:AIL 的記憶體 lock / unlock 成對(`ail_api_*`、`ail_dig_*`、`ail_mdi_*`、`ail_file_sample_*`)、DIG / MDI 的服務回呼與關閉回呼、
+  `ail_impl_init_sample` / `start_sample` / `set_sample_address` / `set_sample_loop_count` / `init_sequence`、波表合成器的 event / timbre 回呼;
+  CRT 的 `fseek`、`printf_core` 與兩個輸出回呼、`stdio_init_streams`、`delay_calibrate`;全螢幕動畫的 `anim_vm_run` / `anim_vm_set_context` 與兩個操作
+  (調色盤、RLE);x87 模擬器的 `emu387_dispatch`、`emu_raise_exception`、`emu_fprem`;路徑搜尋的 `path_flood_*`;繪圖的 `blit_tile24_rle_remap`、
+  `blit_rle_sprite_remap`(doc35 以 live 斷點確認的 CG1 小島)、`screen_zoom_blit`。
+- **遊戲區 122 個**:分 6 批。戰鬥主迴圈與讀鍵(`battle_main_input_loop`、`battle_main_key_poll`、`move_confirm_key_poll`)、走位(`walk_path`、`step_anim_*`)、
+  指令環家族(`action_ring_open` / `select` / `close` / `key_poll` / `draw`、`field_command_ring`、`options_ring`)、資訊卡(`unit_info_cards`、`info_card_*`、
+  `draw_unit_status_panel`、`draw_stat_bar`)、階段推進(`battle_phase_advance`、`turn_status_tick`、`phase_banner_*`)、道具效果
+  (`item_effect_dispatch` 依道具列 +0xd 分派、`effect_*_buff`、`effect_cure_status_flag`)、17 個勝負判定 handler(以 doc26 的表索引命名為
+  `battle_result_check_<索引>`,預設的是 `battle_result_check_default`)、城鎮(`town_hub_main`、`town_hub_select`、`shop_menu`、`tavern_menu`、
+  `church_menu` 與四個服務)、出擊選人(`sortie_member_select`、`sortie_required_member_check`)、開機(`game_main`、`title_seq`、`ani_player`)與戰鬥場景
+  (`attack_scene_orchestrator`、`derived_strike_scene`、`figure_fade_in`)。
+- **寫法的界線**:摘要只寫本體看得到的指令、被呼叫者與文件已記載的結論;參數名或行為沒讀到的就寫「N 個參數」或只列被呼叫者。過程中撤掉的推測有:
+  `fseek` 檢查的旗標是 +0xc 的值 2(不是 bit 2)、AIL 驅動安裝 / MDI 服務回呼 / init_sequence 的內部步驟、`stdio_init_streams` 的「行緩衝」、例外處理的「SIGFPE」、
+  指令環讀鍵的「左右移動、跳過停用項」等。
+- **證據**:指令文字由登錄腳本從位元組反組譯取得(支援 `call:目標` = 本體裡第一個 call 該目標的指令),避免手打;`--check-names` 抓到兩處 —— fseek 的一條證據位址
+  落在指令中間(改用 0x37978),以及 `command_handler_46` 需要跳表格位的 fixup 證據(補 0x51d01 第 46 格 = 0x51db9;第 46 / 47 / 48 格共用這個 `push 0x28 ; jmp 0x33470` 樁)。
