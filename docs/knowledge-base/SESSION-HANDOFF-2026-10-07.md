@@ -51,7 +51,7 @@
 | 項目 | 狀態 | 說明 |
 |---|---|---|
 | 52 個 weak 入口 | 靜態 RE 已到頂 | 唯一呼叫端都在沒有執行路徑的死函式裡,「呼叫端可達」這個方法本來就證明不了;身分已寫在登錄表 |
-| 名稱的實機驗證 | 部分 | 名稱本身全部是靜態 RE,沒有逐一下斷點;但「死函式不會執行」已用 234 份原版 DOSBox-X 實機軌跡反驗(續九十六,`tools/verify_dead_functions_vs_traces.py`):唯一命中是 0x46915 與活路徑共用的樁表 |
+| 名稱的實機驗證 | 部分 | 名稱本身全部是靜態 RE,沒有逐一下斷點;但「死函式不會執行」已用 **4 份不重複**的原版 DOSBox-X 實機軌跡反驗(續九十六的「234 份」是同一份的複本,續九十七訂正):52 個 weak 入口的本體指令沒有一條執行過,0x46915 只有 span 尾端與活路徑共用的樁表有紀錄。執行位址收在 `docs/data/live_exec_addresses.json`,這項反驗已進 `function_inventory.py --selftest`(續九十七) |
 | doc98 續八十稱 0x4a424 為「浮點模擬器主體」 | 已在續九十一訂正 | 它是 SIB 解碼 `emu_ea_sib`;舊句保留為歷史,訂正寫在續九十一 |
 | 部分摘要只列被呼叫者 | 刻意保留 | 參數名或內部步驟沒讀到的,寫「N 個參數」或只列被呼叫者,不寫推測(續九十四列了撤掉的推測) |
 
@@ -69,6 +69,7 @@
 |---|---|
 | 看某個位址是哪個函式、名稱、證據、本體反組譯 | `python tools/function_inventory.py --card 0x位址` |
 | 看覆蓋率 | `python tools/function_inventory.py --coverage` |
+| 有新的原版軌跡時更新實機執行位址 | 新軌跡放進 `.wsl_build/` 後 `python tools/verify_dead_functions_vs_traces.py --export docs/data/live_exec_addresses.json .wsl_build`(需要 capstone;內容驗不過的軌跡自動略過;已登錄 `verify_generated_artifacts`),再調高 `function_inventory.py` 的 `LIVE_ENTRY_FLOOR` |
 | 驗每一筆名稱的位元組證據 | `python tools/function_inventory.py --check-names` |
 | 重生清單 / 結構性命名 | `python tools/function_inventory.py docs/data/function_inventory.json`、`--structural docs/data/function_structural_names.json` |
 | 自我測試 | `python tools/function_inventory.py --selftest`(約 2.5 分鐘) |

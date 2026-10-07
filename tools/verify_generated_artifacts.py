@@ -108,6 +108,10 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # (`FD2_WATCOM_LIBS`,預設 ~/fd2-watcom-libs/w11.0c/lib386);缺檔時產生器回 2,這裡報 ERROR。
     # 上面的結構性命名讀這份產物的名稱,所以它變了要接著重生 function_structural_names.json。
     ("docs/data/watcom_lib_matches.json", "watcom_lib_match.py", ["{out}"], "bytes"),
+    # 2026-10-07(doc98 續九十七):原版 DOSBox-X 實機執行位址。輸入是 `.wsl_build/` 底下的去重軌跡(不進版控),
+    # 缺檔時產生器回 2,這裡報 ERROR。function_inventory.py --selftest 的死函式反驗讀這份產物。
+    ("docs/data/live_exec_addresses.json", "verify_dead_functions_vs_traces.py",
+     ["--export", "{out}", ".wsl_build"], "bytes"),
     # 2026-09-08 新增。加進來的第一次執行就抓到真東西:treasure 那支把一個
     # **已經是新版位址**的常數又加了一次版本位移(+0x356),輸出 `0x35baa`——
     # 落在指令中段,根本不是函式。已改成從事件跳表 0x51b91 讀(且走 fixup),

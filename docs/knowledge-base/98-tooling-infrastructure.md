@@ -7905,3 +7905,36 @@ DOSBox-X 實機軌跡對照 FD2.EXE 反組譯):
 
 **這個檢查的鑑別力**:「每個執行位址都落在某個入口的 span 內」必然成立(span 延伸到下一個入口),不能當證據;能被推翻的是「死函式不會執行」這種主張,
 所以只拿它來驗。工具 `tools/verify_dead_functions_vs_traces.py TRACE_ROOT ..`(附 `--selftest`)只讀軌跡,沒有開模擬器;在 WSL 以 `~/fd2-run*` 為根重跑,輸出與上列一致(有命中時回傳 1,命中位址要人讀:span 尾端可能是共用片段)。
+
+> **續九十七訂正**(依據為 DOSBox-X 原版實機軌跡檔的 sha256):上面的「234 份」是**檔案份數,不是執行次數** —— 那 251 個檔案的內容逐位元組相同(sha256 `e432c232…`),是 2026-08-25 那一次擷取被 harness 目錄
+> 複製時一起帶過去的,實際只有 **1 份**軌跡。「摘要寫『死函式』的 47 個」也把只拿死函式比較形狀的 strong 入口 0x42270 算進去了;正確的分組見續九十七。
+> 「死函式不會執行」的結論不受影響(續九十七用 4 份不重複軌跡重驗)。
+
+## 2026-10-07 續九十七:實機執行位址收進倉庫,死函式反驗進 `function_inventory.py --selftest`;軌跡份數訂正為 4 份不重複
+
+**結論**:原版實機軌跡合併後的執行位址存成 `docs/data/live_exec_addresses.json`(obj1 內 14215 個不重複位址,只有位址、EXE md5 與軌跡檔 sha256,
+沒有遊戲資料或記憶體內容)。`function_inventory.py --selftest` 每次都用它驗「靜態判為沒有執行路徑的 52 個入口,本體指令沒有一條實機執行過」(依據為
+DOSBox-X 實機軌跡對照 FD2.EXE 反組譯),不再需要 WSL;`--card` 標出入口與本體有沒有執行紀錄。
+
+- **軌跡份數訂正**:續九十六的 234 份是同一份軌跡的複本(見上方訂正)。另在 Windows 端 `.wsl_build/` 找到 3 份不同的去重軌跡 —— `trace_unique_cseip.txt`
+  (doc58 續六十六)、`cg1v_trace_unique_cseip.txt`(2026-08-26)、`harness/savewriter_trace_unique_cseip.txt`(2026-08-25);`trace2_unique_cseip.txt` 與 WSL 那份相同。
+  合計 **4 份不重複**,obj1 內執行位址 11221 → 14215,入口位址出現在軌跡裡 252 → **292 / 1356**(下限)。
+- **旁邊沒有 EXE 的軌跡怎麼確認是原版**:改以內容對照 FD2.EXE 反組譯判斷(`fallthrough_ratio`)—— 軌跡屬於這個 EXE 時,非轉移指令執行完一定接著執行「位址 + 指令長度」。
+  4 份都是 **100%**;同一份資料位移 1 byte 或位移舊版差 0x356 後只剩 **25–27%**(對照組),分得很開。門檻定 99%、至少 200 條;
+  旁邊有 `FD2.EXE` 的另外要求 md5 相同。`--export` 需要 capstone,沒有就不匯出。
+- **死函式分組訂正**:改為「weak,或摘要帶『(死函式:』標記」(39 個標記全是 weak,所以就是 52 個 weak)。原本「摘要含『死函式』」會把 strong 的 0x42270
+  (摘要只是說它與死函式 `ail_drv_fn_0502_release` 同形)算進去。
+- **判準用本體,不用 span**:selftest 的檢查只看 `body_insns` 的指令起點(沒有乾淨結尾的 0x3ee42 退回整個 span)。0x46915 的本體到 0x46947 為止,
+  尾端共用樁表 0x4698a / 0x469db 的執行紀錄因此不算 —— 這正是續九十六讀出來的結論,現在寫成判準。結果:52 個沒有任何本體指令被執行。
+- **控制組**(都在 selftest 裡):正向 —— 同一份資料改用 span 當本體,0x46915 會命中 0x4698a / 0x469db(位址換算與資料對得上);
+  反向 —— 把每個死入口自己的位址注入執行集合,52 個全部被抓到;另有 md5 必須與 EXE 相同、已知活入口 int386x_dispatch 0x468a7 必須在集合裡、
+  入口出現數不得低於 `LIVE_ENTRY_FLOOR` 292。
+
+**工具自驗**:`verify_dead_functions_vs_traces.py --selftest` 18 項(新增 fallthrough、採用規則的暫存目錄案例、匯出往返與壞檔拒絕),定點突變 16 / 16 KILLED;
+其中 3 個一開始是 Traceback 而不是 FAIL(匯出寫出讀不回來的檔),selftest 改為把讀回失敗記成 FAIL。`function_inventory.py --selftest`:
+新增 (11b) `dead_body_hits` 純函式 4 項、真實 EXE 段 6 項(43 → 49);程式突變 2 / 2 與資料突變 3 / 3(md5 換掉、0x46915 本體 0x4691a 注入、
+入口位址刪掉)都以預期那一項 FAIL 抓到。登錄表 0x46915 的摘要把「234 份」改為 4 份不重複。
+
+**限制**:軌跡只涵蓋當時擷取的場景(結局 montage、CG、存檔等),「沒有執行紀錄」不代表沒用到。輸入軌跡在 `.wsl_build/`(不進版控,與 `extracted/raw` 同類),
+產物登錄在 `verify_generated_artifacts`(`--export {out} .wsl_build`,逐位元組 IDENTICAL);4 份不重複的 DOSBox-X 原版軌跡都在 `.wsl_build/`,WSL 那份與 `trace2` 相同(sha256),
+所以不需要 WSL 路徑。沒有 `.wsl_build/` 的機器上這一項報 ERROR,來源由 `trace_sha256` 記錄。

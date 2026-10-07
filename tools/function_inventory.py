@@ -95,10 +95,15 @@ EXE 換版或位址抄錯,檢查就會失敗。其他規則:`addr` 必須是本�
 登錄的名稱會進 `load_names()`,所以也會餵給結構性命名(新名字可能讓更多 wrapper 解得出來 —— 登錄後要重生
 `function_structural_names.json`)。`--card ADDR` 印出一個入口的機械事實、呼叫端與本體反組譯,給人讀的時候用。
 
+實機執行位址:`live_exec_addresses.json`(`verify_dead_functions_vs_traces.py --export` 由原版 DOSBox-X 軌跡合併)。
+`--selftest` 用它驗「weak 入口與摘要帶『(死函式:』的入口,本體指令沒有一條實機執行過」(續九十七);
+`--card` 標出入口與本體有沒有執行紀錄。沒有紀錄只代表過去擷取的場景沒走到,不是沒用到。
+
 誠實邊界
 --------
 * 函式指標只認 fixup:執行期算出來的位址(`push`+`ret` 跳進中斷樁表、只有表頭被引用的樁陣列)看不到。
-  2026-10-06 對參考版 EXE 逐類手動核對過(doc98 續七十九):樁表是 0x46915 本體的片段,沒有 fixup 的間接呼叫的目標
+  2026-10-06 對參考版 EXE 逐類手動核對過(doc98 續七十九):樁表位置上在 0x46915 的 span 裡(執行上與活的
+  int386x_dispatch 0x468a7 共用,續九十六),沒有 fixup 的間接呼叫的目標
   都已是入口或在 DOS extender 裡 —— 但那是一次性的追蹤,不是本工具的檢查。
   `--ghidra-export` 會列出「Ghidra 有、這裡沒有」的起點供人工判斷。
 * `span_upper` 以下一個入口為界,中間若夾資料表或漏掉的函式,會高估。
@@ -139,6 +144,8 @@ VERIFIED_JSON = ROOT / "docs" / "data" / "verified_addresses.json"
 ERRATA_JSON = ROOT / "docs" / "data" / "known_address_errata.json"
 FUNCTION_NAMES_JSON = ROOT / "docs" / "data" / "function_names.json"
 WATCOM_JSON = ROOT / "docs" / "data" / "watcom_lib_matches.json"
+LIVE_EXEC_JSON = ROOT / "docs" / "data" / "live_exec_addresses.json"
+LIVE_ENTRY_FLOOR = 292      # 入口位址出現在實機軌跡裡的個數(4 份不重複軌跡,續九十七);重匯出後只能升不能降
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 CONFIDENCES = ("static_re", "verified_dynamic")
 JMP_REL32 = 0xE9
@@ -257,6 +264,22 @@ def body_insns(insn_at, start: int, limit: int) -> list[tuple[int, int, str, str
             return out
         a += size
     return None
+
+
+def dead_body_hits(dead: set[int], spans_: dict[int, int], insn_at, live: set[int]) -> dict[int, list[int]]:
+    """靜態判為沒有執行路徑的入口中,本體指令出現在實機執行位址裡的 -> {入口: 命中位址(排序)}。
+
+    本體 = `body_insns` 的指令起點;沒有乾淨結尾就退回整個 span。不用 span 當本體:span 延伸到下一個入口,
+    尾端可能是與活路徑共用的片段(0x46915 的 `int N ; ret` 樁表與 int386x_dispatch 共用,續九十六)。
+    """
+    hits: dict[int, list[int]] = {}
+    for a in sorted(dead):
+        body = body_insns(insn_at, a, a + spans_[a])
+        addrs = {x for x, *_ in body} if body else set(range(a, a + spans_[a]))
+        got = sorted(addrs & live)
+        if got:
+            hits[a] = got
+    return hits
 
 
 def call_args(insns: list[tuple[int, int, str, str]], argc: dict[int, int | None],
@@ -1346,6 +1369,11 @@ def report_card(addr_s: str) -> int:
                 break
             body.append((x, *got))
             x += got[0]
+    if LIVE_EXEC_JSON.exists():
+        live, lm = load_live_exec()
+        ran = sum(1 for x, *_ in body or [] if x in live)
+        print(f"  實機執行({lm['traces_distinct']} 份原版軌跡,下限):入口 {'有' if a in live else '無'};"
+              f"本體 {ran} / {len(body or [])} 條指令有紀錄" + ("" if ran else "(沒有紀錄 ≠ 沒用到)"))
     import disasm_le as D
     data, meta = CC.load_image()[:2]
     fix = D.build_fixups(data, meta)
@@ -1764,6 +1792,15 @@ def _selftest_structural(fails: list[str]) -> None:
           (body_insns(decoder({0: (1, "nop", "")}), 0, 8), body_insns(decoder({0: (4, "nop", ""), 4: (4, "nop", "")}), 0, 8),
            body_insns(decoder(t1), 0, 0)), (None, None, None))
 
+    print("(11b) dead_body_hits:只算本體指令起點;沒有乾淨結尾才退回整個 span")
+    sp = {0: 0x10, 0x20: 8}
+    check("span 尾端(本體結尾之後)的執行位址不算;本體內的算",
+          (dead_body_hits({0}, sp, decoder(t1), {7, 8}), dead_body_hits({0}, sp, decoder(t1), {4, 7})), ({}, {0: [4]}))
+    check("本體指令中間的位址不算(只比指令起點)", dead_body_hits({0}, sp, decoder(t1), {2, 5}), {})
+    check("解不出本體 -> 整個 span,上界不含", (dead_body_hits({0x20}, sp, decoder({}), {0x27, 0x28}),
+                                       dead_body_hits({0x20}, sp, decoder({}), {0x28})), ({0x20: [0x27]}, {}))
+    check("只看傳進來的入口", dead_body_hits(set(), sp, decoder(t1), {0, 4}), {})
+
     print("(12) call_args:最近 N 個 push 反序、立即值/非立即值/不足/argc 不明、分支與 CALL 清空")
     ins = [(0, 1, "push", "ebx"), (1, 1, "push", "3"), (2, 1, "push", "eax"), (3, 1, "push", "0x1c8"), (4, 5, "call", "0x500"),
            (9, 1, "push", "-1"), (10, 5, "call", "0x600"), (15, 1, "push", "1"), (16, 2, "je", "0x20"), (18, 5, "call", "0x500"),
@@ -2142,6 +2179,7 @@ def _selftest_live(fails: list[str]) -> bool:
     nm_wo = load_names(include_registry=False)
     check("反向控制:不含登錄表時有上百個入口沒有名稱(上一項不是空轉)",
           sum(1 for e in inv["entries"] if not (nm_wo.get(int(e["addr"], 16)) or {}).get("name")) > 100)
+    _selftest_live_exec(check, inv)
     # 事件跳表的正向控制:doc25 L950 記 slot 82 指向舊版 0x35f92,新版 +0x356 = 0x362e8(續三十勘誤)。
     # 表基底或 fixup 解析錯了,這題先失敗,而不是讓所有 event_handler_N 一起變成「fixup 指向別處」。
     import disasm_le as D
@@ -2162,6 +2200,47 @@ def _selftest_live(fails: list[str]) -> bool:
     return True
 
 
+def load_live_exec() -> tuple[set[int], dict]:
+    """`live_exec_addresses.json` -> (實機執行位址, _meta);格式不對 ValueError(`read_export` 的檢查)。"""
+    import verify_dead_functions_vs_traces as V
+    return V.read_export(LIVE_EXEC_JSON.read_text(encoding="utf-8"))
+
+
+def _selftest_live_exec(check, inv: dict) -> None:
+    """靜態「沒有執行路徑」對原版實機執行位址的反驗(續九十七)。"""
+    import hashlib
+    import verify_address_claim_coverage as CC
+    import verify_dead_functions_vs_traces as V
+    try:
+        live, lm = load_live_exec()
+    except (OSError, ValueError, KeyError) as exc:
+        check("live_exec_addresses.json 讀得到且格式正確", False, f"{type(exc).__name__}: {exc}")
+        return
+    check("live_exec_addresses.json 的 exe_md5 與靜態分析的 FD2.EXE 相同",
+          lm["exe_md5"] == hashlib.md5(open(CC.EXE, "rb").read()).hexdigest(), lm["exe_md5"])
+    _, _, code, base, _ = CC.load_image()
+    insn_at = insn_decoder(code, base)
+    if insn_at is None:
+        check("實機反驗需要 capstone(本體邊界)", False)
+        return
+    sp = {int(e["addr"], 16): e["span_upper"] for e in inv["entries"]}
+    names_hex = {n["addr"]: n for n in load_function_names()}
+    dead = V.claimed_dead(inv["entries"], names_hex)
+    hits = dead_body_hits(dead, sp, insn_at, live)
+    check(f"{len(dead)} 個靜態判為沒有執行路徑的入口,本體指令沒有一條出現在 {lm['traces_distinct']} 份原版實機軌跡裡",
+          not hits, str({hex(a): [hex(x) for x in h[:3]] for a, h in list(hits.items())[:3]}))
+    # 正向控制:同一份資料用 span 當本體,0x46915 會命中共用樁 0x4698a(int 16h)/ 0x469db(int 31h)。
+    # 這證明位址換算與資料都對得上,上一項通過靠的是本體邊界,不是資料沒涵蓋到。
+    tail = set(V.body_hits({0x46915: sp[0x46915]}, sorted(live)).get(0x46915, []))
+    check("正向控制:以 span 當本體時 0x46915 命中共用樁 0x4698a / 0x469db", {0x4698A, 0x469DB} <= tail, str(sorted(tail)[:4]))
+    # 反向控制:把每個死入口自己的位址加進執行集合,每一個都要被抓到(檢查不是空轉)
+    check("反向控制:注入死入口位址後每一個都被抓到", set(dead_body_hits(dead, sp, insn_at, live | dead)) == dead)
+    check("已知活入口 int386x_dispatch 0x468a7 有執行紀錄", 0x468A7 in live)
+    n_entry = sum(1 for a in sp if a in live)
+    check(f"入口位址出現在實機軌跡裡 {n_entry} 個,不少於 LIVE_ENTRY_FLOOR {LIVE_ENTRY_FLOOR}(重匯出不能變少)",
+          n_entry >= LIVE_ENTRY_FLOOR, str(n_entry))
+
+
 def selftest() -> int:
     fails: list[str] = []
     _selftest_pure(fails)
@@ -2179,8 +2258,8 @@ def selftest() -> int:
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(8 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 43 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+    print("\n--selftest passed(8 組清單純函式 + 7 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
+          + (" + 真實 EXE 的 49 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 

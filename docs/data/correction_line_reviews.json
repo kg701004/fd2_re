@@ -73,6 +73,20 @@
    "excerpt": "0x43160 多了死函式 0x43210 這個呼叫端,不再「只被 AIL 呼叫」,由 `ail_only` 改為 `wrapper(memset(_, -1, 0x440))`。",
    "verdict": "not_address_erratum",
    "note": "改的是結構性命名的分類(ail_only -> wrapper),兩個位址本身都正確"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "32946d67286b99426770237e9a1e05617c8d2d78",
+   "excerpt": "- **死函式分組訂正**:改為「weak,或摘要帶『(死函式:』標記」(39 個標記全是 weak,所以就是 52 個 weak)。原本「摘要含『死函式』」會把 strong 的 0x42270",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是死函式分組判準(摘要子字串 -> weak 或『(死函式:』標記),0x42270 位址本身無誤"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "fc1e4bab4faa8201068f925d2032b5110ad22653",
+   "excerpt": "入口位址刪掉)都以預期那一項 FAIL 抓到。登錄表 0x46915 的摘要把「234 份」改為 4 份不重複。",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是 0x46915 摘要裡的軌跡份數(234 -> 4 份不重複),位址本身無誤"
   }
  ]
 }
