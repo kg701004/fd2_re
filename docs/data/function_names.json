@@ -22231,7 +22231,7 @@
   {
    "addr": "0x46915",
    "name": "int386xa_do_int",
-   "summary": "_DoINTR_ 的內部:把中斷號 al 換成樁表 0x46948 + 號 x 3 的位址當返回位址推上堆疊,從 REGS 結構載入 eax .. ebp 與 ds / es / fs / gs 後 ret 進 `int N ; ret` 樁(FD2.EXE 反組譯)。樁表 256 格到 0x46c48 為止。",
+   "summary": "_DoINTR_ 的內部:把中斷號 al 換成樁表 0x46948 + 號 x 3 的位址當返回位址推上堆疊,從 REGS 結構載入 eax .. ebp 與 ds / es / fs / gs 後 ret 進 `int N ; ret` 樁(FD2.EXE 反組譯)。樁表 256 格到 0x46c48 為止,落在本入口的 span 裡,但**與活的 int386x_dispatch 0x468a7 共用**(0x468aa 同樣以 lea eax, [esi + 0x46948] 取格)。原版 EXE 的 234 份實機執行軌跡(dosbox_exec_trace.sh,CS 0170,native = EIP - 0x19c000)裡,樁 0x4698a(int 16h)與 0x469db(int 31h)有執行,本入口自己的 0x46915 .. 0x46947 一條都沒有執行 —— 死函式的判定只對這段本體成立。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
