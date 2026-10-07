@@ -8110,3 +8110,37 @@ C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項
 其他工具裡沒有同樣以固定行號讀知識庫的樣本(`audit_evidence_provenance.py` 的 `91-worklist.md:221` 是合成探針,selftest 通過)。
 
 **順帶記下、未改**:同一張 PRIM 字典 `0x3453e` 這個鍵寫了兩次(第二次的「(舊版)」覆蓋第一次),行為上無害。
+
+## 2026-10-07 續一百零二:敵方 AI 施法 / 攻擊 / 道具的原版實機軌跡 —— 有執行紀錄的入口 525 → 555,規劃工具的估計值偏高
+
+**結論**:依續一百的建議,在原版 FD2.EXE(md5 `33464c81…`,DOSBox-X 原版實機)第 1 章戰場只錄一個敵方回合,`ai_spell_execute` 0x15311、
+`ai_attack_execute` 0x1548e、`ai_item_action` 0x15055 三個 AI 執行端都有執行紀錄。第 6 份不重複軌跡收進 `live_exec_addresses.json` 後:
+
+| 指標 | 續一百 | 現在 |
+|---|---|---|
+| 不重複軌跡 | 5 份 | **6 份**(新增 `s102_enemy_phase_unique_cseip.txt`) |
+| obj1 內執行位址 | 29490 | **33453** |
+| 入口位址有執行紀錄 | 525 / 1356 | **555 / 1356**(第一次出現 30 個) |
+| 52 個 weak 入口本體有紀錄 | 0 | **0**(`function_inventory.py --selftest` 的死函式反驗照舊成立) |
+
+`LIVE_ENTRY_FLOOR` 525 → 555。
+
+**受控設計**(續五十二 ~ 五十八在 DOSBox-X 原版實機用過的寫法,寫入後全部讀回):盜賊 #11 已學法術只有 8(聖光彈)、MP 100、拿掉武器(slot0 旗標 0x40 → 0),
+只能施法;盜賊 #12 搬到索爾旁邊 (19,14);盜賊 #13 HP 5 / 28、slot2 寫入道具 58(回復類);我方 #1 ~ #4 的 `+5` 設 0x80(已行動),索爾待機後自動進入 NPC 與敵方回合。
+LOGC 在寫完記憶體、仍停在除錯器時開始,回到我方回合後停錄。原始軌跡 11.3 GB,去重後 18927 行(WSL `~/fd2-run-harness-s102/`,不進版控)。
+
+**第一次執行的 30 個入口**(名稱對場景,30 / 30 屬於敵方 AI 施法、攻擊、道具與其呈現,沒有玩家選單類的入口):
+AI 執行端 `ai_spell_execute`、`ai_attack_execute`、`ai_item_action`、`ai_spell_target_score`、`ai_move_toward_reachable_opponent`、`move_unit_toward_point`;
+法術 `spell_cast_scene`、`spell_damage_resolve`、`spell_damage_apply`、`play_command_cast_animation`、`tai_phase_handler_8`;
+道具 `item_effect_dispatch`、`item_effect_heal`、`heal_hp_apply`;攻擊場景 `attack_scene_orchestrator`、`scene_attack_sequence`、`scene_attack_resolve`、
+`defender_can_counter`、`unit_can_counter_at`、`face_toward_unit`;其餘是移動捲動、面板與資源載入(`scroll_step`、`step_anim_right`、`draw_unit_panel_by_side`、
+`load_fd2_tmp`、`fdother_nested_resource_load` 等)。這次 AI 施法走場景(`spell_cast_scene`),與續五十二「法術 < 10 且 `[0x53af9]` 為 0 走場景」一致。
+這是名稱與操作內容的對照,不是逐一斷點驗證;其餘名稱仍是 FD2.EXE 反組譯。
+
+**規劃工具的估計值偏高**:續九十八 / 續一百的 `plan_trace_coverage.py` 估 `ai_spell_execute` +158,實際只多 30 個入口(三個執行端合計)。
+FD2.EXE 反組譯:差額主要是 `ai_spell_execute` 經指令 handler 表 `[0x51d01 + 法術*4]` 第 23 格到 `command_handler_23` 的那一支(重跑後單獨列為 +122),
+表邊只代表「可能到」,這一輪的法術 8 走場景,根本不碰 handler 表。工具把表邊後面的所有子孫都算成同一步的收益,
+所以收益估計是上界,不是預測。下一輪排第一的仍是 `ail_startup` 的除錯分支(`asctime` +133,要 AIL 除錯環境)。
+
+**踩到的坑**:錄 LOGC 時遊戲約半速,截圖比按鍵慢好幾秒;一次按太多鍵會落到別的畫面(這輪一個 Down 把游標移下一格、Escape 開了狀態卡)。
+每次只送一個鍵、等 4 ~ 5 秒再截圖才跟得上;行動環的 Down = 待機(`fd2_chapter_sweep.py` 的既有對應)。
