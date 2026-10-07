@@ -8067,4 +8067,7 @@ C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項
 - 防拷密碼畫面這輪仍沒走到,也不可能走到:唯一呼叫點 `0x118aa` 是無條件 `EB 07`(續三十六 / 四十);`plan_trace_coverage.py`
   不認得這種「條件分支被改成無條件」的情形,仍把它列為前線(現在剩 +5),是工具的已知盲點。
 
-軌跡與分段檔留在 WSL `~/fd2-run-harness-lt2/` 與 `.wsl_build/`(不進版控);驅動腳本與分析腳本在 scratchpad,只有可重生的產物與工具進倉庫。
+原始軌跡(4 份 `raw_*.TXT`,98.8 GB)切段後已刪除;整輪去重的 `s100_lt2_unique_cseip.txt` 與 15 個分段檔在 `.wsl_build/`,
+另一份連同 `SHA256SUMS` 在 WSL `~/fd2-run-harness-lt2/s100_derived/`(都不進版控)。這兩份就是 `live_exec_addresses.json` 與
+`live_scene_entries.json` 的重生輸入;原始軌跡獨有的執行順序與次數已不在,要改切段方式只能重錄。
+驅動腳本與分析腳本在 scratchpad,只有可重生的產物與工具進倉庫。
