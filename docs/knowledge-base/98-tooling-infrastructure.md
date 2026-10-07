@@ -7824,3 +7824,31 @@ case 只來自本輪可達的 jmp)後:**strong 1293 -> 1304、weak 63 -> 52、ca
 - **0x4a424 的身分訂正**:續八十稱 0x4a424(5110 bytes)為「浮點模擬器主體」,不對 —— 它是 ModRM 有效位址樁表 0x49e04 格位 4 / 12 / 20(mod 0 / 1 / 2 的 rm 4)
   的 SIB 解碼,讀 SIB 位元組後經 `call cs:[ebx*4 + 0x49e64]`(同表格位 24 起的 SIB base 樁)取基底、加上 index 暫存器左移 scale,在 0x4a45b `ret`。
   5110 bytes 的 span 是因為後面的處理常式都是跳表 case(不是入口),span 一路延伸到下一個入口 0x4b81a。以 `emu_ea_sib` 登錄(`function_names.json` 978 筆)。
+
+## 2026-10-07 續九十二:登錄表的保留字逐筆解除 —— 178 筆帶「推定 / 未逐條讀」降到 3 筆(FD2.EXE 反組譯)
+
+**結論**:`function_names.json` 978 筆裡,摘要帶「推定」「未逐條讀」「未核對」的有 178 筆;逐筆讀本體或查分派表後,解除到只剩 3 筆
+(都是浮點模擬核心的級數本體細節,函式身分已確認)。依據都是 FD2.EXE 反組譯,每筆新增的說法都附位元組證據(`--check-names` 978 筆全過)。
+
+- **95 個 `ail_impl_*`**(續九十只由一對一呼叫形狀命名):本體逐條讀過,全部與 API 名稱一致(依據為 FD2.EXE 反組譯比對),沒有一個是錯名。
+  例:`ail_impl_stop_sample` 0x41770 只在狀態 [S+4] = 4 時改成 8;`ail_impl_set_timer_divisor` 0x3f3f8 把除數換成微秒(除數 x 10000 / 11932,0 當 54925);
+  `ail_impl_call_driver` 0x3f113 以 DPMI int 31h AX=0300h 模擬真實模式 int 66h 進驅動;`ail_impl_api_read_ini` 0x3f656 讀 DRIVER / DEVICE / IO_ADDR / IRQ /
+  DMA_8_bit / DMA_16_bit,缺 DRIVER 或 DEVICE 時給「Corrupted .INI」。
+- **60 個 `mix_out_*` 的聲道順序**:原本寫「第一個值是否為左聲道是推定」。混音主迴圈 `ail_mix_samples` 在 0x497b3 以 `lea edx, [ecx + 0x48]` 把增益表 [S+0x48] 交給累加常式;
+  `ail_sample_update_mix_params` 以聲相表 0x5360c[127 - 聲相] 建這張表(表值 0 遞增到 128,聲相 0 時最大);累加常式把它加到 [edi]、[S+0x448] 加到 [edi + 4]
+  (`mix_merge_8_mono_vol_to_stereo` 0x49299 / 0x4929e),立體聲來源的第一個位元組(RIFF WAVE 交錯格式的左聲道)也加到 [edi]。所以 [edi] 是左聲道;
+  48 個立體聲輸出寫明依據,12 個單聲道輸出註明沒有聲道順序問題。
+- **浮點模擬核心對應的 x87 指令**:暫存器形式 D9 F0..FF 經 opcode 跳表 0x49fc4 格 0x31 / 0x39 進子表 0x4b020 / 0x4b12a(以 rm 索引),逐格讀處理常式的呼叫:
+  F0 f2xm1 -> `emu_poly_series`、F1 fyl2x -> `emu_split_then_mul`、F2 fptan -> `emu_trig_sel1`(之後推 1.0)、F3 fpatan -> `emu_fpatan_core`、
+  F9 fyl2xp1 -> `emu_add_one`(加 1 後落進 `emu_split_then_mul`)、FA fsqrt -> `__sqrt`、FB fsincos -> sel0 + sel2、FC frndint -> `emu_round_to_int`、
+  FD fscale -> `rld_sel_1f`、FE fsin -> `emu_trig_sel0`、FF fcos -> `emu_trig_sel2`。`emu_trig_core` 的 esi:0 = sin、1 = tan、2 = cos。
+  續八十九寫 0x4cb8e 是「死函式」不對 —— fptan 在 0x4b098 呼叫它(續九十一補上跳表 case 種子後它也升 strong)。
+  連帶把 9 筆摘要裡的「浮點模擬主體 0x4a424 呼叫」改正為 x87 指令處理常式(0x4a424 是 `emu_ea_sib`,處理常式是它 span 裡的跳表 case,見續九十一)。
+- **其餘逐筆**:`set_errno_dos` 的 [0x5283a] 是 DOS 主版本號(`_cstart_` 在 0x3cd53 以 int 21h AH=30h 取得,AL 存 0x5283a、AH 存 0x5283b);
+  `tm_to_time_t` 的 0x51944 是累計月首日數表(平年 0 .. 365,閏年表 0x5195e),減 0x63df = 25567 日,紀元是 1970-01-01;0x470b1 回傳的是毫秒(百分之一秒 x 10);
+  log 族的選擇子 0xb = log10(fldlg2)、9 = log2(fld1)、預設 0xa = ln(fldln2);`stdio_fgets` 的結束條件(長度 - 1 或 '\n',開頭 EOF 回 NULL);
+  `ail_seq_resend_volume` 送的是控制器 7(通道音量);`ail_wavesynth_update_pitch` 的 14 位元彎音、彎音範圍與每音符頻率表 0x45470 線性內插;
+  `printf_fmt_arg` 每個轉換字元走的轉換函式;`file_save_creat` / `file_save_open` 的參數(檔名, 緩衝, 長度)與 open 旗標。
+  `blit_mask_remap` 原本「推定為陰影效果」沒有本體依據,改為「效果取決於呼叫端傳的換色表」。
+- **剩下的 3 筆**:`emu_trig_core` 0x4c980 的後段、`emu_atan_core` 0x4c35a 與 `emu_split_exponent` 0x4c6e8 的級數本體未逐條讀;三者的身分與對應的 x87 指令都已確認。
+- **過程中的錯**:套用腳本的證據迴圈不分位址,把 wavesynth 的 4 條證據也加到了 `printf_fmt_arg`;`--check-names` 以「evidence 不在函式範圍內」擋下,已移除並改為逐位址加證據。
