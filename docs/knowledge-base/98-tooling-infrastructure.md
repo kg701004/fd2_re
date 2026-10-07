@@ -8232,3 +8232,24 @@ AI 法術 1、2、5、7、8 與 `map_attack_sequence` 這一輪沒有出現(那�
 
 **工具自驗**:`dosbox_harness.sh` `bash -n` 通過;`NAME=VALUE` 檢查對 `AIL_DEBUG=AILDBG.TXT` 通過、對含空白與引號的值拒絕。
 沒有設 `FD2_HARNESS_DOS_SET` 時 DOSBox-X 的啟動指令與原本逐字相同(`dosbox_harness.sh` 原始碼:`${dos_set_args}` 為空字串)。
+
+## 2026-10-08 續一百零六:`fpu=false` 的原版實機軌跡(Watcom 387 模擬器)—— 有執行紀錄的入口 618 → 626
+
+**結論**:`__sys_init_387_emulator`(0x46186)先 `fninit ; fnstcw`,控制字讀回的高位元組不是 3(沒有 FPU)才呼叫
+`emu387_install`(0x461b7)。DOSBox-X 設 `fpu=false` 時浮點指令(ESC 0xd8..0xdf)只吃掉 modrm / 位址、不做事
+(`cpu/core_normal/prefix_none.h` 的 `if (enable_fpu)` 分支),`FPU_CoprocessorException`(`cpu/cpu.cpp`)在 CR0.EM 有設時仍丟 #NM ——
+這正是模擬器掛 int 7 接手的路徑。原版 FD2.EXE(md5 `33464c81…`)以 `FD2_HARNESS_FPU=false FD2_HARNESS_BREAK_START=1` 從 FD2.EXE 的 EXEC
+開始錄:開場 → 標題 CONTINUE(目前戰況,第 10 章)→ 戰場系統選單上方圖示 → 下方「C:>_」→「要離開戰場嗎?」YES → 回到 `C:\>`。
+原始軌跡 550602740 行(7.7 GB,WSL `~/fd2-run-harness-s106/LOGCPU.TXT`,不進版控),去重 `s106_fpu_false_unique_cseip.txt` 33197 行
+(第一行 `F000:0000DAC6`,與續一百 / 一百零五相同),收進後 13 份、obj1 執行位址 38047 → 38330,入口有執行紀錄 618 → **626**,
+52 個 weak 入口本體仍 0 條。`LIVE_ENTRY_FLOOR` 618 → 626。DOSBox-X 記錄檔沒有 exception / E_Exit。
+
+第一次出現的 8 個:`emu387_install`、`__hook387`、`dosx_set_int_vector`、`emu387_int_entry`、`emu387_dispatch`、`emu_ea_disp32_only`、
+`restore_ds_from_cs`、`__unhook387`(離開戰場 → 程式結束 → `__sys_fini_387_emulator`)。
+
+**規劃工具仍是上界**:續一百零五後估 +64(`__unhook387`)+ 8(`emu387_install`),實際 +8。整份軌跡 `emu387_dispatch`(0x4a104)
+只執行 7 次 —— 開機到離開這段遊戲本身幾乎不跑浮點指令,模擬器各指令的 handler 沒有被叫到。重跑後排第一的是 `emu_ea_sib` +37
+(`__unhook387` 本體裡的表),要遊戲在有 FPU 指令的場景(例如會呼叫 `sqrt` 的地方)以 `fpu=false` 執行才走得到,這一輪沒有追。
+
+**工具自驗**:`dosbox_harness.sh` `bash -n` 通過;把 `FD2_HARNESS_FPU` 區塊單獨抽出測:`false`、`387` 產生 `-set 'cpu fpu=…'`,
+`false x`、`true;id`、`FALSE` 都走 `die`(腳本的 `die` 是 `exit 1`),未設與空字串時參數陣列為空(dosbox-x 的 argv 不變)。

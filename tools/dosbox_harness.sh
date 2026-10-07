@@ -293,6 +293,21 @@ cmd_launch() {
         echo "[$name] halted at startup (-break-start): resume from the debugger console"
     fi
 
+    # Optional FPU setting (FD2_HARNESS_FPU=false -> dosbox-x -set "cpu fpu=false").
+    #
+    # 2026-10-08 續一百零六: __sys_init_387_emulator (0x46186) does fninit ; fnstcw and only calls
+    # emu387_install (0x461b7) when the control word does not read back as 0x03xx, i.e. no FPU.
+    # With fpu=false DOSBox-X skips ESC opcodes (cpu/core_normal/prefix_none.h: `if (enable_fpu)`
+    # else only the modrm/EA is consumed), and FPU_CoprocessorException (cpu/cpu.cpp) still raises
+    # #NM when CR0.EM is set -- the path the Watcom emulator's int 7 hook relies on.
+    # Unset: no -set argument at all (the expansion is empty; argv to dosbox-x is unchanged).
+    local fpu_arg=()
+    if [[ -n "${FD2_HARNESS_FPU:-}" ]]; then
+        [[ "$FD2_HARNESS_FPU" =~ ^(true|false|auto|8087|287|387)$ ]] || die "FD2_HARNESS_FPU '$FD2_HARNESS_FPU' is not one of true|false|auto|8087|287|387"
+        fpu_arg=(-set "cpu fpu=${FD2_HARNESS_FPU}")
+        echo "[$name] fpu: ${FD2_HARNESS_FPU}"
+    fi
+
     # Optional DOS environment for FD2.EXE (FD2_HARNESS_DOS_SET="AIL_DEBUG=AILDBG.TXT AIL_SYS_DEBUG=1"
     # -> -c 'SET AIL_DEBUG=AILDBG.TXT' -c 'SET AIL_SYS_DEBUG=1' before FD2.EXE). SET is a shell
     # builtin, so the EXEC count the BREAK_START recipe relies on (5th EXEC = FD2.EXE) is unchanged.
@@ -324,7 +339,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000'${dos_set_args} -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} ${fpu_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000'${dos_set_args} -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 
