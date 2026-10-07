@@ -28,10 +28,12 @@
 工作清單中的完成項代表已驗證的函式、格式或切片，**不是遊戲完成百分比**。
 資產解碼完成也不等於玩法、介面或戰役流程已完成。
 
-所有文件中的 `FD2.EXE` 位址目前只適用於大小 `357074` 位元組、MD5
-`b97caf2239a27a896069d03549d96e1e` 的版本。SHA-256 與相關檔案雜湊見
-[`fd2-reference-files.json`](docs/data/fd2-reference-files.json)；版本不同時
-必須重新定位，不能直接套用既有位址。
+文件中的 `FD2.EXE` 位址以大小 `509158` 位元組、MD5
+`33464c81e6a364fd0660141139aa8e6e` 的版本（1998 重打包版）為基準；2026-08-14 前的
+舊版（`357074` 位元組，MD5 `b97caf2239a27a896069d03549d96e1e`）已遺失，早期文件裡
+沿用舊版的位址要先重新定位（`tools/verify_address_claim_coverage.py --stale-edition`）。
+SHA-256 與相關檔案雜湊見 [`fd2-reference-files.json`](docs/data/fd2-reference-files.json)；
+版本不同時必須重新定位，不能直接套用既有位址。
 
 ## 專案核心
 
