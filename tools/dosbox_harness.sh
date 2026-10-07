@@ -281,6 +281,18 @@ cmd_launch() {
         echo "[$name] dosbox-x log: $workdir/dosbox-x.log"
     fi
 
+    # Optional halt-at-startup (FD2_HARNESS_BREAK_START=1 -> dosbox-x -break-start).
+    #
+    # The debugger TUI is up before the BIOS runs, so a boot-time execution trace can be
+    # armed before FD2.EXE starts: `BPINT 21 4B` + RUN halts on the shell's EXEC of
+    # FD2.EXE, then BPDEL * and LOGC (arming LOGC at the very start is useless: the BIOS
+    # POST calls DEBUG_StopLog, bios.cpp). The instance stays halted until resumed.
+    local break_arg=()
+    if [[ "${FD2_HARNESS_BREAK_START:-0}" != "0" ]]; then
+        break_arg=(-break-start)
+        echo "[$name] halted at startup (-break-start): resume from the debugger console"
+    fi
+
     local audio_env=""
     if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
         local audio_raw="$workdir/sdlaudio.raw"
@@ -296,7 +308,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 

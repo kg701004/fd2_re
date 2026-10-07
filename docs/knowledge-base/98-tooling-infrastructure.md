@@ -7989,3 +7989,82 @@ CLI 的每條路徑都不暫存。量測(交錯跑兩輪,避開筆電負載漂�
 
 **同輪準備、未驗證、未提交**(只在工作區):`dosbox_harness.sh` 加 `FD2_HARNESS_BREAK_START=1`(dosbox-x `-break-start`),供續九十八「從開機就錄」的擷取:開機前停住,
 `BPINT 21 4B` 停在 shell 執行 FD2.EXE 時再 `BPDEL *`、`LOGC`(太早下 LOGC 沒用:BIOS POST 會呼叫 `DEBUG_StopLog`)。**實機啟動被權限擋下,這個選項還沒跑過。**
+
+## 2026-10-07 續一百:從開機就錄、依場景切段的原版實機軌跡 —— 有執行紀錄的入口 292 → 525,名稱對場景抽驗 22 / 22
+
+**結論**:依續九十八的擷取計畫,在原版 FD2.EXE(md5 `33464c81…`)上用 DOSBox-X LOGC 從 shell 執行 FD2.EXE 的那一刻錄到底,
+一輪走過開機、標題讀檔、出擊選人格、戰場(法術、道具四項、休息、指令環的選項 / 系統子選單、結束回合與敵方回合、讀取戰況)、
+C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項、武器店四項、道具店、酒館存檔)、出口進第 2 章戰場。
+原始軌跡 4 份共 98.8 GB(約 70.6 億條指令),依場景切成 15 段各自去重。依據為 DOSBox-X 原版實機軌跡對照 FD2.EXE 反組譯:
+
+| 指標 | 續九十七 | 現在 |
+|---|---|---|
+| 不重複軌跡 | 4 份 | **5 份**(新增這一輪,整輪合併成一份 `s100_lt2_unique_cseip.txt`;分段檔另放,不灌水份數) |
+| obj1 內執行位址 | 14215 | **29490** |
+| 入口位址有執行紀錄 | 292 / 1356 | **525 / 1356**(這一輪 513 個,其中 233 個是第一次出現) |
+| 52 個 weak 入口本體有紀錄 | 0 | **0**(`0x46915` 的 span 尾端多了 `int 0x10 ; ret` 樁 `0x46978`,與既有的 `int 16h` / `int 31h` 同屬共用樁表) |
+
+`function_inventory.py` 的 `LIVE_ENTRY_FLOOR` 292 → 525;`--selftest` 全過(死函式反驗與正反向控制照舊成立)。
+`plan_trace_coverage.py` 重跑:有執行紀錄的 call 2435 條,目標沒有紀錄的 0 條(一致性成立);沒有紀錄的 strong 入口 1012 → 779,
+從已執行程式沒有路徑可到的 504 → 156(`_cstart_`、`game_main`、`ail_startup`、`__sys_init_387_emulator` 都在開機段出現)。
+下一輪收益最大的是敵方 AI 施法 / 攻擊(`ai_spell_execute` +158、`ai_attack_execute` +19)與 `ail_startup` 的除錯分支(`asctime` +133)。
+
+**各段第一次執行的入口**(`python tools/trace_scene_names.py` 讀 `docs/data/live_scene_entries.json`):
+
+| 段 | 做了什麼 | 本輪第一次執行 | 代表名稱 |
+|---|---|---|---|
+| boot | EXEC FD2.EXE → 開場(Escape 跳過)→ 標題 | 216 | `_cstart_`、`game_main`、`ail_startup`、`title_menu_dispatch` |
+| title_load | LOAD 第 23 章、開頭存檔、出擊選人格出現 | 53 | `town_hub_main`、`sortie_member_select`、`draw_roster_pick_grid` |
+| sortie | 選滿 15 人、「確定要進入戰場嗎?」按 YES | 30 | `sortie_required_member_check`、`roster_reorder_selected_first` |
+| prebattle | 戰前對話 48 次 Return | 36 | (對話與演出;全都在舊軌跡出現過) |
+| battle | 行動術、道具四項、休息、指令環、END、敵方回合 | 99 | `field_command_ring`、`options_ring`、`battle_system_submenu`、`enemy_phase_dispatch`、`command_handler_25` |
+| battle_load | 系統子選單讀取戰況 | 2 | `save_load_restore`、`map_count_flagged_event_cells` |
+| battle2 | 再一次 END 與敵方回合 | 0 | (同 battle) |
+| quit | C:> 回 DOS | 24 | `AIL_shutdown`、`crt_run_fini`、`__sys_fini_387_emulator`、`docloseall` |
+| boot2 | DOS 重開 FD2,開場完整播完 | 0 | (與 boot 相同:開場動畫不走新入口) |
+| town | LOAD 第 2 章、進營地 | 2 | `town_hub_redraw`(`town_hub_main` 已在 title_load 出現) |
+| church | 教會四項(狀態、轉交、復活無人、凱麗轉職) | 30 | `church_menu`、`revive_service`、`class_change_apply`、`class_change_ceremony_anim` |
+| shop | 武器店買 / 賣 / 裝備 / 轉交,道具店買藥草 | 13 | `shop_menu`、`shop_buy`、`shop_sell_service`、`town_equip_service` |
+| tavern | 酒館狀態、存第 4 格 | 1 | `tavern_menu` |
+| exit_battle | 出口進第 2 章戰場 | 1 | `command_handler_29`(戰前演出) |
+| attack | 移動索爾(攻擊不可用,改休息) | 6 | `walk_path`、`step_anim_left` |
+
+**名稱 → 場景抽驗(第 2 項)**:`trace_scene_names.py` 的 22 條規則,每條寫「這個名稱應在哪一段第一次執行、是否只在那一段」,
+依據是擷取時的操作紀錄,不是軌跡本身。結果 **22 / 22 成立**。最有鑑別力的一條:第 23 章戰場的法術清單有 8 個法術,
+只施放過行動術(`command_labels.json` 的 command 25),那一段執行到的指令 handler 只有 `command_handler_25`。
+**對照組**:把 15 段的場景標籤隨機打亂 200 次,規則成立數中位數 0 / 22、最多 13 / 22;只對調 church 與 shop 兩段時 14 / 22
+(教會與商店的 8 條全部不成立)—— 規則全過不是什麼資料都會過。教會段第一次執行的 30 個入口中,只在教會段出現的 16 個是教會服務
+本身與其下層(轉職演出、能力成長、資訊卡、陣亡名單等),其餘 14 個是共用的選單 / 清單函式(也出現在 shop / tavern / exit_battle);
+商店段 13 個、回 DOS 段 24 個都只出現在自己那一段。
+
+**抽驗找到的錯誤**:`0x28f65 item_storage_service` 的摘要寫「在單位與寄放處之間移動」,不對。實機上教會與商店的這一項都先問
+「誰的東西呢?」再問「要給誰呢?」,把索爾的巨神戟轉給亞雷斯後,商店裝備服務裡亞雷斯的清單多出一把巨神戟(DOSBox-X 原版實機);
+本體是兩次 `choice_box_left_right`(來源、目標)夾一次 `item_list_select`,`remove_inventory_slot(來源)` 後
+`unit_add_item([0x53c57], 道具)`,目標已有 8 件時改開對話框(FD2.EXE 反組譯);呼叫端也不只教會,還有 `shop_menu`
+(doc42 記的商店第 4 項「transfer」就是它)。名稱依規定不改,摘要改寫為「道具轉交服務(名稱沿用舊稱)」。
+
+**工具自驗**:`trace_scene_names.py --selftest` 6 組 23 項純函式案例(含反向控制與結論層回傳碼);定點突變 11 / 11 KILLED
+(first_seen 不累積 / 不依段序、不比第一次所在段、忽略獨占、不檢查名稱唯一、讀回不擋重複 / 未排序 / 筆數、匯出不排序、
+檔名規則放寬、結論層恆回 0),都是預期那一項 FAIL、沒有 Traceback。第一輪寫的「名稱對到兩個入口」案例兩個位址都不在任何段裡,
+拿掉唯一性檢查照樣不成立,抓不到 —— 改成第一個位址本身會成立後才抓到。`live_scene_entries.json` 登錄進
+`verify_generated_artifacts`(23 / 23 相同)。
+
+**擷取方法與踩到的坑**:
+
+- `dosbox_harness.sh` 的 `FD2_HARNESS_BREAK_START=1`(續九十九只在工作區、沒跑過)這輪實機可用:開機前停住,`BPINT 21 4B` 後 RUN,
+  依序停在 `intro.COM`、`MOUNT.COM`、兩次 `config.COM`,第 5 次才是 `FD2.EXE`(以 `D DS:DX` 看檔名),此時 `BPDEL *` 再 `LOGC 7FFFFFFF`。
+  軌跡第一行就是 `F000:0000DAC6`(那個 `int 21`)。
+- **場景邊界不碰除錯器**:想在換場景時用 Alt+Pause + `LOGC 1` 收檔,結果原本 1.3 GB 以上的檔只剩 1 行(第一次的開機段因此重錄)。
+  改成只記 `LOGCPU.TXT` 當下的位元組數(每行即時寫入),最後依位元組區間 `tail -c | head -c | awk` 切段。計數用完時 dosbox-x 自己進
+  除錯器並關檔,這時改名成 `raw_K.TXT` 再 LOGC 續錄(一份 2³¹−1 行 = 30064771058 bytes)。
+- `wsl -d Ubuntu bash -c "..."` 會先經預設 shell 再解析一次,`$(...)` 在外層就展開;改用 `wsl -d Ubuntu -e bash -c`。
+- 記錄時 LOGC 約 32 MB/s(約 230 萬條指令 / 秒),遊戲約半速,按鍵不受影響。
+- 行動環 / 系統子選單裡**紅色圖示是不可用**:沒有可攻擊目標時的攻擊、第 1 回合時的存檔(第 2 回合變回可用,原因沒查);
+  方向鍵移不到紅色項目,Return 會落在原本的項目上(DOSBox-X 原版實機觀察)。
+- 戰場的「記錄戰況」不寫存檔格,寫 FD2.SAV 的目前戰況區塊(`fd2save.py` 顯示 `current_runtime`、chapter 0x16、turn 2);
+  系統子選單的讀取對應讀回這個區塊(`save_load_restore` 只在這一段第一次執行)。
+- 第 23 章載入後直接出現出擊選人格(沒有城鎮),城鎮改由第 2 章存檔補:回 DOS 後重開 FD2 再 LOAD。
+- 防拷密碼畫面這輪仍沒走到,也不可能走到:唯一呼叫點 `0x118aa` 是無條件 `EB 07`(續三十六 / 四十);`plan_trace_coverage.py`
+  不認得這種「條件分支被改成無條件」的情形,仍把它列為前線(現在剩 +5),是工具的已知盲點。
+
+軌跡與分段檔留在 WSL `~/fd2-run-harness-lt2/` 與 `.wsl_build/`(不進版控);驅動腳本與分析腳本在 scratchpad,只有可重生的產物與工具進倉庫。

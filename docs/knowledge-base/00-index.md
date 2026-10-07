@@ -95,6 +95,7 @@
 | **一次查多個位址的 Ghidra disasm/decompile/xref/function bounds**(不要再寫一次性 `Probe*.java`) | **`98`**(`ProbeBatch.java` + `tools/ghidra_batch_probe.py`) |
 | **某個 EXE 位址是哪個函式、叫什麼、證據在哪**(全部 1356 個入口都有名稱) | **`98`**(續八十一起;`tools/function_inventory.py --card 位址`、`docs/data/function_names.json`) |
 | **下一輪原版實機擷取該跑哪個場景**(依新增入口數排序) | **`98`**(續九十八;`tools/plan_trace_coverage.py`) |
+| **從開機就錄、依場景切段的原版實機軌跡;各場景第一次執行哪些函式、名稱是否對得上場景** | **`98`**(續一百;`tools/trace_scene_names.py`、`docs/data/live_scene_entries.json`;`dosbox_harness.sh` 的 `FD2_HARNESS_BREAK_START=1`) |
 | Call-graph 反組譯方法紀錄 | `24` |
 | 當年開發工具考證 | `04` |
 | 「1995 年怎麼做這遊戲」總覽 | `15` |

@@ -24,7 +24,7 @@
 | **位元組證據** | 每筆名稱的 `{at, insn}` 或跳表 `{fixup_from, table, index}` 逐字比對 FD2.EXE 反組譯通過 | 1149 / 1149(`--check-names`) |
 | **工具自驗** | `--selftest` 通過,新程式碼做定點突變且以 FAIL(非 Traceback)抓到 | `function_inventory.py`:續九十一 7 / 7、續九十五資料突變 1 / 1;`plan_trace_coverage.py`:續九十八 17 / 17 |
 | **產物重生** | 重跑產生器(讀 FD2.EXE 反組譯)與已提交檔逐位元組比對 | `verify_generated_artifacts` 22 / 22(續九十七加入 `live_exec_addresses.json`) |
-| **原版實機** | DOSBox-X 跑原版 EXE | 只用於「死函式不會執行」反驗:4 份不重複軌跡、292 / 1356 個入口有執行紀錄(續九十六 ~ 九十七);**名稱本身未經實機** |
+| **原版實機** | DOSBox-X 跑原版 EXE | 「死函式不會執行」反驗:5 份不重複軌跡、525 / 1356 個入口有執行紀錄(續九十六 ~ 九十七、續一百);名稱以場景分段軌跡**抽驗** 22 條規則 22 / 22 成立(續一百),**其餘名稱未經實機** |
 
 **本線沒有任何結論依賴 remake。**
 
@@ -52,7 +52,8 @@
 | 項目 | 狀態 | 說明 |
 |---|---|---|
 | 52 個 weak 入口 | 靜態 RE 已到頂 | 唯一呼叫端都在沒有執行路徑的死函式裡,「呼叫端可達」這個方法本來就證明不了;身分已寫在登錄表 |
-| 名稱的實機驗證 | 部分 | 名稱本身全部是靜態 RE,沒有逐一下斷點;但「死函式不會執行」已用 **4 份不重複**的原版 DOSBox-X 實機軌跡反驗(續九十六的「234 份」是同一份的複本,續九十七訂正):52 個 weak 入口的本體指令沒有一條執行過,0x46915 只有 span 尾端與活路徑共用的樁表有紀錄。執行位址收在 `docs/data/live_exec_addresses.json`,這項反驗已進 `function_inventory.py --selftest`(續九十七) |
+| 名稱的實機驗證 | 部分 | 名稱本身全部是靜態 RE,沒有逐一下斷點;「死函式不會執行」已用 **5 份不重複**的原版 DOSBox-X 實機軌跡反驗(續九十六的「234 份」是同一份的複本,續九十七訂正;續一百加一輪從開機錄到底的):52 個 weak 入口的本體指令沒有一條執行過,0x46915 只有 span 尾端與活路徑共用的樁表有紀錄。執行位址收在 `docs/data/live_exec_addresses.json`,這項反驗已進 `function_inventory.py --selftest`(續九十七)。續一百另以場景分段軌跡抽驗名稱 22 / 22,並抓到 `0x28f65` 摘要錯誤(是隊員間轉交,不是寄放;名稱沿用、摘要已改) |
+| 下一輪擷取 | 建議 | 敵方 AI 施法 / 攻擊(`ai_spell_execute` +158、`ai_attack_execute` +19)需要敵人進入射程的戰鬥;`ail_startup` 的除錯分支(`asctime` +133)要 AIL 除錯環境;防拷密碼畫面本版不可達(`0x118aa` 是無條件跳過),`plan_trace_coverage.py` 仍列為前線 |
 | doc98 續八十稱 0x4a424 為「浮點模擬器主體」 | 已在續九十一訂正 | 它是 SIB 解碼 `emu_ea_sib`;舊句保留為歷史,訂正寫在續九十一 |
 | 部分摘要只列被呼叫者 | 刻意保留 | 參數名或內部步驟沒讀到的,寫「N 個參數」或只列被呼叫者,不寫推測(續九十四列了撤掉的推測) |
 
@@ -60,7 +61,7 @@
 
 ## 4. 需要人決定
 
-- 是否要對名稱做 DOSBox-X 實機抽驗(授權已在記憶裡,但量大,本線沒有把它列為建議)。
+- 名稱的 DOSBox-X 實機抽驗已做一輪(續一百,22 / 22);要不要擴大到逐一下斷點,仍待人決定(量大)。
 
 ---
 
@@ -70,8 +71,9 @@
 |---|---|
 | 看某個位址是哪個函式、名稱、證據、本體反組譯 | `python tools/function_inventory.py --card 0x位址` |
 | 看覆蓋率 | `python tools/function_inventory.py --coverage` |
-| 決定下一輪原版實機擷取跑哪個場景 | `python tools/plan_trace_coverage.py`(續九十八:戰場指令環 +369、城鎮教會 / 商店 / 出擊選人、從開機就錄 +231) |
+| 決定下一輪原版實機擷取跑哪個場景 | `python tools/plan_trace_coverage.py`(續九十八:戰場指令環 +369、城鎮教會 / 商店 / 出擊選人、從開機就錄 +231 —— 這幾項續一百已擷取;重跑後排第一的是敵方 AI 施法 +158) |
 | 有新的原版軌跡時更新實機執行位址 | 新軌跡放進 `.wsl_build/` 後 `python tools/verify_dead_functions_vs_traces.py --export docs/data/live_exec_addresses.json .wsl_build`(需要 capstone;內容驗不過的軌跡自動略過;已登錄 `verify_generated_artifacts`),再調高 `function_inventory.py` 的 `LIVE_ENTRY_FLOOR` |
+| 從開機就錄的擷取、依場景看第一次執行的函式與名稱抽驗 | `FD2_HARNESS_BREAK_START=1` 啟動 `dosbox_harness.sh`;分段檔放 `.wsl_build/live_s100_segments/` 後 `python tools/trace_scene_names.py --export docs/data/live_scene_entries.json .wsl_build/live_s100_segments`,再 `python tools/trace_scene_names.py`(續一百) |
 | 驗每一筆名稱的位元組證據 | `python tools/function_inventory.py --check-names` |
 | 重生清單 / 結構性命名 | `python tools/function_inventory.py docs/data/function_inventory.json`、`--structural docs/data/function_structural_names.json` |
 | 自我測試 | `python tools/function_inventory.py --selftest`(約 35 秒;續九十九起真實 EXE 段的 build 只算 3 次) |

@@ -24386,7 +24386,7 @@
   {
    "addr": "0x28f65",
    "name": "item_storage_service",
-   "summary": "道具寄放服務:item_list_select 選道具,在單位與寄放處之間移動(unit_add_item / remove_inventory_slot),之後 recalc_equipped_stats(FD2.EXE 反組譯)。church_menu 依 [0x53c57] = 1 呼叫(doc91)。",
+   "summary": "道具轉交服務(名稱沿用舊稱「寄放」,實為隊員之間轉交,沒有寄放處):choice_box_left_right 選來源成員、item_list_select 選道具、再以 choice_box_left_right 選目標成員(目標取自 [0x53c57]);目標已有 8 件時開對話框說明、不轉交,否則 remove_inventory_slot 從來源移除、unit_add_item 加給目標,再對來源 recalc_equipped_stats(FD2.EXE 反組譯)。呼叫端是 shop_menu(第 4 項)與 church_menu([0x53c57] = 1)。原版 DOSBox-X 實機(doc98 續一百):教會與商店的這一項都先問「誰的東西呢?」再問「要給誰呢?」,把索爾的巨神戟轉給亞雷斯後,商店裝備服務裡亞雷斯的清單多出一把巨神戟。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [

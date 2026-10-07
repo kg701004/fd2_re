@@ -112,6 +112,10 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 缺檔時產生器回 2,這裡報 ERROR。function_inventory.py --selftest 的死函式反驗讀這份產物。
     ("docs/data/live_exec_addresses.json", "verify_dead_functions_vs_traces.py",
      ["--export", "{out}", ".wsl_build"], "bytes"),
+    # 2026-10-07(doc98 續一百):同一類實機軌跡,但依遊戲場景切段(從開機錄到底的一輪)。輸入是
+    # `.wsl_build/live_s100_segments/` 的分段檔(不進版控),缺檔時產生器回 2。
+    ("docs/data/live_scene_entries.json", "trace_scene_names.py",
+     ["--export", "{out}", ".wsl_build/live_s100_segments"], "bytes"),
     # 2026-09-08 新增。加進來的第一次執行就抓到真東西:treasure 那支把一個
     # **已經是新版位址**的常數又加了一次版本位移(+0x356),輸出 `0x35baa`——
     # 落在指令中段,根本不是函式。已改成從事件跳表 0x51b91 讀(且走 fixup),
