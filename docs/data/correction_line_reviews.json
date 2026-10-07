@@ -87,6 +87,13 @@
    "excerpt": "入口位址刪掉)都以預期那一項 FAIL 抓到。登錄表 0x46915 的摘要把「234 份」改為 4 份不重複。",
    "verdict": "not_address_erratum",
    "note": "訂正的是 0x46915 摘要裡的軌跡份數(234 -> 4 份不重複),位址本身無誤"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "f3468a4d8030e72d8560b6307cb8c90c107288c5",
+   "excerpt": "- `tools/event_handler_dump.py`:PRIM 標籤改為「舊版,現行 0x26152」;`KNOWN_STALE` 理由與上方註解改寫;`0x26152` **不**加進 PRIM",
+   "verdict": "restates_existing",
+   "note": "重述既有勘誤 0x2cad7 -> 0x26152(2026-09-17 續十八),本行只說明 PRIM 標籤跟上"
   }
  ]
 }

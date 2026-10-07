@@ -680,7 +680,7 @@
       ],
       "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
       "correction_section": "2026-09-17 續十八",
-      "still_pending": "呼叫點證據成立(0x25e2a call 0x26152);doc50 §3.9 記載的 byte[chapter+0x526b9] 測試在 0x26152 本體與一階被呼叫者裡都沒有 0x26b9 的參照,可能在更深層、或屬舊版結構,語意未重驗。",
+      "still_pending": "已解(2026-10-07,doc98 續一百零一):doc50 §3.9 的 byte[chapter+0x526b9] 找不到 0x26b9,是因為表位址本身也抄錯了(同檔 0x526b9 -> 0x523e7 那筆)。現行 0x26152 本體 0x2626d `mov eax, [0x53c03]` + 0x26272 `cmp byte ptr [eax + 0x23e7], 0`(fixup -> 0x523e7)+ `je 0x2637f`:!=0 走 yes_no_prompt -> save_game_menu -> sortie_member_select(整備限定),==0 進城鎮流程,與 doc25 §9.1 的分類一致(FD2.EXE 反組譯,未經實機)。event_handler_dump.py --selftest (3b) 釘住呼叫點與 gate 讀取。",
       "citation_check": {
         "mode": "address",
         "flag": [

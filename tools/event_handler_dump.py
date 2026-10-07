@@ -30,7 +30,7 @@ PRIM = {
     0x205da: 'reset_and_load_chapter',
     0x15f84: '繪畫面', 0x1088d: '完整章節載入', 0x111ba: '載資源', 0x25977: 'play_bgm/scene',
     0x25a96: 'play_sfx', 0x36cd7: '__STK(舊版)', 0x3702f: '__STK',
-    0x2cad7: '戰後raw_gate(舊版,現行位址未解)', 0x18890: '戰鬥行動',
+    0x2cad7: '戰後raw_gate(舊版,現行 0x26152)', 0x18890: '戰鬥行動',
     0x3453e: 'raw_record_byte5_bit0(idx)(舊版)', 0x34894: 'raw_record_byte5_bit0(idx)',
 }
 
@@ -40,19 +40,24 @@ PRIM = {
 #
 #   0x3453e -> 0x34894   實測新位址 50 個呼叫端,且是合法 Watcom 入口
 #   0x36cd7 -> 0x3702f   現行 stack-check,541 個呼叫端
-#   0x2cad7 -> **未解**  已列於 docs/data/known_address_errata.json,與
-#                        0x2ccb6/0x2fd93 同一類(改基準前的手動反組譯位址);
-#                        該檔已載明 `+0x190` 只是局部有效的錨點、不是常數平移,
-#                        所以這裡**不猜**。
+#   0x2cad7 -> 0x26152   當時未解(不猜 +0x190);2026-09-17 由呼叫點解出:
+#                        舊稱 `0x25e2a call 0x2cad7` 的那條,現行是 `call 0x26152`
+#                        (docs/data/known_address_errata.json)。0x26152 在
+#                        function_names.json 已登錄為 town_hub_main,PRIM 不再收
+#                        一次(--check-names 不准兩張表命名同一位址),改由
+#                        selftest (3b) 驗呼叫點與 gate 表讀取。
 #
 # selftest 的規則因此是:每一筆 PRIM 位址要嘛在現行 EXE 解得開,要嘛列在
 # KNOWN_STALE 裡並附理由 —— 新的死位址不能靜默混進來。
 KNOWN_STALE = {
     0x36cd7: "舊版 __STK;現行為 0x3702f(同表已收錄)",
     0x3453e: "舊版 raw_record_byte5_bit0;現行為 0x34894(同表已收錄)",
-    0x2cad7: "現行位址未解,見 docs/data/known_address_errata.json"
-             "(與 0x2ccb6/0x2fd93 同類,+0x190 只是局部錨點)",
+    0x2cad7: "舊版戰後 raw gate;現行為 0x26152(town_hub_main,登錄在 function_names.json,"
+             "selftest (3b) 驗呼叫點與 gate 表讀取)",
 }
+# 0x2cad7 的現行對應:舊呼叫點 0x25e2a 現在呼叫它;它在 0x26272 以章節 [0x53c03]
+# 為索引測 gate 表 0x523e7(`cmp byte ptr [eax + 0x23e7], 0`,disp 經 fixup 到 0x523e7)
+GATE_FN, GATE_CALL_SITE, GATE_TEST_AT, GATE_TABLE = 0x26152, 0x25e2a, 0x26272, 0x523e7
 VAR = {0x53ecc: 'raw_pending_result_code', 0x53ec8: 'raw_accumulator', 0x53a45: '單位陣列', 0x53c03: '章節', 0x51a83: 'raw_overlay_selector'}
 
 
@@ -106,12 +111,13 @@ def selftest():
     """規則:每一筆 PRIM 位址要嘛在現行 EXE 解得開,要嘛列在 KNOWN_STALE 並附理由。
 
     這是 `dump_chapter_beats` 那一輪的同一個 bug 類別 —— 位址表過期不會報錯,
-    只會讓註解安靜地標不出來。差別在於這支有一筆(`0x2cad7`)的現行位址**至今
-    未解**,已列在 `docs/data/known_address_errata.json`。所以檢查不能要求「全部
-    解得開」(那會逼人去猜),但也不能默許 —— 折衷是明確列管,新的死位址仍會被抓到。
+    只會讓註解安靜地標不出來。檢查不能要求「全部解得開」(舊版位址本來就死了,
+    硬要解得開會逼人去猜),但也不能默許 —— 折衷是明確列管,新的死位址仍會被抓到。
+    `0x2cad7` 曾是「現行位址未解」的那一筆,2026-09-17 由呼叫點解出是 0x26152,
+    第 (3b) 題驗這個對應(新位址不在 PRIM,所以不走第 (3) 題)。
 
     VAR 那 5 筆是**資料位址**,不是 call 目標,拿呼叫端數判斷是退化檢查;
-    改用 fixup map 驗證(第 3 題)。
+    改用 fixup map 驗證(第 4 題)。
     """
     import os
     if hasattr(sys.stdout, "reconfigure"):
@@ -168,8 +174,31 @@ def selftest():
     if not ok3:
         fails.append(f"新位址無效或未加入 PRIM:{bad}")
 
-    print("\n(4) VAR 是資料位址:用 fixup map 驗證,不能用呼叫端數(那是退化檢查)")
+    print("\n(3b) 0x2cad7 的現行對應 0x26152:舊呼叫點現在呼叫它,且它以章節為索引讀 gate 表")
     fx = fixup_map(cg.d, cg.meta)
+    site = cg._insn(GATE_CALL_SITE)
+    test = cg._insn(GATE_TEST_AT)
+    site_ok = bool(site) and site.mnemonic == "call" and site.op_str == f"{GATE_FN:#x}"
+
+    def refs(ins, target):
+        return bool(ins) and any(fx.get(o) == target for o in range(ins.address, ins.address + ins.size))
+
+    # gate 測試:比較的是 byte,位移經 fixup 指到 gate 表,索引暫存器由緊鄰的上一條從章節變數 [0x53c03] 載入
+    idx = cg._insn(GATE_TEST_AT - 5)
+    reg = test.op_str[len("byte ptr ["):].split()[0] if test and test.op_str.startswith("byte ptr [") else None
+    test_ok = (bool(test) and test.mnemonic == "cmp" and reg is not None and refs(test, GATE_TABLE)
+               and bool(idx) and idx.address + idx.size == GATE_TEST_AT and idx.mnemonic == "mov"
+               and idx.op_str.startswith(f"{reg}, ") and refs(idx, 0x53c03))
+    in_body = GATE_FN < GATE_TEST_AT < GATE_FN + 1178     # 本體範圍上界 span_upper 1178(function_inventory --card)
+    ok3b = site_ok and test_ok and in_body and call_sites(GATE_FN) > 0
+    print(f"    {'PASS' if ok3b else 'FAIL'}: {GATE_CALL_SITE:#x} "
+          f"{(site.mnemonic + ' ' + site.op_str) if site else '解不開'}、"
+          f"{GATE_TEST_AT:#x} {(test.mnemonic + ' ' + test.op_str) if test else '解不開'}"
+          f"(fixup -> {GATE_TABLE:#x}:{test_ok})、{GATE_FN:#x} 呼叫端 {call_sites(GATE_FN)}")
+    if not ok3b:
+        fails.append(f"0x2cad7 -> {GATE_FN:#x} 的對應不成立(呼叫點 {site_ok}、gate 測試 {test_ok}、在本體內 {in_body})")
+
+    print("\n(4) VAR 是資料位址:用 fixup map 驗證,不能用呼叫端數(那是退化檢查)")
     targets = set(fx.values())
     missing = [hex(a) for a in VAR if a not in targets]
     ok4 = not missing

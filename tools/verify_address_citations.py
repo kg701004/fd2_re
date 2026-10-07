@@ -720,20 +720,32 @@ def selftest() -> int:
     # 91-worklist.md:446 是今天被舊版邏輯誤擋、需要 --mark-correction 才放行的
     # 真實行;三個位址與最近的訂正措辭實測相距 98~260 字元,遠超 max_gap。改成
     # 看距離之後,這一行不必宣告也不會再被擋。真陽性(注入測試的形狀)仍要抓到。
+    # 2026-10-07:原本用行號 446 取這一行;6212b8c6 在前面插了一行後它移到 447,
+    # 第 446 行換成另一段(待辦 25,本來就會被擋),本題因此在 HEAD 上一直 FAIL。
+    # 改成以段落開頭定位、以整行 sha1 釘住內容:找不到、找到多行、內容改過都算 FAIL
+    # (不是 SKIP)—— 前提不成立時,這題不能安靜地拿別的行當「真實假陽性」。
+    head91 = "**2026-09-11 待辦 31:位址訂正的源頭閘門"
+    sha91 = "e9f5cc1563708466c4c8e0f7ee43790092e664f2"   # 363e9773 加入本題時第 446 行的全文
     worklist_text = None
     wp = KB / "91-worklist.md"
+    hits91 = []
     if wp.is_file():
-        lines91 = wp.read_text(encoding="utf-8", errors="replace").splitlines()
-        if len(lines91) >= 446:
-            worklist_text = lines91[445]
+        hits91 = [t for t in wp.read_text(encoding="utf-8", errors="replace").splitlines()
+                  if t.startswith(head91)]
+    if len(hits91) == 1 and _audit_mod()._sha(hits91[0]) == sha91:
+        worklist_text = hits91[0]
     if worklist_text is None:
-        print("    SKIP:讀不到 91-worklist.md:446")
+        why = ("讀不到 91-worklist.md" if not wp.is_file() else
+               f"以「{head91}」開頭的行有 {len(hits91)} 行" if len(hits91) != 1 else
+               "那一行的內容改過(sha1 不符)")
+        print(f"    FAIL:找不到本題的真實樣本 —— {why}")
+        fails.append(f"(11b) 真實樣本前提不成立:{why}")
     else:
         fp = bool(correction_debt_from_lines([("91-worklist.md", 446, worklist_text)],
                                              set(), set()))
         tp_ = bool(correction_debt_from_lines([("x.md", 1, unreg)], set(), set()))
         ok11b = (not fp) and tp_
-        print(f"    {'PASS' if ok11b else 'FAIL'}: worklist:446(真實假陽性)"
+        print(f"    {'PASS' if ok11b else 'FAIL'}: worklist 待辦 31(363e9773 時的第 446 行,真實假陽性)"
               f"擋下={fp}(應 False)、注入真陽性擋下={tp_}(應 True)")
         if not ok11b:
             fails.append(f"距離判準對真實案例不對:worklist446={fp}, 真陽性={tp_}")

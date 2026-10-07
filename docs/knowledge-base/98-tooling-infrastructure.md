@@ -8071,3 +8071,42 @@ C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項
 另一份連同 `SHA256SUMS` 在 WSL `~/fd2-run-harness-lt2/s100_derived/`(都不進版控)。這兩份就是 `live_exec_addresses.json` 與
 `live_scene_entries.json` 的重生輸入;原始軌跡獨有的執行順序與次數已不在,要改切段方式只能重錄。
 驅動腳本與分析腳本在 scratchpad,只有可重生的產物與工具進倉庫。
+
+## 2026-10-07 續一百零一:`--coverage` 列出的兩個疑點 —— 舊版戰後 gate 的現行對應已解並釘進 selftest;`0x3702f` 的 `__STK` 是既定沿用
+
+**結論**:`function_inventory.py --coverage` 列出 5 個「有名稱但不是入口」的位址,其中兩個看起來像問題,查完一個是過期標籤、一個不是問題。依據為 FD2.EXE 反組譯(capstone,`function_inventory.py --card 0x26152`),未經實機。
+
+- **舊版戰後 raw gate**(`event_handler_dump.py` 的 PRIM 標成「現行位址未解」):這是 2026-09-08 寫的標籤,2026-09-17 勘誤已由呼叫點解出現行是 `0x26152`
+  (舊稱的呼叫點 `0x25e2a` 現在是 `call 0x26152`),標籤沒跟著改。`0x26152` 在 `function_names.json` 已登錄為 `town_hub_main`。
+  勘誤那筆還掛著「本體裡找不到 `0x26b9` 的參照,語意未重驗」—— 找不到是因為 doc50 §3.9 引的表位址本身也抄錯了(同檔另一筆更正為 `0x523e7`)。現行本體:
+
+  | 位址 | 指令 | 說明 |
+  |---|---|---|
+  | `0x2626d` | `mov eax, dword ptr [0x3c03]` | fixup -> `0x53c03`(目前章節) |
+  | `0x26272` | `cmp byte ptr [eax + 0x23e7], 0` | fixup -> `0x523e7`(gate 表,以章節為索引) |
+  | `0x26279` | `je 0x2637f` | `==0` 跳走 |
+
+  `!=0` 往下走 `yes_no_prompt` -> `save_game_menu` -> `sortie_member_select`(整備限定);`==0` 到 `0x2637f` 起 `bgm` -> `town_hub_redraw` 迴圈 -> `town_hub_select`(城鎮)。
+  與 doc25 §9.1「`==0` 城鎮流程 / `!=0` 整備限定流程」一致。
+- **`0x3702f=__STK`**:名稱來自 `event_handler_dump.py` 的 PRIM。續八十已查明它在 Watcom 命名裡是 `__CHK`(真正的 `__STK` 是 `0x37042`),
+  當時決定命名表維持原樣、只在續八十記下對應;它也刻意不當入口(序頭的 stack-check 目標)。本輪不改。
+
+**修改**:
+
+- `tools/event_handler_dump.py`:PRIM 標籤改為「舊版,現行 0x26152」;`KNOWN_STALE` 理由與上方註解改寫;`0x26152` **不**加進 PRIM
+  (`--check-names` 不准兩張命名表命名同一位址)。selftest 新增第 (3b) 題:`0x25e2a` 是 `call 0x26152`、`0x26272` 是 byte 比較且位移經 fixup 指到
+  `0x523e7`、緊鄰的上一條把同一個索引暫存器從 `0x53c03` 載入、測試點在 `0x26152` 本體範圍內、`0x26152` 有呼叫端。
+- `docs/data/known_address_errata.json`:那筆的 `still_pending` 改為已解,寫明上表與 selftest 位置。
+
+**驗證**(FD2.EXE 反組譯):`event_handler_dump.py --selftest` PASS;第 (3b) 題定點突變 7 / 7 KILLED(`0x26152` 換回舊位址、gate 表換成抄錯的位址、呼叫點偏 1 byte、
+測試點換成下一條 `je`(`0x26279`)、章節變數換成別的全域、本體範圍縮小、索引暫存器不一致),每個都確認 selftest 對 FD2.EXE 跑到 (3b)、以 FAIL 結束、沒有 Traceback。
+第一次跑突變時突變檔放在 scratchpad,selftest 依 `__file__` 找不到 FD2.EXE 而 SKIP、回傳 0,7 個全「存活」;改放 `tools/` 並要求輸出含 (3b) 後才是上面的結果。
+
+**同輪修正:`verify_address_citations.py --selftest` 第 (11b) 題在 HEAD 上一直 FAIL**(在 `29295e6d` 的乾淨 worktree 重跑確認,與本輪修改無關)。
+這題拿 `91-worklist.md` 一行「三個位址離訂正措辭 98~260 字元」的真實段落當假陽性樣本,但用**行號 446** 取;`6212b8c6`(2026-10-06)在前面插了一行,
+原段落(待辦 31,整行 sha1 與 `363e9773` 加題時相同)移到第 447 行,第 446 行換成本來就會被擋的待辦 25,於是報「真實假陽性被擋下」。判準本身沒壞:
+對第 447 行仍回不擋。改成以段落開頭定位、以整行 sha1 釘住內容,找不到、命中多行或內容改過都算 FAIL(不是 SKIP)。
+定點突變 5 / 5 KILLED(退回行號 446、開頭寫錯、sha1 不符、開頭放寬到命中 4 行、距離門檻 80 改 300),都在 (11b) 印 FAIL、沒有 Traceback。
+其他工具裡沒有同樣以固定行號讀知識庫的樣本(`audit_evidence_provenance.py` 的 `91-worklist.md:221` 是合成探針,selftest 通過)。
+
+**順帶記下、未改**:同一張 PRIM 字典 `0x3453e` 這個鍵寫了兩次(第二次的「(舊版)」覆蓋第一次),行為上無害。
