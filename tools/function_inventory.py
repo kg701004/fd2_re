@@ -2135,6 +2135,13 @@ def _selftest_live(fails: list[str]) -> bool:
     check("每一筆都是 strong 入口", all(by[int(a, 16)]["grade"] == "strong" for a in sd["names"]))
     errs = run_check_names()
     check(f"function_names.json 的 {len(load_function_names())} 筆全部通過位元組證據檢查", not errs, "; ".join(errs[:3]))
+    # 求完整的回歸看守(doc98 續九十四):每個入口都要有名稱;新增入口沒命名、或名稱被刪,就在這裡失敗
+    nm_all = load_names()
+    unnamed_all = [e["addr"] for e in inv["entries"] if not (nm_all.get(int(e["addr"], 16)) or {}).get("name")]
+    check(f"全部 {len(inv['entries'])} 個入口都有名稱(登錄表 / Watcom / AIL)", not unnamed_all, str(unnamed_all[:5]))
+    nm_wo = load_names(include_registry=False)
+    check("反向控制:不含登錄表時有上百個入口沒有名稱(上一項不是空轉)",
+          sum(1 for e in inv["entries"] if not (nm_wo.get(int(e["addr"], 16)) or {}).get("name")) > 100)
     # 事件跳表的正向控制:doc25 L950 記 slot 82 指向舊版 0x35f92,新版 +0x356 = 0x362e8(續三十勘誤)。
     # 表基底或 fixup 解析錯了,這題先失敗,而不是讓所有 event_handler_N 一起變成「fixup 指向別處」。
     import disasm_le as D
@@ -2173,7 +2180,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(8 組清單純函式 + 6 組結構性命名純函式 + 1 組名稱登錄表規則的成對案例"
-          + (" + 真實 EXE 的 41 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
+          + (" + 真實 EXE 的 43 項交叉核對)。" if live else ";真實 EXE 部分 SKIP)。"))
     return 0
 
 
