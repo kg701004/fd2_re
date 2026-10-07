@@ -11978,7 +11978,7 @@
   {
    "addr": "0x4c980",
    "name": "emu_trig_core",
-   "summary": "浮點模擬的三角函式核心(esi 選函式:0 = sin(emu_trig_sel0,D9 FE fsin)、1 = tan(emu_trig_sel1,D9 F2 fptan)、2 = cos(emu_trig_sel2,D9 FF fcos);D9 FB fsincos 先 sel0 再 sel2):以 emu_fprem_core 對 0xc90fdaa2_2168c235(指數 0x3ffe,π/4)取餘得象限,依象限加減 π/4(ld_add_by_value)與換號,再依指數查 cs:0x4c96e 的表(後段未逐條讀)。對應關係由 x87 分派得出:暫存器形式 D9 F0..FF 經跳表 0x49fc4 格 0x31 / 0x39 進子表 0x4b020 / 0x4b12a(以 rm 索引),fsin 0x4b220 呼叫 0x4cb77、fcos 0x4b22d 呼叫 0x4cb81、fptan 0x4b094 呼叫 0x4cb8e 後把 1.0 推上堆疊。",
+   "summary": "浮點模擬的三角函式核心(esi 選函式:0 = sin(emu_trig_sel0,D9 FE fsin)、1 = tan(emu_trig_sel1,D9 F2 fptan)、2 = cos(emu_trig_sel2,D9 FF fcos);D9 FB fsincos 先 sel0 再 sel2):以 emu_fprem_core 對 0xc90fdaa2_2168c235(指數 0x3ffe,π/4)取餘得象限,依象限加減 π/4(ld_add_by_value)與換號,再依指數查 cs:0x4c96e 的表決定級數項數(指數越小項數越少;|r| < 2^-32 時 cos 直接取 1.0、sin 取 r)。後段(本體逐條讀過,FD2.EXE 反組譯):八分象限為奇數時 r 改成 π/4 - r;cos 級數以 emu_ld_mul_add 對 r² 套係數表 0x4c914,sin 級數以 emu_ld_square_series 套 0x4c8ba;依象限((n + 1) & 2)選 sin 或 cos 的結果,cos 由 esi 的 bit 1 把象限移 2,符號依象限 bit 2;tan(esi = 1)再把兩者相除(依象限 sin / cos 或 cos / sin),分母為 0 時給無限大(指數 0x7fff)。對應關係由 x87 分派得出:暫存器形式 D9 F0..FF 經跳表 0x49fc4 格 0x31 / 0x39 進子表 0x4b020 / 0x4b12a(以 rm 索引),fsin 0x4b220 呼叫 0x4cb77、fcos 0x4b22d 呼叫 0x4cb81、fptan 0x4b094 呼叫 0x4cb8e 後把 1.0 推上堆疊。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -11997,6 +11997,22 @@
     {
      "at": "0x4c9ea",
      "insn": "call 0x4b852"
+    },
+    {
+     "at": "0x4ca5d",
+     "insn": "mov cx, word ptr cs:[ecx*2 + 0x3c96e]"
+    },
+    {
+     "at": "0x4ca9e",
+     "insn": "lea ecx, [ecx*2 + 0x3c914]"
+    },
+    {
+     "at": "0x4cad1",
+     "insn": "lea edx, [0x3c8ba]"
+    },
+    {
+     "at": "0x4cb5a",
+     "insn": "or si, 0x7fff"
     }
    ]
   },
@@ -13620,7 +13636,7 @@
   {
    "addr": "0x4c35a",
    "name": "emu_atan_core",
-   "summary": "emu_fpatan_core 呼叫:參數恰為 1.0(指數 0x3fff、尾數 0x80000000_0)時直接給 π/4(指數 0x3ffe),否則做級數;fpatan 的 atan 核心(唯一呼叫端 emu_fpatan_core,D9 F3);級數本體未逐條讀。",
+   "summary": "emu_fpatan_core 呼叫:參數恰為 1.0(指數 0x3fff、尾數 0x80000000_0)時直接給 π/4(指數 0x3ffe),否則:取絕對值;x >= 1 時以 ld_div_core 改算 1 / x(結果最後以 π/2 減回);x > tan(π/12)(0x3ffd:8930a2f4_f66ab09b = 2 - √3)時換成 (x√3 - 1) / (x + √3)(√3 = 0x3fff:ddb3d742_c265539e,結果最後加 π/6 = 0x3ffe:860a91c1_6b9b2c23);再以 emu_ld_square_series 依係數表 0x4c24a(8 項)求 atan 級數,最後還原正負號。fpatan 的 atan 核心(唯一呼叫端 emu_fpatan_core,D9 F3);本體逐條讀過(FD2.EXE 反組譯)。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -13635,6 +13651,18 @@
     {
      "at": "0x4c38b",
      "insn": "mov ax, 0x3ffe"
+    },
+    {
+     "at": "0x4c3df",
+     "insn": "cmp eax, 0x8930a2f4"
+    },
+    {
+     "at": "0x4c3f5",
+     "insn": "mov ecx, 0xddb3d742"
+    },
+    {
+     "at": "0x4c46d",
+     "insn": "call 0x4ced6"
     }
    ]
   },
@@ -13700,7 +13728,7 @@
   {
    "addr": "0x4c6e8",
    "name": "emu_split_exponent",
-   "summary": "(擴展精度值) 把指數換成 0x3ffe(尾數落在 [0.5, 1)),原指數減 0x3ffe 留在堆疊,接著做後續的尾數運算(fyl2x / fyl2xp1 的 log2 核心:D9 F1 0x4b08b 與 D9 F9 經 emu_add_one 落進 emu_split_then_mul 再到這裡;尾數級數未逐條讀完)。emu_split_then_mul 呼叫。",
+   "summary": "(擴展精度值) 把指數換成 0x3ffe(尾數落在 [0.5, 1)),原指數減 0x3ffe 留在堆疊,接著以 Cody–Waite 的 ln 演算法算出 ln(x)(本體逐條讀過,FD2.EXE 反組譯):尾數 f > √½(0x3ffe:b504f333_f9de6484)時 z 的分子 = f - 0.5 - 0.5、分母 = f / 2 + 0.5,否則指數減 1、分子 = f - 0.5、分母 = 分子 / 2 + 0.5;z = 分子 / 分母,w = z²,以係數表 0x4c664(3 項)/ 0x4c646(2 項)經 emu_ld_mul_add 求有理近似 r = z + z·w·A(w) / B(w);指數 e 非 0 時加 e x ln2,ln2 拆成 0.693359375(0x3ffe:b1800000)與 -2.1219444e-4(0xbff2:de8082e3_0865435c)兩段。fyl2x / fyl2xp1 的對數核心:D9 F1 0x4b08b 與 D9 F9 經 emu_add_one 落進 emu_split_then_mul 再到這裡。emu_split_then_mul 呼叫。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -13719,6 +13747,18 @@
     {
      "at": "0x4c708",
      "insn": "mov word ptr [edi + 8], dx"
+    },
+    {
+     "at": "0x4c72a",
+     "insn": "cmp dword ptr [edi + 4], 0xb504f333"
+    },
+    {
+     "at": "0x4c855",
+     "insn": "mov ecx, 0xde8082e3"
+    },
+    {
+     "at": "0x4c88d",
+     "insn": "mov ecx, 0xb1800000"
     }
    ]
   },
