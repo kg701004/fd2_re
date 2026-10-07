@@ -124,6 +124,8 @@ from __future__ import annotations
 
 import argparse
 import bisect
+import contextlib
+import copy
 import json
 import os
 import re
@@ -1068,7 +1070,40 @@ def load_ail() -> dict[int, str]:
     return {int(k, 16): v for k, v in data["entry_points"].items()}
 
 
+# selftest 真實 EXE 段的 build() 結果暫存:None = 不暫存(預設,所有 CLI 路徑都是這樣)。
+# 只在同一個行程內、輸入(FD2.EXE 與工具原始碼)不變的期間重用 —— 不寫磁碟,所以沒有「快取過期」的問題。
+_BUILD_MEMO: dict[bool, dict] | None = None
+_BUILD_RUNS = 0             # `_build` 真正執行的次數;selftest 用它確認「重建比對」真的重算了
+
+
+@contextlib.contextmanager
+def _memo_builds():
+    """在這個區塊內,同一個 `with_argc` 的 `build()` 只算一次,之後回傳深拷貝(呼叫端改了也不會互相影響)。
+
+    selftest 的真實 EXE 段原本算 5 次(自己、重建比對、`build_structural` 兩次、`run_check_names`),
+    其中 3 次與前面的輸入完全相同。「重建兩次逐位元組相同」那一項刻意繞過暫存(直接呼叫 `_build`),
+    否則它就變成拿暫存跟自己比。
+    """
+    global _BUILD_MEMO
+    prev, _BUILD_MEMO = _BUILD_MEMO, {}
+    try:
+        yield
+    finally:
+        _BUILD_MEMO = prev
+
+
 def build(with_argc: bool = True) -> dict:
+    """函式入口清單;`_memo_builds()` 區塊內會重用同一行程已算好的結果。"""
+    if _BUILD_MEMO is None:
+        return _build(with_argc)
+    if with_argc not in _BUILD_MEMO:
+        _BUILD_MEMO[with_argc] = _build(with_argc)
+    return copy.deepcopy(_BUILD_MEMO[with_argc])
+
+
+def _build(with_argc: bool = True) -> dict:
+    global _BUILD_RUNS
+    _BUILD_RUNS += 1
     import disasm_le as D
     import derive_native_argcounts as DNA
     import verify_address_claim_coverage as CC
@@ -1801,6 +1836,25 @@ def _selftest_structural(fails: list[str]) -> None:
                                        dead_body_hits({0x20}, sp, decoder({}), {0x28})), ({0x20: [0x27]}, {}))
     check("只看傳進來的入口", dead_body_hits(set(), sp, decoder(t1), {0, 4}), {})
 
+    print("(11c) _memo_builds:區塊內同一 with_argc 只算一次、回傳深拷貝;區塊外不暫存")
+    calls: list[bool] = []
+    real_build = globals()["_build"]
+    globals()["_build"] = lambda with_argc=True: calls.append(with_argc) or {"entries": [with_argc]}
+    try:
+        with _memo_builds():
+            first = build(False)
+            first["entries"].append("改過")
+            inside = (build(False), build(True), build(True))
+        after = (_BUILD_MEMO, build(False))
+    except Exception as exc:        # 暫存邏輯壞掉時記成 FAIL,不讓整個 selftest 以 Traceback 結束
+        inside, after = (f"{type(exc).__name__}: {exc}",), None
+    finally:
+        globals()["_build"] = real_build
+    check("區塊內 False / True 各算一次,區塊外再呼叫會重算", calls, [False, True, False])
+    check("回傳的是深拷貝:改了第一次的結果,第二次拿到的不受影響", inside[0], {"entries": [False]})
+    check("with_argc 不同各拿各的結果(暫存以 with_argc 為鍵)", inside[1:], ({"entries": [True]}, {"entries": [True]}))
+    check("離開區塊後恢復為不暫存", after, (None, {"entries": [False]}))
+
     print("(12) call_args:最近 N 個 push 反序、立即值/非立即值/不足/argc 不明、分支與 CALL 清空")
     ins = [(0, 1, "push", "ebx"), (1, 1, "push", "3"), (2, 1, "push", "eax"), (3, 1, "push", "0x1c8"), (4, 5, "call", "0x500"),
            (9, 1, "push", "-1"), (10, 5, "call", "0x600"), (15, 1, "push", "1"), (16, 2, "je", "0x20"), (18, 5, "call", "0x500"),
@@ -2136,7 +2190,11 @@ def _selftest_live(fails: list[str]) -> bool:
     check("每筆 span_upper > 0 且總和 = 最後入口之後到 hi 的整段",
           all(x["span_upper"] > 0 for x in inv["entries"])
           and sum(x["span_upper"] for x in inv["entries"]) == int(m["image_range"][1], 16) - min(by))
-    check("重建兩次逐位元組相同", dump(inv) == dump(build(with_argc=False)))
+    # 繞過 _memo_builds 的暫存:這一項要的是真的再算一次(計數沒增加 = 拿暫存跟自己比)
+    runs0 = _BUILD_RUNS
+    again = _build(with_argc=False)
+    check("重建兩次逐位元組相同(真的重算,不是拿暫存)", dump(inv) == dump(again) and _BUILD_RUNS == runs0 + 1,
+          f"runs {runs0} -> {_BUILD_RUNS}")
     print("(15) 真實 EXE:結構性命名")
     # 釘值用「不含 function_names.json」的版本:登錄新名字會改變誰是 wrapper、誰已有真名,那是預期中的變動,
     # 不該每登一批就來改釘值;含登錄表的版本由下面「已提交產物逐位元組相同」那一條管。
@@ -2247,7 +2305,8 @@ def selftest() -> int:
     _selftest_structural(fails)
     _selftest_names(fails)
     try:
-        live = _selftest_live(fails)
+        with _memo_builds():
+            live = _selftest_live(fails)
     except RuntimeError as exc:
         # 不動點的輪數保護(`CONFIRM_MAX_ROUNDS` / `FNPTR_MAX_ROUNDS`)觸發 = 判準壞了沒收斂,記成 FAIL 而不是當掉
         live = True

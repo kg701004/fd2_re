@@ -74,7 +74,7 @@
 | 有新的原版軌跡時更新實機執行位址 | 新軌跡放進 `.wsl_build/` 後 `python tools/verify_dead_functions_vs_traces.py --export docs/data/live_exec_addresses.json .wsl_build`(需要 capstone;內容驗不過的軌跡自動略過;已登錄 `verify_generated_artifacts`),再調高 `function_inventory.py` 的 `LIVE_ENTRY_FLOOR` |
 | 驗每一筆名稱的位元組證據 | `python tools/function_inventory.py --check-names` |
 | 重生清單 / 結構性命名 | `python tools/function_inventory.py docs/data/function_inventory.json`、`--structural docs/data/function_structural_names.json` |
-| 自我測試 | `python tools/function_inventory.py --selftest`(約 2.5 分鐘) |
+| 自我測試 | `python tools/function_inventory.py --selftest`(約 35 秒;續九十九起真實 EXE 段的 build 只算 3 次) |
 
 改 `function_names.json` 後要重生 `function_structural_names.json`,否則 selftest 的「已提交的結構性命名產物與現算相同」會失敗。
 跳表名稱(`event_handler_N`、`command_handler_N`)必須附 `{fixup_from, table, index}` 證據,否則 `--check-names` 失敗。

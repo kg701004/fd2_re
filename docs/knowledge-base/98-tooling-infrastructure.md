@@ -7971,3 +7971,21 @@ DOSBox-X 實機軌跡對照 FD2.EXE 反組譯),不再需要 WSL;`--card` 標出�
 (錯誤路徑如 `__math87_err`、`heap_grow` 失敗分支不一定能重現)。本工具只產生建議,沒有開模擬器。
 
 **工具自驗**:`plan_trace_coverage.py --selftest` 4 組 16 項純函式案例;定點突變 17 / 17 KILLED(第一輪 2 個存活:表尾之後的引用、子已執行的前線,各補一個反向案例)。
+
+## 2026-10-07 續九十九:`function_inventory.py --selftest` 的 build 暫存 —— 真實 EXE 段 5 次重算減為 3 次
+
+**結論**:selftest 的時間幾乎全在真實 EXE 段的 `build()`(cProfile:115 秒中 107 秒,5 次呼叫),其中 3 次與前面的輸入完全相同
+(`build_structural` 兩次各算一次 `build(with_argc=True)`、`run_check_names` 再算一次 `build(with_argc=False)`)。改為只在 selftest 的真實 EXE 段內,
+以 `_memo_builds()` 讓同一個 `with_argc` 只算一次、之後回傳深拷貝。**只在同一行程的記憶體內**,不寫磁碟,所以沒有「輸入變了、快取沒失效」的問題;
+CLI 的每條路徑都不暫存。量測(交錯跑兩輪,避開筆電負載漂移):HEAD 版 52 秒 / 52 秒,新版 34 秒 / 32 秒;`_build` 實際執行次數 5 → 3。
+
+- **重建比對那一項刻意繞過暫存**:直接呼叫 `_build`,並以計數器 `_BUILD_RUNS` 要求它真的多算一次 —— 否則它會變成拿暫存跟自己比,怎樣都不會失敗。
+- PASS 清單與改動前逐行相同,差別只有新增的 (11c) 4 項純函式案例,以及重建比對那一項的標籤多了「(真的重算,不是拿暫存)」。
+
+**工具自驗**:(11c) 以假的 `_build` 驗「區塊內各算一次、區塊外重算」「深拷貝」「以 `with_argc` 為鍵」「離開區塊恢復不暫存」;暫存邏輯丟例外時記成 FAIL。
+定點突變 7 / 7 KILLED(永不命中、不深拷貝、不恢復、條件反向、重建比對改走暫存、計數器不累加、鍵不分 `with_argc`),都是預期那一項 FAIL、沒有 Traceback。
+不會被抓到的只有「selftest 不開暫存」這一種 —— 結果完全相同、只是變慢,屬於效能而非正確性。`equivalent_mutants.json` 裡 `run_check_names` 那一筆因行號移動
+重算上下文雜湊(`--revalidate-registry`:探針 OK 107 / FAIL 0,`text_proximity.py` 那筆 UNVERIFIABLE 是既有狀態)。
+
+**同輪準備、未驗證、未提交**(只在工作區):`dosbox_harness.sh` 加 `FD2_HARNESS_BREAK_START=1`(dosbox-x `-break-start`),供續九十八「從開機就錄」的擷取:開機前停住,
+`BPINT 21 4B` 停在 shell 執行 FD2.EXE 時再 `BPDEL *`、`LOGC`(太早下 LOGC 沒用:BIOS POST 會呼叫 `DEBUG_StopLog`)。**實機啟動被權限擋下,這個選項還沒跑過。**

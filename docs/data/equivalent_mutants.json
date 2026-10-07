@@ -812,7 +812,7 @@
    "key": "run_check_names|inv = build(with_argc=False)|bool False->True#0",
    "reason": "run_check_names 只用清單的 addr 與 span_upper;with_argc 只決定要不要另外算每個入口的 argc(約多 5 秒),算出來的值在這條路徑上沒有任何人讀。改成 True 只會變慢,檢查結果逐筆相同。",
    "evidence": "check_names 的參數只有 spans_(由 addr/span_upper 組成)、命名表、解碼器與 fixup 表(2026-09-28 加),不含 argc。",
-   "scope_hash": "a60051ade2c4"
+   "scope_hash": "31dde868c4ad"
   },
   {
    "tool": "verify_address_claim_coverage.py",
