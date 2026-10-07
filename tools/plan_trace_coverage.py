@@ -17,9 +17,16 @@
 另有一致性檢查:軌跡裡有執行紀錄的 `call 目標` 指令,其目標入口也必須有執行紀錄;不成立代表軌跡截斷或位址換算錯,
 這時整份計畫不可信(回傳 1)。
 
+不可達呼叫點(續一百零三):每個入口在自己的 span 內從入口、指向 span 內的 fixup 目標、別的入口直接分支 / call
+進來的位址出發,沿直接分支走(`jmp` / `ret` 停、條件跳兩邊都走)。走不到的 `call` / `j*` 指令所成的邊不算前線
+—— 例如 0x118aa 的無條件 `jmp` 跳過的防拷呼叫 0x118ac(續三十六)。只在所有呼叫點都走不到時才拿掉那條邊。
+span 內有 fixup 指向自己 span 的入口(`push 基底+索引*n; ret` 這類算出來的位址)與路上解不出指令的入口不做判斷,
+邊全部保留。反驗:實機執行過的指令位址若落在判為走不到的地方,分析不健全,整份計畫不可信(回傳 1)。
+
 誠實邊界:
   * 邊只到 fixup 與直接 call 為止:執行期算出來的位址(`push`+`ret`、算出來的表索引)看不到,這類子會落在
     「沒有任何路徑」那一欄,不是真的到不了。
+  * 不可達過濾只看 call / jmp 邊;ref 與 table 邊的 fixup 落在走不到的程式碼裡時仍然保留。
   * 前線只說「這條邊在已擷取的場景裡沒走到」,要觸發它的遊戲操作得讀父函式(`function_inventory.py --card`)。
   * 收益是入口數,不是指令數,也不保證實機一定能觸發(例如只有錯誤路徑才會走到的)。
 
@@ -35,6 +42,7 @@ import collections
 import json
 import sys
 from pathlib import Path
+from typing import Callable
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -184,11 +192,11 @@ def decoded_call_sites(entries: list[dict], insn_at) -> dict[int, int]:
     return out
 
 
-def decoded_jumps(entries: list[dict], insn_at) -> dict[int, list[int]]:
+def decoded_jumps(entries: list[dict], insn_at, keep: Callable[[int], bool] | None = None) -> dict[int, list[int]]:
     """每個入口的 span 線性解碼,`j*`(含條件跳)的立即目標若是**別的**入口 -> {父: [子]}。
 
     inventory 的 callees 只收 call;thunk(入口第一條就是 jmp)與尾呼叫(`jmp 別的函式`)要靠這個補邊。
-    跳回自己 span 內的不算(那是函式內的分支)。
+    跳回自己 span 內的不算(那是函式內的分支)。`keep(指令位址)` 為假的跳躍指令不收(靜態走不到的)。
     """
     ents = {int(e["addr"], 16) for e in entries}
     out: dict[int, list[int]] = {}
@@ -203,7 +211,7 @@ def decoded_jumps(entries: list[dict], insn_at) -> dict[int, list[int]]:
                 x += 1
                 continue
             size, mn, op = got
-            if mn.startswith("j") and op.startswith("0x"):
+            if mn.startswith("j") and op.startswith("0x") and (keep is None or keep(x)):
                 t = int(op, 16)
                 if t in ents and not (a <= t < end):
                     got_set.add(t)
@@ -211,6 +219,102 @@ def decoded_jumps(entries: list[dict], insn_at) -> dict[int, list[int]]:
         if got_set:
             out[a] = sorted(got_set)
     return out
+
+
+def _is_branch(mn: str) -> bool:
+    return mn.startswith("j") or mn.startswith("loop")
+
+
+def _imm(op: str) -> int | None:
+    """運算元是單一立即位址(`0x1234`)才回整數;遠跳躍 `sel:off`、暫存器、記憶體運算元回 None。"""
+    if op.startswith("0x") and all(ch in "0123456789abcdef" for ch in op[2:]) and len(op) > 2:
+        return int(op, 16)
+    return None
+
+
+def static_reach(spans: dict[int, int], insn_at, fixups: dict[int, int]) -> tuple[set[int], set[int]]:
+    """函式內靜態可達分析 -> (走得到的指令起點, 不做判斷的入口)。
+
+    每個入口在 [入口, 入口 + span) 內,從入口、fixup 目標(來源任意)、別的入口的直接分支 / call 目標出發,
+    沿直接分支走:`jmp` / `ljmp` / `ret*` / `iret*` / `hlt` 之後不往下;條件跳(`j*`、`loop*`)兩邊都走;
+    `call` 視為會回來。不做判斷的入口:span 內有 fixup 指向自己 span(位址可能由基底加位移算出)、
+    或從起點走的路上有解不出的位元組 —— 這兩種入口的指令一律不算走不到。
+    """
+    addrs = sorted(spans)
+    roots: dict[int, set[int]] = collections.defaultdict(set)
+    aborted: set[int] = set()
+    for src, tgt in fixups.items():
+        o = owner_in_span(addrs, spans, tgt)
+        if o is not None:
+            roots[o].add(tgt)
+            if owner_in_span(addrs, spans, src) == o:
+                aborted.add(o)
+    for a in addrs:                                  # 別的入口直接分支 / call 進來的位址(線性解碼)
+        x, end = a, a + spans[a]
+        while x < end:
+            got = insn_at(x)
+            if got is None:
+                x += 1
+                continue
+            size, mn, op = got
+            t = _imm(op) if (_is_branch(mn) or mn == "call") else None
+            if t is not None:
+                o = owner_in_span(addrs, spans, t)
+                if o is not None and o != a:
+                    roots[o].add(t)
+            x += size
+    reached: set[int] = set()
+    for a in addrs:
+        end = a + spans[a]
+        seen: set[int] = set()
+        todo = [a, *sorted(roots.get(a, ()))]
+        while todo:
+            x = todo.pop()
+            while a <= x < end and x not in seen:
+                got = insn_at(x)
+                if got is None:
+                    aborted.add(a)
+                    break
+                seen.add(x)
+                size, mn, op = got
+                if mn.startswith("ret") or mn.startswith("iret") or mn == "hlt":
+                    break
+                if _is_branch(mn) or mn == "ljmp":
+                    t = _imm(op)
+                    if t is not None and a <= t < end:
+                        todo.append(t)
+                    if mn in ("jmp", "ljmp"):
+                        break
+                x += size
+        reached |= seen
+    return reached, aborted
+
+
+def dead_call_edges(call_sites: dict[int, int], owner: Callable[[int], int | None], reached: set[int],
+                    aborted: set[int]) -> dict[tuple[int, int], list[int]]:
+    """{(父, 子): [走不到的呼叫點]};只收**所有**呼叫點都走不到的 (父, 子),父不做判斷的不收。"""
+    by: dict[tuple[int, int], list[int]] = collections.defaultdict(list)
+    alive: set[tuple[int, int]] = set()
+    for s, t in call_sites.items():
+        p = owner(s)
+        if p is None:
+            continue
+        if p in aborted or s in reached:
+            alive.add((p, t))
+        else:
+            by[(p, t)].append(s)
+    return {k: sorted(v) for k, v in by.items() if k not in alive}
+
+
+def unreached_live(live: set[int], owner: Callable[[int], int | None], reached: set[int],
+                   aborted: set[int]) -> list[int]:
+    """實機執行過、落在某入口 span 內、該入口有做判斷,卻判為走不到的位址(應為空)。"""
+    out = []
+    for x in live:
+        o = owner(x)
+        if o is not None and o not in aborted and x not in reached:
+            out.append(x)
+    return sorted(out)
 
 
 def table_slot_label(kind: str, slot: int | None) -> str:
@@ -262,7 +366,30 @@ def run(steps: int, by_parent: int) -> int:
         print("  軌跡與呼叫圖對不上(截斷或位址換算錯),以下計畫不可信。")
         return 1
 
-    edges = build_edges(spans, callees, fixups, base, hi, decoded_jumps(inv, insn_at))
+    addrs = sorted(spans)
+
+    def owner(x: int) -> int | None:
+        return owner_in_span(addrs, spans, x)
+
+    reached, aborted = static_reach(spans, insn_at, fixups)
+    wrong = unreached_live(live, owner, reached, aborted)
+    print(f"可達分析:做判斷的入口 {len(spans) - len(aborted)} / {len(spans)};實機執行過卻判為走不到的指令 {len(wrong)} 條"
+          + (":" + ", ".join(f"{x:#x}" for x in wrong[:5]) if wrong else ""))
+    if wrong:
+        print("  可達分析不健全(有算出來的位址沒看到),以下計畫不可信。")
+        return 1
+    dead = dead_call_edges(decoded_call_sites(inv, insn_at), owner, reached, aborted)
+    for (p, c) in dead:
+        callees[p] = [x for x in callees[p] if x != c]
+    removed = {c for _, c in dead}
+    print(f"靜態走不到的呼叫點所成的邊 {len(dead)} 條(不算前線)"
+          + (":" + "; ".join(f"{', '.join(f'{s:#x}' for s in ss)} {lab(p)} -> {lab(c)}"
+                             for (p, c), ss in sorted(dead.items())) if dead else ""))
+
+    def keep(x: int) -> bool:
+        return owner(x) in aborted or x in reached
+
+    edges = build_edges(spans, callees, fixups, base, hi, decoded_jumps(inv, insn_at, keep))
     fr = frontier(edges, executed, pool)
     eip = [a for a, e in ((int(e["addr"], 16), e) for e in inv) if "eip" in e["signals"]]
     if eip and not any(a in live for a in eip):
@@ -306,7 +433,7 @@ def run(steps: int, by_parent: int) -> int:
           f"其餘 {len(rest - under)} 個的父邊只來自 weak 入口或彼此成環。")
     print("  根是本工具看不到抵達方式的入口(LE 進入點、只由 AIL 名稱表或執行期算出的位址抵達等);依可帶出的入口數前 10:")
     for a in roots[:10]:
-        print(f"  {len(root_gain[a]):4d}  {lab(a)}  {sig[a]}")
+        print(f"  {len(root_gain[a]):4d}  {lab(a)}  {sig[a]}" + ("(呼叫點靜態走不到)" if a in removed else ""))
     return 0
 
 
@@ -376,10 +503,50 @@ def selftest() -> int:
               {"addr": "0x300", "span_upper": 0x10, "callees": []}]
     check("decoded_jumps:跳進別的入口(含條件跳、thunk)才算;跳回自己 span 內、call 不算",
           decoded_jumps(ents_j, lambda a: jt.get(a)), {0x100: [0x300], 0x200: [0x100]})
+    print("(5) static_reach / dead_call_edges / unreached_live / decoded_jumps(keep)")
+    # 入口 0x100(span 0x20):jmp 跳過 0x102 的 call;0x107 條件跳到 0x10B,兩邊都走;0x10D ret 之後 0x10E 走不到
+    rt = {0x100: (2, "jmp", "0x107"), 0x102: (5, "call", "0x200"), 0x107: (2, "jne", "0x10b"),
+          0x109: (2, "loop", "0x109"), 0x10B: (2, "nop", ""), 0x10D: (1, "ret", ""), 0x10E: (5, "call", "0x300"),
+          0x113: (2, "jmp", "0x102"),
+          0x200: (5, "call", "0x113"), 0x205: (1, "ret", ""), 0x300: (1, "ret", "")}
+    sp = {0x100: 0x20, 0x200: 0x10, 0x300: 0x10}
+    r0, ab0 = static_reach(sp, lambda a: rt.get(a), {})
+    check("jmp 之後不往下、條件跳兩邊、ret 停;別的入口 call 進來的 0x113 是起點,它 jmp 回 0x102 讓 call 變可達",
+          (sorted(x for x in r0 if x < 0x200), ab0), ([0x100, 0x102, 0x107, 0x109, 0x10B, 0x10D, 0x113], set()))
+    rt2 = dict(rt)
+    rt2[0x200] = (5, "call", "0x400")
+    r1, _ = static_reach(sp, lambda a: rt2.get(a), {})
+    check("沒有起點時 jmp 跳過的 call 與 ret 後的 call 都走不到", (0x102 in r1, 0x10E in r1, 0x10B in r1), (False, False, True))
+    r2, _ = static_reach(sp, lambda a: rt2.get(a), {0x9000: 0x10E})
+    check("fixup 目標是起點(來源在資料區不影響判斷)", 0x10E in r2, True)
+    _, ab3 = static_reach(sp, lambda a: rt2.get(a), {0x104: 0x10E})
+    check("span 內 fixup 指回自己 span:不做判斷", ab3, {0x100})
+    rt4 = dict(rt2)
+    del rt4[0x10B]
+    _, ab4 = static_reach(sp, lambda a: rt4.get(a), {})
+    check("路上解不出指令:不做判斷", ab4, {0x100})
+    own = lambda x: 0x100 if 0x100 <= x < 0x120 else (0x200 if 0x200 <= x < 0x210 else None)  # noqa: E731
+    sites = {0x102: 0x200, 0x10E: 0x300, 0x113: 0x300, 0x205: 0x500}
+    check("所有呼叫點都走不到才拿掉;有一個走得到(0x113)就保留;父不做判斷的保留",
+          (dead_call_edges(sites, own, {0x113}, set()), dead_call_edges(sites, own, set(), {0x100})),
+          ({(0x100, 0x200): [0x102], (0x200, 0x500): [0x205]}, {(0x200, 0x500): [0x205]}))
+    check("實機執行過卻判為走不到的位址;span 外、不做判斷的入口不算",
+          (unreached_live({0x100, 0x10E, 0x900, 0x205}, own, {0x100}, {0x200}), unreached_live({0x100}, own, {0x100}, set())),
+          ([0x10E], []))
+    def try_imm(o: str):
+        try:
+            return _imm(o)
+        except ValueError as exc:                   # 例外也要成為 FAIL,不是 Traceback
+            return f"ValueError: {exc}"
+
+    check("_imm:只認單一立即位址", [try_imm(o) for o in ("0x10b", "0x37f:0xb00037e", "eax", "dword ptr [eax]", "0x")],
+          [0x10B, None, None, None, None])
+    check("decoded_jumps 的 keep 為假的跳躍不收",
+          decoded_jumps(ents_j, lambda a: jt.get(a), lambda x: x != 0x102), {0x200: [0x100]})
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")
         return 1
-    print("\n--selftest passed(4 組 16 項純函式案例,含成對的反向案例)。")
+    print("\n--selftest passed(5 組 22 項純函式案例,含成對的反向案例)。")
     return 0
 
 

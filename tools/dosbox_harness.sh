@@ -293,6 +293,22 @@ cmd_launch() {
         echo "[$name] halted at startup (-break-start): resume from the debugger console"
     fi
 
+    # Optional DOS environment for FD2.EXE (FD2_HARNESS_DOS_SET="AIL_DEBUG=AILDBG.TXT AIL_SYS_DEBUG=1"
+    # -> -c 'SET AIL_DEBUG=AILDBG.TXT' -c 'SET AIL_SYS_DEBUG=1' before FD2.EXE). SET is a shell
+    # builtin, so the EXEC count the BREAK_START recipe relies on (5th EXEC = FD2.EXE) is unchanged.
+    # Each item must be NAME=VALUE with no quotes or spaces (it is spliced into the tmux command line).
+    # 2026-10-08 續一百零五: ail_startup (0x37d3e) only takes its debug branch (fopen the file named by
+    # AIL_DEBUG, asctime header, AIL_SYS_DEBUG -> [0x54170]) when getenv("AIL_DEBUG") is non-NULL.
+    local dos_set_args=""
+    if [[ -n "${FD2_HARNESS_DOS_SET:-}" ]]; then
+        local kv
+        for kv in $FD2_HARNESS_DOS_SET; do
+            [[ "$kv" =~ ^[A-Z_][A-Z0-9_]*=[A-Za-z0-9_.]+$ ]] || die "FD2_HARNESS_DOS_SET item '$kv' is not NAME=VALUE ([A-Z0-9_] = [A-Za-z0-9_.])"
+            dos_set_args+=" -c 'SET $kv'"
+        done
+        echo "[$name] DOS environment before FD2.EXE:$dos_set_args"
+    fi
+
     local audio_env=""
     if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
         local audio_raw="$workdir/sdlaudio.raw"
@@ -308,7 +324,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000'${dos_set_args} -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 
