@@ -60,6 +60,7 @@ python run_all.py --selftest   # 比對器與輸入檢查的正反對照
 python mut_s76.py              # 變異測試:先跑未變異對照,再逐一跑每個變異(都要以 AssertionError 失敗)
 python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清單逐 byte 比對(掃描約 30 GB)
 python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在時:從壓縮備份還原、驗 sha256 後重切
+python rebuild_excerpts.py --selftest --from-backup <備份夾>   # 反向對照;WSL 沒有 v21 記錄又沒給備份夾時回報 BLOCKED(rc 2)
 python sweep_literals.py [ev_s65b ...]   # 每個數字常數 +1 重算:找出寫進證據卻沒有判準擋得住的手寫值
 python sweep_literals.py --selftest
 ```
@@ -109,7 +110,8 @@ python sweep_literals.py --selftest
   (`fd2_re_evidence_raw_backup/full_logs_20261005/`,約 134 MB,`full_logs_manifest.tsv` 記大小與 sha256;
   備份時逐份解壓比對)。WSL 裡的記錄不在時改用 `python rebuild_excerpts.py --from-backup <備份夾>`:解壓到 WSL 暫存目錄、
   逐份以 `SOURCE_LOGS` 驗 sha256,再用同一組切法重切,結束後刪除暫存目錄。v21 的大小與 sha256 另與 `trace_excerpt.txt`
-  切出當時印下的值相同。
+  切出當時印下的值相同。**2026-10-08 起 WSL 裡的完整記錄已刪除**:不給 `--from-backup` 時 7 個都是 `SOURCE_MISSING`,
+  `--selftest` 也要加 `--from-backup <備份夾>`(正向對照「原樣 → IDENTICAL」需要真的 v21 記錄)。
 
 ## 手寫值掃描(`sweep_literals.py`)
 

@@ -7203,7 +7203,7 @@ CONTINUE / LOAD 沒有另跑標頭完好的對照,完好標頭的走法以同一
 ## 2026-10-05 續七十五:續七十四的兩個未驗證項目 —— 0x89 失控 blit 的三重錯誤路徑、CONTINUE / LOAD 的完好標頭對照(DOSBox-X + 工具改善)
 
 證據 `evidence/runaway_blit_triple_fault_continue_load_control_20261005.json`(DOSBox-X,FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,第 25 章戰場 = map 24)。
-原始紀錄在 `.wsl_build/ctr/v21`、`v22`、`v30`~`v32`;LOGL 追蹤檔(每份約 5.4 GB)留在 WSL 的 `~/fd2-run-harness-<名>/LOGCPU.TXT`,不複製。
+原始紀錄在 `.wsl_build/ctr/v21`、`v22`、`v30`~`v32`;LOGL 追蹤檔(每份約 5.4 GB)當時留在 WSL 的 `~/fd2-run-harness-<名>/LOGCPU.TXT`,不複製;2026-10-08 已從 WSL 刪除(WSL `ls` 讀回已不在),v21、v30 ~ v33 的 xz 備份在倉庫外的本機備份夾(`full_logs_manifest.tsv` 逐份記大小與 sha256),重切摘錄要用 `rebuild_excerpts.py --from-backup`(見「2026-10-05 證據產生器」段)。
 證據由 ev_s75.py 重算並逐項 assert;把判準改掉的 10 個變異全部失敗。
 
 **未驗證是不是工具造成的。** 第一項是:續七十四 v16 在失控寫入之後 CPU 掉進實際模式的 INT 6 迴圈,Alt+Pause 停不住,MEMDUMPBIN / D 也不被接受,事後什麼都讀不到。
@@ -7383,7 +7383,7 @@ g3 的逐指令紀錄看到 DOS/4GW 每次切回保護模式前在 0C5C:08CA~08D
   v21 的大小與 sha256 另與 `trace_excerpt.txt` 切出當時印下的值相同。程式加上 `SOURCE_LOGS`(每份的大小與 sha256)、
   大小不符時回報 `SOURCE_CHANGED`,以及 `--from-backup`:還原到 WSL 暫存目錄、逐份驗 sha256、以同一組切法重切後刪除暫存目錄。
   從 WSL 原記錄與從備份各重切一次,都是 7/7 IDENTICAL;把 HOME 指到空目錄時 7 個都是 SOURCE_MISSING(證明備份模式讀的是還原的那份)。
-  `--selftest` 加 3 個反向對照(大小不符 → SOURCE_CHANGED;備份內容不符、備份清單與 `SOURCE_LOGS` 不一致 → 拒絕還原),6/6 通過。
+  `--selftest` 加 3 個反向對照(大小不符 → SOURCE_CHANGED;備份內容不符、備份清單與 `SOURCE_LOGS` 不一致 → 拒絕還原),6/6 通過。2026-10-08 WSL 記錄刪除後,前 4 項(含正向對照「原樣 → IDENTICAL」)沒有記錄可讀,改為 `--selftest --from-backup <備份夾>`先還原 v21 再對照(6/6 通過;對照不讀還原目錄的突變 3 項 FAIL);不給備份夾時回報 BLOCKED、rc 2,不算通過。
 - 仍然成立的限制:v11 當次 `0018` 寫成哪個 byte 維持 INFERRED(當時沒有傾印)。
 
 ## 2026-10-06 證據產生器:手寫值掃描、地形規則的攻守格子、驅動腳本補收
@@ -8065,7 +8065,7 @@ C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項
   系統子選單的讀取對應讀回這個區塊(`save_load_restore` 只在這一段第一次執行)。
 - 第 23 章載入後直接出現出擊選人格(沒有城鎮),城鎮改由第 2 章存檔補:回 DOS 後重開 FD2 再 LOAD。
 - 防拷密碼畫面這輪仍沒走到,也不可能走到:唯一呼叫點 `0x118aa` 是無條件 `EB 07`(續三十六 / 四十);`plan_trace_coverage.py`
-  不認得這種「條件分支被改成無條件」的情形,仍把它列為前線(現在剩 +5),是工具的已知盲點。
+  不認得這種「條件分支被改成無條件」的情形,仍把它列為前線(現在剩 +5),是工具的已知盲點。(續一百零三已修:靜態可達分析判出 0x118ac 走不到,不再列為前線。)
 
 原始軌跡(4 份 `raw_*.TXT`,98.8 GB)切段後已刪除;整輪去重的 `s100_lt2_unique_cseip.txt` 與 15 個分段檔在 `.wsl_build/`,
 另一份連同 `SHA256SUMS` 在 WSL `~/fd2-run-harness-lt2/s100_derived/`(都不進版控)。這兩份就是 `live_exec_addresses.json` 與
@@ -8127,7 +8127,7 @@ C:> 回 DOS、在 DOS 重開 FD2(開場動畫完整播完)、城鎮(教會四項
 
 **受控設計**(續五十二 ~ 五十八在 DOSBox-X 原版實機用過的寫法,寫入後全部讀回):盜賊 #11 已學法術只有 8(聖光彈)、MP 100、拿掉武器(slot0 旗標 0x40 → 0),
 只能施法;盜賊 #12 搬到索爾旁邊 (19,14);盜賊 #13 HP 5 / 28、slot2 寫入道具 58(回復類);我方 #1 ~ #4 的 `+5` 設 0x80(已行動),索爾待機後自動進入 NPC 與敵方回合。
-LOGC 在寫完記憶體、仍停在除錯器時開始,回到我方回合後停錄。原始軌跡 11.3 GB,去重後 18927 行(WSL `~/fd2-run-harness-s102/`,不進版控)。
+LOGC 在寫完記憶體、仍停在除錯器時開始,回到我方回合後停錄。原始軌跡 11.3 GB(2026-10-08 已刪除,WSL `ls` 讀回已不在),去重後 18927 行(`.wsl_build/` 與 WSL `~/fd2-run-harness-s102/` 各一份,不進版控)。
 
 **第一次執行的 30 個入口**(名稱對場景,30 / 30 屬於敵方 AI 施法、攻擊、道具與其呈現,沒有玩家選單類的入口):
 AI 執行端 `ai_spell_execute`、`ai_attack_execute`、`ai_item_action`、`ai_spell_target_score`、`ai_move_toward_reachable_opponent`、`move_unit_toward_point`;

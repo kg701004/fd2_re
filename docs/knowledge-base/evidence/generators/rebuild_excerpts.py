@@ -1,7 +1,8 @@
 """從 WSL 裡的完整 DOSBox-X 記錄重新切出摘錄,與 inputs_manifest.json 鎖定的摘錄逐 byte 比對。
 
-續七十五~七十七有幾個輸入是從大型記錄(LOGCPU.TXT 每份約 5 GB、dosbox-x.log)切出的摘錄;完整記錄留在
-WSL 的 `~/fd2-run-harness-<run>/`,不搬到 Windows、不進 git。這裡記下每個摘錄的切法(與存檔的驅動腳本相同),
+續七十五~七十七有幾個輸入是從大型記錄(LOGCPU.TXT 每份約 5 GB、dosbox-x.log)切出的摘錄;完整記錄原本留在
+WSL 的 `~/fd2-run-harness-<run>/`,不搬到 Windows、不進 git。2026-10-08 起 WSL 裡的完整記錄已刪除,
+預設模式會回報 7 個 SOURCE_MISSING,要用下面的 `--from-backup`。這裡記下每個摘錄的切法(與存檔的驅動腳本相同),
 重切到 stdout 比對,不寫任何檔案。只讀記錄檔,不啟動 DOSBox-X。
 
 結果:IDENTICAL / DIFFERENT / SOURCE_MISSING(WSL 裡的完整記錄已不在)/ SOURCE_CHANGED(記錄大小與
@@ -13,8 +14,10 @@ SOURCE_LOGS 不符,例如被新的執行覆寫)/ ERROR。全部 IDENTICAL 才 ex
 
 用法:python rebuild_excerpts.py [摘錄名稱 ...]     不給 = 全部(掃描約 30 GB,需數分鐘)
       python rebuild_excerpts.py --from-backup <備份夾> [摘錄名稱 ...]
-      python rebuild_excerpts.py --selftest      反向對照(切法差一行 → DIFFERENT、記錄不在 → SOURCE_MISSING、
-                                                  大小不符 → SOURCE_CHANGED、備份內容不符 → 還原失敗)
+      python rebuild_excerpts.py --selftest [--from-backup <備份夾>]
+                                                 反向對照(切法差一行 → DIFFERENT、記錄不在 → SOURCE_MISSING、
+                                                  大小不符 → SOURCE_CHANGED、備份內容不符 → 還原失敗);
+                                                  WSL 沒有 v21 記錄又沒給備份夾時回報 BLOCKED(rc 2)
 """
 from __future__ import annotations
 
@@ -165,32 +168,56 @@ def check(name: str, pinned: dict[str, list], home: str | None = None) -> tuple[
     return "DIFFERENT", f"重切 {len(r.stdout)} bytes {got[:12]} != 清單 {size} bytes {sha[:12]}"
 
 
-def selftest(pinned: dict[str, list]) -> int:
-    """反向對照(用最快的 post_reset_trace):切法差一行 → DIFFERENT;完整記錄不在 → SOURCE_MISSING;原樣 → IDENTICAL。"""
+def selftest(pinned: dict[str, list], backup: Path | None = None) -> int:
+    """反向對照(用最快的 post_reset_trace):切法差一行 → DIFFERENT;完整記錄不在 → SOURCE_MISSING;原樣 → IDENTICAL。
+
+    Args:
+        pinned: inputs_manifest.json 鎖定的 (bytes, sha256)。
+        backup: 備份夾;給了就先把 v21 記錄還原到 RESTORE_ROOT 再對照(WSL 裡的記錄 2026-10-08 已刪除)。
+
+    Returns:
+        0 = 全部通過;1 = 有對照失敗;2 = 沒有 v21 記錄可用(BLOCKED,正向對照無法執行)。
+    """
     rel, sources, cmd = EXCERPTS["post_reset_trace"]
-    cases = [
-        ("原樣", (rel, sources, cmd), "IDENTICAL"),
-        ("起始行 +1", (rel, sources, cmd.replace("7060950,", "7060951,")), "DIFFERENT"),
-        ("完整記錄不在", (rel, [H + "v99_missing/LOGCPU.TXT"], cmd), "SOURCE_MISSING"),
-    ]
-    fails = 0
-    for label, spec, want in cases:
-        EXCERPTS["_selftest"] = spec
-        got, detail = check("_selftest", pinned)
-        fails += got != want
-        print(f"{'ok  ' if got == want else 'FAIL'} {label}: {got}(應為 {want}) {detail}")
-    # 記錄大小與 SOURCE_LOGS 不符(模擬被新的執行覆寫)→ SOURCE_CHANGED
     k = "v21/LOGCPU.TXT"
-    orig = SOURCE_LOGS[k]
-    SOURCE_LOGS[k] = (orig[0] + 1, orig[1])
-    EXCERPTS["_selftest"] = (rel, sources, cmd)
+    home = None
+    fails = 0
     try:
-        got, detail = check("_selftest", pinned)
+        if backup is not None:
+            try:
+                restore(backup, [k])
+            except RestoreError as e:
+                print(f"FAIL 還原 v21 記錄: {e}")
+                return 1
+            home = RESTORE_ROOT
+        elif _wsl(f'test -f "{H}{k}"', 60).returncode != 0:
+            # 正向對照(原樣 → IDENTICAL)必須用真的記錄;沒有記錄時不能把其他項目的 ok 當成通過
+            print(f"BLOCKED WSL 裡沒有 {H}{k}(2026-10-08 已刪除);改用 --selftest --from-backup <備份夾>")
+            return 2
+        cases = [
+            ("原樣", (rel, sources, cmd), "IDENTICAL"),
+            ("起始行 +1", (rel, sources, cmd.replace("7060950,", "7060951,")), "DIFFERENT"),
+            ("完整記錄不在", (rel, [H + "v99_missing/LOGCPU.TXT"], cmd), "SOURCE_MISSING"),
+        ]
+        for label, spec, want in cases:
+            EXCERPTS["_selftest"] = spec
+            got, detail = check("_selftest", pinned, home)
+            fails += got != want
+            print(f"{'ok  ' if got == want else 'FAIL'} {label}: {got}(應為 {want}) {detail}")
+        # 記錄大小與 SOURCE_LOGS 不符(模擬被新的執行覆寫)→ SOURCE_CHANGED
+        orig = SOURCE_LOGS[k]
+        SOURCE_LOGS[k] = (orig[0] + 1, orig[1])
+        EXCERPTS["_selftest"] = (rel, sources, cmd)
+        try:
+            got, detail = check("_selftest", pinned, home)
+        finally:
+            SOURCE_LOGS[k] = orig
+            del EXCERPTS["_selftest"]
+        fails += got != "SOURCE_CHANGED"
+        print(f"{'ok  ' if got == 'SOURCE_CHANGED' else 'FAIL'} 記錄大小不符: {got}(應為 SOURCE_CHANGED) {detail}")
     finally:
-        SOURCE_LOGS[k] = orig
-        del EXCERPTS["_selftest"]
-    fails += got != "SOURCE_CHANGED"
-    print(f"{'ok  ' if got == 'SOURCE_CHANGED' else 'FAIL'} 記錄大小不符: {got}(應為 SOURCE_CHANGED) {detail}")
+        if backup is not None:
+            cleanup_restore()
     # 備份還原:.xz 內容不是那份記錄、備份清單與 SOURCE_LOGS 不一致 → 都必須 RestoreError(不能還原成功)。
     # 暫存備份夾放在 .wsl_build(gitignore、WSL 看得到)
     (ROOT / ".wsl_build").mkdir(exist_ok=True)
@@ -217,6 +244,10 @@ def main(argv: list[str]) -> int:
     man = json.loads(MANIFEST.read_text(encoding="utf-8"))["generators"]
     pinned = {k: v for g in man.values() for k, v in g["inputs"].items()}
     if argv[:1] == ["--selftest"]:
+        if argv[1:2] == ["--from-backup"]:
+            if len(argv) < 3:
+                raise SystemExit("--from-backup 需要備份夾路徑")
+            return selftest(pinned, Path(argv[2]))
         return selftest(pinned)
     backup = None
     if argv[:1] == ["--from-backup"]:
