@@ -1,17 +1,18 @@
 # SESSION-HANDOFF 2026-10-07
 
 > 依 `AI_Development_Standard/00_Global/Project_Continuity.md` 撰寫:明確區分完成/未完成/
-> 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證(本線依據一律是 FD2.EXE 反組譯)。
+> 需人決定,每一項標註**驗證等級**,不把未驗證的寫成已驗證(本線依據是 FD2.EXE 反組譯;原版 DOSBox-X 實機軌跡只用於死函式反驗與擷取規劃)。
 > 前一份:[`SESSION-HANDOFF-2026-09-19.md`](SESSION-HANDOFF-2026-09-19.md)。
 
 ## 0. 範圍與主軸
 
 **本文件只交接「函式清單求完整」這一條線**:commit `8adabab6` ~ `687ecb6b` 中與 `tools/function_inventory.py` /
 `docs/data/function_names.json` 相關的 11 個 commit,全部已推送至 `fork remaster-local`。
+歸檔後又有 `b9c62ec0`、`15bb1aff`、`88c4cf74` 三個 commit(續九十六 ~ 九十八:原版實機軌跡反驗死函式、執行位址收進倉庫、下一輪擷取規劃),同樣已推送。
 同期另有 DOSBox-X 動態驗證(續六十五 ~ 七十七)與證據產生器收進倉庫等 commit,**不在本文件總結範圍**,見 `git log 0c2e139f..687ecb6b`。
 
 目標(使用者 2026-10-06 定):FD2.EXE 的每個函式入口都要讀過並命名,而且**先把分母做對**。
-逐步紀錄在 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的續七十八 ~ 續九十四。
+逐步紀錄在 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的續七十八 ~ 續九十八。
 
 ---
 
@@ -21,9 +22,9 @@
 |---|---|---|
 | **靜態 RE** | FD2.EXE 反組譯確定,未經實機 | `function_names.json` 全部 1149 筆(`confidence: static_re`) |
 | **位元組證據** | 每筆名稱的 `{at, insn}` 或跳表 `{fixup_from, table, index}` 逐字比對 FD2.EXE 反組譯通過 | 1149 / 1149(`--check-names`) |
-| **工具自驗** | `--selftest` 通過,新程式碼做定點突變且以 FAIL(非 Traceback)抓到 | `function_inventory.py`:續九十一 7 / 7、續九十五資料突變 1 / 1 |
-| **產物重生** | 重跑產生器(讀 FD2.EXE 反組譯)與已提交檔逐位元組比對 | `verify_generated_artifacts` 21 / 21 |
-| **原版實機** | DOSBox-X 跑原版 EXE | 本線**未使用** |
+| **工具自驗** | `--selftest` 通過,新程式碼做定點突變且以 FAIL(非 Traceback)抓到 | `function_inventory.py`:續九十一 7 / 7、續九十五資料突變 1 / 1;`plan_trace_coverage.py`:續九十八 17 / 17 |
+| **產物重生** | 重跑產生器(讀 FD2.EXE 反組譯)與已提交檔逐位元組比對 | `verify_generated_artifacts` 22 / 22(續九十七加入 `live_exec_addresses.json`) |
+| **原版實機** | DOSBox-X 跑原版 EXE | 只用於「死函式不會執行」反驗:4 份不重複軌跡、292 / 1356 個入口有執行紀錄(續九十六 ~ 九十七);**名稱本身未經實機** |
 
 **本線沒有任何結論依賴 remake。**
 
