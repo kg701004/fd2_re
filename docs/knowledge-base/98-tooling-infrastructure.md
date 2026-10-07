@@ -7938,3 +7938,36 @@ DOSBox-X 實機軌跡對照 FD2.EXE 反組譯),不再需要 WSL;`--card` 標出�
 **限制**:軌跡只涵蓋當時擷取的場景(結局 montage、CG、存檔等),「沒有執行紀錄」不代表沒用到。輸入軌跡在 `.wsl_build/`(不進版控,與 `extracted/raw` 同類),
 產物登錄在 `verify_generated_artifacts`(`--export {out} .wsl_build`,逐位元組 IDENTICAL);4 份不重複的 DOSBox-X 原版軌跡都在 `.wsl_build/`,WSL 那份與 `trace2` 相同(sha256),
 所以不需要 WSL 路徑。沒有 `.wsl_build/` 的機器上這一項報 ERROR,來源由 `trace_sha256` 記錄。
+
+## 2026-10-07 續九十八:下一輪原版實機擷取跑哪裡 —— `tools/plan_trace_coverage.py` 排出的優先順序
+
+**結論**:以續九十七的實機執行位址為邊界,在呼叫圖上找「父函式執行過、子函式沒有」的前線,依「打開這條邊能新增多少沒執行過的 strong 入口」
+貪婪排序(依據為 DOSBox-X 原版實機軌跡對照 FD2.EXE 反組譯與 LE fixup)。1012 個沒有執行紀錄的 strong 入口中,**508 個可由已執行的程式沿呼叫圖走到**,
+其中少數幾個場景就占了大部分:
+
+| 順位 | 打開哪裡(父 -> 子) | 新增入口 | 對應的遊戲操作(依 FD2.EXE 反組譯的函式名稱推定) |
+|---|---|---|---|
+| 1 | `battle_main_input_loop` 0x117e7 -> `field_command_ring` 0x16f55 | 369 | 戰場上叫出指令環(連帶存讀檔、加入、裝備重算等) |
+| 2 | `town_hub_select` 0x2670e -> `church_menu` 0x29daa | 27 | 城鎮進教會 |
+| 3 | `battle_main_input_loop` -> `copy_protection_password_check` 0x33faf | 25 | 密碼(防拷)畫面 |
+| 4 | `town_hub_select` -> `shop_menu` 0x279bc | 14 | 城鎮進商店(裝備選單) |
+| 6 | `town_hub_select` -> `sortie_member_select` 0x2af28 | 8 | 出擊選人 |
+
+前 6 步合計 +453,前 25 步 +496;之後每步只 +1 ~ 3(函式庫的錯誤路徑、AIL 少用的 API)。依父函式彙總,`battle_main_input_loop` 底下沒走到的分支合計 398、
+`player_spell_select` 0x1cff0 301、`player_action_ring` 0x18d8c 287、`town_hub_select` 59 —— 也就是**一場完整的戰鬥(叫出指令環、用道具與法術、休息)加一趟城鎮**
+是收益最大的擷取。
+
+**另外 504 個從已執行的程式沒有路徑可到**:根 66 個(連同它們帶出的共 500 個),最大的是 LE 進入點 `_cstart_` 0x3ccb4(帶出 231 個)—— **現有 4 份軌跡都是
+開機後才開始錄**,啟動段要靠「從開機就錄」的擷取補;其餘是只以 AIL 名稱表抵達的 API(`AIL_install_DIG_driver_image` 等)與 Watcom 初始化 / 結束表裡的函式指標
+(`register_float_formatters`、387 模擬器的 init / fini thunk)。
+
+**這個計畫可信的前提**:一致性檢查 —— 軌跡裡有執行紀錄的 923 條 `call` 指令,目標入口全都有執行紀錄(0 條不符)。軌跡截斷或位址換算錯時這項會失敗,
+工具回傳 1 且不出計畫。
+
+**邊的來源**:直接 `call`(inventory 的 callees)、span 內 `j*` 跳進別的入口(thunk / 尾呼叫;補上後 `__sys_fini_387_emulator` 不再是根)、程式碼內指向入口的 fixup
+(取位址)、資料區指標表(連續 fixup)被程式碼引用(以索引分派;已知跳表標出第幾格)。看不到的:執行期算出的位址。
+
+**限制**:「對應的遊戲操作」欄是由函式名稱推定,要觸發哪個分支得讀父函式(`function_inventory.py --card`);收益以入口數計,不保證每條路徑實機都能觸發
+(錯誤路徑如 `__math87_err`、`heap_grow` 失敗分支不一定能重現)。本工具只產生建議,沒有開模擬器。
+
+**工具自驗**:`plan_trace_coverage.py --selftest` 4 組 16 項純函式案例;定點突變 17 / 17 KILLED(第一輪 2 個存活:表尾之後的引用、子已執行的前線,各補一個反向案例)。

@@ -69,6 +69,7 @@
 |---|---|
 | 看某個位址是哪個函式、名稱、證據、本體反組譯 | `python tools/function_inventory.py --card 0x位址` |
 | 看覆蓋率 | `python tools/function_inventory.py --coverage` |
+| 決定下一輪原版實機擷取跑哪個場景 | `python tools/plan_trace_coverage.py`(續九十八:戰場指令環 +369、城鎮教會 / 商店 / 出擊選人、從開機就錄 +231) |
 | 有新的原版軌跡時更新實機執行位址 | 新軌跡放進 `.wsl_build/` 後 `python tools/verify_dead_functions_vs_traces.py --export docs/data/live_exec_addresses.json .wsl_build`(需要 capstone;內容驗不過的軌跡自動略過;已登錄 `verify_generated_artifacts`),再調高 `function_inventory.py` 的 `LIVE_ENTRY_FLOOR` |
 | 驗每一筆名稱的位元組證據 | `python tools/function_inventory.py --check-names` |
 | 重生清單 / 結構性命名 | `python tools/function_inventory.py docs/data/function_inventory.json`、`--structural docs/data/function_structural_names.json` |
