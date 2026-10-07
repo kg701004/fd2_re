@@ -6,8 +6,8 @@
    "0x4ef29"
   ],
   "entries": 1356,
-  "strong": 1293,
-  "weak": 63,
+  "strong": 1304,
+  "weak": 52,
   "by_signal": {
    "prologue": 541,
    "call": 840,
@@ -16,7 +16,7 @@
    "fnptr": 422,
    "eip": 1,
    "island": 44,
-   "call_reached": 208
+   "call_reached": 219
   },
   "argc_available": true,
   "fnptr_available": true,
@@ -25800,10 +25800,11 @@
   {
    "addr": "0x4bddc",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 106,
    "argc": 0,
    "callees": [],
@@ -25826,10 +25827,11 @@
   {
    "addr": "0x4be57",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 53,
    "argc": 0,
    "callees": [],
@@ -25908,10 +25910,11 @@
   {
    "addr": "0x4c2a4",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 182,
    "argc": null,
    "callees": [
@@ -25925,10 +25928,11 @@
   {
    "addr": "0x4c35a",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 355,
    "argc": 0,
    "callees": [
@@ -25972,10 +25976,11 @@
   {
    "addr": "0x4c59e",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 238,
    "argc": 0,
    "callees": [],
@@ -25985,10 +25990,11 @@
   {
    "addr": "0x4c68c",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 25,
    "argc": null,
    "callees": [
@@ -26000,10 +26006,11 @@
   {
    "addr": "0x4c6a5",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 67,
    "argc": 0,
    "callees": [
@@ -26017,10 +26024,11 @@
   {
    "addr": "0x4c6e8",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 664,
    "argc": 0,
    "callees": [
@@ -26086,10 +26094,11 @@
   {
    "addr": "0x4cb8e",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 54,
    "argc": 0,
    "callees": [
@@ -26101,10 +26110,11 @@
   {
    "addr": "0x4cbc4",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 468,
    "argc": null,
    "callees": [
@@ -26119,10 +26129,11 @@
   {
    "addr": "0x4cd98",
    "signals": [
-    "call"
+    "call",
+    "call_reached"
    ],
    "callers": 1,
-   "grade": "weak",
+   "grade": "strong",
    "span_upper": 204,
    "argc": 0,
    "callees": [],

@@ -20,7 +20,8 @@
 * `island`        走不到的死函式(`island_entries`,2026-10-07,見下)
 
 * `call_reached`  對 `call` 的佐證(2026-10-07):唯一的呼叫端是「從 strong 入口可達反組譯走到的 `call` 指令」
-                  (`confirm_reached_calls`,確認的再當種子到不動點;種子不含 weak 自己,避免循環論證)
+                  (`confirm_reached_calls`,確認的再當種子到不動點;種子不含 weak 自己,避免循環論證;
+                  本輪走到的 `jmp [reg*4 + 表]` 的 case 也當種子,`jmp_table_cases`)
 
 `grade`:有 prologue / ail / thunk_target / fnptr / eip / call_reached,或被 CALL 兩次以上 = `strong`;只被 CALL 一次而呼叫端
 沒走到、或只有 island = `weak`(E8 位元組掃描會接受資料位元組的偶然命中;island 只靠解碼,沒有執行路徑或引用佐證)。
@@ -341,6 +342,10 @@ def structural(entries: list[dict], names: dict[int, str], thunks: dict[int, int
         for a, e in sorted(todo.items()):
             cs = [int(t, 16) for t in e["callees"]]
             if a in out or not cs or e["span_upper"] > WRAPPER_MAX_SPAN or not all(t in label for t in cs):
+                continue
+            if bodies is not None and a in bodies and bodies[a] is None:
+                # 本體在 span 內沒有乾淨收尾:落進下一個入口(2026-10-07:0x4c68c 呼叫 __FLDAC 後不 ret,直接接 0x4c6a5),
+                # 行為延伸到 span 外,清單的 callees 不完整,不能說它只是包一層
                 continue
             calls = call_args(bodies[a], argc, skip) if bodies and bodies.get(a) else []
             if bodies and bodies.get(a) and not calls:
@@ -729,26 +734,37 @@ CONFIRM_MAX_ROUNDS = 10
 
 
 def confirm_reached_calls(new_cg, strong: set[int], weak: set[int], call_index: dict[int, tuple[int, ...]],
-                          insn_at) -> set[int]:
+                          insn_at, cases_of=None) -> set[int]:
     """weak 入口裡,呼叫端是「從 strong 入口可達反組譯走到的 `call` 指令」的那些(不動點:確認的再當種子)。
 
     weak 的疑慮是 E8 位元組掃描命中資料位元組;呼叫端若是可達的 call 指令,就不是偶然命中。種子刻意只用 strong:
     拿 weak 自己當種子會循環論證(實測從全部入口出發 218 個,只從 strong 出發 208 個)。
-    `new_cg() -> callgraph_le.CG`。
+    `new_cg() -> callgraph_le.CG`。`cases_of(reached) -> set[int]` 給了就把「這一輪走到的 `jmp [reg*4 + 表]` 的格子目標」
+    也當下一輪的種子:可達反組譯本身不跟間接 jmp,跳表後面的 case 本體(例:浮點模擬器經 opcode 跳表 0x49ec4 / 0x49fc4
+    抵達的處理常式)裡的 call 不給它就永遠算沒走到。case 只來自本輪可達的 jmp,不引入 weak 的本體。
     """
     seeds, confirmed = set(strong), set()
     for _ in range(CONFIRM_MAX_ROUNDS):
         rd = new_cg()
         rd.build(sorted(seeds))
         reached = set(rd.reached)
+        cases = set(cases_of(reached)) - seeds if cases_of else set()
         new = {a for a in weak - confirmed
                if any(s in reached and (g := insn_at(s)) is not None and bare(g[1]) == "call"
                       for s in call_index.get(a, ()))}
-        if not new:
+        if not new and not cases:
             return confirmed
         confirmed |= new
-        seeds |= new
+        seeds |= new | cases
     raise RuntimeError(f"呼叫端確認的不動點 {CONFIRM_MAX_ROUNDS} 輪內沒有收斂")
+
+
+def jmp_table_cases(reached: set[int], insn_at, fixups: dict[int, int], code: bytes, base: int, hi: int,
+                    stops: set[int]) -> set[int]:
+    """可達指令裡 `jmp [reg*4 + 表]` 的表格目標(case 標籤);與 `discover_fnptr` 的 case 同一套 `pointer_evidence` 規則。"""
+    refs = pointer_refs(sorted(reached), insn_at, fixups, code, base, hi)
+    _, jslots = pointer_evidence(refs, fixups, base, hi, stops)    # 全部 refs:call 表頭也要當相鄰 jmp 表的邊界
+    return {fixups[s] for s in jslots}
 
 
 def entry_signals(prologue: set[int], callers: dict[int, int], ail: set[int],
@@ -1073,9 +1089,11 @@ def build(with_argc: bool = True) -> dict:
                         fnptr, None, eip, island, interior)
         grades = {int(e["addr"], 16): (e["grade"], e["signals"]) for e in late["entries"]}
         # 不必先剔除 bad_sites:它們不是落在可達指令中間(不在 reached 的指令起點裡)就是非 call 的起點,確認條件本來就擋掉
+        stops = table_stops(set(grades), fixups, base, hi)
         reached_calls = confirm_reached_calls(lambda: CG(CC.EXE), {a for a, (g, _) in grades.items() if g == "strong"},
                                               {a for a, (g, s) in grades.items() if g == "weak" and "call" in s},
-                                              call_index, insn_at)
+                                              call_index, insn_at,
+                                              lambda r: jmp_table_cases(r, insn_at, fixups, code, base, hi, stops))
         # 沒被確認、又只有 call 訊號的 weak:本體解碼不合理(implausible)就不收 —— 呼叫端與本體都沒有佐證,
         # 只剩 E8 位元組命中(實測只有 0x4dddc:embedded_const_table 0x4dda3 之後常數資料裡的偶然命中)。
         # 已確認的不套這條:0x4dda3 自己(call 一個 pop/ret 取位址,後面接資料)也會被 implausible 判成 zero_bytes。
@@ -1420,6 +1438,36 @@ def _selftest_pure(fails: list[str]) -> None:
     check("confirm_reached_calls:由 strong 出發逐輪確認(0x200 -> 0x300);只被自己走到的呼叫端(0x400)、"
           "呼叫端不是 call(0x500)、沒走到(0x600)都不確認",
           confirm_reached_calls(FakeCG, {0x100}, {0x200, 0x300, 0x400, 0x500, 0x600}, idx_c, fake_c.get), {0x200, 0x300})
+
+    class FakeCGJ(FakeCG):
+        REACH = {**FakeCG.REACH, 0x700: {0x700, 0x705}}
+    fake_j = {**fake_c, 0x705: (5, "call", "0x800")}
+    idx_j = {**idx_c, 0x800: (0x705,)}
+    # 0x106 當作可達的 `jmp [reg*4 + 表]`,表裡的 case 是 0x700;0x700 的本體只有經 case 種子才走得到
+    cases_j = lambda r: {0x700} if 0x106 in r else set()     # noqa: E731
+    cases_n = lambda r: {0x700} if 0x405 in r else set()     # noqa: E731
+
+    def confirm_or_err(*args):
+        try:
+            return confirm_reached_calls(*args)
+        except RuntimeError:
+            return "沒有收斂"
+    check("confirm_reached_calls:可達 jmp 表的 case 當下一輪種子 -> case 本體裡的 call(0x800)確認;不給 cases_of 不確認;"
+          "case 只能來自本輪可達的 jmp(只有 weak 0x400 的本體走得到的 jmp 不算);第一輪只有 case、沒有新確認也要再走一輪",
+          (confirm_or_err(FakeCGJ, {0x100}, {0x200, 0x300, 0x400, 0x800}, idx_j, fake_j.get, cases_j),
+           confirm_or_err(FakeCGJ, {0x100}, {0x200, 0x300, 0x400, 0x800}, idx_j, fake_j.get),
+           confirm_or_err(FakeCGJ, {0x100}, {0x200, 0x300, 0x400, 0x800}, idx_j, fake_j.get, cases_n),
+           confirm_or_err(FakeCGJ, {0x100}, {0x800}, idx_j, fake_j.get, cases_j)),
+          ({0x200, 0x300, 0x800}, {0x200, 0x300}, {0x200, 0x300}, {0x800}))
+    code_j = bytearray(0x200)
+    code_j[0x003:0x007] = (0x1100).to_bytes(4, "little")
+    code_j[0x013:0x017] = (0x1108).to_bytes(4, "little")
+    fx_j = {0x1003: 0x1100, 0x1013: 0x1108, 0x1100: 0x1040, 0x1104: 0x1050, 0x1108: 0x1060}
+    dec_j = {0x1000: (7, "jmp", "dword ptr [ebx*4 + 0x1100]"), 0x1010: (7, "call", "dword ptr [ebx*4 + 0x1108]")}
+    check("jmp_table_cases:可達 jmp 表的格子目標;相鄰的 call 表頭(0x1108)是邊界、call 表的目標不算 case;jmp 沒走到就沒有",
+          (jmp_table_cases({0x1000, 0x1010}, dec_j.get, fx_j, bytes(code_j), 0x1000, 0x1200, set()),
+           jmp_table_cases({0x1010}, dec_j.get, fx_j, bytes(code_j), 0x1000, 0x1200, set())),
+          ({0x1040, 0x1050}, set()))
     check("entry_signals:eip、island 排在 fnptr 之後",
           entry_signals({0x10}, {}, set(), {}, {0x10}, {0x10, 0x20}, {0x20}), {0x10: ["prologue", "fnptr", "eip"],
                                                                            0x20: ["eip", "island"]})
@@ -1783,13 +1831,14 @@ def _selftest_structural(fails: list[str]) -> None:
         ent(0x100, [0x200]), ent(0x200),                           # 已有真名 -> 不命名
         ent(0x300, [0x1e]), ent(0x1e, [0x100]),                    # 只被 AIL 種子呼叫 -> ail_only 優先於 wrapper
         ent(0x1f, [0x100]),                                        # 本體的 CALL 目標與 callees 不一致 -> 退回不帶參數
+        ent(0x20, [0x100]),                                        # 本體沒有乾淨收尾(落進下一個入口)-> 不是 wrapper
     ]
     es[15]["argc"] = 1                                             # spawn(0x200)讀 1 個參數;pan(0x100)argc 不明
     ret = (0x900, 1, "ret", "")
     bodies = {0x10: [(0, 5, "push", "0x28"), (5, 5, "call", "0x3702f"), (10, 1, "push", "5"), (11, 5, "call", "0x200"), (16, 5, "call", "0x100"), ret],
               0x14: [(0, 1, "push", "eax"), (1, 5, "call", "0x200"), (6, 5, "call", "0x10"), ret],
               0x18: [ret], 0x19: [ret], 0x1a: None, 0x1b: [(0, 2, "call", "eax"), ret],
-              0x1f: [(0, 5, "call", "0x100"), (5, 5, "call", "0x200"), ret]}
+              0x1f: [(0, 5, "call", "0x100"), (5, 5, "call", "0x200"), ret], 0x20: None}
     got = structural(es, names, {0x1c: 0x200, 0x1d: 0x777}, {0x300}, bodies, {}, 0x1000, 0x2000, frozenset({0x3702f}))
     check("不給 skip:本體多出 __STK,與 callees 不一致 -> 退回不帶參數",
           structural(es, names, {}, set(), bodies, {}, 0x1000, 0x2000)[0x10]["name"], "wrapper(pan, spawn)")
@@ -1954,17 +2003,22 @@ def _selftest_live(fails: list[str]) -> bool:
           {"0x135dd", "0x10b4e"} <= set(e.get("callees", [])), str(e.get("callees")))
     check("0x26b91(debits gold)的 globals 含金幣全域 0x53bf3", "0x53bf3" in by.get(0x26b91, {}).get("globals", []),
           str(by.get(0x26b91, {}).get("globals")))
-    check("回歸釘值:entries 1356 / strong 1293 / weak 63 / fnptr 422 / eip 1 / island 44 / 內部空隙 15 / call_reached 208"
+    check("回歸釘值:entries 1356 / strong 1304 / weak 52 / fnptr 422 / eip 1 / island 44 / 內部空隙 15 / call_reached 219"
           "(參考版 EXE 固定,數字變了就是判準變了;2026-10-06 剔除 7 個被反證的 weak,再加函式指標 215 個新入口 + 3 個經它們抵達的 "
           "thunk_target;2026-10-07 加 LE 進入點 1 個與死函式島 44 個,再以呼叫端可達確認 208 個 weak -> strong,"
-          "AIL_startup 的假入口 0x37eb7 移除,未確認又解碼不合理的 weak 0x4dddc 移除)",
+          "AIL_startup 的假入口 0x37eb7 移除,未確認又解碼不合理的 weak 0x4dddc 移除;同日確認時加跳表 case 種子,"
+          "浮點模擬器 opcode 跳表後面的 11 個再升 strong)",
           (m["entries"], m["strong"], m["weak"], m["by_signal"]["fnptr"], m["fnptr_available"], m["by_signal"]["eip"],
            m["by_signal"]["island"], m["island_available"], m["island_interior_gaps"], m["by_signal"].get("call_reached"),
            m["call_reached_available"])
-          == (1356, 1293, 63, 422, True, 1, 44, True, 15, 208, True),
+          == (1356, 1304, 52, 422, True, 1, 44, True, 15, 219, True),
           f"{m['entries']}/{m['strong']}/{m['weak']}/{m['by_signal']}/{m.get('island_interior_gaps')}")
     # 呼叫端確認(doc98 續八十四)。正向:有真名、原本只被 CALL 一次的;反向:唯一呼叫端在死函式裡的
-    cr_pos = {0x372f9: "fsopen", 0x3cc7d: "rand", 0x3d3a6: "filelength", 0x3da76: "int386x"}
+    cr_pos = {0x372f9: "fsopen", 0x3cc7d: "rand", 0x3d3a6: "filelength", 0x3da76: "int386x",
+              # 呼叫端在浮點模擬器 opcode 跳表(0x4a182 jmp cs:[ebx*4 + 0x49ec4])後面的處理常式裡,要跳表 case 種子才走得到
+              0x4c59e: "emu_check_exception", 0x4cd98: "__sqrt",
+              # 再下一層:唯一呼叫端在上面那批本體裡(0x4c314 在 emu_fpatan_core 0x4c2a4 內)
+              0x4c35a: "emu_atan_core"}
     check("正向控制:只被 CALL 一次但呼叫端可達的有名函式都升為 strong(call + call_reached)",
           all(by.get(a, {}).get("signals") == ["call", "call_reached"] and by[a]["grade"] == "strong" for a in cr_pos),
           str({hex(a): by.get(a, {}).get("signals") for a in cr_pos}))
@@ -2106,7 +2160,13 @@ def selftest() -> int:
     _selftest_pure(fails)
     _selftest_structural(fails)
     _selftest_names(fails)
-    live = _selftest_live(fails)
+    try:
+        live = _selftest_live(fails)
+    except RuntimeError as exc:
+        # 不動點的輪數保護(`CONFIRM_MAX_ROUNDS` / `FNPTR_MAX_ROUNDS`)觸發 = 判準壞了沒收斂,記成 FAIL 而不是當掉
+        live = True
+        fails.append(f"真實 EXE:build 沒有收斂 {exc}")
+        print(f"    FAIL: 真實 EXE:build 沒有收斂  [{exc}]")
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")
         for f in fails:

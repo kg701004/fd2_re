@@ -20699,6 +20699,27 @@
      "insn": "cmp cl, byte ptr [edx]"
     }
    ]
+  },
+  {
+   "addr": "0x4a424",
+   "name": "emu_ea_sib",
+   "summary": "浮點模擬的 ModRM 有效位址樁裡帶 SIB 的那一格(表 0x49e04 格位 [4, 12, 20],即 mod 0 / 1 / 2 的 rm 4;FD2.EXE 反組譯):讀 SIB 位元組([esi],esi 前進),以 mod x 8 + base 經 call cs:[ebx*4 + 0x49e64](同表格位 24 起的 SIB base 樁)取基底,index 欄不是 4 時再加上存檔框裡的 index 暫存器左移 scale(SIB 位 7..6)後 ret。2026-10-07 前清單把它和後面約 5000 bytes 的 x87 指令處理常式(opcode 跳表 0x49ec4 / 0x49fc4 的 case 本體)算成同一個 span,doc98 曾稱它為「浮點模擬器主體」—— 本體其實在 0x4a45b 的 ret 結束。",
+   "confidence": "static_re",
+   "date": "2026-10-07",
+   "evidence": [
+    {
+     "at": "0x4a424",
+     "insn": "mov bl, byte ptr [esi]"
+    },
+    {
+     "at": "0x4a437",
+     "insn": "call dword ptr cs:[ebx*4 + 0x39e64]"
+    },
+    {
+     "at": "0x4a45b",
+     "insn": "ret"
+    }
+   ]
   }
  ]
 }

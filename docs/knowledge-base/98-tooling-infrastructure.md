@@ -7791,3 +7791,36 @@ weak 272 -> 64、strong 1086 -> 1294。剩下的 64 個 weak = 44 個死函式�
 
 **整段(續八十一 .. 九十)的分母與覆蓋**:入口 1313 -> 1356(+1 LE 進入點、+44 死函式島、-1 AIL_startup 假入口、-1 資料裡的 E8 命中;
 208 個 weak 經呼叫端可達反組譯確認升 strong);名稱登錄 425 -> 977;strong 有名稱或記載 69% -> 100%。
+
+## 2026-10-07 續九十一:呼叫端確認補上跳表 case 種子 —— 浮點模擬器 11 個 weak 升 strong,剩下 8 個 weak 全在死函式後面(FD2.EXE 反組譯)
+
+**結論**:續八十四留下的 20 個未確認 weak 裡,有 11 個不是「證明不了」而是工具漏了一步(依據為 FD2.EXE 反組譯比對)。
+`confirm_reached_calls` 的可達反組譯只拿 strong 入口當種子,`callgraph_le` 本身不跟間接 `jmp`,所以跳表後面的 case 本體永遠算沒走到;
+`discover_fnptr` 早就把可達 `jmp [reg*4 + 表]` 的格子當種子,這裡沒有。補上(`jmp_table_cases`,同一套 `pointer_evidence` 規則,
+case 只來自本輪可達的 jmp)後:**strong 1293 -> 1304、weak 63 -> 52、call_reached 208 -> 219,分母 1356 不變**。
+
+- **漏掉的地方**:清單裡的「0x4a424(5110 bytes)」其實只有 0x4a424..0x4a45b 是 ModRM 有效位址的 SIB 解碼(`ret` 收尾,見下方身分訂正);後面約 5000 bytes 是
+  x87 指令的處理常式,由模擬器入口 0x4a104 的兩個分派抵達 —— 記憶體運算元走 0x4a182 `jmp cs:[ebx*4 + 0x49ec4]`(64 格,索引 = ModRM reg 欄 x 8 + opcode 低 3 位),
+  暫存器運算元走 0x4a22f `jmp cs:[edx*4 + 0x49fc4]`(64 格);處理常式裡另有 9 張子跳表(都是表頭緊接在 `jmp cs:[ebx*4 + 表]` 之後:0x4ac45、0x4ad84、0x4ae05、0x4b020、0x4b12a、0x4b242、0x4b2cb、0x4b4d4、0x4b689;
+  以 `FF 24` 後接 fixup 的位元組掃描逐一列出)。
+  這兩個 jmp 從 strong 入口走得到,但格子目標沒進種子,處理常式裡的 call 全被當成沒走到。
+- **升 strong 的 11 個**:呼叫端在處理常式裡的 9 個(`__LDU4` 0x4bddc、`__U4LD` 0x4be57、`emu_fpatan_core` 0x4c2a4、`emu_check_exception` 0x4c59e、
+  `emu_add_one` 0x4c68c、`emu_split_then_mul` 0x4c6a5、`emu_trig_sel1` 0x4cb8e、`emu_poly_series` 0x4cbc4、`__sqrt` 0x4cd98),
+  以及再下一層的 2 個(`emu_atan_core` 0x4c35a 由 0x4c2a4 呼叫、`emu_split_exponent` 0x4c6e8 由 0x4c6a5 呼叫)。
+- **剩下 8 個 weak call 入口,唯一呼叫端全在死函式島裡**:0x3669a(由 `lx_load_file` 0x367d1)、0x37339(由 `freopen` 0x3739e)、0x3cbfb(由 `tan` 0x3cc64)、
+  0x4660a(由 `dos_result_check` 0x465f2)、0x46915(由 `_DoINTR_` 0x468cb)、0x47654(由 `gmtime` 0x47678)、0x4d7b4(由 `log` 0x4d808)、
+  0x4d800(由 `x87_log_sel_9_wrap` 0x4d82e)。
+  呼叫端本身沒有執行路徑(FD2.EXE 反組譯),這個方法本來就不該確認它們;weak 52 = 44 個死函式島 + 這 8 個,每個都說得出為什麼是 weak。
+- **連帶修正(結構性命名)**:0x4c68c 升 strong 後被結構性命名成不帶參數的 `wrapper(__FLDAC)` —— 它呼叫 `__FLDAC` 後不 `ret`,直接落進下一個入口 0x4c6a5,
+  `body_insns` 在 span 內找不到乾淨收尾。新規則:有本體反組譯、但本體沒有乾淨收尾的不算 wrapper(行為延伸到 span 外,清單的 callees 不完整;與續七十九
+  0x37028 那條「callees 來自 span 蓋到的下一段」同一個道理)。結構性命名(不含登錄表)的計數因此不變(thunk 7 / ail_only 169 / wrapper 115 / leaf 119 / 72 / 34)。
+- **自我測試與突變**(`--selftest`,真實 EXE 段讀 FD2.EXE 反組譯):純函式案例 —— `confirm_reached_calls` 給 case 種子後 case 本體裡的 call 確認、不給不確認、只有 weak 本體走得到的 jmp 不給 case、
+  第一輪只有 case 沒有新確認也要再走一輪(以替身 CG 模擬 FD2.EXE 反組譯的可達集合);`jmp_table_cases` 取可達 jmp 表的格子、相鄰的 call 表頭是邊界、jmp 沒走到就沒有;結構性命名「本體沒有乾淨收尾」不出 wrapper。
+  真實 EXE:回歸釘值 1356 / 1304 / 52 / call_reached 219,正向控制加 `emu_check_exception`、`__sqrt`、`emu_atan_core`(下一層)。
+  定點突變 7 個(case 不當種子、只有 case 的一輪就停、case 取自種子而非可達集合、`jmp_table_cases` 不看 refs、只給 jmp refs 使 call 表頭不當邊界、
+  build 不傳 `cases_of`、沒有乾淨收尾仍算 wrapper):第一輪 6 個 KILLED;「case 不當種子」使不動點永不收斂而以 RuntimeError 當掉 ——
+  當掉不算殺死,所以純函式案例改為把 RuntimeError 收成結果值、`selftest()` 把真實 EXE 段的不收斂記成 FAIL,重跑後 KILLED(7 / 7,皆有 FAIL 標記、無 Traceback)。
+  「只給 jmp refs」只有純函式案例殺得掉(參考版 EXE 的 jmp 表後面沒有緊鄰的 call 表),這是純函式案例存在的理由。
+- **0x4a424 的身分訂正**:續八十稱 0x4a424(5110 bytes)為「浮點模擬器主體」,不對 —— 它是 ModRM 有效位址樁表 0x49e04 格位 4 / 12 / 20(mod 0 / 1 / 2 的 rm 4)
+  的 SIB 解碼,讀 SIB 位元組後經 `call cs:[ebx*4 + 0x49e64]`(同表格位 24 起的 SIB base 樁)取基底、加上 index 暫存器左移 scale,在 0x4a45b `ret`。
+  5110 bytes 的 span 是因為後面的處理常式都是跳表 case(不是入口),span 一路延伸到下一個入口 0x4b81a。以 `emu_ea_sib` 登錄(`function_names.json` 978 筆)。
