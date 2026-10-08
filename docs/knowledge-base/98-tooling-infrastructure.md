@@ -8401,3 +8401,104 @@ kind 共 8 種:
   - 規格不成立與規格錯誤都會進 FAIL
   - 事實檔:呼叫端與 call 位址、參數 / 字串 / 回傳統計、C 記錄總次數、重產位元組相同、不含名稱
 - 突變:新程式碼 18 個,第一輪漏 1 個(呼叫端不分 call 位址),補題後全部 KILLED;續一百零七的 10 個也重跑,全部 KILLED。全部無 Traceback。
+
+## 2026-10-08 續一百零九:摘要篩選 —— 有實機紀錄的 451 筆摘要全掃,改正 16 個函式(參數順序 / 漏參數 / 參數個數 / 回傳值)
+
+續一百零八的規格檔只涵蓋 47 個函式,而有規格又有紀錄的 39 個裡就驗出 3 筆摘要錯誤,其餘有紀錄的摘要多半也有同類錯誤。
+這一輪把摘要裡不必人工整理就能機械比對的部分全部掃一遍,列出候選後逐筆看反組譯。
+
+**工具** `tools/screen_summaries_by_calllog.py`(新)。只讀已提交的檔:摘要、`function_call_profiles.json`、參考版 EXE、
+`docs/data/summary_screen_review.json`(新,人工核對結論),不必重讀呼叫紀錄。四種篩選:
+
+| 篩選 | 比什麼 | 可比的分母 |
+|---|---|---|
+| `param_count` | 摘要參數列的個數 vs 實機直接呼叫端 `call` 之後 `add esp, N` 的 N / 4(所有呼叫端一致且 > 0 才比) | 200 / 253 個有參數列 |
+| `param_type` | 參數名的型別意涵 vs 該位置最常見值:unit / 單位 / attacker … 要是單位序號或單位陣列指標,dst / src / buf … 要是指標(NULL 可),x / y / idx / stride / 長度 … 要是小整數;≥ 80% 違反才列 | 374 個參數 |
+| `param_str` | 參數名是字串(檔名 / 格式 / 名稱 …),該位置有非 NULL 值卻從未讀到可列印字串 | 7 個參數 |
+| `ret_unlisted` | 摘要把回傳值列舉完(≥ 2 個字面值或「否則 / 其餘 N」,且沒有「回傳筆數」這類非字面句),實機卻回了列舉外的值 | 8 個函式 |
+
+- 每個候選在 review 檔記 `fixed`(摘要已改正,之後必須不再觸發)或 `not_error`(附理由,必須仍對應現存候選,否則算過期)。
+- rc 0 = 沒有未核對的候選、review 檔沒有錯誤。報告同時列各篩選的分母。
+
+**為什麼參數個數不用 inventory `argc`**:`argc` 是 `derive_native_argcounts.callee_argc` 線性掃描本體得到的「讀到第幾個參數」,兩個方向都會錯。以沿控制流追 ESP 位移的方式重算:
+
+| 函式 | inventory argc | 本體實際讀到 | 原因 |
+|---|---|---|---|
+| `defender_can_counter` 0x1f0dc | 5 | 2 | 0x1f11f 中段 `ret` 之後,線性掃描把保存暫存器的位移歸零 |
+| `figure_fade_in` 0x2e9a8 | 11 | 7 | 同上,中段 `ret` 在 0x2eac1 |
+| `grant_reward_rows` 0x1aa1d | 2 | 3 | 0x1ac68 讀第 3 參數 |
+| `play_map_effect_animation` 0x1c4cc | 3 | 4 | 0x1c56a 讀第 4 參數 |
+
+呼叫端清堆疊比較可靠,但 Watcom 常在 `call` 與 `add esp` 之間先存 eax(`mov edx, eax`、`mov [esp+0x1c], eax`)。所以:
+- 最多跳過 2 條不動 esp 的 mov。
+- 呼叫端之間取唯一的非 0 值;沒有清堆疊的呼叫端是延後清理,不算不一致。
+
+**校正過程**:原型 83 個候選,大多是雜訊:
+- 「回 0x1d947」這類「跳回」的碼位址。
+- 列指標公式「回傳 0x61646 + …」。
+- 「選中 0xc9 否則 0xcd」的顏色。
+
+調整後的規則:
+- 「否則 / 其餘 N」只在同一句前面已有「回 N」時才算回傳值。
+- 排除「返回 / 設回 / …回 0 時 / 回 0 的」。
+- 清堆疊時跳過 mov。
+
+調整後剩 18 個,逐筆看反組譯:
+
+| 結論 | 函式 | 改正 |
+|---|---|---|
+| fixed | `draw_stat_bar_cells` 0x17d6f | `(x, y, 長度, 色格)` → `(dst, stride, 長度, 色格)`;另改正畫法:長度 > 0 只畫 0..長度 欄(色格 / +1 / +2),空槽格 0x1d 只在長度 0 時畫,沒有「0x5d 收尾」 |
+| fixed | `draw_stat_bar` 0x18795 | `(x, dst, 列, …)` → `(dst, stride, 色格, 目前值, 最大值)` |
+| fixed | `draw_number_full_color` 0x1875d | `(x, 目前值, 最大值, ...)` → `(dst, stride, 目前值, 最大值, 寬度)` |
+| fixed | `menu_tick_redraw` 0x27079 | `(mode, positions)` → `(positions, mode)` |
+| fixed | `title_menu_draw_buttons` 0x1ff79 | 漏第 1 參數:`(res, 選中項, 項數)`;補圖格規則 2i+1 / 選中 2i+2 |
+| fixed | `shop_menu` 0x279bc | 參數不是「店種」,是 town_hub_select 以 malloc(0xfa00) + memmove 複製的 VGA 畫面備份,當 carousel_icon_blit 的圖示來源 |
+| fixed | `apply_stat_growth` 0x1e529 | 第 3 參數改名 `msg_id`:是 dialog 的訊息編號(實機 0x1ea..0x1ee),不是字串 |
+| fixed | `printf_core` 0x3e117 | `(輸出回呼, 回呼參數, 格式, 參數表)` → `(回呼參數, 格式, 參數表, 輸出回呼)` |
+| fixed | `scene_attack_sequence` 0x2ebe1 | 3 個 → 8 個參數(a4..a8 只轉傳給演出函式) |
+| fixed | `grant_reward_rows` 0x1aa1d | 漏第 2 參數:`(單位, 筆數, 列表)` |
+| fixed | `figure_fade_in` 0x2e9a8 | 「11 個參數」→ 7 個(11 是 argc 多算) |
+| fixed | `play_map_effect_animation` 0x1c4cc | 3 個 → 4 個參數(3 是 argc 少算;沿控制流沒有讀 a1) |
+| fixed | `ai_choose_action` 0x14ef0 | 補回傳值:三者都 < 6 回 0,其他路徑把 [0x51a83] 設 0 後回 1(實機 0 有 95 次、1 有 12 次) |
+| fixed | `target_cursor_loop` 0x115b6 | 補回傳值:鍵碼 1(Esc)回 -1(實機 -1 有 27 次、1 有 14 次) |
+| not_error | `blit_tile24_rle_flat` 0x4e127 | 呼叫端推 4 個、本體只讀 3 個,摘要原本就寫明 |
+
+候選以外另改 2 筆:
+- `blit_res_cell_sprite` 0x16886:`(res, idx, a3, a4)` → `(dst, stride, res, idx)`。篩選抓不到:兩個指標對調,型別相容。是對照呼叫端 draw_number 時看到的。
+- `draw_number` 0x187d6:原本沒有參數列,補上 `(dst, stride, 值, 基底格, 寬度)`,之後型別篩選就能檢查它。
+
+每一筆都在 `function_names.json` 補了位元組證據,`--check-names` 1149 / 1149 通過。共 18 個候選:改正 17 個、非錯誤 1 個、未核對 0 個。
+
+**規格擴充**(`function_specs.json`):改正過的參數順序與回傳值加規格鎖住,引用新摘要原句。
+- stride 參數 ∈ [0x140, 0x1c8]:draw_stat_bar_cells、draw_stat_bar、draw_number_full_color、draw_number、blit_res_cell_sprite。
+- 參數範圍:數值條長度 0..102、色格 0x17..0x1a、menu_tick_redraw 的 mode 0..3、標題按鈕數 1..3。
+- printf_core 第 2 參數是 C 字串。
+- 回傳值:ai_choose_action ∈ {0, 1},target_cursor_loop ∈ {1, -1}。
+
+合計 57 個函式 71 條。有紀錄的 62 條全部成立,未執行 9 條。
+
+**誠實邊界**:
+- 型別相容的對調(指標對指標、小整數對小整數)看不出來,blit_res_cell_sprite 就是這種。
+- 沒有型別意涵的參數名(a2、ctx、色格 …)不檢查。
+- 回傳值只在摘要列舉完時比,目前 8 個函式。
+- 參數個數只在呼叫端有清堆疊時比(200 / 253);暫存器傳參的函式不比。
+- 事實檔的參數位置依 argc 列出。argc 少算時,後面的參數不在剖面裡,例如 grant_reward_rows 的第 3 參數。
+
+**任務外發現(只記錄,不修)**:
+- `derive_native_argcounts.callee_argc` 會多算(本體中段有 `ret`)也會少算(見上表)。
+- 依賴它的有:
+  - `verify_names_by_calllog.param_slot` 與事實檔的參數位置
+  - 規格「參數位置能由 argc 定位」的檢查
+
+**工具自驗**:
+- `--selftest` 79 題,涵蓋:
+  - 參數列解析、型別名單與字尾規則、各型別邊界值
+  - 回傳句的列舉判定:返回、設回、…時、…的、公式、回合、分句都要排除
+  - 清堆疊:imm8 / imm32、跳過 mov、最多 2 條、`mov ebp, esp` 不跳
+  - 合成剖面的 6 種候選與門檻邊界、呼叫端不一致
+  - review 的 7 種拒收、fixed 仍觸發、not_error 過期、rc
+  - 真實 EXE 的 draw_stat_bar 呼叫端清 5 個參數、真實篩選各分母非零
+- 突變 48 個:
+  - 第一輪存活 5 個:佔位名正規式是死碼,刪掉;其餘 4 個補題(覆蓋門檻、unit 上限 0x7f、NULL 字串參數、不在登錄的錯誤訊息)。
+  - 重跑 47 個全部 KILLED,無 Traceback。
+- 篩選有效性:同一套規則在改正前報 18 個候選(15 個函式),改正後只剩 1 個 not_error、未核對 0 個。新增的規格在實機紀錄上全部成立。

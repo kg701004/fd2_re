@@ -1,0 +1,167 @@
+{
+ "_doc": "tools/screen_summaries_by_calllog.py 篩出的候選(摘要宣稱 vs 實機紀錄矛盾)的人工核對結論,手動維護。每筆 {addr, name, screen, key, verdict, reason, date}:verdict fixed = 摘要已改正(之後必須不再觸發),not_error = 核對後不是錯誤(reason 寫依據;必須仍對應一個現存候選,否則過期)。doc98 續一百零九。",
+ "reviews": [
+  {
+   "addr": "0x17d6f",
+   "name": "draw_stat_bar_cells",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數列改為 (dst, stride, 長度, 色格);本體 0x17d7d / 0x17d81 把第 1、2 參數當 blit_raw_cell 的 dst / stride",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x18795",
+   "name": "draw_stat_bar",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數列改為 (dst, stride, 色格, 目前值, 最大值);0x187c9 / 0x187c5 原樣轉傳第 1、2 參數",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x18795",
+   "name": "draw_stat_bar",
+   "screen": "param_type",
+   "key": "s2",
+   "verdict": "fixed",
+   "reason": "同上一筆(舊摘要的 dst 在第 2 位,實際是 stride)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1875d",
+   "name": "draw_number_full_color",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數列改為 (dst, stride, 目前值, 最大值, 寬度);0x1876c 比較第 3、4 參數",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x27079",
+   "name": "menu_tick_redraw",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數列改為 (positions, mode);0x27087 以第 2 參數當 mode",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1ff79",
+   "name": "title_menu_draw_buttons",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "補第 1 參數 res:(res, 選中項, 項數);0x1ff95 把第 1 參數當 blit_res_cell_sprite 的 res",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1ff79",
+   "name": "title_menu_draw_buttons",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "同上一筆,參數列 2 個 -> 3 個(呼叫端都清 3 個)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x279bc",
+   "name": "shop_menu",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數是 town_hub_select 複製的 VGA 畫面備份(0x2681a malloc 0xfa00、0x2682f memmove),不是店種",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1e529",
+   "name": "apply_stat_growth",
+   "screen": "param_type",
+   "key": "s3",
+   "verdict": "fixed",
+   "reason": "第 3 參數改名 msg_id:是 dialog 的訊息編號(0x1e599 push 給 0x1e5a3 dialog),不是字串指標",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1e529",
+   "name": "apply_stat_growth",
+   "screen": "param_str",
+   "key": "s3",
+   "verdict": "fixed",
+   "reason": "同上一筆",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x3e117",
+   "name": "printf_core",
+   "screen": "param_str",
+   "key": "s3",
+   "verdict": "fixed",
+   "reason": "參數列改為 (回呼參數, 格式, 參數表, 輸出回呼);格式是 [ebp+0x1c] 第 2 參數,回呼是 [ebp+0x24] 第 4 參數",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x2ebe1",
+   "name": "scene_attack_sequence",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "參數列補到 8 個;呼叫端 add esp, 0x20,本體 0x2ef04 讀第 8 個",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1aa1d",
+   "name": "grant_reward_rows",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "補第 2 參數「筆數」:(單位, 筆數, 列表);0x1ac52 以它為迴圈上限、0x1ac68 讀第 3 參數",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x2e9a8",
+   "name": "figure_fade_in",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "11 個 -> 7 個;呼叫端都 add esp, 0x1c,本體最遠讀第 7 個(0x2e9f9);11 是 argc 多算",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1c4cc",
+   "name": "play_map_effect_animation",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "3 個 -> 4 個;呼叫端都 add esp, 0x10,本體 0x1c56a 讀第 4 個;argc 3 是少算",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x14ef0",
+   "name": "ai_choose_action",
+   "screen": "ret_unlisted",
+   "key": "ret",
+   "verdict": "fixed",
+   "reason": "補回傳值:三者都 < 6 回 0(0x14f7d),其他路徑回 1(0x1504b)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x115b6",
+   "name": "target_cursor_loop",
+   "screen": "ret_unlisted",
+   "key": "ret",
+   "verdict": "fixed",
+   "reason": "補回傳值:鍵碼 1(Esc)回 -1(0x117b9)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x4e127",
+   "name": "blit_tile24_rle_flat",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "摘要已寫明:兩個呼叫端推 4 個 (src, dst, stride, color),本體只讀 [ebp+8] / [ebp+0xc] / [ebp+0x10](0x4e12d..0x4e13b),第 4 個不讀;參數列列的就是本體實際用到的 3 個",
+   "date": "2026-10-08"
+  }
+ ]
+}
