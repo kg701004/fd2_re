@@ -8253,3 +8253,49 @@ AI 法術 1、2、5、7、8 與 `map_attack_sequence` 這一輪沒有出現(那�
 
 **工具自驗**:`dosbox_harness.sh` `bash -n` 通過;把 `FD2_HARNESS_FPU` 區塊單獨抽出測:`false`、`387` 產生 `-set 'cpu fpu=…'`,
 `false x`、`true;id`、`FALSE` 都走 `die`(腳本的 `die` 是 `exit 1`),未設與空字串時參數陣列為空(dosbox-x 的 argv 不變)。
+
+## 2026-10-08 續一百零七:函式呼叫紀錄(DOSBox-X 修補)—— 名稱的逐函式實機反驗一次跑完全部入口
+
+**結論**:「逐一下斷點」改成一次執行。`tools/dosbox/fd2_calllog_patch.py` 在 dosbox-x 重度除錯核心每條指令的掛勾
+(`DEBUG_HeavyIsBreakpoint`)加一段:入口檔列出的 1356 個執行期 EIP 一被執行就寫 E(暫存器、返回位址上方 8 個 dword、
+16 個碼位元組、eax/edx/ebx/ecx/esi/edi 與 [esp+4..+0x10] 指向的 32 位元組),控制回到返回位址(同一個 SS、ESP 變高)時寫 R
+(eax / edx);每個入口前 200 次寫明細,全部次數另計。修補只套在複本樹 `~/fd2-dosbox-calllog`,harness 預設的
+`~/fd2-dosbox-build` 沒動;以倉庫腳本產生的 debug.cpp 重編(只重編 debug.o)。沒設 `FD2_CALLLOG_ENTRIES` 時每條指令只多一個布林判斷。
+harness 以 `FD2_HARNESS_DOSBOX_BIN=~/fd2-dosbox-calllog/dosbox-x/src/dosbox-x FD2_HARNESS_CALLLOG=<入口檔>` 啟用,入口檔由
+`python tools/verify_names_by_calllog.py --write-entries` 產生;binary 裡沒有修補字串時 harness 直接 `die`(未修補的 dosbox-x 會
+默默什麼都不記)。
+
+**試跑(原版 FD2.EXE md5 `33464c81…`)**:開機 → 標題 CONTINUE(第 10 章戰場)→ 移動一個單位、待機 → 結束回合(敵方行動)→
+離開戰場 YES → `C:\>` → `exit`(dosbox-x 正常結束,寫出 `T exit` 計數)。約 10.7 億條遊戲段指令,紀錄 28.5 MB
+(同一段 LOGC 是 7.7 GB 級)。WSL `~/fd2-run-harness-cl1/CALLLOG.TXT`,複本 `.wsl_build/cl1_CALLLOG.TXT`(不進版控)。
+
+`python tools/verify_names_by_calllog.py .wsl_build/cl1_CALLLOG.TXT`:
+
+| 檢查 | 結果 |
+|---|---|
+| 紀錄可信:16 個碼位元組 = EXE(fixup 位置遮掉) | 31465 / 31465 |
+| 被執行 / 有返回紀錄 / 未執行 | 387 / 382 / 969(共 1356) |
+| 直接與經 thunk 的動態呼叫邊在靜態 `callees` 裡 | 648 / 648 |
+| 間接 call 反算的目標(暫存器)= 實際進入的入口(可經 jmp 跳板) | 212 一致、0 不一致;1764 筆的 slot 是執行期寫入的指標,沒有 fixup 可對 |
+| 語意宣稱(libc 驗算、摘要「回傳緩衝區 / 回傳目的」) | 9 個入口、10 條:成立 9、無法判定 1(傳 NULL 讓函式自行配置的那條) |
+
+**第一次跑報了 6 筆 FAIL,全部是本工具的規則錯,修正後名稱與摘要沒有發現錯誤**:
+- 2 筆間接呼叫:`call eax` 的目標是跳板入口 0x3cf1c(`jmp` 到 0x46186),實際進入的入口就是跳板本身;改成接受跳板鏈上任一站。
+- `strlen`(0x37b55)回 9、eax 指向的字串第 1 個位元組就是 NUL:0x37b55 從 `[esp+4]` 取參數(`mov edi, [ebp+0xc]`),不是 eax。
+  參數位置改為依 inventory 的 `argc`(本體從堆疊讀到第幾個):`argc ≥ k` 取 `[esp+4k]`,`argc == 0` 才用 Watcom 暫存器,其他不猜;
+  「兩邊都收」的寬鬆比對拿掉(selftest 有一題專驗堆疊傳參的 memcpy 回傳 eax 不算 dst)。
+- 3 筆「回傳緩衝區」:`itoa_via_utoa`(0x46e61)的緩衝區是參數列第 2 個;`stdio_fgets`(0x46f9c)摘要寫了 EOF 時回 NULL;
+  `file_load_whole`(0x36cab)第 2 參數是「緩衝區或 NULL」,傳 NULL 時自行配置。宣稱改為依摘要開頭的參數列定位第幾個參數,
+  回 0 只在摘要寫「回 NULL」時算成立,參數名含 NULL 且傳 0 時記「無法判定」。
+
+**誠實邊界**:這是「名稱 / 摘要中能機械檢查的宣稱」與「名稱證據所依據的呼叫圖」的實機反驗,不是語意的全面證明。
+(1)執行覆蓋:試跑只到 387 個入口,要照既有 13 份軌跡的場景再錄,上界約是已知的 626;52 個 weak 入口從未執行,這個方法驗不到。
+(2)宣稱覆蓋:目前只有 libc 驗算(`memcpy`、`memset`、`strcpy`、`strcat`、`memmove`、`strlen`、`strcmp`、`rand`)與「回傳緩衝區 / 目的」;
+大部分遊戲函式名稱沒有能從參數與回傳值直接判定的宣稱,需要逐函式寫可檢查的規格。`--json` 輸出逐函式剖面(呼叫端、參數與回傳的
+相異值與範圍、宣稱結果),供逐批人工核對。
+
+**工具自驗**:`--selftest` 43 題通過(解析錯誤不靜默略過、fixup 遮罩、direct / 非 direct、`FF /2` 解碼、`argc` 定位、libc 驗算的成立與不成立、
+摘要宣稱定位與 NULL 路徑、整體 check 會報 FAIL)。突變 10 個全部 KILLED、無 Traceback(遮罩失效、碼位元組永遠相符、direct 不比目標、
+參數改用暫存器、memcpy 兩邊都收、strlen 差一、NULL 路徑無條件成立、宣稱定位錯一格、解析錯誤靜默略過、FAIL 不報語意)。
+`fd2_calllog_patch.py` 對原 debug.cpp 產生的內容與實際編譯的只差註解;重複套用會拒絕。harness 的 `FD2_HARNESS_CALLLOG` 區塊抽出逐值測
+9 組通過(未設、合法、含 CAP / DUMP;未修補 binary、空檔、不存在、相對路徑、`5;id`、`abc` 都走 `die`)。

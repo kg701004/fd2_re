@@ -324,6 +324,29 @@ cmd_launch() {
         echo "[$name] DOS environment before FD2.EXE:$dos_set_args"
     fi
 
+    # Optional function call log (FD2_HARNESS_CALLLOG=<file of hex EIPs> -> $workdir/CALLLOG.TXT).
+    #
+    # 2026-10-08 續一百零七: needs a dosbox-x built with tools/dosbox/fd2_calllog_patch.py (point
+    # FD2_HARNESS_DOSBOX_BIN at it); an unpatched binary would ignore the variables and record nothing,
+    # so the binary is checked for the variable name first. The entries file is written by
+    # `python tools/verify_names_by_calllog.py --write-entries`. FD2_HARNESS_CALLLOG_CAP (records per
+    # entry, default 200) and FD2_HARNESS_CALLLOG_DUMP (bytes per pointer, default 32) are optional.
+    local calllog_env=""
+    if [[ -n "${FD2_HARNESS_CALLLOG:-}" ]]; then
+        [[ -s "$FD2_HARNESS_CALLLOG" && "$FD2_HARNESS_CALLLOG" =~ ^/[A-Za-z0-9_./-]+$ ]] || die "FD2_HARNESS_CALLLOG '$FD2_HARNESS_CALLLOG' is not a non-empty file with an absolute [A-Za-z0-9_./-] path"
+        grep -aq FD2_CALLLOG_ENTRIES "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN has no call-log patch (tools/dosbox/fd2_calllog_patch.py); set FD2_HARNESS_DOSBOX_BIN"
+        calllog_env="FD2_CALLLOG_ENTRIES='$FD2_HARNESS_CALLLOG' FD2_CALLLOG_OUT='$workdir/CALLLOG.TXT' "
+        if [[ -n "${FD2_HARNESS_CALLLOG_CAP:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_CAP" =~ ^[0-9]+$ ]] || die "FD2_HARNESS_CALLLOG_CAP '$FD2_HARNESS_CALLLOG_CAP' is not a number"
+            calllog_env+="FD2_CALLLOG_CAP=$FD2_HARNESS_CALLLOG_CAP "
+        fi
+        if [[ -n "${FD2_HARNESS_CALLLOG_DUMP:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_DUMP" =~ ^[0-9]+$ ]] || die "FD2_HARNESS_CALLLOG_DUMP '$FD2_HARNESS_CALLLOG_DUMP' is not a number"
+            calllog_env+="FD2_CALLLOG_DUMP=$FD2_HARNESS_CALLLOG_DUMP "
+        fi
+        echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
+    fi
+
     local audio_env=""
     if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
         local audio_raw="$workdir/sdlaudio.raw"
@@ -339,7 +362,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} ${fpu_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000'${dos_set_args} -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}${calllog_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} ${log_arg[*]@Q} ${break_arg[*]@Q} ${fpu_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000'${dos_set_args} -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 
