@@ -7557,9 +7557,9 @@
   {
    "addr": "0x2b843",
    "name": "roster_move_member_to_slot1",
-   "summary": "(char_id):在名冊 [0x53bf7](80-byte 記錄,[0x53bfb] 人)第 1 格起找 record+8 == char_id 的成員,把他移到第 1 格(第 0 格不動),其餘成員依原順序從第 2 格起排;接著釋放精靈快取 [0x53a61],開 0x5029f 的 FDICON 檔,對每個成員以 0x11019(portrait, fp) 重新載入圖示。唯一呼叫端 0x2af28。",
+   "summary": "(char_id):在名冊 [0x53bf7](80-byte 記錄,[0x53bfb] 人)第 1 格起找 record+8 == char_id 的成員,把他移到第 1 格(第 0 格不動),其餘成員依原順序從第 2 格起排;接著釋放精靈快取 [0x53a61],開 0x5029f 的 FDICON 檔,對每個成員以 0x11019(portrait, fp) 重新載入圖示。唯一呼叫端 0x2af28。只在 sortie_required_member_check 通過的章節呼叫(0x11 / 0x13 / 0x19 以後:9,0x19 章再 0x1d;0x14:0x15;0x15 / 0x16:0x18;0x2b358..0x2b3af)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x2b85a",
@@ -7784,9 +7784,9 @@
   {
    "addr": "0x2000a",
    "name": "map_overview_screen",
-   "summary": "全地圖縮圖(戰場游標迴圈 0x117e7 呼叫):以 0x1399c 建縮小圖塊,地圖高度 [0x53ac5] > 0x28 時縮放比 3、否則 4;逐格以 map_cell_info 建圖塊指標表,用 draw_map_scaled_fixedpoint 從目前視角 8 步縮放過去,之後等鍵(期間閃爍標記),離開時釋放並 redraw。",
+   "summary": "全地圖縮圖(戰場游標迴圈 0x117e7 呼叫):以 0x1399c 建縮小圖塊,地圖高度 [0x53ac5] > 0x28 時縮放比 3、否則 4;逐格以 map_cell_info 建圖塊指標表,用 draw_map_scaled_fixedpoint 從目前視角 8 步縮放過去,之後等鍵(期間閃爍標記),離開時釋放並 redraw。觸發鍵:battle_main_input_loop 0x119be / 0x119c3 比較 scancode 0x3b(F1)或 0x49(PgUp)後 0x119c8 呼叫。實機(cl7):戰場游標模式按 F1 進入(eax = 0x3b),按 Escape 離開。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x2004b",
@@ -8582,8 +8582,8 @@
    "addr": "0x2ff01",
    "name": "spell_cast_scene",
    "confidence": "static_re",
-   "date": "2026-09-29",
-   "summary": "(caster, spell, a3, a4):法術的場景呈現入口,只轉呼叫 0x2ff45。呼叫端:ai_spell_execute(法術 < 10 且 [0x53af9] 為 0)與 player_spell_select(法術 < 9、== 0x18 或 > 0x1b)。DOSBox-X 觀察(doc98 續五十二):AI 施放聖光彈時停在這裡,之後 spell_damage_resolve 的返回位址 0x3095d 位於這條場景路徑內。內部流程未展開。",
+   "date": "2026-10-08",
+   "summary": "(caster, spell, count, targets):法術的場景呈現入口(本體約 3876 bytes,堆疊框架 0x130)。呼叫端:ai_spell_execute(法術 < 10 且 [0x53af9] 為 0)與 player_spell_select(法術 < 9、== 0x18 或 > 0x1b)。法術 ≥ 0x20 時把 4 個參數原樣轉給 spell_scene_effects(0x2fff7..0x30012)。DOSBox-X 觀察(doc98 續五十二):AI 施放聖光彈時停在這裡,之後 spell_damage_resolve 的返回位址 0x3095d 位於這條場景路徑內。實機(cl5)第 3 個都是 1、第 4 個是目標清單0x1f1488 / 0x1f15a0。內部流程未展開。續一百一十二(勘誤):舊摘要寫「只轉呼叫 0x2ff45」,0x2ff45 是 0x2ff3d mov dword ptr [esp + 0xe8], 0 位移裡的 E8 00 00 00 00(doc98 續七十八);第 3 / 4 參數原寫 a3 / a4。",
    "evidence": [
     {
      "at": "0x2ff01",
@@ -8592,6 +8592,10 @@
     {
      "at": "0x2ff06",
      "insn": "call 0x3702f"
+    },
+    {
+     "at": "0x2fff7",
+     "insn": "cmp ebp, 0x20"
     }
    ]
   },
@@ -12448,9 +12452,9 @@
   {
    "addr": "0x3e602",
    "name": "printf_call_float_hook",
-   "summary": "(三個參數照轉)呼叫 [0x537f4] 的浮點格式化掛鉤(printf_fmt_float 由 0x46170 登錄在那裡)。printf_fmt_arg 遇到浮點轉換時呼叫。",
+   "summary": "(3 個參數) 照轉呼叫 [0x537f4] 的浮點格式化掛鉤(printf_fmt_float 由 0x46170 登錄在那裡)。printf_fmt_arg 遇到浮點轉換時呼叫。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x3e60e",
@@ -13903,9 +13907,9 @@
   {
    "addr": "0x4ce64",
    "name": "emu_ld_fma_store",
-   "summary": "(來源, 目的) 讀 80 位元值到 si:edx:eax,呼叫 0x4ce84(ld_mul_core + ld_add_core 的 wrapper)後寫回目的。(死函式:沒有呼叫端、沒有引用)",
+   "summary": "(x, 係數表, 項數) Watcom 暫存器傳參(eax / edx / ebx):讀 eax 指向的 80 位元值 x 到 si:edx:eax,呼叫 emu_ld_mul_add(0x4ce84:累加值從 edx 指向的係數表第 0 筆起,每輪乘 x(ld_mul_core)、加下一筆 10-byte 係數(ld_add_core),共 ebx 輪,0x4ceca dec dword ptr [ebp + 0xc]),結果寫回 x 的位置(0x4ce77 pop ecx 取回進入時的 eax)。(死函式:沒有呼叫端、沒有引用)續一百一十二(參數讀寫角色篩選經轉交,勘誤):舊參數列寫 (來源, 目的),第 2 個其實只被讀(係數表),寫回的是第 1 個。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x4ce69",
@@ -13918,6 +13922,14 @@
     {
      "at": "0x4ce7d",
      "insn": "mov word ptr [ecx + 8], si"
+    },
+    {
+     "at": "0x4ce67",
+     "insn": "mov ecx, edx"
+    },
+    {
+     "at": "0x4ce77",
+     "insn": "pop ecx"
     }
    ]
   },
@@ -14503,9 +14515,9 @@
   {
    "addr": "0x1f6ef",
    "name": "vga_fill_rect",
-   "summary": "(x, y, 寬, 高, 顏色) 以 VGA 0xa0000 + y x 320 + x 為起點,逐列 memset 填色(列寬 0x140)。map_overview_screen 呼叫。",
+   "summary": "(x, y, 顏色, 邊長) 以 VGA 0xa0000 + y x 320 + x 為起點填 (邊長-1) x (邊長-1) 的正方形:逐列 memset(列寬 0x140)。第 3 個是 memset 的填色值(0x1f6fd 載入 edi、0x1f722 推入),第 4 個同時是列數與每列長度(0x1f733 lea eax, [ebp - 1])。map_overview_screen 呼叫:x / y = 座標 x 縮放比 + 視窗原點、第 4 個 = 縮放比(0x2024f..0x20278、0x20285..0x202ac)。續一百一十二(靜態個數篩選,勘誤):舊參數列寫 (x, y, 寬, 高, 顏色),呼叫端都清 4 個。實機(cl7,F1 進地圖縮圖):3498 次呼叫(記 200 次)第 4 個都是 4(地圖高度 ≤ 0x28 的縮放比),第 3 個 0x20..0x50 逐幀變化(閃爍標記),第 1 / 2 個是 0x52..0xc6 的畫面座標。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x1f713",
@@ -14518,6 +14530,18 @@
     {
      "at": "0x1f72c",
      "insn": "add ebx, 0x140"
+    },
+    {
+     "at": "0x1f6fd",
+     "insn": "mov edi, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x1f701",
+     "insn": "mov ebp, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x1f733",
+     "insn": "lea eax, [ebp - 1]"
     }
    ]
   },
@@ -14561,9 +14585,9 @@
   {
    "addr": "0x203bd",
    "name": "vga_palette_write_256",
-   "summary": "(三個參數) 對 256 個調色盤項目逐一 outp(0x3c8, i) 再三次 outp(0x3c9, …) 寫 RGB(三個分量如何由參數算出未逐條核對)。map_attack_resolve 呼叫。",
+   "summary": "(3 個參數) 對 256 個調色盤項目逐一 outp(0x3c8, i) 再三次 outp(0x3c9, …) 寫 RGB(三個分量如何由參數算出未逐條核對)。map_attack_resolve 呼叫。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x203dc",
@@ -21058,9 +21082,9 @@
   {
    "addr": "0x41b84",
    "name": "voc_parse_blocks",
-   "summary": "(取樣) 從 [+0x878] 的目前區塊起解析 Creative VOC 區塊:類型 0..9 經 cs:0x41b5c 跳表分派,以 voc_block_len 前進。檔案取樣的兩個 API 呼叫。",
+   "summary": "(取樣, 續播) 從 [+0x878] 的目前區塊起解析 Creative VOC 區塊:類型 0..9 經 cs:0x41b5c 跳表分派,以 voc_block_len 前進。第 2 個非 0 時,區塊處理完再呼叫 0x39798(0x41c13 / 0x41dad 比較 [esp+0x14])。EOS 回呼 ail_voc_next_block_cb 傳 1,ail_impl_allocate_file_sample / ail_impl_set_sample_file 傳 0。續一百一十二(靜態個數篩選,勘誤):舊參數列只列 (取樣),呼叫端都清 2 個。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x41b95",
@@ -21073,6 +21097,14 @@
     {
      "at": "0x41baa",
      "insn": "jmp dword ptr cs:[eax*4 + 0x31b5c]"
+    },
+    {
+     "at": "0x41c13",
+     "insn": "cmp dword ptr [esp + 0x14], 0"
+    },
+    {
+     "at": "0x41dad",
+     "insn": "cmp dword ptr [esp + 0x14], 0"
     }
    ]
   },
@@ -23577,9 +23609,9 @@
   {
    "addr": "0x1c9dd",
    "name": "item_mp_restore",
-   "summary": "(單位, 量) 回復 MP:目前 MP +0x44 加上回復量(含 prng_next 的亂數),不超過上限 +0x46(FD2.EXE 反組譯)。物品效果分派 0x20c6f 呼叫(doc13 / doc11 的 MP 回復)。",
+   "summary": "(單位, 量) 回復 MP:目前 MP +0x44 加上回復量(含 prng_next 的亂數),不超過上限 +0x46(FD2.EXE 反組譯)。物品效果分派 0x20c6f 呼叫(doc13 / doc11 的 MP 回復)。第 2 個是道具效果列 +0xe 的回復量(0x20df2 推 [esp+0x68]):type 0xb 的道具只有 206 / 207(回復量 80 / 200,效果列 0x602ad + id*0x17 的 +0xd / +0xe)。實機(cl7):道具 206「魔法水 +MP 080」用在悠妮身上,參數 (1, 0x50),MP 224 -> 298。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x1ca04",
@@ -24796,9 +24828,9 @@
   {
    "addr": "0x2b439",
    "name": "sortie_required_member_check",
-   "summary": "(選取陣列, ...) 出擊的必須出場檢查:掃描單位([0x53a45],每筆 0x50,+8 為 id)找本章必須出場的角色,沒選到時開對話框顯示「本章XX必須出場!」並等鍵,回傳是否通過(FD2.EXE 反組譯)。sortie_member_select 呼叫(doc99 / doc91)。",
+   "summary": "(選取陣列, ...) 出擊的必須出場檢查:掃描單位([0x53a45],每筆 0x50,+8 為 id)找本章必須出場的角色,沒選到時開對話框顯示「本章XX必須出場!」並等鍵,回傳是否通過(FD2.EXE 反組譯)。sortie_member_select 呼叫(doc99 / doc91)。呼叫條件(sortie_member_select 0x2b2bb..0x2b345,章節 [0x53c03]):0x10 章在 0x33499(0x12) 成立時查角色 0x12;0x11 / 0x13 與 0x19 以後查 9(0x19 章通過再查 0x1d);0x12 查 0x10;0x14 查 0x15;0x15 / 0x16 查 0x18;其餘章節不呼叫。通過時依同一張表以 roster_move_member_to_slot1 把該角色移到第 1 格(0x2b358..0x2b3af)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x2b488",
@@ -24830,9 +24862,9 @@
   {
    "addr": "0x2d80d",
    "name": "spell_scene_effects",
-   "summary": "(2 個參數) 法術場景內的效果階段:load_fdother_80_to_53b13 載入效果音,依法術呼叫 item_effect_heal / item_effect_type21_damage / effect_ap_percent_buff / effect_dp_percent_buff / effect_hit_ev_buff / apply_status_spell_to_targets 等,play_loaded_sfx_and_free 收尾(FD2.EXE 反組譯)。spell_cast_scene 呼叫(doc25)。",
+   "summary": "(caster, spell, count, targets) 法術場景內的效果階段:load_fdother_80_to_53b13 載入效果音,依法術呼叫 item_effect_heal / item_effect_type21_damage / effect_ap_percent_buff / effect_dp_percent_buff / effect_hit_ev_buff / apply_status_spell_to_targets 等,play_loaded_sfx_and_free 收尾(FD2.EXE 反組譯)。spell_cast_scene 在法術 ≥ 0x20 時呼叫(0x2fff7 cmp ebp, 0x20),把自己的 4 個參數原樣依序推入(0x2fffc..0x3000b),本體讀到第 4 個(doc25)。第 3 / 4 個依序轉給 apply_status_spell_to_targets 的 count / targets(0x2de9a / 0x2de9e)。續一百一十二(靜態個數篩選,勘誤):舊參數列寫 (2 個參數),呼叫端清 4 個。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x2ddbe",
@@ -24845,6 +24877,14 @@
     {
      "at": "0x2de4b",
      "insn": "call 0x22721"
+    },
+    {
+     "at": "0x2ddf0",
+     "insn": "mov eax, dword ptr [esp + 0x58]"
+    },
+    {
+     "at": "0x2de9a",
+     "insn": "push dword ptr [esp + 0x5c]"
     }
    ]
   },

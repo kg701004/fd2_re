@@ -29,6 +29,12 @@
    傳參方式:呼叫端清堆疊個數(EXE 全部 `call rel32`,`call_cleanups`)唯一且 == 參數列個數 -> 堆疊;沒有清堆疊時
    argc == 個數 -> 堆疊、argc 0 且 ≤ 4 個 -> Watcom 暫存器;其餘不比。
 
+續一百一十二(殘留風險查證):
+- `param_count` 加靜態版:實機沒比過個數的函式(沒有紀錄、或紀錄裡沒有直接呼叫端)改比 EXE 全部呼叫端的清堆疊個數;
+  沒有呼叫端清堆疊時只在本體 argc 比參數列多時列出。以值傳的 double 佔 2 格;`(三個參數)` 這類讀不出個數的不比。
+- `param_role` 追轉交:參數原樣推給被呼叫端(或 call 當下放在暫存器)時,取被呼叫端對該引數的讀寫(最多 4 層);
+  `add` / `lea` 算出的指標也算同一個參數。
+
 參數位置:呼叫端有清堆疊時取 [esp+4k](`s<k>`);否則依 inventory argc(`verify_names_by_calllog.param_slot`)。
 
 這是篩選,不是判決。每個候選要人看反組譯,在 review 檔記:
@@ -88,9 +94,25 @@ def parse_sig(summary: str) -> tuple[list[str] | None, int | None]:
     names = [p.strip() for p in body.split(",")]
     if len(names) == 1 and (n := NPARAMS.match(names[0])):
         return [], int(n.group(1))
-    if any(p in ("...", "..") or "=" in p for p in names):
-        return names, None
+    if any(p in ("...", "..") or "=" in p or "個參數" in p for p in names):
+        return names, None      # 「三個參數照轉」這類寫法讀不出個數,不可當成 1 個參數
     return names, len(names)
+
+
+def slot_starts(params: list[str]) -> list[int]:
+    """每個參數從第幾個堆疊格開始(1 起)。以值傳的 double 佔 2 格(8 bytes),`double*` 是指標佔 1 格。"""
+    out, s = [], 1
+    for p in params:
+        out.append(s)
+        s += 2 if p == "double" else 1
+    return out
+
+
+def n_slots(params: list[str] | None, n: int | None) -> int | None:
+    """參數列佔的堆疊格數;`(N 個參數)` 沒有名稱時就是 N。"""
+    if n is None:
+        return None
+    return n + sum(p == "double" for p in params or [])
 
 
 UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者"})
@@ -208,6 +230,7 @@ class Screen:
     cands: list[Cand] = field(default_factory=list)
     denom: dict[str, int] = field(default_factory=dict)
     mixed_cleanup: list[int] = field(default_factory=list)
+    count_checked: set[int] = field(default_factory=set)   # 已由實機呼叫端比過個數的函式
 
 
 def _bump(sc: Screen, k: str) -> None:
@@ -233,17 +256,21 @@ def screen(names: list[dict], profiles: dict[str, dict], code: bytes, base: int)
             sc.mixed_cleanup.append(a)
         if params is not None:
             _bump(sc, "有參數列")
-        # 1. 參數個數
-        if n_sig is not None and pushed:
+        # 1. 參數個數(以堆疊格數比:double 佔 2 格)
+        slots = n_slots(params, n_sig)
+        if slots is not None and pushed:
             _bump(sc, "param_count 可比")
-            if n_sig != pushed:
+            sc.count_checked.add(a)
+            if slots != pushed:
                 sc.cands.append(Cand(a, name, "param_count", "count",
-                                     f"摘要參數列 {n_sig} 個,實機呼叫端都清 {pushed} 個堆疊參數",
+                                     f"摘要參數列 {slots} 格,實機呼叫端都清 {pushed} 個堆疊參數",
                                      sorted(f"{s:#x}:{v}" for s, v in sites.items())))
         # 2 / 3. 參數型別、字串
+        starts = slot_starts(params or [])
         for k, pn in enumerate(params or [], 1):
             kind = type_of(pn)
-            slot = (f"s{k}" if k <= pushed else None) if pushed else VC.param_slot(p["argc"], k)
+            j = starts[k - 1]
+            slot = (f"s{j}" if j <= pushed else None) if pushed else VC.param_slot(p["argc"], j)
             prm = p["params"].get(slot) if slot else None
             if kind is None or prm is None:
                 continue
@@ -281,6 +308,39 @@ def screen(names: list[dict], profiles: dict[str, dict], code: bytes, base: int)
     return sc
 
 
+def screen_static_count(sc: Screen, names: list[dict], cleanups: dict[int, set[int]],
+                        argc: dict[int, int | None]) -> None:
+    """`param_count` 的靜態版(續一百一十二):實機沒比過個數的函式(沒有紀錄、或紀錄裡沒有直接呼叫端)。
+
+    - EXE 全部 `call rel32` 呼叫端清的堆疊個數唯一 -> 與參數列格數比,不同即候選。
+    - 沒有任何呼叫端清堆疊時,本體讀到第 argc 個堆疊參數;argc 是下界(可以不讀最後一個),只有 argc 比格數**多**
+      才是候選(摘要漏列參數)。argc 0 是暫存器傳參或沒有參數,不比。
+    清堆疊個數有兩種以上(可變參數)不比。候選與實機版共用 (addr, param_count, count) 鍵:之後錄到實機紀錄時
+    由實機版接手,review 不必改。
+    """
+    for x in names:
+        a = int(x["addr"], 16)
+        if a in sc.count_checked:
+            continue
+        params, n = parse_sig(x.get("summary") or "")
+        slots = n_slots(params, n)
+        if slots is None:
+            continue
+        c = cleanups.get(a, set())
+        ag = argc.get(a)
+        if len(c) == 1:
+            _bump(sc, "param_count 可比(靜態清堆疊)")
+            v = next(iter(c))
+            if v != slots:
+                sc.cands.append(Cand(a, x["name"], "param_count", "count",
+                                     f"摘要參數列 {slots} 格,EXE 全部呼叫端都清 {v} 個堆疊參數(靜態)", sorted(c)))
+        elif not c and ag:
+            _bump(sc, "param_count 可比(靜態 argc)")
+            if ag > slots:
+                sc.cands.append(Cand(a, x["name"], "param_count", "count",
+                                     f"摘要參數列 {slots} 格,本體讀到第 {ag} 個堆疊參數(靜態,無呼叫端清堆疊)", [ag]))
+
+
 # ---------------------------------------------------------------- 參數讀寫角色(靜態,續一百一十一)
 
 _MEM = re.compile(r"\[([a-z]{2,3})")
@@ -291,6 +351,7 @@ _REG32 = frozenset({"eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"})
 _FIRST_READ = frozenset({"cmp", "test", "push", "call", "jmp", "bt", "out"})
 _PTR_ARITH = frozenset({"add", "sub", "inc", "dec"})      # 指標加減常數 / 索引後仍指向同一塊
 _STRING_OPS = ("stos", "movs", "lods", "cmps", "scas")
+_LEA_REG = re.compile(r"\b(e(?:ax|bx|cx|dx|si|di|bp))\b(\*\d)?")
 
 
 def _writes_first(m: str) -> bool:
@@ -312,7 +373,9 @@ def _stack_param(o: str, delta: int, ebp: int | None) -> int | None:
     return off // 4 if off >= 4 else 0
 
 
-def param_uses(cg, target: int, entries: list[int], n: int, regconv: bool) -> dict[int, dict[str, int]] | None:
+def param_uses(cg, target: int, entries: list[int], n: int, regconv: bool,
+               fwd: list[tuple[int, int, int | str, int]] | None = None,
+               init: dict[str, int] | None = None) -> dict[int, dict[str, int]] | None:
     """被呼叫端本體經由第 k 個參數(指標)讀 / 寫記憶體的次數 -> {k: {"r": 次, "w": 次}};走不出本體回 None。
 
     沿 `derive_native_argcounts.callee_argc` 走到的指令(附 ESP 位移與 ebp 框架基底),依位址順序追蹤
@@ -323,12 +386,25 @@ def param_uses(cg, target: int, entries: list[int], n: int, regconv: bool) -> di
     - 寫:`stos` / `movs` 的 edi,或第一個運算元是 `[r…]` 且指令會寫它。讀:`lods` / `movs` / `cmps` 的 esi、
       `cmps` / `scas` 的 edi,或其他 `[r…]` 運算元。`lea` 不算存取。
     依位址順序是近似(合流處不合併狀態);這是篩選,候選要人看反組譯。
+
+    `fwd`(續一百一十二):給一個 list 就收「第 k 個參數被原樣推給 `call 0xT` 當第 j 個引數」-> (k, T, j, 呼叫點)。
+    `push r`(r 裝著第 k 個)與 `push [esp+X]`(堆疊上的第 k 個)記在推入後的堆疊深度;`call` 時深度 h 的值
+    是第 (位移 - h) / 4 + 1 個引數。被彈掉(深度大於目前位移)的在每個指令開頭就忘掉。
+    `call` 當下裝著第 k 個參數的暫存器也記下 -> (k, T, 暫存器名, 呼叫點)(組語核心常以 edi / esi 傳指標)。
+
+    指標衍生(續一百一十二):`add r, X` / `lea r, [...]` 算出的 r,若 r 原本沒裝參數、而 X(暫存器或堆疊參數)
+    或 lea 裡唯一一個不帶倍率的暫存器裝著第 k 個,r 也算第 k 個 —— `dst + y*stride + x` 的結果仍指向 dst 那塊。
+    `init` 給定時以它當入口的暫存器對應(追暫存器轉交用),取代 regconv 的 eax / edx / ebx / ecx。
     """
     trace: dict[int, tuple[int, int | None]] = {}
     if DNA.callee_argc(cg, target, entries, trace)[0] is None or not trace:
         return None
-    state: dict[str, int] = {r: k for k, r in enumerate(VC.REG_ARGS[:n], 1)} if regconv else {}
+    if init is not None:
+        state: dict[str, int] = dict(init)
+    else:
+        state = {r: k for k, r in enumerate(VC.REG_ARGS[:n], 1)} if regconv else {}
     uses: dict[int, dict[str, int]] = {}
+    pend: dict[int, int] = {}                      # 堆疊深度 -> 第 k 個參數(等著被 call 吃掉的引數)
 
     def use(reg: str, kind: str) -> None:
         k = state.get(reg)
@@ -340,6 +416,19 @@ def param_uses(cg, target: int, entries: list[int], n: int, regconv: bool) -> di
         i = cg._insn(a)
         m = i.mnemonic.split()[-1]                     # `rep movsb` -> movsb
         ops = [o.strip() for o in i.op_str.split(",")] if i.op_str else []
+        if fwd is not None:
+            for h in [h for h in pend if h > delta]:
+                del pend[h]
+            if m == "push" and ops:
+                k = state.get(ops[0])
+                if k is None and not regconv:
+                    k = _stack_param(ops[0], delta, ebp)
+                if k and k <= n:
+                    pend[delta + 4] = k
+            elif m == "call" and ops and ops[0].startswith("0x"):
+                t = int(ops[0], 16)
+                fwd.extend((k, t, (delta - h) // 4 + 1, a) for h, k in sorted(pend.items()))
+                fwd.extend((k, t, r, a) for r, k in sorted(state.items()))
         if m.startswith(_STRING_OPS) and not m.startswith(("movsx", "movzx")):
             if m.startswith(("stos", "movs")):
                 use("edi", "w")
@@ -374,6 +463,19 @@ def param_uses(cg, target: int, entries: list[int], n: int, regconv: bool) -> di
                     state.pop(d, None)
             elif m == "mov" and src in state:
                 state[d] = state[src]
+            elif m == "add" and d == ops[0] and d in _REG32 and d not in state:
+                k2 = state.get(src)
+                if k2 is None and not regconv:
+                    k2 = _stack_param(src, delta, ebp)
+                    k2 = k2 if k2 and k2 <= n else None
+                if k2:
+                    state[d] = k2
+            elif m == "lea" and d in _REG32:
+                ks = {state[r] for r, scale in _LEA_REG.findall(src) if r in state and not scale}
+                if len(ks) == 1:
+                    state[d] = ks.pop()
+                else:
+                    state.pop(d, None)
             elif m == "xchg" and src in _REG32 and d in _REG32:
                 sv, dv = state.pop(src, None), state.pop(d, None)
                 if sv:
@@ -419,35 +521,97 @@ def role_convention(n: int, cleanups: set[int], argc: int | None) -> str | None:
     return None
 
 
+FWD_DEPTH = 4      # 轉交最多追幾層被呼叫端
+
+
+def role_uses(cg, code: bytes | None, base: int, entries: list[int], target: int, n: int, regconv: bool,
+              memo: dict, depth: int = 0, known: set[int] | None = None,
+              init: dict[str, int] | None = None) -> dict[int, dict[str, int]] | None:
+    """本體直接存取(r / w)加上原樣轉交給被呼叫端後、被呼叫端對該引數的存取(fr / fw,遞迴)。
+
+    被呼叫端的引數個數取該呼叫點清的堆疊個數(`pushed_args`),以它當 n 重算;轉交到第 j 個而呼叫點清不到 j 個自然查不到
+    (prologue 存起來的暫存器不是引數)。被呼叫端一律以堆疊傳參看待(呼叫端推了引數)。`code` 是 None 時不追轉交。
+    `known` 是已知入口的集合(預設由 entries 建);不是已知入口的呼叫目標不追。
+    暫存器轉交:被呼叫端以 `init = {暫存器: 1}` 重算,取它對第 1 個(那個暫存器的入口值)的存取。
+    memo 的總計鍵含 depth:同一個函式在較深處被截斷的結果不可給較淺處重用(否則結果依走訪順序而變);
+    本體的直接存取與轉交清單與 depth 無關,另以 ("direct", …) 鍵共用。
+    """
+    known = set(entries) if known is None else known
+    sig = (target, n, regconv, tuple(sorted((init or {}).items())))
+    key = sig + (depth,)
+    if key in memo:
+        return memo[key]
+    memo[key] = None                                   # 遞迴循環時當作走不出
+    dkey = ("direct",) + sig
+    if dkey not in memo:
+        fl: list[tuple[int, int, int | str, int]] | None = [] if code is not None else None
+        memo[dkey] = (param_uses(cg, target, entries, n, regconv, fl, init), fl)
+    direct, fwd = memo[dkey]
+    if direct is None:
+        return None
+    out = {k: {"r": u["r"], "w": u["w"], "fr": 0, "fw": 0} for k, u in direct.items()}
+    if depth < FWD_DEPTH:
+        for k, t, j, site in fwd or []:
+            if t not in known:
+                continue
+            if isinstance(j, str):
+                sub = role_uses(cg, code, base, entries, t, 0, False, memo, depth + 1, known, {j: 1})
+                su = (sub or {}).get(1)
+            else:
+                nt = pushed_args(code, base, site)
+                if not nt:
+                    continue
+                sub = role_uses(cg, code, base, entries, t, nt, False, memo, depth + 1, known)
+                su = (sub or {}).get(j)
+            if su:
+                o = out.setdefault(k, {"r": 0, "w": 0, "fr": 0, "fw": 0})
+                o["fr"] += su["r"] + su["fr"]
+                o["fw"] += su["w"] + su["fw"]
+    memo[key] = out
+    return out
+
+
 def screen_roles(sc: Screen, names: list[dict], cg, entries: list[int], argc: dict[int, int | None],
-                 cleanups: dict[int, set[int]]) -> None:
+                 cleanups: dict[int, set[int]], code: bytes | None = None, base: int = 0) -> None:
     """`param_role`:參數名是目的,本體經由它只讀不寫;或參數名是來源,本體經由它寫入 -> 候選。
 
     不需要實機紀錄:涵蓋所有有參數列的函式(含沒執行到的)。dst / src 對調時兩個參數都會觸發。
+    續一百一十二:給 `code` 就把「原樣轉交給被呼叫端」的存取算進來(`role_uses`)—— 只轉交、本體不碰的參數
+    (畫圖函式把 dst 傳給 blit)原本沒得比。double 參數佔 2 格,第 k 個參數取它開始的那一格。
     """
+    memo: dict = {}
+    known = set(entries)
     for x in names:
         params, n = parse_sig(x.get("summary") or "")
         roles = {k: role_of(pn) for k, pn in enumerate(params or [], 1)}
         if not n or not any(roles.values()):
             continue
         a = int(x["addr"], 16)
-        conv = role_convention(n, cleanups.get(a, set()), argc.get(a))
-        uses = param_uses(cg, a, entries, n, conv == "reg") if conv else None
+        slots = n_slots(params, n)
+        starts = slot_starts(params or [])
+        conv = role_convention(slots, cleanups.get(a, set()), argc.get(a))
+        if conv == "reg" and slots != n:
+            conv = None                                # double 走暫存器的配置不猜
+        uses = role_uses(cg, code, base, entries, a, slots, conv == "reg", memo, 0, known) if conv else None
         if uses is None:
             continue
         _bump(sc, "param_role 函式")
         for k, role in roles.items():
-            u = uses.get(k)
-            if not role or not u:
+            u = uses.get(starts[k - 1])
+            if not role or not u or not any(u.values()):
                 continue
             _bump(sc, "param_role 可比")
+            if u["fr"] or u["fw"]:
+                _bump(sc, "param_role 可比(含轉交)")
             pn = params[k - 1]
-            if role == "dst" and not u["w"]:
+            r, w = u["r"] + u["fr"], u["w"] + u["fw"]
+            how = f"本體讀 {u['r']}、寫 {u['w']};轉交後讀 {u['fr']}、寫 {u['fw']}"
+            if role == "dst" and not w:
                 sc.cands.append(Cand(a, x["name"], "param_role", f"p{k}",
-                                     f"第 {k} 參數 {pn}(目的):本體經由它讀 {u['r']} 次、從未寫入", [u]))
-            elif role == "src" and u["w"]:
+                                     f"第 {k} 參數 {pn}(目的):讀 {r} 次、從未寫入({how})", [u]))
+            elif role == "src" and w:
                 sc.cands.append(Cand(a, x["name"], "param_role", f"p{k}",
-                                     f"第 {k} 參數 {pn}(來源):本體經由它寫入 {u['w']} 次", [u]))
+                                     f"第 {k} 參數 {pn}(來源):寫入 {w} 次({how})", [u]))
 
 
 # ---------------------------------------------------------------- 核對結論
@@ -508,7 +672,9 @@ def run(review_path: Path) -> tuple[Screen, list[Cand], list[str], dict, list[di
     sc = screen(names, profiles, st.code, st.base)
     from callgraph_le import CG
     import verify_address_claim_coverage as CC
-    screen_roles(sc, names, CG(CC.EXE), st.entries, st.argc, call_cleanups(st.code, st.base, set(st.entries)))
+    cleanups = call_cleanups(st.code, st.base, set(st.entries))
+    screen_static_count(sc, names, cleanups, st.argc)
+    screen_roles(sc, names, CG(CC.EXE), st.entries, st.argc, cleanups, st.code, st.base)
     reviews, errs = load_review(json.loads(review_path.read_text(encoding="utf-8")),
                                 {int(x["addr"], 16): x["name"] for x in names})
     pending, rerrs, _ = reconcile(sc.cands, reviews)
@@ -560,6 +726,7 @@ def selftest() -> int:
     chk("N 個參數", parse_sig("(3 個參數) …"), ([], 3))
     chk("可變參數不比個數", parse_sig("(fmt, ...) …")[1], None)
     chk("暫存器寫法不比個數", parse_sig("(eax = ptr, edx = 段) …")[1], None)
+    chk("「三個參數」讀不出個數(不可當 1 個)", parse_sig("(三個參數照轉) …"), (["三個參數照轉"], None))
     chk("沒有參數列", parse_sig("讀 BIOS 計時器。無參數。"), (None, None))
     chk("參數列不在開頭不算", parse_sig("Watcom CRT 近堆配置(size)")[0], None)
 
@@ -669,6 +836,8 @@ def selftest() -> int:
         (["param_count"], []))
     chk("未執行的函式不進分母", sc.denom.get("有摘要且被執行"), 7)
     chk("param_count 分母 = 呼叫端一致且 > 0 的(0x600 除外)", sc.denom.get("param_count 可比"), 6)
+    chk("實機比過個數的函式記入 count_checked(靜態版跳過它們)", sc.count_checked,
+        {0x100, 0x200, 0x300, 0x400, 0x500, 0x700})
     sc2 = screen(names, {"0x300": prof(two, {"s1": {"top": ptr_top}}, [["0x0", 2], ["0x5", 2]], returned=4)},
                  bytes(ccode), 0x2000)
     chk("返回次數 < 5 不比回傳", [c.screen for c in sc2.cands], [])
@@ -870,9 +1039,20 @@ def selftest() -> int:
     chk("strcpy(目的, 來源):第 1 個只寫、第 2 個只讀", (s1["w"] > 0, s1["r"], s2["r"] > 0, s2["w"]), (True, 0, True, 0))
     clean = call_cleanups(st.code, st.base, set(st.entries))
     rsc2 = Screen()
-    screen_roles(rsc2, real_names, rcg, st.entries, st.argc, clean)
+    screen_roles(rsc2, real_names, rcg, st.entries, st.argc, clean, st.code, st.base)
     n_cmp = rsc2.denom.get("param_role 可比", 0)
-    chk("真實 param_role 可比 ≥ 50", n_cmp >= 50, True)
+    chk("真實 param_role 可比 ≥ 90(續一百一十二含轉交)", n_cmp >= 90, True)
+    chk("真實 param_role 可比(含轉交)≥ 40", rsc2.denom.get("param_role 可比(含轉交)", 0) >= 40, True)
+    rsc2n = Screen()
+    screen_roles(rsc2n, real_names, rcg, st.entries, st.argc, clean)
+    chk("不給 code 就不追轉交(可比較少)", rsc2n.denom.get("param_role 可比", 0) < n_cmp, True)
+    ru = role_uses(rcg, st.code, st.base, st.entries, 0x1E7F6, 4, False, {}) or {}
+    chk("draw_unit_hp_bar 第 1 個:add eax, [esp+0x10] 衍生後轉給 draw_hp_bar 的目的(只經轉交寫入)",
+        (ru.get(1, {}).get("w"), ru.get(1, {}).get("fw", 0) > 0), (0, True))
+    bt = role_uses(rcg, st.code, st.base, st.entries, 0x4ED34, 3, False, {}) or {}
+    chk("blit_image_transparent:edi / esi 經暫存器轉交給核心 -> 第 1 個寫、第 2 個讀",
+        (bt.get(1, {}).get("fw", 0) > 0, bt.get(1, {}).get("fr", 0), bt.get(2, {}).get("fr", 0) > 0,
+         bt.get(2, {}).get("fw", 0)), (True, 0, True, 0))
 
     def flip(x: dict) -> dict:
         ps, _ = parse_sig(x.get("summary") or "")
@@ -884,12 +1064,132 @@ def selftest() -> int:
         return {**x, "summary": "(" + ", ".join(new) + ")" + rest}
 
     rsc3 = Screen()
-    screen_roles(rsc3, [flip(x) for x in real_names], rcg, st.entries, st.argc, clean)
+    screen_roles(rsc3, [flip(x) for x in real_names], rcg, st.entries, st.argc, clean, st.code, st.base)
     hit = sum(c.screen == "param_role" for c in rsc3.cands)
     print(f"    (角色全部對調的對照:{hit} / {rsc3.denom.get('param_role 可比', 0)} 觸發;原本 {len(rsc2.cands)})")
     chk("對照:角色全部對調後 ≥ 90% 觸發(篩選分得出讀寫)", hit >= 0.9 * rsc3.denom.get("param_role 可比", 1), True)
     run_sc = run(REVIEW_JSON)[0]
     chk("run() 有接上角色篩選(分母與單獨跑相同)", run_sc.denom.get("param_role 可比"), n_cmp)
+    chk("run() 有接上靜態個數篩選(兩種分母都非零)",
+        (run_sc.denom.get("param_count 可比(靜態清堆疊)", 0) > 0, run_sc.denom.get("param_count 可比(靜態 argc)", 0) > 0),
+        (True, True))
+    chk("真實:靜態個數篩選不重比實機比過的函式", any(c.addr in real.count_checked and "靜態" in c.detail
+                                            for c in run_sc.cands), False)
+
+    print("[13] 續一百一十二:格數、靜態個數、轉交、指標衍生")
+    chk("double 佔 2 格", slot_starts(["double", "輸出"]), [1, 3])
+    chk("double* 是指標佔 1 格", slot_starts(["double*", "x"]), [1, 2])
+    chk("格數:(double, n) = 3", n_slots(["double", "n"], 2), 3)
+    chk("格數:(3 個參數) = 3", n_slots([], 3), 3)
+    chk("格數:讀不出個數 -> None", n_slots(["a", "..."], None), None)
+    dprof = {"0x100": prof([[None, "0x2020", "direct", 5]],
+                           {"s1": {"top": small_top}, "s3": {"top": ptr_top}}, [["0x0", 9]])}
+    dsc = screen([{"addr": "0x100", "name": "f", "summary": "(double, x):…"}], dprof, bytes(ccode), 0x2000)
+    chk("實機:(double, x) 呼叫端清 3 個 -> 個數相符;x 取 s3", sorted((c.screen, c.key) for c in dsc.cands),
+        [("param_type", "s3")])
+    snames = [{"addr": f"{a:#x}", "name": f"f{a:x}", "summary": sm} for a, sm in (
+        (0x10, "(a, b):…"), (0x20, "(a, b):…"), (0x30, "(double, x):…"), (0x40, "(a, b):…"), (0x50, "(a, b):…"),
+        (0x60, "(a, b):…"), (0x70, "(a, b, c):…"), (0x80, "(三個參數):…"), (0x90, "(a, b):…"))]
+    ssc = Screen(count_checked={0x70})
+    screen_static_count(ssc, snames, {0x10: {3}, 0x20: {2}, 0x30: {3}, 0x60: {2, 3}, 0x70: {2}, 0x80: {3}},
+                        {0x40: 3, 0x50: 1, 0x60: 3, 0x90: 0})
+    chk("靜態個數:清 3 / 2 格、argc 3 > 2 -> 候選;double、argc 較少、多值、實機比過、讀不出個數、argc 0 不報",
+        sorted(c.addr for c in ssc.cands), [0x10, 0x40])
+    chk("靜態個數分母(清堆疊 3、argc 2)", (ssc.denom.get("param_count 可比(靜態清堆疊)"),
+                                       ssc.denom.get("param_count 可比(靜態 argc)")), (3, 2))
+    chk("靜態候選與實機版同鍵", {(c.screen, c.key) for c in ssc.cands}, {("param_count", "count")})
+
+    def U2(body: list[tuple[str, str]], n: int = 2):
+        return param_uses(_G({0: body}), 0, [], n, False)
+
+    chk("add r, [堆疊參數]:r 原本沒裝參數 -> 衍生", U2([("mov", "eax, 0x10"), ("add", "eax, dword ptr [esp + 4]"),
+                                                ("mov", "byte ptr [eax], 1"), RET], n=1), {1: W1})
+    chk("add r1, r2:r2 裝參數 -> r1 衍生", U2([("mov", "edx, dword ptr [esp + 4]"), ("mov", "eax, 0x10"),
+                                         ("add", "eax, edx"), ("mov", "byte ptr [eax], 1"), RET]), {1: W1})
+    chk("add 已裝參數的 r 保留原參數", U2([("mov", "eax, dword ptr [esp + 4]"), ("add", "eax, dword ptr [esp + 8]"),
+                                    ("mov", "byte ptr [eax], 1"), RET]), {1: W1})
+    chk("add 超過 n 的堆疊參數不對應", U2([("mov", "eax, 0"), ("add", "eax, dword ptr [esp + 8]"),
+                                    ("mov", "byte ptr [eax], 1"), RET], n=1), {})
+    chk("lea 唯一不帶倍率的暫存器 -> 衍生", U2([("mov", "edx, dword ptr [esp + 4]"), ("lea", "eax, [ecx + edx]"),
+                                         ("mov", "byte ptr [eax], 1"), RET]), {1: W1})
+    chk("lea 帶倍率不算", U2([("mov", "edx, dword ptr [esp + 4]"), ("lea", "eax, [ecx + edx*4]"),
+                          ("mov", "byte ptr [eax], 1"), RET]), {})
+    chk("lea 兩個參數 -> 不判", U2([("mov", "edx, dword ptr [esp + 4]"), ("mov", "ecx, dword ptr [esp + 8]"),
+                              ("lea", "eax, [ecx + edx]"), ("mov", "byte ptr [eax], 1"), RET]), {})
+    fw: list = []
+    param_uses(_G({0: [("push", "dword ptr [esp + 8]"), ("push", "dword ptr [esp + 8]"), ("call", "0x100"),
+                       ("add", "esp, 8"), RET]}), 0, [], 2, False, fw)
+    chk("轉交:兩個堆疊參數依序推入 -> (k, 目標, 第 j 個引數, 呼叫點)", fw, [(2, 0x100, 2, 2), (1, 0x100, 1, 2)])
+    fw2: list = []
+    param_uses(_G({0: [("push", "dword ptr [esp + 4]"), ("add", "esp, 4"), ("call", "0x100"), RET]}), 0, [], 1,
+               False, fw2)
+    chk("轉交:推入後被彈掉的不算", fw2, [])
+    fw2b: list = []
+    param_uses(_G({0: [("push", "dword ptr [esp + 4]"), ("add", "esp, 4"), ("push", "5"), ("call", "0x100"),
+                       ("add", "esp, 4"), RET]}), 0, [], 1, False, fw2b)
+    chk("轉交:彈掉後同一深度改推常數,不可沿用舊的參數", fw2b, [])
+    fw2c: list = []
+    param_uses(_G({0: [("push", "dword ptr [esp + 8]"), ("call", "0x100"), ("add", "esp, 4"), RET]}), 0, [], 1, False,
+               fw2c)
+    chk("轉交:超過 n 的堆疊參數不記", fw2c, [])
+    fw3: list = []
+    param_uses(_G({0: [("mov", "edi, dword ptr [esp + 4]"), ("call", "0x100"), RET]}), 0, [], 1, False, fw3)
+    chk("轉交:call 當下暫存器裡的參數也記", fw3, [(1, 0x100, "edi", 1)])
+    chk("init 指定入口暫存器", param_uses(_G({0: [("stosb", "byte ptr es:[edi], al"), RET]}), 0, [], 0, False,
+                                       None, {"edi": 1}), {1: W1})
+
+    # 合成:0x0 / 0x200 把兩個堆疊參數推給 0x100(第 1 個寫、第 2 個讀);0x300 只清 1 個;0x400 以 edi / esi 交給 0x500
+    fbody = [("push", "dword ptr [esp + 8]"), ("push", "dword ptr [esp + 8]"), ("call", "0x100"),
+             ("add", "esp, 8"), RET]
+    freg = [("mov", "edi, dword ptr [esp + 4]"), ("mov", "esi, dword ptr [esp + 8]"), ("call", "0x500"), RET]
+    core = [("lodsb", "al, byte ptr [esi]"), ("stosb", "byte ptr es:[edi], al"), RET]
+    gf = _G({0x0: fbody, 0x100: body, 0x200: fbody, 0x300: fbody, 0x400: freg, 0x500: core, 0x600: freg})
+    fcode = bytearray(b"\x90" * 0x700)
+    for site, cl in ((0x2, 8), (0x202, 8), (0x302, 4)):
+        fcode[site:site + 8] = b"\xe8\0\0\0\0\x83\xc4" + bytes((cl,))
+    fnames = [{"addr": "0x0", "name": "f_ok", "summary": "(dst, src):…"},
+              {"addr": "0x200", "name": "f_swap", "summary": "(src, dst):…"},
+              {"addr": "0x300", "name": "f_short", "summary": "(dst, src):…"},
+              {"addr": "0x400", "name": "f_reg_ok", "summary": "(dst, src):…"},
+              {"addr": "0x600", "name": "f_reg_swap", "summary": "(src, dst):…"}]
+    fents = [0x0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600]
+    fcl = {0x0: {2}, 0x200: {2}, 0x300: {2}, 0x400: {2}, 0x600: {2}}
+    fsc = Screen()
+    screen_roles(fsc, fnames, gf, fents, {}, fcl, bytes(fcode), 0)
+    chk("轉交:名稱對調的兩個函式(堆疊、暫存器)各 2 個候選;正確的不報", sorted((c.addr, c.key) for c in fsc.cands),
+        [(0x200, "p1"), (0x200, "p2"), (0x600, "p1"), (0x600, "p2")])
+    chk("轉交:呼叫點只清 1 個 -> 第 2 個不算(可比 = 4 函式 x 2 + 1)",
+        (fsc.denom.get("param_role 可比"), fsc.denom.get("param_role 可比(含轉交)")), (9, 9))
+    chk("候選明細的讀次數含轉交(f_swap 第 2 個只經轉交讀 1 次)",
+        [c.detail for c in fsc.cands if (c.addr, c.key) == (0x200, "p2") and "讀 1 次" in c.detail] != [], True)
+    dnames = [{"addr": "0x0", "name": "f_dbl", "summary": "(double, 輸出):…"},
+              {"addr": "0x100", "name": "f_dblreg", "summary": "(double, 輸出):…"}]
+    dg = _G({0x0: [("mov", "eax, dword ptr [esp + 0xc]"), ("mov", "byte ptr [eax], 1"), RET],
+             0x100: [("mov", "byte ptr [ebx], 1"), RET]})
+    dsc2 = Screen()
+    screen_roles(dsc2, dnames, dg, [0x0, 0x100], {0x100: 0}, {0x0: {3}})
+    chk("double 後的參數取第 3 格、清 3 個才算堆疊;double 走暫存器不比",
+        (dsc2.denom.get("param_role 函式"), dsc2.denom.get("param_role 可比"), dsc2.cands), (1, 1, []))
+    fsc0 = Screen()
+    screen_roles(fsc0, fnames, gf, fents, {}, fcl)
+    chk("不給 code 就沒有轉交:全部零存取、不可比", (fsc0.denom.get("param_role 可比"), fsc0.cands), (None, []))
+    deep = _G({0x0: fbody, 0x100: fbody, 0x200: fbody, 0x300: fbody, 0x400: fbody, 0x500: body})
+    dcode = bytearray(b"\x90" * 0x600)
+    for site in (0x2, 0x102, 0x202, 0x302, 0x402):
+        dcode[site:site + 8] = b"\xe8\0\0\0\0\x83\xc4\x08"
+    for a, op in ((0x0, "0x100"), (0x100, "0x200"), (0x200, "0x300"), (0x300, "0x400"), (0x400, "0x500")):
+        deep.m[a + 2] = _I(a + 2, "call", op)
+    dents = [0x0, 0x100, 0x200, 0x300, 0x400, 0x500]
+    chk(f"轉交深度上限 {FWD_DEPTH}:第 5 層才寫入的追不到", role_uses(deep, bytes(dcode), 0, dents, 0x0, 2, False, {}),
+        {})
+    chk("轉交深度上限:從第 1 層起算追得到", role_uses(deep, bytes(dcode), 0, dents, 0x100, 2, False, {}),
+        {1: {"r": 0, "w": 0, "fr": 0, "fw": 1}, 2: {"r": 0, "w": 0, "fr": 1, "fw": 0}})
+    chk("不是已知入口的呼叫目標不追", role_uses(deep, bytes(dcode), 0, [0x400], 0x400, 2, False, {}), {})
+    shared: dict = {}
+    role_uses(deep, bytes(dcode), 0, dents, 0x0, 2, False, shared)
+    chk("共用 memo:先從第 0 層走過(較深處被截斷)再問第 1 層,結果與單獨問相同",
+        role_uses(deep, bytes(dcode), 0, dents, 0x100, 2, False, shared),
+        role_uses(deep, bytes(dcode), 0, dents, 0x100, 2, False, {}))
 
     print()
     print("--selftest OK" if not fails else f"--selftest FAILED: {fails}")

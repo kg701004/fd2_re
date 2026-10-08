@@ -8643,7 +8643,69 @@ argc 等於個數為堆疊、argc 0 且不超過 4 個為 Watcom 暫存器。
 
 **沒錄到的**(都有原因,不是遺漏):
 - `sortie_required_member_check`:這條出擊路線沒有呼叫(推論:只在有必須出場角色的章節)。
-- `item_mp_restore`:道具表找不到 type 0xb 的列。
+- `item_mp_restore`:道具表找不到 type 0xb 的列。**續一百一十二勘誤:錯**,效果列 +0xd 為 0xb 的有道具 206 / 207,cl7 已錄到。
 - `roster_move_member_to_slot1`:這兩輪的操作沒有走到它唯一的呼叫端。
 - `map_overview_screen`:不知道觸發按鍵。
 - `spell_damage_on_targets_flash`:沒有呼叫端。
+
+## 2026-10-08 續一百一十二:續一百一十一的殘留風險逐項查證 —— 靜態個數篩選、角色篩選追到轉交,cl7 實機補錄;改正 6 筆摘要、更正 1 筆結論
+
+逐項列出殘留風險,能靜態查證的先查,查得出觸發方式的再錄實機:
+
+| 殘留風險 | 查證 | 結果 |
+|---|---|---|
+| 沒有實機紀錄的函式從未比參數個數(有參數列 103 個) | 靜態:EXE 全部呼叫端清堆疊個數;沒有呼叫端清堆疊時用本體 argc(下界,只抓 argc 較多) | 8 個不符:double 佔 2 格 3 個、`(三個參數)` 讀成 1 個 2 個、真錯 3 個 |
+| 角色篩選:只轉交給被呼叫端、本體不碰的參數沒得比(50 個) | 追 push -> call 與暫存器轉交,加上 `add` / `lea` 算出的指標 | 可比 59 -> 97,剩 11 個;命中 1 個(真錯) |
+| 摘要裡「呼叫 / 跳到 0x…」的位址 | 64 條,目標不是入口的 17 條逐條看 | 16 條是共用收尾、返回位址或否定句;1 條錯(spell_cast_scene 的 0x2ff45) |
+| 續一百一十一「沒錄到的」5 個的理由 | 反組譯呼叫點、道具效果列、fixup(含資料段) | 1 個理由錯(item_mp_restore),2 個查出觸發方式並錄到,2 個條件讀出 |
+| 規格未執行 7 條 | 查呼叫條件 | cl7 錄到 3 條;剩 4 條各有原因(見下) |
+
+**改正的摘要**(都看過反組譯):
+1. `vga_fill_rect` 0x1f6ef:舊參數列 (x, y, 寬, 高, 顏色)。兩個呼叫端都清 4 個;本體第 3 個進 edi 當 memset 填色值、第 4 個減 1
+   同時當列數與列長。改成 (x, y, 顏色, 邊長)。cl7 實機:第 4 個 200 / 200 次是 4(縮放比),第 3 個逐幀 0x20..0x50。
+2. `voc_parse_blocks` 0x41b84:舊參數列只列 (取樣)。3 個呼叫端清 2 個(EOS 回呼推 1、兩個 API 推 0),0x41c13 / 0x41dad 讀第 2 個決定
+   要不要再呼叫 0x39798。補上第 2 個。
+3. `spell_scene_effects` 0x2d80d:舊參數列 (2 個參數)。唯一呼叫端清 4 個,依 ESP 位移換算是 spell_cast_scene 的 4 個參數原樣轉入;
+   第 3 / 4 個再轉給 apply_status_spell_to_targets 的 count / targets。改成 (caster, spell, count, targets)。
+4. `spell_cast_scene` 0x2ff01:「只轉呼叫 0x2ff45」是續七十八已證明的假 E8(0x2ff3d 的 mov 位移);刪掉,第 3 / 4 參數命名
+   count / targets(cl5 實機第 3 個都是 1、第 4 個是目標清單 0x1f1488 / 0x1f15a0)。
+5. `emu_ld_fma_store` 0x4ce64:舊參數列 (來源, 目的)。轉交追蹤顯示第 2 個(edx)交給 emu_ld_mul_add 後只被讀(係數表),
+   寫回的 [ecx] 是 0x4ce77 `pop ecx` 取回的進入時 eax(第 1 個);另有 ebx 當項數。改成 (x, 係數表, 項數)。
+6. `printf_call_float_hook`、`vga_palette_write_256`:參數列寫成「三個參數」,篩選讀成 1 個;改成 `(3 個參數)`,篩選也改為讀不出
+   個數就不比(不再當成 1 個)。
+
+**續一百一十一的勘誤與查出的條件**:
+- `item_mp_restore`「道具表找不到 type 0xb」**錯**:效果列(0x602ad + id × 0x17)+0xd 為 0xb 的有道具 206 / 207(+0xe 回復量
+  80 / 200)。cl7 用 206「魔法水 +MP 080」,參數 (1, 0x50),MP 224 -> 298。
+- `map_overview_screen`:battle_main_input_loop 0x119be / 0x119c3 比 scancode 0x3b(F1)/ 0x49(PgUp)。cl7 按 F1 錄到(連帶 vga_fill_rect)。
+- `sortie_required_member_check` / `roster_move_member_to_slot1`:「只在有必須出場角色的章節」的推論改為讀出的條件 ——
+  sortie_member_select 0x2b2bb..0x2b3af 依章節 [0x53c03] 查角色:0x10(另要 0x33499(0x12) 成立)查 0x12、0x11 / 0x13 / 0x19 以後
+  查 9(0x19 再查 0x1d)、0x12 查 0x10、0x14 查 0x15、0x15 / 0x16 查 0x18,通過才移到第 1 格。本輪沒錄(要改章節進城鎮)。
+- `spell_damage_on_targets_flash` 0x212b9:FD2.EXE 反組譯,全部 rel32 call / jmp 0 個、fixup(code 與資料段)0 個指到它,確認沒有引用。
+
+**規格未執行剩 4 條**:`table_60181_entry`(唯一呼叫鏈 copy_protection_password_check 在 0x118ac,本版前面是無條件
+`jmp`,續三十六 / 四十)、`ail_debug_trace_prefix`(要 AIL_DEBUG)、`fmt_inf_nan`(遊戲不印 inf / nan)、`lower_class_row24_ptr`
+(加入名冊 0x112a5 與 field_unit_construct 0x10d99 劇本記錄 +0x84 < 0x44 的分支,cl1..cl7 都沒走到)。
+
+**工具**(`tools/screen_summaries_by_calllog.py`):
+- `slot_starts` / `n_slots`:以值傳的 double 佔 2 格(`double*` 1 格);實機個數比格數,參數位置取起始格。
+- `screen_static_count`:實機沒比過個數的函式(`count_checked` 以外)改用靜態清堆疊;鍵與實機版相同,之後錄到紀錄由實機版接手。
+- `param_uses(fwd, init)`:記「第 k 個原樣推給 `call T` 當第 j 個引數」與 call 當下暫存器裡的參數;`add r, X` / `lea` 的結果在 r 原本
+  沒裝參數時算衍生。`role_uses`:遞迴取被呼叫端對該引數的讀寫(最多 4 層;memo 鍵含深度,深處截斷的結果不給淺處重用)。
+- 角色全部對調的對照:97 / 97 觸發。
+
+**自驗**:selftest 新增 39 題([13] 31 題:合成本體、靜態個數、深度上限、memo 順序;[12] 真實 EXE 的 draw_unit_hp_bar / blit_image_transparent、run() 接線)。
+突變 42 個,第一輪存活 11:2 個對應的條件本來就多餘(每個指令開頭已清掉彈出的引數;被呼叫端以呼叫點個數重算),刪掉條件、突變移除;
+9 個是測試缺口,補 6 題、改 1 題。重跑 40 個全 KILLED,未突變對照通過。新規格的負向對照:範圍改錯後 2 條都報「不成立」。
+
+**cl7**(第 1 章戰場,原版 FD2.EXE,修補版 dosbox-x 呼叫紀錄):F1 地圖縮圖 -> 悠妮(+7 = 0x34,學法術列 19 有 (6, 35))設 Lv 5、
+EXP 99、HP 14,施治療術給自己 -> 得到經驗 3 點升到 6 級,學會法術 35 -> 道具欄放 206 / 207,用魔法水 -> 離開戰場、DOS `exit`。
+7 份紀錄 E 253043 筆、`T exit` 7 / 7;執行入口 586 -> 591(item_mp_restore、unit_set_bit_1a、vga_fill_rect、map_overview_screen、
+spell_learn_row12_ptr),事實檔重產。規格新增 2 個函式 5 條:60 個函式 79 條,有紀錄 75 條全部成立。
+摘要篩選:已改正 27、非錯誤 2、未核對 0。
+
+**仍留的**:
+- 沒有紀錄的函式,型別相容的「單位 / 指標」錯位(draw_unit_hp_bar 那種)靜態看不到 —— 角色篩選只分讀寫。
+- 角色篩選仍有 11 個參數零存取(未逐一查原因)。
+- 轉交追蹤依位址順序近似,深度上限 4;只追堆疊 push 與 call 當下的暫存器,不追 `mov [esp+X], r` 預先放引數的寫法。
+- sortie 兩個函式與上列 4 條規格未錄。

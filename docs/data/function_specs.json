@@ -1,5 +1,5 @@
 {
- "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式;續一百一十一加 1 個)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
+ "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式;續一百一十一加 1 個;續一百一十二加 2 個)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
  "specs": [
   {
    "addr": "0x1b83d",
@@ -1159,6 +1159,66 @@
      "param": 5,
      "min": "0x25",
      "max": "0x27"
+    }
+   ]
+  },
+  {
+   "addr": "0x1f6ef",
+   "name": "vga_fill_rect",
+   "source": [
+    {
+     "summary_of": "0x1f6ef",
+     "quote": [
+      "(x, y, 顏色, 邊長) 以 VGA 0xa0000 + y x 320 + x 為起點",
+      "第 4 個 = 縮放比"
+     ]
+    },
+    {
+     "summary_of": "0x2000a",
+     "quote": "地圖高度 [0x53ac5] > 0x28 時縮放比 3、否則 4"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_range",
+     "param": 1,
+     "min": 0,
+     "max": "0x13f"
+    },
+    {
+     "kind": "param_range",
+     "param": 2,
+     "min": 0,
+     "max": "0xc7"
+    },
+    {
+     "kind": "param_range",
+     "param": 4,
+     "min": 3,
+     "max": 4
+    }
+   ]
+  },
+  {
+   "addr": "0x1c9dd",
+   "name": "item_mp_restore",
+   "source": {
+    "summary_of": "0x1c9dd",
+    "quote": [
+     "(單位, 量) 回復 MP",
+     "type 0xb 的道具只有 206 / 207(回復量 80 / 200"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    },
+    {
+     "kind": "param_range",
+     "param": 2,
+     "min": 80,
+     "max": 200
     }
    ]
   }

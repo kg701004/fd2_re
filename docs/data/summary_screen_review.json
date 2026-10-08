@@ -225,6 +225,42 @@
    "verdict": "fixed",
    "reason": "參數列寫成「(4 參數同 …)」讀不出個數;實機呼叫端清 4 個,s1..s3 與 draw_roster_pick_grid 相同,參數列已寫出 4 個名稱",
    "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1f6ef",
+   "name": "vga_fill_rect",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "沒有實機紀錄,靜態:兩個呼叫端(map_overview_screen 0x20278 / 0x202ac)都清 4 個。本體讀第 1..4 個:x、y×320、第 3 個當 memset 填色值、第 4 個減 1 當列數與列長。參數列改成 (x, y, 顏色, 邊長)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x41b84",
+   "name": "voc_parse_blocks",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "沒有實機紀錄,靜態:3 個呼叫端都清 2 個(EOS 回呼推 1、兩個 API 推 0);本體 0x41c13 / 0x41dad 讀第 2 個決定是否再呼叫 0x39798。參數列補上第 2 個",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x2d80d",
+   "name": "spell_scene_effects",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "沒有實機紀錄,靜態:唯一呼叫端 0x30012 清 4 個,依 ESP 位移換算是 spell_cast_scene 的第 1..4 參數原樣轉入;本體 callee_argc 讀到第 4 個。參數列改成 (caster, spell, a3, a4)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x4ce64",
+   "name": "emu_ld_fma_store",
+   "screen": "param_role",
+   "key": "p2",
+   "verdict": "fixed",
+   "reason": "edx(第 2 個)複製到 ecx 交給 emu_ld_mul_add,那裡只以 cs:[edi] 讀(係數表);寫回的 [ecx] 是 0x4ce77 pop ecx取回的進入時 eax(第 1 個)。另有 ebx 當項數。參數列改成 (x, 係數表, 項數)",
+   "date": "2026-10-08"
   }
  ]
 }
