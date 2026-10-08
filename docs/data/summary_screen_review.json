@@ -162,6 +162,69 @@
    "verdict": "not_error",
    "reason": "摘要已寫明:兩個呼叫端推 4 個 (src, dst, stride, color),本體只讀 [ebp+8] / [ebp+0xc] / [ebp+0x10](0x4e12d..0x4e13b),第 4 個不讀;參數列列的就是本體實際用到的 3 個",
    "date": "2026-10-08"
+  },
+  {
+   "addr": "0x22d1b",
+   "name": "apply_status_spell_to_targets",
+   "screen": "param_role",
+   "key": "p5",
+   "verdict": "fixed",
+   "reason": "第 5 參數不是 anim:呼叫端最先推的是 field_off(0x25 / 0x26 / 0x27),本體 0x22d9f..0x22da3 把它加到單位記錄指標後讀寫該欄位;第 2 參數才是指令號(0x16 / 0x1a / 0x1b)。參數列已更新成 (caster, 指令號, count, targets, field_off)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x4ecbf",
+   "name": "decode_image_with_header",
+   "screen": "param_region",
+   "key": "s4",
+   "verdict": "not_error",
+   "reason": "src 確實是來源:本體 0x4ecdc 把它載入 esi、0x4ecf0 以 rep movsb 從 esi 讀;這個函式是把畫面一塊擷取進 dst,所以來源是 VGA 0xa0000(src_stride 0x140)。摘要已改寫為擷取並附證據",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1e7f6",
+   "name": "draw_unit_hp_bar",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數順序錯:本體 0x1e805 以第 3 個參數取單位記錄、0x1e842 加上第 1 個當畫面位址;實機 s1 = 0xa0000、s3 = 單位序號。參數列已更新成 (dst, stride, unit, pos);規格的 param_unit 跟著換到第 3 個",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1e7f6",
+   "name": "draw_unit_hp_bar",
+   "screen": "param_type",
+   "key": "s2",
+   "verdict": "fixed",
+   "reason": "同 s1:第 2 個是 stride(實機 0x140),不是 dst",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1cd17",
+   "name": "flash_listed_units_band_cycle",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "呼叫端推 4 個,與前一個 play_map_effect_animation 呼叫相同;本體讀第 2..4 個,第 1 個(施法者)不讀。參數列補上 caster",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x2b4fb",
+   "name": "draw_roster_pick_grid",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數名 bg 有歧義(別處指顏色),實機是背景緩衝區指標 0x2f8018;改名「背景緩衝」",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x2b67f",
+   "name": "roster_pick_wait_key",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "fixed",
+   "reason": "參數列寫成「(4 參數同 …)」讀不出個數;實機呼叫端清 4 個,s1..s3 與 draw_roster_pick_grid 相同,參數列已寫出 4 個名稱",
+   "date": "2026-10-08"
   }
  ]
 }

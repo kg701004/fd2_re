@@ -283,7 +283,8 @@ def _esp_imm(op: str) -> int | None:
         return None
 
 
-def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
+def callee_argc(cg, target: int, entries,
+                trace: dict[int, tuple[int, int | None]] | None = None) -> tuple[int | None, str]:
     """第三條訊號:**被呼叫端本體**讀到第幾個參數。回傳 (最大參數序號, 說明);判不出來回 (None, 原因)。
 
     與 A(清理)、B(緊鄰 push)完全獨立:那兩條看的是呼叫端,這條看被呼叫端自己從堆疊
@@ -306,6 +307,10 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
     (`defender_can_counter` 讀 2 個記成 5、`figure_fade_in` 讀 7 個記成 11),往前跳過 push 的程式碼
     被算進位移(`grant_reward_rows` 讀 3 個記成 2)。跳表的 case 本體流程到不了:跳表位移只有一種時,
     沒走到的指令段以該位移補走。
+
+    `trace`(選用):傳入空 dict 時,填入每個走到的指令位址 -> (ESP 位移, ebp 基底或 None),
+    供 `screen_summaries_by_calllog` 的參數讀寫角色篩選把 `[esp+X]` / `[ebp+X]` 換算成第幾個參數;
+    不影響回傳值。
 
     誠實邊界:這是**下界**(函式可以不讀最後一個參數),判準是「本體讀到的 > 呼叫端傳的」為矛盾、
     相等為確認、較小只算不反對。
@@ -350,6 +355,8 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
                 if a != start and _is_stack_check_prologue(cg, a):
                     break                               # 走進下一個函式
                 seen[a] = delta
+                if trace is not None:
+                    trace[a] = (delta, ebp_base)
                 via_jmp = False
                 m, op = i.mnemonic, i.op_str
                 if m == "mov" and op == "ebp, esp":

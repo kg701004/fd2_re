@@ -720,17 +720,71 @@ def summarize(st: Static, logs: list[CallLog], rep: Report) -> tuple[list[str], 
     return lines, fails
 
 
+def _skip_mov_eax(b: bytes, j: int) -> int:
+    """j 處若是不動 esp 的「存回傳值」指令就回它的長度,否則 0。
+
+    Watcom 常在 call 與 `add esp` 之間先存 eax:`mov r32, r32`(89 / 8B,ModRM mod=11)、
+    `mov [esp+disp8], eax`(89 44 24 d8)、`mov [esp+disp32], eax`(89 84 24 d32)。
+    """
+    if b[j] in (0x89, 0x8B) and b[j + 1] >= 0xC0 and (b[j + 1] & 7) != 4 and ((b[j + 1] >> 3) & 7) != 4:
+        return 2
+    if b[j] == 0x89 and b[j + 1] == 0x44 and b[j + 2] == 0x24:
+        return 4
+    if b[j] == 0x89 and b[j + 1] == 0x84 and b[j + 2] == 0x24:
+        return 7
+    return 0
+
+
+def pushed_args(code: bytes, base: int, at: int) -> int | None:
+    """`call rel32`(at)之後的清堆疊 -> 推了幾個參數;不是 E8 -> None。
+
+    call 之後最多跳過 2 條存回傳值的 mov(`_skip_mov_eax`),接著是 `add esp, imm8 / imm32` 就取 imm / 4,
+    否則 0(沒有清堆疊:暫存器傳參、callee 清,或清堆疊延後到別處 —— 呼叫端之間取唯一的非 0 值)。
+    """
+    i = at - base
+    if not 0 <= i < len(code) - 30 or code[i] != 0xE8:
+        return None
+    b = code[i + 5:i + 30]
+    j = 0
+    for _ in range(2):
+        n = _skip_mov_eax(b, j)
+        if not n:
+            break
+        j += n
+    if b[j] == 0x83 and b[j + 1] == 0xC4:
+        return b[j + 2] // 4
+    if b[j] == 0x81 and b[j + 1] == 0xC4:
+        return int.from_bytes(b[j + 2:j + 6], "little") // 4
+    return 0
+
+
 def _top(c: collections.Counter, n: int = 8) -> list[list]:
     return [[f"{v:#x}", k] for v, k in sorted(c.items(), key=lambda x: (-x[1], x[0]))[:n]]
 
 
-def param_slots(argc: int | None) -> list[str]:
-    """剖面列出的參數位置:argc ≥ 1 -> s1..s<argc>(最多 8);argc == 0 -> Watcom 暫存器;不明 -> 兩者都列。"""
+def param_slots(argc: int | None, cleanup: int | None = None) -> list[str]:
+    """剖面列出的參數位置:argc ≥ 1 -> s1..s<argc>(最多 8);argc == 0 -> Watcom 暫存器;不明 -> 兩者都列。
+
+    `cleanup`(續一百一十一):實機呼叫端 call 之後清掉的堆疊參數個數(唯一的非 0 值)。argc 是本體讀到的下界
+    (可以不讀最後幾個),比 cleanup 少時補列到 s<cleanup>(最多 8);原本列的位置不刪。
+    """
     if argc:
-        return [f"s{k}" for k in range(1, min(argc, 8) + 1)]
-    if argc == 0:
-        return list(REG_ARGS)
-    return list(REG_ARGS) + ["s1", "s2", "s3", "s4"]
+        slots = [f"s{k}" for k in range(1, min(argc, 8) + 1)]
+    elif argc == 0:
+        slots = list(REG_ARGS)
+    else:
+        slots = list(REG_ARGS) + ["s1", "s2", "s3", "s4"]
+    if cleanup:
+        slots += [f"s{k}" for k in range(1, min(cleanup, 8) + 1) if f"s{k}" not in slots]
+    return slots
+
+
+def caller_cleanup(st: Static, callers) -> int | None:
+    """實機直接 / thunk 呼叫端(call 位址)清堆疊個數的唯一非 0 值;沒有或不只一種 -> None。"""
+    vals = {pushed_args(st.code, st.base, s) for (_, s, k) in callers if s is not None and k in ("direct", "thunk")}
+    vals.discard(None)
+    vals.discard(0)
+    return vals.pop() if len(vals) == 1 else None
 
 
 def profile_facts(st: Static, rep: Report) -> dict[str, dict]:
@@ -741,7 +795,7 @@ def profile_facts(st: Static, rep: Report) -> dict[str, dict]:
         p = rep.profiles[a]
         argc = st.argc.get(a)
         params = {}
-        for slot in param_slots(argc):
+        for slot in param_slots(argc, caller_cleanup(st, p["callers"])):
             c = p["slots"][slot]
             params[slot] = {"distinct": len(c), "top": _top(c)}
             if p["strs"].get(slot):
@@ -780,7 +834,8 @@ def export_doc(st: Static, rep: Report, paths: list[Path], logs: list[CallLog]) 
     doc = {
         "_doc": "原版 FD2.EXE(md5 33464c81…)DOSBox-X 函式呼叫紀錄的逐函式事實,由 tools/verify_names_by_calllog.py "
                 "--export 從 .wsl_build/*_CALLLOG.TXT 產生(紀錄本身不進版控)。只含紀錄推得的值:參數依 inventory argc "
-                "取位置(argc ≥ 1 為 [esp+4k] 的 s<k>,argc == 0 為 Watcom 暫存器),回傳為 eax;每個入口每份紀錄最多記 "
+                "取位置(argc ≥ 1 為 [esp+4k] 的 s<k>,argc == 0 為 Watcom 暫存器;實機呼叫端清堆疊個數比 argc 多時"
+                "補列到該個數,續一百一十一),回傳為 eax;每個入口每份紀錄最多記 "
                 "cap 次明細(calls.logged),calls.total 是全部執行次數(C 記錄)。callers = [呼叫者入口, call 位址, 種類, 次數]。"
                 "名稱與摘要請以 --json 產生審閱版。doc98 續一百零八。",
         "delta": f"{DELTA:#x}",
@@ -867,6 +922,22 @@ def selftest() -> int:
     chk("argc 1、第 2 參數 -> 不猜", param_slot(1, 2), None)
     chk("argc 不明 -> 不猜", param_slot(None, 1), None)
     chk("參考版 memcpy / strlen 是堆疊傳參(argc ≥ 1)", (st.argc[memcpy] or 0) >= 1 and (st.argc[strlen] or 0) >= 1, True)
+    S = [f"s{k}" for k in range(1, 9)]
+    chk("剖面位置:argc 3 -> s1..s3", param_slots(3), S[:3])
+    chk("剖面位置:argc 3、呼叫端清 5 -> 補到 s5", param_slots(3, 5), S[:5])
+    chk("剖面位置:argc 5、呼叫端清 3 -> 不刪", param_slots(5, 3), S[:5])
+    chk("剖面位置:argc 0、呼叫端清 2 -> 暫存器 + s1..s2", param_slots(0, 2), list(REG_ARGS) + S[:2])
+    chk("剖面位置:argc 不明、呼叫端清 6 -> 暫存器 + s1..s6", param_slots(None, 6), list(REG_ARGS) + S[:6])
+    chk("剖面位置:呼叫端清 12 -> 最多 s8", param_slots(2, 12), S)
+    # 0x18cde / 0x18cfa(呼叫 draw_stat_bar)之後都是 add esp, 0x14;0x22d3c(呼叫 0x1c4cc)之後 add esp, 0x10
+    cc5 = {(None, 0x18CDE, "direct"): 1, (None, 0x18CFA, "thunk"): 1}
+    chk("呼叫端清堆疊:兩個都清 5 -> 5", caller_cleanup(st, cc5), 5)
+    chk("呼叫端清堆疊:間接 / 不是 call / 沒有位址的不算",
+        caller_cleanup(st, {**cc5, (None, 0x22D3C, "indirect"): 1, (None, 0x18CDF, "direct"): 1, (None, None, "direct"): 1}), 5)
+    chk("呼叫端清堆疊:5 與 4 混合 -> None", caller_cleanup(st, {**cc5, (None, 0x22D3C, "direct"): 1}), None)
+    chk("呼叫端清堆疊:不清的呼叫端(call memcpy 之後沒有 add esp)不算不一致",
+        (pushed_args(st.code, st.base, site), caller_cleanup(st, {**cc5, (None, site, "direct"): 1})), (0, 5))
+    chk("呼叫端清堆疊:沒有呼叫端 -> None", caller_cleanup(st, {}), None)
 
     print("[5] 語意驗算")
     ac_m, ac_s = st.argc[memcpy], st.argc[strlen]
@@ -1027,6 +1098,12 @@ def selftest() -> int:
         tmp.unlink()
     chk("事實檔重產位元組相同", e1 == e2, True)
     chk("事實檔不含名稱", '"memcpy"' in e1, False)
+    # draw_stat_bar 0x18795 由 0x18cde 呼叫(之後 add esp, 0x14 = 5 個);argc 假設成 2 時事實檔要補列到 s5
+    import dataclasses
+    lg11 = parse_calllog(_synthetic(st, 0x18795, 0x18CDE + 5 + DELTA, stack=[1, 2, 3, 4, 5, 6]))
+    st_lo = dataclasses.replace(st, argc={**st.argc, 0x18795: 2})
+    chk("argc 比呼叫端清堆疊少 -> 事實檔補列到 s5",
+        sorted(profile_facts(st_lo, check(st_lo, [lg11]))["0x18795"]["params"]), ["s1", "s2", "s3", "s4", "s5"])
 
     if fails:
         print(f"\n--selftest FAILED({len(fails)} 筆)")

@@ -1,5 +1,5 @@
 {
- "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
+ "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式;續一百一十一加 1 個)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
  "specs": [
   {
    "addr": "0x1b83d",
@@ -926,7 +926,7 @@
    "source": [
     {
      "summary_of": "0x1e7f6",
-     "quote": "(unit, dst, stride, pos)"
+     "quote": "(dst, stride, unit, pos)"
     },
     {
      "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
@@ -936,7 +936,7 @@
    "claims": [
     {
      "kind": "param_unit",
-     "param": 1
+     "param": 3
     }
    ]
   },
@@ -1129,6 +1129,36 @@
       1,
       -1
      ]
+    }
+   ]
+  },
+  {
+   "addr": "0x22d1b",
+   "name": "apply_status_spell_to_targets",
+   "source": {
+    "summary_of": "0x22d1b",
+    "quote": [
+     "(caster, 指令號, count, targets, field_off)",
+     "field_off(0x25 / 0x26 / 0x27)",
+     "指令號(0x16 / 0x1a / 0x1b = 22 / 26 / 27,doc13)"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    },
+    {
+     "kind": "param_range",
+     "param": 2,
+     "min": "0x16",
+     "max": "0x1b"
+    },
+    {
+     "kind": "param_range",
+     "param": 5,
+     "min": "0x25",
+     "max": "0x27"
     }
    ]
   }

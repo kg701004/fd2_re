@@ -8559,3 +8559,91 @@ kind 共 8 種:
   - 第一輪存活 2 個(ret 不看位移、間接 jmp 不停),補 (t)(u) 兩題。
   - 重跑全部 KILLED,無逾時。
 - `function_inventory --selftest` 通過(真實 EXE 49 項)。
+
+## 2026-10-08 續一百一十一:摘要篩選補「指標對指標」兩種、剖面參數位置補到呼叫端清堆疊個數、實機補錄 2 輪 —— 更新 7 筆摘要(2 筆參數順序錯)
+
+續一百零九的篩選看不到型別相容的對調(兩個指標參數寫反),也碰不到沒有實機紀錄的函式。補兩種
+(`tools/screen_summaries_by_calllog.py`):
+
+| 篩選 | 依據 | 可比 | 命中 | 結論 |
+|---|---|---|---|---|
+| `param_region` | 實機紀錄:來源名稱(src / res / 圖 … 或字串)的參數,最常見值有 ≥ 50% 落在 VGA 0xa0000 起 | 36 個參數 | 1 | 非錯誤(摘要另行改寫) |
+| `param_role` | 靜態:本體經由該參數是寫還是讀;目的只讀不寫、來源被寫入即列出 | 85 個函式、59 個參數 | 1 | 參數順序錯,已改正 |
+
+- **`decode_image_with_header` 0x4ecbf 的 src 是 VGA**:本體 0x4ecdc 把 src 載入 esi,0x4ecf0 以 `rep movsb` 從 esi 讀、
+  每列加第 6 參數(實機 0x140)。這是把畫面一塊擷取進 dst(dst 值與 `draw_image_then_free` 的 img 相同,0x1fd3c8 各
+  498 次),之後由 `blit_image_rows` 依同一標頭貼回。參數順序正確,review 記 not_error;摘要的「解碼」改寫成擷取,
+  第 6 參數命名 src_stride。
+- **`apply_status_spell_to_targets` 0x22d1b**:沒有實機紀錄,原有篩選碰不到。舊參數列 (caster, count, targets,
+  field_off, anim) 把第 5 個當 anim,但本體 0x22d9f..0x22da3 把它加到單位記錄指標後讀寫,是欄位偏移。
+  呼叫端 0x2de98..0x2dea8 由後往前推 field_off(0x25 / 0x26 / 0x27)、targets、count、指令號(0x16 / 0x1a / 0x1b,
+  與 doc13 的 22 / 26 / 27 一致)、caster。參數列已更新成 (caster, 指令號, count, targets, field_off),review 記 fixed。
+
+**`param_role` 的做法**:`derive_native_argcounts.callee_argc` 加選用的 `trace`(每個走到的指令的 ESP 位移與 ebp
+框架基底,回傳值不變)。依位址順序追蹤「哪個暫存器裝著第 k 個參數」:
+- `mov r, [esp+X]` 換算成第 k 個;暫存器傳參時入口 eax / edx / ebx / ecx 依序是第 1..n 個。
+- `mov r2, r1` 複製;`add / sub / inc / dec` 保留;其他寫入、`call` 後的 eax / ecx / edx、`popal` 失效。
+- 寫:`stos` / `movs` 的 edi、第一運算元 `[r…]` 且會寫入。讀:`lods` / `movs` / `cmps` 的 esi、其他 `[r…]`。
+
+傳參方式要對得上才比:EXE 全部 `call rel32` 的清堆疊個數(`call_cleanups`)唯一且等於參數列個數為堆疊;沒有清堆疊時
+argc 等於個數為堆疊、argc 0 且不超過 4 個為 Watcom 暫存器。
+
+**對照**:
+- 真實摘要的目的 / 來源角色全部對調:59 / 59 觸發(原本 0)。篩選分得出讀寫,不是什麼都報或什麼都不報。
+- 靜態清堆疊與實機剖面呼叫端的清堆疊:342 個相同、2 個靜態多一種值(不比)、1 個不同(`delay_impl` 只經 thunk 呼叫)。
+
+**剖面參數位置**:`verify_names_by_calllog.param_slots` 加 `cleanup`。實機呼叫端清堆疊個數比 argc 多時,補列到該個數
+(最多 s8),原列的位置不刪。`pushed_args` / `_skip_mov_eax` 搬到 `verify_names_by_calllog`,篩選工具從那裡匯入同名函式。
+重產 `function_call_profiles.json`:
+- 3 個函式多 4 個位置:0x25bf4 的 s1 / s2、0x3db52 的 s1、0x4e127 的 s4。
+- 其他欄位 0 筆變動。
+- 影響小:argc 比呼叫端少的 10 個多半沒有實機紀錄;argc 判不出的函式本來就列 s1..s4。
+
+**工具自驗**:
+- 篩選 selftest 新增 [9]-[12]:名稱角色與運算元、24 個合成本體、傳參方式 / 清堆疊 / VGA 邊界、真實 EXE
+  (strcpy 第 1 個只寫第 2 個只讀、角色全部對調的對照、`run()` 有接上)。
+- 突變 40 個全 KILLED。第一輪存活 6 個,補測試後重跑:
+  - 目的先讀後寫的情形、VGA 下界、VGA 次數下限、`run()` 接線沒有測到。
+  - 2 個 `callee_argc` trace 的突變有 FAIL,但後面的真實檢查當掉,不算抓到;真實檢查改成不會當掉。
+- `verify_names_by_calllog` selftest 新增 `param_slots` / `caller_cleanup` / 事實檔補列;突變 8 個全 KILLED
+  (第一輪存活 1:不清堆疊的呼叫端沒有測到)。
+
+**第 3 步:實機補錄(cl5 / cl6,原版 FD2.EXE,修補版 dosbox-x 呼叫紀錄)**
+
+先列清單:有名稱與摘要的 1149 個函式中有紀錄的 451 個、沒有的 698 個,多半是 CRT、FPU 模擬、AIL 驅動與沒觸發的章節事件。
+遊戲中可達的挑出戰鬥法術、道具效果、地圖演出的 AI 攻擊、教會復活、出擊選人,兩輪錄完:
+
+| 輪 | 場景 | 操作 |
+|---|---|---|
+| cl5 | 第 1 章戰場 | 悠妮法術欄設 [4, 10, 13, 17, 18, 19, 20, 22]、MP 999,敵 #11 移到 (23,17)、HP 999,逐一施放(解毒術前把悠妮 +0x25 設 3);道具欄放 94 / 95 / 96 / 29 逐一使用;敵 #11 給法術 {0, 4}(AI 選了 4)、再只給 {0},拿掉武器、`[0x53af9]` = 1 各跑一次敵方回合,再裝回武器跑一次(地圖物理攻擊);離開戰場後 DOS `exit` |
+| cl6 | 營地城鎮 | 名冊 #2 / #5 的 +5 bit0 設 1 → 教會復活(2 個候選,費用 4000 / 3000,復活 1 人);名冊人數改 17(複製 4 筆記錄)→ 出口 → 出擊選人:把 sortie_member_select 的旗標陣列(0x1f15e4)設 14 人,Enter 切成 15 人後離開並進戰場 |
+
+6 份紀錄共 219957 筆 E、解析錯誤 0、都以 `T exit` 結束;執行入口 534 → 586,有摘要且執行 451 → 502。新錄到:
+- 法術 / 道具:earthquake_spell_effect、cast_heal_on_targets、spell_heal_resolve、effect_ap / dp_percent_buff、effect_hit_ev_buff、
+  cast_fixed_heal_after_mp、effect_cure_status_flag、cast_status_spell、apply_status_spell_to_targets、command_generic_damage(法術 0)、
+  command_generic_damage_type21(法術 4)、item_effect_stat_up、item_effect_type21_damage。
+- 地圖演出:map_attack_sequence / map_attack_resolve、draw_unit_hp_bar。
+- 城鎮:revive_candidate_select、draw_revive_candidate_rows、sortie_member_select、draw_roster_pick_grid、roster_pick_wait_key、
+  roster_reorder_selected_first。
+
+**實機確認續一百一十一的改正**:apply_status_spell_to_targets 的堆疊是 (1, 0x16, 1, 0x1f1488, 0x27),與新的參數列
+(caster, 指令號, count, targets, field_off)逐項相符;規格新增 3 條(第 1 個是單位、第 2 個 0x16..0x1b、第 5 個 0x25..0x27)。
+
+**新紀錄帶出的摘要錯誤**(都看過反組譯):
+1. `draw_unit_hp_bar` 0x1e7f6:規格 param_unit 第 1 參數(引當時摘要)5 次不成立。本體 0x1e805 以第 3 個取單位記錄、0x1e842 加上
+   第 1 個,實機 s1 = 0xa0000、s3 = 單位序號 7..9:參數列是 (dst, stride, unit, pos)。摘要與規格(換到第 3 參數)已更新。
+   這種「單位 / 指標」錯位,靜態角色篩選看不到(dst 只被拿來算位址,沒有經由它存取記憶體),要靠實機值。
+2. `flash_listed_units_band_cycle` 0x1cd17:呼叫端推 4 個,摘要只列 3 個;第 1 個(施法者)本體不讀。
+3. `draw_roster_pick_grid` 0x2b4fb:參數名 bg 在別處指顏色,這裡實機是緩衝區指標 0x2f8018,改名「背景緩衝」。
+4. `roster_pick_wait_key` 0x2b67f:參數列寫成「4 參數同 …」,篩選讀成 1 個;寫出 4 個名稱。
+5. `item_effect_stat_up` 0x21082:摘要只寫 type 8 / 9 / 0xa;分派 0x20c6f 對 type 0x11 / 0x12 / 0x13 也呼叫它(欄位 +0x42 / +0x46 /
+   +0x3b),實機 3 個道具各一次。補寫。
+
+結果:規格 58 個函式 74 條,有紀錄 67 條全部成立(未執行 7 條);摘要篩選已改正 23、非錯誤 2、未核對 0。
+
+**沒錄到的**(都有原因,不是遺漏):
+- `sortie_required_member_check`:這條出擊路線沒有呼叫(推論:只在有必須出場角色的章節)。
+- `item_mp_restore`:道具表找不到 type 0xb 的列。
+- `roster_move_member_to_slot1`:這兩輪的操作沒有走到它唯一的呼叫端。
+- `map_overview_screen`:不知道觸發按鍵。
+- `spell_damage_on_targets_flash`:沒有呼叫端。

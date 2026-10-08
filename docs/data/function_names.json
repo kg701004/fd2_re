@@ -2617,7 +2617,7 @@
   {
    "addr": "0x4ecbf",
    "name": "decode_image_with_header",
-   "summary": "(dst, w, h, src, off, arg6):在 dst 寫 {u16 w, u16 h, u32 off} 標頭(w/h 另存 [0x627b4]/[0x627b6]),src+=off 後交給 0x4ecf0 解碼。舊文件位址 0x4e96f(勘誤)。",
+   "summary": "(dst, w, h, src, off, src_stride):把 src+off 起 w×h 的矩形逐列擷取到 dst —— dst 先寫 {u16 w, u16 h, u32 off} 標頭(w/h 另存 [0x627b4]/[0x627b6]),再由 0x4ecf0 逐列 rep movsb(每列之後 src 加 src_stride)。實機 src 多為 VGA 0xa0000、src_stride 0x140,dst 的值與 draw_image_then_free 的 img 相同(0x1fd3c8 各 498 次):存下畫面一塊,之後由 blit_image_rows 依同一標頭貼回。舊文件位址 0x4e96f(勘誤)。續一百一十一:舊摘要寫「解碼」、第 6 參數未命名;0x4ecf0 只是逐列複製。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -3486,7 +3486,7 @@
   {
    "addr": "0x1e7f6",
    "name": "draw_unit_hp_bar",
-   "summary": "(unit, dst, stride, pos):HP > 0 時以 len = HP*0x45/MaxHP + 1 在面板位置(+6 列、+7 px)呼叫 draw_hp_bar。",
+   "summary": "(dst, stride, unit, pos):HP > 0 時以 len = HP*0x45/MaxHP + 1 在面板位置(+6 列、+7 px)呼叫 draw_hp_bar。續一百一十一(呼叫紀錄,勘誤):舊參數列寫 (unit, dst, stride, pos)。本體 0x1e801 讀第 4 個當 pos 指標、0x1e805 讀第 3 個乘 0x50 加 [0x53a45] 取單位記錄、0x1e83d 以第 2 個乘列數、0x1e842 加上第 1 個;實機 5 次 s1 = 0xa0000(VGA)、s2 = 0x140、s3 = 單位序號 7..9。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -3780,7 +3780,7 @@
   {
    "addr": "0x1cd17",
    "name": "flash_listed_units_band_cycle",
-   "summary": "(tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(base = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。",
+   "summary": "(caster, tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(base = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。續一百一十一(呼叫紀錄篩選,勘誤):舊參數列只列 3 個。呼叫端 0x21259..0x21263 推 4 個(add esp, 0x10),與緊接在前呼叫 play_map_effect_animation 的 4 個相同;本體 0x1cd28 / 0x1ce02 / 0x1ce0c 讀第 2..4 個,第 1 個不讀。實機 s1 = 施法者序號 0xb、s2 = 指令號 0。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7285,7 +7285,7 @@
   {
    "addr": "0x2b4fb",
    "name": "draw_roster_pick_grid",
-   "summary": "(bg, limit, flags, cursor):複製背景到 [0x53c63],畫數字 limit 與 limit - count_nonzero_roster_flags(flags);名冊前 [0x53bfb]-1 人以每列 10 格排開,flags 非 0 的畫一般精靈、為 0 的畫調色帶版(blit_tile24_rle_band),游標格另畫一個精靈。",
+   "summary": "(背景緩衝, limit, flags, cursor):複製背景到 [0x53c63],畫數字 limit 與 limit - count_nonzero_roster_flags(flags);名冊前 [0x53bfb]-1 人以每列 10 格排開,flags 非 0 的畫一般精靈、為 0 的畫調色帶版(blit_tile24_rle_band),游標格另畫一個精靈。續一百一十一(呼叫紀錄篩選):第 1 參數舊名 bg(別的摘要用 bg 指顏色),實機 200 次都是緩衝區指標 0x2f8018;limit 0xf、flags 0x1f15e4(sortie_member_select 的區域陣列)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7318,7 +7318,7 @@
   {
    "addr": "0x2b67f",
    "name": "roster_pick_wait_key",
-   "summary": "(4 參數同 draw_roster_pick_grid):沒有按鍵時每個 BIOS tick(0x46c 改變)重畫 draw_roster_pick_grid 並貼到 VGA;有鍵時以 int386(0x16) 讀,0xe0/0x52 掃描碼或 Space 字元視為 Enter(0x1c)、0x53 視為 Esc(1),回傳掃描碼。",
+   "summary": "(背景緩衝, limit, flags, cursor):4 個參數與 draw_roster_pick_grid 相同。沒有按鍵時每個 BIOS tick(0x46c 改變)重畫 draw_roster_pick_grid 並貼到 VGA;有鍵時以 int386(0x16) 讀,0xe0/0x52 掃描碼或 Space 字元視為 Enter(0x1c)、0x53 視為 Esc(1),回傳掃描碼。續一百一十一(呼叫紀錄篩選):舊參數列寫「4 參數同 draw_roster_pick_grid」,篩選讀成 1 個參數;實機呼叫端清 4 個,s1..s3 與 draw_roster_pick_grid 相同(0x2f8018 / 0xf / 0x1f15e4)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -7590,7 +7590,7 @@
   {
    "addr": "0x22d1b",
    "name": "apply_status_spell_to_targets",
-   "summary": "(caster, count, targets, field_off, anim):播地圖效果並呈現在目標上,再逐一處理:目標記錄 +field_off 為 0、職業(+0x20)不是 0x19/0x1a、且 rand%100 < 50 時生效 —— 跳數字、+field_off = rand%4+2(持續回合)、[0x53ec8] += 目標 Lv(+0x21)×8;否則跳固定提示框。與 doc13 對狀態法術的記載(種族免疫、duration、Lv<<3 經驗)一致。",
+   "summary": "(caster, 指令號, count, targets, field_off):播地圖效果(0x1c4cc 與 0x1c2da 都收前 4 個參數)並呈現在目標上,再逐一處理:目標記錄 +field_off 為 0、職業(+0x20)不是 0x19/0x1a、且 rand%100 < 50 時生效 —— 0x1c81f(目標, 10) 扣血、跳數字、+field_off = rand%4+2(持續回合)、[0x53ec8] += 目標 Lv(+0x21)×8;否則跳固定提示框。與 doc13 對狀態法術的記載(種族免疫、duration、Lv<<3 經驗)一致。續一百一十一(參數讀寫角色篩選,勘誤):舊參數列寫 (caster, count, targets, field_off, anim)。呼叫端 0x2de98..0x2dea8 由後往前推 field_off(0x25 / 0x26 / 0x27)、targets、count、指令號(0x16 / 0x1a / 0x1b = 22 / 26 / 27,doc13)、caster,呼叫後 add esp, 0x14;本體 0x22d77 以第 3 個比迴圈上限、0x22d81 讀第 4 個的位元組當單位序號、0x22d9f..0x22da3 把第 5 個加到單位記錄指標再讀寫。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -24227,7 +24227,7 @@
   {
    "addr": "0x21082",
    "name": "item_effect_stat_up",
-   "summary": "(7 個參數) 道具 type 8 / 9 / 0xa 的效果:play_map_effect_animation 演出、提升能力後 recalc_equipped_stats 重算,remove_inventory_slot 消耗道具,queue_unit_number_popup 顯示數值(FD2.EXE 反組譯)。只被 item_effect_dispatch 呼叫(doc13:與 raw table 全表對齊)。",
+   "summary": "(7 個參數) 道具 type 8 / 9 / 0xa 的效果:play_map_effect_animation 演出、提升能力後 recalc_equipped_stats 重算,remove_inventory_slot 消耗道具,queue_unit_number_popup 顯示數值(FD2.EXE 反組譯)。只被 item_effect_dispatch 呼叫(doc13:與 raw table 全表對齊)。續一百一十一(呼叫紀錄 + 分派反組譯):item_effect_dispatch 0x20c6f 對 type 0x11 / 0x12 / 0x13 也呼叫本函式,第 3 參數(能力欄位偏移)依序是 0x42(MaxHP)/ 0x46(MaxMP)/ 0x3b(0x20ed5..0x20f4b);type 8 / 9 / 0xa 是 0x37 / 0x39 / 0x3e(0x20d57..0x20daf)。實機:生命之貫(94,type 0x11)、魔力水晶(95,0x12)、風精之羽(96,0x13)各一次,s3 = 0x42 / 0x46 / 0x3b,入口 eax = type;MaxHP 782 → 802。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
