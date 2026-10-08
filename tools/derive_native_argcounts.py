@@ -295,11 +295,17 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
 
     兩種序頭:
       * Watcom `push <frame>; call 0x3702f`:從 stack-check 之後位移歸零起算(保存暫存器的 push、
-        `sub esp,N` 都只是位移);本體掃到下一個函式入口為止。
+        `sub esp,N` 都只是位移)。
       * 沒有堆疊探測的 leaf(小型 runtime 函式,如 `delay`、`memset`、`heap_free`):從入口本身起算;
-        入口若是 `jmp <imm>`(thunk)就跟過去;掃到第一個位移為 0 的 `ret` 或下一個 Watcom 序頭為止。
-        找不到乾淨的 ret 回 None(舊版位址落在新版 EXE 的函式中段就是這種)—— **None 不是 0**,
-        0 表示本體確實一個參數都沒讀。
+        入口若是 `jmp <imm>`(thunk)就跟過去。沒有任何位移為 0 的出口(`ret`,或以 jmp 跳出本體)
+        回 None(舊版位址落在新版 EXE 的函式中段就是這種)—— **None 不是 0**,0 表示本體確實一個
+        參數都沒讀。
+
+    沿控制流走(2026-10-08 續一百一十):本體範圍是起點到下一個函式入口;條件跳躍兩邊都走、`jmp imm`
+    跟過去、ret 與間接 jmp 停。原本是線性掃描,兩個方向都錯:本體中段的 ret 之後位移被當成 0
+    (`defender_can_counter` 讀 2 個記成 5、`figure_fade_in` 讀 7 個記成 11),往前跳過 push 的程式碼
+    被算進位移(`grant_reward_rows` 讀 3 個記成 2)。跳表的 case 本體流程到不了:跳表位移只有一種時,
+    沒走到的指令段以該位移補走。
 
     誠實邊界:這是**下界**(函式可以不讀最後一個參數),判準是「本體讀到的 > 呼叫端傳的」為矛盾、
     相等為確認、較小只算不反對。
@@ -318,62 +324,101 @@ def callee_argc(cg, target: int, entries) -> tuple[int | None, str]:
     later = [e for e in entries if e > a]
     end = min(later) if later else a + 0x4000
     start = a
-    delta = 0
     top = 0
-    ebp_base = None
+    seen: dict[int, int] = {}       # 位址 -> 走到時的 ESP 位移(第一次)
+    switch_delta: set[int] = set()  # 間接 jmp(跳表)當下的位移
     clean_ret = False
-    while a < end:
-        i = cg._insn(a)
-        if i is None:
-            break
-        if a != start and _is_stack_check_prologue(cg, a):
-            break                                       # 走進下一個函式
-        m, op = i.mnemonic, i.op_str
-        if m == "mov" and op == "ebp, esp":
-            ebp_base = delta
-        for mm in _CALLEE_ESP.finditer(op):
-            off = int(mm.group(1), 0) - delta
-            # 位移 0..3 是回傳位址本身,不是參數;第 k 個參數佔位移 4k..4k+3,所以非對齊的
-            # byte 讀取(取 dword 參數的某個 byte)歸入 off // 4。2026-09-17 突變窮舉抓到我先寫成
-            # `off > 0` 配 ceil —— 那會把回傳位址的 byte 算成第 1 個參數、把 [esp+5] 算成第 2 個。
-            if off >= 4:
-                top = max(top, off // 4)
-        if ebp_base is not None:
-            for mm in _CALLEE_EBP.finditer(op):
-                off = int(mm.group(1), 0) - ebp_base
-                if off >= 4:
-                    top = max(top, off // 4)
-        if m == "push":
-            delta += 4
-        elif m == "pop":
-            delta -= 4
-        elif m in ("sub", "add") and op.startswith("esp,"):
-            # 2026-09-18:function_inventory 把它套到全部 1102 個入口時撞到 `sub esp, eax`
-            # (原本只餵過章節 handler 可達的那幾十個目標),`int(' eax', 0)` 直接 ValueError。
-            # ESP 被暫存器調整之後位移不可知,之後的 [esp+X] 都換算不回來 —— 回 None,不是 0。
-            n = _esp_imm(op)
-            if n is None:
-                return None, f"esp adjusted by non-immediate at {a:#x}"
-            delta += n if m == "sub" else -n
-        elif m == "leave" and ebp_base is not None:
-            delta = ebp_base - 4                        # mov esp,ebp; pop ebp
-        elif m == "call" and op.startswith("0x") and int(op, 16) == STACK_CHECK:
-            delta -= 4          # 0x3702f 以 ret 4 彈掉呼叫端 push 的那個 frame 大小
-        elif m in ("ret", "retn", "retf") and delta == 0:
-            clean_ret = True
-            if leaf:
-                break
-            # 有序頭的函式也可能多出口,ret 之後還有別的分支,所以繼續掃;但 ret 後面緊接
-            # 填充(int3 / nop)或下一個序頭就是函式結束 —— 再掃下去讀到的是填充位元組被
-            # 反組譯成的垃圾,可能長得像 [esp+N] 而**高估**(2026-09-17 盲點清單第 3 項)。
-            nxt = cg._insn(a + i.size)
-            if nxt is None or nxt.mnemonic in ("int3", "nop") or _is_stack_check_prologue(cg, a + i.size):
+    used_ebp = False
+
+    def walk(root: int, delta0: int) -> str | None:
+        """從 root 沿控制流走;條件跳躍兩邊都走,`jmp imm` 跟過去,ret / 間接 jmp / 走出本體停。
+        ESP 被暫存器調整回錯誤說明,否則 None。"""
+        nonlocal top, clean_ret, used_ebp
+        work = [(root, delta0, None, False)]
+        while work:
+            a, delta, ebp_base, via_jmp = work.pop()
+            while True:
+                if not start <= a < end:
+                    # 以 jmp 走出本體且堆疊已平衡 = 尾端跳到共用尾段或 tail call,算乾淨的出口
+                    clean_ret |= via_jmp and delta == 0
+                    break
+                if a in seen:
+                    break                               # 已走過(位移以第一次為準)
+                i = cg._insn(a)
+                if i is None:
+                    break
+                if a != start and _is_stack_check_prologue(cg, a):
+                    break                               # 走進下一個函式
+                seen[a] = delta
+                via_jmp = False
+                m, op = i.mnemonic, i.op_str
+                if m == "mov" and op == "ebp, esp":
+                    ebp_base = delta
+                    used_ebp = True
+                for mm in _CALLEE_ESP.finditer(op):
+                    off = int(mm.group(1), 0) - delta
+                    # 位移 0..3 是回傳位址本身,不是參數;第 k 個參數佔位移 4k..4k+3,所以非對齊的
+                    # byte 讀取(取 dword 參數的某個 byte)歸入 off // 4。2026-09-17 突變窮舉抓到我先寫成
+                    # `off > 0` 配 ceil —— 那會把回傳位址的 byte 算成第 1 個參數、把 [esp+5] 算成第 2 個。
+                    if off >= 4:
+                        top = max(top, off // 4)
+                if ebp_base is not None:
+                    for mm in _CALLEE_EBP.finditer(op):
+                        off = int(mm.group(1), 0) - ebp_base
+                        if off >= 4:
+                            top = max(top, off // 4)
+                if m == "push":
+                    delta += 4
+                elif m == "pop":
+                    delta -= 4
+                elif m in ("sub", "add") and op.startswith("esp,"):
+                    # 2026-09-18:function_inventory 把它套到全部 1102 個入口時撞到 `sub esp, eax`
+                    # (原本只餵過章節 handler 可達的那幾十個目標),`int(' eax', 0)` 直接 ValueError。
+                    # ESP 被暫存器調整之後位移不可知,之後的 [esp+X] 都換算不回來 —— 回 None,不是 0。
+                    n = _esp_imm(op)
+                    if n is None:
+                        return f"esp adjusted by non-immediate at {a:#x}"
+                    delta += n if m == "sub" else -n
+                elif m == "leave" and ebp_base is not None:
+                    delta = ebp_base - 4                # mov esp,ebp; pop ebp
+                elif m == "call" and op.startswith("0x") and int(op, 16) == STACK_CHECK:
+                    delta -= 4          # 0x3702f 以 ret 4 彈掉呼叫端 push 的那個 frame 大小
+                if m in ("ret", "retn", "retf"):
+                    clean_ret |= delta == 0
+                    break
+                if m == "jmp":
+                    if op.startswith("0x"):
+                        a, via_jmp = int(op, 16), True
+                        continue
+                    switch_delta.add(delta)             # 跳表:case 本體流程到不了,另外補
+                    break
+                if (m.startswith("j") or m.startswith("loop")) and op.startswith("0x"):
+                    work.append((int(op, 16), delta, ebp_base, False))
                 a += i.size
+        return None
+
+    err = walk(start, 0)
+    if err:
+        return None, err
+    # 跳表的 case 本體:流程到不了。只有一種跳表位移時,把本體範圍內沒走到的指令段以該位移再走
+    # (Watcom 的 switch 在跳之前已把堆疊整理好,各 case 進入時位移相同);位移不只一種就不補。
+    if len(switch_delta) == 1:
+        d = next(iter(switch_delta))
+        a, prev_seen = start, True
+        while a < end:
+            i = cg._insn(a)
+            if i is None:
                 break
-        a += i.size
+            if a not in seen and prev_seen and i.mnemonic not in ("int3", "nop"):
+                err = walk(a, d)
+                if err:
+                    return None, err
+            prev_seen = a in seen
+            a += i.size
     if leaf and not clean_ret:
         return None, "leaf without clean ret"
-    return top, ("leaf" if leaf else "prologue") + (" ebp" if ebp_base is not None else "") + f" span={a - start:#x}"
+    span = (max(seen) - start) if seen else 0
+    return top, ("leaf" if leaf else "prologue") + (" ebp" if used_ebp else "") + f" span={span:#x}"
 
 
 def collect(cg, order: list[int]) -> dict[int, list[dict]]:
@@ -772,9 +817,39 @@ def _selftest_callee_cases() -> dict:
     g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"), _CI(0, "int3"),
              _CI(0, "mov", "eax, dword ptr [esp + 0x10]", 4)])
     syn["ret 後接 int3 填充就停"] = callee_argc(g, 0, [])[0] == 1
-    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"),
+    # 序頭 10 bytes:je @10 -> 0x11、mov @12、ret @16、mov @17、ret @21
+    g = _cg([_CI(0, "je", "0x11", 2), _CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret"),
              _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "ret")])
-    syn["ret 後接指令(多出口)就繼續"] = callee_argc(g, 0, [])[0] == 2
+    syn["多出口:條件跳躍兩邊都走"] = callee_argc(g, 0, [])[0] == 2
+    # (p) 本體中段 ret 之後的分支仍帶著保存暫存器的位移:push ebx @10、je @11 -> 0x10(16)、pop @13、
+    #     ret @14、(16)mov [esp+0xc] = 第 2 個參數(線性掃描會在 ret 後歸零而算成第 3 個)
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "je", "0x10", 2), _CI(0, "pop", "ebx"), _CI(0, "ret"), _CI(0, "nop"),
+             _CI(0, "mov", "eax, dword ptr [esp + 0xc]", 4), _CI(0, "pop", "ebx"), _CI(0, "ret")])
+    syn["中段 ret 後的分支保留位移(不多算)"] = callee_argc(g, 0, [])[0] == 2
+    # (q) jmp 跳過兩個 push:push ebx @10、jmp @11 -> 0x10(16)、push @13、push @14、nop @15、
+    #     (16)mov [esp+8] = 第 1 個參數(線性掃描把跳過的 push 算進位移而算成 0)
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "jmp", "0x10", 2), _CI(0, "push", "eax"), _CI(0, "push", "eax"),
+             _CI(0, "nop"), _CI(0, "mov", "eax, dword ptr [esp + 0x8]", 4), _CI(0, "pop", "ebx"), _CI(0, "ret")])
+    syn["跳過的 push 不算進位移(不少算)"] = callee_argc(g, 0, [])[0] == 1
+    # (r) leaf 以 jmp 跳出本體且位移 0 = 乾淨出口(共用尾段 / tail call);位移不是 0 就不算
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "jmp", "0x9000", 5)], prologue=False)
+    syn["leaf tail jmp 算乾淨出口"] = callee_argc(g, 0, [])[0] == 1
+    g = _cg([_CI(0, "push", "eax"), _CI(0, "jmp", "0x9000", 5)], prologue=False)
+    syn["leaf 位移不為 0 的 jmp 不算出口"] = callee_argc(g, 0, [])[0] is None
+    # (s) 跳表:push ebx @10、jmp [table] @11(間接)、(17)case 本體 mov [esp+0xc] 以跳表位移 4 補走 = 第 2 個
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "jmp", "dword ptr [eax*4 + 0x100]", 6),
+             _CI(0, "mov", "eax, dword ptr [esp + 0xc]", 4), _CI(0, "pop", "ebx"), _CI(0, "ret")])
+    syn["跳表 case 以跳表位移補走"] = callee_argc(g, 0, [])[0] == 2
+    # (t) leaf 唯一的 ret 位移不是 0(push 後 ret = 跳到算出來的位址,int386x_dispatch 那種)-> 不是乾淨出口
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "push", "eax"), _CI(0, "ret")], prologue=False)
+    syn["leaf 的 ret 位移不為 0 不算乾淨"] = callee_argc(g, 0, [])[0] is None
+    # (u) 兩個跳表、位移不同(4 與 8)-> 不補走 case,間接 jmp 之後也不能直接往下讀:
+    #     push ebx @10、je @11 -> 0x19(25)、jmp [t1] @13(位移 4)、(19)case mov [esp+0x10]、pop @23、ret @24、
+    #     (25)push eax、jmp [t2] @26(位移 8)。流程上沒有讀任何參數 -> 0。
+    g = _cg([_CI(0, "push", "ebx"), _CI(0, "je", "0x19", 2), _CI(0, "jmp", "dword ptr [eax*4 + 0x100]", 6),
+             _CI(0, "mov", "eax, dword ptr [esp + 0x10]", 4), _CI(0, "pop", "ebx"), _CI(0, "ret"),
+             _CI(0, "push", "eax"), _CI(0, "jmp", "dword ptr [eax*4 + 0x200]", 6)])
+    syn["兩種跳表位移不補走、間接 jmp 後不往下讀"] = callee_argc(g, 0, [])[0] == 0
     # (m)(n)(o) 2026-09-18:ESP 被暫存器調整 -> None(先前已讀到的 [esp+4] 也不能當答案回傳);
     #          成對的立即值 add 必須照算:兩個 push 之後 add esp,8 退回原位,[esp+0x7] 是第 1 個參數的
     #          最後一個 byte(把 add 當 sub 會算成 0,少退會算成第 2 個以上)。

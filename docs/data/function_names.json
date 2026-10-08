@@ -1785,7 +1785,7 @@
   {
    "addr": "0x1c4cc",
    "name": "play_map_effect_animation",
-   "summary": "(a1, a2, a3, a4):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(inventory argc 3 少算)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。",
+   "summary": "(a1, a2, a3, a4):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(當時 inventory argc 記 3,線性掃描少算;續一百一十改為沿控制流後是 4)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -23464,7 +23464,7 @@
   {
    "addr": "0x1aa1d",
    "name": "grant_reward_rows",
-   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。inventory argc 記 2 是少算。",
+   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。當時 inventory argc 記 2 是線性掃描少算(續一百一十改為沿控制流後是 3)。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -24889,7 +24889,7 @@
   {
    "addr": "0x2e9a8",
    "name": "figure_fade_in",
-   "summary": "(7 個參數) figure / 台座淡入的共用 helper:8 迴圈以 palette_brightness_ramp 調亮度、blit_anim_frame / blit_rle_image_at_xy 畫、copy_rect 輸出,依單位 +6 的陣營選邊(FD2.EXE 反組譯)。攻擊 / 法術 / 道具場景等 6 處呼叫(doc35 §4.0 / §9.2)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 11 個(取自 inventory argc;本體中段 0x2eac1 有 ret,線性掃描在它之後把保存暫存器的位移歸零而多算)。兩個實機呼叫端 0x2e6ba / 0x30356 之後都是 add esp, 0x1c,本體沿控制流最遠讀到第 7 個參數(0x2e9f9)。",
+   "summary": "(7 個參數) figure / 台座淡入的共用 helper:8 迴圈以 palette_brightness_ramp 調亮度、blit_anim_frame / blit_rle_image_at_xy 畫、copy_rect 輸出,依單位 +6 的陣營選邊(FD2.EXE 反組譯)。攻擊 / 法術 / 道具場景等 6 處呼叫(doc35 §4.0 / §9.2)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 11 個(取自當時的 inventory argc,續一百一十改為沿控制流後是 7;本體中段 0x2eac1 有 ret,線性掃描在它之後把保存暫存器的位移歸零而多算)。兩個實機呼叫端 0x2e6ba / 0x30356 之後都是 add esp, 0x1c,本體沿控制流最遠讀到第 7 個參數(0x2e9f9)。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [

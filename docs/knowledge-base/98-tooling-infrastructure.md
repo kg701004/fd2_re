@@ -8502,3 +8502,60 @@ kind 共 8 種:
   - 第一輪存活 5 個:佔位名正規式是死碼,刪掉;其餘 4 個補題(覆蓋門檻、unit 上限 0x7f、NULL 字串參數、不在登錄的錯誤訊息)。
   - 重跑 47 個全部 KILLED,無 Traceback。
 - 篩選有效性:同一套規則在改正前報 18 個候選(15 個函式),改正後只剩 1 個 not_error、未核對 0 個。新增的規格在實機紀錄上全部成立。
+
+## 2026-10-08 續一百一十:`callee_argc` 改成沿控制流 —— inventory argc 61 筆改變,與呼叫端清堆疊一致 480 → 518、多算 6 → 0
+
+續一百零九記錄的任務外發現:`derive_native_argcounts.callee_argc`(inventory 的 `argc`,本體從堆疊讀到第幾個參數)
+是線性掃描,兩個方向都會錯。
+- **多算**:本體中段的 `ret` 之後,位移被當成 0。
+- **少算**:往前跳過 push 的程式碼,被算進位移。
+
+`verify_names_by_calllog.param_slot`、事實檔的參數位置、規格的「參數位置能由 argc 定位」與結構性命名的 `wrapper(a, b)`
+都依賴它。
+
+**改法**:從本體起點沿控制流走,本體範圍到下一個函式入口為止。
+- 條件跳躍兩邊都走;`jmp imm` 跟過去;`ret`、間接 jmp、走出本體就停。
+- 每個位址以第一次走到時的 ESP 位移換算 `[esp+X]` / `[ebp+X]`。
+- **跳表**:case 本體流程到不了。跳表位移只有一種時,沒走到的指令段以該位移補走;不只一種就不補。
+- **leaf 的乾淨出口**:位移 0 的 `ret`,或以 jmp 跳出本體且位移 0(共用尾段 / tail call)。都沒有就回 None。
+
+**對照**:獨立訊號是呼叫端 `call` 後的 `add esp, N`,用 `screen_summaries_by_calllog.pushed_args` 計算,
+所有呼叫端取唯一的非 0 值。567 個函式有這個值:
+
+| | 線性(舊) | 沿控制流(新) |
+|---|---|---|
+| 與呼叫端相同 | 480 | 518 |
+| 比呼叫端多(矛盾) | 6 | 0 |
+| 比呼叫端少(下界,允許) | 30 | 10 |
+| 判不出來(None) | 51 | 39 |
+
+全部 1356 個入口裡 argc 變了 61 個:
+- 變大 22 個、變小 12 個。
+- 由 None 變成有值 20 個。
+- 由有值變成 None 7 個:都是 leaf,FPU 模擬器 / AIL 的組語,例如 `int386x_dispatch` 是 `push eax; ret` 跳到算出來的位址,沒有乾淨出口。
+
+例:
+- `defender_can_counter` 5 → 2,`figure_fade_in` 11 → 7,`item_grid_select` 14 → 2,`emu387_int_entry` 15 → 0。
+- `grant_reward_rows` 2 → 3,`play_map_effect_animation` 3 → 4,`draw_terrain_layer` 2 → 6。
+
+剩下 10 個比呼叫端少的,舊版也一樣少。例如 `play_loaded_sfx_and_free` 本體不讀參數,呼叫端清 14 個,是合併清理。
+不是這次的退步。
+
+**重產**:
+- `function_inventory.json`:只有 argc 欄變,其他欄位 0 筆變動。
+- `function_call_profiles.json`:參數位置依 argc 列出,argc 變大的函式多了後面的參數。
+- 其餘 22 項登錄產物不變。重產後:
+  - 規格 62 / 62 成立。
+  - 摘要篩選 `param_type` 可比的參數 374 → 377,未核對 0。
+  - `--check-names` 1149 / 1149。
+- 續一百零九寫在三筆摘要裡的「inventory argc 少算 / 多算」改成「當時的 inventory argc」,並附新值。
+
+**工具自驗**:
+- `derive_native_argcounts --selftest` 通過,含 15 個文件簽名逐一相等、PRIM 只剩 dialog 投影那一筆過讀。
+- 合成邊界:
+  - 舊題 (l)「ret 後接指令就繼續」原本假設線性掃描,改寫成真正的多出口(條件跳躍兩邊都走)。
+  - 新增 6 題:中段 ret 後的分支保留位移、跳過的 push 不算、leaf tail jmp 算出口與位移不為 0 不算、跳表以跳表位移補走、ret 位移不為 0 不算乾淨、兩種跳表位移不補走且間接 jmp 後不往下讀。
+- 突變 17 個:
+  - 第一輪存活 2 個(ret 不看位移、間接 jmp 不停),補 (t)(u) 兩題。
+  - 重跑全部 KILLED,無逾時。
+- `function_inventory --selftest` 通過(真實 EXE 49 項)。

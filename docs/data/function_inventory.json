@@ -691,7 +691,7 @@
    "callers": 27,
    "grade": "strong",
    "span_upper": 885,
-   "argc": 2,
+   "argc": 6,
    "callees": [
     "0x11eb0",
     "0x24d22",
@@ -1446,7 +1446,7 @@
    "callers": 6,
    "grade": "strong",
    "span_upper": 333,
-   "argc": 4,
+   "argc": 1,
    "callees": [
     "0x11eb0",
     "0x12d7b",
@@ -3427,7 +3427,7 @@
    "callers": 9,
    "grade": "strong",
    "span_upper": 726,
-   "argc": 2,
+   "argc": 3,
    "callees": [
     "0x15f84",
     "0x16559",
@@ -3840,7 +3840,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 430,
-   "argc": 14,
+   "argc": 2,
    "callees": [
     "0x16c57",
     "0x184c0",
@@ -4067,7 +4067,7 @@
    "callers": 16,
    "grade": "strong",
    "span_upper": 658,
-   "argc": 3,
+   "argc": 4,
    "callees": [
     "0x11cac",
     "0x11eb0",
@@ -4590,7 +4590,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 154,
-   "argc": 5,
+   "argc": 3,
    "callees": [
     "0x1b722",
     "0x1b83d",
@@ -4981,7 +4981,7 @@
    "callers": 6,
    "grade": "strong",
    "span_upper": 167,
-   "argc": 5,
+   "argc": 2,
    "callees": [
     "0x1b722",
     "0x1b83d",
@@ -6117,7 +6117,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 791,
-   "argc": 3,
+   "argc": 4,
    "callees": [
     "0x11cac",
     "0x11eb0",
@@ -8481,7 +8481,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 790,
-   "argc": 4,
+   "argc": 5,
    "callees": [
     "0x15f84",
     "0x1685c",
@@ -9933,7 +9933,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 1151,
-   "argc": 23,
+   "argc": 5,
    "callees": [
     "0x25a96",
     "0x25b45",
@@ -10094,7 +10094,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 1780,
-   "argc": 2,
+   "argc": 4,
    "callees": [
     "0x111ba",
     "0x11cac",
@@ -10289,7 +10289,7 @@
    "callers": 6,
    "grade": "strong",
    "span_upper": 503,
-   "argc": 11,
+   "argc": 7,
    "callees": [
     "0x11d40",
     "0x11eb0",
@@ -12851,7 +12851,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 363,
-   "argc": 3,
+   "argc": 1,
    "callees": [
     "0x10b4e",
     "0x111ba",
@@ -13376,7 +13376,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 11,
-   "argc": 1,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
@@ -13441,7 +13441,7 @@
    "callers": 17,
    "grade": "strong",
    "span_upper": 87,
-   "argc": null,
+   "argc": 5,
    "callees": [
     "0x3cf26",
     "0x3cf50",
@@ -13688,7 +13688,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 173,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x36c56",
     "0x3cf9b",
@@ -13710,7 +13710,7 @@
    "callers": 0,
    "grade": "weak",
    "span_upper": 111,
-   "argc": 1,
+   "argc": 3,
    "callees": [
     "0x3d074",
     "0x3d36c",
@@ -13729,7 +13729,7 @@
    "callers": 0,
    "grade": "weak",
    "span_upper": 118,
-   "argc": 1,
+   "argc": 3,
    "callees": [
     "0x3d074",
     "0x3d36c",
@@ -13983,7 +13983,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 15,
-   "argc": 1,
+   "argc": 0,
    "callees": [],
    "globals": [
     "0x52796"
@@ -14666,7 +14666,7 @@
    "callers": 18,
    "grade": "strong",
    "span_upper": 250,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -14720,7 +14720,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 235,
-   "argc": null,
+   "argc": 1,
    "callees": [
     "0x37c9c",
     "0x3eda5",
@@ -14748,7 +14748,7 @@
    "callers": 3,
    "grade": "strong",
    "span_upper": 121,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x37c9c",
     "0x3edd1",
@@ -14850,7 +14850,7 @@
    "callers": 42,
    "grade": "strong",
    "span_upper": 264,
-   "argc": null,
+   "argc": 4,
    "callees": [
     "0x37c9c",
     "0x3f113",
@@ -14915,7 +14915,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 7,
-   "argc": null,
+   "argc": 2,
    "callees": [],
    "globals": [],
    "takers": []
@@ -14928,7 +14928,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 850,
-   "argc": 5,
+   "argc": null,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -14962,7 +14962,7 @@
    "callers": 3,
    "grade": "strong",
    "span_upper": 235,
-   "argc": null,
+   "argc": 1,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -14990,7 +14990,7 @@
    "callers": 3,
    "grade": "strong",
    "span_upper": 243,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -15091,7 +15091,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 221,
-   "argc": null,
+   "argc": 0,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -15267,7 +15267,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 229,
-   "argc": null,
+   "argc": 1,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -15294,7 +15294,7 @@
    "callers": 4,
    "grade": "strong",
    "span_upper": 243,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x37c9c",
     "0x3f22a",
@@ -17426,7 +17426,7 @@
    "callers": 0,
    "grade": "weak",
    "span_upper": 128,
-   "argc": 0,
+   "argc": null,
    "callees": [
     "0x46013"
    ],
@@ -17442,7 +17442,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 25,
-   "argc": 0,
+   "argc": null,
    "callees": [
     "0x3cba9"
    ],
@@ -17460,7 +17460,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 138,
-   "argc": 0,
+   "argc": null,
    "callees": [
     "0x3cba9"
    ],
@@ -18811,7 +18811,7 @@
    "callers": 0,
    "grade": "weak",
    "span_upper": 28,
-   "argc": null,
+   "argc": 3,
    "callees": [],
    "globals": [],
    "takers": []
@@ -19215,7 +19215,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 737,
-   "argc": 4,
+   "argc": 2,
    "callees": [
     "0x37324",
     "0x3759c",
@@ -19265,7 +19265,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 576,
-   "argc": 0,
+   "argc": 2,
    "callees": [
     "0x364d4",
     "0x364fb",
@@ -19731,7 +19731,7 @@
    "callers": 3,
    "grade": "strong",
    "span_upper": 256,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x382e9"
    ],
@@ -19771,7 +19771,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 1552,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x364d4",
     "0x364fb",
@@ -19818,7 +19818,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 128,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x36c56",
     "0x36cab",
@@ -20266,7 +20266,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 48,
-   "argc": 1,
+   "argc": 2,
    "callees": [],
    "globals": [],
    "takers": []
@@ -20407,7 +20407,7 @@
    "callers": 3,
    "grade": "strong",
    "span_upper": 599,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x39694",
     "0x39716",
@@ -20444,7 +20444,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 214,
-   "argc": null,
+   "argc": 2,
    "callees": [
     "0x39694",
     "0x39716",
@@ -20466,7 +20466,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 301,
-   "argc": 2,
+   "argc": 3,
    "callees": [
     "0x392d0",
     "0x39521",
@@ -20494,7 +20494,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 216,
-   "argc": 2,
+   "argc": 3,
    "callees": [
     "0x41b84",
     "0x41deb",
@@ -20910,7 +20910,7 @@
    "callers": 2,
    "grade": "strong",
    "span_upper": 1712,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x364d4",
     "0x364fb",
@@ -20956,7 +20956,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 128,
-   "argc": 1,
+   "argc": 2,
    "callees": [
     "0x36c56",
     "0x36cab",
@@ -21374,7 +21374,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 48,
-   "argc": 1,
+   "argc": 3,
    "callees": [
     "0x42640"
    ],
@@ -21390,7 +21390,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 64,
-   "argc": 1,
+   "argc": 2,
    "callees": [],
    "globals": [],
    "takers": []
@@ -21520,7 +21520,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 32,
-   "argc": 1,
+   "argc": 2,
    "callees": [],
    "globals": [],
    "takers": []
@@ -21597,7 +21597,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 32,
-   "argc": 1,
+   "argc": 2,
    "callees": [],
    "globals": [],
    "takers": []
@@ -21776,7 +21776,7 @@
    "callers": 0,
    "grade": "strong",
    "span_upper": 1025,
-   "argc": null,
+   "argc": 5,
    "callees": [
     "0x39521",
     "0x39694",
@@ -22012,7 +22012,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 76,
-   "argc": null,
+   "argc": 0,
    "callees": [
     "0x462e6"
    ],
@@ -22409,7 +22409,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 36,
-   "argc": 0,
+   "argc": null,
    "callees": [],
    "globals": [],
    "takers": []
@@ -22422,7 +22422,7 @@
    "callers": 0,
    "grade": "weak",
    "span_upper": 74,
-   "argc": 0,
+   "argc": null,
    "callees": [
     "0x46915"
    ],
@@ -25639,7 +25639,7 @@
    "callers": 14,
    "grade": "strong",
    "span_upper": 14,
-   "argc": null,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
@@ -25792,7 +25792,7 @@
    "callers": 6,
    "grade": "strong",
    "span_upper": 5,
-   "argc": null,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
@@ -25916,7 +25916,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 182,
-   "argc": null,
+   "argc": 0,
    "callees": [
     "0x4b852",
     "0x4ba87",
@@ -26505,7 +26505,7 @@
    "callers": 1,
    "grade": "weak",
    "span_upper": 76,
-   "argc": 2,
+   "argc": null,
    "callees": [
     "0x4dc41"
    ],
@@ -26520,7 +26520,7 @@
    "callers": 1,
    "grade": "weak",
    "span_upper": 4,
-   "argc": 1,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
@@ -26534,7 +26534,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 4,
-   "argc": 1,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
@@ -26756,7 +26756,7 @@
    "callers": 1,
    "grade": "strong",
    "span_upper": 114,
-   "argc": null,
+   "argc": 0,
    "callees": [],
    "globals": [],
    "takers": []
