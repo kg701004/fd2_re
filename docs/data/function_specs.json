@@ -1,0 +1,944 @@
+{
+ "_doc": "逐函式可機械檢查的規格(doc98 續一百零八)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
+ "specs": [
+  {
+   "addr": "0x1b83d",
+   "name": "find_equipped_slot",
+   "source": [
+    {
+     "summary_of": "0x1b83d",
+     "quote": [
+      "8 個 2-byte 道具欄",
+      "欄位序號,找不到回 -1",
+      "單位記錄(80 bytes,基底 [0x53a45])"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": 7,
+     "also": [
+      -1
+     ]
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x2860a",
+   "name": "compare_to_glyph",
+   "source": {
+    "summary_of": "0x2860a",
+    "quote": "a==b 回 0x1f、a<b 回 0x2a、a>b 回 0x77"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      "0x1f",
+      "0x2a",
+      "0x77"
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x1f183",
+   "name": "unit_uses_move_cost_row19",
+   "source": {
+    "summary_of": "0x1f183",
+    "quote": [
+     "unit[+7]==0x1c 回 0",
+     "回 1,其餘回 0"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      0,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x1bb8c",
+   "name": "unit_add_item",
+   "source": [
+    {
+     "summary_of": "0x1bb8c",
+     "quote": [
+      "(unit, item):在單位的 8 個道具欄",
+      "回 1;沒有空欄回 -1"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x1c1c3",
+   "name": "unit_can_equip_item",
+   "source": [
+    {
+     "summary_of": "0x1c1c3",
+     "quote": [
+      "單位記錄(80 bytes,基底 [0x53a45])",
+      "類型出現在職業列前 6 bytes 內回 1,否則 0"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      0,
+      1
+     ]
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x1f0dc",
+   "name": "defender_can_counter",
+   "source": {
+    "summary_of": "0x1f0dc",
+    "quote": [
+     "堆疊參數為兩者的單位序號",
+     "守方能反擊回 1,否則 -1"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    },
+    {
+     "kind": "param_range",
+     "param": 1,
+     "min": 0,
+     "max": "0x5f"
+    },
+    {
+     "kind": "param_range",
+     "param": 2,
+     "min": 0,
+     "max": "0x5f"
+    }
+   ]
+  },
+  {
+   "addr": "0x1debe",
+   "name": "unit_can_counter_at",
+   "source": [
+    {
+     "summary_of": "0x1debe",
+     "quote": [
+      "(unit, x, y):unit +0x26(麻痺)非 0 回 -1",
+      "否則回 1"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x13fd4",
+   "name": "rest_hp_recover",
+   "source": [
+    {
+     "summary_of": "0x13fd4",
+     "quote": [
+      "(unit):HP(+0x40)等於 MaxHP(+0x42)",
+      "任一非 0 時回 0",
+      "[0x51a83] = 1,回 1"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      0,
+      1
+     ]
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x37c9c",
+   "name": "ail_debug_trace_prefix",
+   "source": {
+    "summary_of": "0x37c9c",
+    "quote": "回傳 1。每個 AIL 進入點都呼叫它"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x4d731",
+   "name": "fmt_inf_nan",
+   "source": {
+    "summary_of": "0x4d731",
+    "quote": "並回 1,否則回 0"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      0,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x2a857",
+   "name": "class_change_candidate_select",
+   "source": {
+    "summary_of": "0x2a857",
+    "quote": "Enter/Space 回 1、Esc 回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x2a29d",
+   "name": "revive_candidate_select",
+   "source": {
+    "summary_of": "0x2a29d",
+    "quote": "Enter/Space 回 1、Esc 回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x29bcb",
+   "name": "save_slot_selector",
+   "source": {
+    "summary_of": "0x29bcb",
+    "quote": "Enter/Space 回 1、Esc 回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x275e6",
+   "name": "item_list_select",
+   "source": {
+    "summary_of": "0x275e6",
+    "quote": "Enter/Space 回 1、Esc 回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x27f4a",
+   "name": "equip_compare_select",
+   "source": {
+    "summary_of": "0x27f4a",
+    "quote": "Enter/Space 回 1、Esc 回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x26a0d",
+   "name": "collect_town_shop_items",
+   "source": {
+    "summary_of": "0x26a0d",
+    "quote": [
+     "取 +3 起 12 格",
+     "回傳數量"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": 12
+    }
+   ]
+  },
+  {
+   "addr": "0x1c269",
+   "name": "unit_list_bits_1a",
+   "source": [
+    {
+     "summary_of": "0x1c269",
+     "quote": [
+      "+0x1a 起 5 bytes 共 40 個 bit",
+      "回傳個數",
+      "單位記錄(80 bytes,基底 [0x53a45])"
+     ]
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": 40
+    },
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x12c0d",
+   "name": "unit_at_cursor",
+   "source": {
+    "summary_of": "0x12c0d",
+    "quote": "回第一個符合的單位索引,沒有回 -1"
+   },
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": "0x5f",
+     "also": [
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x12c60",
+   "name": "find_unit_by_char_id",
+   "source": {
+    "summary_of": "0x12c60",
+    "quote": [
+     "時回傳索引",
+     "回 -1"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": "0x5f",
+     "also": [
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x4e8bc",
+   "name": "item_effect_row_ptr",
+   "source": {
+    "summary_of": "0x4e8bc",
+    "quote": "回傳 0x602ad + item*0x17"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x602ad",
+     "stride": "0x17"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e8a5",
+   "name": "move_cost_row_ptr",
+   "source": {
+    "summary_of": "0x4e8a5",
+    "quote": "回傳 0x61646 + selector*0x14"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x61646",
+     "stride": "0x14"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e866",
+   "name": "row7_ptr_619fd",
+   "source": {
+    "summary_of": "0x4e866",
+    "quote": "回傳 0x619fd + id*7"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x619fd",
+     "stride": 7
+    }
+   ]
+  },
+  {
+   "addr": "0x4e809",
+   "name": "row31_ptr_6238d",
+   "source": {
+    "summary_of": "0x4e809",
+    "quote": "回傳 0x6238d + (id-1)*0x1f"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x6238d",
+     "stride": "0x1f",
+     "offset": -1
+    }
+   ]
+  },
+  {
+   "addr": "0x4e88e",
+   "name": "class_equip_row_ptr",
+   "source": {
+    "summary_of": "0x4e88e",
+    "quote": "回傳 0x6188a + class*7"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x6188a",
+     "stride": 7
+    }
+   ]
+  },
+  {
+   "addr": "0x4e7dd",
+   "name": "promoted_row2_ptr_615fe",
+   "source": {
+    "summary_of": "0x4e7dd",
+    "quote": [
+     "回傳 0x615fe + (portrait-0x20)*2",
+     "只收轉職後 portrait(≥0x20)"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x615fe",
+     "stride": 2,
+     "offset": "-0x20"
+    },
+    {
+     "kind": "param_range",
+     "param": 1,
+     "min": "0x20",
+     "max": "0x7fffffff"
+    }
+   ]
+  },
+  {
+   "addr": "0x4e821",
+   "name": "growth_row11_ptr",
+   "source": {
+    "summary_of": "0x4e821",
+    "quote": "回傳 0x620a1 + portrait*11"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x620a1",
+     "stride": 11
+    }
+   ]
+  },
+  {
+   "addr": "0x4e838",
+   "name": "lower_class_row24_ptr",
+   "source": {
+    "summary_of": "0x4e838",
+    "quote": "回傳 0x61da1 + idx*24"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x61da1",
+     "stride": 24
+    }
+   ]
+  },
+  {
+   "addr": "0x4e84f",
+   "name": "high_class_row10_ptr",
+   "source": {
+    "summary_of": "0x4e84f",
+    "quote": "回傳 0x61af9 + idx*10"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x61af9",
+     "stride": 10
+    }
+   ]
+  },
+  {
+   "addr": "0x4e7f2",
+   "name": "spell_learn_row12_ptr",
+   "source": {
+    "summary_of": "0x4e7f2",
+    "quote": "回傳 0x626b3 + idx*12"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x626b3",
+     "stride": 12
+    }
+   ]
+  },
+  {
+   "addr": "0x4ded4",
+   "name": "table_60181_entry",
+   "source": {
+    "summary_of": "0x4ded4",
+    "quote": "回傳 0x60181 + 索引 x 3"
+   },
+   "claims": [
+    {
+     "kind": "ret_linear",
+     "param": 1,
+     "base": "0x60181",
+     "stride": 3
+    }
+   ]
+  },
+  {
+   "addr": "0x3cf50",
+   "name": "lseek",
+   "source": {
+    "summary_of": "0x3cf50",
+    "quote": "失敗經 set_errno_dos 回 -1,成功回新位置"
+   },
+   "claims": [
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": "0x7fffffff",
+     "also": [
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x3dce0",
+   "name": "dos_read",
+   "source": {
+    "summary_of": "0x3dce0",
+    "quote": [
+     "(fd, buf, n)",
+     "失敗經 set_errno_dos 回 -1,成功回讀到的位元組數"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_le_param",
+     "param": 3,
+     "also": [
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x36c56",
+   "name": "file_size_by_name",
+   "source": {
+    "summary_of": "0x36c56",
+    "quote": "(檔名) open(0x200)"
+   },
+   "claims": [
+    {
+     "kind": "param_cstr",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x36cab",
+   "name": "file_load_whole",
+   "source": {
+    "summary_of": "0x36cab",
+    "quote": "(檔名, 緩衝區或 NULL)"
+   },
+   "claims": [
+    {
+     "kind": "param_cstr",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x37324",
+   "name": "fopen",
+   "source": {
+    "summary_of": "0x37324",
+    "quote": "fopen(name, mode)"
+   },
+   "claims": [
+    {
+     "kind": "param_cstr",
+     "param": 1
+    },
+    {
+     "kind": "param_cstr",
+     "param": 2
+    }
+   ]
+  },
+  {
+   "addr": "0x3d074",
+   "name": "open",
+   "source": {
+    "summary_of": "0x3d074",
+    "quote": "open(path, oflag, ...)"
+   },
+   "claims": [
+    {
+     "kind": "param_cstr",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x111ba",
+   "name": "load_res",
+   "source": {
+    "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+    "quote": "0x111ba 是「開 .DAT 取 entry[index]」"
+   },
+   "claims": [
+    {
+     "kind": "param_cstr",
+     "param": 1,
+     "suffix": ".DAT"
+    }
+   ]
+  },
+  {
+   "addr": "0x1b722",
+   "name": "unit_item_id",
+   "source": [
+    {
+     "summary_of": "0x1b722",
+     "quote": "(unit, slot):回傳單位記錄(80 bytes,基底 [0x53a45])"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x1b8a6",
+   "name": "unit_item_count",
+   "source": [
+    {
+     "summary_of": "0x1b8a6",
+     "quote": "(unit):單位記錄(80 bytes,基底 [0x53a45])8 個道具欄"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    },
+    {
+     "kind": "ret_range",
+     "min": 0,
+     "max": 8
+    }
+   ]
+  },
+  {
+   "addr": "0x1ca89",
+   "name": "unit_spend_mp",
+   "source": [
+    {
+     "summary_of": "0x1ca89",
+     "quote": "(unit, id):unit[+0x44](word,現有 MP)"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x13512",
+   "name": "unit_set_flag5_bit7",
+   "source": [
+    {
+     "summary_of": "0x13512",
+     "quote": "(unit):單位記錄(80 bytes,基底 [0x53a45])byte +5 設 0x80"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x127e0",
+   "name": "draw_unit_sprite",
+   "source": [
+    {
+     "summary_of": "0x127e0",
+     "quote": "讀單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x1b750",
+   "name": "recalc_equipped_stats",
+   "source": [
+    {
+     "summary_of": "0x1b750",
+     "quote": "(unit):以單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  },
+  {
+   "addr": "0x1d79c",
+   "name": "unit_set_bit_1a",
+   "source": [
+    {
+     "summary_of": "0x1d79c",
+     "quote": "(unit, bit):單位記錄(80 bytes,基底 [0x53a45])+0x1a 起的 40-bit 位元欄"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    },
+    {
+     "kind": "param_range",
+     "param": 2,
+     "min": 0,
+     "max": 39
+    }
+   ]
+  },
+  {
+   "addr": "0x2facd",
+   "name": "draw_unit_panel_by_side",
+   "source": [
+    {
+     "summary_of": "0x2facd",
+     "quote": "(dst, unit):單位記錄(80 bytes,基底 [0x53a45])"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 2
+    }
+   ]
+  },
+  {
+   "addr": "0x177fc",
+   "name": "action_ring_select",
+   "source": {
+    "summary_of": "0x177fc",
+    "quote": [
+     "Esc(掃描碼 1)回 -1、Enter / Space 回 1",
+     "這些鍵與其他鍵都回 0"
+    ]
+   },
+   "claims": [
+    {
+     "kind": "ret_in",
+     "values": [
+      0,
+      1,
+      -1
+     ]
+    }
+   ]
+  },
+  {
+   "addr": "0x1e7f6",
+   "name": "draw_unit_hp_bar",
+   "source": [
+    {
+     "summary_of": "0x1e7f6",
+     "quote": "(unit, dst, stride, pos)"
+    },
+    {
+     "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "讀單位陣列指標 `[0x53a45]`(0x26bdc8,21 人)"
+    }
+   ],
+   "claims": [
+    {
+     "kind": "param_unit",
+     "param": 1
+    }
+   ]
+  }
+ ]
+}

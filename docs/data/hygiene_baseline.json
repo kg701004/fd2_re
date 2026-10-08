@@ -360,6 +360,12 @@
    "rule": "regenerable",
    "reason": "人讀反編譯碼得出的函式名稱登錄表,手動維護(tools/function_inventory.py 只讀不寫)。內容是「這個入口是什麼」的人工判讀,機器上沒有來源可以重生;正確性改由同一支工具的 --check-names 保證:每筆 evidence 在該位址實際反組譯、逐字比對,且必須落在該函式範圍內(selftest 的真實 EXE 段每次都跑)。與 address_claim_reviews.json、equivalent_mutants.json 同類。**永久豁免**,條目刻意留在清單裡而不是從分母移除。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/function_specs.json",
+   "rule": "regenerable",
+   "reason": "逐函式可機械檢查的規格(續一百零八),手動維護(tools/verify_names_by_calllog.py 只讀不寫)。內容是「摘要裡哪句話可以拿實機參數 / 回傳檢查」的人工整理,機器上沒有來源可以重生;正確性改由同一支工具保證:載入時逐條確認引文仍在 function_names.json 的摘要或 docs/ 文件裡、名稱與登錄相同、參數位置能由 inventory argc 定位,--selftest 對真實規格檔要求零錯誤。與 function_names.json 同類。**永久豁免**。",
+   "permanent": "no_generator"
   }
  ]
 }

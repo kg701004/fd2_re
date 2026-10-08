@@ -8299,3 +8299,105 @@ harness 以 `FD2_HARNESS_DOSBOX_BIN=~/fd2-dosbox-calllog/dosbox-x/src/dosbox-x F
 參數改用暫存器、memcpy 兩邊都收、strlen 差一、NULL 路徑無條件成立、宣稱定位錯一格、解析錯誤靜默略過、FAIL 不報語意)。
 `fd2_calllog_patch.py` 對原 debug.cpp 產生的內容與實際編譯的只差註解;重複套用會拒絕。harness 的 `FD2_HARNESS_CALLLOG` 區塊抽出逐值測
 9 組通過(未設、合法、含 CAP / DUMP;未修補 binary、空檔、不存在、相對路徑、`5;id`、`abc` 都走 `die`)。
+
+## 2026-10-08 續一百零八:呼叫紀錄擴大到城鎮 / 商店 / 戰鬥指令 / 法術 / 敵方 AI / 存讀檔,加規格檔與逐函式事實檔 —— 534 個入口實機反驗,改正 3 筆摘要
+
+**結論**:用續一百零七的修補版 dosbox-x(`FD2_HARNESS_CALLLOG`)照既有路線再錄 3 輪,加上試跑共 4 份紀錄,原版 FD2.EXE(md5 `33464c81…`)
+被執行的入口 387 → **534**。新增兩樣東西:
+
+- `docs/data/function_specs.json`:把摘要裡能機械檢查的句子整理成規格,每輪紀錄自動對照。47 個函式、59 條。
+- `docs/data/function_call_profiles.json`:逐函式的參數、回傳值、呼叫端事實檔。
+
+規格 50 條有紀錄,全部成立。第一次對照時 1 條不成立,追下去是摘要寫錯;設計規格時又讀出 2 筆摘要錯誤。共 3 筆摘要已改正,名稱沒有錯。
+
+**四份紀錄**(都以 `exit` 正常結束、寫出 `T exit`;紀錄在 `.wsl_build/cl1..cl4_CALLLOG.TXT`,不進版控):
+
+| 份 | 路線 | E 筆數 | 入口 | 新增 |
+|---|---|---|---|---|
+| cl1 | 續一百零七試跑:CONTINUE 第 10 章戰場 → 移動 / 待機 → 敵方回合 | 31465 | 387 | 387 |
+| cl2 | 存檔第 1 格(章節位元組 1)→ 城鎮。酒店:名冊、狀態、存檔 / 讀檔。武器店:買皮甲裝給亞雷斯、賣巨神戟。<br>出口 → 第 2 章戰場。系統環:戰況存檔 / 讀檔、行軍、設定。指令環:道具 / 法術。結束回合 ×3:敵方 AI 物理攻擊村民、回合事件。<br>離開戰場 | 40769 | 474 | 92 |
+| cl3 | 教會 4 項:狀態、轉交物品、復活(無對象)、轉職(凱麗 武者 → 武聖)。武器店:裝備服務、第 4 項。道具店:買藥草。<br>戰場:用藥草、戰況畫面(勝敗條件)、移動、待機、施聖光彈。結束回合 ×3 | 41444 | 501 | 41 |
+| cl4 | 續一百零二的受控設計(10 處寫入全部讀回)→ 索爾物理攻擊盜賊 #12 → 敵方回合。<br>#11 施聖光彈:`ai_spell_execute`、`spell_cast_scene`、`spell_damage_resolve`。#13 用道具 58:`ai_item_action`、`item_effect_heal` | 33818 | 450 | 14 |
+
+`python tools/verify_names_by_calllog.py --logs-dir .wsl_build`:
+
+| 檢查 | 結果 |
+|---|---|
+| 紀錄可信:16 個碼位元組 = EXE(fixup 遮掉) | 147496 / 147496;解析錯誤 0 |
+| 被執行 / 有返回紀錄 / 未執行 | 534 / 529 / 822(共 1356) |
+| 直接與 thunk 動態邊在靜態 `callees` | 1280 / 1280 |
+| 間接 call 反算目標 = 實際入口 | 848 一致、0 不一致;5522 筆 slot 是執行期指標 |
+| libc 驗算與摘要「回傳緩衝區 / 目的」 | 成立 9、無法判定 1(同續一百零七) |
+| 規格檔 47 個函式 59 條 | 被執行 39 個函式;有紀錄 50 條:成立 50、不成立 0;未執行 9 條 |
+
+與既有 13 份 LOGC 軌跡(`live_exec_addresses.json`,626 個入口)比:兩邊合計 631 個入口。
+- **只在 LOGC 的 97 個**:其他法術的指令 handler、出擊選人、AIL 除錯輸出(`asctime` 一族)、`fpu=false` 那一輪的 387 模擬器、其他章節的過場。
+- **只在呼叫紀錄的 5 個**(實機第一次有執行紀錄):`ai_move_toward_nearest` 0x13e9c、`find_event_cell` 0x15df3、`battle_result_check_default` 0x205b4、`load_game_menu` 0x2986f、`event_handler_6` 0x34778。
+
+**規格檔**(`docs/data/function_specs.json`,手動維護,登記為 hygiene 的永久 `no_generator`)。每條規格都引用出處原句,出處是 `function_names.json` 的摘要或 `docs/` 文件。載入時有下列任一情況,就報「規格」FAIL,該條不採用:
+- 原句已不在出處
+- 名稱與登錄不同
+- 參數位置不能由 inventory `argc` 定位
+
+kind 共 8 種:
+
+| kind | 檢查內容 |
+|---|---|
+| `ret_in` | 回傳值落在指定集合 |
+| `ret_range` | 回傳值在範圍內,或屬於 `also` |
+| `ret_linear` | 列指標公式,回傳 = 基底 + 執行期位移 + (參數 + offset) × 列長。obj3 的位移是 0x192000,例如 `item_effect_row_ptr` = 0x602ad + item × 0x17 |
+| `ret_eq_param` | 回傳值等於某參數 |
+| `ret_le_param` | 0 ≤ 回傳 ≤ 某參數,例如 `dos_read` 回讀到的位元組數 |
+| `param_range` | 參數在範圍內 |
+| `param_cstr` | 參數指向可列印 C 字串,可指定結尾。例如 `load_res` 第 1 參數以 `.DAT` 結尾:405 次全部成立,讀到 DATO / FDOTHER / FDMUS / FIGANI / FDFIELD |
+| `param_unit` | 參數是單位序號,或指向單位陣列 0x26bdc8 + k × 0x50 |
+
+`--selftest` 檢查真實規格檔必須零錯誤,所以摘要改了而規格沒跟著改,selftest 會失敗。這次就實際發生一次:改正 `draw_unit_panel_by_side` 的摘要後,它的規格引文立刻被報出來。
+
+**逐函式剖面**有兩種:
+
+| 產生方式 | 內容 | 版控 |
+|---|---|---|
+| `--json OUT` | 審閱用:事實加上名稱、摘要、各規則判定,呼叫端附名稱;人工逐批核對名稱時直接看 | 不進 |
+| `--export OUT --logs-dir .wsl_build` | `docs/data/function_call_profiles.json`,534 個函式,只含紀錄推得的事實,不含名稱,改名不會漂移 | 進,登錄於 `verify_generated_artifacts`(24 / 24 相同);缺紀錄回 2 |
+
+事實檔每個函式的欄位:
+- `argc`
+- `calls`:記錄 / 返回 / 放棄 / 全部執行次數
+- `callers`:[呼叫者入口, call 位址, 種類, 次數]
+- `params`:依 argc 取位置,列相異值數、最常見 8 個值與次數、指向的字串
+- `ret`:相異值、最常見值、有號最小 / 最大
+
+**改正的 3 筆摘要**(`function_names.json`,補了位元組證據,`--check-names` 1149 / 1149 通過):
+
+1. `draw_unit_panel_by_side` 0x2facd:參數是 `(dst, unit)`,不是 `(unit, dst)`。
+   - 怎麼發現的:規格 `param_unit` 第 1 參數 30 次全部不成立,實際值都是畫面緩衝 0x245018;第 2 參數是單位序號 7..0x19。
+   - 反組譯:本體以 `[esp+8]`(0x2fad7)乘 0x50 取單位,兩次 push 後以 `[esp+0xc]`(0x2fb1e)當 dst。
+2. `action_ring_select` 0x177fc:舊摘要寫「否則回傳選擇索引」,是錯的。
+   - 實際:Esc 回 -1、Enter / Space 回 1;方向鍵在項目可用時才把 `[0x53c57]` 設成 0 / 1 / 2 / 3,這些鍵和其他鍵都回 0。
+   - 實機 94 次回傳只有 0(43 次)、1(38 次)、-1(13 次)。
+   - 新加規格 `ret_in {0, 1, -1}`:94 次成立。
+3. `open_dialog_box` 0x1956b:載入呼叫是 `load_res(0x51a70 "DATO.DAT", [0x53a85], res_idx)`。舊摘要寫成 `load_res(res_idx, 檔名, [0x53a85])`。
+   - 反組譯:0x1966a 起依序 push ebx、`[0x53a85]`、0x1a70,最後 push 的是第 1 參數。
+   - `load_res` 的 `.DAT` 規格涵蓋 0x19676 的 53 次呼叫,全部成立。
+
+**驅動實機時學到的**:
+- 指令環圖示紅色 = 停用、藍色 = 可用。`action_ring_select` 只在項目可用時才接受方向鍵,所以沒裝武器時 ↑ 選不到攻擊,沒有合法目標時 ← 選不到法術;Enter 會執行環記住的上一項。
+- 重度除錯核心下畫面落後按鍵數秒,每鍵等 4–5 秒再截圖。
+- 酒店選單有存檔 / 讀檔 / 回 DOS;戰場系統環上項的子環有記錄戰況 / 讀取戰況 / 離開戰場;離開後在 `C:\>` 打 `exit` 才寫得出全部次數。
+- `fd2_chapter_sweep.debugger_cmd(name, "BPDEL *")` 不安全:它把字串直接拼進 WSL bash 指令,`*` 會被展開成目前目錄的檔名,除錯器輸入列留下一串檔名、遊戲停住。工具裡的 `BPDEL *` 都走 `fd2_dosbox_live_helper`,逐參數傳遞所以沒事;這支目前沒有工具傳 `*`,只記錄,不修。
+
+**誠實邊界**:
+- 這是可機械檢查的宣稱與呼叫圖的實機反驗,不是語意證明。
+- 規格只涵蓋 47 個函式,其餘名稱靠人工對照 `--json` 剖面逐批看。
+- 4 份紀錄每入口最多記 200 次明細。
+- 822 個入口未執行,其中 52 個 weak 從未執行。
+- 本輪的玩家法術只有聖光彈一種,其他法術 handler 要另錄。
+
+**工具自驗**:
+- `--selftest` 93 題通過,新增的題目涵蓋:
+  - 規格拒收條件:名稱不符、引文不在、多段引文缺一段、出處在 docs/ 外、kind 不認得、缺欄位、argc 定位不到、不是入口、沒有清單、有錯只剔除該條
+  - 8 種 kind 的成立與不成立,含位移、offset、width、also、可列印、對齊
+  - 規格不成立與規格錯誤都會進 FAIL
+  - 事實檔:呼叫端與 call 位址、參數 / 字串 / 回傳統計、C 記錄總次數、重產位元組相同、不含名稱
+- 突變:新程式碼 18 個,第一輪漏 1 個(呼叫端不分 call 位址),補題後全部 KILLED;續一百零七的 10 個也重跑,全部 KILLED。全部無 Traceback。

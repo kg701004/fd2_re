@@ -1068,7 +1068,7 @@
   {
    "addr": "0x1956b",
    "name": "open_dialog_box",
-   "summary": "(res_idx):配置三塊 0xfa00 緩衝([0x53c5b] 工作、[0x53c5f] 存檔、[0x53c63] 樣板),把目前 VGA 畫面存進存檔並複製到樣板,以 0x168b6 在樣板畫框;依 res_idx 0x80..0x84 設繪製位置 [0x53c67](其他值 0x9017),以 load_res(res_idx, 0x51a70 的檔名, [0x53a85]) 載入並鏡像繪入樣板;最後由下往上滑入(present_box_at_row 由 i=5 遞減)。close_box_slide_down 是它的反向。 續七十二(DOSBox-X):它設的 [0x53c67] 與載入的 [0x53a85] 在框關閉後都不還原;v10a 索爾行動的戰鬥場景結束後本函式以頭像 32(索爾)、[0x53c67] = 0x9017 開框,之後事件 0 的亂碼對白就在左下角鏡像畫索爾。 續七十三(DOSBox-X v11):索爾 +7 改成 20 後同樣的操作,本函式載入 20、[0x53c67] = 0x9017,亂碼畫面左下角變成頭像 20;續七十一 v9b 第二次觸發的鏡像索爾也是這次載入留下的(順序與像素比對,推論)。",
+   "summary": "(res_idx):配置三塊 0xfa00 緩衝([0x53c5b] 工作、[0x53c5f] 存檔、[0x53c63] 樣板),把目前 VGA 畫面存進存檔並複製到樣板,以 0x168b6 在樣板畫框;依 res_idx 0x80..0x84 設繪製位置 [0x53c67](其他值 0x9017),以 load_res(0x51a70 的檔名 \"DATO.DAT\", [0x53a85], res_idx) 載入並鏡像繪入樣板;最後由下往上滑入(present_box_at_row 由 i=5 遞減)。close_box_slide_down 是它的反向。 續一百零八(DOSBox-X 呼叫紀錄,勘誤):舊摘要把 load_res 的參數寫成 (res_idx, 檔名, [0x53a85]);0x1966a 起依序 push ebx(res_idx)、[0x53a85]、0x51a70,第 1 參數是檔名,實機 0x19676 的 53 次呼叫第 1 參數都指向 \"DATO.DAT\"。 續七十二(DOSBox-X):它設的 [0x53c67] 與載入的 [0x53a85] 在框關閉後都不還原;v10a 索爾行動的戰鬥場景結束後本函式以頭像 32(索爾)、[0x53c67] = 0x9017 開框,之後事件 0 的亂碼對白就在左下角鏡像畫索爾。 續七十三(DOSBox-X v11):索爾 +7 改成 20 後同樣的操作,本函式載入 20、[0x53c67] = 0x9017,亂碼畫面左下角變成頭像 20;續七十一 v9b 第二次觸發的鏡像索爾也是這次載入留下的(順序與像素比對,推論)。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -1087,6 +1087,14 @@
     {
      "at": "0x1966a",
      "insn": "push ebx"
+    },
+    {
+     "at": "0x1966b",
+     "insn": "push dword ptr [0x3a85]"
+    },
+    {
+     "at": "0x19671",
+     "insn": "push 0x1a70"
     },
     {
      "at": "0x19676",
@@ -1251,10 +1259,18 @@
   {
    "addr": "0x2facd",
    "name": "draw_unit_panel_by_side",
-   "summary": "(unit, dst):單位記錄(80 bytes,基底 [0x53a45])byte +6 為 0 時面板畫在 dst+0xc080(第 154 列),否則 dst+0x5ab(第 4 列、第 171 行);[0x53c03]==0x18 且 unit==0x11 時強制前者。以 0x18c6d(位置, 320, unit) 繪製。",
+   "summary": "(dst, unit):單位記錄(80 bytes,基底 [0x53a45])byte +6 為 0 時面板畫在 dst+0xc080(第 154 列),否則 dst+0x5ab(第 4 列、第 171 行);[0x53c03]==0x18 且 unit==0x11 時強制前者。以 0x18c6d(位置, 320, unit) 繪製。 續一百零八(DOSBox-X 呼叫紀錄,勘誤):參數順序是 (dst, unit),舊摘要寫成 (unit, dst)。本體以 [esp+8](第 2 參數)當單位序號乘 0x50,兩次 push 後以 [esp+0xc](第 1 參數)當 dst;實機 30 次第 1 參數都是畫面緩衝 0x245018、第 2 參數是單位序號 7..0x19。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
+    {
+     "at": "0x2fad7",
+     "insn": "mov edx, dword ptr [esp + 8]"
+    },
+    {
+     "at": "0x2fb1e",
+     "insn": "add eax, dword ptr [esp + 0xc]"
+    },
     {
      "at": "0x2faeb",
      "insn": "movzx eax, byte ptr [edx + eax + 6]"
@@ -22972,7 +22988,7 @@
   {
    "addr": "0x177fc",
    "name": "action_ring_select",
-   "summary": "(項目表, ...) 以 action_ring_key_poll 讀環上的選擇,回傳 1(取消)時改回 -1,否則回傳選擇索引(FD2.EXE 反組譯)。指令環家族的讀鍵(doc11 的取消 = -1)。",
+   "summary": "(項目表, ...) 以 action_ring_key_poll 讀一個鍵:Esc(掃描碼 1)回 -1、Enter / Space 回 1;↑ ← → ↓ 在項目表對應欄為 0(可用)時把 [0x53c57] 設成 0 / 1 / 2 / 3,這些鍵與其他鍵都回 0(呼叫端迴圈到非 0 為止,選擇的項目在 [0x53c57])(FD2.EXE 反組譯)。指令環家族的讀鍵(doc11 的取消 = -1)。 續一百零八(DOSBox-X 呼叫紀錄,勘誤):舊摘要寫「否則回傳選擇索引」;實機 94 次回傳只有 0(43 次)、1(38 次)、-1(13 次)。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -22983,6 +22999,18 @@
     {
      "at": "0x1781d",
      "insn": "mov eax, 0xffffffff"
+    },
+    {
+     "at": "0x1782e",
+     "insn": "mov eax, 1"
+    },
+    {
+     "at": "0x1783f",
+     "insn": "mov dword ptr [0x3c57], 0"
+    },
+    {
+     "at": "0x17894",
+     "insn": "xor eax, eax"
     }
    ]
   },

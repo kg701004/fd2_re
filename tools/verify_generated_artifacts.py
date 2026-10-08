@@ -116,6 +116,10 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # `.wsl_build/live_s100_segments/` 的分段檔(不進版控),缺檔時產生器回 2。
     ("docs/data/live_scene_entries.json", "trace_scene_names.py",
      ["--export", "{out}", ".wsl_build/live_s100_segments"], "bytes"),
+    # 2026-10-08(doc98 續一百零八):修補版 DOSBox-X 的函式呼叫紀錄(`.wsl_build/*_CALLLOG.TXT`,不進版控)推得的
+    # 逐函式事實(參數、回傳、呼叫端、次數;不含名稱,改名不會漂移)。缺紀錄檔時產生器回 2,這裡報 ERROR。
+    ("docs/data/function_call_profiles.json", "verify_names_by_calllog.py",
+     ["--export", "{out}", "--logs-dir", ".wsl_build"], "bytes"),
     # 2026-09-08 新增。加進來的第一次執行就抓到真東西:treasure 那支把一個
     # **已經是新版位址**的常數又加了一次版本位移(+0x356),輸出 `0x35baa`——
     # 落在指令中段,根本不是函式。已改成從事件跳表 0x51b91 讀(且走 fixup),
