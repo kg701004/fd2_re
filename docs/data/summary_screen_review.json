@@ -261,6 +261,24 @@
    "verdict": "fixed",
    "reason": "edx(第 2 個)複製到 ecx 交給 emu_ld_mul_add,那裡只以 cs:[edi] 讀(係數表);寫回的 [ecx] 是 0x4ce77 pop ecx取回的進入時 eax(第 1 個)。另有 ebx 當項數。參數列改成 (x, 係數表, 項數)",
    "date": "2026-10-08"
+  },
+  {
+   "addr": "0x344b4",
+   "name": "blit_res_cell_xy",
+   "screen": "param_flow",
+   "key": "p3",
+   "verdict": "fixed",
+   "reason": "第 3 個不是 x:唯一呼叫端 draw_password_screen(複製保護畫面,不會執行,沒有實機紀錄)在 0x343c6 推 ebx = malloc 回傳的畫面緩衝,第 5 / 6 個推 0x96 / 0x4b(該函式摘要的座標);本體 0x344da / 0x344de 把第 3、5 個都加進 dst,名稱對調本體看不出。參數列改成 (res, idx, base, stride, x, y)",
+   "date": "2026-10-08"
+  },
+  {
+   "addr": "0x41deb",
+   "name": "wav_parse_chunks",
+   "screen": "param_role",
+   "key": "p2",
+   "verdict": "fixed",
+   "reason": "參數對調:第 2 個(edi,0x41ded)推給 AIL_set_sample_type / _playback_rate / _address 當第 1 個引數(取樣),經 AIL 包裝轉到實作後被寫入;第 1 個(esi,0x41df1)+ 0xc 後交給 strnicmp 比 \"fmt \" / \"data\"(檔案影像)。呼叫端 0x42092 / 0x41fb8 都把取樣推在第 2 個。參數列改成 (檔案影像, 取樣)",
+   "date": "2026-10-08"
   }
  ]
 }

@@ -624,9 +624,9 @@
   {
    "addr": "0x344b4",
    "name": "blit_res_cell_xy",
-   "summary": "(res, idx, x, stride, base, y):cell = res + dword[res + idx*4 + 6];dst = y*stride + x + base;以 0x4e22a(dst, cell, stride) 繪製(0x4e22a = blit_tile24_rle,格式見該筆)。",
+   "summary": "(res, idx, base, stride, x, y):cell = res + dword[res + idx*4 + 6];dst = y*stride + base + x(0x344d5 imul 第 6 個 x 第 4 個、0x344da 加第 3 個、0x344de 加第 5 個);以 0x4e22a(dst, cell, stride) 繪製(0x4e22a = blit_tile24_rle,格式見該筆)。唯一呼叫端 draw_password_screen 第 3 個推 malloc 回傳的畫面緩衝(ebx)、第 5 / 6 個推座標 (0x96, 0x4b) 等(0x343ba..0x343db)。續一百一十三(param_flow 呼叫端值流,勘誤):舊參數列寫 (res, idx, x, stride, base, y),x 與 base 對調—— 兩者都只是加進位址,本體分不出,呼叫端推的值分得出。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x344ce",
@@ -639,6 +639,14 @@
     {
      "at": "0x344e8",
      "insn": "call 0x4e22a"
+    },
+    {
+     "at": "0x344da",
+     "insn": "add eax, dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x344de",
+     "insn": "add eax, dword ptr [esp + 0x18]"
     }
    ]
   },
@@ -21111,9 +21119,9 @@
   {
    "addr": "0x41deb",
    "name": "wav_parse_chunks",
-   "summary": "(取樣, 檔案影像) RIFF WAVE:以 strnicmp 找 \"fmt \"(0x51410)與 \"data\"(0x51415)區塊,依格式呼叫 AIL_set_sample_type / _playback_rate / _address。檔案取樣的兩個 API 呼叫。",
+   "summary": "(檔案影像, 取樣) RIFF WAVE:從第 1 個 + 0xc 起以 strnicmp 找 \"fmt \"(0x51410)與 \"data\"(0x51415)區塊(0x41df1 載入 esi、0x41df5 add esi, 0xc),依格式以第 2 個為取樣呼叫 AIL_set_sample_type / _playback_rate / _address(0x41ded 載入 edi、0x41e6a / 0x41e77 / 0x41eb5 push edi 當第 1 個引數)。檔案取樣的兩個 API 呼叫,都把取樣推在第 2 個(0x42092 push esi 與前面 voc_parse_blocks 的 0x42080 push esi 同一個)。續一百一十三(參數讀寫角色篩選經 AIL 包裝轉交,勘誤):舊參數列寫 (取樣, 檔案影像),兩個對調 —— 「檔案影像」經 AIL_set_sample_* 轉到實作後被寫入。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-08",
    "evidence": [
     {
      "at": "0x41dfa",
@@ -21130,6 +21138,18 @@
     {
      "at": "0x41eb6",
      "insn": "call 0x39694"
+    },
+    {
+     "at": "0x41ded",
+     "insn": "mov edi, dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x41df1",
+     "insn": "mov esi, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x41e6a",
+     "insn": "push edi"
     }
    ]
   },
