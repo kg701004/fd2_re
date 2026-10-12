@@ -455,15 +455,25 @@ def load_specs(st: Static, doc: dict, root: Path = ROOT) -> tuple[list[Spec], li
     return specs, errors
 
 
+_TEXT_CTRL = frozenset(b"\t\n\r")      # 字串裡常見的控制字元(格式字串多以 \n 結尾)
+
+
 def _cstr(full: bytes | None, prefix: bytes) -> str | None:
-    """dump 開頭的 C 字串(可列印 ASCII,NUL 結尾);dump 內沒有 NUL 回 None(分不出來)。
-    NUL 之前有不可列印字元回 ''(必定不是字串)。"""
+    """dump 開頭的 C 字串(可列印 ASCII 與 tab / 換行,NUL 結尾);dump 內沒有 NUL 回 None(分不出來)。
+    NUL 之前有其他不可列印字元回 ''(必定不是字串)。只有 tab / 換行、沒有任何可列印字元的也回 None:指到的可能是
+    小整數(9 / 10 / 13),分不出。
+    續一百一十四:原本換行也算不可列印;帶 AIL_DEBUG 錄的 cl12 裡,AIL 追蹤的格式字串(`AIL_stop_sample(0x%X)` 加換行)
+    31 筆因此被判成不是字串。"""
     buf = full if full is not None else prefix
     i = buf.find(b"\0")
     if i < 0:
         return None
     s = buf[:i]
-    return s.decode("ascii") if all(0x20 <= b < 0x7F for b in s) else ""
+    if not all(0x20 <= b < 0x7F or b in _TEXT_CTRL for b in s):
+        return ""
+    if s and not any(0x20 <= b < 0x7F for b in s):
+        return None
+    return s.decode("ascii")
 
 
 def spec_check(claim: dict, e: Entry, ret: tuple[int, int] | None, argc: int | None) -> tuple[bool, str] | None:
@@ -1052,7 +1062,14 @@ def selftest() -> int:
         False)
     chk("param_cstr 結尾 .DAT -> 成立", sc({"kind": "param_cstr", "param": 1, "suffix": ".DAT"}, ent, None, 3)[0], True)
     chk("param_cstr 結尾 .SAV -> 不成立", sc({"kind": "param_cstr", "param": 1, "suffix": ".SAV"}, ent, None, 3)[0], False)
-    chk("param_cstr 含換行(不可列印)-> 不成立", sc({"kind": "param_cstr", "param": 2}, ent, None, 3)[0], False)
+    chk("param_cstr 含換行的字串(AB + 換行)-> 成立(續一百一十四:格式字串多以換行結尾)",
+        sc({"kind": "param_cstr", "param": 2}, ent, None, 3), (True, "字串 'AB\\n'"))
+    chk("_cstr:可列印 + 換行 / tab 是字串;其他控制字元不是;只有換行分不出;空字串不是;沒有 NUL 分不出",
+        [_cstr(None, b) for b in (b"A\tB\r\n\0", b"A\x01\0", b"\n\0", b"\0", b"AB")], ["A\tB\r\n", "", None, "", None])
+    chk("param_cstr 只有換行 -> 不適用;含其他控制字元 -> 不成立",
+        [sc({"kind": "param_cstr", "param": 1}, parse_calllog(_synthetic(
+            st, memcpy, ret_rt, stack=[5, 0x40, 10], mems={"s1": h + "00" * (32 - len(h) // 2)})).entries[1], None, 3)
+         for h in ("0a00", "410100")], [None, (False, "第 1 參數指向的不是可列印字串")])
     chk("param_cstr dump 內沒有 NUL -> 不適用", sc({"kind": "param_cstr", "param": 3}, ent, None, 3), None)
     unit_e = parse_calllog(_synthetic(st, memcpy, ret_rt, stack=[UNIT_BASE + 3 * 0x50, UNIT_BASE + 3 * 0x50 + 4, 7,
                                                                  0x245018])).entries[1]

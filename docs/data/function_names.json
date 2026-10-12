@@ -482,9 +482,9 @@
   {
    "addr": "0x2eb9f",
    "name": "blit_anim_frame",
-   "summary": "(anim, idx, a3, a4, a5):影格 = anim + dword[anim + idx*4 + 8];取影格開頭的 u16 寬、u16 高,以 0x4e98d(影格+9, 寬, 高, a3, a4, a5) 繪製。",
+   "summary": "(anim, idx, dst, stride, mode):影格 = anim + dword[anim + idx*4 + 8];影格開頭兩個 u16 是 x、y 位移(0x2ebbe / 0x2ebc1),以 blit_rle_image_at_xy(影格+9, x, y, dst, stride, mode) 繪製(0x2ebc5..0x2ebd6 依序推第 5 / 4 / 3 個、y、x、影格+9)。實機:第 3 個是指標、第 4 個 0x280 / 0x190 / 0x140、第 5 個多為 -1。續一百一十四(直接讀反組譯,勘誤):舊摘要把兩個 u16 寫成寬、高,後三個參數寫 a3 / a4 / a5 —— 它們落在 blit_rle_image_at_xy 的 x、y 與 dst、stride、mode 位置;寬高在影格+9 的圖頭。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2ebb9",
@@ -501,15 +501,23 @@
     {
      "at": "0x2ebd7",
      "insn": "call 0x4e98d"
+    },
+    {
+     "at": "0x2ebc1",
+     "insn": "movzx ebx, word ptr [eax + 2]"
+    },
+    {
+     "at": "0x2ebc5",
+     "insn": "push dword ptr [esp + 0x18]"
     }
    ]
   },
   {
    "addr": "0x311e5",
    "name": "anim_step_and_draw",
-   "summary": "(anim, enable, a3, a4):enable==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格,計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。",
+   "summary": "(anim, enable, dst, stride):enable==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格(0x31204 / 0x31208 / 0x3120c 推第 2 / 4 / 3 個當它的 mode / stride / dst),計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。續一百一十四:第 3 / 4 個由佔位名 a3 / a4 改成 dst / stride(原樣轉交給 blit_anim_frame 的第 3 / 4 個;實機第 3 個是指標、第 4 個 0x280 / 0x140)。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x31219",
@@ -526,6 +534,14 @@
     {
      "at": "0x31249",
      "insn": "inc byte ptr [0x4131]"
+    },
+    {
+     "at": "0x31204",
+     "insn": "push dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x3120c",
+     "insn": "push dword ptr [esp + 0x18]"
     }
    ]
   },
@@ -12789,9 +12805,9 @@
   {
    "addr": "0x4d0d0",
    "name": "fmt_exponent",
-   "summary": "(輸出, 指數, ...) 寫指數部分:正負號('+' / '-')後依大小寫 1 / 2 / 3 位數(>= 100 三位、>= 10 兩位)。printf 浮點核心 0x4d25b 呼叫。",
+   "summary": "(輸出, 指數, 位數, 上限) 寫指數部分:正負號('+' / '-')後寫 位數 個數字,不足的高位補 '0'(0x4d13f);位數 為 0 時取 2,指數 >= 100 則取 3(0x4d115..0x4d123)。回傳 1 + 位數;1 + 位數 > 上限 就不寫(0x4d12b);指數需要的位數(>= 100 三位、>= 10 兩位、否則一位)超過 位數 也不寫,回傳 1 + 需要的位數(0x4d130 / 0x4d168)。printf 浮點核心 0x4d25b 呼叫。續一百一十四(直接讀反組譯):補上原本以 ... 省略的第 3 / 4 個參數。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x4d0e6",
@@ -12808,6 +12824,14 @@
     {
      "at": "0x4d0f7",
      "insn": "mov edi, 3"
+    },
+    {
+     "at": "0x4d0df",
+     "insn": "mov eax, dword ptr [ebp + 0x1c]"
+    },
+    {
+     "at": "0x4d12b",
+     "insn": "cmp edx, dword ptr [ebp + 0x20]"
     }
    ]
   },
@@ -13915,9 +13939,9 @@
   {
    "addr": "0x4ce64",
    "name": "emu_ld_fma_store",
-   "summary": "(x, 係數表, 項數) Watcom 暫存器傳參(eax / edx / ebx):讀 eax 指向的 80 位元值 x 到 si:edx:eax,呼叫 emu_ld_mul_add(0x4ce84:累加值從 edx 指向的係數表第 0 筆起,每輪乘 x(ld_mul_core)、加下一筆 10-byte 係數(ld_add_core),共 ebx 輪,0x4ceca dec dword ptr [ebp + 0xc]),結果寫回 x 的位置(0x4ce77 pop ecx 取回進入時的 eax)。(死函式:沒有呼叫端、沒有引用)續一百一十二(參數讀寫角色篩選經轉交,勘誤):舊參數列寫 (來源, 目的),第 2 個其實只被讀(係數表),寫回的是第 1 個。",
+   "summary": "(x*, 係數表, 項數) Watcom 暫存器傳參(eax / edx / ebx):讀 eax 指向的 80 位元值 x 到 si:edx:eax,呼叫 emu_ld_mul_add(0x4ce84:累加值從 edx 指向的係數表第 0 筆起,每輪乘 x(ld_mul_core)、加下一筆 10-byte 係數(ld_add_core),共 ebx 輪,0x4ceca dec dword ptr [ebp + 0xc]),結果寫回 x 的位置(0x4ce77 pop ecx 取回進入時的 eax)。(死函式:沒有呼叫端、沒有引用)續一百一十二(參數讀寫角色篩選經轉交,勘誤):舊參數列寫 (來源, 目的),第 2 個其實只被讀(係數表),寫回的是第 1 個。續一百一十四:第 1 個參數名由 x 改成 x*(指向 80 位元值的指標:0x4ce69 / 0x4ce6d / 0x4ce70 經由它讀、0x4ce78 起寫回),避免被當成座標。",
    "confidence": "static_re",
-   "date": "2026-10-08",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x4ce69",
@@ -13938,6 +13962,10 @@
     {
      "at": "0x4ce77",
      "insn": "pop ecx"
+    },
+    {
+     "at": "0x4ce70",
+     "insn": "mov eax, dword ptr [eax]"
     }
    ]
   },
@@ -14789,9 +14817,9 @@
   {
    "addr": "0x2bf83",
    "name": "anim_draw_and_advance",
-   "summary": "(影格索引*, 計時*, 動畫, ...) blit_anim_frame 畫目前影格,計時加 1,到了該影格的持續值(+6)就歸零並前進到下一格。tai_phase_handler_2 呼叫。",
+   "summary": "(影格索引*, 計時*, dst, stride, 動畫) blit_anim_frame(動畫, *影格索引, dst, stride, -1) 畫目前影格(0x2bf97 推 -1、0x2bf99 / 0x2bf9d 推第 4 / 3 個、0x2bfa5 推第 5 個當動畫),計時加 1,到了該影格的持續值(動畫的影格 + 6)就歸零並前進到下一格。tai_phase_handler_2 的兩個呼叫端(0x2be52 / 0x2bebf)推 (兩個全域 byte 的位址, 它的第 3 個參數, 第 4 個參數, 第 2 個參數)。續一百一十四(直接讀反組譯,勘誤):舊參數列寫 (影格索引*, 計時*, 動畫, ...),動畫其實是第 5 個(0x2bfb7 add eax, dword ptr [esp + 0x1c],當時堆疊位移 8);第 3 / 4 個是轉給 blit_anim_frame 的 dst / stride。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2bf97",
@@ -14808,6 +14836,14 @@
     {
      "at": "0x2bfd4",
      "insn": "inc byte ptr [esi]"
+    },
+    {
+     "at": "0x2bfa5",
+     "insn": "push dword ptr [esp + 0x2c]"
+    },
+    {
+     "at": "0x2bfb7",
+     "insn": "add eax, dword ptr [esp + 0x1c]"
     }
    ]
   },
@@ -24352,9 +24388,9 @@
   {
    "addr": "0x22470",
    "name": "unit_present_intro_frames",
-   "summary": "(單位, ...) 單位出現演出的前段:FDOTHER #6 的圖格 0x72 .. 0x7c 逐張以 blit_rle_c0_transparent 畫到 0x8088 + 24 x (x - 鏡頭 X) + 0x1c8 x 24 x (y - 鏡頭 Y) + 0x1c8,每張後 draw_unit_layer 重畫、copy_rect 輸出 320 x 192 並 wait_ticks(1),共 11 幀(FD2.EXE 反組譯)。unit_present 呼叫(doc31)。",
+   "summary": "(x, y, 背景緩衝) 單位出現演出的前段:每幀先以 memmove 把 背景緩衝(0x25680 bytes)蓋回畫面緩衝(0x22498..0x224a7),FDOTHER #6 的圖格 0x72 .. 0x7c 逐張以 blit_rle_c0_transparent 畫到 0x8088 + 24 x (x - 鏡頭 X) + 0x1c8 x 24 x (y - 鏡頭 Y) + 0x1c8,每張後 draw_unit_layer 重畫、copy_rect 輸出 320 x 192 並 wait_ticks(1),共 11 幀(FD2.EXE 反組譯)。unit_present 呼叫(doc31):0x222c8..0x222cd 推 (它的第 4 個參數, 第 5 個參數, malloc 來的緩衝)。續一百一十四(直接讀反組譯,勘誤):舊參數列寫 (單位, ...);第 1 個是格座標 x(0x224af 載入後減鏡頭 X)、第 2 個是 y(0x2247e 載入 ebp,0x224c9 起減鏡頭 Y),沒有單位參數。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x224f5",
@@ -24367,6 +24403,18 @@
     {
      "at": "0x22526",
      "insn": "call 0x11eb0"
+    },
+    {
+     "at": "0x2247e",
+     "insn": "mov ebp, dword ptr [esp + 0x18]"
+    },
+    {
+     "at": "0x2249d",
+     "insn": "push dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x224af",
+     "insn": "mov eax, dword ptr [esp + 0x14]"
     }
    ]
   },
@@ -24848,9 +24896,9 @@
   {
    "addr": "0x2b439",
    "name": "sortie_required_member_check",
-   "summary": "(選取陣列, ...) 出擊的必須出場檢查:掃描單位([0x53a45],每筆 0x50,+8 為 id)找本章必須出場的角色,沒選到時開對話框顯示「本章XX必須出場!」並等鍵,回傳是否通過(FD2.EXE 反組譯)。sortie_member_select 呼叫(doc99 / doc91)。呼叫條件(sortie_member_select 0x2b2bb..0x2b345,章節 [0x53c03]):0x10 章在 0x33499(0x12) 成立時查角色 0x12;0x11 / 0x13 與 0x19 以後查 9(0x19 章通過再查 0x1d);0x12 查 0x10;0x14 查 0x15;0x15 / 0x16 查 0x18;其餘章節不呼叫。通過時依同一張表以 roster_move_member_to_slot1 把該角色移到第 1 格(0x2b358..0x2b3af)。",
+   "summary": "(人數, 角色 id) 出擊的必須出場檢查:掃描單位陣列 [0x53a45] 的第 1 .. 人數 筆(每筆 0x50,+8 為 id;第 0 筆不看,0x2b458 lea ebx, [edx + 1])找 角色 id,沒選到時開對話框顯示「本章XX必須出場!」並等鍵,回傳是否通過(FD2.EXE 反組譯)。sortie_member_select 呼叫(doc99 / doc91)。呼叫條件(sortie_member_select 0x2b2bb..0x2b345,章節 [0x53c03]):0x10 章在 0x33499(0x12) 成立時查角色 0x12;0x11 / 0x13 與 0x19 以後查 9(0x19 章通過再查 0x1d);0x12 查 0x10;0x14 查 0x15;0x15 / 0x16 查 0x18;其餘章節不呼叫。通過時依同一張表以 roster_move_member_to_slot1 把該角色移到第 1 格(0x2b358..0x2b3af)。續一百一十四(實機 cl11 + 直接讀反組譯,勘誤):舊參數列寫 (選取陣列, ...);第 1 個是要掃描的筆數(0x2b447 載入 ecx 當迴圈上限,呼叫端 0x2b344 推 ebp = 出擊目標人數),第 2 個是角色 id(0x2b46f)。實機 (15, 9) 回 1,接著呼叫 roster_move_member_to_slot1(9)。",
    "confidence": "static_re",
-   "date": "2026-10-08",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2b488",
@@ -24859,6 +24907,18 @@
     {
      "at": "0x2b4bd",
      "insn": "call 0x15f84"
+    },
+    {
+     "at": "0x2b447",
+     "insn": "mov ecx, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x2b454",
+     "insn": "cmp edx, ecx"
+    },
+    {
+     "at": "0x2b46f",
+     "insn": "movzx eax, byte ptr [esp + 0x10]"
     }
    ]
   },

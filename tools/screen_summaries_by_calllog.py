@@ -430,6 +430,8 @@ def _depth(o: str, delta: int, ebp: int | None) -> int | None:
 CAP = 8                    # 合流後同一位置最多記幾個可能值;超過就當作不明
 _TOP = "*"                 # 不明(與任何集合合流仍是不明 -> 單調,不動點必停)
 UNK = frozenset({None})    # 值流:來源不明
+CFG_BUDGET = 64            # 每個指令平均最多處理幾次(真實 EXE 最多 7.9 次,0x2ebe1);超過 = 轉移不單調,當作走不出
+CFG_OVERRUN: list[int] = []    # 撞到上限的函式(應該一直是空的;selftest 以真實 EXE 斷言)
 
 
 def _join(a: dict, b: dict, missing: frozenset) -> dict:
@@ -470,6 +472,8 @@ def cfg_states(cg, target: int, entries: list[int], init: dict, step, missing: f
     事件處理)時仍照走 —— 那裡位移不為 0 只是收尾段替它清堆疊,本體內的位移是對的(續一百一十三,141 個判不出的有 115 個)。
     跳表的 case 段沒有直接前驅,當作間接 jmp 的後繼;仍走不到的(本體沒有間接 jmp)依位址順序以空狀態起算。
     `step(指令, (位移, ebp), 狀態) -> 新狀態`,不可改動傳入的 dict。
+    迭代上限(續一百一十四):合流單調時必停;轉移寫錯(不單調)會跑不停,所以處理次數超過 CFG_BUDGET × 指令數就回 None,
+    並把函式記進 CFG_OVERRUN。
     續一百一十三取代依位址順序的近似:共用尾段(兩條路徑各推不同的引數再 jmp 進來)依位址順序只看得到落入的
     那條 —— 呼叫點值流對實機值的 33 筆矛盾,主因就是這個(另一個是位址常數沒套 fixup)。
     """
@@ -489,9 +493,14 @@ def cfg_states(cg, target: int, entries: list[int], init: dict, step, missing: f
     orphans = sorted(a for a in nodes if a not in reached and a != start)
     sin: dict[int, dict] = {start: dict(init)}
     work = [start]
+    budget = CFG_BUDGET * len(nodes)
     while True:
         while work:
             a = work.pop()
+            budget -= 1
+            if budget < 0:
+                CFG_OVERRUN.append(target)
+                return None
             out = step(ins[a], trace[a], sin[a])
             for t in _succs(ins[a], nodes, orphans):
                 if t not in sin:
@@ -786,8 +795,9 @@ def role_uses(cg, code: bytes | None, base: int, entries: list[int], target: int
     個數(`callee_argc`,續一百一十三)。被呼叫端一律以堆疊傳參看待(呼叫端推了引數)。`code` 是 None 時不追轉交。
     `known` 是已知入口的集合(預設由 entries 建);不是已知入口的呼叫目標不追。
     暫存器 / 全域槽轉交:被呼叫端以 `init = {暫存器 或 ("g", 位址): 1}` 重算,取它對第 1 個(入口值)的存取。
-    存進全域槽(續一百一十三,`anim_vm_set_context` 這類「設定」函式):讀該槽的其他函式以 `init = {("g", 位址): 1}`
-    重算,存取算進 fr / fw(一樣佔一層深度)。
+    存進全域槽(續一百一十三,`anim_vm_set_context` 這類「設定」函式):讀該槽的函式以 `init = {("g", 位址): 1}`
+    重算,存取算進 fr / fw(一樣佔一層深度)。含自己(續一百一十四):本體在存之前讀到的是上一次呼叫存的值;存之後
+    的讀回已由本體的直接追蹤算過,以 init 重算時該槽在存入處失效,不會重複計。原本排除自己,真實 EXE 上結果相同。
     memo 的總計鍵含 depth:同一個函式在較深處被截斷的結果不可給較淺處重用(否則結果依走訪順序而變);
     本體的直接存取與轉交清單與 depth 無關,另以 ("direct", …) 鍵共用。
     """
@@ -807,8 +817,8 @@ def role_uses(cg, code: bytes | None, base: int, entries: list[int], target: int
     out = {k: {"r": u["r"], "w": u["w"], "fr": 0, "fw": 0} for k, u in direct.items()}
     if depth < FWD_DEPTH:
         for k, t, j, site in fwd or []:
-            if t is None:                              # 存進全域槽:改看讀這個槽的其他函式
-                for c in sorted(_global_readers(cg, entries, memo).get(j[1], set()) - {target}):
+            if t is None:                              # 存進全域槽:改看讀這個槽的函式
+                for c in sorted(_global_readers(cg, entries, memo).get(j[1], set())):
                     su = (role_uses(cg, code, base, entries, c, 0, False, memo, depth + 1, known, {j: 1}) or {}).get(1)
                     if su:
                         o = out.setdefault(k, {"r": 0, "w": 0, "fr": 0, "fw": 0})
@@ -919,8 +929,6 @@ def _value_step(i, td: tuple[int, int | None], s: dict, c: int, fixups: dict[int
             if d <= -4:
                 return frozenset({("param", c, -d // 4)})
             return s.get(d, UNK) if d > 0 else UNK
-        if o.startswith(("byte ptr", "word ptr")):
-            return _SMALL
         if (gs := _gslot(o, _mem_fix(i, fixups))) is not None and gs in s:
             return s[gs]
         g = _GLOBAL.match(o)
@@ -1383,6 +1391,15 @@ def selftest() -> int:
         print(f"    {'PASS' if ok else 'FAIL'}: {label}" + ("" if ok else f"  got={got!r} want={want!r}"))
         if not ok:
             fails.append(label)
+
+    def dig(d, *ks):
+        """巢狀取值;任何一層沒有 -> None(程式壞掉時這一題回 FAIL,不是當機)。"""
+        for k in ks:
+            try:
+                d = d[k]
+            except (KeyError, IndexError, TypeError):
+                return None
+        return d
 
     print("[1] 參數列")
     chk("一般", parse_sig("(dst, stride, res):…"), (["dst", "stride", "res"], 3))
@@ -1866,28 +1883,28 @@ def selftest() -> int:
     tcode[5:13] = b"\xe8\0\0\0\0\x83\xc4\x04"
     tg = _G({0: tail, 0x100: [RET]})
     ts = arg_sources(tg, [0, 0x100], bytes(tcode), 0, {}, {}, {}, {})
-    chk("合流:共用尾段的引數 = 兩條路徑的聯集 {0, 5}", ts[0x100][5][1][1], frozenset({("imm", 0), ("imm", 5)}))
-    chk("呼叫點記呼叫者", ts[0x100][5][0], 0)
+    chk("合流:共用尾段的引數 = 兩條路徑的聯集 {0, 5}", dig(ts, 0x100, 5, 1, 1), frozenset({("imm", 0), ("imm", 5)}))
+    chk("呼叫點記呼叫者", dig(ts, 0x100, 5, 0), 0)
     ts2 = arg_sources(_G({0: [("push", "0x3a30"), ("call", "0x100"), ("add", "esp, 4"), RET], 0x100: [RET]}), [0, 0x100],
                       bytes(b"\x90" + b"\xe8\0\0\0\0\x83\xc4\x04" + b"\x90" * 0x200), 0, {1 - 4: 0x53A30}, {}, {}, {})
-    chk("位址常數套 fixup -> 執行期值(obj2 + 0x19c000;合成指令長 1,立即值位置 = 位址 + 1 - 4)", ts2[0x100][1][1][1],
+    chk("位址常數套 fixup -> 執行期值(obj2 + 0x19c000;合成指令長 1,立即值位置 = 位址 + 1 - 4)", dig(ts2, 0x100, 1, 1, 1),
         frozenset({("imm", 0x53A30 + VC.DELTA)}))
     chk("fixup 不在立即值位置(只有位移有)-> 立即值不重定位",
         _value_step(_I(0x10, "mov", "dword ptr [0x3c57], 0"), (0, None), {}, 0, {0x10: 0x53C57}, set()),
         {("g", 0x53C57): frozenset({("imm", 0)})})
     chk("真實:0x28ee1 / 0x291f5 推的 esi 是 [0x53c57] 的內容(0),不是它的位址",
-        all(("imm", 0x1EFC57) not in rsrc0[0x1B8E7][x][1][2] for x in (0x28EE1, 0x291F5)), True)
+        [dig(rsrc0, 0x1B8E7, x, 1, 2) for x in (0x28EE1, 0x291F5)], [frozenset({("imm", 0)})] * 2)
     chk("obj3(>= 0x60000)位移不同", _runtime(0x602AD), 0x602AD + VC.OBJ3_DELTA)
     stg = [("sub", "esp, 4"), ("mov", "dword ptr [esp], 7"), ("call", "0x100"), ("add", "esp, 4"), RET]
     scode = bytearray(b"\x90" * 0x200)
     scode[2:10] = b"\xe8\0\0\0\0\x83\xc4\x04"
-    chk("mov [esp], 7 預先放的引數", arg_sources(_G({0: stg, 0x100: [RET]}), [0, 0x100], bytes(scode), 0, {}, {}, {},
-                                              {})[0x100][2][1][1], frozenset({("imm", 7)}))
+    chk("mov [esp], 7 預先放的引數", dig(arg_sources(_G({0: stg, 0x100: [RET]}), [0, 0x100], bytes(scode), 0, {}, {}, {},
+                                              {}), 0x100, 2, 1, 1), frozenset({("imm", 7)}))
     nocl = arg_sources(_G({0: [("push", "9"), ("call", "0x100"), ("jmp", "0x300")], 0x100: [RET], 0x300: [RET]}),
                        [0, 0x100, 0x300], bytes(0x400), 0, {}, {}, {}, {0x100: 1})
-    chk("呼叫點後面沒有 add esp -> 引數個數取被呼叫端 argc", nocl[0x100][1][1].get(1), frozenset({("imm", 9)}))
+    chk("呼叫點後面沒有 add esp -> 引數個數取被呼叫端 argc", dig(nocl, 0x100, 1, 1, 1), frozenset({("imm", 9)}))
     chk("值流:byte 載入 -> small、lea [esp+X] -> stack、xor r, r -> 0",
-        [_value_step(_I(0, m, o), (4, None), {}, 0, {}, set())[r] for m, o, r in
+        [_value_step(_I(0, m, o), (4, None), {}, 0, {}, set()).get(r) for m, o, r in
          (("movzx", "eax, byte ptr [ebx]", "eax"), ("lea", "eax, [esp + 8]", "eax"), ("xor", "ecx, ecx", "ecx"))],
         [_SMALL, frozenset({("stack",)}), frozenset({("imm", 0)})])
     chk("值流:寫子暫存器,原本不明 -> 不明;原本小 -> 小",
@@ -1911,7 +1928,7 @@ def selftest() -> int:
     lcode = bytearray(b"\x90" * 0x200)
     lcode[2:10] = b"\xe8\0\0\0\0\x83\xc4\x04"
     chk("迴圈:定點會停(inc 使 ecx 不明,入口的 0 與回邊的不明合流)",
-        arg_sources(_G({0: loop, 0x100: [RET]}), [0, 0x100], bytes(lcode), 0, {}, {}, {}, {})[0x100][2][1][1],
+        dig(arg_sources(_G({0: loop, 0x100: [RET]}), [0, 0x100], bytes(lcode), 0, {}, {}, {}, {}), 0x100, 2, 1, 1),
         frozenset({("imm", 0), None}))
     chk("[ebp - 8] 是區域變數(深度 = 框架基底 + 8)", _depth("dword ptr [ebp - 8]", 12, 4), 12)
     chk("[esp] 沒有位移也是堆疊", _depth("dword ptr [esp]", 8, None), 8)
@@ -1992,6 +2009,65 @@ def selftest() -> int:
     chk("呼叫點沒有清堆疊 -> 以被呼叫端 argc 追轉交", role_uses(nw, bytes(ncode), 0, [0x0, 0x100, 0x200], 0x0, 1, False,
                                                   {}), {1: {"r": 0, "w": 0, "fr": 0, "fw": 1}})
 
+    # ---- 續一百一十四:突變存活的補題(每題都有一個改壞的版本會讓它 FAIL)
+    JT = ("jmp", "dword ptr [eax*4 + 0x1000]")
+    chk("跳表:case 段接在間接 jmp 之後,進入時帶著 jmp 當下的狀態(edi 已載入參數)",
+        U2([("mov", "edi, dword ptr [esp + 4]"), JT, ("mov", "byte ptr [edi], 1"), RET], n=1), {1: W1})
+    chk("跳表:case 段以迴圈開頭(回邊是它的前驅,不算孤立段)-> 仍以空狀態補走",
+        U2([JT, ("mov", "edi, dword ptr [esp + 4]"), ("stosb", "byte ptr es:[edi], al"), ("dec", "ecx"), ("jne", "0x1"),
+            RET], n=1), {1: W1})
+    grown = [0]
+
+    def grow(i, td, s0):                               # 不單調的轉移:每走一次多一個位置(走滿 5000 次才停)
+        grown[0] += 1
+        return {**s0, grown[0]: frozenset({1})} if grown[0] < 5000 else s0
+
+    pre_over = list(CFG_OVERRUN)
+    del CFG_OVERRUN[:]
+    chk("引擎:轉移不單調 -> 撞到迭代上限就停,回 None 並記下函式(沒有上限會走滿 5000 次)",
+        (cfg_states(_G({0: [("dec", "ecx"), ("jne", "0x0"), RET]}), 0, [], {}, grow, frozenset()), list(CFG_OVERRUN),
+         grown[0] < 5000), (None, [0], True))
+    CFG_OVERRUN[:] = pre_over
+    chk("非 mov 寫區域變數(xor [esp], eax)-> 該格失效",
+        U2([("sub", "esp, 4"), ("mov", "eax, dword ptr [esp + 8]"), ("xor", "dword ptr [esp], eax"),
+            ("mov", "ecx, dword ptr [esp]"), ("mov", "byte ptr [ecx], 1"), ("add", "esp, 4"), RET], n=1), {})
+    chk("只載入參數的一個 byte(mov al, byte ptr [esp + 4])-> eax 不是那個參數",
+        U2([("mov", "al, byte ptr [esp + 4]"), ("mov", "byte ptr [eax], 1"), RET], n=1), {})
+    chk("exact:sub r, 暫存器 失效;一般模式保留;sub r, 常數 保留",
+        [_param_step(_I(0, "sub", o), (0, None), {"eax": frozenset({1})}, 1, False, ex).get("eax")
+         for o, ex in (("eax, ecx", True), ("eax, ecx", False), ("eax, 4", True))], [None, frozenset({1}), frozenset({1})])
+    chk("int 21h:設定 AH 的指令不緊鄰(中間隔兩個不寫 eax 的指令)",
+        U2([("mov", "ah, 0x3d"), ("mov", "edx, dword ptr [esp + 4]"), ("xor", "ecx, ecx"), ("int", "0x21"), RET], n=1),
+        {1: R1})
+
+    def fwd_ints(body: list[tuple[str, str]]) -> list:
+        fl: list = []
+        param_uses(_G({0: body}), 0, [], 1, False, fl)
+        return [f for f in fl if isinstance(f[2], int)]
+
+    pre8 = [("sub", "esp, 8"), ("mov", "eax, dword ptr [esp + 0xc]")]
+    post8 = [("call", "0x100"), ("add", "esp, 8"), RET]
+    chk("轉交:對齊的堆疊格算第 j 個引數(對照);未對齊的(mov [esp + 2], r)不算",
+        (fwd_ints(pre8 + [("mov", "dword ptr [esp + 4], eax")] + post8),
+         fwd_ints(pre8 + [("mov", "dword ptr [esp + 2], eax")] + post8)), ([(1, 0x100, 2, 3)], []))
+    chk("值流:讀回區域格 / 推入的引數(mov r, [esp])",
+        _value_step(_I(0, "mov", "eax, dword ptr [esp]"), (4, None), {4: frozenset({("imm", 7)})}, 0, {}, set()).get("eax"),
+        frozenset({("imm", 7)}))
+    thk = arg_sources(_G({0: [("push", "5"), ("call", "0x100"), ("add", "esp, 4"), RET], 0x100: [("jmp", "0x200")],
+                          0x200: [RET]}), [0, 0x100, 0x200],
+                      bytes(b"\x90" + b"\xe8\0\0\0\0\x83\xc4\x04" + b"\x90" * 0x300), 0, {}, {0x200: 0x100}, {}, {})
+    chk("呼叫 thunk(0x100 jmp 0x200)的呼叫點也記在真入口 0x200", (dig(thk, 0x200, 1, 1, 1), dig(thk, 0x100, 1, 1, 1)),
+        (frozenset({("imm", 5)}),) * 2)
+    rcode = bytes(b"\x90\x90" + b"\xe8\0\0\0\0\x83\xc4\x08" + b"\x90" * 0x300)
+    rb = _G({0: [("push", "eax"), ("push", "edx"), ("call", "0x100"), ("add", "esp, 8"), RET], 0x100: [RET]})
+    chk("暫存器傳參的呼叫者(沒有清堆疊、本體不讀堆疊參數):入口 eax / edx 是它的第 1 / 2 個參數;傳法不明的呼叫者不當參數",
+        [(dig(r, 0x100, 2, 1, 1), dig(r, 0x100, 2, 1, 2))
+         for r in (arg_sources(rb, [0, 0x100], rcode, 0, {}, {}, {}, {0: 0}), arg_sources(rb, [0, 0x100], rcode, 0, {}, {}, {}, {}))],
+        [(frozenset({("param", 0, 2)}), frozenset({("param", 0, 1)})), (UNK, UNK)])
+    chk("call_conv:清堆疊個數唯一 / 沒有清堆疊但本體讀堆疊參數 -> stack;都沒有且 argc 0 -> reg;個數不一 / argc 不明 -> None",
+        [call_conv(1, c, a) for c, a in (({1: {2}}, {}), ({}, {1: 3}), ({}, {1: 0}), ({1: {2, 3}}, {1: 0}), ({}, {}),
+                                         ({1: {2}}, {1: 0}))], ["stack", "stack", "reg", None, None, "stack"])
+
     print("[15] 續一百一十三:param_flow(合成)")
     chk("flow_verdict:全部違反 -> viol", flow_verdict("small", {1: {0x1F6C80}, 2: {0x1F6C90}}), ("viol", 2, 2))
     chk("flow_verdict:4 / 5 違反(80%)-> viol", flow_verdict("small", {i: {0x1F6C80} if i < 4 else {5}
@@ -2012,24 +2088,47 @@ def selftest() -> int:
     fv = flow_values(fsrc, fprof, fcl, {}, 0x100, 1, 0x100)
     chk("flow_values:呼叫者參數 -> 它的實機值;回傳值 -> 被呼叫者的實機回傳;全域載入解不出;沒紀錄的呼叫者往上追",
         fv, {0x10: {0x1F6C80}, 0x20: {0x1F6C80}, 0x30: None, 0x40: {3}})
-    chk("flow_values:受測函式自己的實機值不用", flow_values(fsrc, fprof, fcl, {}, 0x100, 1, 0x900)[0x10], None)
+    fx9 = flow_values(fsrc, fprof, fcl, {}, 0x100, 1, 0x900)
+    chk("flow_values:受測函式自己的實機值不用(它的參數、它的回傳值都是)", (fx9.get(0x10, "缺"), fx9.get(0x20, "缺")),
+        (None, None))
     chk(f"flow_values:往上追最多 {FLOW_DEPTH} 層", flow_values(
         {0x100: {1: (0x200, {1: frozenset({("param", 0x200, 1)})})}, 0x200: {2: (0x300, {1: frozenset({("param", 0x300, 1)})})},
          0x300: {3: (0x400, {1: frozenset({("param", 0x400, 1)})})}, 0x400: {4: (0x500, {1: frozenset({("param", 0x500, 1)})})},
          0x500: {5: (0x600, {1: frozenset({("imm", 1)})})}},
-        {}, {a: {1} for a in range(0x100, 0x700, 0x100)}, {}, 0x100, 1, 0)[1], None)
-    dprof = {"0x500": prof([], {"s1": {"top": [["0x1f6c80", 9]]}, "s2": {"top": [["0x5", 2]]}}, [["0x0", 9]], argc=2)}
+        {}, {a: {1} for a in range(0x100, 0x700, 0x100)}, {}, 0x100, 1, 0).get(1, "缺"), None)
+    cprof = {"0x900": prof([], {"s2": {"top": [["0x9", 9]]}, "edx": {"top": [["0x7", 9]]}}, [])}
+    csrc = {0x100: {0x10: (0x900, {1: frozenset({("param", 0x900, 2)})})}}
+    chk("flow_values:呼叫者的參數位置依它的傳法 —— 堆疊(本體讀堆疊參數)取 s2、暫存器取 edx、不明解不出",
+        [flow_values(csrc, cprof, {}, ac, 0x100, 1, 0x100).get(0x10, "缺") for ac in ({0x900: 2}, {0x900: 0}, {})],
+        [{9}, {7}, None])
+    ptr9 = {"top": [["0x1f6c80", 9]]}
+    dprof = {"0x500": prof([], {"s1": ptr9, "s2": ptr9, "s3": {"top": [["0x1f6c80", 2]]}}, [["0x0", 9]], argc=3)}
     dcode = bytearray(b"\x90" * 0x100)
     dcode[0x10:0x18] = b"\xe8\0\0\0\0\x83\xc4\x04"
     chk("down_verdict:被呼叫端該位置實機是指標 -> small 違反", down_verdict("small", [(0x500, 1, 0x10)], dprof, bytes(dcode), 0),
         ("viol", 1, 1))
-    chk("down_verdict:呼叫點清不到第 j 個 / 次數 < MIN_COVERED / 沒紀錄都不算",
+    chk("down_verdict:呼叫點只清 1 個 -> 第 2 個不算;被呼叫端沒紀錄不算",
         [down_verdict("small", f, dprof, bytes(dcode), 0)[0] for f in ([(0x500, 2, 0x10)], [(0x600, 1, 0x10)])],
         [None, None])
     dcode2 = bytearray(dcode)
     dcode2[0x17] = 8
-    chk("down_verdict:次數 2 < MIN_COVERED 不算", down_verdict("small", [(0x500, 2, 0x10)], dprof, bytes(dcode2), 0),
+    chk("down_verdict(對照):同一筆,呼叫點清 2 個 -> 判違反(擋下上一題的是清堆疊個數)",
+        down_verdict("small", [(0x500, 2, 0x10)], dprof, bytes(dcode2), 0), ("viol", 1, 1))
+    dcode3 = bytearray(dcode)
+    dcode3[0x17] = 12
+    chk("down_verdict:次數 2 < MIN_COVERED 不算", down_verdict("small", [(0x500, 3, 0x10)], dprof, bytes(dcode3), 0),
         (None, 0, 0))
+    selfp = {"0x100": prof([], {"s1": ptr9}, []), "0x500": prof([], {"s1": ptr9}, [])}
+    fcode = bytearray(b"\x90" * 0x200)
+    fcode[0x101:0x109] = b"\xe8\0\0\0\0\x83\xc4\x04"
+
+    def downs(callee: int) -> list:
+        g = _G({0x100: [("push", "dword ptr [esp + 4]"), ("call", f"{callee:#x}"), ("add", "esp, 4"), RET], 0x500: [RET]})
+        return [r[4] for r in flow_param_verdicts({"addr": "0x100", "name": "f", "summary": "(x):…"}, g, [0x100, 0x500], {},
+                                                  selfp, {0x100: {1}}, {}, bytes(fcode), 0)]
+
+    chk("被呼叫端判決:原樣轉交給別的函式 -> 用它的實機值(對照);遞迴呼叫自己 -> 不用(受測函式自己的實機值)",
+        (downs(0x500), downs(0x100)), ([("viol", 1, 1)], [(None, 0, 0)]))
     # screen_flow:實機比過型別的參數不再比;候選鍵 p<k>
     sg = _G({0x100: [("mov", "eax, dword ptr [esp + 4]"), ("mov", "eax, dword ptr [esp + 8]"), RET]})
     ssrc = {0x100: {0x10: (0x900, {1: frozenset({("imm", 0x1F6C80)}), 2: frozenset({("imm", 0x1F6C80)})})}}
@@ -2050,10 +2149,10 @@ def selftest() -> int:
 
     print("[16] 續一百一十三:真實 EXE 與實機紀錄校準")
     rsrc = rsrc0
-    s0x1237c = rsrc[0x126F7][0x1237C][1][3]
+    s0x1237c = dig(rsrc, 0x126F7, 0x1237C, 1, 3) or frozenset()
     chk("真實:0x1237c 共用尾段(0x122f7 jmp 進來)的第 3 個引數含 0 / 1 / 5(依位址順序只有 5)",
         {("imm", 0), ("imm", 1), ("imm", 5)} <= s0x1237c, True)
-    chk("真實:0x1eb1c 推的位址常數套 fixup = 實機值 0x1efa30", rsrc[0x1EC2A][0x1EB1C][1][1],
+    chk("真實:0x1eb1c 推的位址常數套 fixup = 實機值 0x1efa30", dig(rsrc, 0x1EC2A, 0x1EB1C, 1, 1),
         frozenset({("imm", 0x1EFA30)}))
     n_ok, cbad = flow_live_consistency(rsrc, real_prof, clean, st.argc)
     print(f"    (呼叫點值流對實機:相符 {n_ok}、矛盾 {len(cbad)})")
@@ -2106,6 +2205,11 @@ def selftest() -> int:
                                           run_sc2.denom.get("param_flow 可比(被呼叫端)", 0) > 0), (True, True))
     chk("真實 param_role 可比 ≥ 105(續一百一十三沿控制流 + 五種機制;續一百一十二 97)",
         run_sc2.denom.get("param_role 可比", 0) >= 105, True)
+    chk("真實:真入口 0x3e01d 的呼叫點都經 thunk 0x3790a(≥ 150 個),兩邊記的呼叫點相同",
+        (len(dig(rsrc, 0x3E01D) or {}) >= 150, set(dig(rsrc, 0x3E01D) or {}) == set(dig(rsrc, 0x3790A) or {1})), (True, True))
+    chk("真實:0x41b84 跳表 case 段裡的呼叫點 0x41bde,第 1 個引數 = 呼叫者的第 1 個參數",
+        dig(rsrc, 0x39694, 0x41BDE, 1, 1), frozenset({("param", 0x41B84, 1)}))
+    chk("真實:沒有函式撞到引擎的迭代上限", CFG_OVERRUN, [])
 
     print()
     print("--selftest OK" if not fails else f"--selftest FAILED: {fails}")
