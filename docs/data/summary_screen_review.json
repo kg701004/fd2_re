@@ -279,6 +279,96 @@
    "verdict": "fixed",
    "reason": "參數對調:第 2 個(edi,0x41ded)推給 AIL_set_sample_type / _playback_rate / _address 當第 1 個引數(取樣),經 AIL 包裝轉到實作後被寫入;第 1 個(esi,0x41df1)+ 0xc 後交給 strnicmp 比 \"fmt \" / \"data\"(檔案影像)。呼叫端 0x42092 / 0x41fb8 都把取樣推在第 2 個。參數列改成 (檔案影像, 取樣)",
    "date": "2026-10-08"
+  },
+  {
+   "addr": "0x1f558",
+   "name": "draw_map_scaled_fixedpoint",
+   "screen": "param_type",
+   "key": "s1",
+   "verdict": "fixed",
+   "reason": "參數列改為 (cx, cy, step, tiles);圖格指標表是第 4 個(0x1f660),第 1 個是中心 x(0x1f571)",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x1f73f",
+   "name": "show_fdother_static_screen",
+   "screen": "param_flow",
+   "key": "p3",
+   "verdict": "fixed",
+   "reason": "參數列改為 (索引 A, 索引 B, 來源圖, 起始列);第 3 個是 copy_rect 的來源緩衝(0x1f800)",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x22af6",
+   "name": "effect_cure_status_flag",
+   "screen": "param_flow",
+   "key": "p4",
+   "verdict": "fixed",
+   "reason": "參數列改為 (使用者, 動畫號, 數量, targets, 狀態欄位偏移);第 4 個是目標序號陣列(0x22b4b),偏移是第 5 個(0x22b79)",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x3739e",
+   "name": "freopen",
+   "screen": "param_flow",
+   "key": "p2",
+   "verdict": "fixed",
+   "reason": "參數名 模式 改成 模式字串(原樣交給 stdio_doopen 的模式字串)",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x1c4cc",
+   "name": "play_map_effect_animation",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "第 1 個參數本體確實不讀;呼叫端一律推施放者 / 使用者(item_effect_heal 0x211c2、effect_cure_status_flag 0x22b10 等),名稱依呼叫端",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x1cd17",
+   "name": "flash_listed_units_band_cycle",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "第 1 個參數本體確實不讀;三個呼叫端推的都是自己的第 1 個參數(使用者 / caster),名稱依呼叫端",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "事件回呼,經函式指標呼叫、沒有靜態呼叫點;本體不讀第 2 個。名稱依 AIL 的 MIDI 事件回呼慣例(驅動, 序列, 狀態, 資料 1, 資料 2),本體無從驗證",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x365ab",
+   "name": "dpmi_dos_free",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體只讀第 3 個(選擇子,0x365b5);第 1 個不讀。名稱依實機值:0xf710 / 0x137c0 這類 = 第 2 個 >> 12,即 段 x 16",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x365ab",
+   "name": "dpmi_dos_free",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "本體不讀第 2 個。名稱依實機值:0xf710000 這類,低 16 位全為 0,即 段 << 16(dpmi_dos_alloc_locked 第 3 個輸出)",
+   "date": "2026-10-12"
+  },
+  {
+   "addr": "0x2fe14",
+   "name": "anim_loop_over_cycling_bg",
+   "screen": "param_role",
+   "key": "p2",
+   "verdict": "fixed",
+   "reason": "參數列改為 (動畫, 緩衝區, 次數);第 2 個是被寫入的緩衝區(0x2fe57 / 0x2fe9d),動畫是第 1 個(0x2fe25)",
+   "date": "2026-10-12"
   }
  ]
 }

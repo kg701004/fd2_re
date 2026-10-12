@@ -1676,9 +1676,9 @@
   {
    "addr": "0x1e0db",
    "name": "queue_unit_number_popup",
-   "summary": "(?, value, unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,以 sprintf(0x501b6 的格式)把數值轉成字串,4 個字元依序寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位),水平位移 = i*5 + 2。知識庫記載以 0x69/0x5e 呼叫時顯示回復量/傷害。",
+   "summary": "(數值, 字形基底, unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,以 sprintf(0x501b6 的格式)把數值轉成字串,4 個字元依序寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位),水平位移 = i*5 + 2。知識庫記載以 0x69/0x5e 呼叫時顯示回復量/傷害。續一百一十六(直接讀反組譯,勘誤):舊參數列 (?, value, unit) 把數值寫在第 2 個。數值是第 1 個(0x1e0ec 載入 ebp,0x1e170 推給 sprintf);第 2 個是字形基底 —— 每個數字字元加上它再減 0x30 寫進字形陣列(0x1e1bd),呼叫端只推 0x69(回復)或 0x5e(傷害)。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1e0f2",
@@ -1695,6 +1695,18 @@
     {
      "at": "0x1e19e",
      "insn": "mov byte ptr [ebx + eax + 0x3dfc], dl"
+    },
+    {
+     "at": "0x1e0ec",
+     "insn": "mov ebp, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x1e1bd",
+     "insn": "mov dl, byte ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x1e1c4",
+     "insn": "sub dl, 0x30"
     }
    ]
   },
@@ -7055,9 +7067,9 @@
   {
    "addr": "0x2b749",
    "name": "count_nonzero_roster_flags",
-   "summary": "(flags):數 flags[0 .. [0x53bfb]-2] 中非 0 的 byte(名冊人數減 1 項,最後一項不算),經共用尾段 0x26ed6(mov eax, ebx)回傳計數。",
+   "summary": "(flags*):數 flags[0 .. [0x53bfb]-2] 中非 0 的 byte(名冊人數減 1 項,最後一項不算),經共用尾段 0x26ed6(mov eax, ebx)回傳計數。續一百一十六:參數名 flags 改成 flags*(是選取旗標的 byte 陣列指標,實機 0x1f15e4;flags 這個名稱在別處指旗標值)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2b75f",
@@ -7353,9 +7365,9 @@
   {
    "addr": "0x2b4fb",
    "name": "draw_roster_pick_grid",
-   "summary": "(背景緩衝, limit, flags, cursor):複製背景到 [0x53c63],畫數字 limit 與 limit - count_nonzero_roster_flags(flags);名冊前 [0x53bfb]-1 人以每列 10 格排開,flags 非 0 的畫一般精靈、為 0 的畫調色帶版(blit_tile24_rle_band),游標格另畫一個精靈。續一百一十一(呼叫紀錄篩選):第 1 參數舊名 bg(別的摘要用 bg 指顏色),實機 200 次都是緩衝區指標 0x2f8018;limit 0xf、flags 0x1f15e4(sortie_member_select 的區域陣列)。",
+   "summary": "(背景緩衝, limit, flags*, cursor):複製背景到 [0x53c63],畫數字 limit 與 limit - count_nonzero_roster_flags(flags);名冊前 [0x53bfb]-1 人以每列 10 格排開,flags 非 0 的畫一般精靈、為 0 的畫調色帶版(blit_tile24_rle_band),游標格另畫一個精靈。續一百一十一(呼叫紀錄篩選):第 1 參數舊名 bg(別的摘要用 bg 指顏色),實機 200 次都是緩衝區指標 0x2f8018;limit 0xf、flags 0x1f15e4(sortie_member_select 的區域陣列)。續一百一十六:參數名 flags 改成 flags*(是選取旗標的 byte 陣列指標,實機 0x1f15e4;flags 這個名稱在別處指旗標值)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2b53c",
@@ -7386,9 +7398,9 @@
   {
    "addr": "0x2b67f",
    "name": "roster_pick_wait_key",
-   "summary": "(背景緩衝, limit, flags, cursor):4 個參數與 draw_roster_pick_grid 相同。沒有按鍵時每個 BIOS tick(0x46c 改變)重畫 draw_roster_pick_grid 並貼到 VGA;有鍵時以 int386(0x16) 讀,0xe0/0x52 掃描碼或 Space 字元視為 Enter(0x1c)、0x53 視為 Esc(1),回傳掃描碼。續一百一十一(呼叫紀錄篩選):舊參數列寫「4 參數同 draw_roster_pick_grid」,篩選讀成 1 個參數;實機呼叫端清 4 個,s1..s3 與 draw_roster_pick_grid 相同(0x2f8018 / 0xf / 0x1f15e4)。",
+   "summary": "(背景緩衝, limit, flags*, cursor):4 個參數與 draw_roster_pick_grid 相同。沒有按鍵時每個 BIOS tick(0x46c 改變)重畫 draw_roster_pick_grid 並貼到 VGA;有鍵時以 int386(0x16) 讀,0xe0/0x52 掃描碼或 Space 字元視為 Enter(0x1c)、0x53 視為 Esc(1),回傳掃描碼。續一百一十一(呼叫紀錄篩選):舊參數列寫「4 參數同 draw_roster_pick_grid」,篩選讀成 1 個參數;實機呼叫端清 4 個,s1..s3 與 draw_roster_pick_grid 相同(0x2f8018 / 0xf / 0x1f15e4)。續一百一十六:參數名 flags 改成 flags*(是選取旗標的 byte 陣列指標,實機 0x1f15e4;flags 這個名稱在別處指旗標值)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2b69d",
@@ -7885,9 +7897,9 @@
   {
    "addr": "0x1f558",
    "name": "draw_map_scaled_fixedpoint",
-   "summary": "(tiles, cx, cy, scale):定點數縮放地圖繪製,每格 0xc00(24×128)單位;以 (cx, cy) 為畫面中心(半寬 0x9c)算起始格與格內偏移,清空 [0x53a49] 後畫到 +0x504 起的畫面區。呼叫端 map_overview_screen、earthquake_spell_effect。",
+   "summary": "(cx, cy, step, tiles):定點數縮放地圖繪製,每格 0xc00(24×128)單位;以 (cx, cy) 為畫面中心(半寬 0x9c)算起始格與格內偏移,清空 [0x53a49] 後畫到 +0x504 起的畫面區。呼叫端 map_overview_screen、earthquake_spell_effect。續一百一十六(直接讀反組譯,勘誤):舊參數列 (tiles, cx, cy, scale) 順序錯。第 1 / 2 個是中心座標(0x1f571、0x1f587,各減 第 3 個 x 0x9c、x 0x60),第 3 個是每個像素前進的定點步進(0x1f641 `add ebx`,滿 0xc00 換下一格),第 4 個是每格一個 dword 的圖格指標表(0x1f660:(列 x 64 + 行) x 4 加上它再取值)。實機 (0xa500 起, 0x87c0 起, 0xdb 起, malloc 的指標)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1f569",
@@ -7908,6 +7920,22 @@
     {
      "at": "0x1f5f4",
      "insn": "push 0xfa00"
+    },
+    {
+     "at": "0x1f571",
+     "insn": "mov eax, dword ptr [esp + 0x30]"
+    },
+    {
+     "at": "0x1f587",
+     "insn": "mov ecx, dword ptr [esp + 0x34]"
+    },
+    {
+     "at": "0x1f641",
+     "insn": "add ebx, dword ptr [esp + 0x38]"
+    },
+    {
+     "at": "0x1f660",
+     "insn": "add eax, dword ptr [esp + 0x3c]"
     }
    ]
   },
@@ -13292,9 +13320,9 @@
   {
    "addr": "0x3739e",
    "name": "freopen",
-   "summary": "(檔名, 模式, FILE*) stdio_reclaim_stream 收回後保留旗標 0x4000,交給 stdio_doopen 重開。(死函式:沒有呼叫端、沒有引用)",
+   "summary": "(檔名, 模式字串, FILE*) stdio_reclaim_stream 收回後保留旗標 0x4000,交給 stdio_doopen 重開。(死函式:沒有呼叫端、沒有引用)續一百一十六:參數名 模式 改成 模式字串(原樣交給 stdio_doopen 的模式字串;模式這個名稱在 io_set_mode / setvbuf 是整數)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x373a4",
@@ -14955,9 +14983,9 @@
   {
    "addr": "0x2fe14",
    "name": "anim_loop_over_cycling_bg",
-   "summary": "(緩衝區, 動畫, 次數) 每輪清 0x1f400 bytes 的緩衝、畫 [0x5413f] 三張背景之一(輪流)、blit_anim_frame,再 copy_rect 到 VGA 並 wait_ticks(1);依動畫的影格數與持續值前進。0x2fb2c 呼叫。",
+   "summary": "(動畫, 緩衝區, 次數) 每輪清 0x1f400 bytes 的緩衝、畫 [0x5413f] 三張背景之一(輪流)、blit_anim_frame,再 copy_rect 到 VGA 並 wait_ticks(1);依動畫的影格數與持續值前進。0x2fb2c 呼叫。續一百一十六(角色篩選抓到,直接讀反組譯,勘誤):舊參數列 (緩衝區, 動畫, 次數) 前兩個對調。第 1 個是動畫(0x2fe25 載入 edi,交給 blit_anim_frame 的第 1 個;呼叫端推載入資源的回傳),第 2 個是緩衝區(0x2fe57 推給清除用的 0x37910、0x2fe9d 當 blit_anim_frame 的 dst、0x2feba 當 copy_rect 的來源;呼叫端推 malloc 的回傳)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2fe38",
@@ -14974,6 +15002,18 @@
     {
      "at": "0x2fec8",
      "insn": "call 0x11eb0"
+    },
+    {
+     "at": "0x2fe25",
+     "insn": "mov edi, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x2fe57",
+     "insn": "push dword ptr [esp + 0x28]"
+    },
+    {
+     "at": "0x2fe9d",
+     "insn": "push dword ptr [esp + 0x28]"
     }
    ]
   },
@@ -15018,9 +15058,9 @@
   {
    "addr": "0x36522",
    "name": "dpmi_dos_alloc_locked",
-   "summary": "(段落數, 線性位址*, 選擇子*, ...) int386(0x31) 以 AX=0x100 配置 DOS 記憶體,成功時填回 段 << 16、線性位址(段 x 16)與選擇子,再 dpmi_lock_region 鎖住。",
+   "summary": "(段落數, 線性位址*, 段<<16*, 選擇子*) int386(0x31) 以 AX=0x100 配置 DOS 記憶體,成功時填回 段 << 16、線性位址(段 x 16)與選擇子,再 dpmi_lock_region 鎖住。續一百一十六(直接讀反組譯,勘誤):舊參數列把第 3 個寫成選擇子*。第 3 個收 段 << 16(0x36526 載入 ebx,0x3655f 寫入),第 2 個收線性位址(0x3656d / 0x36571),選擇子寫進第 4 個(0x3657c / 0x36580,DX 的低 16 位)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x3652a",
@@ -15037,15 +15077,31 @@
     {
      "at": "0x3659c",
      "insn": "call 0x365da"
+    },
+    {
+     "at": "0x36526",
+     "insn": "mov ebx, dword ptr [esp + 0x48]"
+    },
+    {
+     "at": "0x3655f",
+     "insn": "mov dword ptr [ebx], eax"
+    },
+    {
+     "at": "0x3656d",
+     "insn": "mov edx, dword ptr [esp + 0x44]"
+    },
+    {
+     "at": "0x3657c",
+     "insn": "mov edx, dword ptr [esp + 0x4c]"
     }
    ]
   },
   {
    "addr": "0x365ab",
    "name": "dpmi_dos_free",
-   "summary": "(選擇子, ...) int386(0x31) 以 AX=0x101 釋放 DOS 記憶體區塊。AIL 內 8 處呼叫。",
+   "summary": "(線性位址, 段<<16, 選擇子) int386(0x31) 以 AX=0x101 釋放 DOS 記憶體區塊。AIL 內 8 處呼叫。續一百一十六(直接讀反組譯,勘誤):舊參數列 (選擇子, ...) 把選擇子寫在第 1 個。本體只讀第 3 個(0x365b5,取低 16 位放進 DX);前兩個本體不讀。實機 (0xf710, 0xf710000, 0x1c8) 這類:第 1 個 = 段 x 16、第 2 個 = 段 << 16,就是 dpmi_dos_alloc_locked 填回的三個值。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x365ae",
@@ -15058,6 +15114,14 @@
     {
      "at": "0x365ce",
      "insn": "call 0x370f0"
+    },
+    {
+     "at": "0x365b5",
+     "insn": "mov eax, dword ptr [esp + 0x44]"
+    },
+    {
+     "at": "0x365b9",
+     "insn": "and eax, 0xffff"
     }
    ]
   },
@@ -22814,9 +22878,9 @@
   {
    "addr": "0x10c50",
    "name": "field_unit_construct",
-   "summary": "(FDFIELD 記錄, ...) 戰場單位建構:依 FDFIELD 的 b0 直接寫陣營 +6(0 敵 / 1 友 / 2 我方)、以 fdicon_cache_load 取 +2 圖示格,查成長 / 職業表(growth_row11_ptr、lower_class_row24_ptr、high_class_row10_ptr)填能力,recalc_equipped_stats 重算裝備,並以 0x145cd 更新地圖阻擋標記(FD2.EXE 反組譯)。spawn 呼叫(doc03)。",
+   "summary": "(記錄索引, FILE*) 戰場單位建構:依 FDFIELD 的 b0 直接寫陣營 +6(0 敵 / 1 友 / 2 我方)、以 fdicon_cache_load 取 +2 圖示格,查成長 / 職業表(growth_row11_ptr、lower_class_row24_ptr、high_class_row10_ptr)填能力,recalc_equipped_stats 重算裝備,並以 0x145cd 更新地圖阻擋標記(FD2.EXE 反組譯)。spawn 呼叫(doc03)。續一百一十六(直接讀反組譯):補齊參數列。第 1 個是記錄的索引不是指標(0x10c85 乘 6、0x10d6c 乘 0x1a;實機 0、1、2 …);第 2 個是 FDICON 的 FILE*(0x10ece 原樣推給 fdicon_cache_load 的第 2 個;呼叫端推 fopen 的回傳)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x10c61",
@@ -22825,19 +22889,31 @@
     {
      "at": "0x10c69",
      "insn": "mov ebx, dword ptr [0x3beb]"
+    },
+    {
+     "at": "0x10c85",
+     "insn": "imul edx, dword ptr [esp + 0x48], 6"
+    },
+    {
+     "at": "0x10ece",
+     "insn": "push dword ptr [esp + 0x4c]"
     }
    ]
   },
   {
    "addr": "0x11019",
    "name": "fdicon_cache_load",
-   "summary": "(raw key, ...) 依 raw key 從 FDICON 檔 fseek / fread 讀一組單位圖示進 process-global 快取格,回傳格號(寫進單位 +2);CONTINUE 時依存檔的順序重建(FD2.EXE 反組譯)。doc26 / doc31 已驗證。",
+   "summary": "(raw key, FILE*) 依 raw key 從 FDICON 檔 fseek / fread 讀一組單位圖示進 process-global 快取格,回傳格號(寫進單位 +2);CONTINUE 時依存檔的順序重建(FD2.EXE 反組譯)。doc26 / doc31 已驗證。續一百一十六(直接讀反組譯):補齊參數列,第 2 個是 FDICON 的 FILE*(0x11037 推給 fseek 的第 1 個)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1103b",
      "insn": "call 0x37940"
+    },
+    {
+     "at": "0x11037",
+     "insn": "push dword ptr [esp + 0x58]"
     }
    ]
   },
@@ -23064,9 +23140,9 @@
   {
    "addr": "0x14625",
    "name": "mark_unit_cell_blocking",
-   "summary": "(值 1, 值 2) 非 0 的參數各以 map_cell_set_bit7 在對應格子設 bit 7(阻擋)(FD2.EXE 反組譯)。只被 mark_units_blocking 呼叫。",
+   "summary": "(x, y) 非 0 的參數各以 map_cell_set_bit7 在對應格子設 bit 7(阻擋)(FD2.EXE 反組譯)。只被 mark_units_blocking 呼叫。續一百一十六(直接讀反組譯):參數名 值 1 / 值 2 改成 x / y —— 原樣交給 map_cell_set_bit7 的 x、y(0x14631 / 0x14635 載入;實機都是地圖座標範圍的小整數)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1463e",
@@ -23075,6 +23151,14 @@
     {
      "at": "0x14642",
      "insn": "call 0x146a7"
+    },
+    {
+     "at": "0x14631",
+     "insn": "mov ebx, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x14635",
+     "insn": "mov esi, dword ptr [esp + 0x10]"
     }
    ]
   },
@@ -23149,9 +23233,9 @@
   {
    "addr": "0x15f0e",
    "name": "draw_res_image_frame",
-   "summary": "(資源, ..., 幀號, ...) 取資源 + [資源 + 幀號*4 + 6] 的幀,讀寬高後 malloc 緩衝,以 decode_image_with_header 解碼、blit_rle_c0_transparent 透明繪製(FD2.EXE 反組譯)。回合數字跑馬燈、HP 面板、武器命中特效等 8 處呼叫。",
+   "summary": "(資源, dst, stride, x, y, 幀號) 取資源 + [資源 + 幀號*4 + 6] 的幀,讀寬高後 malloc 緩衝,以 decode_image_with_header 解碼、blit_rle_c0_transparent 透明繪製(FD2.EXE 反組譯)。回合數字跑馬燈、HP 面板、武器命中特效等 8 處呼叫。續一百一十六(直接讀反組譯):補齊參數列。舊寫法 (資源, ..., 幀號, ...) 的幀號其實是第 6 個(0x15f23 載入 edi,0x15f27 取 [資源 + 幀號*4 + 6]);第 2 個是畫面基底、第 3 個是跨距、第 4 / 5 個是 x / y(0x15f35 .. 0x15f3e:y x 跨距 + x,0x15f72 再加基底)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x15f27",
@@ -23160,6 +23244,22 @@
     {
      "at": "0x15f2b",
      "insn": "movsx ebx, word ptr [esi]"
+    },
+    {
+     "at": "0x15f23",
+     "insn": "mov edi, dword ptr [esp + 0x2c]"
+    },
+    {
+     "at": "0x15f35",
+     "insn": "mov ebp, dword ptr [esp + 0x28]"
+    },
+    {
+     "at": "0x15f39",
+     "insn": "imul ebp, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x15f3e",
+     "insn": "add ebp, dword ptr [esp + 0x24]"
     }
    ]
   },
@@ -23963,9 +24063,9 @@
   {
    "addr": "0x1f42d",
    "name": "phase_banner_split_slide",
-   "summary": "(圖格, 位移) 分割滑入的階段標題:FDOTHER #5 的圖格(0x52),兩半分別畫在 (0x55 - 位移, 82) 與 (165 + 位移, 81),跨距 0x1c8(456)(FD2.EXE 反組譯)。phase_banner_zoom_in / zoom_out 以位移 100、75、50、25、0 逐幀呼叫(doc56)。",
+   "summary": "(位移, 圖格) 分割滑入的階段標題:FDOTHER #5 的圖格(0x52),兩半分別畫在 (0x55 - 位移, 82) 與 (165 + 位移, 81),跨距 0x1c8(456)(FD2.EXE 反組譯)。phase_banner_zoom_in / zoom_out 以位移 100、75、50、25、0 逐幀呼叫(doc56)。續一百一十六(直接讀反組譯,勘誤):舊參數列 (圖格, 位移) 兩個對調。第 1 個是位移(0x1f444:左半的 x = 0x55 減它;0x1f46f:右半的 x = 0xa5 加它;實機 0、0x19、0x32、0x4b、0x64),第 2 個是左半的圖格編號(0x1f439 推給 draw_res_image_frame 的幀號;呼叫端 phase_banner_zoom_in / zoom_out 推自己的圖格,實機 0x50 / 0x52)。內文也要更正:兩半的 y 都是 0x52(82);右半固定用 0x51 號圖格(0x1f46b),舊內文把它寫成 y = 81、把 y 寫成圖格。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1f43d",
@@ -23978,15 +24078,31 @@
     {
      "at": "0x1f449",
      "insn": "push 0x1c8"
+    },
+    {
+     "at": "0x1f439",
+     "insn": "push dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x1f444",
+     "insn": "sub ebx, dword ptr [esp + 0x14]"
+    },
+    {
+     "at": "0x1f46b",
+     "insn": "push 0x51"
+    },
+    {
+     "at": "0x1f46f",
+     "insn": "mov eax, dword ptr [esp + 0x14]"
     }
    ]
   },
   {
    "addr": "0x1f73f",
    "name": "show_fdother_static_screen",
-   "summary": "(.., .., 索引 A, 索引 B) FDOTHER 靜態全螢幕畫面:palfade_in 後清 VGA(memset 0xa0000),以 load_res 載入並 blit_rle_image_at_xy 畫,wait_ticks 停留後 palfade(FD2.EXE 反組譯)。title_seq 呼叫(doc23 §2.4 ⑥:獨立於 ANI / AFM VM 的第二套顯示機制)。",
+   "summary": "(索引 A, 索引 B, 來源圖, 起始列) FDOTHER 靜態全螢幕畫面:palfade_in 後清 VGA(memset 0xa0000),以 load_res 載入並 blit_rle_image_at_xy 畫,wait_ticks 停留後 palfade(FD2.EXE 反組譯)。title_seq 呼叫(doc23 §2.4 ⑥:獨立於 ANI / AFM VM 的第二套顯示機制)。續一百一十六(直接讀反組譯,勘誤):舊參數列 (.., .., 索引 A, 索引 B) 錯兩位。兩個索引是第 1 / 2 個:第 2 個先載入並存進 [0x53a65](0x1f763),第 1 個載入後以 blit_rle_image_at_xy 畫到 VGA(0x1f77f);第 3 個是一塊圖的緩衝,第 4 個是起始列 —— 最後以 copy_rect 把 第 3 個 + 第 4 個 x 320 起的 320 x 200 複製到 VGA(0x1f7f2 / 0x1f800)。實機 (0x4b, 0x4c, malloc 的指標, 0xa) 與 (0x64, 0x63, 同一指標, 0x1c2)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1f74a",
@@ -23999,6 +24115,22 @@
     {
      "at": "0x1f75b",
      "insn": "call 0x37910"
+    },
+    {
+     "at": "0x1f763",
+     "insn": "push dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x1f77f",
+     "insn": "push dword ptr [esp + 8]"
+    },
+    {
+     "at": "0x1f7f2",
+     "insn": "mov edx, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x1f800",
+     "insn": "add eax, dword ptr [esp + 0x1c]"
     }
    ]
   },
@@ -24408,9 +24540,9 @@
   {
    "addr": "0x2111a",
    "name": "item_effect_type21_damage",
-   "summary": "(使用者, 數量, 目標, ...) 道具 type 0x15 的傷害效果:play_map_effect_animation,對每個目標 spell_damage_resolve,以 type21_effect_presentation 呈現,傷害 0 時 queue_unit_fixed_popup、否則 queue_unit_number_popup,收尾 action_finish_effect(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc13 / doc32)。",
+   "summary": "(使用者, 數量, targets, spell) 道具 type 0x15 的傷害效果:play_map_effect_animation,對每個目標 spell_damage_resolve,以 type21_effect_presentation 呈現,傷害 0 時 queue_unit_fixed_popup、否則 queue_unit_number_popup,收尾 action_finish_effect(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc13 / doc32)。續一百一十六(直接讀反組譯):補齊參數列。第 4 個原樣交給 play_map_effect_animation 的動畫號與 spell_damage_resolve 的 spell(0x2112c 載入 ebp);第 3 個是目標序號的 byte 陣列,改用登錄裡的名稱 targets。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x21128",
@@ -24425,9 +24557,9 @@
   {
    "addr": "0x211a4",
    "name": "item_effect_heal",
-   "summary": "(使用者, 數量, 目標 bytes, 回復量) 回復效果:play_map_effect_animation 演出,對每個目標 heal_hp_apply、present_effect_on_targets 與 queue_unit_number_popup 顯示(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc32:ABI 已由 IDA 閉合)。",
+   "summary": "(使用者, 數量, targets, 回復量) 回復效果:play_map_effect_animation 演出,對每個目標 heal_hp_apply、present_effect_on_targets 與 queue_unit_number_popup 顯示(FD2.EXE 反組譯)。item_effect_dispatch 與 0x2d80d 呼叫(doc32:ABI 已由 IDA 閉合)。續一百一十六:參數名 目標 bytes 改成 targets(與其他效果函式一致)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x211b2",
@@ -24501,9 +24633,9 @@
   {
    "addr": "0x22721",
    "name": "effect_ap_percent_buff",
-   "summary": "(使用者, 數量, 目標) AP% 增益效果:對每個目標以 prng_next 與 chp_truncate 算出增量,寫回並 queue_unit_number_popup 顯示,經驗累加到 [0x53ec8](FD2.EXE 反組譯)。道具效果(type 0x10)、command_handler_17 與 0x2d80d 呼叫(doc11 舊位址 0x47935)。",
+   "summary": "(使用者, 數量, targets) AP% 增益效果:對每個目標以 prng_next 與 chp_truncate 算出增量,寫回並 queue_unit_number_popup 顯示,經驗累加到 [0x53ec8](FD2.EXE 反組譯)。道具效果(type 0x10)、command_handler_17 與 0x2d80d 呼叫(doc11 舊位址 0x47935)。續一百一十六:參數名 目標 改成 targets(目標序號的 byte 陣列,原樣交給 play_map_effect_animation 的 targets)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x22740",
@@ -24522,9 +24654,9 @@
   {
    "addr": "0x22866",
    "name": "effect_dp_percent_buff",
-   "summary": "(使用者, 數量, 目標) DP% 增益效果:與 effect_ap_percent_buff 同結構(prng_next、chp_truncate、跳數字、經驗累加)(FD2.EXE 反組譯)。道具效果(type 0xf)、command_handler_18 與 0x2d80d 呼叫(doc11 舊位址 0x47a7a)。",
+   "summary": "(使用者, 數量, targets) DP% 增益效果:與 effect_ap_percent_buff 同結構(prng_next、chp_truncate、跳數字、經驗累加)(FD2.EXE 反組譯)。道具效果(type 0xf)、command_handler_18 與 0x2d80d 呼叫(doc11 舊位址 0x47a7a)。續一百一十六:參數名 目標 改成 targets(目標序號的 byte 陣列,原樣交給 play_map_effect_animation 的 targets)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x22885",
@@ -24543,9 +24675,9 @@
   {
    "addr": "0x22997",
    "name": "effect_hit_ev_buff",
-   "summary": "(使用者, 數量, 目標) HIT / EV 增益效果:對每個目標以 prng_next 決定增量並跳數字;type 12 重用時目標標記 +0x24 非 0 就跳過且不耗亂數(FD2.EXE 反組譯)。道具效果、command_handler_19 與 0x2d80d 呼叫(doc11 舊位址 0x47bab、doc13)。",
+   "summary": "(使用者, 數量, targets) HIT / EV 增益效果:對每個目標以 prng_next 決定增量並跳數字;type 12 重用時目標標記 +0x24 非 0 就跳過且不耗亂數(FD2.EXE 反組譯)。道具效果、command_handler_19 與 0x2d80d 呼叫(doc11 舊位址 0x47bab、doc13)。續一百一十六:參數名 目標 改成 targets(目標序號的 byte 陣列,原樣交給 play_map_effect_animation 的 targets)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x229b6",
@@ -24564,9 +24696,9 @@
   {
    "addr": "0x22af6",
    "name": "effect_cure_status_flag",
-   "summary": "(使用者, 數量, 目標 bytes, 狀態欄位偏移, ...) 解除狀態:對每個目標,單位記錄在指定偏移的狀態 byte 非 0 時呼叫 heal_hp_apply(目標, 0xa)、queue_unit_number_popup(0x69),把該 byte 清 0,並以 等級(職業 9 .. 0x18 再加 30)x 4 累加經驗 [0x53ec8];狀態 byte 為 0 時 queue_unit_fixed_popup(FD2.EXE 反組譯)。道具效果(type 6 / 7)與 cast_fixed_heal_after_mp 呼叫(doc11 的「狀態清除」)。",
+   "summary": "(使用者, 動畫號, 數量, targets, 狀態欄位偏移) 解除狀態:對每個目標,單位記錄在指定偏移的狀態 byte 非 0 時呼叫 heal_hp_apply(目標, 0xa)、queue_unit_number_popup(0x69),把該 byte 清 0,並以 等級(職業 9 .. 0x18 再加 30)x 4 累加經驗 [0x53ec8];狀態 byte 為 0 時 queue_unit_fixed_popup(FD2.EXE 反組譯)。道具效果(type 6 / 7)與 cast_fixed_heal_after_mp 呼叫(doc11 的「狀態清除」)。續一百一十六(直接讀反組譯,勘誤):舊參數列 (使用者, 數量, 目標 bytes, 狀態欄位偏移, ...) 從第 2 個起錯一位。第 2 個是動畫號(0x22b0c 推給 play_map_effect_animation 的第 2 個;呼叫端推 0x14 / 0x15),第 3 個是目標個數(0x22b45 迴圈上限),第 4 個是目標序號的 byte 陣列(0x22b4b),第 5 個才是狀態欄位偏移(0x22b79 加到單位記錄;呼叫端推 0x25 / 0x26)。實機 (1, 0x14, 3, 0x1f1488, 0x25)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x22b7f",
@@ -24583,6 +24715,22 @@
     {
      "at": "0x22baf",
      "insn": "add dword ptr [0x3ec8], ebp"
+    },
+    {
+     "at": "0x22b0c",
+     "insn": "push dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x22b45",
+     "insn": "cmp edi, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x22b4b",
+     "insn": "mov ebx, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x22b79",
+     "insn": "mov esi, dword ptr [esp + 0x24]"
     }
    ]
   },

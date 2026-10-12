@@ -372,6 +372,12 @@
    "rule": "regenerable",
    "reason": "摘要篩選候選的人工核對結論(續一百零九),手動維護(tools/screen_summaries_by_calllog.py 只讀不寫)。內容是「看過反組譯後判定摘要已改正 / 不是錯誤」的人工結論,機器上沒有來源可以重生;正確性改由同一支工具保證:fixed 的條目必須不再觸發、not_error 的條目必須仍對應現存候選(否則過期)、名稱與登錄相同、理由非空,--selftest 對真實檔要求結構零錯誤。與 function_specs.json 同類。**永久豁免**。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/param_read_review.json",
+   "rule": "regenerable",
+   "reason": "參數的人工閱讀登錄(續一百一十六),手動維護(tools/param_dossier.py 只讀不寫)。內容是「讀過反組譯,確認第幾個參數是什麼」的人工結論,機器上沒有來源可以重生;正確性改由 `param_dossier.py --coverage` 把關(每筆的依據指令必須真的引用該參數的堆疊格、摘要改名後登錄即過期)。",
+   "permanent": "no_generator"
   }
  ]
 }

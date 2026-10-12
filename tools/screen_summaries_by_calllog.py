@@ -45,6 +45,16 @@
   與實機型別篩選同一條 `violates` 規則;違反的呼叫點 / 被呼叫端 ≥ 80% 才列出。selftest 以真實紀錄校準:
   呼叫點值流對實機值零矛盾、有紀錄的參數上靜態判決零誤報、歷史上實機抓到的型別錯誤用舊摘要能重現。
 
+續一百一十六(已知 7 筆參數列錯誤,原本的篩選一筆都沒抓到,逐筆查出擋在哪):
+- 實機型別篩選原本把「該位置紀錄不到 MIN_COVERED 次、其實沒判」的參數也記成已比,`param_flow` 因此跳過它。
+  改成判得出才算已比,其餘另計「紀錄太少」並交給 `param_flow`。
+- 以 `...` 省略的摘要原本被所有靜態篩選跳過。`resolve_sig` 以呼叫端清堆疊個數(或本體 argc)補成定長:
+  第一個 `...` 之前的名稱位置確定,照常比;之後的名稱位置不明,不比(實機篩選原本會拿錯的位置去比)。
+  `..` 是「省略一個參數」,佔一格,個數照算。
+- `param_unread`(靜態):堆疊傳參的函式,摘要具名的參數本體一次都沒引用它的堆疊格 -> 候選(名稱放錯位置的徵兆)。
+- 參數名登錄:每個位置確定的參數名必須有型別(四份名單),或列在 `OPAQUE_NAMES`(審過,名稱本身不含可比的型別)。
+  兩邊都不在 = 未分類,rc 1 —— 新名稱不會再無聲地落在所有篩選之外。
+
 參數位置:呼叫端有清堆疊時取 [esp+4k](`s<k>`);否則依 inventory argc(`verify_names_by_calllog.param_slot`)。
 
 這是篩選,不是判決。每個候選要人看反組譯,在 review 檔記:
@@ -77,7 +87,8 @@ from verify_names_by_calllog import _skip_mov_eax, pushed_args  # noqa: E402,F40
 NAMES_JSON = ROOT / "docs" / "data" / "function_names.json"
 PROFILES_JSON = ROOT / "docs" / "data" / "function_call_profiles.json"
 REVIEW_JSON = ROOT / "docs" / "data" / "summary_screen_review.json"
-SCREENS = ("param_count", "param_type", "param_str", "ret_unlisted", "param_region", "param_role", "param_flow")
+SCREENS = ("param_count", "param_type", "param_str", "ret_unlisted", "param_region", "param_role", "param_flow",
+           "param_unread")
 VERDICTS = ("fixed", "not_error")
 VIOLATION_SHARE = 0.8      # 最常見值裡違反型別的比例門檻
 MIN_COVERED = 3            # 最常見值的次數合計至少這麼多才判
@@ -89,11 +100,16 @@ MIN_RETURNED = 5           # 有返回紀錄至少這麼多次才比回傳值
 NPARAMS = re.compile(r"^(\d+) 個參數$")
 
 
+ELLIPSIS = "..."           # 其餘參數省略,個數不明
+ONE_OMITTED = ".."         # 省略一個參數,佔一格
+
+
 def parse_sig(summary: str) -> tuple[list[str] | None, int | None]:
     """摘要開頭參數列 -> (參數名, 個數)。
 
     沒有參數列 -> (None, None);`()` -> ([], 0);`(3 個參數)` -> ([], 3);含 `...` / `..`(可變參數)或
     `eax = ptr` 這類暫存器寫法 -> (名稱, None),個數不比。
+    `..` 是「省略一個參數」(佔一格,續一百一十六):個數照算,名稱沒有型別。
     """
     m = VC.PARAMS.match(summary or "")
     if not m:
@@ -104,7 +120,7 @@ def parse_sig(summary: str) -> tuple[list[str] | None, int | None]:
     names = [p.strip() for p in body.split(",")]
     if len(names) == 1 and (n := NPARAMS.match(names[0])):
         return [], int(n.group(1))
-    if any(p in ("...", "..") or "=" in p or "個參數" in p for p in names):
+    if any(p == ELLIPSIS or "=" in p or "個參數" in p for p in names):
         return names, None      # 「三個參數照轉」這類寫法讀不出個數,不可當成 1 個參數
     return names, len(names)
 
@@ -125,20 +141,72 @@ def n_slots(params: list[str] | None, n: int | None) -> int | None:
     return n + sum(p == "double" for p in params or [])
 
 
+def positioned(params: list[str] | None) -> list[str]:
+    """位置確定的參數名:第一個 `...` 之前的。之後的名稱不知道落在第幾個,任何篩選都不比。"""
+    ps = list(params or [])
+    return ps[:ps.index(ELLIPSIS)] if ELLIPSIS in ps else ps
+
+
+def is_named(pn: str) -> bool:
+    """是不是具名的參數(不是 `...` / `..` 這兩種省略記號)。"""
+    return pn not in (ELLIPSIS, ONE_OMITTED)
+
+
+def resolve_sig(summary: str, cleanups: set[int], argc: int | None) -> tuple[list[str] | None, int | None]:
+    """`parse_sig`,但把以 `...` 省略的參數列補成定長(續一百一十六),讓靜態篩選比得到 `...` 之前的名稱。
+
+    堆疊格數取呼叫端清堆疊個數(唯一時);沒有清堆疊資訊時取本體 argc(下界:省略的部分可能更多,前面的位置不受影響)。
+    `...` 之前的名稱保留,從第一個 `...` 起一律換成 `...`(每格一個)補到格數。清堆疊個數不一致(真的可變參數)、
+    格數不明、前面的名稱已經超過格數(由 param_count 列出)、暫存器寫法 -> 原樣回 (名稱, None)。
+    """
+    params, n = parse_sig(summary)
+    if params is None or n is not None or ELLIPSIS not in params or any("=" in p or "個參數" in p for p in params):
+        return params, n
+    total = next(iter(cleanups)) if len(cleanups) == 1 else (argc if not cleanups and argc else None)
+    prefix = positioned(params)
+    used = n_slots(prefix, len(prefix))
+    if total is None or used > total:
+        return params, None
+    out = prefix + [ELLIPSIS] * (total - used)
+    return out, len(out)
+
+
 UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者"})
 STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path"})
 PTR_NAMES = frozenset({
     "dst", "src", "out", "buf", "目的", "緩衝區", "輸出", "來源", "res", "anim", "img", "records", "units", "targets",
     "grid", "terrainTable", "FILE*", "項目表", "items", "work", "tmpl", "font", "list", "fp", "script", "ctx", "ptr",
     "圖", "單位清單", "資源", "畫面緩衝", "串流", "參數表", "精靈", "檔案影像", "列表", "路徑碼陣列", "costRow",
-    "&輸出", "positions", "p"})
+    "&輸出", "positions", "p",
+    # 續一百一十六(逐名稱依字義審過;同名在不同函式意思不同的不收,改摘要裡的名稱或放 OPAQUE_NAMES)
+    "序列", "字串", "MDI 驅動", "DIG 驅動", "MDI", "驅動", "驅動結構", "結構", "合成器", "取樣", "IO 參數", "panel_buf",
+    "strip", "換色表", "動畫", "攻方動畫", "守方動畫", "背景圖", "面板附圖", "音效資源", "來源圖", "係數表", "lut",
+    "4 格啟用表", "清單", "命令列", "畫面備份", "數字串", "xs", "ys", "speeds", "panels",
+    "tiles", "回呼", "輸出回呼", "double* a", "double* b", "檔名或記憶體影像", "argv 或 NULL", "起點", "終點", "start"})
 SMALL_NAMES = frozenset({
     "x", "y", "mode", "count", "item", "idx", "sel", "sell", "len", "id", "n", "spell", "selector", "value", "delta",
     "budget", "row", "kind", "slot", "res_idx", "originX", "originY", "class", "color", "w", "h", "cursorX",
     "cursorY", "startX", "startY", "tgtX", "tgtY", "寬", "高", "序號", "索引", "數量", "次數", "個數", "項數", "項目數",
     "店種", "陣營", "幀號", "動畫號", "道具", "事件號", "指令號", "stride", "目的跨距", "長度", "大小", "char_id",
     "amount", "camp", "line", "cmd", "glyph", "shadow", "bg", "off", "k", "r", "g", "選擇", "選中項", "階段", "列",
-    "倍率", "選擇值", "距離門檻", "陣營篩選", "回復量"})
+    "倍率", "選擇值", "距離門檻", "陣營篩選", "回復量",
+    # 續一百一十六
+    "進位", "cursor", "limit", "上限", "寬度", "位數", "小數位數", "整數位數", "模式", "handle", "fd", "EFLAGS", "cx", "cy",
+    "portrait", "字元", "最大值", "目前值", "格", "段", "色格", "圖格", "旗標", "人數", "筆數", "段落數", "操作數", "編號",
+    "年", "微秒", "Hz", "tick 數", "邊長", "顏色", "量", "欄位", "名冊索引", "記錄索引", "FDOTHER 索引", "索引 A", "索引 B",
+    "角色 id", "msg_id", "text_idx", "tbl_idx", "bit", "cell", "type", "whence", "shift", "step", "radius",
+    "radius_start", "i", "first", "last", "enable", "fly_back", "use_marker_key", "rangeByte", "extraThreshold",
+    "sideSelector", "except", "field_off", "src_stride", "新長", "舊長", "目的寬", "目的高", "起", "迄", "起始相位",
+    "基底格", "指數", "格式字元", "訊號", "向量", "dos_err", "DOS 錯誤碼", "共享旗標", "狀態欄位偏移", "像素數 word",
+    "續播", "選擇子", "raw key", "通道", "bank", "patch", "控制器", "d1", "d2", "狀態", "狀態 byte", "資料 1", "資料 2",
+    "MIDI 狀態位元組", "數值", "字形基底", "起始列"})
+# 審過、名稱本身不含可機械比對的型別(續一百一十六):泛稱(值 / a / b)、可大可小的量(位移 / 請求大小)、
+# 同名在不同函式裡是不同東西(偏移 / base / 除數)、低於 1 MB 的位址(線性位址:數值落在小整數範圍)。
+# 這些參數任何型別篩選都比不到,只能靠讀反組譯(`tools/param_dossier.py`)。
+OPAQUE_NAMES = frozenset({
+    "值", "新值", "a", "b", "double", "base", "偏移", "位移", "arg", "saved", "pos", "panel_pos", "scale", "聲部", "除數",
+    "被除數", "mask", "遮罩", "增量", "請求大小", "規格", "v", "dword", "view_arg", "box_arg", "0..15", "ss", "esp", "ebp",
+    "回呼參數", "擴展精度值", "錯誤旗標", "行", "線性位址", "段<<16"})
 
 
 def type_of(name: str) -> str | None:
@@ -147,11 +215,42 @@ def type_of(name: str) -> str | None:
         return "unit"
     if name in STR_NAMES:
         return "str"
-    if (name in PTR_NAMES or name.endswith(("*", "_ptr", "_out", "Buf")) or "指標" in name or "緩衝" in name):
+    if (name in PTR_NAMES or name.endswith(("*", "_ptr", "_out", "Buf", "陣列")) or "指標" in name or "緩衝" in name):
         return "ptr"
     if name in SMALL_NAMES:
         return "small"
     return None
+
+
+def name_class(name: str) -> str | None:
+    """參數名在登錄裡的類別:'typed'(四份名單之一)/ 'opaque'(審過,不含可比的型別)/ None(未分類)。"""
+    if type_of(name):
+        return "typed"
+    return "opaque" if name in OPAQUE_NAMES else None
+
+
+def audit_names(sc: "Screen", names: list[dict]) -> list[str]:
+    """每個位置確定的具名參數都要分類 -> 未分類的明細(每筆一行)。分母記進 sc.denom。
+
+    不算:省略記號、暫存器寫法(`eax = ptr`)、「N 個參數」。第一個 `...` 之後的具名參數位置不明,另計不比的個數。
+    """
+    out = []
+    for x in names:
+        params, _ = parse_sig(x.get("summary") or "")
+        if not params or any("=" in p or "個參數" in p for p in params):
+            continue
+        pre = positioned(params)
+        for _ in (p for p in params[len(pre):] if is_named(p)):
+            _bump(sc, "參數名 位置不明(省略之後,不比)")
+        for k, pn in enumerate(pre, 1):
+            if not is_named(pn):
+                continue
+            c = name_class(pn)
+            _bump(sc, {"typed": "參數名 有型別", "opaque": "參數名 審過無型別", None: "參數名 未分類"}[c])
+            if c is None:
+                out.append(f"{x['addr']} {x['name']} 第 {k} 個參數 {pn!r} 未分類"
+                           "(加進型別名單,或審過後加進 OPAQUE_NAMES)")
+    return out
 
 
 def violates(kind: str, v: int) -> bool:
@@ -171,7 +270,7 @@ def violates(kind: str, v: int) -> bool:
 # (buf / 緩衝區 在 dos_read 是寫、在 dos_write 是讀,不收)。字串參數一律是來源。
 DST_ROLE = frozenset({"dst", "目的", "out", "輸出", "&輸出", "outBuf", "畫面緩衝"})
 SRC_ROLE = frozenset({"src", "來源", "res", "img", "圖", "資源", "anim", "精靈", "font", "串流", "tmpl", "檔案影像",
-                      "script"})
+                      "script", "動畫"})
 VGA_LO, VGA_HI = 0xA0000, 0xC0000   # VGA 視訊記憶體(DOS4GW 把低 1 MB 線性對映,畫面緩衝實機值 0xa0000)
 REGION_SHARE = 0.5                   # 來源參數最常見值裡落在 VGA 的比例門檻
 
@@ -242,6 +341,8 @@ class Screen:
     mixed_cleanup: list[int] = field(default_factory=list)
     count_checked: set[int] = field(default_factory=set)   # 已由實機呼叫端比過個數的函式
     type_checked: set[tuple[int, int]] = field(default_factory=set)   # 實機比過型別的 (函式, 第 k 個參數)
+    role_checked: set[tuple[int, int]] = field(default_factory=set)   # 角色篩選比過的(續一百一十六)
+    flow_checked: set[tuple[int, int]] = field(default_factory=set)   # 值流篩選比過的(續一百一十六)
 
 
 def _bump(sc: Screen, k: str) -> None:
@@ -277,19 +378,23 @@ def screen(names: list[dict], profiles: dict[str, dict], code: bytes, base: int)
                                      f"摘要參數列 {slots} 格,實機呼叫端都清 {pushed} 個堆疊參數",
                                      sorted(f"{s:#x}:{v}" for s, v in sites.items())))
         # 2 / 3. 參數型別、字串
-        starts = slot_starts(params or [])
-        for k, pn in enumerate(params or [], 1):
+        pre = positioned(params)                       # 第一個 `...` 之後的名稱位置不明,不比
+        starts = slot_starts(pre)
+        for k, pn in enumerate(pre, 1):
             kind = type_of(pn)
             j = starts[k - 1]
             slot = (f"s{j}" if j <= pushed else None) if pushed else VC.param_slot(p["argc"], j)
             prm = p["params"].get(slot) if slot else None
             if kind is None or prm is None:
                 continue
-            _bump(sc, "param_type 可比")
-            sc.type_checked.add((a, k))
             top = [(int(v, 16), c) for v, c in prm["top"]]
             covered = sum(c for _, c in top)
             bad = sum(c for v, c in top if violates(kind, v))
+            if covered >= MIN_COVERED:
+                _bump(sc, "param_type 可比")
+                sc.type_checked.add((a, k))            # 判得出才算已比;判不出的留給 param_flow(續一百一十六)
+            else:
+                _bump(sc, "param_type 紀錄太少")
             if covered >= MIN_COVERED and bad >= VIOLATION_SHARE * covered:
                 sc.cands.append(Cand(a, name, "param_type", slot,
                                      f"第 {k} 參數 {pn}({kind})在 {slot}:最常見值 {bad} / {covered} 次違反", prm["top"]))
@@ -336,9 +441,17 @@ def screen_static_count(sc: Screen, names: list[dict], cleanups: dict[int, set[i
             continue
         params, n = parse_sig(x.get("summary") or "")
         slots = n_slots(params, n)
-        if slots is None:
-            continue
         c = cleanups.get(a, set())
+        if slots is None:
+            pre = positioned(params)
+            if params and ELLIPSIS in params and len(c) == 1 and not any("=" in p or "個參數" in p for p in params):
+                _bump(sc, "param_count 可比(省略,下界)")
+                used, v = n_slots(pre, len(pre)), next(iter(c))
+                if used > v:
+                    sc.cands.append(Cand(a, x["name"], "param_count", "count",
+                                         f"摘要在 `...` 之前已列 {used} 格,EXE 全部呼叫端只清 {v} 個堆疊參數(靜態)",
+                                         sorted(c)))
+            continue
         ag = argc.get(a)
         if len(c) == 1:
             _bump(sc, "param_count 可比(靜態清堆疊)")
@@ -855,11 +968,11 @@ def screen_roles(sc: Screen, names: list[dict], cg, entries: list[int], argc: di
     memo: dict = {}
     known = set(entries)
     for x in names:
-        params, n = parse_sig(x.get("summary") or "")
+        a = int(x["addr"], 16)
+        params, n = resolve_sig(x.get("summary") or "", cleanups.get(a, set()), argc.get(a))
         roles = {k: role_of(pn) for k, pn in enumerate(params or [], 1)}
         if not n or not any(roles.values()):
             continue
-        a = int(x["addr"], 16)
         slots = n_slots(params, n)
         starts = slot_starts(params or [])
         conv = role_convention(slots, cleanups.get(a, set()), argc.get(a))
@@ -874,6 +987,7 @@ def screen_roles(sc: Screen, names: list[dict], cg, entries: list[int], argc: di
             if not role or not u or not any(u.values()):
                 continue
             _bump(sc, "param_role 可比")
+            sc.role_checked.add((a, k))
             if u["fr"] or u["fw"]:
                 _bump(sc, "param_role 可比(含轉交)")
             pn = params[k - 1]
@@ -885,6 +999,54 @@ def screen_roles(sc: Screen, names: list[dict], cg, entries: list[int], argc: di
             elif role == "src" and w:
                 sc.cands.append(Cand(a, x["name"], "param_role", f"p{k}",
                                      f"第 {k} 參數 {pn}(來源):寫入 {w} 次({how})", [u]))
+
+
+# ---------------------------------------------------------------- 沒讀的具名參數(靜態,續一百一十六)
+
+def stack_params_read(cg, target: int, entries: list[int]) -> set[int] | None:
+    """本體引用過哪幾個堆疊參數格(1 起;讀、`push [esp+X]` 轉交、`lea` 取位址都算)-> 集合;走不出本體回 None。"""
+    res = cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
+    if res is None:
+        return None
+    _, trace, ins = res
+    out: set[int] = set()
+    for at, i in ins.items():
+        for o in (i.op_str.split(",") if i.op_str else []):
+            k = _stack_param(o.strip(), *trace[at])
+            if k:
+                out.add(k)
+    return out
+
+
+def screen_unread(sc: Screen, names: list[dict], cg, entries: list[int], argc: dict[int, int | None],
+                  cleanups: dict[int, set[int]]) -> None:
+    """`param_unread`:堆疊傳參的函式,摘要具名的參數本體一次都沒引用它的堆疊格 -> 候選。
+
+    名稱宣稱這個參數有用途;本體完全不碰,多半是名稱放錯位置(實例 `dpmi_dos_free`:摘要寫第 1 個是選擇子,
+    本體只讀第 3 個)。真的沒用到的參數(呼叫慣例上留著的)核對後記 not_error。
+    省略記號(`...` / `..`)不比;暫存器傳參不比(入口暫存器有沒有被用,要追值才知道)。
+    """
+    for x in names:
+        a = int(x["addr"], 16)
+        c = cleanups.get(a, set())
+        params, n = resolve_sig(x.get("summary") or "", c, argc.get(a))
+        slots = n_slots(params, n)
+        if not slots or role_convention(slots, c, argc.get(a)) != "stack":
+            continue
+        read = stack_params_read(cg, a, entries)
+        if read is None:
+            continue
+        _bump(sc, "param_unread 函式")
+        starts = slot_starts(params)
+        for k, pn in enumerate(params, 1):
+            if not is_named(pn):
+                continue
+            _bump(sc, "param_unread 可比")
+            mine = {starts[k - 1], starts[k - 1] + 1} if pn == "double" else {starts[k - 1]}
+            if not mine & read:
+                sc.cands.append(Cand(a, x["name"], "param_unread", f"p{k}",
+                                     f"第 {k} 參數 {pn}:本體沒有引用它的堆疊格(本體引用的格:{sorted(read)})",
+                                     sorted(read)))
 
 
 # ---------------------------------------------------------------- 呼叫點值流與 param_flow(靜態,續一百一十三)
@@ -1144,10 +1306,10 @@ def flow_param_verdicts(x: dict, cg, entries: list[int], sources: dict, profiles
                         cleanups: dict[int, set[int]], argc: dict[int, int | None], code: bytes | None, base: int
                         ) -> list[tuple[int, str, str, tuple, tuple]]:
     """摘要 x 每個有型別的參數 -> (k, 名稱, 型別, 呼叫端判決, 被呼叫端判決);傳參方式對不上參數列的回 []。"""
-    params, n = parse_sig(x.get("summary") or "")
+    a = int(x["addr"], 16)
+    params, n = resolve_sig(x.get("summary") or "", cleanups.get(a, set()), argc.get(a))
     if not params or n is None:
         return []
-    a = int(x["addr"], 16)
     slots = n_slots(params, n)
     starts = slot_starts(params)
     conv = role_convention(slots, cleanups.get(a, set()), argc.get(a))
@@ -1239,7 +1401,7 @@ def flow_calibration(names: list[dict], cg, entries: list[int], sources: dict, p
     for x in names:
         a = int(x["addr"], 16)
         p = profiles.get(f"{a:#x}")
-        params, n = parse_sig(x.get("summary") or "")
+        params, n = resolve_sig(x.get("summary") or "", cleanups.get(a, set()), argc.get(a))
         if not p or not params or n is None:
             continue
         conv = role_convention(n_slots(params, n), cleanups.get(a, set()), argc.get(a))
@@ -1273,6 +1435,7 @@ def screen_flow(sc: Screen, names: list[dict], cg, entries: list[int], sources: 
             if up[0] is None and down[0] is None:
                 continue
             _bump(sc, "param_flow 可比")
+            sc.flow_checked.add((a, k))
             if up[0]:
                 _bump(sc, "param_flow 可比(呼叫端)")
             if down[0]:
@@ -1345,12 +1508,13 @@ def run(review_path: Path) -> tuple[Screen, list[Cand], list[str], dict, list[di
     screen_static_count(sc, names, cleanups, st.argc)
     cg = CG(CC.EXE)
     screen_roles(sc, names, cg, st.entries, st.argc, cleanups, st.code, st.base)
+    screen_unread(sc, names, cg, st.entries, st.argc, cleanups)
     sources = arg_sources(cg, st.entries, st.code, st.base, st.fixups, st.thunk_of, cleanups, st.argc)
     screen_flow(sc, names, cg, st.entries, sources, profiles, cleanups, st.argc, st.code, st.base)
     reviews, errs = load_review(json.loads(review_path.read_text(encoding="utf-8")),
                                 {int(x["addr"], 16): x["name"] for x in names})
     pending, rerrs, _ = reconcile(sc.cands, reviews)
-    return sc, pending, errs + rerrs, reviews, names
+    return sc, pending, errs + rerrs + audit_names(sc, names), reviews, names
 
 
 def report(sc: Screen, pending: list[Cand], errs: list[str], reviews: dict) -> list[str]:
@@ -1365,7 +1529,7 @@ def report(sc: Screen, pending: list[Cand], errs: list[str], reviews: dict) -> l
     for c in pending:
         lines.append(f"PENDING {c.screen} {c.addr:#x} {c.name} [{c.key}]:{c.detail}")
     for e in errs:
-        lines.append(f"FAIL review:{e}")
+        lines.append(f"FAIL {'參數名' if '未分類' in e else 'review'}:{e}")
     return lines
 
 
@@ -1420,7 +1584,8 @@ def selftest() -> int:
     chk("ptr 含「緩衝」", type_of("調色盤緩衝"), "ptr")
     chk("small", type_of("x"), "small")
     chk("佔位名 a3 不判", type_of("a3"), None)
-    chk("不認得的不判", type_of("portrait"), None)
+    chk("不認得的不判", type_of("zzz_unknown"), None)
+    chk("ptr 字尾 陣列(續一百一十六)", type_of("選取陣列"), "ptr")
 
     print("[3] 型別違反")
     U = VC.UNIT_BASE
@@ -2168,7 +2333,7 @@ def selftest() -> int:
            0x279BC: ("(店種) …", {1}), 0x1E529: ("(stat_ptr, growth_pair_ptr, msg, line):", {3}),
            0x27079: ("(mode, positions):", {1}), 0x2B4FB: ("(bg, limit, flags, cursor):", {1}),
            0x17D6F: ("(x, y, 長度, 色格) …", {1}), 0x344B4: ("(res, idx, x, stride, base, y):", {3}),
-           0x22D1B: ("(caster, count, targets, field_off, anim):", {3, 5})}
+           0x22D1B: ("(caster, count, targets, field_off, anim):", {3, 4, 5})}   # 續一百一十六:field_off 有型別後第 4 個也報
     cur = {int(x["addr"], 16): x for x in real_names}
 
     def flagged(x: dict) -> set[int]:
@@ -2200,7 +2365,8 @@ def selftest() -> int:
         if u is not None:
             zero += [(x["name"], k) for k, r in rl.items() if r and not any((u.get(slot_starts(ps)[k - 1]) or {}).values())]
     chk("真實:角色篩選零存取的參數 0 個(續一百一十二留 11 個;逐一查出 5 種原因並補機制)", zero, [])
-    run_sc2 = run(REVIEW_JSON)[0]
+    run_all = run(REVIEW_JSON)
+    run_sc2 = run_all[0]
     chk("run() 有接上 param_flow(分母非零)", (run_sc2.denom.get("param_flow 可比(呼叫端)", 0) > 0,
                                           run_sc2.denom.get("param_flow 可比(被呼叫端)", 0) > 0), (True, True))
     chk("真實 param_role 可比 ≥ 105(續一百一十三沿控制流 + 五種機制;續一百一十二 97)",
@@ -2210,6 +2376,156 @@ def selftest() -> int:
     chk("真實:0x41b84 跳表 case 段裡的呼叫點 0x41bde,第 1 個引數 = 呼叫者的第 1 個參數",
         dig(rsrc, 0x39694, 0x41BDE, 1, 1), frozenset({("param", 0x41B84, 1)}))
     chk("真實:沒有函式撞到引擎的迭代上限", CFG_OVERRUN, [])
+
+    print("[17] 續一百一十六:沒判的不算已比、省略的摘要、param_unread、參數名登錄")
+    chk("`..` 佔一格,個數照算", parse_sig("(.., x):…"), (["..", "x"], 2))
+    chk("位置確定的名稱:第一個 ... 之前", (positioned(["a", "...", "b", "..."]), positioned(["a", "..", "b"]),
+                                       positioned(["..."]), positioned(None)), (["a"], ["a", "..", "b"], [], []))
+    chk("省略記號不算具名", (is_named("..."), is_named(".."), is_named("x")), (False, False, True))
+    chk("resolve_sig:清堆疊 3 -> 補成 3 格", resolve_sig("(a, ...):…", {3}, None), (["a", "...", "..."], 3))
+    chk("resolve_sig:... 之後的名稱位置不明,換成省略", resolve_sig("(a, ..., b, ...):…", {4}, None),
+        (["a", "...", "...", "..."], 4))
+    chk("resolve_sig:剛好列滿", resolve_sig("(a, b, ...):…", {2}, None), (["a", "b"], 2))
+    chk("resolve_sig:double 佔 2 格", resolve_sig("(double, n, ...):…", {4}, None), (["double", "n", "..."], 3))
+    chk("resolve_sig:沒有清堆疊時取 argc", resolve_sig("(a, ...):…", set(), 2), (["a", "..."], 2))
+    chk("resolve_sig:清堆疊不一致(可變參數)/ 格數不明 / argc 0 -> 個數不明",
+        (resolve_sig("(fmt, ...):…", {2, 3}, 2)[1], resolve_sig("(a, ...):…", set(), None)[1],
+         resolve_sig("(a, ...):…", set(), 0)[1]), (None, None, None))
+    chk("resolve_sig:列出的已超過格數 -> 個數不明(由 param_count 列出)", resolve_sig("(a, b, c, ...):…", {2}, None)[1], None)
+    chk("resolve_sig:暫存器寫法不補", resolve_sig("(eax = ptr, ...):…", {2}, None)[1], None)
+    chk("resolve_sig:一般摘要原樣", resolve_sig("(a, b):…", {5}, None), (["a", "b"], 2))
+    # 沒判的不算已比:s1 只有 2 筆紀錄(< MIN_COVERED),s2 有 3 筆
+    fprof = {"0x100": prof(two, {"s1": {"top": [["0x245018", MIN_COVERED - 1]]}, "s2": {"top": [["0x245018", MIN_COVERED]]}},
+                           [["0x0", 9]])}
+    fsc = screen(snm, fprof, bytes(ccode), 0x2000)
+    chk("紀錄太少的參數不算已比、不報;夠的照判", (sorted(fsc.type_checked), [(c.screen, c.key) for c in fsc.cands],
+                                       fsc.denom.get("param_type 可比"), fsc.denom.get("param_type 紀錄太少")),
+        ([(0x100, 2)], [("param_type", "s2")], 1, 1))
+    screen_flow(fsc, snm, sg, [0x100], ssrc, {}, {0x100: {2}}, {}, None, 0)
+    chk("紀錄太少的參數由 param_flow 接手(p1),已比的 p2 不重複", sorted((c.screen, c.key) for c in fsc.cands),
+        [("param_flow", "p1"), ("param_type", "s2")])
+    chk("值流比過的參數記進 flow_checked", sorted(fsc.flow_checked), [(0x100, 1)])
+    pprof = {"0x100": prof(two, {"s1": {"top": small_top}, "s2": {"top": ptr_top}}, [["0x0", 9]])}
+
+    def live(sig: str) -> tuple:
+        lsc = screen([{"addr": "0x100", "name": "f", "summary": sig}], pprof, bytes(ccode), 0x2000)
+        return sorted((c.screen, c.key) for c in lsc.cands), lsc.denom.get("param_type 可比", 0), 0x100 in lsc.count_checked
+
+    chk("實機:... 之後的名稱位置不明,不比(原本會拿第 2 格比 x)", live("(..., x):…"), ([], 0, False))
+    chk("實機:... 之前的照比", live("(y, ..., x):…"), ([], 1, False))
+    chk("實機:`..` 佔一格,x 在 s2 照比,個數也比", live("(.., x):…"), ([("param_type", "s2")], 1, True))
+    enames = [{"addr": f"{a:#x}", "name": f"f{a:x}", "summary": sm} for a, sm in (
+        (0x10, "(a, b, c, ...):…"), (0x20, "(a, ...):…"), (0x30, "(a, b, c, ...):…"), (0x40, "(eax = p, ...):…"),
+        (0x50, "(double, n, ...):…"), (0x60, "(a, b, c, ...):…"), (0x70, "(a, b, ...):…"))]
+    esc = Screen()
+    screen_static_count(esc, enames, {0x10: {2}, 0x20: {2}, 0x30: {2, 3}, 0x40: {1}, 0x50: {2}, 0x70: {2}}, {0x60: 2})
+    chk("靜態個數:... 之前已列的格數超過清堆疊 -> 候選(double 佔 2 格);剛好列滿、多值、暫存器寫法、沒有清堆疊不報",
+        (sorted(c.addr for c in esc.cands), esc.denom), ([0x10, 0x50], {"param_count 可比(省略,下界)": 4}))
+    rg = _G({0x100: [("mov", "eax, dword ptr [esp + 4]"), ("mov", "ecx, dword ptr [eax]"), RET]})
+
+    def roles_e(cleanup: set[int]) -> tuple:
+        rsc = Screen()
+        screen_roles(rsc, [{"addr": "0x100", "name": "f", "summary": "(dst, ...):…"}], rg, [0x100], {}, {0x100: cleanup})
+        return [(c.screen, c.key) for c in rsc.cands], rsc.denom.get("param_role 可比", 0), sorted(rsc.role_checked)
+
+    chk("角色篩選:省略的摘要,... 之前的 dst 只讀不寫 -> 候選;記進 role_checked", roles_e({2}),
+        ([("param_role", "p1")], 1, [(0x100, 1)]))
+    chk("角色篩選:清堆疊不一致的省略摘要仍不比", roles_e({2, 3}), ([], 0, []))
+
+    def flow_e(cleanup: set[int]) -> list:
+        return [(k, up[0]) for k, _, _, up, _ in flow_param_verdicts(
+            {"addr": "0x100", "name": "f", "summary": "(x, ...):…"}, sg, [0x100], ssrc, {}, {0x100: cleanup}, {}, None, 0)]
+
+    chk("值流:省略的摘要,... 之前的 x 收到指標 -> 違反;補上的格不列", flow_e({2}), [(1, "viol")])
+    chk("值流:清堆疊不一致的省略摘要仍不比", flow_e({2, 3}), [])
+
+    def rd(body: list[tuple[str, str]]) -> set[int] | None:
+        return stack_params_read(_G({0: body}), 0, [])
+
+    chk("引用的堆疊格:mov 讀、lea 取位址", rd([("mov", "eax, dword ptr [esp + 8]"), ("lea", "ecx, [esp + 0xc]"), RET]), {2, 3})
+    chk("引用的堆疊格:push 之後換算位移", rd([("push", "ebx"), ("mov", "eax, dword ptr [esp + 8]"), ("pop", "ebx"), RET]), {1})
+    chk("引用的堆疊格:push [esp+X] 轉交也算", rd([("push", "dword ptr [esp + 8]"), ("add", "esp, 4"), RET]), {2})
+    chk("引用的堆疊格:ebp 框架", rd([("push", "ebp"), ("mov", "ebp, esp"), ("mov", "eax, dword ptr [ebp + 0xc]"),
+                             ("pop", "ebp"), RET]), {2})
+    chk("引用的堆疊格:區域變數不算參數", rd([("sub", "esp, 8"), ("mov", "eax, dword ptr [esp + 4]"), ("add", "esp, 8"),
+                                RET]), set())
+    chk("引用的堆疊格:走不出本體 -> None", stack_params_read(_G({}), 0, []), None)
+    B13 = [("mov", "eax, dword ptr [esp + 4]"), ("mov", "ecx, dword ptr [esp + 0xc]"), RET]
+
+    def unread(sig: str, body: list[tuple[str, str]], cleanup: set[int] | None = None, ag: int | None = None) -> tuple:
+        usc = Screen()
+        screen_unread(usc, [{"addr": "0x100", "name": "f", "summary": sig}], _G({0x100: body} if body else {}), [0x100],
+                      {} if ag is None else {0x100: ag}, {0x100: cleanup} if cleanup else {})
+        return [(c.screen, c.key) for c in usc.cands], usc.denom.get("param_unread 函式", 0), usc.denom.get("param_unread 可比", 0)
+
+    chk("沒讀的具名參數:本體讀第 1、3 個 -> p2", unread("(a, b, c):…", B13, {3}), ([("param_unread", "p2")], 1, 3))
+    chk("沒讀的具名參數:`..` 的位置不報、不算可比", unread("(a, .., c):…", B13, {3}), ([], 1, 2))
+    chk("沒讀的具名參數:省略的摘要,... 之前的照報,補上的格不報", unread("(a, b, ...):…", B13, {3}),
+        ([("param_unread", "p2")], 1, 2))
+    chk("沒讀的具名參數:double 佔兩格,讀到任一格就算", unread("(double, n):…", [
+        ("mov", "eax, dword ptr [esp + 8]"), ("mov", "ecx, dword ptr [esp + 0xc]"), RET], {3}), ([], 1, 2))
+    chk("沒讀的具名參數:double 兩格都沒讀 -> p1", unread("(double, n):…", [("mov", "ecx, dword ptr [esp + 0xc]"), RET], {3}),
+        ([("param_unread", "p1")], 1, 2))
+    chk("沒讀的具名參數:沒有清堆疊時以 argc 定傳法", unread("(a, b):…", [("mov", "eax, dword ptr [esp + 8]"), RET], None, 2),
+        ([("param_unread", "p1")], 1, 2))
+    chk("沒讀的具名參數:暫存器傳參不比", unread("(a, b):…", [RET], None, 0), ([], 0, 0))
+    chk("沒讀的具名參數:個數對不上不比", unread("(a, b):…", B13, {3}), ([], 0, 0))
+    chk("沒讀的具名參數:走不出本體不比", unread("(a, b, c):…", [], {3}), ([], 0, 0))
+    chk("登錄:有型別 / 審過無型別 / 未分類", (name_class("dst"), name_class("值"), name_class("zzz_unknown")),
+        ("typed", "opaque", None))
+    chk("登錄:OPAQUE_NAMES 與型別名單不重疊", sorted(nm for nm in OPAQUE_NAMES if type_of(nm)), [])
+    asc = Screen()
+    aerr = audit_names(asc, [{"addr": "0x1", "name": "f1", "summary": "(dst, 值, zzz_unknown, .., ..., late):…"},
+                             {"addr": "0x2", "name": "f2", "summary": "(eax = ptr, zzz2):…"},
+                             {"addr": "0x3", "name": "f3", "summary": "(3 個參數) …"},
+                             {"addr": "0x4", "name": "f4", "summary": "沒有參數列"}])
+    chk("登錄:未分類的只有 zzz_unknown(第 3 個);省略記號、暫存器寫法、... 之後的不算",
+        (len(aerr), "f1 第 3 個參數 'zzz_unknown' 未分類" in "".join(aerr)), (1, True))
+    chk("登錄分母", asc.denom, {"參數名 有型別": 1, "參數名 審過無型別": 1, "參數名 未分類": 1,
+                            "參數名 位置不明(省略之後,不比)": 1})
+    chk("登錄:未分類 -> rc 1,報告列 FAIL 參數名", (exit_code([], aerr),
+                                          [ln.split(":")[0] for ln in report(Screen(), [], aerr + ["x:review 錯"], {})
+                                           if ln.startswith("FAIL")]), (1, ["FAIL 參數名", "FAIL review"]))
+    # 真實:run() 有接上、登錄沒有漏
+    chk("真實:參數名未分類 0、... 之後的具名參數 0", (run_sc2.denom.get("參數名 未分類", 0),
+                                         run_sc2.denom.get("參數名 位置不明(省略之後,不比)", 0)), (0, 0))
+    chk("真實:run() 沒有參數名錯誤", [e for e in run_all[2] if "未分類" in e], [])
+    chk("真實:param_unread 有接上(可比 ≥ 800)、紀錄太少另計(> 0)",
+        (run_sc2.denom.get("param_unread 可比", 0) >= 800, run_sc2.denom.get("param_type 紀錄太少", 0) > 0), (True, True))
+    chk("真實:審過無型別的參數 < 有型別的 1 / 10(名單不是空殼)",
+        run_sc2.denom.get("參數名 審過無型別", 10 ** 6) * 10 < run_sc2.denom.get("參數名 有型別", 0), True)
+    emat, _ = flow_calibration([{**cur[0x2111A], "summary": "(使用者, 數量, targets, ...) …"}], rcg, st.entries, rsrc,
+                               real_prof, clean, st.argc, st.code, st.base)
+    chk("校準涵蓋省略的摘要(item_effect_type21_damage 寫成省略時仍有 3 個參數進矩陣)", sum(emat.values()) // 2, 3)
+    # 召回:本輪與前兩輪靠讀反組譯才找到的參數列錯誤,舊摘要現在由哪個篩選抓到
+    old116 = {0x22AF6: ("(使用者, 數量, 目標 bytes, 狀態欄位偏移, ...) …", {4}),
+              0x2B439: ("(選取陣列, ...) …", {1}),
+              0x1F73F: ("(.., .., 索引 A, 索引 B) …", {3}),
+              0x2F4D4: ("(strip, ..., panel_buf, ...):…", {1})}
+    chk("召回:4 筆舊摘要以靜態值流重現在對的參數(省略的摘要原本整筆不比)",
+        {a: flagged({"addr": f"{a:#x}", "summary": sm}) for a, (sm, _) in old116.items()},
+        {a: want for a, (_, want) in old116.items()})
+    chk("對照:同 4 個函式的目前摘要一個都不報", {a: flagged(cur[a]) for a in old116}, {a: set() for a in old116})
+    usc2 = Screen()
+    screen_unread(usc2, [{**cur[0x365AB], "summary": "(選擇子, ...) …"}], rcg, st.entries, st.argc, clean)
+    chk("召回:dpmi_dos_free 舊摘要 (選擇子, ...) -> param_unread p1(本體只讀第 3 個)",
+        [(c.screen, c.key) for c in usc2.cands], [("param_unread", "p1")])
+    rsc5 = Screen()
+    screen_roles(rsc5, [{**cur[0x2BF83], "summary": "(影格索引*, 計時*, 動畫, ...) …"}], rcg, st.entries, st.argc, clean,
+                 st.code, st.base)
+    chk("召回:anim_draw_and_advance 舊摘要 (影格索引*, 計時*, 動畫, ...) -> 角色篩選 p3(第 3 個其實是 dst,被寫入)",
+        [(c.screen, c.key) for c in rsc5.cands], [("param_role", "p3")])
+    tsc = screen([{**cur[0x1F558], "summary": "(tiles, cx, cy, scale):…"}], real_prof, st.code, st.base)
+    chk("召回:draw_map_scaled_fixedpoint 舊摘要 (tiles, cx, cy, scale) -> 實機型別 s1",
+        [(c.screen, c.key) for c in tsc.cands], [("param_type", "s1")])
+    # 誠實邊界:這 2 筆任何篩選都抓不到(數值範圍重疊、同型別的輸出指標對調),只能讀反組譯。哪天抓到了,改這題與 doc98。
+    miss = {0x22470: "(單位, ...) …", 0x36522: "(段落數, 線性位址*, 選擇子*, ...) …"}
+    msc = Screen()
+    mnames = [{**cur[a], "summary": sm} for a, sm in miss.items()]
+    screen_roles(msc, mnames, rcg, st.entries, st.argc, clean, st.code, st.base)
+    screen_unread(msc, mnames, rcg, st.entries, st.argc, clean)
+    chk("邊界:unit_present_intro_frames / dpmi_dos_alloc_locked 的舊摘要,值流、角色、沒讀三個篩選都不報",
+        ({a: flagged(x) for a, x in zip(miss, mnames)}, msc.cands), ({a: set() for a in miss}, []))
 
     print()
     print("--selftest OK" if not fails else f"--selftest FAILED: {fails}")
