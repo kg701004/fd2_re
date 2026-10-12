@@ -8810,3 +8810,54 @@ heap_grow 的不同變數混在一起;型別證據把 `base + x` 衍生的指標
   ail_drv_fn_0502_release、sortie_required_member_check)靜態篩選不比;sortie_required_member_check 本輪已讀並改正,剩 4 筆(數字為改正前)。
 - 7 個指標參數只有弱證據(見上)。
 - 規格未執行的 2 條沒有實機紀錄可比,工具仍列為「未執行」,沒有另設「實機走不到」的標記。
+
+## 2026-10-12 續一百一十五:續一百一十四留下的五項逐項定案 —— `_cstr` 加門檻、規格的 unreachable 標記、省略與佔位名的摘要全部讀完
+
+五項逐項與使用者討論後的決定:
+
+| 項目 | 決定 | 結果 |
+|---|---|---|
+| 1. 續一百一十四的變更 | 先提交 | 69797852 |
+| 2. cl11 在改過記憶體的狀態下錄的紀錄 | 保留 | 修改只決定走哪條分支(名冊補到 17 人、選取旗標、章節值暫改 0x11);參數 15 是遊戲算的出擊人數、9 是 0x2b2f4 `push 9` 的常數,名冊裡的角色 9 是存檔原有的 |
+| 3. `_cstr` 把換行算進字串 | 加門檻 | 見下 |
+| 4. 規格未執行的 2 條 | 加 unreachable 標記與反向檢查 | 見下 |
+| 5. 以 `...` 省略或佔位名的摘要 | 全部直接讀 | 見下 |
+
+**`_cstr` 門檻**(`tools/verify_names_by_calllog.py`):續一百一十四的定義提交後才量影響 —— 10 份紀錄 2712712 個有 dump 的位置,
+新收成字串的 3790 筆依可列印字元數:1 個 1880 筆、2 個 1112 筆(幾乎都是二進位資料:`X` + CR、`xi` + 換行;少數是格式字串的尾巴),
+3 個以上 798 筆全是文字。1 / 2 個的會寫進事實檔的字串欄,讓 param_str 變鈍。改成:含 tab / 換行的內容,可列印字元 >= 3(`_TEXT_MIN`)
+才算字串,不到的回「分不出」;沒有控制字元的短字串照舊。事實檔重產(少 245 行),規格 77 條仍全部成立;突變 8 個全 KILLED。
+
+**unreachable 標記**:`docs/data/function_specs.json` 的規格可加 `unreachable = {kind, reason}`,kind 是 static(靜態走不到)或
+practical(程式碼上走得到、實務上不會發生)。工具報「未執行 2 條(標記為實機走不到 靜態走不到 1、實務上不會發生 1;沒有交代 0 條)」;
+標了卻出現執行紀錄就 FAIL(標記是可以被推翻的宣稱)。兩條的理由是本輪重新靜態查的:
+- `table_60181_entry`(static):唯一呼叫端 copy_protection_password_check 0x3405d,它的唯一呼叫點在 battle_main_input_loop 0x118ac,
+  前一個指令 0x118aa 是無條件 `jmp 0x118b3`;兩個函式都沒有 fixup 指到。
+- `fmt_inf_nan`(practical):只經 printf_fmt_float 0x49b7d -> fmt_double_core 0x4d279 / dbl_to_digits 0x4d987 呼叫,10 份紀錄裡
+  printf_fmt_float 一次都沒執行。
+selftest 加 9 題;突變 11 個全 KILLED。沒納入的 1 個突變:拿掉「unreachable 必須是物件」的型別檢查 —— 它讓工具當機而不是報 FAIL。
+
+**省略與佔位名的摘要**(逐函式列出每個參數的載入指令、原樣轉交到哪個被呼叫端的哪個參數、實機值、呼叫端推的來源,再看反組譯):
+- 以 `...` 省略且沒有紀錄的 4 筆:
+  - `pan_view_left_to_panel` 參數列錯:(strip, ..., panel_buf, ...) -> (unit, anim, panel_buf, strip, 背景圖)。條帶是第 4 個(0x2f4e1),
+    第 1 個是單位(0x2f581 推給 draw_unit_panel_by_side 的第 2 個;呼叫端推 attacker / defender)。這一類累計第 5 筆錯誤。
+  - `dbl_to_digits`:前兩個正確,補齊成 (double, 位數, 指數*, 符號*, 格式字元, 輸出)。
+  - `lx_load_file`、`ail_drv_fn_0502_release`(都是死函式):列出的名稱正確,省略的部分維持。
+  - 連帶:`pan_view_right_to_panel` 原本沒有參數列,補上 (unit, anim, 面板附圖, panel_buf, strip, 背景圖)。
+- 佔位名 18 個、11 個函式,全部改名:
+  - AI 鏈 8 個函式的 a2 -> camp(行動單位的陣營 +6)。ai_mode_dispatch 的三個呼叫點 friendly_phase_dispatch 0x1d874、
+    enemy_phase_dispatch 0x1d93f / 0x1d9d0 推的是該單位的 +6 或常數 0,之後原樣轉交到 mark_units_blocking / map_block_cells_of_side。
+  - `play_map_effect_animation` (a1, a2, a3, a4) -> (caster, 動畫號, count, targets);第 1 個本體不讀。
+  - `decode_blit_transparent` a2 -> dst(實機 1800 次都是 0xa0000)。
+  - `scene_attack_sequence` (…, ctx, a4, a5, a6, a7, a8) -> (…, 攻方動畫, 守方動畫, strip, panel_buf, 面板附圖, 音效資源)。
+    第 3 / 4 個分別與 attacker / defender 一起交給 pan_view_*;第 8 個交給 0x25a96(以 [資源 + 索引*4 + 6] 取一段資料給 AIL 播放,
+    該函式沒有名稱,「音效資源」是依這段用法取的名)。
+- 改名後實機型別篩選多比到 12 個參數(param_type 可比 460 -> 472),全部相符;param_role 可比 112 -> 116(對調對照 116 / 116)、
+  param_flow 可比 52 -> 59;候選無新增。值流校準 381 筆相符、矛盾 0。
+
+**仍留的**:
+- 參數名沒有型別意涵的 293 個(851 個有名稱的參數裡;130 個在沒有實機紀錄的函式)。佔位名 0 個。
+- 以 `...` 省略的摘要 33 筆,沒有實機紀錄的剩 2 筆(兩個死函式,列出的名稱已讀過)。有紀錄的 31 筆只有「有型別的名稱」由實機比過,
+  沒有型別的名稱沒有逐筆讀。
+- param_flow 判不出的 27 個裡,7 個指標參數只有弱證據(與續一百一十四相同)。
+- 0x25a96、0x111ba、0x37910 等被呼叫端沒有名稱;本輪用到它們的地方只描述用法。

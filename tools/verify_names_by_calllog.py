@@ -387,12 +387,18 @@ UNIT_BASE = 0x26BDC8      # 戰場單位陣列 [0x53a45] 的執行期值(doc98 �
 OBJ3_DELTA = 0x192000     # obj3(≥ 0x60000 的資料表)的執行期位移,與 obj1/obj2 不同(reference: controlled live test)
 
 
+# 規格的選填欄位 unreachable = {"kind": …, "reason": …}:這個函式實機走不到,規格沒有紀錄可比(續一百一十五)。
+# 標了卻出現執行紀錄,summarize 報 FAIL —— 標記是可以被推翻的宣稱,不是免檢。
+UNREACHABLE_KINDS = {"static": "靜態走不到", "practical": "實務上不會發生"}
+
+
 @dataclass
 class Spec:
     addr: int
     name: str
     claims: list[dict]
     quote: str
+    unreachable: dict | None = None
 
 
 def _int(v: int | str) -> int:
@@ -406,7 +412,8 @@ def _signed(v: int, width: int) -> int:
 
 def load_specs(st: Static, doc: dict, root: Path = ROOT) -> tuple[list[Spec], list[str]]:
     """驗證並載入規格。回 (規格, 錯誤);錯誤包含:入口不存在、名稱與登錄不同、引文不在出處、
-    kind 不認得、缺欄位、參數位置無法由 argc 定位。有錯的規格整條不採用(不拿不可靠的宣稱去比)。"""
+    kind 不認得、缺欄位、參數位置無法由 argc 定位、unreachable 的 kind 不認得或沒有 reason。有錯的規格整條不採用
+    (不拿不可靠的宣稱去比)。"""
     specs, errors = [], []
     rows = doc.get("specs") if isinstance(doc, dict) else None
     if not isinstance(rows, list):
@@ -447,7 +454,11 @@ def load_specs(st: Static, doc: dict, root: Path = ROOT) -> tuple[list[Spec], li
                     raise ValueError(f"{c['kind']} 第 {c['param']} 參數無法由 argc={st.argc.get(addr)} 定位")
                 if c["kind"] == "param_cstr" and param_slot(st.argc.get(addr), int(c["param"])) not in MEM_INDEX:
                     raise ValueError(f"param_cstr 第 {c['param']} 參數沒有記憶體 dump(紀錄只 dump 暫存器與 [esp+4..0x10])")
-            specs.append(Spec(addr, name, claims, quote))
+            unr = row.get("unreachable")
+            if unr is not None and (not isinstance(unr, dict) or unr.get("kind") not in UNREACHABLE_KINDS
+                                    or not isinstance(unr.get("reason"), str) or not unr["reason"].strip()):
+                raise ValueError(f"unreachable 要有 kind({' / '.join(UNREACHABLE_KINDS)})與非空的 reason")
+            specs.append(Spec(addr, name, claims, quote, unr))
         except KeyError as exc:
             errors.append(f"{where}:缺欄位或不認得的 kind {exc}")
         except (ValueError, TypeError) as exc:
@@ -456,12 +467,15 @@ def load_specs(st: Static, doc: dict, root: Path = ROOT) -> tuple[list[Spec], li
 
 
 _TEXT_CTRL = frozenset(b"\t\n\r")      # 字串裡常見的控制字元(格式字串多以 \n 結尾)
+_TEXT_MIN = 3                           # 含 tab / 換行的內容,可列印字元至少這麼多才算字串
 
 
 def _cstr(full: bytes | None, prefix: bytes) -> str | None:
     """dump 開頭的 C 字串(可列印 ASCII 與 tab / 換行,NUL 結尾);dump 內沒有 NUL 回 None(分不出來)。
-    NUL 之前有其他不可列印字元回 ''(必定不是字串)。只有 tab / 換行、沒有任何可列印字元的也回 None:指到的可能是
-    小整數(9 / 10 / 13),分不出。
+    NUL 之前有其他不可列印字元回 ''(必定不是字串)。含 tab / 換行而可列印字元不到 _TEXT_MIN 個的也回 None:
+    指到的可能是小整數(9 / 10 / 13)或二進位資料,分不出。
+    續一百一十五:門檻來自 10 份紀錄的量測 —— 換行算進字串後新收的 3790 筆,可列印 1 個的 1880 筆、2 個的 1112 筆多為
+    二進位資料(`X` + CR、`xi` + 換行),3 個以上的 798 筆全是文字;1 / 2 個的不可寫進事實檔的字串欄。
     續一百一十四:原本換行也算不可列印;帶 AIL_DEBUG 錄的 cl12 裡,AIL 追蹤的格式字串(`AIL_stop_sample(0x%X)` 加換行)
     31 筆因此被判成不是字串。"""
     buf = full if full is not None else prefix
@@ -471,7 +485,8 @@ def _cstr(full: bytes | None, prefix: bytes) -> str | None:
     s = buf[:i]
     if not all(0x20 <= b < 0x7F or b in _TEXT_CTRL for b in s):
         return ""
-    if s and not any(0x20 <= b < 0x7F for b in s):
+    printable = sum(0x20 <= b < 0x7F for b in s)
+    if printable < len(s) and printable < _TEXT_MIN:
         return None
     return s.decode("ascii")
 
@@ -706,6 +721,10 @@ def summarize(st: Static, logs: list[CallLog], rep: Report) -> tuple[list[str], 
         fails.append(f"間接呼叫:{at:#x} 的 {how} 目標 {v:#x} 不是實際進入的 {ent:#x}")
     for msg in rep.spec_errors:
         fails.append(f"規格:{msg}")
+    for sp in rep.specs:
+        if sp.unreachable and sp.addr in rep.executed:
+            fails.append(f"規格:{sp.addr:#x} {sp.name} 標記為實機走不到({UNREACHABLE_KINDS[sp.unreachable['kind']]}),"
+                         "卻有執行紀錄 —— 標記要拿掉")
     verdicts = {"spec": collections.Counter(), "other": collections.Counter()}
     for a in sorted(rep.checks):
         for rule, v in sorted(rep.checks[a].items()):
@@ -727,6 +746,11 @@ def summarize(st: Static, logs: list[CallLog], rep: Report) -> tuple[list[str], 
     lines.append(f"規格檔:{len(rep.specs)} 個函式 {nclaims} 條(規格錯誤 {len(rep.spec_errors)});被執行 {len(ran)} 個函式、"
                  f"{sum(spec.values())} 條有紀錄:" + "、".join(f"{k} {spec[k]}" for k in ("成立", "不成立", "無法判定"))
                  + f";未執行 {nclaims - sum(spec.values())} 條")
+    marked = collections.Counter(sp.unreachable["kind"] for sp in rep.specs
+                                 if sp.unreachable and sp.addr not in rep.executed for _ in sp.claims)
+    if marked:
+        lines[-1] += ("(標記為實機走不到 " + "、".join(f"{UNREACHABLE_KINDS[k]} {marked[k]}" for k in UNREACHABLE_KINDS if marked[k])
+                      + f";沒有交代 {nclaims - sum(spec.values()) - sum(marked.values())} 條)")
     return lines, fails
 
 
@@ -1031,6 +1055,13 @@ def selftest() -> int:
     chk("第 2 參數超出 argc 1 -> 錯誤", len(errs(variant(claims=[{"kind": "param_range", "param": 2, "min": 0, "max": 1}]))), 1)
     chk("不是 inventory 入口 -> 錯誤", len(errs(variant(addr=f"{row_ptr + 1:#x}"))), 1)
     chk("沒有 specs 清單 -> 錯誤", len(load_specs(st, {"spec": []})[1]), 1)
+    unr_ok = {"kind": "static", "reason": "唯一呼叫端在無條件 jmp 之後"}
+    chk("unreachable 合法 -> 載入並帶著標記", [sp.unreachable for sp in load_specs(st, {"specs": [variant(unreachable=unr_ok)]})[0]],
+        [unr_ok])
+    chk("沒有 unreachable -> 標記是 None", [sp.unreachable for sp in load_specs(st, {"specs": [ok_row]})[0]], [None])
+    chk("unreachable 的 kind 不認得 / 沒有 reason / reason 空白 / 不是物件 -> 錯誤",
+        [len(errs(variant(unreachable=u))) for u in ({"kind": "maybe", "reason": "x"}, {"kind": "static"},
+                                                     {"kind": "practical", "reason": "  "}, "static")], [1, 1, 1, 1])
     chk("有錯的那條不採用、其他照收", len(load_specs(st, {"specs": [ok_row, variant(name="x")]})[0]), 1)
     real_specs, real_errs = load_specs(st, json.loads(SPECS_JSON.read_text(encoding="utf-8")))
     chk("docs/data/function_specs.json 全部可載入(摘要改了要跟著改規格)", real_errs, [])
@@ -1039,7 +1070,7 @@ def selftest() -> int:
     print("[8] 規格檔:各 kind 的成立與不成立")
     ent = parse_calllog(_synthetic(st, memcpy, ret_rt, {"eax": 3}, stack=[5, 0x40, 10],
                                    mems={"s1": "46444f544845522e44415400" + "00" * 20,
-                                         "s2": "41420a00" + "00" * 28, "s3": "4142" + "41" * 30})).entries[1]
+                                         "s2": "4142430a00" + "00" * 27, "s3": "4142" + "41" * 30})).entries[1]
     sc = spec_check
     chk("ret_in -1 對 0xffffffff -> 成立", sc({"kind": "ret_in", "values": [1, -1]}, ent, (0xFFFFFFFF, 0), 3)[0], True)
     chk("ret_in 2 -> 不成立", sc({"kind": "ret_in", "values": [1, -1]}, ent, (2, 0), 3)[0], False)
@@ -1062,10 +1093,12 @@ def selftest() -> int:
         False)
     chk("param_cstr 結尾 .DAT -> 成立", sc({"kind": "param_cstr", "param": 1, "suffix": ".DAT"}, ent, None, 3)[0], True)
     chk("param_cstr 結尾 .SAV -> 不成立", sc({"kind": "param_cstr", "param": 1, "suffix": ".SAV"}, ent, None, 3)[0], False)
-    chk("param_cstr 含換行的字串(AB + 換行)-> 成立(續一百一十四:格式字串多以換行結尾)",
-        sc({"kind": "param_cstr", "param": 2}, ent, None, 3), (True, "字串 'AB\\n'"))
-    chk("_cstr:可列印 + 換行 / tab 是字串;其他控制字元不是;只有換行分不出;空字串不是;沒有 NUL 分不出",
-        [_cstr(None, b) for b in (b"A\tB\r\n\0", b"A\x01\0", b"\n\0", b"\0", b"AB")], ["A\tB\r\n", "", None, "", None])
+    chk("param_cstr 含換行的字串(ABC + 換行)-> 成立(續一百一十四:格式字串多以換行結尾)",
+        sc({"kind": "param_cstr", "param": 2}, ent, None, 3), (True, "字串 'ABC\\n'"))
+    chk("_cstr:可列印 3 個 + 換行 / tab 是字串;其他控制字元不是;只有換行分不出;空字串不是;沒有 NUL 分不出",
+        [_cstr(None, b) for b in (b"A\tBC\r\n\0", b"A\x01\0", b"\n\0", b"\0", b"AB")], ["A\tBC\r\n", "", None, "", None])
+    chk("_cstr:含換行而可列印只有 1 / 2 個 -> 分不出;沒有控制字元的短字串照舊是字串",
+        [_cstr(None, b) for b in (b"X\r\0", b"xi\n\0", b"AB\0", b"X\0")], [None, None, "AB", "X"])
     chk("param_cstr 只有換行 -> 不適用;含其他控制字元 -> 不成立",
         [sc({"kind": "param_cstr", "param": 1}, parse_calllog(_synthetic(
             st, memcpy, ret_rt, stack=[5, 0x40, 10], mems={"s1": h + "00" * (32 - len(h) // 2)})).entries[1], None, 3)
@@ -1091,6 +1124,28 @@ def selftest() -> int:
     chk("param_unit 不成立進 FAIL", any("spec:param_unit#0 不成立" in f for f in fl9), True)
     chk("ret_in 成立有計數", rep9.checks[memcpy]["spec:ret_in#1"]["pass"], 1)
     chk("規格錯誤進 FAIL", any(f.startswith("規格:") for f in fl9), True)
+
+    def spec_line(rows: list[dict]) -> tuple[str, list[str]]:
+        ln, fl = summarize(st, [lg9], check(st, [lg9], load_specs(st, {"specs": rows})[0]))
+        return next(x for x in ln if x.startswith("規格檔")).split(";")[-1], [f for f in fl if "走不到" in f]
+
+    pr = {"kind": "practical", "reason": "遊戲不印這種值"}
+    chk("沒被執行的規格:沒標記 -> 只報未執行",
+        spec_line([ok_row]), ("未執行 1 條", []))
+    chk("沒被執行的規格:標了 unreachable -> 另列種類與沒有交代的條數,不是 FAIL",
+        spec_line([variant(unreachable=unr_ok)]), ("沒有交代 0 條)", []))
+    chk("標記的種類分開列", "靜態走不到 1" in summarize(st, [lg9], check(st, [lg9], load_specs(
+        st, {"specs": [variant(unreachable=unr_ok)]})[0]))[0][-1], True)
+    chk("兩條沒被執行:一條標實務上不會發生、一條沒標 -> 沒有交代 1 條",
+        "未執行 2 條(標記為實機走不到 實務上不會發生 1;沒有交代 1 條)" in summarize(st, [lg9], check(st, [lg9], load_specs(
+            st, {"specs": [variant(unreachable=pr), ok_row]})[0]))[0][-1], True)
+    chk("標記逐條計數:一個函式 2 條規格 -> 2",
+        spec_line([variant(claims=ok_row["claims"] * 2, unreachable=unr_ok)])[0], "沒有交代 0 條)")
+    chk("(同上)種類後面的條數是 2", "靜態走不到 2;" in summarize(st, [lg9], check(st, [lg9], load_specs(
+        st, {"specs": [variant(claims=ok_row["claims"] * 2, unreachable=unr_ok)]})[0]))[0][-1], True)
+    got_l, got_f = spec_line([dict(sp_row, unreachable=unr_ok)])
+    chk("標了 unreachable 卻有執行紀錄 -> FAIL(標記可以被推翻),而且不列入走不到的條數",
+        (len(got_f), "memcpy 標記為實機走不到(靜態走不到),卻有執行紀錄" in "".join(got_f), got_l), (1, True, "未執行 0 條"))
 
     print("[10] 逐函式事實檔")
     lg10 = parse_calllog(_synthetic(st, memcpy, ret_rt, stack=[0x2000, 0x3000, 4], seq=1, mems={"s2": "4142434400" + "00" * 27},

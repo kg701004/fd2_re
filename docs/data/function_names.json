@@ -1809,9 +1809,9 @@
   {
    "addr": "0x1c4cc",
    "name": "play_map_effect_animation",
-   "summary": "(a1, a2, a3, a4):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(當時 inventory argc 記 3,線性掃描少算;續一百一十改為沿控制流後是 4)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。",
+   "summary": "(caster, 動畫號, count, targets):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(當時 inventory argc 記 3,線性掃描少算;續一百一十改為沿控制流後是 4)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。續一百一十五(直接讀反組譯):佔位名 a1..a4 改名。第 1 個本體不讀(呼叫端推施放者 / 使用者);第 2 個是特效編號(0x1c4dd 載入 ebp,0x1c6b0 起與 0x16 / 0x19 / 0x12 / 0x13 / 8 / 9 比);第 3 個是目標個數(0x1c55d 的迴圈上限);第 4 個是目標單位序號的 byte 陣列(0x1c571)。實機第 2 個 0xd / 0x13 等、第 3 個 1 / 3、第 4 個是呼叫端堆疊上的陣列。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1c517",
@@ -1848,6 +1848,14 @@
     {
      "at": "0x1c56a",
      "insn": "mov eax, dword ptr [esp + 0x94]"
+    },
+    {
+     "at": "0x1c55d",
+     "insn": "cmp esi, dword ptr [esp + 0x90]"
+    },
+    {
+     "at": "0x1c571",
+     "insn": "movzx edx, byte ptr [esi + eax]"
     }
    ]
   },
@@ -2131,9 +2139,9 @@
   {
    "addr": "0x15e9e",
    "name": "decode_blit_transparent",
-   "summary": "(img, a2, stride, x, y):依 img 開頭的 u16 寬高配置 w*h+8 的暫存,以 0x4ecbf 解碼進暫存,再以 blit_image_transparent 貼到 y*stride + x + a2;回傳暫存指標(呼叫端負責釋放)。",
+   "summary": "(img, dst, stride, x, y):依 img 開頭的 u16 寬高配置 w*h+8 的暫存,以 0x4ecbf 解碼進暫存,再以 blit_image_transparent 貼到 y*stride + x + dst;回傳暫存指標(呼叫端負責釋放)。續一百一十五(直接讀反組譯):佔位名 a2 改成 dst —— 貼圖的基底(0x15efa 加進位址);同一個值也當 decode_image_with_header 擷取畫面的來源(0x15ee3)。實機 1800 次都是 0xa0000。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x15eb3",
@@ -2154,6 +2162,14 @@
     {
      "at": "0x15eff",
      "insn": "call 0x4ed34"
+    },
+    {
+     "at": "0x15ee3",
+     "insn": "push dword ptr [esp + 0x24]"
+    },
+    {
+     "at": "0x15efa",
+     "insn": "add ebp, dword ptr [esp + 0x24]"
     }
    ]
   },
@@ -3866,9 +3882,9 @@
   {
    "addr": "0x2f4d4",
    "name": "pan_view_left_to_panel",
-   "summary": "(strip, ..., panel_buf, ...):在 640 px 寬的條帶(stride 0x280)上,視窗從 x=288 以每幀 32 px 移到 0(10 幀),背景是 [0x5413f] 三張圖輪播;接著清空條帶、在 panel_buf 畫背景與 draw_unit_panel_by_side,複製到條帶左半、疊 blit_anim_frame,再平移一次停在左半。呼叫端 0x2cf30、0x2ebe1(指令環攻擊路徑)。",
+   "summary": "(unit, anim, panel_buf, strip, 背景圖):在 640 px 寬的條帶(stride 0x280)上,視窗從 x=288 以每幀 32 px 移到 0(10 幀),背景是 [0x5413f] 三張圖輪播;接著清空條帶、在 panel_buf 畫背景與 draw_unit_panel_by_side,複製到條帶左半、疊 blit_anim_frame,再平移一次停在左半。呼叫端 0x2cf30、0x2ebe1(指令環攻擊路徑)。續一百一十五(直接讀反組譯,勘誤):舊參數列寫 (strip, ..., panel_buf, ...),條帶其實是第 4 個(0x2f4e1 載入 edi,當 blit_anim_frame / blit_rle_image_at_xy 的 dst 與 copy_rect 的目的);第 1 個是單位(0x2f581 推給 draw_unit_panel_by_side 的第 2 個,呼叫端推 attacker / defender)、第 2 個是動畫(0x2f5bc 推給 blit_anim_frame 的第 1 個)、第 5 個是面板背景圖(0x2f575 推給 blit_rle_image_at_xy 的 src,呼叫端推 [0x54137] / [0x5413b])。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2f4e5",
@@ -3893,15 +3909,31 @@
     {
      "at": "0x2f5c0",
      "insn": "call 0x2eb9f"
+    },
+    {
+     "at": "0x2f4e1",
+     "insn": "mov edi, dword ptr [esp + 0x1c]"
+    },
+    {
+     "at": "0x2f575",
+     "insn": "push dword ptr [esp + 0x34]"
+    },
+    {
+     "at": "0x2f581",
+     "insn": "push dword ptr [esp + 0x10]"
+    },
+    {
+     "at": "0x2f5bc",
+     "insn": "push dword ptr [esp + 0x24]"
     }
    ]
   },
   {
    "addr": "0x2f631",
    "name": "pan_view_right_to_panel",
-   "summary": "pan_view_left_to_panel 的反方向:視窗 x 從 32 以每幀 32 px 往右移,新面板(另在 (0xa4,0x9d) 多畫一張圖)複製到條帶右半,第二段平移停在 x=320。唯一呼叫端 0x2ebe1。",
+   "summary": "(unit, anim, 面板附圖, panel_buf, strip, 背景圖) pan_view_left_to_panel 的反方向:視窗 x 從 32 以每幀 32 px 往右移,新面板(另在 (0xa4,0x9d) 多畫一張圖)複製到條帶右半,第二段平移停在 x=320。唯一呼叫端 0x2ebe1。續一百一十五(直接讀反組譯):補上參數列 —— 與 pan_view_left_to_panel 相同,多一個第 3 個:畫在 (0xa4, 0x9d) 的那張圖(0x2f6fb 推給 blit_rle_image_at_xy 的 src);第 5 個是條帶(0x2f63f 載入 ebp)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2f643",
@@ -3926,6 +3958,18 @@
     {
      "at": "0x2f7ac",
      "insn": "cmp esi, 0xa"
+    },
+    {
+     "at": "0x2f63f",
+     "insn": "mov ebp, dword ptr [esp + 0x24]"
+    },
+    {
+     "at": "0x2f6fb",
+     "insn": "push dword ptr [esp + 0x30]"
+    },
+    {
+     "at": "0x2f707",
+     "insn": "push dword ptr [esp + 0x14]"
     }
    ]
   },
@@ -8528,8 +8572,8 @@
    "addr": "0x1548e",
    "name": "ai_attack_execute",
    "confidence": "verified_dynamic",
-   "date": "2026-09-29",
-   "summary": "(unit, a2):AI 單位執行已選好的物理攻擊(目標序號在 [0x53c4b],落點在 [0x53c43]/[0x53c47])。focus_unit、0x14b78 移動到落點;byte [0x53af9] 非 0 時走地圖呈現:open_attack_hp_panels 後 map_attack_sequence(unit, 目標),目標仍存活且 defender_can_counter 為 1 時再 map_attack_sequence(目標, unit) 反擊;為 0 時改呼叫 0x2e2b0(與玩家攻擊相同的場景呈現)。最後 apply_pending_exp(目標)。呼叫端 0x13a9f、0x14ef0(AI 流程)。玩家攻擊(player_action_ring 0x18fc6)無條件呼叫 0x2e2b0,不看 [0x53af9]。2026-09-29 DOSBox-X 動態驗證(doc98 續五十一):[0x53af9] = 1 的兩輪,AI 攻擊 4 次都停在 map_attack_sequence/map_attack_resolve,反擊由第二次 map_attack_sequence(返回位址 0x15613)執行;= 0 的一輪 AI 攻擊停在 scene_attack_resolve;三輪玩家攻擊都走場景。",
+   "date": "2026-10-12",
+   "summary": "(unit, camp):AI 單位執行已選好的物理攻擊(目標序號在 [0x53c4b],落點在 [0x53c43]/[0x53c47])。focus_unit、0x14b78 移動到落點;byte [0x53af9] 非 0 時走地圖呈現:open_attack_hp_panels 後 map_attack_sequence(unit, 目標),目標仍存活且 defender_can_counter 為 1 時再 map_attack_sequence(目標, unit) 反擊;為 0 時改呼叫 0x2e2b0(與玩家攻擊相同的場景呈現)。最後 apply_pending_exp(目標)。呼叫端 0x13a9f、0x14ef0(AI 流程)。玩家攻擊(player_action_ring 0x18fc6)無條件呼叫 0x2e2b0,不看 [0x53af9]。2026-09-29 DOSBox-X 動態驗證(doc98 續五十一):[0x53af9] = 1 的兩輪,AI 攻擊 4 次都停在 map_attack_sequence/map_attack_resolve,反擊由第二次 map_attack_sequence(返回位址 0x15613)執行;= 0 的一輪 AI 攻擊停在 scene_attack_resolve;三輪玩家攻擊都走場景。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "evidence": [
     {
      "at": "0x154f5",
@@ -8565,8 +8609,8 @@
    "addr": "0x15311",
    "name": "ai_spell_execute",
    "confidence": "verified_dynamic",
-   "date": "2026-09-29",
-   "summary": "(unit, a2):AI 單位執行已選好的法術(法術 [0x53c2f]、施放點 [0x53c27]/[0x53c2b],[0x53c23] < 6 時直接回 0)。以 collect_targets_in_range(施放點, range = 法術列 +4)取目標,選擇子:a2 為 0 時取「法術列 +6 為 0 ? 1 : 0」,否則取 +6;法術 < 10 且 byte [0x53af9] 為 0 時走 0x2ff01(場景呈現),否則呼叫指令 handler 表 [0x51d01 + 法術*4](地圖呈現,與玩家同一套 handler);最後 [0x53ec8] = 0(AI 施法不入帳經驗)。呼叫端 0x13a9f、0x14ef0。2026-09-29 DOSBox-X 動態驗證(doc98 續五十二):盜賊只會聖光彈時,[0x53af9] = 1 那輪 spell_damage_resolve 的返回位址是 0x212a4(handler 迴圈),= 0 那輪先停在 0x2ff01(返回位址 0x15405)、spell_damage_resolve 返回位址 0x3095d;兩輪傷害都符合 spell_damage_apply 的公式,MP 各扣 24。 2026-09-30 DOSBox-X(doc98 續五十三):AI 以聖光彈擊殺友軍 NPC(+7 = 0x85、等級 3)後,0x1546a 停點讀到 [0x53ec8] = 3(= high_class_row10_ptr(0x41)+9 的 1 × 3),0x15474 停點讀到 0;施法者 EX 維持 0。 法術 9(續五十五,DOSBox-X):[0x53af9] = 0 走 spell_cast_scene(spell_damage_resolve 返回位址 0x3095d),= 1 走 handler 0x214ad(返回位址 0x15426),所以同一個法術 9,玩家與 AI 在旗標為 0 時呈現不同。",
+   "date": "2026-10-12",
+   "summary": "(unit, camp):AI 單位執行已選好的法術(法術 [0x53c2f]、施放點 [0x53c27]/[0x53c2b],[0x53c23] < 6 時直接回 0)。以 collect_targets_in_range(施放點, range = 法術列 +4)取目標,選擇子:camp 為 0 時取「法術列 +6 為 0 ? 1 : 0」,否則取 +6;法術 < 10 且 byte [0x53af9] 為 0 時走 0x2ff01(場景呈現),否則呼叫指令 handler 表 [0x51d01 + 法術*4](地圖呈現,與玩家同一套 handler);最後 [0x53ec8] = 0(AI 施法不入帳經驗)。呼叫端 0x13a9f、0x14ef0。2026-09-29 DOSBox-X 動態驗證(doc98 續五十二):盜賊只會聖光彈時,[0x53af9] = 1 那輪 spell_damage_resolve 的返回位址是 0x212a4(handler 迴圈),= 0 那輪先停在 0x2ff01(返回位址 0x15405)、spell_damage_resolve 返回位址 0x3095d;兩輪傷害都符合 spell_damage_apply 的公式,MP 各扣 24。 2026-09-30 DOSBox-X(doc98 續五十三):AI 以聖光彈擊殺友軍 NPC(+7 = 0x85、等級 3)後,0x1546a 停點讀到 [0x53ec8] = 3(= high_class_row10_ptr(0x41)+9 的 1 × 3),0x15474 停點讀到 0;施法者 EX 維持 0。 法術 9(續五十五,DOSBox-X):[0x53af9] = 0 走 spell_cast_scene(spell_damage_resolve 返回位址 0x3095d),= 1 走 handler 0x214ad(返回位址 0x15426),所以同一個法術 9,玩家與 AI 在旗標為 0 時呈現不同。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "evidence": [
     {
      "at": "0x15321",
@@ -8745,8 +8789,8 @@
    "addr": "0x14ef0",
    "name": "ai_choose_action",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(unit, a2):依序呼叫 0x14237(物理,優先級寫 [0x53c4f])、ai_spell_candidate_select([0x53c23])、0x1567e(道具,[0x53c33]),d = 攻方 +0x48 - 物理目標([0x53c4b])+0x4a,bit = 攻方 +0x34 & 0x40。三者都 < 6 回 0;P > S 且 P > I → 0x1548e(ai_attack_execute);P == S 且 P > I:法術 < 11 時法術列 +0 < d 走物理、否則 ai_spell_execute,法術 >= 11 時 bit 非 0 走物理、否則施法;P == I 且 P > S:bit 非 0 物理、否則 0x15055;S > P 且 S >= I → ai_spell_execute;I > P 且 I > S → 0x15055;其餘(例如三者相等)不行動。呼叫端 0x13a9f 等。2026-09-30 DOSBox-X 動態驗證(doc98 續五十七):同一個敵方回合 8 個敵人,在 0x14f62 讀到的 (P, S, d, bit) 與之後停下的執行函式全部符合 ——S 24 > P 8 施法、P 0x12 > S 8 物理、P = S = 8 且法術 8 時 d 441 物理 / d 440 施法、法術 13 時 bit 0x40 = 1 物理 / 0 施法。道具分支未測。 道具分支(續五十八,DOSBox-X):I 9 > P 0 與 I 0x12 > P 8 走 0x15055;P = I = 8 時 bit 0x40 = 1 物理、0 走 0x15055;P、S、I 都是 0 的 4 個敵人停在 0x14f62 後沒有進任何執行函式。 續六十六(DOSBox-X):AI 模式 8 的單位不會進本函式;同一單位改模式 2、清掉法術與 MP 後,本函式走道具分支 0x15055(返回 0x1503e,EDX = d = 260 − 724 = −464)。 續六十七(DOSBox-X):敵人 #18 只有武器 60(道具列 +0xd = 20)時,本函式走道具執行 0x15055 把武器當道具用,而不是物理攻擊;換成武器 8(+0xd = 0)後回 0x1548e。道具列 +0xd != 0 的武器:11、29、38、40、51、56、57、58、60、61、79、94、95、96、99、101、102。 續一百零九(呼叫紀錄篩選,補回傳值):三者都 < 6 回 0(0x14f7d);其他路徑(執行任一動作或不行動)都把 [0x51a83] 設 0 後回 1(0x15041 / 0x1504b)。舊摘要沒寫回傳值;實機 107 次:0 有 95 次、1 有 12 次。",
+   "date": "2026-10-12",
+   "summary": "(unit, camp):依序呼叫 0x14237(物理,優先級寫 [0x53c4f])、ai_spell_candidate_select([0x53c23])、0x1567e(道具,[0x53c33]),d = 攻方 +0x48 - 物理目標([0x53c4b])+0x4a,bit = 攻方 +0x34 & 0x40。三者都 < 6 回 0;P > S 且 P > I → 0x1548e(ai_attack_execute);P == S 且 P > I:法術 < 11 時法術列 +0 < d 走物理、否則 ai_spell_execute,法術 >= 11 時 bit 非 0 走物理、否則施法;P == I 且 P > S:bit 非 0 物理、否則 0x15055;S > P 且 S >= I → ai_spell_execute;I > P 且 I > S → 0x15055;其餘(例如三者相等)不行動。呼叫端 0x13a9f 等。2026-09-30 DOSBox-X 動態驗證(doc98 續五十七):同一個敵方回合 8 個敵人,在 0x14f62 讀到的 (P, S, d, bit) 與之後停下的執行函式全部符合 ——S 24 > P 8 施法、P 0x12 > S 8 物理、P = S = 8 且法術 8 時 d 441 物理 / d 440 施法、法術 13 時 bit 0x40 = 1 物理 / 0 施法。道具分支未測。 道具分支(續五十八,DOSBox-X):I 9 > P 0 與 I 0x12 > P 8 走 0x15055;P = I = 8 時 bit 0x40 = 1 物理、0 走 0x15055;P、S、I 都是 0 的 4 個敵人停在 0x14f62 後沒有進任何執行函式。 續六十六(DOSBox-X):AI 模式 8 的單位不會進本函式;同一單位改模式 2、清掉法術與 MP 後,本函式走道具分支 0x15055(返回 0x1503e,EDX = d = 260 − 724 = −464)。 續六十七(DOSBox-X):敵人 #18 只有武器 60(道具列 +0xd = 20)時,本函式走道具執行 0x15055 把武器當道具用,而不是物理攻擊;換成武器 8(+0xd = 0)後回 0x1548e。道具列 +0xd != 0 的武器:11、29、38、40、51、56、57、58、60、61、79、94、95、96、99、101、102。 續一百零九(呼叫紀錄篩選,補回傳值):三者都 < 6 回 0(0x14f7d);其他路徑(執行任一動作或不行動)都把 [0x51a83] 設 0 後回 1(0x15041 / 0x1504b)。舊摘要沒寫回傳值;實機 107 次:0 有 95 次、1 有 12 次。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "evidence": [
     {
      "at": "0x14f0b",
@@ -8949,8 +8993,8 @@
    "addr": "0x13e9c",
    "name": "ai_move_toward_nearest",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(unit, a2):掃描全部 [0x53beb] 個單位,a2 為 0 時只看 +6 != 0、否則只看 +6 == 0 的單位,取曼哈頓距離嚴格最小者(同距保留序號小者);**不檢查 +5 bit0**,所以已陣亡但留在原位的單位也算。沒有候選回 0;目標就在自己的格子回 0;否則呼叫 0x14b78(目標 x, 目標 y, unit, a2),它回非 0 才回 1。AI 模式 0/1 的備援在 0x14121 失敗後呼叫(返回 0x13b1e),回 0 時接著休息 rest_hp_recover。2026-09-30 DOSBox-X 動態驗證(doc98 續六十):0x14121 在 0x141cd 回 0 後,盜賊 #13 在 (1,1) 的 0x14b78 目標是 6 格外、+5 bit0 的 NPC 屍體 (1,7)(若跳過屍體應是 35 格外的索爾),實際移到 (0,4);屍體移走後目標變成最近的活人索爾 (22,15),移到 (5,1)。 續六十一:真實擊殺也一樣——敵人 #11 真的打死 NPC #7 後,#7 留在 (1,7)(只有 +5 = 1、HP 0),#13 連續兩個回合都以 (1,7) 為目標(若陣亡清座標應是索爾 (22,15)),從 (1,1) 走到 (0,4) 再到 (0,7)。",
+   "date": "2026-10-12",
+   "summary": "(unit, camp):掃描全部 [0x53beb] 個單位,camp 為 0 時只看 +6 != 0、否則只看 +6 == 0 的單位,取曼哈頓距離嚴格最小者(同距保留序號小者);**不檢查 +5 bit0**,所以已陣亡但留在原位的單位也算。沒有候選回 0;目標就在自己的格子回 0;否則呼叫 0x14b78(目標 x, 目標 y, unit, camp),它回非 0 才回 1。AI 模式 0/1 的備援在 0x14121 失敗後呼叫(返回 0x13b1e),回 0 時接著休息 rest_hp_recover。2026-09-30 DOSBox-X 動態驗證(doc98 續六十):0x14121 在 0x141cd 回 0 後,盜賊 #13 在 (1,1) 的 0x14b78 目標是 6 格外、+5 bit0 的 NPC 屍體 (1,7)(若跳過屍體應是 35 格外的索爾),實際移到 (0,4);屍體移走後目標變成最近的活人索爾 (22,15),移到 (5,1)。 續六十一:真實擊殺也一樣——敵人 #11 真的打死 NPC #7 後,#7 留在 (1,7)(只有 +5 = 1、HP 0),#13 連續兩個回合都以 (1,7) 為目標(若陣亡清座標應是索爾 (22,15)),從 (1,1) 走到 (0,4) 再到 (0,7)。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "evidence": [
     {
      "at": "0x13eee",
@@ -9014,9 +9058,9 @@
   {
    "addr": "0x14b78",
    "name": "move_unit_toward_point",
-   "summary": "(x, y, unit, a2):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(a2) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, a2) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。 續六十八(DOSBox-X):由 ai_move_toward_reachable_opponent 傳入地圖外的目標 (156,255) 時要跑數十秒才返回,回 1,單位落在 (172,53)(地圖寬 25)。之後同一敵方回合出現一段文字框是亂碼樣式的劇情對話,原因未查。 續六十九(DOSBox-X):上述「亂碼樣式的劇情對話」是事件 0(event_handler_0,第 1 章的事件)——單位走出地圖時,逐步移動的 field_event_lookup 讀到地圖陣列之外的格子而寫入事件 0,敵方回合在該單位之後分派。",
+   "summary": "(x, y, unit, camp):把單位往 (x, y) 移動。成本列預設 class(+0x20),0x1f183 成立改列 19,+8 == 0x1c 改列 1。先以 0x145cd(camp) 標出對手(略過 +5 bit0),用單位 MV(+0x3b)做 0x4e4f6 mode 0 搜尋;到不了就以預算 0x1c 做 mode 1 搜尋,若取得方向陣列(0=下、1=左、2=上、其他=右),沿著走,取最後一個泛洪可達(地圖 byte3 != 0xff)的格當替代目標 T'(找不到方向陣列則 T' 仍是 (x, y))。接著重新泛洪,0x146d1(unit, camp) 把同陣營單位的格標 0xff,0x14b16 列出可落格(y 外 x 內);取曼哈頓距離 T' 最小者,同距時 abs(|dx|-|dy|) 嚴格較小才換,完全同分保留先出現者。最後以 mode 0 產生路徑交 0x13488 執行:路徑非空回 1,否則回 0(留在原地)。呼叫端含 AI 模式分支、0x14121、ai_move_toward_nearest。2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):9 次呼叫逐段重算全部相符。盜賊 #13 (1,1)→(1,7) 停在 (0,4),是因為 MV 4 直接到不了,mode 1 路徑是 左、下×6、右,MV 內最後可達格是 (0,4)。平手場景 T = (24,18) 與四鄰都站著夥伴,落點 (23,17)(同距取清單第一個會是 (24,16),同分取最後一個會是 (25,17))。 續六十七(DOSBox-X):#48 往 (11,27) 時 mode 0(MV 6)回 0xff、mode 1(預算 28)回 20、最後 mode 0 往 (10,14) 回 6,三次都與 grid_path_search 重算相同。 續六十八(DOSBox-X):由 ai_move_toward_reachable_opponent 傳入地圖外的目標 (156,255) 時要跑數十秒才返回,回 1,單位落在 (172,53)(地圖寬 25)。之後同一敵方回合出現一段文字框是亂碼樣式的劇情對話,原因未查。 續六十九(DOSBox-X):上述「亂碼樣式的劇情對話」是事件 0(event_handler_0,第 1 章的事件)——單位走出地圖時,逐步移動的 field_event_lookup 讀到地圖陣列之外的格子而寫入事件 0,敵方回合在該單位之後分派。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x14b9f",
@@ -9053,15 +9097,19 @@
     {
      "at": "0x14ec4",
      "insn": "call 0x13488"
+    },
+    {
+     "at": "0x14c0a",
+     "insn": "push dword ptr [esp + 0x54]"
     }
    ]
   },
   {
    "addr": "0x14237",
    "name": "ai_physical_candidate_select",
-   "summary": "(unit, a2):AI 物理攻擊候選。[0x53c4f] = 0;find_equipped_slot(unit, 0) 找不到直接回 0;武器列 +0xb / +0xc 當目標枚舉的內圈門檻與射程。0x145cd(a2)、0x4e390(MV +0x3b;成本列 = 職業,unit_uses_move_cost_row19 為 1 時 0x13)、0x146d1、0x14b16 取候選格(y 外 x 內);每格以 collect_targets_in_range(格, 列 +0xc, 列 +0xb, a2 == 0 ? 1 : 0)取目標,依目標序號逐一評分。地形修正只在 unit_uses_move_cost_row19 回 1 時套(攻方用候選格、目標用自己所站的格,[0x51a12]/[0x51a2a] 百分比截斷向零)—— 與 scene_attack_resolve 的閘門極性相反。原始 = 攻方 AP' - 目標 DP';> 2 優先級 8,否則 0(不略過);原始 > 目標目前 HP(+0x40)→ 分數 ×2、優先級 0x12;unit_can_counter_at(目標, 格) 回 1 時加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零。先比優先級再比分數,嚴格較大才寫入 [0x53c43]/[0x53c47] 格、[0x53c4b] 目標、[0x53c4f] 優先級(最佳分數是區域變數、初值 0,所以優先級 0 且分數 <= 0 的組不會被記下;優先級 8 的組即使分數為負也會蓋過優先級 0)。固定回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續六十三):2 回合 4 次呼叫、27 組 (格, 目標) 的優先級、分數、目標 AP'、攻方 AP'/DP' 與每次比較後的 [0x53c43..0x53c4f] 全部與重算相同。原始 2 > HP 1 記為 (0x12, 4);原始 2 <= HP 記為優先級 0 但照樣寫入全域、之後不攻擊;索爾距離 1 的組 -11 ×3/2 → -16(floor 為 -17);同分保留先出現的格。對照規則「<= 2 略過」在 10 組、「地形閘門同實戰」在 25 組、「×3/2 取 floor」在 1 組預測不同,「同分取後者」在 2 次呼叫的最終選擇上預測不同。 2026-10-01 DOSBox-X(doc98 續六十四,3 個敵方回合 6 次呼叫、54 組全部與重算相同):地形 3..5(把地形表 byte 1 改成 3/4/5)在攻方候選格與目標所站格都依 [0x51a12]/[0x51a2a] 第 3..5 項修正(攻方 AP 100/DP 20 → 地形 3 為 95/22、4 為 95/19、5 為 100/20;目標 AP 50 → 48,截斷向零);「地形 3..5 不修正」與「當地形 2」的對照各在 18 組預測不同、改變 3 次最終選擇。出貨地圖中地形 3 只在 map 18、4 只在 map 19、5 在 map 24..29。射程 byte >= 0x10 的出貨武器不存在,改值後走十字分支(見 collect_targets_in_range)。",
+   "summary": "(unit, camp):AI 物理攻擊候選。[0x53c4f] = 0;find_equipped_slot(unit, 0) 找不到直接回 0;武器列 +0xb / +0xc 當目標枚舉的內圈門檻與射程。0x145cd(camp)、0x4e390(MV +0x3b;成本列 = 職業,unit_uses_move_cost_row19 為 1 時 0x13)、0x146d1、0x14b16 取候選格(y 外 x 內);每格以 collect_targets_in_range(格, 列 +0xc, 列 +0xb, camp == 0 ? 1 : 0)取目標,依目標序號逐一評分。地形修正只在 unit_uses_move_cost_row19 回 1 時套(攻方用候選格、目標用自己所站的格,[0x51a12]/[0x51a2a] 百分比截斷向零)—— 與 scene_attack_resolve 的閘門極性相反。原始 = 攻方 AP' - 目標 DP';> 2 優先級 8,否則 0(不略過);原始 > 目標目前 HP(+0x40)→ 分數 ×2、優先級 0x12;unit_can_counter_at(目標, 格) 回 1 時加 攻方 DP' - 目標 AP';目標 +8 == 0 → ×3/2 截斷向零。先比優先級再比分數,嚴格較大才寫入 [0x53c43]/[0x53c47] 格、[0x53c4b] 目標、[0x53c4f] 優先級(最佳分數是區域變數、初值 0,所以優先級 0 且分數 <= 0 的組不會被記下;優先級 8 的組即使分數為負也會蓋過優先級 0)。固定回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續六十三):2 回合 4 次呼叫、27 組 (格, 目標) 的優先級、分數、目標 AP'、攻方 AP'/DP' 與每次比較後的 [0x53c43..0x53c4f] 全部與重算相同。原始 2 > HP 1 記為 (0x12, 4);原始 2 <= HP 記為優先級 0 但照樣寫入全域、之後不攻擊;索爾距離 1 的組 -11 ×3/2 → -16(floor 為 -17);同分保留先出現的格。對照規則「<= 2 略過」在 10 組、「地形閘門同實戰」在 25 組、「×3/2 取 floor」在 1 組預測不同,「同分取後者」在 2 次呼叫的最終選擇上預測不同。 2026-10-01 DOSBox-X(doc98 續六十四,3 個敵方回合 6 次呼叫、54 組全部與重算相同):地形 3..5(把地形表 byte 1 改成 3/4/5)在攻方候選格與目標所站格都依 [0x51a12]/[0x51a2a] 第 3..5 項修正(攻方 AP 100/DP 20 → 地形 3 為 95/22、4 為 95/19、5 為 100/20;目標 AP 50 → 48,截斷向零);「地形 3..5 不修正」與「當地形 2」的對照各在 18 組預測不同、改變 3 次最終選擇。出貨地圖中地形 3 只在 map 18、4 只在 map 19、5 在 map 24..29。射程 byte >= 0x10 的出貨武器不存在,改值後走十字分支(見 collect_targets_in_range)。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x1427e",
@@ -9253,9 +9301,9 @@
   {
    "addr": "0x13a9f",
    "name": "ai_mode_dispatch",
-   "summary": "(unit, a2):單位記錄 +5 & 5 非 0 直接返回;否則依 +0x34 低四位(FDFIELD b17)分派 AI 行動(各模式的流程見 doc11 表)。模式 0..7、9..11 做完後走共用收尾 0x13e5a:field_event_lookup(x, y, 1)、unit_set_flag5_bit7(unit)、0x134e4、0x11cac(0);**模式 8 在 0x13d97 比對後直接跳到函式結尾,不行動也不走共用收尾**。呼叫端只有敵方回合 0x1d8ba(兩趟)與友軍回合 0x1d80b。2026-10-01 DOSBox-X 動態驗證(doc98 續六十六,map 18 #26 同一單位同一格 4 個敵方回合):模式 8 時兩趟各停一次(EAX = 8,返回 0x1d947 / 0x1d9d7),之後沒有 ai_choose_action、執行函式、0x13e5a 或 unit_set_flag5_bit7 的停點;改模式 2 時進 ai_choose_action、0x13e5a、unit_set_flag5_bit7,第 2 趟不再進來。證據 evidence/ai_mode8_move_confirm_boss_20261001.json 續六十七(DOSBox-X,map 24):友軍回合(friendly_phase_dispatch,a2 = 1)出貨模式 8 的 NPC #17 同樣在 0x13aef(EAX = 8)後沒有任何收尾停點;改模式 3 就走收尾。",
+   "summary": "(unit, camp):單位記錄 +5 & 5 非 0 直接返回;否則依 +0x34 低四位(FDFIELD b17)分派 AI 行動(各模式的流程見 doc11 表)。模式 0..7、9..11 做完後走共用收尾 0x13e5a:field_event_lookup(x, y, 1)、unit_set_flag5_bit7(unit)、0x134e4、0x11cac(0);**模式 8 在 0x13d97 比對後直接跳到函式結尾,不行動也不走共用收尾**。呼叫端只有敵方回合 0x1d8ba(兩趟)與友軍回合 0x1d80b。2026-10-01 DOSBox-X 動態驗證(doc98 續六十六,map 18 #26 同一單位同一格 4 個敵方回合):模式 8 時兩趟各停一次(EAX = 8,返回 0x1d947 / 0x1d9d7),之後沒有 ai_choose_action、執行函式、0x13e5a 或 unit_set_flag5_bit7 的停點;改模式 2 時進 ai_choose_action、0x13e5a、unit_set_flag5_bit7,第 2 趟不再進來。證據 evidence/ai_mode8_move_confirm_boss_20261001.json 續六十七(DOSBox-X,map 24):友軍回合(friendly_phase_dispatch,camp = 1)出貨模式 8 的 NPC #17 同樣在 0x13aef(EAX = 8)後沒有任何收尾停點;改模式 3 就走收尾。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "confidence": "verified_dynamic",
-   "date": "2026-10-01",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x13aca",
@@ -9276,6 +9324,10 @@
     {
      "at": "0x13e80",
      "insn": "call 0x13512"
+    },
+    {
+     "at": "0x13ab4",
+     "insn": "mov edi, dword ptr [esp + 0x24]"
     }
    ]
   },
@@ -9386,9 +9438,9 @@
   {
    "addr": "0x2ebe1",
    "name": "scene_attack_sequence",
-   "summary": "(attacker, defender, ctx, a4, a5, a6, a7, a8):有戰鬥場景的一次攻擊(玩家攻擊、[0x53af9] == 0 時的 AI 攻擊)。下數預設 1,rand()%100 < 3 時 2;每一擊呼叫 scene_attack_resolve(0x2ed0c),其 out+0x10 非 0(攻方武器列 +9 == 3)且還沒加過時下數 +1(只加一次),所以最多 3 下;地圖路徑 map_attack_sequence 兩個條件不疊加、最多 2 下。2026-10-01 DOSBox-X(doc98 續六十七):索爾帶 71 號武器(魔龍爪,唯一列 +9 == 3 的道具)亂數 25 強制成 0 打 3 下、自然亂數 77/46/94/79 各 2 下;武器 31 / 60 / 8(類型 0)亂數 30..99 都是 1 下。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要只列 3 個參數。實機呼叫端 0x2e6de 推 8 個(add esp, 0x20),本體沿控制流讀到第 8 個(0x2ef04);a4..a8 在本體只被 push 給演出函式(實機 11 次 a6 都是畫面緩衝 0x245018、a5 都是 0x288018)。",
+   "summary": "(attacker, defender, 攻方動畫, 守方動畫, strip, panel_buf, 面板附圖, 音效資源):有戰鬥場景的一次攻擊(玩家攻擊、[0x53af9] == 0 時的 AI 攻擊)。下數預設 1,rand()%100 < 3 時 2;每一擊呼叫 scene_attack_resolve(0x2ed0c),其 out+0x10 非 0(攻方武器列 +9 == 3)且還沒加過時下數 +1(只加一次),所以最多 3 下;地圖路徑 map_attack_sequence 兩個條件不疊加、最多 2 下。2026-10-01 DOSBox-X(doc98 續六十七):索爾帶 71 號武器(魔龍爪,唯一列 +9 == 3 的道具)亂數 25 強制成 0 打 3 下、自然亂數 77/46/94/79 各 2 下;武器 31 / 60 / 8(類型 0)亂數 30..99 都是 1 下。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要只列 3 個參數。實機呼叫端 0x2e6de 推 8 個(add esp, 0x20),本體沿控制流讀到第 8 個(0x2ef04);a4..a8 在本體只被 push 給演出函式(實機 11 次 a6 都是畫面緩衝 0x245018、a5 都是 0x288018)。續一百一十五(直接讀反組譯):第 3..8 個改名(原 ctx, a4, a5, a6, a7, a8)。第 3 / 4 個是動畫:第 3 個與 attacker、第 4 個與 defender 一起交給 pan_view_left_to_panel / pan_view_right_to_panel(0x2f4b0 / 0x2ee50),也直接交給 blit_anim_frame;第 5 個是 640 px 寬的條帶、第 6 個是面板緩衝(pan_view_* 的 strip / panel_buf);第 7 個只交給 pan_view_right_to_panel 當畫在 (0xa4, 0x9d) 的那張圖(0x2ef2c);第 8 個交給 0x25a96(0x2ee28),那裡以 [資源 + 索引*4 + 6] 取出一段資料交給 AIL 播放。",
    "confidence": "verified_dynamic",
-   "date": "2026-10-01",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x2ec34",
@@ -9413,15 +9465,27 @@
     {
      "at": "0x2ef04",
      "insn": "push dword ptr [esp + 0xc4]"
+    },
+    {
+     "at": "0x2ee28",
+     "insn": "push dword ptr [esp + 0xc4]"
+    },
+    {
+     "at": "0x2ee50",
+     "insn": "push dword ptr [esp + 0xb8]"
+    },
+    {
+     "at": "0x2ef2c",
+     "insn": "push dword ptr [esp + 0xc4]"
     }
    ]
   },
   {
    "addr": "0x14121",
    "name": "ai_move_toward_reachable_opponent",
-   "summary": "(unit, a2):AI 模式 0/1/5/11 在 ai_choose_action 沒有候選時的移動備援。成本列同 move_unit_toward_point(class、0x1f183 → 19、+8 == 0x1c → 1),0x145cd(a2) 標出對手格後以 grid_path_search mode 2(預算 0x1c、目標固定 (0,0))找 0x40 格;outBuf 是自己堆疊上 8 byte 區域的 [esp+4..5],沒有初始化。回 0xff → 重設地圖、回 0。否則重設地圖後讀 outBuf 當目標:等於自己的格子就回 0(不移動);不等就 [0x51a83] = 0、0x12d7b(unit)、move_unit_toward_point(x, y, unit, a2),它回非 0 才回 1,最後 [0x51a83] = 1。2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):找得到對手的 #48 → (9,27),0x14b78 回 1,本函式回 1,不再呼叫 0x13e9c;MV 0 的 #45 → (19,47),0x14b78 回 0,本函式回 0,模式 0 接著呼叫 ai_move_toward_nearest 再休息;站在 (0,2) 的 #54 預算內沒有對手 → 0xff → 回 0 → 休息。**站在 (0,0) 的 #53**:mode 2 的起點檢查讓結果先變 0,預算內又沒有對手,回 0 而不是 0xff,本函式把未初始化的 [esp+4..5](入口時就是 [156,255])當目標,呼叫 0x14b78(156, 255),它回 1,#53 落在 (172,53)(地圖寬 25,已在地圖外);同一設定前一回合沒下斷點也落在 (172,53)。在 0x14132 把那兩個 byte 改成 (0,0) 時走「等於自己」分支:不呼叫 0x12d7b 與 0x14b78,回 0。四次 mode 2 搜尋以入口地圖逐指令重算,回傳值、outBuf、整張地圖都相同。證據 evidence/ai_seek_opponent_rand_trace_20261001.json 續六十九(DOSBox-X):落到地圖外的單位下一個敵方回合再進本函式時,mode 2 回 1,focus_unit(0x12d7b)對地圖外座標 (178,49) 永不返回,遊戲卡住。",
+   "summary": "(unit, camp):AI 模式 0/1/5/11 在 ai_choose_action 沒有候選時的移動備援。成本列同 move_unit_toward_point(class、0x1f183 → 19、+8 == 0x1c → 1),0x145cd(camp) 標出對手格後以 grid_path_search mode 2(預算 0x1c、目標固定 (0,0))找 0x40 格;outBuf 是自己堆疊上 8 byte 區域的 [esp+4..5],沒有初始化。回 0xff → 重設地圖、回 0。否則重設地圖後讀 outBuf 當目標:等於自己的格子就回 0(不移動);不等就 [0x51a83] = 0、0x12d7b(unit)、move_unit_toward_point(x, y, unit, camp),它回非 0 才回 1,最後 [0x51a83] = 1。2026-10-01 DOSBox-X 動態驗證(doc98 續六十八,map 24):找得到對手的 #48 → (9,27),0x14b78 回 1,本函式回 1,不再呼叫 0x13e9c;MV 0 的 #45 → (19,47),0x14b78 回 0,本函式回 0,模式 0 接著呼叫 ai_move_toward_nearest 再休息;站在 (0,2) 的 #54 預算內沒有對手 → 0xff → 回 0 → 休息。**站在 (0,0) 的 #53**:mode 2 的起點檢查讓結果先變 0,預算內又沒有對手,回 0 而不是 0xff,本函式把未初始化的 [esp+4..5](入口時就是 [156,255])當目標,呼叫 0x14b78(156, 255),它回 1,#53 落在 (172,53)(地圖寬 25,已在地圖外);同一設定前一回合沒下斷點也落在 (172,53)。在 0x14132 把那兩個 byte 改成 (0,0) 時走「等於自己」分支:不呼叫 0x12d7b 與 0x14b78,回 0。四次 mode 2 搜尋以入口地圖逐指令重算,回傳值、outBuf、整張地圖都相同。證據 evidence/ai_seek_opponent_rand_trace_20261001.json 續六十九(DOSBox-X):落到地圖外的單位下一個敵方回合再進本函式時,mode 2 回 1,focus_unit(0x12d7b)對地圖外座標 (178,49) 永不返回,遊戲卡住。續一百一十五(直接讀反組譯):佔位名 a2 改成 camp —— 行動單位的陣營(+6:0 敵方、1 友軍)。ai_mode_dispatch 的三個呼叫點(friendly_phase_dispatch 0x1d874、enemy_phase_dispatch 0x1d93f / 0x1d9d0)推的是該單位的 +6 或常數 0,之後一路原樣轉交;實機只有 0 與 1。",
    "confidence": "verified_dynamic",
-   "date": "2026-10-01",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x14189",
@@ -12893,13 +12957,29 @@
   {
    "addr": "0x4d966",
    "name": "dbl_to_digits",
-   "summary": "(double, 位數, ...) 把 double 轉成十進位有效數字與指數(printf 浮點核心 0x4d25b 呼叫):先 fmt_inf_nan,再以 frexp / dbl_scale_pow10 / 大整數運算取數字。",
+   "summary": "(double, 位數, 指數*, 符號*, 格式字元, 輸出) 把 double 轉成十進位有效數字與指數(printf 浮點核心 0x4d25b 呼叫):先 fmt_inf_nan,再以 frexp / dbl_scale_pow10 / 大整數運算取數字。續一百一十五(直接讀反組譯):補上原本以 ... 省略的參數。double 佔第 1 / 2 格;位數(第 3 格,0x4d96f)在格式字元是 'F' 時加上十進位指數(0x4d9ff),上限 16;指數*(第 4 格)與符號*(第 5 格)進入時寫 0(0x4d980 / 0x4d985),負數時符號寫 -1(0x4d9c6);輸出(第 7 格)交給 fmt_inf_nan 與最後的 strcpy(0x4d978 / 0x4daf6)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-12",
    "evidence": [
     {
      "at": "0x4d987",
      "insn": "call 0x4d731"
+    },
+    {
+     "at": "0x4d96f",
+     "insn": "mov ebx, dword ptr [ebp + 0x1c]"
+    },
+    {
+     "at": "0x4d978",
+     "insn": "push dword ptr [ebp + 0x2c]"
+    },
+    {
+     "at": "0x4d9c6",
+     "insn": "mov dword ptr [eax], 0xffffffff"
+    },
+    {
+     "at": "0x4d9ff",
+     "insn": "cmp dword ptr [ebp + 0x28], 0x46"
     }
    ]
   },

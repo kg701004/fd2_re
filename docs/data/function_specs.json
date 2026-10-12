@@ -1,5 +1,5 @@
 {
- "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式;續一百一十一加 1 個;續一百一十二加 2 個)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。",
+ "_doc": "逐函式可機械檢查的規格(doc98 續一百零八;續一百零九加 10 個函式;續一百一十一加 1 個;續一百一十二加 2 個)。每條規格引用摘要(summary_of = 該函式或他函式在 docs/data/function_names.json 的摘要)或 docs/ 文件的原句;tools/verify_names_by_calllog.py 載入時逐條確認原句還在、名稱與登錄相同、參數位置能由 inventory argc 定位,否則報規格錯誤。kind:ret_in(回傳 ∈ values,width 預設 32)、ret_range(min..max 或 also)、ret_linear(回傳 = base + 執行期位移 + (參數 + offset) × stride;obj3 位移 0x192000)、ret_eq_param、ret_le_param(0 ≤ 回傳 ≤ 參數,或 also)、param_range、param_cstr(參數指向可列印 C 字串,可指定 suffix)、param_unit(單位序號 < count,或指向單位陣列 base + k × 0x50)。參數 k 依 argc:argc ≥ k 為 [esp+4k],argc == 0 為 eax/edx/ebx/ecx。選填 unreachable = {kind, reason}(續一百一十五):實機走不到的函式,kind 是 static(靜態走不到)或 practical(程式碼上走得到、實務上不會發生);工具把這些規格另列,標了卻出現執行紀錄就報錯。",
  "specs": [
   {
    "addr": "0x1b83d",
@@ -255,7 +255,11 @@
       1
      ]
     }
-   ]
+   ],
+   "unreachable": {
+    "kind": "practical",
+    "reason": "只經 printf 的浮點格式呼叫(printf_fmt_float 0x49b7d -> fmt_double_core 0x4d279 / dbl_to_digits 0x4d987),而且值要是 inf / nan;10 份紀錄裡 printf_fmt_float 一次都沒執行"
+   }
   },
   {
    "addr": "0x2a857",
@@ -613,7 +617,11 @@
      "base": "0x60181",
      "stride": 3
     }
-   ]
+   ],
+   "unreachable": {
+    "kind": "static",
+    "reason": "唯一呼叫端 copy_protection_password_check 0x3405d;它的唯一呼叫點在 battle_main_input_loop 0x118ac,前一個指令 0x118aa 是無條件 jmp 0x118b3,控制流走不到;沒有 fixup 指到這兩個函式"
+   }
   },
   {
    "addr": "0x3cf50",
