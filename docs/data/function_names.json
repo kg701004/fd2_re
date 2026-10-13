@@ -265,9 +265,9 @@
   {
    "addr": "0x365da",
    "name": "dpmi_lock_region",
-   "summary": "(a, b):取 [min, max] 區間,長度 max-min+1,以 int 31h AX=0600h 鎖定線性記憶體;carry 清除時回 1。",
+   "summary": "(起點, 終點):兩個線性位址取 [min, max] 區間,長度 max-min+1,以 int 31h AX=0600h 鎖定線性記憶體;carry 清除時回 1。 續一百一十七:參數名 a / b 改成 起點 / 終點(與 dpmi_unlock_region 相同;dpmi_lock_range 推 start 與 start + len)。",
    "confidence": "static_re",
-   "date": "2026-09-18",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x365f6",
@@ -515,9 +515,9 @@
   {
    "addr": "0x311e5",
    "name": "anim_step_and_draw",
-   "summary": "(anim, enable, dst, stride):enable==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格(0x31204 / 0x31208 / 0x3120c 推第 2 / 4 / 3 個當它的 mode / stride / dst),計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。續一百一十四:第 3 / 4 個由佔位名 a3 / a4 改成 dst / stride(原樣轉交給 blit_anim_frame 的第 3 / 4 個;實機第 3 個是指標、第 4 個 0x280 / 0x140)。",
+   "summary": "(anim, mode, dst, stride):mode==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格(0x31204 / 0x31208 / 0x3120c 推第 2 / 4 / 3 個當它的 mode / stride / dst),計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。續一百一十四:第 3 / 4 個由佔位名 a3 / a4 改成 dst / stride(原樣轉交給 blit_anim_frame 的第 3 / 4 個;實機第 3 個是指標、第 4 個 0x280 / 0x140)。 續一百一十七:第 2 個由 enable 改名 mode —— 非 0 時原樣當 blit_anim_frame 的 mode(實機 -1、0x4b0 等)。",
    "confidence": "static_re",
-   "date": "2026-10-12",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x31219",
@@ -548,9 +548,9 @@
   {
    "addr": "0x31bdf",
    "name": "charcard_say_and_wait",
-   "summary": "(box_arg, text_idx):角色卡場景的一句話:0x1956b(box_arg) 開框 → dialog(固定視窗參數,文字表 [0x53a79]) → draw_dialog_cell(0) → wait_key_with_marker(0) → 0x26996 關框;前後與中間各 kbd_flush 一次。",
+   "summary": "(res_idx, text_idx):角色卡場景的一句話:0x1956b(res_idx) 開框 → dialog(固定視窗參數,文字表 [0x53a79]) → draw_dialog_cell(0) → wait_key_with_marker(0) → 0x26996 關框;前後與中間各 kbd_flush 一次。 續一百一十七:第 1 個由 box_arg 改名 res_idx(0x31bef 原樣推給 open_dialog_box 的 res_idx;呼叫端推 0x15 .. 0x25)。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x31bf3",
@@ -640,9 +640,9 @@
   {
    "addr": "0x344b4",
    "name": "blit_res_cell_xy",
-   "summary": "(res, idx, base, stride, x, y):cell = res + dword[res + idx*4 + 6];dst = y*stride + base + x(0x344d5 imul 第 6 個 x 第 4 個、0x344da 加第 3 個、0x344de 加第 5 個);以 0x4e22a(dst, cell, stride) 繪製(0x4e22a = blit_tile24_rle,格式見該筆)。唯一呼叫端 draw_password_screen 第 3 個推 malloc 回傳的畫面緩衝(ebx)、第 5 / 6 個推座標 (0x96, 0x4b) 等(0x343ba..0x343db)。續一百一十三(param_flow 呼叫端值流,勘誤):舊參數列寫 (res, idx, x, stride, base, y),x 與 base 對調—— 兩者都只是加進位址,本體分不出,呼叫端推的值分得出。",
+   "summary": "(res, idx, 畫面緩衝, stride, x, y):cell = res + dword[res + idx*4 + 6];dst = y*stride + 畫面緩衝 + x(0x344d5 imul 第 6 個 x 第 4 個、0x344da 加第 3 個、0x344de 加第 5 個);以 0x4e22a(dst, cell, stride) 繪製(0x4e22a = blit_tile24_rle,格式見該筆)。唯一呼叫端 draw_password_screen 第 3 個推 malloc 回傳的畫面緩衝(ebx)、第 5 / 6 個推座標 (0x96, 0x4b) 等(0x343ba..0x343db)。續一百一十三(param_flow 呼叫端值流,勘誤):舊參數列寫 (res, idx, x, stride, 畫面緩衝, y),x 與 畫面緩衝 對調—— 兩者都只是加進位址,本體分不出,呼叫端推的值分得出。 續一百一十七:第 3 個由 base 改名 畫面緩衝(呼叫端推 malloc 回傳的畫面緩衝)。",
    "confidence": "static_re",
-   "date": "2026-10-08",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x344ce",
@@ -1627,9 +1627,9 @@
   {
    "addr": "0x187d6",
    "name": "draw_number",
-   "summary": "(dst, stride, 值, 基底格, 寬度):把整數畫成數字字形:負數先歸 0;寬度 3 且 > 999、或寬度 2 且 > 99 時改畫溢位字形;否則以 sprintf 和 0x51ebf 的格式(寬度字元 = '0'+寬度)轉字串,每個字元畫成資源 [0x53a81] 的第 (基底 + 字元 - '0') 格,間隔 6 px。知識庫記載為回合數字/數值顯示用。 續一百零九(呼叫紀錄篩選):補參數列:0x187e7 取第 2 參數當 stride、0x187eb 取第 3 參數當值、0x18801 比較第 5 參數(寬度)、0x18862 加第 4 參數(基底格),第 1 參數 + 6 × 第幾字當 blit_res_cell_sprite 的 dst。實機 800 次第 2 參數都是 0x1c8 / 0x140。",
+   "summary": "(dst, stride, 數值, 基底格, 寬度):把整數畫成數字字形:負數先歸 0;寬度 3 且 > 999、或寬度 2 且 > 99 時改畫溢位字形;否則以 sprintf 和 0x51ebf 的格式(寬度字元 = '0'+寬度)轉字串,每個字元畫成資源 [0x53a81] 的第 (基底 + 字元 - '0') 格,間隔 6 px。知識庫記載為回合數字/數值顯示用。 續一百零九(呼叫紀錄篩選):補參數列:0x187e7 取第 2 參數當 stride、0x187eb 取第 3 參數當值、0x18801 比較第 5 參數(寬度)、0x18862 加第 4 參數(基底格),第 1 參數 + 6 × 第幾字當 blit_res_cell_sprite 的 dst。實機 800 次第 2 參數都是 0x1c8 / 0x140。 續一百一十七:第 3 個由 值 改名 數值(呼叫端推 目前值 / value / limit;實機 0 .. 0x337)。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x187ff",
@@ -1920,9 +1920,9 @@
   {
    "addr": "0x146d1",
    "name": "map_block_cells_of_side",
-   "summary": "(except, mode):對每個單位(數量 [0x53beb],略過 except 與 +5 bit0 已設者),mode==0 時挑 +6(陣營)==0 的、否則挑 +6!=0 的,把它所在地圖格的 byte3 設 0xff。 2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):在 move_unit_toward_point 內比對泛洪後與本函式後的地圖,4 次非空的差集都正好是同陣營、+5 bit0 未設、不是自己的單位所在的可達格,其他格不變。",
+   "summary": "(排除單位, camp):對每個單位(數量 [0x53beb],略過 排除單位 與 +5 bit0 已設者),camp==0 時挑 +6(陣營)==0 的、否則挑 +6!=0 的,把它所在地圖格的 byte3 設 0xff。 2026-09-30 DOSBox-X 動態驗證(doc98 續六十二):在 move_unit_toward_point 內比對泛洪後與本函式後的地圖,4 次非空的差集都正好是同陣營、+5 bit0 未設、不是自己的單位所在的可達格,其他格不變。 續一百一十七:參數名 except / mode 改成 排除單位 / camp —— 第 1 個是單位序號(實機 0、0xe .. 0x11;呼叫端推自己的 unit),第 2 個呼叫端推行動單位的陣營(實機 0 / 1)。",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x146ff",
@@ -3426,9 +3426,9 @@
   {
    "addr": "0x1e611",
    "name": "redraw_map_with_hp_panels",
-   "summary": "(panels, stride, arg):在離屏緩衝 [0x53a49]+0x8088(stride 0x1c8)重畫地形層與單位層,在面板位置畫面板底圖 0x30、滿格 HP 條與 draw_unit_hp_bar;第二個面板(panels[2] != -1)同樣處理;最後複製 0x138×0xc0 到畫面。",
+   "summary": "(panels, 面板 2 單位, 面板 1 單位):在離屏緩衝 [0x53a49]+0x8088(跨距 0x1c8)重畫地形層與單位層,在面板位置畫面板底圖 0x30、滿格 HP 條與 draw_unit_hp_bar;第二個面板(panels[2] != -1)同樣處理;最後複製 0x138×0xc0 到畫面。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (panels, stride, arg)。跨距是本體裡的常數 0x1c8,不是參數。第 3 個在 0x1e6a8 原樣推成第一個面板那次 draw_unit_hp_bar 的 unit(0x1e6bc),第 2 個在 0x1e6fc 推成第二個面板那次的 unit(0x1e710);呼叫端 ai_attack_execute 第 2 個推自己的 unit、第 3 個推 [0x53c4b]。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x1e640",
@@ -3449,6 +3449,14 @@
     {
      "at": "0x1e734",
      "insn": "jmp 0x11d2c"
+    },
+    {
+     "at": "0x1e6a8",
+     "insn": "push dword ptr [esp + 0x14]"
+    },
+    {
+     "at": "0x1e6fc",
+     "insn": "push dword ptr [esp + 0x10]"
     }
    ]
   },
@@ -3538,9 +3546,9 @@
   {
    "addr": "0x1e7f6",
    "name": "draw_unit_hp_bar",
-   "summary": "(dst, stride, unit, pos):HP > 0 時以 len = HP*0x45/MaxHP + 1 在面板位置(+6 列、+7 px)呼叫 draw_hp_bar。續一百一十一(呼叫紀錄,勘誤):舊參數列寫 (unit, dst, stride, pos)。本體 0x1e801 讀第 4 個當 pos 指標、0x1e805 讀第 3 個乘 0x50 加 [0x53a45] 取單位記錄、0x1e83d 以第 2 個乘列數、0x1e842 加上第 1 個;實機 5 次 s1 = 0xa0000(VGA)、s2 = 0x140、s3 = 單位序號 7..9。",
+   "summary": "(dst, stride, unit, pos_ptr):HP > 0 時以 len = HP*0x45/MaxHP + 1 在面板位置(+6 列、+7 px)呼叫 draw_hp_bar。續一百一十一(呼叫紀錄,勘誤):舊參數列寫 (unit, dst, stride, pos)。本體 0x1e801 讀第 4 個當 pos 指標、0x1e805 讀第 3 個乘 0x50 加 [0x53a45] 取單位記錄、0x1e83d 以第 2 個乘列數、0x1e842 加上第 1 個;實機 5 次 s1 = 0xa0000(VGA)、s2 = 0x140、s3 = 單位序號 7..9。 續一百一十七:第 4 個由 pos 改名 pos_ptr(指向面板座標 x、y 兩個 dword;實機 0x1efa30)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x1e81b",
@@ -3770,9 +3778,9 @@
   {
    "addr": "0x4df84",
    "name": "blit_tile24_rle_band_cycled",
-   "summary": "(src, dst, stride, base, shift):與 blit_tile24_rle 同一種 24×24 RLE,每個像素改成 ((index + shift) & 7) + base。blit_tile24_rle_band 是 shift=0、base=0x18 的特例。唯一呼叫端 flash_listed_units_band_cycle。",
+   "summary": "(src, dst, stride, 色彩基底, shift):與 blit_tile24_rle 同一種 24×24 RLE,每個像素改成 ((index + shift) & 7) + 色彩基底。blit_tile24_rle_band 是 shift=0、色彩基底=0x18 的特例。唯一呼叫端 flash_listed_units_band_cycle。 續一百一十七:第 4 個由 base 改名 色彩基底(實機 0x20)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x4df99",
@@ -3832,9 +3840,9 @@
   {
    "addr": "0x1cd17",
    "name": "flash_listed_units_band_cycle",
-   "summary": "(caster, tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(base = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。續一百一十一(呼叫紀錄篩選,勘誤):舊參數列只列 3 個。呼叫端 0x21259..0x21263 推 4 個(add esp, 0x10),與緊接在前呼叫 play_map_effect_animation 的 4 個相同;本體 0x1cd28 / 0x1ce02 / 0x1ce0c 讀第 2..4 個,第 1 個不讀。實機 s1 = 施法者序號 0xb、s2 = 指令號 0。",
+   "summary": "(caster, tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(色彩基底 = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。續一百一十一(呼叫紀錄篩選,勘誤):舊參數列只列 3 個。呼叫端 0x21259..0x21263 推 4 個(add esp, 0x10),與緊接在前呼叫 play_map_effect_animation 的 4 個相同;本體 0x1cd28 / 0x1ce02 / 0x1ce0c 讀第 2..4 個,第 1 個不讀。實機 s1 = 施法者序號 0xb、s2 = 指令號 0。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x1cd33",
@@ -8288,8 +8296,8 @@
    "addr": "0x1c81f",
    "name": "spell_damage_apply",
    "confidence": "verified_dynamic",
-   "date": "2026-09-28",
-   "summary": "(target, base):HP(+0x40)-= base × 9 / 10 + (rand%100) × base / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— base 440 亂數 75 -> 429(999->570)、base 220 亂數 65 -> 212(999->787)、base 176 亂數 58 -> 168(999->831)、base 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。",
+   "date": "2026-10-13",
+   "summary": "(target, 基礎傷害):HP(+0x40)-= 基礎傷害 × 9 / 10 + (rand%100) × 基礎傷害 / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— 基礎傷害 440 亂數 75 -> 429(999->570)、基礎傷害 220 亂數 65 -> 212(999->787)、基礎傷害 176 亂數 58 -> 168(999->831)、基礎傷害 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。 續一百一十七:第 2 個由 base 改名 基礎傷害。",
    "evidence": [
     {
      "at": "0x1c845",
@@ -8699,8 +8707,8 @@
    "addr": "0x1598a",
    "name": "ai_spell_candidate_select",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(unit, mode):AI 單位的法術候選選擇。先把 [0x53c23] 設 0;unit_list_bits_1a 為 0 或 unit+0x27 != 0 直接返回。依法術編號遞增逐一處理:法術列(row7_ptr_619fd)+5 的 MP 大於 unit+0x44 就跳過;0x4e390 以施法者目前位置、半徑 = 列 +3 標記施放點,map_collect_cells_byte3_set 依 y 再 x 的掃描序列出;每個施放點以 collect_targets_in_range(半徑 = 列 +4,選擇子:mode 為 0 時取「列 +6 為 0 ? 1 : 0」,否則取 +6)取目標,目標數為 0 跳過,否則呼叫 ai_spell_target_score。分數嚴格大於 [0x53c23] 才換;同分時列 +0(法術數值)較大才換,再同分保留先出現者。勝出者寫入 [0x53c23] 分數、[0x53c27]/[0x53c2b] 施放點、[0x53c2f] 法術。呼叫端 0x1d91a(返回 0x1d91f)、0x14f15(返回 0x14f1a),0x13e09。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三):4 輪 8 次呼叫的候選清單(法術、施放點、目標、順序)與最終選擇,全部與由單位表離線重算的結果相同;MP 79 那輪沒有任何法術 12(MP 80)的評分呼叫。 施法門檻(續五十六,DOSBox-X):[0x53c23] 的最佳分數 >= 6 才施法 —— 0x1d8ba 的第一遍掃描在 0x1d92d 判斷(>= 6 立刻呼叫 0x13a9f 行動),0x14ef0 在 0x14f6b 判斷(物理、法術、道具三者都 < 6 時跳到 0x22bbe)。實測最佳分數 8、6 時第一遍就接著呼叫 0x14f1a 並施法;最佳分數 3 時第一遍不行動,第二遍才評分且沒有呼叫 ai_spell_execute。同分 3 時保留掃描序最前的施放點。",
+   "date": "2026-10-13",
+   "summary": "(unit, camp):AI 單位的法術候選選擇。先把 [0x53c23] 設 0;unit_list_bits_1a 為 0 或 unit+0x27 != 0 直接返回。依法術編號遞增逐一處理:法術列(row7_ptr_619fd)+5 的 MP 大於 unit+0x44 就跳過;0x4e390 以施法者目前位置、半徑 = 列 +3 標記施放點,map_collect_cells_byte3_set 依 y 再 x 的掃描序列出;每個施放點以 collect_targets_in_range(半徑 = 列 +4,選擇子:camp 為 0 時取「列 +6 為 0 ? 1 : 0」,否則取 +6)取目標,目標數為 0 跳過,否則呼叫 ai_spell_target_score。分數嚴格大於 [0x53c23] 才換;同分時列 +0(法術數值)較大才換,再同分保留先出現者。勝出者寫入 [0x53c23] 分數、[0x53c27]/[0x53c2b] 施放點、[0x53c2f] 法術。呼叫端 0x1d91a(返回 0x1d91f)、0x14f15(返回 0x14f1a),0x13e09。2026-09-30 DOSBox-X 動態驗證(doc98 續五十三):4 輪 8 次呼叫的候選清單(法術、施放點、目標、順序)與最終選擇,全部與由單位表離線重算的結果相同;MP 79 那輪沒有任何法術 12(MP 80)的評分呼叫。 施法門檻(續五十六,DOSBox-X):[0x53c23] 的最佳分數 >= 6 才施法 —— 0x1d8ba 的第一遍掃描在 0x1d92d 判斷(>= 6 立刻呼叫 0x13a9f 行動),0x14ef0 在 0x14f6b 判斷(物理、法術、道具三者都 < 6 時跳到 0x22bbe)。實測最佳分數 8、6 時第一遍就接著呼叫 0x14f1a 並施法;最佳分數 3 時第一遍不行動,第二遍才評分且沒有呼叫 ai_spell_execute。同分 3 時保留掃描序最前的施放點。 續一百一十七:第 2 個由 mode 改名 camp(呼叫端 ai_choose_action / ai_mode_dispatch 推行動單位的陣營)。",
    "evidence": [
     {
      "at": "0x1599b",
@@ -8882,8 +8890,8 @@
    "addr": "0x1567e",
    "name": "ai_item_candidate_select",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(unit, mode):AI 道具候選。[0x53c33] = 0;以 0x1b8a6(旗標 bit7 清除的 slot 數)掃 slot 0..count-1,道具 = +0xb + 2*slot,列 = item_effect_row_ptr;列 +0xd 為 0 跳過。施放點 = 距施法者 <= 列 +0x10 的格(> 0xf 時改 1),依 y 再 x;每格以 collect_targets_in_range(範圍 = 列 +0x12,選擇子:mode 為 0 時取「列 +0x11 為 0 ? 1 : 0」)取目標(列 +0x10 > 0xf 時改呼叫 0x149f8),有目標才呼叫 ai_item_target_score;嚴格大於才換,寫入 [0x53c33] 分數、[0x53c37]/[0x53c3b] 施放點、[0x53c3f] slot。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):4 個持道具的敵人,候選清單(施放點、目標、順序)與勝出的 (分數, 施放點, slot) 全部與重算相同。",
+   "date": "2026-10-13",
+   "summary": "(unit, camp):AI 道具候選。[0x53c33] = 0;以 0x1b8a6(旗標 bit7 清除的 slot 數)掃 slot 0..count-1,道具 = +0xb + 2*slot,列 = item_effect_row_ptr;列 +0xd 為 0 跳過。施放點 = 距施法者 <= 列 +0x10 的格(> 0xf 時改 1),依 y 再 x;每格以 collect_targets_in_range(範圍 = 列 +0x12,選擇子:camp 為 0 時取「列 +0x11 為 0 ? 1 : 0」)取目標(列 +0x10 > 0xf 時改呼叫 0x149f8),有目標才呼叫 ai_item_target_score;嚴格大於才換,寫入 [0x53c33] 分數、[0x53c37]/[0x53c3b] 施放點、[0x53c3f] slot。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):4 個持道具的敵人,候選清單(施放點、目標、順序)與勝出的 (分數, 施放點, slot) 全部與重算相同。 續一百一十七:第 2 個由 mode 改名 camp(呼叫端 ai_choose_action 推行動單位的陣營)。",
    "evidence": [
     {
      "at": "0x1568f",
@@ -11575,9 +11583,9 @@
   {
    "addr": "0x3ff4a",
    "name": "asctime_put_2digits",
-   "summary": "(值, 偏移, 緩衝區):div(值, 10),把 '0' + 商、'0' + 餘寫到緩衝區[偏移]、[偏移 + 1]。",
+   "summary": "(數值, off, 緩衝區):div(數值, 10),把 '0' + 商、'0' + 餘寫到緩衝區[off]、[off + 1]。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x3ff53",
@@ -13077,9 +13085,9 @@
   {
    "addr": "0x4e795",
    "name": "blit_mask_remap",
-   "summary": "(目的, 遮罩, 目的跨距, 換色表) 遮罩開頭為寬、高兩個 word;遮罩位元組非 0 的位置把目的像素換成 換色表[目的像素](效果取決於呼叫端傳的換色表)。rising_particles_effect 呼叫。",
+   "summary": "(目的, 遮罩圖, 目的跨距, 換色表) 遮罩圖開頭為寬、高兩個 word;遮罩圖的位元組非 0 的位置把目的像素換成 換色表[目的像素](效果取決於呼叫端傳的換色表)。rising_particles_effect 呼叫。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x4e7a9",
@@ -13669,9 +13677,9 @@
   {
    "addr": "0x465f2",
    "name": "dos_result_check",
-   "summary": "(值, DOS 錯誤碼) 錯誤碼非 0 時交給 set_errno_from_dos_if 0x4660a。(死函式:沒有呼叫端、沒有引用)",
+   "summary": "(dos_err, 旗標) 旗標(第 2 個)非 0 時把兩個參數原樣交給 set_errno_from_dos_if 0x4660a。(死函式:沒有呼叫端、沒有引用) 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (值, DOS 錯誤碼)。0x465f5 測的是第 2 個;第 1 個經 set_errno_from_dos_if 傳到 set_errno_dos 的 dos_err,它才是錯誤碼。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x465f8",
@@ -13680,15 +13688,23 @@
     {
      "at": "0x46600",
      "insn": "call 0x4660a"
+    },
+    {
+     "at": "0x465f5",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    },
+    {
+     "at": "0x465fd",
+     "insn": "push dword ptr [ebp + 8]"
     }
    ]
   },
   {
    "addr": "0x4660a",
    "name": "set_errno_from_dos_if",
-   "summary": "(值, 旗標) 旗標非 0 時呼叫 set_errno_dos(值)。只被死函式 dos_result_check 呼叫。",
+   "summary": "(dos_err, 旗標) 旗標非 0 時呼叫 set_errno_dos(dos_err)。只被死函式 dos_result_check 呼叫。 續一百一十七:第 1 個由 值 改名 dos_err(0x46616 原樣推給 set_errno_dos 的 dos_err)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x46610",
@@ -17464,9 +17480,9 @@
   {
    "addr": "0x3e493",
    "name": "far_strnlen",
-   "summary": "(偏移, 段, 上限) 以 es:偏移 掃到 NUL 或達上限,回傳長度。printf_fmt_arg 呼叫(遠指標字串)。",
+   "summary": "(字串, 段, 上限) 以 es:字串(遠指標的偏移部分)掃到 NUL 或達上限,回傳長度。printf_fmt_arg 呼叫(遠指標字串)。 續一百一十七:第 1 個由 偏移 改名 字串(實機是堆疊上的字串位址)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x3e4a5",
@@ -17604,9 +17620,9 @@
   {
    "addr": "0x3fe7f",
    "name": "stdio_set_default_buffer",
-   "summary": "(FILE*, 旗標) 旗標非 0 用模式 0x100、否則 0x400,呼叫 setvbuf(fp, ?, 模式, 0x1000)。ail_startup 呼叫。",
+   "summary": "(FILE*, 緩衝區) 緩衝區非 NULL 用模式 0x100、否則 0x400,呼叫 setvbuf(FILE*, 緩衝區, 模式, 0x1000)(C 函式庫 setbuf 的做法)。ail_startup 呼叫。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (FILE*, 旗標),setvbuf 的第 2 個引數寫「?」。0x3fe82 把第 2 個載入 edx,0x3fe8a 測它選模式,0x3fe99 原樣推成 setvbuf 的緩衝區;呼叫端推 0。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x3fe85",
@@ -17619,6 +17635,18 @@
     {
      "at": "0x3fe93",
      "insn": "push 0x1000"
+    },
+    {
+     "at": "0x3fe82",
+     "insn": "mov edx, dword ptr [ebp + 0xc]"
+    },
+    {
+     "at": "0x3fe8a",
+     "insn": "test edx, edx"
+    },
+    {
+     "at": "0x3fe99",
+     "insn": "push edx"
     }
    ]
   },
@@ -18109,9 +18137,9 @@
   {
    "addr": "0x4d656",
    "name": "dosx_set_int_vector",
-   "summary": "(向量, 偏移, 段) DOS extender 型號 [0x52832] 在 2..8 時以 AX=2504h 設保護模式向量,否則 AH=25h。__hook387 呼叫。",
+   "summary": "(向量, 處理常式, 段) DOS extender 型號 [0x52832] 在 2..8 時以 AX=2504h 設保護模式向量,否則 AH=25h。__hook387 呼叫。 續一百一十七:第 2 個由 偏移 改名 處理常式(中斷處理常式的偏移;呼叫端推 0x1e60e8)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x4d663",
@@ -20927,9 +20955,9 @@
   {
    "addr": "0x3ebb4",
    "name": "pit_set_divisor",
-   "summary": "(除數) 關中斷後寫 PIT:out 0x43, 0x36(通道 0、模式 3),低 / 高位元組寫 0x40;除數存 [0x52bde]。",
+   "summary": "(PIT 除數) 關中斷後寫 PIT:out 0x43, 0x36(通道 0、模式 3),低 / 高位元組寫 0x40;除數存 [0x52bde]。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x3ebbb",
@@ -21111,9 +21139,9 @@
   {
    "addr": "0x3f5b4",
    "name": "ail_ini_parse_line",
-   "summary": "(行, ...) 解析 INI 的一行:辨識 '-'、以 toupper 正規化、strlen 量長度,把鍵 / 值存回呼叫端。ail_impl_api_read_ini 呼叫 4 次。",
+   "summary": "(行字串, ...) 解析 INI 的一行:辨識 '-'、以 toupper 正規化、strlen 量長度,把鍵 / 值存回呼叫端。ail_impl_api_read_ini 呼叫 4 次。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x3f5d4",
@@ -21709,9 +21737,9 @@
   {
    "addr": "0x4584d",
    "name": "find_in_neg1_list",
-   "summary": "(清單, 值, 上限) 在以 -1 結尾的 dword 清單裡找值,回傳索引或 -1。波表合成器呼叫。",
+   "summary": "(清單, bank, patch) 在音色表裡找 (bank, patch):清單每項 0x20 bytes,某項的第一個 dword 是 -1 就結束(最多 0x200 項);[項] == bank 且 [項 + 4] == patch 時傳回該項的位址,找不到傳回 0。波表合成器呼叫:ail_wavesynth_timbre_cb 推 (bank, patch);ail_wavesynth_event_cb 在 0x45c58 推 (0x7f, 資料 1)([esp + 4] == 9 時,0x45c46)、在 0x45bf0 推 ([ebp + 0x194], 資料 1)。 續一百一十七(名稱沿呼叫邊,勘誤):舊摘要寫 (清單, 值, 上限)、「dword 清單」、「回傳索引或 -1」,三處都錯。0x45866 比第 2 個與 [eax]、0x4586a 比第 3 個與 [eax + 4]、0x45870 每項前進 0x20、0x45873 上限 0x200 項;找不到時 0x4587b 把 eax 清 0,找到時 eax 仍是該項的位址。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x4585f",
@@ -21724,6 +21752,18 @@
     {
      "at": "0x45866",
      "insn": "cmp ebx, esi"
+    },
+    {
+     "at": "0x4586a",
+     "insn": "cmp ecx, dword ptr [eax + 4]"
+    },
+    {
+     "at": "0x45870",
+     "insn": "add eax, 0x20"
+    },
+    {
+     "at": "0x4587b",
+     "insn": "xor eax, eax"
     }
    ]
   },
@@ -23123,9 +23163,9 @@
   {
    "addr": "0x145cd",
    "name": "mark_units_blocking",
-   "summary": "(選擇值) 掃描全部單位([0x53a45],每筆 0x50),依呼叫端的選擇值與陣營 +6 篩選後呼叫 0x14625 在地圖上標阻擋(FD2.EXE 反組譯)。AI 移動、單位建構與戰鬥行動呼叫(doc11 的物理落點第一步)。",
+   "summary": "(camp) 掃描全部單位([0x53a45],每筆 0x50,略過 +5 bit0 已設者),camp == 0 時挑 +6(陣營)!= 0 的、否則挑 +6 == 0 的(與 camp 不同陣營的單位),呼叫 0x14625 在地圖上標阻擋(FD2.EXE 反組譯)。AI 移動、單位建構與戰鬥行動呼叫(doc11 的物理落點第一步)。 續一百一十七:參數名 選擇值 改成 camp(0x14601 / 0x1460d 測它,0x14605 / 0x14611 讀 +6;AI 呼叫端推行動單位的 camp,其餘呼叫端推常數 0 / 1)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x145de",
@@ -23134,6 +23174,14 @@
     {
      "at": "0x145e8",
      "insn": "add ebx, 0x50"
+    },
+    {
+     "at": "0x14601",
+     "insn": "test edi, edi"
+    },
+    {
+     "at": "0x14605",
+     "insn": "movzx edx, byte ptr [ebx + 6]"
     }
    ]
   },
@@ -24063,9 +24111,9 @@
   {
    "addr": "0x1f42d",
    "name": "phase_banner_split_slide",
-   "summary": "(位移, 圖格) 分割滑入的階段標題:FDOTHER #5 的圖格(0x52),兩半分別畫在 (0x55 - 位移, 82) 與 (165 + 位移, 81),跨距 0x1c8(456)(FD2.EXE 反組譯)。phase_banner_zoom_in / zoom_out 以位移 100、75、50、25、0 逐幀呼叫(doc56)。續一百一十六(直接讀反組譯,勘誤):舊參數列 (圖格, 位移) 兩個對調。第 1 個是位移(0x1f444:左半的 x = 0x55 減它;0x1f46f:右半的 x = 0xa5 加它;實機 0、0x19、0x32、0x4b、0x64),第 2 個是左半的圖格編號(0x1f439 推給 draw_res_image_frame 的幀號;呼叫端 phase_banner_zoom_in / zoom_out 推自己的圖格,實機 0x50 / 0x52)。內文也要更正:兩半的 y 都是 0x52(82);右半固定用 0x51 號圖格(0x1f46b),舊內文把它寫成 y = 81、把 y 寫成圖格。",
+   "summary": "(dx, 圖格) 分割滑入的階段標題:FDOTHER #5 的圖格(0x52),兩半分別畫在 (0x55 - dx, 82) 與 (165 + dx, 81),跨距 0x1c8(456)(FD2.EXE 反組譯)。phase_banner_zoom_in / zoom_out 以位移 100、75、50、25、0 逐幀呼叫(doc56)。續一百一十六(直接讀反組譯,勘誤):舊參數列 (圖格, 位移) 兩個對調。第 1 個是位移(0x1f444:左半的 x = 0x55 減它;0x1f46f:右半的 x = 0xa5 加它;實機 0、0x19、0x32、0x4b、0x64),第 2 個是左半的圖格編號(0x1f439 推給 draw_res_image_frame 的幀號;呼叫端 phase_banner_zoom_in / zoom_out 推自己的圖格,實機 0x50 / 0x52)。內文也要更正:兩半的 y 都是 0x52(82);右半固定用 0x51 號圖格(0x1f46b),舊內文把它寫成 y = 81、把 y 寫成圖格。 續一百一十七:第 1 個由 位移 改名 dx。",
    "confidence": "static_re",
-   "date": "2026-10-12",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x1f43d",
@@ -24510,9 +24558,9 @@
   {
    "addr": "0x20c6f",
    "name": "item_effect_dispatch",
-   "summary": "(使用者, 道具, ...) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。",
+   "summary": "(使用者, slot, 數量, targets) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (使用者, 道具, ...)。第 2 個是道具欄位序號,不是道具編號 —— 0x20c96 原樣推給 unit_item_id 的 slot(實機 2 / 4;呼叫端推 [0x53c3f] / [0x53c57])。第 3 個是目標個數(原樣推給 item_effect_heal / effect_cure_status_flag 的 數量;實機 1),第 4 個是目標清單(0x20c80 載入 ebp,原樣推成 targets;實機 0x1f14f8)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x20c87",
@@ -24521,6 +24569,14 @@
     {
      "at": "0x20c8c",
      "insn": "mov dword ptr [0x3ec4], 0"
+    },
+    {
+     "at": "0x20c96",
+     "insn": "push dword ptr [esp + 0x84]"
+    },
+    {
+     "at": "0x20c80",
+     "insn": "mov ebp, dword ptr [esp + 0x8c]"
     }
    ]
   },
@@ -24901,9 +24957,9 @@
   {
    "addr": "0x2872b",
    "name": "shop_buy",
-   "summary": "(店種, ...) 購買流程:選商品與對象,檢查持有數(unit_item_count)與能否裝備(unit_can_equip_item),以 unit_add_item 加入,可當場裝備(unit_equip_slot、recalc_equipped_stats)(FD2.EXE 反組譯)。shop_menu 呼叫(doc91:同函式內 11 個寫入點都有定值)。",
+   "summary": "(count, items) 購買流程:選商品與對象,檢查持有數(unit_item_count)與能否裝備(unit_can_equip_item),以 unit_add_item 加入,可當場裝備(unit_equip_slot、recalc_equipped_stats)(FD2.EXE 反組譯)。shop_menu 呼叫(doc91:同函式內 11 個寫入點都有定值)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (店種, ...)。第 1 個是商品清單的筆數 —— 本體只在 0x28842 / 0x28851 把它原樣推給 open_item_list_panel / item_list_select 的 count(再傳到 draw_item_list_two_column,0x272e9 與 6 比,當每頁格數的上限;實機 1 / 4)。第 2 個是商品清單指標(0x2873c 載入 ebp,原樣傳成 items;實機 0x1f15f4)。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x289db",
@@ -24916,6 +24972,14 @@
     {
      "at": "0x28a78",
      "insn": "call 0x1bb8c"
+    },
+    {
+     "at": "0x28842",
+     "insn": "push dword ptr [esp + 0x74]"
+    },
+    {
+     "at": "0x2873c",
+     "insn": "mov ebp, dword ptr [esp + 0x70]"
     }
    ]
   },

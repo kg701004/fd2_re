@@ -601,7 +601,7 @@
    "addr": "0x3f5b4",
    "name": "ail_ini_parse_line",
    "param": 1,
-   "pname": "行",
+   "pname": "行字串",
    "basis": [
     {
      "kind": "body",
@@ -609,14 +609,14 @@
      "insn": "mov ebp, dword ptr [esp + 0x18]"
     }
    ],
-   "note": "行字串:toupper 正規化、strlen 量長度",
-   "date": "2026-10-12"
+   "note": "行字串:toupper 正規化、strlen 量長度(續一百一十七:參數由 行 改名 行字串,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x365da",
    "name": "dpmi_lock_region",
    "param": 1,
-   "pname": "a",
+   "pname": "起點",
    "basis": [
     {
      "kind": "body",
@@ -624,14 +624,14 @@
      "insn": "mov edx, dword ptr [esp + 0x3c]"
     }
    ],
-   "note": "線性位址;與第 2 個取較小的當區間起點",
-   "date": "2026-10-12"
+   "note": "線性位址;與第 2 個取較小的當區間起點(續一百一十七:參數由 a 改名 起點,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x365da",
    "name": "dpmi_lock_region",
    "param": 2,
-   "pname": "b",
+   "pname": "終點",
    "basis": [
     {
      "kind": "body",
@@ -639,8 +639,8 @@
      "insn": "mov ebx, dword ptr [esp + 0x40]"
     }
    ],
-   "note": "線性位址;與第 1 個取較大的當區間終點",
-   "date": "2026-10-12"
+   "note": "線性位址;與第 1 個取較大的當區間終點(續一百一十七:參數由 b 改名 終點,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x2860a",
@@ -676,7 +676,7 @@
    "addr": "0x187d6",
    "name": "draw_number",
    "param": 3,
-   "pname": "值",
+   "pname": "數值",
    "basis": [
     {
      "kind": "body",
@@ -684,8 +684,8 @@
      "insn": "mov eax, dword ptr [esp + 0x38]"
     }
    ],
-   "note": "要畫的整數:負數歸 0,交給 sprintf",
-   "date": "2026-10-12"
+   "note": "要畫的整數:負數歸 0,交給 sprintf(續一百一十七:參數由 值 改名 數值,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x2968d",
@@ -766,7 +766,7 @@
    "addr": "0x1e7f6",
    "name": "draw_unit_hp_bar",
    "param": 4,
-   "pname": "pos",
+   "pname": "pos_ptr",
    "basis": [
     {
      "kind": "body",
@@ -774,14 +774,14 @@
      "insn": "mov ebx, dword ptr [esp + 0x14]"
     }
    ],
-   "note": "面板位置指標,與 map_attack_sequence 的第 3 個是同一個值",
-   "date": "2026-10-12"
+   "note": "面板位置指標,與 map_attack_sequence 的第 3 個是同一個值(續一百一十七:參數由 pos 改名 pos_ptr,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x4df84",
    "name": "blit_tile24_rle_band_cycled",
    "param": 4,
-   "pname": "base",
+   "pname": "色彩基底",
    "basis": [
     {
      "kind": "body",
@@ -789,8 +789,8 @@
      "insn": "mov edx, dword ptr [ebp + 0x14]"
     }
    ],
-   "note": "色帶基底;實機 0x20",
-   "date": "2026-10-12"
+   "note": "色帶基底;實機 0x20(續一百一十七:參數由 base 改名 色彩基底,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x16b43",
@@ -811,7 +811,7 @@
    "addr": "0x1c81f",
    "name": "spell_damage_apply",
    "param": 2,
-   "pname": "base",
+   "pname": "基礎傷害",
    "basis": [
     {
      "kind": "body",
@@ -819,8 +819,8 @@
      "insn": "mov eax, dword ptr [esp + 0x20]"
     }
    ],
-   "note": "傷害基數:x 9 / 10 再加亂數項",
-   "date": "2026-10-12"
+   "note": "傷害基數:x 9 / 10 再加亂數項(續一百一十七:參數由 base 改名 基礎傷害,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x4e4f6",
@@ -856,7 +856,7 @@
    "addr": "0x3ff4a",
    "name": "asctime_put_2digits",
    "param": 1,
-   "pname": "值",
+   "pname": "數值",
    "basis": [
     {
      "kind": "body",
@@ -864,14 +864,14 @@
      "insn": "push dword ptr [ebp + 0x14]"
     }
    ],
-   "note": "推給 div 當被除數",
-   "date": "2026-10-12"
+   "note": "推給 div 當被除數(續一百一十七:參數由 值 改名 數值,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x3ff4a",
    "name": "asctime_put_2digits",
    "param": 2,
-   "pname": "偏移",
+   "pname": "off",
    "basis": [
     {
      "kind": "body",
@@ -879,8 +879,8 @@
      "insn": "add eax, dword ptr [ebp + 0x18]"
     }
    ],
-   "note": "加到緩衝區指標",
-   "date": "2026-10-12"
+   "note": "加到緩衝區指標(續一百一十七:參數由 偏移 改名 off,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x46e61",
@@ -976,7 +976,7 @@
    "addr": "0x3e493",
    "name": "far_strnlen",
    "param": 1,
-   "pname": "偏移",
+   "pname": "字串",
    "basis": [
     {
      "kind": "body",
@@ -984,8 +984,8 @@
      "insn": "mov edx, dword ptr [ebp + 0x14]"
     }
    ],
-   "note": "字串的偏移(實機是線性位址)",
-   "date": "2026-10-12"
+   "note": "字串的偏移(實機是線性位址)(續一百一十七:參數由 偏移 改名 字串,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x3ff35",
@@ -1006,14 +1006,14 @@
    "addr": "0x3ebb4",
    "name": "pit_set_divisor",
    "param": 1,
-   "pname": "除數",
+   "pname": "PIT 除數",
    "basis": [
     {
      "kind": "live"
     }
    ],
-   "note": "資料卡沒有列出以 [esp+X] 引用的指令;名稱依實機值(0、0x174e、0x26d7,是 PIT 除數的大小)",
-   "date": "2026-10-12"
+   "note": "資料卡沒有列出以 [esp+X] 引用的指令;名稱依實機值(0、0x174e、0x26d7,是 PIT 除數的大小)(續一百一十七:參數由 除數 改名 PIT 除數,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x4997e",
@@ -1079,7 +1079,7 @@
    "addr": "0x1f42d",
    "name": "phase_banner_split_slide",
    "param": 1,
-   "pname": "位移",
+   "pname": "dx",
    "basis": [
     {
      "kind": "body",
@@ -1087,8 +1087,8 @@
      "insn": "sub ebx, dword ptr [esp + 0x14]"
     }
    ],
-   "note": "x 位移:左半 0x55 減它、右半 0xa5 加它",
-   "date": "2026-10-12"
+   "note": "x 位移:左半 0x55 減它、右半 0xa5 加它(續一百一十七:參數由 位移 改名 dx,重讀資料卡,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x1f42d",
@@ -1134,6 +1134,291 @@
    ],
    "note": "原樣交給 map_cell_set_bit7 的 y",
    "date": "2026-10-12"
+  },
+  {
+   "addr": "0x2872b",
+   "name": "shop_buy",
+   "param": 1,
+   "pname": "count",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x28842",
+     "insn": "push dword ptr [esp + 0x74]"
+    }
+   ],
+   "note": "原樣推給 open_item_list_panel 的 count(0x28851 再推給 item_list_select);本體沒有別的用途",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2872b",
+   "name": "shop_buy",
+   "param": 2,
+   "pname": "items",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x2873c",
+     "insn": "mov ebp, dword ptr [esp + 0x70]"
+    }
+   ],
+   "note": "載入 ebp,原樣傳成 open_item_list_panel / item_list_select 的 items",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4584d",
+   "name": "find_in_neg1_list",
+   "param": 1,
+   "pname": "清單",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45857",
+     "insn": "mov eax, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "表的指標:每項前進 0x20,第一個 dword 是 -1 就結束",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4584d",
+   "name": "find_in_neg1_list",
+   "param": 2,
+   "pname": "bank",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4584f",
+     "insn": "mov ebx, dword ptr [esp + 0x10]"
+    }
+   ],
+   "note": "載入 ebx,0x45866 與 [項] 比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4584d",
+   "name": "find_in_neg1_list",
+   "param": 3,
+   "pname": "patch",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45853",
+     "insn": "mov ecx, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "載入 ecx,0x4586a 與 [項 + 4] 比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x465f2",
+   "name": "dos_result_check",
+   "param": 1,
+   "pname": "dos_err",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x465fd",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "原樣推成 set_errno_from_dos_if 的第 1 個(再傳到 set_errno_dos 的 dos_err)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x465f2",
+   "name": "dos_result_check",
+   "param": 2,
+   "pname": "旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x465f5",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "載入 eax,0x465f8 測它非 0 才往下呼叫",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4660a",
+   "name": "set_errno_from_dos_if",
+   "param": 1,
+   "pname": "dos_err",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4660d",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "載入 eax,0x46616 推給 set_errno_dos",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4660a",
+   "name": "set_errno_from_dos_if",
+   "param": 2,
+   "pname": "旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x46610",
+     "insn": "cmp dword ptr [ebp + 0xc], 0"
+    }
+   ],
+   "note": "與 0 比,是 0 就不呼叫",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3fe7f",
+   "name": "stdio_set_default_buffer",
+   "param": 1,
+   "pname": "FILE*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3fe9a",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "原樣推成 setvbuf 的 FILE*",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3fe7f",
+   "name": "stdio_set_default_buffer",
+   "param": 2,
+   "pname": "緩衝區",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3fe82",
+     "insn": "mov edx, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "載入 edx:0x3fe8a 測它選模式 0x100 / 0x400,0x3fe99 原樣推成 setvbuf 的緩衝區",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1e611",
+   "name": "redraw_map_with_hp_panels",
+   "param": 1,
+   "pname": "panels",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x1e61c",
+     "insn": "mov ebx, dword ptr [esp + 8]"
+    }
+   ],
+   "note": "面板座標陣列:[+0] / [+4] 是第一個面板,[+8] != -1 時 [+8] / [+0xc] 是第二個",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1e611",
+   "name": "redraw_map_with_hp_panels",
+   "param": 2,
+   "pname": "面板 2 單位",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x1e6fc",
+     "insn": "push dword ptr [esp + 0x10]"
+    }
+   ],
+   "note": "第二個面板那次 draw_unit_hp_bar(0x1e710)的 unit",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1e611",
+   "name": "redraw_map_with_hp_panels",
+   "param": 3,
+   "pname": "面板 1 單位",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x1e6a8",
+     "insn": "push dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "第一個面板那次 draw_unit_hp_bar(0x1e6bc)的 unit",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x20c6f",
+   "name": "item_effect_dispatch",
+   "param": 2,
+   "pname": "slot",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x20c96",
+     "insn": "push dword ptr [esp + 0x84]"
+    }
+   ],
+   "note": "原樣推給 unit_item_id 的 slot(道具欄位序號)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x20c6f",
+   "name": "item_effect_dispatch",
+   "param": 3,
+   "pname": "數量",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x20cd2",
+     "insn": "push dword ptr [esp + 0x90]"
+    }
+   ],
+   "note": "原樣推給 item_effect_heal 的 數量",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x20c6f",
+   "name": "item_effect_dispatch",
+   "param": 4,
+   "pname": "targets",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x20c80",
+     "insn": "mov ebp, dword ptr [esp + 0x8c]"
+    }
+   ],
+   "note": "載入 ebp,原樣推成各效果函式的 targets",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x145cd",
+   "name": "mark_units_blocking",
+   "param": 1,
+   "pname": "camp",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x145da",
+     "insn": "mov edi, dword ptr [esp + 0x10]"
+    }
+   ],
+   "note": "載入 edi;0x14601 / 0x1460d 測它:0 時挑 +6 != 0 的單位,否則挑 +6 == 0 的",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x311e5",
+   "name": "anim_step_and_draw",
+   "param": 2,
+   "pname": "mode",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x31204",
+     "insn": "push dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "非 0 時原樣推成 blit_anim_frame 的 mode;0x311f4 與 0 比,是 0 只把影格計數歸零",
+   "date": "2026-10-13"
   }
  ]
 }

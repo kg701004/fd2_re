@@ -8958,3 +8958,105 @@ selftest 加 9 題;突變 11 個全 KILLED。沒納入的 1 個突變:拿掉「u
 - 呼叫紀錄只記前 8 個堆疊參數:`grid_path_search` 第 9 / 10 個沒有實機值(登錄以本體指令與呼叫端的全域槽為依據)。
 - 0x25a96、0x111ba(以索引載入資源)、0x37910(清除記憶體)等有實機紀錄的被呼叫端仍沒有名稱。
 - `ail_ini_parse_line`、`title_anim_or_still` 等 25 筆摘要仍以 `...` / `..` 省略部分參數(之前的名稱已由靜態篩選比到)。
+
+## 2026-10-13 續一百一十七:續一百一十六「工具看不到的」逐項查原因 —— 新篩選 `param_name`(名稱沿呼叫邊)、三種值規則;改正 6 筆參數列
+
+起因:使用者問續一百一十六列的「工具看不到的」四項是什麼原因。逐項量測後,沒有一項是整類做不到:
+
+| 項目 | 量到的原因 | 性質 |
+|---|---|---|
+| 兩個同型別的參數對調抓不到 | 篩選只比 4 種粗型別;名稱的語意比型別細,但沒有任何檢查拿名稱互相比 | 工具少一種檢查 |
+| 呼叫紀錄只記前 8 個堆疊參數 | 補丁與剖析器都寫死 8;具名參數落在第 9 格以後的只有 `grid_path_search` 的 2 個 | 常數,影響 2 個參數 |
+| 65 個無型別名稱 | 49 個是泛稱(值 / a / b / arg),16 個其實有意義,只是沒有對應的判定 | 名稱問題 + 工具缺規則 |
+| 36 個只有人工讀過 | 29 個就是上一列的無型別名稱;5 個實機只記到 1 .. 2 次;2 個是第 9 / 10 格 | 資料不夠 |
+
+**新篩選 `param_name`(`tools/screen_summaries_by_calllog.py`,靜態)**:呼叫者把自己的參數**原樣**傳給被呼叫者時
+(`arg_sources` 的呼叫點值流,只追值不變的搬運),兩邊的參數名應該講同一件事。
+- 相容 = 同名、同義(`NAME_SAME`,21 組,例 unit / 單位、spell / cmd / 指令號)、或一個是另一個的泛稱(`NAME_ISA`,39 條,
+  遞移,例 attacker -> unit、targets -> 單位清單 -> list)。同一個泛稱底下的兩個特稱**不**相容(attacker 傳到 defender)。
+- 不相容 -> 候選,掛在被呼叫者的參數上,鍵 `p<k>:<呼叫者的參數名>`:同一個來源名稱不論幾個呼叫點只核對一次,
+  新的來源名稱是新的候選。錯的可能是任一端,也可能兩邊都對(角色互換),要看反組譯。
+- 任一端是無型別名稱的邊不比(另計;目前 5 條)。
+- `name_table_errors`:同義組重疊、組內或特稱與泛稱跨型別 / 沒有型別、泛稱指向自己那一組 -> 錯誤。
+  selftest 另檢查兩張表與 `OPAQUE_NAMES` 裡沒有摘要已經不用的名稱。
+- 目前 597 條邊,涵蓋 864 個具名參數中的 397 個。它是一致性檢查:邊兩端的名稱都是人寫的,相容不代表兩邊都對,
+  所以 `param_dossier.py --coverage` 把它另外列一行,**不計入**「機器比過」。
+
+**值規則多三種**(原本只有 unit / ptr / small / str;`VALUE_KINDS`):`nibble`(0 .. 15)、`seg16`(段左移 16,低 16
+位元為 0)、`dosmem`(1 MB 以下的線性位址)。`dpmi_dos_free` 的 線性位址 / 段<<16 原本同屬無型別,兩個對調看不到;
+現在由實機型別篩選比到,對調各報一筆(selftest)。
+
+**無型別名稱 65 -> 36 個參數**(`OPAQUE_NAMES` 35 -> 20 個名稱):base / 偏移 / 遮罩 / 行 / pos / box_arg 在各函式改成
+講得出型別的名稱;聲部 / mask / ss / esp / ebp 本來就有型別,移到型別名單;0..15 / 線性位址 / 段<<16 改用值規則。
+一端無型別的呼叫邊原有 11 條,其中 6 條的另一端講得出型別,照它改名(4 個函式 5 個參數:`draw_number` 的 值、
+`dpmi_lock_region` 的 a / b、`charcard_say_and_wait` 的 box_arg、`draw_unit_hp_bar` 的 pos)。
+剩下的 36 個:值 7、b 4、double 4、a 3、錯誤旗標 2、新值 2,其餘各 1。
+
+**結果**(10 份紀錄):
+
+| | 續一百一十六 | 本輪 |
+|---|---|---|
+| param_type 可比 | 532 | 549 |
+| param_role 可比 | 125 | 128 |
+| param_flow 可比 | 180 | 187 |
+| param_unread 可比 | 844 | 847 |
+| param_name 邊 / 可比的參數 | — | 597 / 397 |
+| 參數名 有型別 / 審過無型別 | 796 / 65 | 828 / 36 |
+| 候選 / 已改正 / 非錯誤 / 未核對 | 7 / 34 / 7 / 0 | 11 / 43 / 11 / 0 |
+
+具名參數 864 個:機器比過 745、只有人工讀過 28(登錄 95 筆,其中 67 筆機器也比過)、兩者都沒有 91
+(其中 18 個至少有名稱邊)。
+
+**改正的參數列**(`docs/data/function_names.json`;都是 `param_name` 報出來、再讀反組譯確認):
+
+| 函式 | 舊 -> 新 | 依據 |
+|---|---|---|
+| `shop_buy` 0x2872b | (店種, ...) -> (count, items) | 第 1 個只在 0x28842 / 0x28851 原樣推成清單筆數(下游 0x272e9 與 6 比);第 2 個是商品清單指標 |
+| `find_in_neg1_list` 0x4584d | (清單, 值, 上限) -> (清單, bank, patch);內文三處也錯 | 0x45866 / 0x4586a 比兩個鍵;每項 0x20 bytes;傳回項目位址或 0,不是索引或 -1 |
+| `stdio_set_default_buffer` 0x3fe7f | (FILE*, 旗標) -> (FILE*, 緩衝區) | 0x3fe99 把第 2 個原樣推成 setvbuf 的緩衝區(C 的 setbuf) |
+| `redraw_map_with_hp_panels` 0x1e611 | (panels, stride, arg) -> (panels, 面板 2 單位, 面板 1 單位) | 0x1e6fc / 0x1e6a8 推成兩次 draw_unit_hp_bar 的 unit;跨距是常數 0x1c8 |
+| `dos_result_check` 0x465f2 | (值, DOS 錯誤碼) -> (dos_err, 旗標) | 0x465f5 測第 2 個;第 1 個傳到 set_errno_dos 的 dos_err |
+| `item_effect_dispatch` 0x20c6f | (使用者, 道具, ...) -> (使用者, slot, 數量, targets) | 第 2 個是道具欄位序號(0x20c96 推給 unit_item_id 的 slot),不是道具編號 |
+
+另有 21 筆摘要只改參數名或用詞(沒有位置錯誤):`map_block_cells_of_side` (except, mode) -> (排除單位, camp)(except 登記成
+小整數,實際是單位序號)、`mark_units_blocking` 選擇值 -> camp(內文補上條件:camp == 0 挑 +6 != 0 的)、
+`ai_spell_candidate_select` / `ai_item_candidate_select` mode -> camp、`anim_step_and_draw` enable -> mode,
+以及上一段列的無型別名稱。
+
+核對後不是錯誤的 4 個候選:`scene_attack_sequence` 的 p1:守方 / p2:攻方(反擊時 `attack_scene_orchestrator` 在
+0x2e724 / 0x2e75b 把兩個單位對調著推)、`find_in_neg1_list` 的 p3:資料 1(MIDI 事件的資料 1 當 patch 查表)、
+`decode_image_with_header` 的 p4:dst(它從呼叫者要畫上去的那塊擷取背景)。
+
+續一百一十四起累計:參數列錯誤 18 筆(另 1 筆只有內文錯)。
+
+**驗證**:
+- selftest:篩選工具 381 題(新增 [18] 共 53 題)、`param_dossier.py` 34 題,全過。
+- 召回(selftest 內,真實 EXE):6 筆舊摘要各自重現在對的參數;目前的摘要只剩核對過的 4 個候選。
+- 突變:篩選工具本輪新增的程式 49 個,第一輪 1 個存活 —— `name_edges` 裡一個多餘的判斷(被呼叫者沒有具名參數時
+  先跳過;不跳過也只是迴圈零次)。已刪除,換成另一個突變,受影響的 7 個(邊 / 放在哪)重跑全部 KILLED;其餘 42 個
+  第一輪就 KILLED。`param_dossier.py` 3 個全部 KILLED。都有 FAIL 行、沒有 Traceback,未突變對照通過。
+  寫突變清單時發現 4 個條件沒有題目能分辨,先補題再跑。
+- 閘門 33 項 rc 0。第一輪有 3 項失敗,同一個原因:`docs/data/function_specs.json` 有 2 筆引文引用改名前的參數列
+  (`draw_unit_hp_bar`、`draw_number`)。兩筆宣稱的參數都不是改名的那個,引文跟著改名後重跑全過。
+
+**量測的限制**:
+- 那 6 筆召回是用這個篩選找到的錯誤,不是獨立的命中率。對續一百一十六列的 4 筆同型別對調,`param_name` 抓到 0 筆:
+  `unit_present_intro_frames`、`dpmi_dos_alloc_locked`、`queue_unit_number_popup` 沒有任何名稱邊;
+  `phase_banner_split_slide` 當時的 (圖格, 位移) 有邊,但「位移」是無型別名稱,那條邊不比 —— 換成有型別的 dx
+  就兩端都報(兩種都寫成 selftest)。無型別名稱會遮住對調,這是把它們改掉的另一個理由。
+  查原因時的原型沒有排除無型別名稱,當時說「抓到 phase_banner_split_slide」是錯的,以這裡為準。
+- 同義表與泛稱表是人審的。型別檢查擋得住跨型別的誤併,擋不住把兩個同型別、不同意思的名稱併成同義。
+
+**仍留的**:
+- 864 個具名參數裡有 467 個不在任何名稱邊上;它們的同型別對調仍然只能讀。要再往下,需要第二份可對照的描述
+  (全域變數或結構欄位的名稱登錄),目前沒有。
+- 91 個參數沒有任何依據(`param_dossier.py --worklist`;18 個至少有名稱邊)。
+- 36 個無型別名稱的參數(泛稱),要讀過才能改名。
+- 沒有做、要等實機補錄的兩項:
+  - 紀錄太少的 5 個參數:`gold_add_with_counter_anim` 的 delta(1 次)、`equip_compare_select` 的 count(1 次)、
+    `roster_reorder_selected_first` 的 選取旗標陣列(2 次)、`localtime` 的 time_t*(1 次)、
+    `show_fdother_static_screen` 的 起始列(2 次);門檻是 3 次。
+  - 8 格上限:要一起改的有 4 處 —— 補丁 `tools/dosbox/fd2_calllog_patch.py` 的兩個 `k <= 8`、
+    `verify_names_by_calllog.py` 的 `len(stack) != 8`、`param_slot`、`param_slots`;再重編 debug.o、補錄一場有 AI 移動的
+    戰鬥。舊紀錄仍是 8 格,剖析器要兩種都收。
+- 23 筆摘要仍以 `...` / `..` 省略部分參數。

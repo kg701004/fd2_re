@@ -369,6 +369,123 @@
    "verdict": "fixed",
    "reason": "參數列改為 (動畫, 緩衝區, 次數);第 2 個是被寫入的緩衝區(0x2fe57 / 0x2fe9d),動畫是第 1 個(0x2fe25)",
    "date": "2026-10-12"
+  },
+  {
+   "addr": "0x27738",
+   "name": "open_item_list_panel",
+   "screen": "param_name",
+   "key": "p1:店種",
+   "verdict": "fixed",
+   "reason": "錯在呼叫者:shop_buy 的參數列改為 (count, items)。它的第 1 個只在 0x28842 / 0x28851 原樣推成清單筆數,不是店種",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x275e6",
+   "name": "item_list_select",
+   "screen": "param_name",
+   "key": "p1:店種",
+   "verdict": "fixed",
+   "reason": "同 open_item_list_panel p1:店種 —— shop_buy 的參數列改為 (count, items)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4584d",
+   "name": "find_in_neg1_list",
+   "screen": "param_name",
+   "key": "p3:patch",
+   "verdict": "fixed",
+   "reason": "錯在被呼叫者:參數列改為 (清單, bank, patch)。第 3 個在 0x4586a 與 [項 + 4] 比,是第二個比對鍵,不是上限",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4660a",
+   "name": "set_errno_from_dos_if",
+   "screen": "param_name",
+   "key": "p2:DOS 錯誤碼",
+   "verdict": "fixed",
+   "reason": "錯在呼叫者:dos_result_check 的參數列改為 (dos_err, 旗標)。0x465f5 測第 2 個;錯誤碼是第 1 個(傳到 set_errno_dos)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x47039",
+   "name": "setvbuf",
+   "screen": "param_name",
+   "key": "p2:旗標",
+   "verdict": "fixed",
+   "reason": "錯在呼叫者:stdio_set_default_buffer 的參數列改為 (FILE*, 緩衝區)。0x3fe99 把第 2 個原樣推成 setvbuf 的緩衝區",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1e611",
+   "name": "redraw_map_with_hp_panels",
+   "screen": "param_name",
+   "key": "p2:unit",
+   "verdict": "fixed",
+   "reason": "錯在被呼叫者:參數列改為 (panels, 面板 2 單位, 面板 1 單位)。第 2 個在 0x1e6fc 推成 draw_unit_hp_bar 的 unit;跨距是常數 0x1c8,不是參數",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1e7f6",
+   "name": "draw_unit_hp_bar",
+   "screen": "param_name",
+   "key": "p3:stride",
+   "verdict": "fixed",
+   "reason": "同 redraw_map_with_hp_panels p2:unit —— 它的第 2 個不是 stride",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1b722",
+   "name": "unit_item_id",
+   "screen": "param_name",
+   "key": "p2:道具",
+   "verdict": "fixed",
+   "reason": "錯在呼叫者:item_effect_dispatch 的參數列改為 (使用者, slot, 數量, targets)。第 2 個是道具欄位序號(實機 2 / 4)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x146d1",
+   "name": "map_block_cells_of_side",
+   "screen": "param_name",
+   "key": "p1:unit",
+   "verdict": "fixed",
+   "reason": "錯在被呼叫者的名稱:except 登記成小整數,實際是單位序號。參數列改為 (排除單位, camp)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2ebe1",
+   "name": "scene_attack_sequence",
+   "screen": "param_name",
+   "key": "p1:守方",
+   "verdict": "not_error",
+   "reason": "反擊:attack_scene_orchestrator 在 defender_can_counter 回 1 之後(0x2e6fa)於 0x2e724 / 0x2e75b 把自己的 (守方, 攻方) 對調著推進來(0x2e720 推第 2 個當第 1 個引數、0x2e71c 推第 1 個當第 2 個),由守方擔任這一段的 attacker;正常那次 0x2e6de 照順序推",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2ebe1",
+   "name": "scene_attack_sequence",
+   "screen": "param_name",
+   "key": "p2:攻方",
+   "verdict": "not_error",
+   "reason": "同 p1:守方 —— 反擊那兩個呼叫點角色對調",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4584d",
+   "name": "find_in_neg1_list",
+   "screen": "param_name",
+   "key": "p3:資料 1",
+   "verdict": "not_error",
+   "reason": "ail_wavesynth_event_cb 在 0x45c58 / 0x45bf0 把 MIDI 事件的資料 1 當 patch 去查音色表(0x45c58 那次 bank 固定 0x7f);資料 1 在別的事件是別的東西,不列成 patch 的同義詞",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ecbf",
+   "name": "decode_image_with_header",
+   "screen": "param_name",
+   "key": "p4:dst",
+   "verdict": "not_error",
+   "reason": "它從畫面擷取一塊存起來:decode_blit_transparent / draw_res_image_frame 把自己要畫上去的 dst 當擷取來源傳進來(之後才在同一塊上繪製),所以呼叫者的 dst 是這裡的 src;實機第 4 個多為 VGA 0xa0000",
+   "date": "2026-10-13"
   }
  ]
 }

@@ -55,6 +55,15 @@
 - 參數名登錄:每個位置確定的參數名必須有型別(四份名單),或列在 `OPAQUE_NAMES`(審過,名稱本身不含可比的型別)。
   兩邊都不在 = 未分類,rc 1 —— 新名稱不會再無聲地落在所有篩選之外。
 
+續一百一十七(同型別的對調 / 放錯,型別篩選看不到):
+- `param_name`(靜態):呼叫者把自己的參數**原樣**傳給被呼叫者時,兩邊的參數名應該講同一件事。名稱相同、列在
+  `NAME_SAME` 同一組(同義)、或一個是另一個的泛稱(`NAME_ISA`,遞移)-> 相容;其餘列為候選,鍵是
+  `p<k>:<呼叫者的參數名>`(每個新的來源名稱都要核對一次)。兩個小整數、兩個同型別指標對調時型別不變,
+  但名稱會對不上。任一端是無型別名稱(`OPAQUE_NAMES`)的邊不比。這是一致性檢查:兩邊的名稱都是人寫的,
+  相容不代表兩邊都對;沒有任何呼叫邊的參數比不到。
+- 值規則多三種(原本只有 unit / ptr / small / str):`nibble`(0..15)、`seg16`(真實模式段左移 16,低 16 位元為 0)、
+  `dosmem`(1 MB 以下的線性位址)。名稱有比「小整數」更窄的主張時用它。
+
 參數位置:呼叫端有清堆疊時取 [esp+4k](`s<k>`);否則依 inventory argc(`verify_names_by_calllog.param_slot`)。
 
 這是篩選,不是判決。每個候選要人看反組譯,在 review 檔記:
@@ -88,7 +97,7 @@ NAMES_JSON = ROOT / "docs" / "data" / "function_names.json"
 PROFILES_JSON = ROOT / "docs" / "data" / "function_call_profiles.json"
 REVIEW_JSON = ROOT / "docs" / "data" / "summary_screen_review.json"
 SCREENS = ("param_count", "param_type", "param_str", "ret_unlisted", "param_region", "param_role", "param_flow",
-           "param_unread")
+           "param_unread", "param_name")
 VERDICTS = ("fixed", "not_error")
 VIOLATION_SHARE = 0.8      # 最常見值裡違反型別的比例門檻
 MIN_COVERED = 3            # 最常見值的次數合計至少這麼多才判
@@ -171,8 +180,9 @@ def resolve_sig(summary: str, cleanups: set[int], argc: int | None) -> tuple[lis
     return out, len(out)
 
 
-UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者"})
-STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path"})
+UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者",
+                        "排除單位", "面板 1 單位", "面板 2 單位"})
+STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path", "行字串"})
 PTR_NAMES = frozenset({
     "dst", "src", "out", "buf", "目的", "緩衝區", "輸出", "來源", "res", "anim", "img", "records", "units", "targets",
     "grid", "terrainTable", "FILE*", "項目表", "items", "work", "tmpl", "font", "list", "fp", "script", "ctx", "ptr",
@@ -182,7 +192,9 @@ PTR_NAMES = frozenset({
     "序列", "字串", "MDI 驅動", "DIG 驅動", "MDI", "驅動", "驅動結構", "結構", "合成器", "取樣", "IO 參數", "panel_buf",
     "strip", "換色表", "動畫", "攻方動畫", "守方動畫", "背景圖", "面板附圖", "音效資源", "來源圖", "係數表", "lut",
     "4 格啟用表", "清單", "命令列", "畫面備份", "數字串", "xs", "ys", "speeds", "panels",
-    "tiles", "回呼", "輸出回呼", "double* a", "double* b", "檔名或記憶體影像", "argv 或 NULL", "起點", "終點", "start"})
+    "tiles", "回呼", "輸出回呼", "double* a", "double* b", "檔名或記憶體影像", "argv 或 NULL", "起點", "終點", "start",
+    # 續一百一十七(原本的無型別名稱,讀過之後改成有型別的)
+    "遮罩圖", "處理常式", "esp", "ebp"})
 SMALL_NAMES = frozenset({
     "x", "y", "mode", "count", "item", "idx", "sel", "sell", "len", "id", "n", "spell", "selector", "value", "delta",
     "budget", "row", "kind", "slot", "res_idx", "originX", "originY", "class", "color", "w", "h", "cursorX",
@@ -199,18 +211,30 @@ SMALL_NAMES = frozenset({
     "sideSelector", "except", "field_off", "src_stride", "新長", "舊長", "目的寬", "目的高", "起", "迄", "起始相位",
     "基底格", "指數", "格式字元", "訊號", "向量", "dos_err", "DOS 錯誤碼", "共享旗標", "狀態欄位偏移", "像素數 word",
     "續播", "選擇子", "raw key", "通道", "bank", "patch", "控制器", "d1", "d2", "狀態", "狀態 byte", "資料 1", "資料 2",
-    "MIDI 狀態位元組", "數值", "字形基底", "起始列"})
-# 審過、名稱本身不含可機械比對的型別(續一百一十六):泛稱(值 / a / b)、可大可小的量(位移 / 請求大小)、
-# 同名在不同函式裡是不同東西(偏移 / base / 除數)、低於 1 MB 的位址(線性位址:數值落在小整數範圍)。
+    "MIDI 狀態位元組", "數值", "字形基底", "起始列",
+    # 續一百一十七
+    "mask", "聲部", "ss", "PIT 除數", "dx", "基礎傷害", "色彩基底"})
+# 審過、名稱本身不含可機械比對的型別(續一百一十六):泛稱(值 / a / b)、可大可小的量(位移 / 增量 / 請求大小)、
+# 浮點值(double 以值傳佔 2 格,個數篩選有算;除數 / 被除數 / 擴展精度值是 387 模擬器的運算元)。
 # 這些參數任何型別篩選都比不到,只能靠讀反組譯(`tools/param_dossier.py`)。
+# 續一百一十七:15 個名稱移出 —— base / 偏移 / 遮罩 / 行 / pos / box_arg 在各函式改成講得出型別的名稱;聲部 / mask / ss / esp / ebp
+# 本來就有型別;0..15 / 線性位址 / 段<<16 改用值規則(`VALUE_KINDS`);scale 已沒有摘要在用。
+# selftest 檢查這份名單裡沒有摘要已經不用的名稱。
 OPAQUE_NAMES = frozenset({
-    "值", "新值", "a", "b", "double", "base", "偏移", "位移", "arg", "saved", "pos", "panel_pos", "scale", "聲部", "除數",
-    "被除數", "mask", "遮罩", "增量", "請求大小", "規格", "v", "dword", "view_arg", "box_arg", "0..15", "ss", "esp", "ebp",
-    "回呼參數", "擴展精度值", "錯誤旗標", "行", "線性位址", "段<<16"})
+    "值", "新值", "a", "b", "double", "位移", "arg", "saved", "panel_pos", "除數", "被除數", "增量", "請求大小",
+    "規格", "v", "dword", "view_arg", "回呼參數", "擴展精度值", "錯誤旗標"})
+
+
+# 比「小整數」更窄的值規則(續一百一十七)。名稱 -> 型別;`violates` 有對應的判定。
+VALUE_KINDS = {"0..15": "nibble", "段<<16": "seg16", "線性位址": "dosmem"}
+DOS_MEM_TOP = 0x100000     # 真實模式可定址的上限(1 MB);DOS4GW 把它線性對映在同樣的位址
 
 
 def type_of(name: str) -> str | None:
-    """參數名 -> 'unit' / 'str' / 'ptr' / 'small' / None(沒有型別意涵,含 a2 這類佔位名:不在任何名單)。"""
+    """參數名 -> 'unit' / 'str' / 'ptr' / 'small' / 'nibble' / 'seg16' / 'dosmem' / None(沒有型別意涵,
+    含 a2 這類佔位名:不在任何名單)。"""
+    if name in VALUE_KINDS:
+        return VALUE_KINDS[name]
     if name in UNIT_NAMES:
         return "unit"
     if name in STR_NAMES:
@@ -263,6 +287,12 @@ def violates(kind: str, v: int) -> bool:
         return 0 < v < 0x10000
     if kind == "small":
         return 0x100000 <= v and not small_neg
+    if kind == "nibble":
+        return v > 0xF
+    if kind == "seg16":
+        return v & 0xFFFF != 0          # 段 << 16:低 16 位元一定是 0(0 = 沒有配置,可)
+    if kind == "dosmem":
+        return v >= DOS_MEM_TOP
     raise ValueError(kind)
 
 
@@ -270,7 +300,7 @@ def violates(kind: str, v: int) -> bool:
 # (buf / 緩衝區 在 dos_read 是寫、在 dos_write 是讀,不收)。字串參數一律是來源。
 DST_ROLE = frozenset({"dst", "目的", "out", "輸出", "&輸出", "outBuf", "畫面緩衝"})
 SRC_ROLE = frozenset({"src", "來源", "res", "img", "圖", "資源", "anim", "精靈", "font", "串流", "tmpl", "檔案影像",
-                      "script", "動畫"})
+                      "script", "動畫", "遮罩圖"})
 VGA_LO, VGA_HI = 0xA0000, 0xC0000   # VGA 視訊記憶體(DOS4GW 把低 1 MB 線性對映,畫面緩衝實機值 0xa0000)
 REGION_SHARE = 0.5                   # 來源參數最常見值裡落在 VGA 的比例門檻
 
@@ -342,6 +372,7 @@ class Screen:
     count_checked: set[int] = field(default_factory=set)   # 已由實機呼叫端比過個數的函式
     type_checked: set[tuple[int, int]] = field(default_factory=set)   # 實機比過型別的 (函式, 第 k 個參數)
     role_checked: set[tuple[int, int]] = field(default_factory=set)   # 角色篩選比過的(續一百一十六)
+    name_checked: set[tuple[int, int]] = field(default_factory=set)   # 名稱沿呼叫邊比過的(續一百一十七;兩端都記)
     flow_checked: set[tuple[int, int]] = field(default_factory=set)   # 值流篩選比過的(續一百一十六)
 
 
@@ -1263,7 +1294,7 @@ def _flow_violates(kind: str, v) -> bool:
     if v == "small":
         return kind in ("ptr", "str")
     if v == "stack":
-        return kind in ("unit", "small")
+        return kind in ("unit", "small", "nibble", "dosmem")    # 區域變數位址在 1 MB 以上;seg16 的低位元不知道,不判
     return violates(kind, v)
 
 
@@ -1446,6 +1477,152 @@ def screen_flow(sc: Screen, names: list[dict], cg, entries: list[int], sources: 
                                      f"轉交的被呼叫端 {down[2]} / {down[1]} 個違反", [list(up), list(down)]))
 
 
+# ---------------------------------------------------------------- 參數名沿呼叫邊(param_name,靜態,續一百一十七)
+
+# 同一個東西的不同寫法(中英、簡寫)。同組互相相容。逐組審過:同組的名稱在所有用到的摘要裡指同一種東西。
+NAME_SAME: tuple[frozenset[str], ...] = tuple(frozenset(g) for g in (
+    ("unit", "單位"), ("caster", "使用者"), ("attacker", "攻方"), ("defender", "守方"), ("value", "數值"), ("start", "起點"),
+    ("count", "數量", "個數", "n"), ("anim", "動畫"), ("dst", "目的", "輸出"), ("img", "圖"), ("ptr", "指標"),
+    ("FILE*", "fp"), ("MDI", "MDI 驅動"), ("len", "大小"), ("fd", "handle"), ("slot", "欄位"),
+    ("d1", "資料 1"), ("d2", "資料 2"), ("狀態", "狀態 byte"), ("圖格", "幀號"),
+    ("spell", "cmd", "指令號"),       # 法術編號就是指令號(command_generic_damage 的指令號原樣當 spell_damage_resolve 的 spell)
+))
+# 特稱 -> 它的泛稱(可多個)。特稱與泛稱(遞移)相容,方向不拘:呼叫者的 attacker 傳給被呼叫者的 unit,或反過來
+# (呼叫者手上的 unit 在被呼叫者那裡擔任 attacker)。同一個泛稱底下的兩個特稱**不**相容 —— attacker 傳到
+# defender 的位置就是候選(真的是反擊這類角色互換,核對後記 not_error)。
+NAME_ISA: dict[str, tuple[str, ...]] = {
+    "attacker": ("unit",), "defender": ("unit",), "caster": ("unit",), "target": ("unit",),
+    "排除單位": ("unit",), "面板 1 單位": ("unit",), "面板 2 單位": ("unit",),
+    "攻方動畫": ("anim",), "守方動畫": ("anim",), "script": ("anim",),
+    "panel_buf": ("dst",), "strip": ("dst",), "dst": ("緩衝區",),
+    "背景圖": ("src",), "面板附圖": ("src",), "img": ("src",),
+    "originX": ("x",), "tgtX": ("x",), "dx": ("x",), "originY": ("y",), "tgtY": ("y",),
+    "src_stride": ("stride",), "目的跨距": ("stride",),
+    "targets": ("單位清單",), "單位清單": ("list",),
+    "指令號": ("id", "動畫號", "tbl_idx"),   # 指令號拿去查表:法術列(id)、地圖特效(動畫號)、色帶基底表(tbl_idx)
+    "回復量": ("amount",), "rangeByte": ("budget",), "色格": ("idx",),
+    "DIG 驅動": ("指標",), "MDI 驅動": ("指標",), "起點": ("ptr",), "序列": ("結構",),
+    "double* a": ("double*",), "double* b": ("double*",), "檔名": ("名稱",),
+    "目前值": ("數值",), "limit": ("數值",),   # draw_number 要畫的數字:呼叫端推目前值、名冊上限
+    "panels": ("pos_ptr",),                    # 面板座標陣列的開頭就是第一個面板的座標
+}
+
+
+def _name_group(name: str, same: tuple[frozenset[str], ...]) -> frozenset[str]:
+    return next((g for g in same if name in g), frozenset({name}))
+
+
+def name_generals(name: str, same: tuple[frozenset[str], ...] = NAME_SAME,
+                  isa: dict[str, tuple[str, ...]] = NAME_ISA) -> frozenset[str]:
+    """名稱所屬的同義組,加上它所有泛稱(遞移)的同義組 -> 攤平成名稱集合。"""
+    out: set[str] = set()
+    todo = [name]
+    while todo:
+        g = _name_group(todo.pop(), same)
+        if g <= out:
+            continue
+        out |= g
+        todo.extend(up for m in g for up in isa.get(m, ()))
+    return frozenset(out)
+
+
+def names_agree(a: str, b: str, same: tuple[frozenset[str], ...] = NAME_SAME,
+                isa: dict[str, tuple[str, ...]] = NAME_ISA) -> bool:
+    """兩個參數名是否相容:同名、同義,或一個是另一個的泛稱。"""
+    return a in name_generals(b, same, isa) or b in name_generals(a, same, isa)
+
+
+def name_table_errors(same: tuple[frozenset[str], ...] = NAME_SAME,
+                      isa: dict[str, tuple[str, ...]] = NAME_ISA) -> list[str]:
+    """同義表 / 泛稱表自身的毛病:同義組重疊、組內或特稱與泛稱的型別不同、泛稱指向自己那一組。
+
+    同義與泛稱都不能跨型別(指標不會是小整數的別名);名單寫錯會讓真的矛盾被當成相容。"""
+    out: list[str] = []
+    seen: dict[str, int] = {}
+    for i, g in enumerate(same):
+        if len(g) < 2:
+            out.append(f"NAME_SAME #{i}:少於 2 個名稱")
+        if len({type_of(m) for m in g}) != 1 or type_of(next(iter(g))) is None:
+            out.append(f"NAME_SAME #{i} {sorted(g)}:型別不一致或沒有型別")
+        for m in g:
+            if m in seen:
+                out.append(f"NAME_SAME:{m!r} 同時在 #{seen[m]} 與 #{i}")
+            seen[m] = i
+    for spec, ups in isa.items():
+        for up in ups:
+            if up in _name_group(spec, same):
+                out.append(f"NAME_ISA:{spec!r} 的泛稱 {up!r} 就在它自己的同義組")
+            elif type_of(spec) is None or type_of(spec) != type_of(up):
+                out.append(f"NAME_ISA:{spec!r}({type_of(spec)})與泛稱 {up!r}({type_of(up)})型別不同或沒有型別")
+    return out
+
+
+def param_places(summary: str, cleanups: set[int], argc: int | None) -> dict[int | str, tuple[int, str]]:
+    """摘要裡位置確定的具名參數各放在哪 -> {堆疊格(1 起)或暫存器名: (第 k 個, 名稱)}。
+
+    傳參方式對不上參數列(`role_convention` 回 None)、暫存器寫法、沒有參數列 -> {}。"""
+    params, n = resolve_sig(summary or "", cleanups, argc)
+    if not params or n is None:
+        return {}
+    slots = n_slots(params, n)
+    conv = role_convention(slots, cleanups, argc)
+    if conv is None or (conv == "reg" and slots != n):
+        return {}
+    starts = slot_starts(params)
+    return {(starts[k - 1] if conv == "stack" else VC.REG_ARGS[starts[k - 1] - 1]): (k, pn)
+            for k, pn in enumerate(params, 1) if is_named(pn)}
+
+
+def name_edges(names: list[dict], sources: dict, cleanups: dict[int, set[int]], argc: dict[int, int | None]
+               ) -> list[tuple[int, int, str, int, int, str, int]]:
+    """呼叫者的具名參數原樣傳到被呼叫者的具名參數 -> [(呼叫者, 第 k 個, 名稱, 被呼叫者, 第 k 個, 名稱, 呼叫點)]。
+
+    來源取呼叫點值流(`arg_sources`:只追值不變的搬運,合流取聯集);該引數位置可能的來源裡每個「呼叫者的參數」
+    各成一條邊。兩端都要是摘要裡位置確定的具名參數。"""
+    places = {int(x["addr"], 16): param_places(x.get("summary") or "", cleanups.get(int(x["addr"], 16), set()),
+                                                argc.get(int(x["addr"], 16))) for x in names}
+    out = []
+    for t, sites in sorted(sources.items()):
+        pt = places.get(t, {})
+        for site, (_, args) in sorted(sites.items()):
+            for where, (kt, nt) in pt.items():
+                for d in args.get(where, UNK):
+                    if d is None or d == _TOP or d[0] != "param":
+                        continue
+                    f, m = d[1], d[2]
+                    conv = call_conv(f, cleanups, argc)
+                    key = m if conv == "stack" else VC.REG_ARGS[m - 1] if conv == "reg" and m <= 4 else None
+                    hit = places.get(f, {}).get(key)
+                    if hit:
+                        out.append((f, hit[0], hit[1], t, kt, nt, site))
+    return sorted(set(out))
+
+
+def screen_names(sc: Screen, names: list[dict], sources: dict, cleanups: dict[int, set[int]],
+                 argc: dict[int, int | None]) -> None:
+    """`param_name`:呼叫者的參數原樣傳給被呼叫者,兩邊的名稱不相容(`names_agree`)-> 候選,掛在被呼叫者的參數上。
+
+    鍵 `p<k>:<呼叫者的參數名>`:同一個來源名稱不論幾個呼叫點只核對一次,新的來源名稱是新的候選。
+    錯的可能是任一端(`shop_buy` 的「店種」傳給 `count`:錯在呼叫者;`find_in_neg1_list` 的「上限」收到 patch:
+    錯在被呼叫者),也可能兩邊都對(角色互換)—— 要人看反組譯。任一端是無型別名稱的邊不比,另計。
+    """
+    fname = {int(x["addr"], 16): x["name"] for x in names}
+    bad: dict[tuple[int, int, str, str], list] = {}
+    for f, kf, nf, t, kt, nt, site in name_edges(names, sources, cleanups, argc):
+        _bump(sc, "param_name 邊")
+        if name_class(nf) != "typed" or name_class(nt) != "typed":
+            _bump(sc, "param_name 邊(一端無型別,不比)")
+            continue
+        sc.name_checked |= {(f, kf), (t, kt)}
+        if not names_agree(nf, nt):
+            bad.setdefault((t, kt, nt, nf), []).append([fname.get(f, hex(f)), kf, f"{site:#x}"])
+    sc.denom["param_name 可比(參數,任一端)"] = len(sc.name_checked)
+    for (t, kt, nt, nf), ev in sorted(bad.items()):
+        who = "、".join(sorted({e[0] for e in ev}))
+        sc.cands.append(Cand(t, fname.get(t, hex(t)), "param_name", f"p{kt}:{nf}",
+                             f"第 {kt} 參數 {nt}:{who} 把自己叫 {nf} 的參數原樣傳進來({len(ev)} 個呼叫點),兩個名稱不相容", ev))
+
+
 # ---------------------------------------------------------------- 核對結論
 
 def load_review(doc: dict, names: dict[int, str]) -> tuple[dict[tuple[int, str, str], dict], list[str]]:
@@ -1511,6 +1688,7 @@ def run(review_path: Path) -> tuple[Screen, list[Cand], list[str], dict, list[di
     screen_unread(sc, names, cg, st.entries, st.argc, cleanups)
     sources = arg_sources(cg, st.entries, st.code, st.base, st.fixups, st.thunk_of, cleanups, st.argc)
     screen_flow(sc, names, cg, st.entries, sources, profiles, cleanups, st.argc, st.code, st.base)
+    screen_names(sc, names, sources, cleanups, st.argc)
     reviews, errs = load_review(json.loads(review_path.read_text(encoding="utf-8")),
                                 {int(x["addr"], 16): x["name"] for x in names})
     pending, rerrs, _ = reconcile(sc.cands, reviews)
@@ -2526,6 +2704,151 @@ def selftest() -> int:
     screen_unread(msc, mnames, rcg, st.entries, st.argc, clean)
     chk("邊界:unit_present_intro_frames / dpmi_dos_alloc_locked 的舊摘要,值流、角色、沒讀三個篩選都不報",
         ({a: flagged(x) for a, x in zip(miss, mnames)}, msc.cands), ({a: set() for a in miss}, []))
+
+    print("[18] 續一百一十七:值規則 nibble / seg16 / dosmem、param_name(名稱沿呼叫邊)")
+    chk("值規則的名稱", [type_of(nm) for nm in ("0..15", "段<<16", "線性位址", "線性位址*", "段<<16*")],
+        ["nibble", "seg16", "dosmem", "ptr", "ptr"])
+    chk("nibble:0xf 可、0x10 違反", (violates("nibble", 0xF), violates("nibble", 0x10)), (False, True))
+    chk("seg16:低 16 位元為 0 才可(0 也可;只有高半個 word 非 0 也違反)",
+        [violates("seg16", v) for v in (0xF710000, 0, 0xF710, 0xF710001, 0xF718000)], [False, False, True, True, True])
+    chk("dosmem:1 MB 以下才可(邊界)", [violates("dosmem", v) for v in (0xF710, 0xFFFFF, 0x100000, 0xF710000)],
+        [False, False, True, True])
+    chk("值流:區域變數位址違反 nibble / dosmem,seg16 不判;小整數對三種都不判",
+        [_flow_violates(k, v) for k in ("nibble", "dosmem", "seg16") for v in ("stack", "small")],
+        [True, False, True, False, False, False])
+    vprof = {"0x100": prof(two, {"s1": {"top": [["0xf710", 5]]}, "s2": {"top": [["0xf710000", 5]]}}, [["0x0", 9]])}
+
+    def vlive(sig: str) -> list:
+        return sorted((c.screen, c.key) for c in screen([{"addr": "0x100", "name": "f", "summary": sig}], vprof,
+                                                        bytes(ccode), 0x2000).cands)
+
+    chk("實機:(線性位址, 段<<16) 相符不報;兩個對調各報一筆(原本同屬無型別,看不到)",
+        (vlive("(線性位址, 段<<16):…"), vlive("(段<<16, 線性位址):…")), ([], [("param_type", "s1"), ("param_type", "s2")]))
+    # 名稱表(合成的表:同義 2 組、泛稱 3 條)
+    tsame = (frozenset({"unit", "單位"}), frozenset({"attacker", "攻方"}), frozenset({"defender", "守方"}))
+    tisa = {"attacker": ("unit",), "defender": ("unit",), "targets": ("單位清單",), "單位清單": ("list",)}
+
+    def agree(a: str, b: str) -> bool:
+        return names_agree(a, b, tsame, tisa)
+
+    chk("名稱:同名 / 同義相容", (agree("x", "x"), agree("unit", "單位"), agree("攻方", "attacker")), (True, True, True))
+    chk("名稱:特稱與泛稱相容,方向不拘", (agree("attacker", "unit"), agree("unit", "attacker")), (True, True))
+    chk("名稱:泛稱經同義組(攻方 -> attacker -> unit -> 單位)", (agree("攻方", "單位"), agree("單位", "守方")), (True, True))
+    chk("名稱:泛稱遞移(targets -> 單位清單 -> list)", (agree("targets", "list"), agree("list", "targets")), (True, True))
+    chk("名稱:同一個泛稱底下的兩個特稱不相容", (agree("attacker", "defender"), agree("攻方", "守方"), agree("守方", "attacker")),
+        (False, False, False))
+    chk("名稱:沒有關係的不相容", (agree("x", "y"), agree("unit", "list"), agree("targets", "unit")), (False, False, False))
+    chk("name_generals:名稱 + 同義 + 所有泛稱", name_generals("攻方", tsame, tisa), frozenset({"攻方", "attacker", "unit", "單位"}))
+    chk("name_generals:泛稱成環不會停不下來", name_generals("a", (), {"a": ("b",), "b": ("a",)}), frozenset({"a", "b"}))
+    chk("名稱表:合成的表沒有毛病", name_table_errors(tsame, tisa), [])
+    chk("名稱表:同義組重疊 / 只有一個名稱 / 跨型別",
+        ["重疊" if "同時在" in e else "少於" if "少於" in e else "型別" if "型別不一致" in e else e for e in name_table_errors(
+            (frozenset({"unit", "單位"}), frozenset({"單位", "caster"}), frozenset({"x"}), frozenset({"x", "dst"})), {})],
+        ["重疊", "少於", "型別", "重疊"])
+    chk("名稱表:同義組裡有無型別名稱", len(name_table_errors((frozenset({"值", "zzz"}),), {})), 1)
+    chk("名稱表:泛稱指向自己那一組 / 泛稱跨型別 / 特稱沒有型別",
+        [("自己的同義組" in e, "型別不同" in e) for e in name_table_errors(
+            tsame, {"單位": ("unit",), "x": ("dst",), "zzz": ("x",)})], [(True, False), (False, True), (False, True)])
+    chk("名稱表:特稱與泛稱都沒有型別也算錯", len(name_table_errors((), {"zzz": ("yyy",)})), 1)
+    # 參數放在哪
+    chk("param_places:堆疊(double 佔 2 格)", param_places("(a, double, b):…", {4}, None),
+        {1: (1, "a"), 2: (2, "double"), 4: (3, "b")})
+    chk("param_places:... 之後的名稱不算;`..` 不算具名", param_places("(a, .., b, ..., c):…", {5}, None),
+        {1: (1, "a"), 3: (3, "b")})
+    chk("param_places:Watcom 暫存器", param_places("(a, b):…", set(), 0), {"eax": (1, "a"), "edx": (2, "b")})
+    chk("param_places:暫存器傳參卻有 double(格數與個數不同)-> {}", param_places("(double, b):…", set(), 0), {})
+    chk("param_places:個數對不上 / 暫存器寫法 / 沒有參數列 -> {}",
+        (param_places("(a, b):…", {3}, None), param_places("(eax = p):…", {1}, None), param_places("沒有", {1}, None)),
+        ({}, {}, {}))
+    # 邊:0x100 (x, y) 呼叫 0x200,把自己的第 1 / 2 個原樣推成第 1 / 2 個引數
+    P1, P2 = frozenset({("param", 0x100, 1)}), frozenset({("param", 0x100, 2)})
+
+    def nscr(caller: str, callee: str, args: dict, clean_t: set[int] | None = None, more: dict | None = None,
+             clean_f: tuple[int, ...] = (2,)) -> tuple:
+        """0x100(呼叫者,清堆疊 clean_f;空的 = 暫存器傳參)在 0x10 呼叫 0x200(清堆疊 clean_t,預設 2)。"""
+        nn = [{"addr": "0x100", "name": "f", "summary": caller}, {"addr": "0x200", "name": "g", "summary": callee},
+              {"addr": "0x300", "name": "h", "summary": "(守方, y):…"}]
+        src = {0x200: {0x10: (0x100, args), **(more or {})}}
+        cl = {0x200: clean_t if clean_t is not None else {2}, 0x300: {2}}
+        if clean_f:
+            cl[0x100] = set(clean_f)
+        nsc = Screen()
+        screen_names(nsc, nn, src, cl, {} if clean_f else {0x100: 0})
+        return ([(c.addr, c.key) for c in nsc.cands], nsc.denom.get("param_name 邊", 0),
+                nsc.denom.get("param_name 邊(一端無型別,不比)", 0), sorted(nsc.name_checked))
+
+    chk("邊:名稱相同 -> 不報,兩端都記進 name_checked", nscr("(x, y):…", "(x, y):…", {1: P1, 2: P2}),
+        ([], 2, 0, [(0x100, 1), (0x100, 2), (0x200, 1), (0x200, 2)]))
+    chk("邊:兩個小整數對調(型別篩選看不到)-> 兩個候選,鍵帶呼叫者的名稱", nscr("(x, y):…", "(y, x):…", {1: P1, 2: P2})[0],
+        [(0x200, "p1:x"), (0x200, "p2:y")])
+    chk("邊:同義 / 泛稱 -> 不報", nscr("(單位, 攻方):…", "(unit, unit):…", {1: P1, 2: P2})[0], [])
+    chk("邊:兩個特稱 -> 候選", nscr("(攻方, y):…", "(defender, y):…", {1: P1, 2: P2})[0], [(0x200, "p1:攻方")])
+    chk("邊:一端無型別 -> 不比,另計;兩端都不進 name_checked", nscr("(值, y):…", "(x, y):…", {1: P1, 2: P2}),
+        ([], 2, 1, [(0x100, 2), (0x200, 2)]))
+    chk("邊:無型別的是被呼叫者那一端也一樣不比", nscr("(x, y):…", "(值, y):…", {1: P1, 2: P2}),
+        ([], 2, 1, [(0x100, 2), (0x200, 2)]))
+    chk("邊:來源可能是常數或參數(合流)-> 仍算一條邊", nscr("(x, y):…", "(y, y):…", {1: P1 | {("imm", 0)}})[0],
+        [(0x200, "p1:x")])
+    chk("邊:來源不明 / 回傳值 / 小整數 -> 沒有邊", nscr("(x, y):…", "(y, x):…", {1: UNK, 2: frozenset({("ret", 0x100)})})[1], 0)
+    chk("邊:呼叫者的 double 佔 2 格,第 3 格是第 2 個參數", nscr("(double, y):…", "(x, x):…", {1: frozenset({("param", 0x100, 3)})},
+                                                 clean_f=(3,)), ([(0x200, "p1:y")], 1, 0, [(0x100, 2), (0x200, 1)]))
+    chk("邊:呼叫者是暫存器傳參,第 2 個在 edx", nscr("(x, y):…", "(x, x):…", {1: P2}, clean_f=())[0], [(0x200, "p1:y")])
+    chk("邊:被呼叫者的 ... 之後不比;個數對不上整個不比",
+        (nscr("(x, y):…", "(x, ..., y):…", {1: P1, 3: P1}, {3})[1], nscr("(x, y):…", "(y, x):…", {1: P1, 2: P2}, {3})[1]), (1, 0))
+    two_sites = {0x20: (0x100, {1: P1}), 0x30: (0x300, {1: frozenset({("param", 0x300, 1)})})}
+    got18 = nscr("(攻方, y):…", "(defender, y):…", {1: P1}, more=two_sites)
+    chk("邊:同一個來源名稱幾個呼叫點只算一個候選;另一個呼叫者名稱相容就不多報", got18[:2], ([(0x200, "p1:攻方")], 3))
+    nsc2 = Screen()
+    screen_names(nsc2, [{"addr": "0x100", "name": "f", "summary": "(x, y):…"}, {"addr": "0x200", "name": "g", "summary": "(y, y):…"},
+                        {"addr": "0x300", "name": "h", "summary": "(w, y):…"}],
+                 {0x200: {0x10: (0x100, {1: P1}), 0x30: (0x300, {1: frozenset({("param", 0x300, 1)})})}},
+                 {0x100: {2}, 0x200: {2}, 0x300: {2}}, {})
+    chk("邊:兩個呼叫者傳進來的名稱不同 -> 各一個候選;明細列呼叫者與呼叫點",
+        [(c.key, c.evidence) for c in nsc2.cands], [("p1:w", [["h", 1, "0x30"]]), ("p1:x", [["f", 1, "0x10"]])])
+    # 真實
+    chk("真實:名稱表沒有毛病", name_table_errors(), [])
+    used = {pn for x in real_names for pn in positioned(parse_sig(x.get("summary") or "")[0]) if is_named(pn)}
+    chk("真實:OPAQUE_NAMES 沒有摘要已經不用的名稱", sorted(OPAQUE_NAMES - used), [])
+    chk("真實:NAME_SAME / NAME_ISA 沒有摘要已經不用的名稱",
+        sorted(({m for g in NAME_SAME for m in g} | set(NAME_ISA) | {u for ups in NAME_ISA.values() for u in ups}) - used), [])
+    chk("真實:run() 有接上 param_name(邊 ≥ 500、可比的參數 ≥ 350)",
+        (run_sc2.denom.get("param_name 邊", 0) >= 500, run_sc2.denom.get("param_name 可比(參數,任一端)", 0) >= 350,
+         len(run_sc2.name_checked) == run_sc2.denom.get("param_name 可比(參數,任一端)")), (True, True, True))
+    base18 = {(c.addr, c.key) for c in run_sc2.cands if c.screen == "param_name"}
+    chk("真實:目前的候選恰為核對過的 4 筆(反擊的角色互換 2、資料 1 當 patch、擷取來源)", sorted(base18),
+        [(0x2EBE1, "p1:守方"), (0x2EBE1, "p2:攻方"), (0x4584D, "p3:資料 1"), (0x4ECBF, "p4:dst")])
+    chk("真實:dpmi_dos_free 的 線性位址 / 段<<16 現在由實機型別篩選比到",
+        ((0x365AB, 1) in run_sc2.type_checked, (0x365AB, 2) in run_sc2.type_checked), (True, True))
+    chk("真實:把這兩個對調 -> 實機型別篩選各報一筆",
+        sorted(c.key for c in screen([{**cur[0x365AB], "summary": "(段<<16, 線性位址, 選擇子) …"}], real_prof, st.code,
+                                     st.base).cands if c.screen == "param_type"), ["s1", "s2"])
+
+    def nflag(over: dict[int, str]) -> list:
+        """把幾個函式換回舊摘要 -> param_name 新增的候選。"""
+        osc = Screen()
+        screen_names(osc, [{**x, "summary": over.get(int(x["addr"], 16), x.get("summary"))} for x in real_names], rsrc, clean,
+                     st.argc)
+        return sorted({(c.addr, c.key) for c in osc.cands} - base18)
+
+    chk("召回:shop_buy 舊摘要 (店種, ...) -> 兩個被呼叫端的 count 都收到「店種」", nflag({0x2872B: "(店種, ...) …"}),
+        [(0x275E6, "p1:店種"), (0x27738, "p1:店種")])
+    chk("召回:find_in_neg1_list 舊摘要 (清單, 值, 上限) -> 第 3 個收到 patch", nflag({0x4584D: "(清單, 值, 上限) …"}),
+        [(0x4584D, "p3:patch")])
+    chk("召回:stdio_set_default_buffer 舊摘要 (FILE*, 旗標) -> setvbuf 的緩衝區收到「旗標」", nflag({0x3FE7F: "(FILE*, 旗標) …"}),
+        [(0x47039, "p2:旗標")])
+    chk("召回:redraw_map_with_hp_panels 舊摘要 (panels, stride, arg) -> 自己收到 unit、又把 stride 傳成 unit",
+        nflag({0x1E611: "(panels, stride, arg):…"}), [(0x1E611, "p2:unit"), (0x1E7F6, "p3:stride")])
+    chk("召回:dos_result_check 舊摘要 (值, DOS 錯誤碼) -> 被呼叫端的旗標收到「DOS 錯誤碼」", nflag({0x465F2: "(值, DOS 錯誤碼) …"}),
+        [(0x4660A, "p2:DOS 錯誤碼")])
+    chk("召回:item_effect_dispatch 舊摘要 (使用者, 道具, ...) -> unit_item_id 的 slot 收到「道具」",
+        nflag({0x20C6F: "(使用者, 道具, ...) …"}), [(0x1B722, "p2:道具")])
+    chk("邊界:phase_banner_split_slide 當時的舊摘要 (圖格, 位移) 不報 —— 位移 是無型別名稱,那條邊不比",
+        nflag({0x1F42D: "(圖格, 位移) …"}), [])
+    chk("對照:同一個對調,第 2 個改用有型別的名稱 (圖格, dx) -> 兩端都報(無型別名稱會遮住對調)",
+        nflag({0x1F42D: "(圖格, dx) …"}), [(0x15F0E, "p6:dx"), (0x1F42D, "p2:圖格")])
+    # 誠實邊界:沒有任何名稱邊的參數,這個篩選也看不到。續一百一十六的 2 筆加上 queue_unit_number_popup(舊摘要 (?, value, unit))。
+    chk("邊界:unit_present_intro_frames / dpmi_dos_alloc_locked / queue_unit_number_popup 的舊摘要,param_name 也不報",
+        nflag({0x22470: "(單位, ...) …", 0x36522: "(段落數, 線性位址*, 選擇子*, ...) …", 0x1E0DB: "(?, value, unit) …"}), [])
 
     print()
     print("--selftest OK" if not fails else f"--selftest FAILED: {fails}")

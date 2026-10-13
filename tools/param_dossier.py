@@ -28,6 +28,8 @@
 
 `--coverage` 的三個數字:機器比過(實機型別 / 值流 / 讀寫角色任一個篩選比到)、只有人工讀過、兩者都沒有。
 都沒有的那些就是下一批要讀的(`--worklist` 列出)。rc 1 只表示登錄本身有錯;「都沒有」不算失敗,但會印出來。
+另印「名稱沿呼叫邊比過」的個數(`param_name`,續一百一十七)。它**不計入**機器比過:邊兩端的名稱都是人寫的,
+相容只代表兩邊說法一致,不是獨立的證據;`--worklist` 會標出哪些參數至少有這一項。
 
 用法:
     python tools/param_dossier.py NAME|0xADDR ... [--dis N]   # 資料卡(--dis:另印本體前 N 個指令)
@@ -195,13 +197,16 @@ def load_reads(doc: dict, ctx: Ctx) -> tuple[dict[tuple[int, int], dict], list[s
     return out, errs
 
 
-def coverage(ctx: Ctx, reads: dict[tuple[int, int], dict]) -> tuple[list[tuple[int, int]], set[tuple[int, int]], dict]:
-    """(全部具名參數, 機器比過的, 各篩選比過的個數)。機器比過 = 實機型別 / 值流 / 讀寫角色任一個比到。"""
+def coverage(ctx: Ctx, reads: dict[tuple[int, int], dict]
+             ) -> tuple[list[tuple[int, int]], set[tuple[int, int]], dict, set[tuple[int, int]]]:
+    """(全部具名參數, 機器比過的, 各篩選比過的個數, 名稱沿呼叫邊比過的)。
+
+    機器比過 = 實機型別 / 值流 / 讀寫角色任一個比到。名稱沿呼叫邊(`param_name`)另外回,不併入:它是一致性檢查。"""
     sc = SS.run(SS.REVIEW_JSON)[0]
     named = [(int(x["addr"], 16), k) for x in ctx.names for k, _ in named_params(x.get("summary") or "")]
     universe = set(named)
     parts = {"實機型別": sc.type_checked & universe, "值流": sc.flow_checked & universe, "讀寫角色": sc.role_checked & universe}
-    return named, set().union(*parts.values()), {k: len(v) for k, v in parts.items()}
+    return named, set().union(*parts.values()), {k: len(v) for k, v in parts.items()}, sc.name_checked & universe
 
 
 def show_source(ctx: Ctx, d) -> str:
@@ -338,9 +343,11 @@ def selftest() -> int:
     reads, errs = load_reads(raw, ctx)
     chk("登錄零錯誤", errs, [])
     chk("登錄不是空的(≥ 30 筆)", len(reads) >= 30, True)
-    named, machine, parts = coverage(ctx, reads)
+    named, machine, parts, edged = coverage(ctx, reads)
     n_m, n_r, rest = classify(named, machine, set(reads))
-    print(f"    (具名參數 {len(named)}:機器比過 {n_m} {parts}、只有人工讀過 {n_r}、都沒有 {len(rest)})")
+    print(f"    (具名參數 {len(named)}:機器比過 {n_m} {parts}、只有人工讀過 {n_r}、都沒有 {len(rest)};名稱邊 {len(edged)})")
+    chk("名稱沿呼叫邊比過 ≥ 350,而且沒有併進機器比過(有參數只有名稱邊)",
+        (len(edged) >= 350, edged <= set(named), bool(edged - machine)), (True, True, True))
     chk("三個數字加起來 = 全部", n_m + n_r + len(rest), len(named))
     chk("機器比過 ≥ 600(run() 的三個篩選都有接上)", (n_m >= 600, all(v > 0 for v in parts.values())), (True, True))
     d = dossier(ctx, 0x365AB)
@@ -377,16 +384,19 @@ def main(argv: list[str] | None = None) -> int:
     ctx = load_ctx()
     if a.coverage or a.worklist:
         reads, errs = load_reads(json.loads(READS_JSON.read_text(encoding="utf-8")), ctx)
-        named, machine, parts = coverage(ctx, reads)
+        named, machine, parts, edged = coverage(ctx, reads)
         n_m, n_r, rest = classify(named, machine, set(reads))
         print(f"具名參數 {len(named)}:機器比過 {n_m}(" + "、".join(f"{k} {v}" for k, v in parts.items())
               + f";可重複)、只有人工讀過 {n_r}、都沒有 {len(rest)}")
         print(f"登錄 {len(reads)} 筆(其中 {sum(k in machine for k in reads)} 筆的參數機器也比過)")
+        print(f"名稱沿呼叫邊比過 {len(edged)}(一致性檢查,不計入機器比過;「都沒有」的 {len(rest)} 個裡有 "
+              f"{sum(p in edged for p in rest)} 個至少有這一項)")
         if a.worklist:
             for fa, k in rest:
                 x = ctx.by[fa]
                 pn = dict(named_params(x["summary"]))[k]
-                print(f"  {fa:#x} {x['name']} 第 {k} 個 {pn}({SS.name_class(pn)};{'有' if f'{fa:#x}' in ctx.prof else '無'}實機紀錄)")
+                print(f"  {fa:#x} {x['name']} 第 {k} 個 {pn}({SS.name_class(pn)};{'有' if f'{fa:#x}' in ctx.prof else '無'}實機紀錄"
+                      + (";有名稱邊" if (fa, k) in edged else "") + ")")
         for e in errs:
             print(f"FAIL 登錄:{e}")
         print("結果:" + ("FAIL" if errs else "PASS"))

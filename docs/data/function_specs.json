@@ -934,7 +934,7 @@
    "source": [
     {
      "summary_of": "0x1e7f6",
-     "quote": "(dst, stride, unit, pos)"
+     "quote": "(dst, stride, unit, pos_ptr)"
     },
     {
      "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
@@ -1019,7 +1019,7 @@
    "name": "draw_number",
    "source": {
     "summary_of": "0x187d6",
-    "quote": "(dst, stride, 值, 基底格, 寬度)"
+    "quote": "(dst, stride, 數值, 基底格, 寬度)"
    },
    "claims": [
     {
