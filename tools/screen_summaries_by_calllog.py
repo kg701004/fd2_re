@@ -182,7 +182,8 @@ def resolve_sig(summary: str, cleanups: set[int], argc: int | None) -> tuple[lis
 
 UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者",
                         "排除單位", "面板 1 單位", "面板 2 單位"})
-STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path"})
+STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path",
+                       "前綴字串"})
 PTR_NAMES = frozenset({
     "dst", "src", "out", "buf", "目的", "緩衝區", "輸出", "來源", "res", "anim", "img", "records", "units", "targets",
     "grid", "terrainTable", "FILE*", "項目表", "items", "work", "tmpl", "font", "list", "fp", "script", "ctx", "ptr",
@@ -196,7 +197,9 @@ PTR_NAMES = frozenset({
     # 續一百一十七(原本的無型別名稱,讀過之後改成有型別的)
     "遮罩圖", "處理常式", "esp", "ebp",
     # 續一百一十八(補齊以 ... 省略的參數列時新增)
-    "目標動畫"})
+    "目標動畫",
+    # 續一百一十九
+    "argv"})
 SMALL_NAMES = frozenset({
     "x", "y", "mode", "count", "item", "idx", "sel", "sell", "len", "id", "n", "spell", "selector", "value", "delta",
     "budget", "row", "kind", "slot", "res_idx", "originX", "originY", "class", "color", "w", "h", "cursorX",
@@ -220,7 +223,12 @@ SMALL_NAMES = frozenset({
     "限可使用", "delay_ms", "可跳過",
     # 原本的無型別名稱,讀過之後確定是小整數:compare_to_glyph 的兩個字形碼與 vga_palette_fade_range 的藍(a / b;
     # 指標的 a / b 已改名 a* / b*)、save_game_menu 的 byte 旗標、數學錯誤的位元旗標(0x40 / 0x80 / 0x100 / 0x800)
-    "a", "b", "view_arg", "錯誤旗標"})
+    "a", "b", "view_arg", "錯誤旗標",
+    # 續一百一十九(替原本沒有參數名的函式補參數列時新增;逐名稱依讀到的用法審過)
+    "port", "dst_stride", "欄數", "列數", "捲動 x", "捲動 y", "半區", "功能號", "中斷號", "開檔旗標", "box_y", "音量",
+    "毫秒數", "結束列", "計時器", "已移動", "隱藏對方", "argc", "IRQ", "ISR 位移", "取樣格式", "播放速率", "聲相", "區塊號",
+    "速度", "標記", "邏輯通道", "實體通道", "聲部數", "符號指數 word", "精度", "正號旗標", "指數位數", "指數字元",
+    "十進位指數", "施放點 x", "施放點 y", "起點 x", "起點 y", "步數", "陣營選擇子", "圖序號", "幀數", "事件碼", "題號"})
 # 審過、名稱本身不含可機械比對的型別(續一百一十六):泛稱(值 / a / b)、可大可小的量(位移 / 增量 / 請求大小)、
 # 浮點值(double 以值傳佔 2 格,個數篩選有算;除數 / 被除數 / 擴展精度值是 387 模擬器的運算元)。
 # 這些參數任何型別篩選都比不到,只能靠讀反組譯(`tools/param_dossier.py`)。
@@ -231,8 +239,15 @@ SMALL_NAMES = frozenset({
 # 擴展精度值*)。留下的 9 個:任意大小的整數(值 / 位移 / 增量 / 請求大小 / dword)、浮點值(double)、
 # 用途不明的指標或值(arg / 回呼參數 / 新值)。
 # selftest 檢查這份名單裡沒有摘要已經不用的名稱。
+# 續一百一十九:3 個名稱移出 —— 新值 / 回呼參數 / arg 讀過之後改成講得出型別的名稱(掛鉤指標 / 輸出目標* /
+# 目標 portrait 陣列)。
+# 續一百一十九:加「未使用」—— 本體不讀、呼叫端只推常數的參數(stdio_alloc_file);沒有型別可比。另加這一輪替原本
+# 沒有參數名的函式補參數列時遇到的:任意大小的整數(被除數 / 除數 / 種子 / 位置 / 位元組數 / 使用者資料)、
+# 兩種型別共用一格(fd 或記憶體影像)、拆成幾格的 80 位元數(尾數低 32 位 / 尾數高 32 位)、只有低 5 位有意義的
+# eax 殘值(函式代碼)。
 OPAQUE_NAMES = frozenset({
-    "值", "新值", "double", "位移", "arg", "增量", "請求大小", "dword", "回呼參數"})
+    "值", "double", "位移", "增量", "請求大小", "dword", "未使用",
+    "被除數", "除數", "種子", "位置", "位元組數", "使用者資料", "fd 或記憶體影像", "尾數低 32 位", "尾數高 32 位", "函式代碼"})
 
 
 # 比「小整數」更窄的值規則(續一百一十七)。名稱 -> 型別;`violates` 有對應的判定。
@@ -1505,10 +1520,14 @@ NAME_ISA: dict[str, tuple[str, ...]] = {
     "排除單位": ("unit",), "面板 1 單位": ("unit",), "面板 2 單位": ("unit",),
     "攻方動畫": ("anim",), "守方動畫": ("anim",), "script": ("anim",), "目標動畫": ("anim",),
     "panel_buf": ("dst",), "strip": ("dst",), "dst": ("緩衝區",),
+    # 續一百一十九:沒有講角色的緩衝區拿去當來源(anim_loop_over_cycling_bg 的 緩衝區 -> copy_rect 的 src);
+    # dst 與 src 同在「緩衝區」底下,兩者彼此仍不相容。畫面備份是存下來的整張畫面,用的時候是來源
+    # (shop_menu / tavern_menu / church_menu 交給 carousel_icon_blit 取樣)。
+    "src": ("緩衝區",), "畫面備份": ("src",),
     # 背景圖 / 面板附圖 也是「精靈」(帶寬高標頭的 RLE 圖):play_command_cast_animation 把它們交給 blit_rle_sprite_remap
     "背景圖": ("src", "精靈"), "面板附圖": ("src", "精靈"), "img": ("src",),
-    "originX": ("x",), "tgtX": ("x",), "dx": ("x",), "originY": ("y",), "tgtY": ("y",),
-    "src_stride": ("stride",), "目的跨距": ("stride",),
+    "originX": ("x",), "tgtX": ("x",), "dx": ("x",), "originY": ("y",), "tgtY": ("y",), "box_y": ("y",),
+    "src_stride": ("stride",), "目的跨距": ("stride",), "dst_stride": ("stride",),
     "targets": ("單位清單",), "單位清單": ("list",),
     "指令號": ("id", "動畫號", "tbl_idx"),   # 指令號拿去查表:法術列(id)、地圖特效(動畫號)、色帶基底表(tbl_idx)
     "回復量": ("amount",), "rangeByte": ("budget",), "色格": ("idx",),
@@ -1516,6 +1535,16 @@ NAME_ISA: dict[str, tuple[str, ...]] = {
     "double* a": ("double*",), "double* b": ("double*",), "檔名": ("名稱",),
     "目前值": ("數值",), "limit": ("數值",),   # draw_number 要畫的數字:呼叫端推目前值、名冊上限
     "panels": ("pos_ptr",),                    # 面板座標陣列的開頭就是第一個面板的座標
+    # 續一百一十九(替原本沒有參數名的函式補參數列後,沿呼叫邊對出來的特稱 / 泛稱;逐條看過呼叫點)
+    "amount": ("數值",),                       # item_effect_stat_up 的 amount 就是 queue_unit_number_popup 要跳的數字
+    "radius_start": ("radius",), "對方動畫*": ("anim",), "台座圖*": ("src",), "載入緩衝": ("緩衝區",),
+    "施法者動畫*": ("anim",), "目前目標動畫*": ("anim",), "下個目標動畫*": ("anim",),   # tai_phase_transition_9tick
+    "驅動": ("指標",),                         # ail_impl_uninstall_driver 把驅動結構交給 ail_mem_unlock_free 釋放
+    # fmt_double_core 把自己的參數分給各個小函式:精度 = 小數位數(fmt_fixed_digits)= 要取的位數(dbl_to_digits),
+    # 指數位數 = fmt_exponent 的位數,寬度 = fmt_insert_zeros 要補到的長度
+    "精度": ("小數位數", "位數"), "指數位數": ("位數",), "寬度": ("新長",),
+    # printf_core 的第 1 個是輸出要去的地方:sprintf 傳 buf、vfprintf 傳 fp(兩者彼此不相容)
+    "buf": ("輸出目標*",), "fp": ("輸出目標*",),
 }
 
 
@@ -1541,6 +1570,29 @@ def names_agree(a: str, b: str, same: tuple[frozenset[str], ...] = NAME_SAME,
                 isa: dict[str, tuple[str, ...]] = NAME_ISA) -> bool:
     """兩個參數名是否相容:同名、同義,或一個是另一個的泛稱。"""
     return a in name_generals(b, same, isa) or b in name_generals(a, same, isa)
+
+
+# C runtime 的函式(續一百一十九):參數名是角色(dst / src / n / 字串 / fp),任何呼叫者都可以把自己的東西傳進來,
+# 名稱相不相容沒有資訊 —— 補上 memmove 的參數列之後,光它就多 9 個「work 傳成 dst」這類候選。
+# 被呼叫端在這份名單裡的邊改用 `libc_agree`:只有型別矛盾(指標對小整數)或讀寫角色相反(dst 對 src)才是候選。
+# 名單以函式名稱列(只收摘要標明是 Watcom CRT 的);selftest 檢查每個都還在 function_names.json。
+LIBC_FUNCS = frozenset({
+    "memmove", "memcpy", "strlen", "strnicmp", "abs", "outp", "fputc", "fread", "fopen", "fsopen", "fclose", "sopen",
+    "close", "lseek", "sprintf", "fprintf", "vfprintf", "malloc", "nmalloc", "int386", "segread",
+    "open", "read", "write", "fwrite", "printf", "div", "time", "srand", "cos", "sin", "tan", "frexp"})
+_PTRISH, _INTISH = ("ptr", "str"), ("small", "nibble")
+
+
+def libc_agree(a: str, b: str) -> bool:
+    """呼叫者的參數名 a 傳給 C runtime 函式的參數 b:型別不矛盾、讀寫角色不相反就相容。
+
+    型別矛盾 = 一個是指標 / 字串、另一個是小整數(單位可以是索引也可以是指標,不判);
+    角色相反 = 一個是目的、另一個是來源(`role_of`),這仍值得人看一眼。"""
+    ta, tb = type_of(a), type_of(b)
+    if (ta in _PTRISH and tb in _INTISH) or (ta in _INTISH and tb in _PTRISH):
+        return False
+    ra, rb = role_of(a), role_of(b)
+    return not (ra and rb and ra != rb)
 
 
 def name_table_errors(same: tuple[frozenset[str], ...] = NAME_SAME,
@@ -1616,6 +1668,7 @@ def screen_names(sc: Screen, names: list[dict], sources: dict, cleanups: dict[in
     鍵 `p<k>:<呼叫者的參數名>`:同一個來源名稱不論幾個呼叫點只核對一次,新的來源名稱是新的候選。
     錯的可能是任一端(`shop_buy` 的「店種」傳給 `count`:錯在呼叫者;`find_in_neg1_list` 的「上限」收到 patch:
     錯在被呼叫者),也可能兩邊都對(角色互換)—— 要人看反組譯。任一端是無型別名稱的邊不比,另計。
+    被呼叫者是 C runtime(`LIBC_FUNCS`)時改用 `libc_agree`(續一百一十九)。
     """
     fname = {int(x["addr"], 16): x["name"] for x in names}
     bad: dict[tuple[int, int, str, str], list] = {}
@@ -1625,7 +1678,7 @@ def screen_names(sc: Screen, names: list[dict], sources: dict, cleanups: dict[in
             _bump(sc, "param_name 邊(一端無型別,不比)")
             continue
         sc.name_checked |= {(f, kf), (t, kt)}
-        if not names_agree(nf, nt):
+        if not (libc_agree(nf, nt) if fname.get(t) in LIBC_FUNCS else names_agree(nf, nt)):
             bad.setdefault((t, kt, nt, nf), []).append([fname.get(f, hex(f)), kf, f"{site:#x}"])
     sc.denom["param_name 可比(參數,任一端)"] = len(sc.name_checked)
     for (t, kt, nt, nf), ev in sorted(bad.items()):
@@ -2809,6 +2862,27 @@ def selftest() -> int:
     two_sites = {0x20: (0x100, {1: P1}), 0x30: (0x300, {1: frozenset({("param", 0x300, 1)})})}
     got18 = nscr("(攻方, y):…", "(defender, y):…", {1: P1}, more=two_sites)
     chk("邊:同一個來源名稱幾個呼叫點只算一個候選;另一個呼叫者名稱相容就不多報", got18[:2], ([(0x200, "p1:攻方")], 3))
+    # C runtime 的被呼叫端(合成:把 0x200 命名成 memmove)
+    chk("libc_agree:同型別不同名相容;指標對小整數矛盾(兩個方向);單位不判",
+        (libc_agree("work", "dst"), libc_agree("w", "n"), libc_agree("名稱", "字串"), libc_agree("x", "dst"),
+         libc_agree("buf", "n"), libc_agree("單位", "n"), libc_agree("單位", "dst"), libc_agree("名稱", "n")),
+        (True, True, True, False, False, True, True, False))
+    chk("libc_agree:目的對來源(角色相反)矛盾,兩個方向;一端沒有角色不判",
+        (libc_agree("目的", "src"), libc_agree("src", "dst"), libc_agree("work", "src"), libc_agree("dst", "目的")),
+        (False, False, True, True))
+
+    def lscr(callee_name: str, caller: str, callee: str) -> list:
+        lsc = Screen()
+        screen_names(lsc, [{"addr": "0x100", "name": "f", "summary": caller}, {"addr": "0x200", "name": callee_name,
+                                                                                "summary": callee}],
+                     {0x200: {0x10: (0x100, {1: P1, 2: P2})}}, {0x100: {2}, 0x200: {2}}, {})
+        return [c.key for c in lsc.cands]
+
+    chk("邊:被呼叫端是 C runtime -> 名稱不同但型別相容不報;一般函式同樣的邊照報",
+        (lscr("memmove", "(work, w):…", "(dst, n):…"), lscr("g", "(work, w):…", "(dst, n):…")), ([], ["p1:work", "p2:w"]))
+    chk("邊:C runtime 仍報型別矛盾與角色相反",
+        (lscr("memmove", "(w, work):…", "(dst, n):…"), lscr("memmove", "(目的, w):…", "(src, n):…")),
+        (["p1:w", "p2:work"], ["p1:目的"]))
     nsc2 = Screen()
     screen_names(nsc2, [{"addr": "0x100", "name": "f", "summary": "(x, y):…"}, {"addr": "0x200", "name": "g", "summary": "(y, y):…"},
                         {"addr": "0x300", "name": "h", "summary": "(w, y):…"}],
@@ -2820,14 +2894,19 @@ def selftest() -> int:
     chk("真實:名稱表沒有毛病", name_table_errors(), [])
     used = {pn for x in real_names for pn in positioned(parse_sig(x.get("summary") or "")[0]) if is_named(pn)}
     chk("真實:OPAQUE_NAMES 沒有摘要已經不用的名稱", sorted(OPAQUE_NAMES - used), [])
+    chk("真實:LIBC_FUNCS 的函式都還在登錄裡", sorted(LIBC_FUNCS - {x["name"] for x in real_names}), [])
     chk("真實:NAME_SAME / NAME_ISA 沒有摘要已經不用的名稱",
         sorted(({m for g in NAME_SAME for m in g} | set(NAME_ISA) | {u for ups in NAME_ISA.values() for u in ups}) - used), [])
     chk("真實:run() 有接上 param_name(邊 ≥ 500、可比的參數 ≥ 350)",
         (run_sc2.denom.get("param_name 邊", 0) >= 500, run_sc2.denom.get("param_name 可比(參數,任一端)", 0) >= 350,
          len(run_sc2.name_checked) == run_sc2.denom.get("param_name 可比(參數,任一端)")), (True, True, True))
     base18 = {(c.addr, c.key) for c in run_sc2.cands if c.screen == "param_name"}
-    chk("真實:目前的候選恰為核對過的 4 筆(反擊的角色互換 2、資料 1 當 patch、擷取來源)", sorted(base18),
-        [(0x2EBE1, "p1:守方"), (0x2EBE1, "p2:攻方"), (0x4584D, "p3:資料 1"), (0x4ECBF, "p4:dst")])
+    chk("真實:目前的候選恰為核對過的 15 筆(續一百一十七的 4 筆 + 續一百一十九補參數列後的 11 筆,理由都在 review 檔)",
+        sorted(base18),
+        [(0x11EB0, "p3:panel_buf"), (0x11EB0, "p3:strip"), (0x14742, "p5:mode"), (0x1F183, "p1:count"), (0x219AD, "p5:cy"),
+         (0x2EBE1, "p1:守方"), (0x2EBE1, "p2:攻方"), (0x3771C, "p2:目的"), (0x3D36C, "p1:檔名或記憶體影像"),
+         (0x4584D, "p3:資料 1"), (0x49BB7, "p1:輸出"), (0x4D1F0, "p1:輸出"), (0x4D88C, "p2:整數位數"), (0x4E98D, "p4:背景圖"),
+         (0x4ECBF, "p4:dst")])
     chk("真實:dpmi_dos_free 的 線性位址 / 段<<16 現在由實機型別篩選比到",
         ((0x365AB, 1) in run_sc2.type_checked, (0x365AB, 2) in run_sc2.type_checked), (True, True))
     chk("真實:把這兩個對調 -> 實機型別篩選各報一筆",
@@ -2851,8 +2930,8 @@ def selftest() -> int:
         nflag({0x1E611: "(panels, stride, arg):…"}), [(0x1E611, "p2:unit"), (0x1E7F6, "p3:stride")])
     chk("召回:dos_result_check 舊摘要 (值, DOS 錯誤碼) -> 被呼叫端的旗標收到「DOS 錯誤碼」", nflag({0x465F2: "(值, DOS 錯誤碼) …"}),
         [(0x4660A, "p2:DOS 錯誤碼")])
-    chk("召回:item_effect_dispatch 舊摘要 (使用者, 道具, ...) -> unit_item_id 的 slot 收到「道具」",
-        nflag({0x20C6F: "(使用者, 道具, ...) …"}), [(0x1B722, "p2:道具")])
+    chk("召回:item_effect_dispatch 舊摘要 (使用者, 道具, ...) -> unit_item_id 與 item_effect_stat_up 的 slot 都收到「道具」",
+        nflag({0x20C6F: "(使用者, 道具, ...) …"}), [(0x1B722, "p2:道具"), (0x21082, "p4:道具")])
     chk("邊界:phase_banner_split_slide 當時的舊摘要 (圖格, 位移) 不報 —— 位移 是無型別名稱,那條邊不比",
         nflag({0x1F42D: "(圖格, 位移) …"}), [])
     chk("對照:同一個對調,第 2 個改用有型別的名稱 (圖格, dx) -> 兩端都報(無型別名稱會遮住對調)",

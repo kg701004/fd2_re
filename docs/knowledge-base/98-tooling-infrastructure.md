@@ -9189,3 +9189,128 @@ param_flow 只補實機型別沒比到的參數,所以實機比到的變多時�
 - 18 個無型別名稱的參數。
 - 「單位用法」特徵的靜態篩選(第五節):原型量過,沒有做成工具。
 - 實機紀錄太少的參數剩 2 個具名的有人工閱讀、但實機型別沒比到(見第六節);呼叫紀錄的 8 格上限沒有改。
+
+## 2026-10-13 續一百一十九:續一百一十八「仍留的」做完 —— 沒有參數名的函式 255 -> 0、沒有依據的參數 5 -> 0、無型別名稱再改 3 個;讀出 18 處寫錯的摘要
+
+照續一百一十八「仍留的」逐項做。實機補錄那一項改由呼叫點靜態定案(第六節),這一輪沒有新的實機紀錄,仍是 12 份。
+
+**一、沒有依據的 5 個參數 -> 0**(`tools/param_dossier.py`、`docs/data/param_read_review.json`)。三個函式的名稱讀下來都對,
+缺的是登錄工具驗得了的依據,所以加三種:
+- `raw`:走不出本體的函式(以間接 jmp 結束、切換堆疊)。只看入口起的直線段(依位址解到第一個控制轉移或改寫 ESP 的指令),
+  自己數 ESP 位移與 ebp 框架。`stack_switch_and_jump` 的 3 個:0x3f0fe / 0x3f101 / 0x3f104 各讀第 1 / 2 / 3 格(FD2.EXE 反組譯)。
+- `via`:暫存器傳參的函式沒有碰那個暫存器、原樣交給被呼叫端。`emu_ld_fma_store` 的 項數(ebx):本體到 0x4ce72 的 call 為止
+  沒有提到 ebx;被呼叫端 `emu_ld_mul_add` 0x4ce87 push ebx 存起來,0x4ceca dec dword ptr [ebp + 0xc] 每輪把那一份減 1
+  (FD2.EXE 反組譯)。工具要求 `at` 是被呼叫端直接讀那個暫存器、或讀它入口存在堆疊上那一份的指令。
+- `indirect`:只經函式指標被呼叫、而且本體不讀的參數。`ail_wavesynth_event_cb` 的 序列:它的位址由 ail_impl_create_wave_synthesizer 0x45e6e 的 push(運算元帶 fixup)交給
+  AIL_register_event_callback 存進 MDI 驅動 [+0x1a0];`ail_xmidi_event` 0x42d98 call dword ptr [eax + 0x1a0] 推 5 個,第 2 個是
+  0x42d94 push esi = 它自己的第 1 個參數(FD2.EXE 反組譯)。工具檢查 fixup 指到這個函式、`at` 是間接 call、後面的 add esp
+  個數等於摘要的格數、push 是那一格的 push;**不檢查**那個間接 call 真的走到它,所以和 `caller` 一樣是名稱的來源。
+- 順便補一個洞:`reg` 依據原本把 `push r` 當成「讀」,任何入口保存暫存器的 push 都會過關。現在 `push r` 不算,除非它是
+  第一個 call 的引數(call 後面緊跟 add esp,push 落在引數個數之內)。`emu_ld_fma_store` 第 1 個的依據因此由 0x4ce66
+  push eax 改成 0x4ce69 mov si, word ptr [eax + 8];`raise_via_hook` 的 0x4d726 push eax 是 call [0x5283c] 的引數,照舊成立
+  (FD2.EXE 反組譯)。
+- selftest 51 -> 91 題;新增程式的突變 46 個全部 KILLED(`--selftest FAILED` 且沒有 Traceback),對照組 OK。設計突變時發現
+  3 個分不出來的假本體,先改成分得出來的再跑。
+
+**二、255 個「有堆疊參數、摘要沒有參數名」的函式全部補上參數列**(`docs/data/function_names.json`)。
+- 這 255 個裡有不少摘要其實寫了參數(`memmove(dst, src, n)` 這種寫在句子裡的),只是不在工具認得的開頭。
+- 依實機呼叫次數排序分 5 批:最常被呼叫的 54 個主對話自己讀;其餘 201 個交 4 個只讀的子代理(各 43 / 65 / 45 / 48 個),
+  每個參數要給一條引用它堆疊格的指令與「讀到了什麼」。子代理不改版本庫,只寫暫存目錄的規格檔。
+- 子代理的每一條依據都由主對話另寫的核對程式重驗(指令在本體裡、引用的是那一格、文字相同):477 條裡 474 條成立;
+  其餘 3 條在走不出本體的兩個函式(`write` 0x3d46a / 0x3d46d、`ail_api_read_ini_alt_entry` 0x384c6),沿控制流核對不到
+  (這 3 個參數在 `--coverage` 裡仍各有別的依據)。本體不讀的參數另依呼叫點 / 分派端。規格再經主對話統一用語後才套用。
+- 6 個函式其實沒有堆疊參數,寫成 `()`:`getch` 0x37b71、`play_loaded_sfx_and_free` 0x1d4f6、`action_finish_effect` 0x1df58、
+  `map_count_flagged_event_cells` 0x12263(「清堆疊個數」是呼叫者在 call 之後用 add esp 收自己的區域框架,例 0x21857 add esp, 0x40
+  後面緊跟 pop 與 ret)、`emu387_int_entry` 0x4a0e8 與 `emu387_dispatch` 0x4a104(中斷框架,不是 C 參數)(FD2.EXE 反組譯)。
+- 三個經跳表分派的族,簽章由分派端決定(FD2.EXE 反組譯):`command_handler_N` 是 (使用者, count, targets) —— 分派端
+  0x1541f call dword ptr [eax*4 + 0x1d01] 推 3 個,**指令號不在引數裡**,各 handler 自己推常數;`tai_phase_handler_N` 是
+  (caster, anim, dst, stride, 事件碼),分派端 0x30469 推 5 個;`event_handler_N` 是 (unit),分派端推 1 個。
+- 新的參數自動進各篩選。**實機型別篩選對新增的參數一個矛盾都沒有報**(可比 597 -> 818,DOSBox-X 呼叫紀錄)。
+  其餘篩選共報 62 個要核對的候選(另有 13 個是 C runtime 的名稱邊,由第四節的規則消掉),逐一看過呼叫點:
+  17 個是特稱 / 泛稱(加進 `NAME_ISA`),3 個靠把 figure_fade_in 的 work 改成泛稱「緩衝區」解掉,42 個記 `not_error`
+  (其中 13 個是 command_handler 推完常數就尾跳到同族另一個的收尾段,第 1 個在那一段才讀)。另有 3 個參數的名稱帶讀寫角色、
+  本體卻只經函式指標轉交或根本不讀,改成不帶角色的名稱(圖指標 / 效果動畫* / 輸出*)。
+- 補完之後「都沒有依據」的參數有 250 個(實機沒執行到、名稱又沒有讀寫角色的),全部登錄:226 筆用子代理給的指令
+  (登錄工具再驗一次)、24 筆主對話補(其中 14 筆是 `indirect`、7 筆是 `caller`)。
+
+**三、讀的過程中找到的摘要錯誤**(都先由主對話對過反組譯才改;FD2.EXE 反組譯):
+- `ail_mix_samples` 0x49690:參數是**一個取樣**,不是驅動 —— 0x4969b 由 [取樣 + 0] 取驅動;舊摘要寫成對所有取樣跑的主迴圈。
+  實機值 0x1ff018 / 0x1ff8ac 與 AIL_stop_sample 的取樣相同(DOSBox-X 呼叫紀錄)。
+- `menu_transition_panel_a` 0x182ad:第 1 個是水平位置(0x182ca / 0x182fa),舊摘要寫「裁掉上方」。
+- `battle_situation_slide_a` .. `_e` 5 個:方向寫反 —— 每列是 memmove([0x53a49] + …, 第 1 個參數 + …, 寬)(例 0x1b086 / 0x1b087),
+  第 1 個是來源的面板圖;第 2 個是段號不是格數。
+- `ail_api_read_ini_alt_entry` 0x38463:它才是入口(兩個直接呼叫點 0x413d2 / 0x44252 都指到這裡,沒有呼叫指到 0x3846a)。
+- `ail_dig_service` 0x406b0:不是每個 tick 的服務,是安裝時重設輸出(唯一呼叫點 0x41018,實機 12 次,DOSBox-X 呼叫紀錄)。
+- `ail_mdi_probe_io` 0x439a0:0x304 只呼叫一次(0x43a5f),不是逐一。
+- `read_at_file_or_memory` 0x3645d:呼叫端是兩個函式(4 + 13 個呼叫點),不是一個。
+- `ail_impl_restore_use16_isr` 0x3f063:IRQ >= 8 加的是 0x68(0x3f07f + 0x3f082),不是 0x70。
+- `ail_impl_minimum_sample_buffer_size` 0x418b0:比的是「[D+0x14] 是不是速率的 1 / 2 / 4 倍」(0x4191d..0x41937),舊摘要方向反了。
+- `ail_impl_install_timbre` 0x44af0:0x5372a 寫的是 patch、0x5372b 是 bank(0x44b25 / 0x44b37),舊摘要兩個位址寫反。
+- `printf_g_strip_zeros` 0x49bb7:去尾端的 '.' 對所有浮點格式都做(0x49bf0),不只 %g。
+- `fmt_scale_round_bigint` 0x4d841:比的是十進位指數與位數(0x4d852),不是兩個指數。
+- `log_domain_error` 0x4dc41:第 2 個參數是哪一個 log 函式的代碼(0x4d7c9 存的 eax,AL 由 0x4d800 / 0x4d804 設),不是錯誤碼。
+- `lut_circle_shrink_frames` 0x22547:半徑固定 0xb,隨幀變的是起始列 = cy/5 × i(0x225dd..0x225ef)。
+- 另有 4 筆寫漏呼叫端(`earthquake_spell_effect`、`cast_heal_on_targets`、`cast_fixed_heal_after_mp`、`cast_status_spell`:
+  0x21895 / 0x21bcb / 0x22bdc / 0x22e57 的尾跳共用同一個呼叫點)、1 筆把「未核對」補實(`vga_palette_write_256` 0x203bd 三個參數
+  原樣當 R / G / B)。
+- 新觀察(原版的行為,不是摘要錯誤):`lx_image_size` 0x3669a 的 0x36740 那個 close 沒有先看旗標 bit 0,標頭檢查失敗時
+  記憶體影像模式也會把影像指標當 handle 交給 close(另外三處 0x367a7 / 0x3684b / 0x36c2c 都有看)。這是 param_name 篩選
+  報出來的(close 的 fd 收到「檔名或記憶體影像」)。
+- **子代理回報、主對話沒有驗證,所以沒有寫進摘要**(都是讀 FD2.EXE 反組譯的說法,留待之後查):`ail_impl_resume_sequence` 0x448d0 比的 [Q+0x190+i*4] 是不是通道對映;
+  `rising_particles_effect` 兩個資源誰是小圖誰是換色表;`draw_password_screen` 兩列各是什麼;`command_handler_11` / `12` 摘要裡的
+  sprite_walk_on(0x2189a)是不是其實是圓形 LUT 效果;`command_handler_17` 在 0x226fe push 0x12(扣 MP 用的指令號與第 18 項相同,
+  可能是原作筆誤);`ail_dig_probe_io` 的第 1 個是 DIG 驅動結構還是 AIL 驅動(FD2.EXE 反組譯,尚未複查)。
+
+**四、篩選工具**(`tools/screen_summaries_by_calllog.py`)。
+- 補上 `memmove(dst, src, n)` 之後,光它就多 9 個「呼叫者的 work 傳成 dst」這類候選。C runtime 的參數名是角色,誰都可以傳進來,
+  名稱相不相容沒有資訊。新增 `LIBC_FUNCS`(33 個函式)與 `libc_agree`:被呼叫端在名單裡的邊只比型別(指標對小整數才矛盾)
+  與讀寫角色(dst 對 src)。這條規則留下來的候選是真的:`memmove` 的 src 收到 info_card_present_frame 的「目的」
+  (合成完貼上畫面,0x184b5)、`close` 那一筆(見第三節)。
+- 突變 12 / 12 個 KILLED,對照組 OK。selftest 381 -> 386 題。
+- 名單:小整數 +45、指標 +1、字串 +1;`OPAQUE_NAMES` 9 -> 17(見第五節)。
+
+**五、無型別名稱**。原有的 18 個裡再改 3 個(FD2.EXE 反組譯):
+- `swap_hook_5275c` 的 新值 -> 掛鉤指標:[0x5275c] 被 5 處 call dword ptr [0x275c] 呼叫(0x36517、0x36d1a、0x36d35、0x41344、0x441c4),
+  是釋放記憶體的掛鉤;續一百一十八寫的「用途不明」作廢。
+- `printf_core` 的 回呼參數 -> 輸出目標*:0x3e132 存進區域結構的第一個欄位,回呼收到的是結構的位址(0x3e1af),不是它本身。
+- `class_change_candidate_select` 的 arg -> 目標 portrait 陣列(原樣交給 draw_class_change_options 的第 5 個,0x2a77a)。
+- 這一輪補參數列時另有 26 個參數照實取了無型別名稱:任意大小的整數(被除數 / 除數 / 種子 / 位置 / 位元組數 / 使用者資料 /
+  請求大小 / 位移)、兩種型別共用一格(fd 或記憶體影像)、拆成幾格的 80 位元數、只有低 5 位有意義的值、不讀的參數(未使用)。
+  所以「審過無型別」是 18 -> 41,不是變少;它們都有人工閱讀的登錄。
+
+**六、原訂的實機補錄改由呼叫點定案**。續一百一十八留下 2 個「實機紀錄只有 2 次」的參數,兩個函式都只有一個直接呼叫點:
+- `roster_reorder_selected_first` 0x2b777 的 選取旗標陣列:0x2b0ec mov eax, esp、0x2b0ee push eax、0x2b0ef 呼叫 —— 推的一定是
+  呼叫者堆疊上的陣列位址(FD2.EXE 反組譯)。
+- `show_fdother_static_screen` 0x1f73f 的 起始列:0x1fbaf 推的是倒數計數 esi(0x1fa85 從 0x217 起),而且只在 esi == 0x1c2
+  (0x1fb94)與 esi == 0xa(0x1fba4)時呼叫,值只有這兩種;實機紀錄的 0xa / 0x1c2 已經是全部(FD2.EXE 反組譯、DOSBox-X 呼叫紀錄)。
+  續一百一十八找不到的「觸發條件」就是標題畫面閒置時的這個倒數。
+- 兩筆登錄各加一條 `caller` 依據。第三筆實機紀錄不會多告訴我們什麼,所以沒有錄。
+
+**結果**(12 份紀錄;`python tools/screen_summaries_by_calllog.py`、`python tools/param_dossier.py --coverage`):
+
+| | 續一百一十八 | 本輪 |
+|---|---|---|
+| 具名參數 | 899 | 1525 |
+| 機器比過 / 只有人工讀過 / 都沒有 | 799 / 95 / 5 | 1176 / 349 / 0 |
+| 人工閱讀登錄 | 181 | 436(body 401、indirect 15、caller 9、reg 6、live 3、raw 3、via 1) |
+| param_type 可比 / 紀錄太少 | 597 / 78 | 818 / 134 |
+| param_role 可比 | 130 | 195 |
+| param_flow 可比 | 192 | 337 |
+| param_unread 可比 | 884 | 1493 |
+| param_name 邊 / 可比的參數 | 642 / 432 | 1163 / 773 |
+| 參數名 有型別 / 審過無型別 | 881 / 18 | 1484 / 41 |
+| 候選 / 已改正 / 非錯誤 / 未核對 | 13 / 43 / 13 / 0 | 55 / 43 / 55 / 0 |
+| 有堆疊參數但沒有參數名的函式 | 255 | 0 |
+
+**驗證**:
+- selftest:篩選工具 386 題、`param_dossier.py` 91 題、`verify_names_by_calllog.py` 全過(`docs/data/function_specs.json` 引用
+  printf_core 參數列的那一條,引文跟著改名)。
+- `function_inventory.py --check-names`:1149 筆的反組譯證據全部相符(本輪由依據指令新增的證據都在內)。
+- 突變:`param_dossier.py` 46 / 46、篩選工具的 C runtime 規則 12 / 12,都是 `--selftest FAILED` 且沒有 Traceback,對照組 OK。
+
+**仍留的**:
+- 第三節最後一點的 6 件子代理回報,還沒有複查。
+- 「單位用法」特徵的靜態篩選仍沒有做(續一百一十八量過,4 筆已知的對調只抓得到 1 筆)。參數名多了 626 個之後值得重量一次。
+- 呼叫紀錄的 8 格上限沒有改(只影響 `grid_path_search` 的 2 個參數)。
+- param_unread 只走函式自己的本體:推完常數就尾跳到另一個函式收尾段的 handler,會被報成「沒有人讀」(本輪 13 筆,記 not_error)。
+- `LIBC_FUNCS` 只收了這一輪補參數列的 C runtime 函式;之前就有參數列的沒有收(它們的邊已經各自核對過)。

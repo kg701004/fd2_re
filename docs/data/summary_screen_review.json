@@ -504,6 +504,384 @@
    "verdict": "not_error",
    "reason": "第 2 個參數本體確實不讀(本體只引用第 3 / 4 格,0x1cad5 / 0x1cad9);兩個呼叫端 command_generic_damage_type21(0x213f3)與 item_effect_type21_damage 推的是自己的 指令號 / spell,名稱 指令號 依呼叫端",
    "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3db52",
+   "name": "stdio_alloc_file",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體確實不讀堆疊參數(入口直接取空閒串列 [0x541a0],0x3db57)。唯一的呼叫端 fsopen 在 0x372fc push 0、0x37303 清 1 格;名稱「未使用」依這個呼叫點(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x11eb0",
+   "name": "copy_rect",
+   "screen": "param_name",
+   "key": "p3:panel_buf",
+   "verdict": "not_error",
+   "reason": "panel_buf 是合成用的緩衝:畫完之後當來源複製出去。scene_attack_sequence 0x2ed9a push 它當第 3 個(src),目的是另一個參數 + 0x140(0x2eda6 / 0x2edb6)、跨距 0x280;名稱兩邊都對(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x11eb0",
+   "name": "copy_rect",
+   "screen": "param_name",
+   "key": "p3:strip",
+   "verdict": "not_error",
+   "reason": "strip 合成完之後貼到畫面:scene_attack_sequence 0x2eecd 與 play_command_cast_animation 0x31077 都是 copy_rect(0xa0000, 0x140, strip, …, 0x140, 0xc8);名稱兩邊都對(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x14742",
+   "name": "find_unit_near_cursor",
+   "screen": "param_name",
+   "key": "p5:mode",
+   "verdict": "not_error",
+   "reason": "target_cursor_loop 的 mode 取 0..3 時就是陣營篩選碼(本函式 0x147bc..0x147f3 與 0 / 1 / 2 / 3 比,對單位 [+6]),4 / 6 另有意思:0x11747 mode 4 不呼叫本函式。兩個名稱各自正確,不列成同義(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1f183",
+   "name": "unit_uses_move_cost_row19",
+   "screen": "param_name",
+   "key": "p1:count",
+   "verdict": "not_error",
+   "reason": "target_cursor_loop 的第 2 個參數有兩種用法:模式 6 時 0x115d6 存進區域變數 [esp + 0xc],0x116a2 乘 0x50 取單位記錄、0x116c6 推給本函式(這時它是單位);其他模式是候選個數。名稱 count 取多數用法,摘要已註明(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3771c",
+   "name": "memmove",
+   "screen": "param_name",
+   "key": "p2:目的",
+   "verdict": "not_error",
+   "reason": "info_card_present_frame 的「目的」是三塊面板合成進去的畫面緩衝(menu_transition_panel_a / b / c 的目的),合成完 0x184aa..0x184b5 以 memmove(0xa0000, 目的, 0xfa00) 貼上畫面,所以在這裡是來源;名稱兩邊都對(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3d36c",
+   "name": "close",
+   "screen": "param_name",
+   "key": "p1:檔名或記憶體影像",
+   "verdict": "not_error",
+   "reason": "lx_image_size / lx_load_file 把第 1 個參數與 open 的回傳合流在同一個暫存器(旗標 bit 0 設 = 記憶體影像,直接用參數;清 = open(檔名),0x366bb / 0x366d9、0x36800 / 0x36812)。close 的 4 個呼叫點有 3 個先看 bit 0(0x367a7、0x3684b、0x36c2c),這時傳的是 open 的回傳;只有 lx_image_size 0x36740 沒有看 —— 標頭檢查失敗時記憶體影像模式也會把指標當 handle 交給 close(原版的行為,DOS 回錯誤,沒有別的後果)。名稱兩邊都對(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1df58",
+   "name": "action_finish_effect",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "沒有堆疊參數。例:command 路線 0x21852 call、0x21857 add esp, 0x40、0x2185a 起 pop ebp / edi / esi。call 之後的 add esp 是呼叫者收自己的區域框架(後面緊跟 pop 與 ret),不是替它清引數;本體也沒有引用回傳位址以上的格(FD2.EXE 反組譯);實機「清 16 個」是同一件事(DOSBox-X 呼叫紀錄記的是 call 後的 add esp)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1d4f6",
+   "name": "play_loaded_sfx_and_free",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "沒有堆疊參數。例:0x2def4 call、0x2def9 add esp, 0x38、0x2defc 起 pop ebp / edi / esi / ebx、ret。call 之後的 add esp 是呼叫者收自己的區域框架(後面緊跟 pop 與 ret),不是替它清引數;本體也沒有引用回傳位址以上的格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x12263",
+   "name": "map_count_flagged_event_cells",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "沒有堆疊參數。例:0x3598b call、0x35990 add esp, 0x10、0x35993 起 pop edi / esi / ebx、ret。call 之後的 add esp 是呼叫者收自己的區域框架(後面緊跟 pop 與 ret),不是替它清引數;本體也沒有引用回傳位址以上的格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x37b71",
+   "name": "getch",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "沒有參數。唯一的呼叫點在 debug_print_answer 0x16f4c,後面的 add esp, 0x14 是那個函式收自己在入口配的區域緩衝(FD2.EXE 反組譯);本體只讀 [0x52824] 與 int 21h AH=08h",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4a0e8",
+   "name": "emu387_int_entry",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "中斷進入點,沒有 C 參數:進入時堆疊上是被中斷程式的 EIP / CS / EFLAGS。靜態 argc 15 是把分派器引用框架的位置算成參數(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4a104",
+   "name": "emu387_dispatch",
+   "screen": "param_count",
+   "key": "count",
+   "verdict": "not_error",
+   "reason": "沒有 C 參數:[ebp + 4] 起是進入點擺好的暫存器框架(段暫存器、pushal 的 8 個、被中斷的 EIP / CS),不是呼叫端推的引數(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3da42",
+   "name": "return_zero_3da42",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體只有 xor eax, eax,不讀參數。名稱依唯一的呼叫點:nmalloc 0x370c9 push esi(esi 是它在 0x3708b 載入的請求大小)(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x25bf4",
+   "name": "game_main",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體不讀。名稱依唯一的呼叫點(Watcom 啟動碼):0x460d6 push dword ptr [0x5462c] 是第 1 個,0x460dc 呼叫、0x460e1 清 2 格;實機值都是 1(DOSBox-X 呼叫紀錄),合於 argc",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x25bf4",
+   "name": "game_main",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "本體不讀。名稱依唯一的呼叫點:0x460d6 之前推的 [0x54628] 是第 2 個,實機值是指標(DOSBox-X 呼叫紀錄),合於 argv",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x219ad",
+   "name": "remap_circle_scanlines",
+   "screen": "param_name",
+   "key": "p5:cy",
+   "verdict": "not_error",
+   "reason": "lut_remap_circle_band 呼叫它兩次:第一次列範圍是自己的 起始列..結束列,第二次(0x22093)從圓心那一列起、只重做下半,所以把 cy 推成起始列。兩個名稱各自正確(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x49bb7",
+   "name": "printf_g_strip_zeros",
+   "screen": "param_name",
+   "key": "p1:輸出",
+   "verdict": "not_error",
+   "reason": "printf_fmt_float 0x49b9e 把自己的輸出緩衝交進來,本函式就地修改裡面已經寫好的數字串(去尾端的 0 與 '.');同一塊記憶體,在呼叫者是輸出、在這裡是要處理的字串(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d1f0",
+   "name": "fmt_insert_zeros",
+   "screen": "param_name",
+   "key": "p1:輸出",
+   "verdict": "not_error",
+   "reason": "fmt_double_core 0x4d48f 把自己的輸出緩衝交進來,本函式就地在已經寫好的字串裡補 0;同 printf_g_strip_zeros 的情形(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d88c",
+   "name": "dbl_scale_pow10",
+   "screen": "param_name",
+   "key": "p2:整數位數",
+   "verdict": "not_error",
+   "reason": "fmt_double_core 0x4d3a6 以自己的整數位數當 10 的次方去調整數值的大小;在被呼叫端它就是次方 n。兩個名稱各自正確,不列成同義(n 與 count / 數量 同組)(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4e98d",
+   "name": "blit_rle_image_at_xy",
+   "screen": "param_name",
+   "key": "p4:背景圖",
+   "verdict": "not_error",
+   "reason": "figure_fade_in 0x2eab5 / 0x2eae2 把台座圖畫到背景圖上:背景圖在這裡是畫布(目的),之後才當來源複製出去。兩個名稱各自正確(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2134b",
+   "name": "command_handler_1",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_0 的收尾段 0x2121a,第 1 個在那一段才讀(0x2121a push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21364",
+   "name": "command_handler_2",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_0 的收尾段 0x2121a,第 1 個在那一段才讀(0x2121a push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2137d",
+   "name": "command_handler_3",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_0 的收尾段 0x2121a,第 1 個在那一段才讀(0x2121a push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21449",
+   "name": "command_handler_5",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_4 的收尾段 0x213aa,第 1 個在那一段才讀(0x213aa push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21462",
+   "name": "command_handler_6",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_4 的收尾段 0x213aa,第 1 個在那一段才讀(0x213aa push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2147b",
+   "name": "command_handler_7",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_4 的收尾段 0x213aa,第 1 個在那一段才讀(0x213aa push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21494",
+   "name": "command_handler_8",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_0 的收尾段 0x2121a,第 1 個在那一段才讀(0x2121a push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21b99",
+   "name": "command_handler_14",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_13 的收尾段 0x21b0b,第 1 個在那一段才讀(0x21b0b push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2211c",
+   "name": "command_handler_15",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_13 的收尾段 0x21b0b,第 1 個在那一段才讀(0x21b0b push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22153",
+   "name": "command_handler_16",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_13 的收尾段 0x21b0b,第 1 個在那一段才讀(0x21b0b push dword ptr [esp + 0x10]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22bc6",
+   "name": "command_handler_21",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_20 的收尾段 0x22a9b,第 1 個在那一段才讀(0x22a9b push dword ptr [esp + 0x14]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22cbf",
+   "name": "command_handler_26",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_22 的收尾段 0x22bf7,第 1 個在那一段才讀(0x22bf7 push dword ptr [esp + 0x14]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22e41",
+   "name": "command_handler_27",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "不是沒有人讀:本體推完自己的常數(指令號等)就尾跳到 command_handler_22 的收尾段 0x22bf7,第 1 個在那一段才讀(0x22bf7 push dword ptr [esp + 0x14]);篩選只走自己的本體。名稱依 分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2218a",
+   "name": "command_handler_23",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "本體確實不讀第 2 個(只引用第 1 / 3 格)。名稱依分派端:分派端 ai_spell_execute 0x1541f call dword ptr [eax*4 + 0x1d01] 由後往前推 targets、count、施法單位(0x15416 / 0x15417 / 0x1541b),0x15426 清 3 格;另一個直接呼叫點 item_effect_dispatch 0x2103e 也推 3 個(0x21043 add esp, 0xc)(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x34d64",
+   "name": "event_handler_28",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體不讀引數。名稱依呼叫端:event_handler_29 0x34dc7 直接呼叫、之前 0x34dc3 推自己的第 1 個(unit),call 後清 1 格;它也在事件跳表裡(fixup 0x51c01),同族的分派端一律只推 1 個單位序號(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2ccf4",
+   "name": "tai_phase_handler_8",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體不讀第 1 個(引用第 2..5 格)。簽章由分派端決定:spell_cast_scene 0x30469 call dword ptr [eax*4 + 0x24c6] 推 5 個、0x30470 add esp, 0x14,最後推的是 caster(0x30462);實機值 0 / 0xb 是單位序號(DOSBox-X 呼叫紀錄)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x2ce1a",
+   "name": "tai_phase_handler_9",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體不讀第 1 個(引用第 2..5 格;本格不分邊)。簽章由分派端決定:spell_cast_scene 0x30469 call dword ptr [eax*4 + 0x24c6] 推 5 個、0x30470 add esp, 0x14,最後推的是 caster(0x30462)(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22656",
+   "name": "lut_circle_frames",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "本體確實不讀。唯一的呼叫點 0x2244e 推 7 個、0x22453 add esp, 0x1c;本體只讀第 3 / 4 / 5 個。名稱依呼叫點推的東西:0x2244a push dword ptr [esp + 0x54](最後推的,第 1 個):與交給 lut_circle_shrink_frames 第 1 個的是同一個格座標 x(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22656",
+   "name": "lut_circle_frames",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "本體確實不讀。唯一的呼叫點 0x2244e 推 7 個、0x22453 add esp, 0x1c;本體只讀第 3 / 4 / 5 個。名稱依呼叫點推的東西:0x22446 push dword ptr [esp + 0x54](第 2 個):格座標 y(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22656",
+   "name": "lut_circle_frames",
+   "screen": "param_unread",
+   "key": "p6",
+   "verdict": "not_error",
+   "reason": "本體確實不讀。唯一的呼叫點 0x2244e 推 7 個、0x22453 add esp, 0x1c;本體只讀第 3 / 4 / 5 個。名稱依呼叫點推的東西:0x22439 push dword ptr [esp + 8](第 6 個):與交給 lut_circle_shrink_frames 第 6 個的是同一個區域變數(圖指標)(FD2.EXE 反組譯);名稱取不帶讀寫角色的「圖指標」(本體不讀,不能叫 src)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22656",
+   "name": "lut_circle_frames",
+   "screen": "param_unread",
+   "key": "p7",
+   "verdict": "not_error",
+   "reason": "本體確實不讀。唯一的呼叫點 0x2244e 推 7 個、0x22453 add esp, 0x1c;本體只讀第 3 / 4 / 5 個。名稱依呼叫點推的東西:0x22436 push dword ptr [esp](最先推的,第 7 個):呼叫者的區域變數;本體自己從 [0x53a6d] 資源逐幀取 LUT,不用它(FD2.EXE 反組譯)",
+   "date": "2026-10-13"
   }
  ]
 }

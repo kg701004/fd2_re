@@ -27,7 +27,19 @@
   - `reg`(續一百一十八):Watcom 暫存器傳參的函式(`SS.call_conv` 回 'reg'),第 k 個參數在 eax / edx / ebx / ecx 的
     第 k 個。`at` 必須是本體依位址順序、第一個 call 之前**第一個提到那個暫存器(含 ax / al 這類部分暫存器)**的指令,
     而且不是單純覆寫它(`mov r, …` / `xor r, r`);`insn` 必須與反組譯相同。這只擋寫錯暫存器或指到已被覆寫之後的
-    指令 —— 依位址順序不等於執行順序,它是人工閱讀的佐證,不是證明。
+    指令 —— 依位址順序不等於執行順序,它是人工閱讀的佐證,不是證明。`push r` 不算提到(續一百一十九):那只是把它
+    存起來,暫存器裡的入口值還在,真正的第一次使用在後面。例外是它被推成第一個 call 的引數(call 後面緊跟
+    `add esp, N`,而且那個 push 落在 N / 4 個引數之內)—— 那就是讀。
+  - `via`(續一百一十九):暫存器傳參的函式,本體在第一個 call 之前完全沒有提到那個暫存器 —— 入口值原樣交給被呼叫端。
+    `via` 是本體依位址順序的第一個 call(必須是直接呼叫),`at` / `insn` 是**被呼叫端**裡讀它的指令:被呼叫端第一個
+    提到那個暫存器的指令(不是覆寫);或者被呼叫端入口就 `push r` 存起來時,之後以堆疊位置讀那一份的指令。
+  - `raw`(續一百一十九):只給**走不出本體**的函式(以間接 jmp 結束、切換堆疊)。`at` 必須在入口起的直線段裡
+    (依位址順序解到第一個控制轉移或改寫 ESP 的指令為止),而且引用這個參數的堆疊格;`insn` 必須相同。
+    走得出本體的函式不收,請用 `body`。
+  - `indirect`(續一百一十九):只經函式指標被呼叫、而且**本體不讀**的參數(回呼的簽章由呼叫它的那一端決定)。
+    `store` 必須是 fixup 指到這個函式的位置(有人存了它的位址);`at` 必須是間接 call,後面緊跟 `add esp, N`,
+    N / 4 等於摘要的堆疊格數;`push_at` / `push_insn` 必須是那個呼叫點推這個參數的 push。工具**不檢查**那個間接 call
+    真的會走到這個函式(那要資料流),所以它和 `caller` 一樣是名稱的來源,不是證明;本體有引用的參數不收,請用 `body`。
 - 同一個 (函式, 參數) 只能一筆。
 
 `--coverage` 的三個數字:機器比過(實機型別 / 值流 / 讀寫角色任一個篩選比到)、只有人工讀過、兩者都沒有。
@@ -44,10 +56,11 @@
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -55,9 +68,11 @@ import screen_summaries_by_calllog as SS  # noqa: E402
 
 ROOT = SS.ROOT
 READS_JSON = ROOT / "docs" / "data" / "param_read_review.json"
-BASIS_KINDS = ("body", "caller", "live", "reg")
+BASIS_KINDS = ("body", "caller", "live", "reg", "via", "raw", "indirect")
 Refs = dict[int, list[tuple[int, str]]]
 RegUses = dict[str, tuple[int, str, bool]]
+SavedRefs = dict[str, list[tuple[int, str]]]
+Site = tuple[str, int, list[tuple[int, str] | None]]       # 間接呼叫點:(call 的文字, 引數個數, 各引數的 push)
 # 暫存器參數與它的部分暫存器:先寫 al 再讀 eax,讀到的已經不是入口值
 REG_ALIASES = {"eax": ("eax", "ax", "al", "ah"), "edx": ("edx", "dx", "dl", "dh"),
                "ebx": ("ebx", "bx", "bl", "bh"), "ecx": ("ecx", "cx", "cl", "ch")}
@@ -101,14 +116,16 @@ def body_refs(cg, target: int, entries: list[int]) -> Refs | None:
 def reg_first_uses(cg, target: int, entries: list[int]) -> RegUses | None:
     """本體依位址順序、第一個 call 之前,第一個提到各暫存器參數的指令 -> {暫存器: (位址, 指令文字, 是不是單純覆寫)}。
 
-    「提到」含部分暫存器(`REG_ALIASES`)。單純覆寫 = `mov` / `lea` / `pop` 把它當目的而來源沒有用到它,或
-    `xor r, r` / `sub r, r`:入口值沒有被讀。call 之後不再看 —— 入口值可能已交給被呼叫端或被它改掉。
+    「提到」含部分暫存器(`REG_ALIASES`)。`push r` 不算,除非在它之前沒有別的指令提到 r、而且那個 push 是
+    第一個 call 的引數(call 後面緊跟 `add esp, N`,push 落在 N / 4 個引數之內)。
+    單純覆寫 = `mov` / `lea` / `pop` 把它當目的而來源沒有用到它,或 `xor r, r` / `sub r, r`:入口值沒有被讀。call 之後不再看 —— 入口值可能已交給被呼叫端或被它改掉。
     走不出本體回 None。"""
     res = SS.cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
     if res is None:
         return None
-    ins = res[2]
+    _, trace, ins = res
     out: RegUses = {}
+    pushed: dict[str, int] = {}
     for at in sorted(ins):
         i = ins[at]
         ops = [o.strip() for o in i.op_str.split(",")] if i.op_str else []
@@ -116,23 +133,146 @@ def reg_first_uses(cg, target: int, entries: list[int]) -> RegUses | None:
             pat = re.compile(r"\b(?:" + "|".join(al) + r")\b")
             if reg in out or not pat.search(i.op_str or ""):
                 continue
+            if i.mnemonic == "push" and ops == [reg]:
+                pushed.setdefault(reg, at)       # 只是存起來,暫存器裡的入口值還在;是不是 call 的引數到 call 才知道
+                continue
             dest_only = ops[0] in al and not any(pat.search(o) for o in ops[1:])
             same = len(ops) == 2 and ops[0] == ops[1] and ops[0] in al
             out[reg] = (at, f"{i.mnemonic} {i.op_str}".strip(),
                         (i.mnemonic in _OVERWRITE and dest_only) or (i.mnemonic in _ZEROING and same))
         if i.mnemonic == "call":
+            nxt = ins.get(at + i.size)
+            m = re.fullmatch(r"esp, (0x[0-9a-f]+|\d+)", nxt.op_str) if nxt is not None and nxt.mnemonic == "add" else None
+            for reg, pa in pushed.items():       # pushed 只記「在它之前沒有別的指令提到 r」的 push,所以它最早
+                if m and 1 <= (trace[at][0] - trace[pa][0]) // 4 <= int(m.group(1), 0) // 4:
+                    out[reg] = (pa, f"push {reg}", False)
             break
     return out
 
 
+def first_call(cg, target: int, entries: list[int]) -> tuple[int, int | None] | None:
+    """本體依位址順序的第一個 call -> (位址, 直接呼叫的目標;間接呼叫為 None);沒有 call 或走不出本體回 None。"""
+    res = SS.cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
+    for at in sorted(res[2] if res else {}):
+        i = res[2][at]
+        if i.mnemonic == "call":
+            return at, (int(i.op_str, 16) if i.op_str.startswith("0x") else None)
+    return None
+
+
+def saved_copy_refs(cg, target: int, entries: list[int]) -> SavedRefs | None:
+    """入口就被 `push r` 存起來的暫存器參數,本體之後以堆疊位置引用那一份的指令 -> {暫存器: [(位址, 指令文字)]}。
+
+    只認第一個 call 之前、而且在它之前沒有別的指令提到 r 的那個 push(存的才是入口值)。走不出本體回 None。"""
+    res = SS.cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
+    if res is None:
+        return None
+    _, trace, ins = res
+    depth: dict[str, int] = {}
+    seen: set[str] = set()
+    for at in sorted(ins):
+        i = ins[at]
+        for reg, al in REG_ALIASES.items():
+            if reg not in seen and re.search(r"\b(?:" + "|".join(al) + r")\b", i.op_str or ""):
+                seen.add(reg)
+                if i.mnemonic == "push" and i.op_str.strip() == reg:
+                    depth[reg] = trace[at][0] + 4           # push 之後它在入口 ESP 往下這麼多 byte 的地方
+        if i.mnemonic == "call":
+            break
+    out: SavedRefs = {reg: [] for reg in depth}
+    for at in sorted(ins):
+        i = ins[at]
+        for o in (i.op_str.split(",") if i.op_str else []):
+            d = SS._depth(o.strip(), *trace[at])
+            for reg, want in depth.items():
+                if d == want:
+                    out[reg].append((at, f"{i.mnemonic} {i.op_str}".strip()))
+    return out
+
+
+def raw_refs(cg, target: int, limit: int = 64) -> Refs:
+    """入口起的直線段裡引用堆疊參數格的指令 -> {格: [(位址, 指令文字)]}。給走不出本體的函式用。
+
+    依位址順序解,自己數 ESP 位移(push / pop / `sub|add esp, 常數`)與 ebp 框架(`mov ebp, esp`);遇到控制轉移、
+    其他改寫 ESP 的指令、或不認得的堆疊指令(pushal / leave 之類)就停 —— 之後的位移不可信。"""
+    delta, ebp, out, at = 0, None, {}, target
+    for _ in range(limit):
+        i = cg._insn(at)
+        if i is None or i.mnemonic.startswith(("j", "call", "ret", "loop", "iret")):
+            break
+        ops = [o.strip() for o in i.op_str.split(",")] if i.op_str else []
+        for o in ops:
+            k = SS._stack_param(o, delta, ebp)
+            if k:
+                out.setdefault(k, []).append((at, f"{i.mnemonic} {i.op_str}".strip()))
+        if i.mnemonic in ("push", "pop"):
+            delta += 4 if i.mnemonic == "push" else -4
+            if i.mnemonic == "pop" and ops == ["ebp"]:
+                ebp = None
+        elif i.mnemonic.startswith(("push", "pop", "enter", "leave")):
+            break
+        elif ops and ops[0] == "esp":
+            if i.mnemonic not in ("sub", "add") or not re.fullmatch(r"(0x[0-9a-f]+|\d+)", ops[1]):
+                break
+            delta += int(ops[1], 0) * (1 if i.mnemonic == "sub" else -1)
+        elif ops and ops[0] == "ebp" and i.mnemonic != "cmp" and i.mnemonic != "test":
+            ebp = delta if (i.mnemonic == "mov" and ops[1] == "esp") else None
+        at += i.size
+    return out
+
+
+def indirect_site(cg, owner: int, entries: list[int], at: int) -> Site | None:
+    """owner 本體裡位於 at 的間接 call -> (call 的文字, 引數個數, [第 j 個引數的 push (位址, 文字) 或 None]);
+    不是間接 call、後面沒有緊跟 `add esp, N`、或走不出 owner 的本體回 None。
+
+    第 j 個引數的 push = call 之前依位址往回、進入時 ESP 位移正好比 call 少 4j 的最近一個 push
+    (中間夾別的指令沒關係,位移對得上才算)。"""
+    res = SS.cfg_states(cg, owner, entries, {}, lambda i, td, st: st, frozenset())
+    if res is None or at not in res[2]:
+        return None
+    _, trace, ins = res
+    i = ins[at]
+    nxt = ins.get(at + i.size)
+    m = re.fullmatch(r"esp, (0x[0-9a-f]+|\d+)", nxt.op_str) if nxt is not None and nxt.mnemonic == "add" else None
+    if i.mnemonic != "call" or i.op_str.startswith("0x") or not m:
+        return None
+    n = int(m.group(1), 0) // 4
+    before = sorted((a for a in ins if a < at), reverse=True)
+    pushes: list[tuple[int, str] | None] = []
+    for j in range(1, n + 1):
+        hit = next((a for a in before if ins[a].mnemonic == "push" and trace[a][0] == trace[at][0] - 4 * j), None)
+        pushes.append(None if hit is None else (hit, f"push {ins[hit].op_str}"))
+    return f"call {i.op_str}", n, pushes
+
+
+@dataclass
+class Extra:
+    """`via` / `raw` / `indirect` 三種依據要用到的事實(其他依據不用)。"""
+    raw: Refs = field(default_factory=dict)                 # raw_refs
+    call: tuple[int, int | None] | None = None              # first_call
+    callee_regs: RegUses | None = None                      # 第一個 call 的目標的 reg_first_uses
+    callee_saved: SavedRefs | None = None                   # 第一個 call 的目標的 saved_copy_refs
+    ptr_refs: frozenset[int] = frozenset()                  # fixup 指到這個函式的位置
+    sites: dict[int, Site | None] = field(default_factory=dict)     # 間接呼叫點 -> indirect_site
+
+
+def _hex(b: dict, key: str) -> int | None:
+    try:
+        return int(b[key], 16)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def check_entry(r: dict, fn: dict | None, refs: Refs | None, sites: set[int], live_slots: set[int],
-                regs: RegUses | None = None, conv: str | None = None) -> str | None:
+                regs: RegUses | None = None, conv: str | None = None, more: Extra | None = None) -> str | None:
     """登錄的一筆 -> 錯誤訊息(None = 成立)。
 
     fn:登錄檔指到的函式(function_names.json 的條目;None = 不存在)。refs:`body_refs` 的結果(None = 走不出本體)。
     sites:EXE 裡直接呼叫它的呼叫點。live_slots:實機紀錄有值的堆疊格。
-    regs:`reg_first_uses` 的結果(None = 走不出本體);conv:`SS.call_conv` 的結果。兩個只有 `reg` 依據會用到。
+    regs:`reg_first_uses` 的結果(None = 走不出本體);conv:`SS.call_conv` 的結果。兩個只有 `reg` / `via` 依據會用到。
+    more:`via` / `raw` / `indirect` 依據要用到的事實(`Extra`)。
     """
+    more = more or Extra()
     if fn is None:
         return "函式不在 function_names.json"
     if r.get("name") != fn["name"]:
@@ -182,6 +322,42 @@ def check_entry(r: dict, fn: dict | None, refs: Refs | None, sites: set[int], li
                 return f"basis reg:{at:#x} 只是覆寫 {reg},沒有讀入口值"
             if b.get("insn") != hit[1]:
                 return f"basis reg:{at:#x} 的指令是 {hit[1]!r},登錄寫 {b.get('insn')!r}"
+            continue
+        if kind == "via":
+            if conv != "reg" or k > len(SS.VC.REG_ARGS):
+                return "basis via:這個函式不是暫存器傳參,或第 k 個參數不在暫存器"
+            reg = SS.VC.REG_ARGS[k - 1]
+            if regs is None or reg in regs:
+                return f"basis via:本體在第一個 call 之前自己提到了 {reg}(或走不出本體),請用 reg"
+            if more.call is None or more.call[1] is None or more.call[0] != _hex(b, "via"):
+                return "basis via:via 不是本體依位址順序的第一個 call,或它不是直接呼叫"
+            first = (more.callee_regs or {}).get(reg)
+            good = [first[:2]] if first is not None and not first[2] else []     # 被呼叫端直接讀暫存器
+            good = good + (more.callee_saved or {}).get(reg, [])                # 或讀它存在堆疊上的那一份
+            if (at, b.get("insn")) not in good:
+                return f"basis via:{at:#x} {b.get('insn')!r} 不是被呼叫端 {more.call[1]:#x} 讀 {reg} 入口值的指令"
+            continue
+        if kind == "raw":
+            if refs is not None:
+                return "basis raw:這個函式走得出本體,請用 body"
+            hit = [txt for s in slots for a, txt in more.raw.get(s, []) if a == at]
+            if b.get("insn") not in hit:
+                return f"basis raw:{at:#x} {b.get('insn')!r} 不是入口直線段裡引用第 {k} 個參數堆疊格的指令"
+            continue
+        if kind == "indirect":
+            if refs is None or any(refs.get(s) for s in slots):
+                return "basis indirect:本體有引用這個參數(或走不出本體),請用 body"
+            if _hex(b, "store") not in more.ptr_refs:
+                return "basis indirect:store 不是 fixup 指到這個函式的位置"
+            site = more.sites.get(at)
+            if site is None:
+                return f"basis indirect:{at:#x} 不是後面緊跟 add esp 的間接 call"
+            pre = SS.positioned(SS.parse_sig(fn["summary"])[0])
+            total = SS.slot_starts(pre)[-1] + (1 if pre[-1] == "double" else 0)
+            if site[0] != b.get("insn") or site[1] != total:
+                return f"basis indirect:{at:#x} 是 {site[0]!r}、推 {site[1]} 個引數;登錄寫 {b.get('insn')!r},摘要有 {total} 格"
+            if site[2][min(slots) - 1] != (_hex(b, "push_at"), b.get("push_insn")):
+                return f"basis indirect:{at:#x} 推第 {k} 個參數的是 {site[2][min(slots) - 1]},與登錄不同"
             continue
         if refs is None:
             return "basis body:走不出這個函式的本體,無從檢查(改用 caller / live)"
@@ -237,6 +413,7 @@ def load_reads(doc: dict, ctx: Ctx) -> tuple[dict[tuple[int, int], dict], list[s
     errs: list[str] = []
     memo: dict[int, Refs | None] = {}
     rmemo: dict[int, RegUses | None] = {}
+    ents = sorted(ctx.st.entries)
     for i, r in enumerate(doc.get("reads", [])):
         try:
             a = int(r["addr"], 16)
@@ -246,8 +423,20 @@ def load_reads(doc: dict, ctx: Ctx) -> tuple[dict[tuple[int, int], dict], list[s
         if a not in memo:
             memo[a] = body_refs(ctx.cg, a, ctx.st.entries) if a in ctx.by else None
             rmemo[a] = reg_first_uses(ctx.cg, a, ctx.st.entries) if a in ctx.by else None
+        more = None
+        kinds = {b.get("kind") for b in r.get("basis") or [] if isinstance(b, dict)}
+        if a in ctx.by and kinds & {"via", "raw", "indirect"}:
+            call = first_call(ctx.cg, a, ctx.st.entries)
+            t = call[1] if call else None
+            ats = {_hex(b, "at") for b in r["basis"] if b.get("kind") == "indirect"} - {None}
+            more = Extra(raw_refs(ctx.cg, a), call,
+                         reg_first_uses(ctx.cg, t, ctx.st.entries) if t is not None else None,
+                         saved_copy_refs(ctx.cg, t, ctx.st.entries) if t is not None else None,
+                         frozenset(src for src, dst in ctx.st.fixups.items() if dst == a),
+                         {x: indirect_site(ctx.cg, ents[max(bisect.bisect_right(ents, x) - 1, 0)], ctx.st.entries, x)
+                          for x in ats})
         e = check_entry(r, ctx.by.get(a), memo[a], set(ctx.sources.get(a, {})), live_slots(ctx, a), rmemo[a],
-                        SS.call_conv(a, ctx.cleanups, ctx.st.argc))
+                        SS.call_conv(a, ctx.cleanups, ctx.st.argc), more)
         key = (a, r.get("param"))
         if e is None and key in out:
             e = "重複"
@@ -294,6 +483,9 @@ def dossier(ctx: Ctx, a: int) -> dict:
     starts = SS.slot_starts(pre)
     slot_name = {s: pn for pn, s in zip(pre, starts)}
     refs = body_refs(ctx.cg, a, ctx.st.entries)
+    walkable = refs is not None
+    if not walkable:
+        refs = raw_refs(ctx.cg, a)               # 只有入口的直線段
     nargs = max(list(ctx.cleanups.get(a, set())) + [ctx.st.argc.get(a) or 0] + list(refs or {}))
     fw: list = []
     if nargs:
@@ -310,12 +502,12 @@ def dossier(ctx: Ctx, a: int) -> dict:
                      "sources": sorted({show_source(ctx, d) for _, ag in ctx.sources.get(a, {}).values()
                                         for d in ag.get(j, SS.UNK)})[:6]})
     return {"addr": a, "name": x["name"], "summary": summ, "params": params, "cleanups": sorted(ctx.cleanups.get(a, set())),
-            "argc": ctx.st.argc.get(a), "recorded": p is not None, "walkable": refs is not None, "slots": rows}
+            "argc": ctx.st.argc.get(a), "recorded": p is not None, "walkable": walkable, "slots": rows}
 
 
 def format_dossier(d: dict) -> list[str]:
     lines = [f"===== {d['addr']:#x} {d['name']}  參數列 {d['params']}  清堆疊 {d['cleanups']}  argc {d['argc']}  "
-             f"有實機紀錄 {d['recorded']}" + ("" if d["walkable"] else "  (走不出本體:沒有引用資訊)"),
+             f"有實機紀錄 {d['recorded']}" + ("" if d["walkable"] else "  (走不出本體:引用只看入口的直線段)"),
              f"   摘要:{d['summary'][:300]}"]
     for r in d["slots"]:
         lines.append(f"  第 {r['slot']} 格 {r['name']}")
@@ -433,6 +625,136 @@ def selftest() -> int:
     chk("reg:走不出本體", "走不出" in (cr(regs=None) or ""), True)
     chk("reg:at 格式錯", "at 格式錯" in (cr(basis=[{"kind": "reg", "insn": "x"}]) or ""), True)
 
+    print("[3c] push 不算讀;via / raw / indirect(續一百一十九)")
+    chk("push r 之後才讀:第一個提到的是後面那一條",
+        reg_first_uses(_G({0x200: [("push", "eax"), ("mov", "si, word ptr [eax + 8]"), ("pop", "ecx"), ("ret", "")]}),
+                       0x200, [0x200]).get("eax"), (0x201, "mov si, word ptr [eax + 8]", False))
+    chk("push r 之後被覆寫:是覆寫(存起來的那一份 reg 不追)",
+        reg_first_uses(_G({0x200: [("push", "ebx"), ("mov", "ebx, 1"), ("pop", "ebx"), ("ret", "")]}), 0x200,
+                       [0x200]).get("ebx"), (0x201, "mov ebx, 1", True))
+    gp = _G({0x200: [("push", "ebx"), ("push", "edx"), ("push", "eax"), ("call", "dword ptr [0x283c]"), ("add", "esp, 8"),
+                     ("pop", "ebx"), ("ret", "")]})
+    chk("push r 是第一個 call 的引數(add esp, 8 = 2 個):eax / edx 算讀,更早的 push ebx 只是存起來",
+        reg_first_uses(gp, 0x200, [0x200]), {"edx": (0x201, "push edx", False), "eax": (0x202, "push eax", False)})
+    chk("push r 是引數、之後才被覆寫:第一個提到的仍是那個 push(讀)",
+        reg_first_uses(_G({0x200: [("push", "eax"), ("mov", "eax, 1"), ("call", "ecx"), ("add", "esp, 4"), ("ret", "")]}),
+                       0x200, [0x200]).get("eax"), (0x200, "push eax", False))
+    chk("call 後面沒有 add esp:push 不當引數",
+        reg_first_uses(_G({0x200: [("push", "eax"), ("call", "ecx"), ("pop", "eax"), ("ret", "")]}), 0x200, [0x200]),
+        {"ecx": (0x201, "call ecx", False)})
+    gv = _G({0x400: [("push", "esi"), ("mov", "ecx, edx"), ("call", "0x500"), ("pop", "esi"), ("ret", "")],
+             0x500: [("push", "ebx"), ("push", "eax"), ("mov", "ebx, 1"), ("test", "eax, eax"),
+                     ("dec", "dword ptr [esp + 4]"), ("add", "esp, 8"), ("ret", "")]})
+    ents = [0x400, 0x500]
+    chk("第一個 call:直接呼叫的目標 / 間接 / 沒有 call",
+        (first_call(gv, 0x400, ents), first_call(gp, 0x200, [0x200]), first_call(gv, 0x500, ents)),
+        ((0x402, 0x500), (0x203, None), None))
+    sv = saved_copy_refs(gv, 0x500, ents)
+    chk("存起來的那一份:push ebx 在位移 4,[esp + 4](位移 8 時)讀的就是它;eax 那一份沒有人讀",
+        sv, {"ebx": [(0x504, "dec dword ptr [esp + 4]")], "eax": []})
+    chk("存起來的那一份:先被別的指令提到的暫存器不算(push 存的已不是入口值);第一個 call 之後的 push 也不算",
+        (saved_copy_refs(_G({0x500: [("mov", "ebx, 1"), ("push", "ebx"), ("pop", "ebx"), ("ret", "")]}), 0x500, [0x500]),
+         saved_copy_refs(_G({0x500: [("call", "ecx"), ("push", "ebx"), ("pop", "ebx"), ("ret", "")]}), 0x500, [0x500])),
+        ({}, {}))
+    fv = {"addr": "0x400", "name": "v", "summary": "(p, tab, n):…"}
+    okv = {"addr": "0x400", "name": "v", "param": 3, "pname": "n", "note": "讀到了", "date": "2026-10-13",
+           "basis": [{"kind": "via", "via": "0x402", "at": "0x504", "insn": "dec dword ptr [esp + 4]"}]}
+    mv = Extra(call=first_call(gv, 0x400, ents), callee_regs=reg_first_uses(gv, 0x500, ents), callee_saved=sv)
+    rv = reg_first_uses(gv, 0x400, ents)
+
+    def cv(conv: str | None = "reg", regs=rv, more: Extra | None = mv, **kw) -> str | None:
+        return check_entry({**okv, **kw}, fv, None, set(), set(), regs, conv, more)
+
+    chk("via:被呼叫端讀存起來的那一份 -> 成立", cv(), None)
+    chk("via:被呼叫端直接讀暫存器(第 1 個 eax,test eax, eax)-> 成立",
+        cv(param=1, pname="p", basis=[{"kind": "via", "via": "0x402", "at": "0x503", "insn": "test eax, eax"}]), None)
+    chk("via:指到被呼叫端覆寫它的指令", "不是被呼叫端 0x500 讀 ebx" in (cv(basis=[
+        {"kind": "via", "via": "0x402", "at": "0x502", "insn": "mov ebx, 1"}]) or ""), True)
+    chk("via:eax 存起來的那一份沒有人讀,指到讀 ebx 那一份的指令 -> 不成立", "讀 eax 入口值" in (cv(
+        param=1, pname="p", basis=[{"kind": "via", "via": "0x402", "at": "0x504", "insn": "dec dword ptr [esp + 4]"}]) or ""),
+        True)
+    chk("via:指令文字不同", "讀 ebx 入口值" in (cv(basis=[
+        {"kind": "via", "via": "0x402", "at": "0x504", "insn": "dec dword ptr [esp]"}]) or ""), True)
+    chk("via:本體自己提到了那個暫存器(第 2 個 edx)", "請用 reg" in (cv(param=2, pname="tab") or ""), True)
+    chk("via:via 不是第一個 call / 沒寫 / 第一個 call 是間接 / 沒有 call",
+        ["不是本體依位址順序的第一個 call" in (e or "") for e in (
+            cv(basis=[{**okv["basis"][0], "via": "0x401"}]), cv(basis=[{k: v for k, v in okv["basis"][0].items() if k != "via"}]),
+            cv(more=Extra(call=(0x402, None), callee_saved=sv)), cv(more=None))], [True] * 4)
+    chk("via:不是暫存器傳參 / 走不出本體", ("不是暫存器傳參" in (cv(conv="stack") or ""), "請用 reg" in (cv(regs=None) or "")),
+        (True, True))
+
+    gw = _G({0x600: [("push", "ebp"), ("mov", "ebp, esp"), ("mov", "ecx, dword ptr [esp + 4]"), ("cmp", "ebp, 0"),
+                     ("mov", "eax, dword ptr [ebp + 8]"), ("sub", "esp, 8"), ("mov", "edx, dword ptr [esp + 0x14]"),
+                     ("mov", "ebp, dword ptr [ebp + 0x10]"), ("mov", "ebx, dword ptr [ebp + 0x10]"), ("mov", "esp, edx"),
+                     ("mov", "eax, dword ptr [esp + 0x10]"), ("jmp", "ecx")]})
+    rw = raw_refs(gw, 0x600)
+    chk("直線段:框架與 sub esp 之後的位移都換算;[esp + 4](回傳位址)不算;ebp 被改寫後的 [ebp + 0x10] 不算;改寫 ESP 之後不看",
+        rw, {1: [(0x604, "mov eax, dword ptr [ebp + 8]")], 2: [(0x606, "mov edx, dword ptr [esp + 0x14]")],
+             3: [(0x607, "mov ebp, dword ptr [ebp + 0x10]")]})
+    chk("直線段:遇到 jmp / pushal 就停;pop ebp 之後 ebp 不再是框架",
+        (raw_refs(_G({0x600: [("jmp", "0x700"), ("mov", "eax, dword ptr [esp + 4]")]}), 0x600),
+         raw_refs(_G({0x600: [("pushal", ""), ("mov", "eax, dword ptr [esp + 0x24]")]}), 0x600),
+         raw_refs(_G({0x600: [("push", "ebp"), ("mov", "ebp, esp"), ("pop", "ebp"), ("mov", "eax, dword ptr [ebp + 8]")]}),
+                  0x600)), ({}, {}, {}))
+    chk("直線段:add esp 往回算", raw_refs(_G({0x600: [("sub", "esp, 0x10"), ("add", "esp, 8"),
+                                                 ("mov", "eax, dword ptr [esp + 0xc]"), ("jmp", "eax")]}), 0x600),
+        {1: [(0x602, "mov eax, dword ptr [esp + 0xc]")]})
+    chk("這個假本體走不出來(以間接 jmp 結束)", body_refs(gw, 0x600, [0x600]), None)
+    fw = {"addr": "0x600", "name": "w", "summary": "(a, b, c):…"}
+    okw = {"addr": "0x600", "name": "w", "param": 2, "pname": "b", "note": "讀到了", "date": "2026-10-13",
+           "basis": [{"kind": "raw", "at": "0x606", "insn": "mov edx, dword ptr [esp + 0x14]"}]}
+
+    def cw(refs_=None, more: Extra | None = Extra(raw=rw), **kw) -> str | None:
+        return check_entry({**okw, **kw}, fw, refs_, set(), set(), None, None, more)
+
+    chk("raw:成立", cw(), None)
+    chk("raw:走得出本體的函式不收", cw(refs_={}), "basis raw:這個函式走得出本體,請用 body")
+    chk("raw:指到引用別的參數的指令 / 指令文字不同 / 直線段以外的位址 / 位址錯但文字對 / 沒有 Extra",
+        ["不是入口直線段裡引用第 2 個參數" in (e or "") for e in (
+            cw(basis=[{"kind": "raw", "at": "0x604", "insn": "mov eax, dword ptr [ebp + 8]"}]),
+            cw(basis=[{"kind": "raw", "at": "0x606", "insn": "mov edx, dword ptr [esp + 0x10]"}]),
+            cw(basis=[{"kind": "raw", "at": "0x60a", "insn": "mov eax, dword ptr [esp + 0x10]"}]),
+            cw(basis=[{"kind": "raw", "at": "0x604", "insn": "mov edx, dword ptr [esp + 0x14]"}]), cw(more=None))], [True] * 5)
+
+    gi = _G({0x800: [("push", "edi"), ("push", "5"), ("mov", "eax, edx"), ("push", "esi"), ("push", "edx"),
+                     ("call", "dword ptr [eax + 0x1a0]"), ("add", "esp, 0xc"), ("pop", "edi"), ("ret", "")],
+             0x900: [("push", "eax"), ("call", "0x800"), ("add", "esp, 4"), ("sub", "esp, 4"), ("add", "esp, 4"),
+                     ("call", "ebx"), ("ret", "")]})
+    si = indirect_site(gi, 0x800, [0x800, 0x900], 0x805)
+    chk("間接呼叫點:3 個引數,第 j 個的 push 依位移對(中間夾 mov 沒關係;更早的 push edi 不是引數)",
+        si, ("call dword ptr [eax + 0x1a0]", 3, [(0x804, "push edx"), (0x803, "push esi"), (0x801, "push 5")]))
+    chk("間接呼叫點:直接 call / 後面沒有 add esp / 不在本體 / 不是 call -> None",
+        [indirect_site(gi, o, [0x800, 0x900], a) for o, a in ((0x900, 0x901), (0x900, 0x905), (0x800, 0x999), (0x900, 0x903))],
+        [None] * 4)
+    fi = {"addr": "0xa00", "name": "cb", "summary": "(drv, seq, st):…"}
+    oki = {"addr": "0xa00", "name": "cb", "param": 2, "pname": "seq", "note": "讀到了", "date": "2026-10-13",
+           "basis": [{"kind": "indirect", "store": "0x950", "at": "0x805", "insn": "call dword ptr [eax + 0x1a0]",
+                      "push_at": "0x803", "push_insn": "push esi"}]}
+    ri = {1: [(0xa01, "mov eax, dword ptr [esp + 4]")], 3: [(0xa02, "mov edx, dword ptr [esp + 0xc]")]}
+    mi = Extra(ptr_refs=frozenset({0x950}), sites={0x805: si})
+
+    def ci(fn_=fi, refs_=ri, more: Extra | None = mi, **kw) -> str | None:
+        return check_entry({**oki, **kw}, fn_, refs_, set(), set(), None, None, more)
+
+    def bi(**kw) -> list[dict]:
+        return [{**oki["basis"][0], **kw}]
+
+    chk("indirect:成立", ci(), None)
+    chk("indirect:本體有引用的參數不收(第 1 個)/ 走不出本體",
+        ["請用 body" in (e or "") for e in (ci(param=1, pname="drv"), ci(refs_=None))], [True, True])
+    chk("indirect:store 不是指到它的 fixup / 沒寫 / 沒有 Extra",
+        ["store 不是 fixup" in (e or "") for e in (ci(basis=bi(store="0x951")), ci(basis=[
+            {k: v for k, v in oki["basis"][0].items() if k != "store"}]), ci(more=None))], [True] * 3)
+    chk("indirect:at 不是間接呼叫點", "不是後面緊跟 add esp 的間接 call" in (ci(basis=bi(at="0x804")) or ""), True)
+    chk("indirect:call 的文字不同 / 引數個數與摘要不同",
+        ["推 3 個引數" in (e or "") for e in (ci(basis=bi(insn="call dword ptr [eax + 0x1a4]")),
+                                          ci(fn_={**fi, "summary": "(drv, seq, st, extra):…"}))], [True, True])
+    chk("indirect:最後一個參數是 double 時多算一格(4 個引數的呼叫點對 3 個參數)",
+        ci(fn_={**fi, "summary": "(drv, seq, double):…"},
+           more=Extra(ptr_refs=frozenset({0x950}), sites={0x805: (si[0], 4, si[2] + [(0x800, "push edi")])})), None)
+    chk("indirect:push 指到別的引數 / push 的文字不同",
+        ["與登錄不同" in (e or "") for e in (ci(basis=bi(push_at="0x804")), ci(basis=bi(push_insn="push edx")))], [True, True])
+
     print("[4] 三個數字")
     chk("機器比過 / 只有人工 / 都沒有", classify([(1, 1), (1, 2), (2, 1), (3, 1)], {(1, 1), (2, 1)}, {(2, 1), (1, 2)}),
         (2, 1, [(3, 1)]))
@@ -463,6 +785,32 @@ def selftest() -> int:
         ("reg", (0x4C4D2, "cmp word ptr [edx + 8], 0", False)))
     chk("真實:登錄裡有 reg 依據的條目(≥ 5 筆),全數成立",
         sum(any(b.get("kind") == "reg" for b in r["basis"]) for r in reads.values()) >= 5, True)
+    chk("真實:emu_ld_fma_store 的 push eax 不算讀,第一個讀 eax 的是 0x4ce69;raise_via_hook 的 push eax 是 call 的引數",
+        ((reg_first_uses(ctx.cg, 0x4CE64, ctx.st.entries) or {}).get("eax"),
+         (reg_first_uses(ctx.cg, 0x4D726, ctx.st.entries) or {}).get("eax")),
+        ((0x4CE69, "mov si, word ptr [eax + 8]", False), (0x4D726, "push eax", False)))
+    chk("真實:emu_ld_mul_add 入口存起來的 ebx 只有 0x4ceca 讀(每輪減 1)",
+        (saved_copy_refs(ctx.cg, 0x4CE84, ctx.st.entries) or {}).get("ebx"), [(0x4CECA, "dec dword ptr [ebp + 0xc]")])
+    chk("真實:stack_switch_and_jump 走不出本體,入口直線段引用 3 個參數各 1 處",
+        (body_refs(ctx.cg, 0x3F0F7, ctx.st.entries), {k: [a for a, _ in v] for k, v in raw_refs(ctx.cg, 0x3F0F7).items()}),
+        (None, {1: [0x3F0FE], 2: [0x3F101], 3: [0x3F104]}))
+    chk("真實:ail_xmidi_event 0x42d98 經 [+0x1a0] 呼叫 event 回呼,推 5 個,第 2 個是 0x42d94 push esi",
+        (lambda t: t and (t[0], t[1], t[2][1]))(indirect_site(ctx.cg, 0x42980, ctx.st.entries, 0x42D98)),
+        ("call dword ptr [eax + 0x1a0]", 5, (0x42D94, "push esi")))
+    d3 = dossier(ctx, 0x3F0F7)
+    chk("真實:走不出本體的函式,資料卡改印入口直線段的引用", (d3["walkable"], [bool(r["refs"]) for r in d3["slots"]]),
+        (False, [True] * 3))
+    kinds = [b.get("kind") for r in reads.values() for b in r["basis"]]
+    chk("真實:登錄裡 via / raw / indirect 三種依據都有條目,全數成立",
+        [kinds.count(k) >= 1 for k in ("via", "raw", "indirect")], [True] * 3)
+    viar = next(r for r in raw["reads"] if r["basis"][0].get("kind") == "via")
+    chk("真實:via 改指被呼叫端覆寫 ebx 的那一條(0x4cea5)-> 不成立",
+        ["讀 ebx 入口值" in e for e in load_reads({"reads": [{**viar, "basis": [
+            {**viar["basis"][0], "at": "0x4cea5", "insn": "mov ebx, dword ptr [ebp]"}]}]}, ctx)[1]], [True])
+    indr = next(r for r in raw["reads"] if r["basis"][0].get("kind") == "indirect")
+    chk("真實:indirect 的 push 改指第 1 個引數(0x42d97 push edx)-> 不成立",
+        ["與登錄不同" in e for e in load_reads({"reads": [{**indr, "basis": [
+            {**indr["basis"][0], "push_at": "0x42d97", "push_insn": "push edx"}]}]}, ctx)[1]], [True])
     first = raw["reads"][0]                           # 取原始條目:登錄全數不成立時也不會因為空清單當機
     chk("真實:把一筆登錄的 pname 改掉 -> 過期", ["過期" in e for e in load_reads({"reads": [{**first, "pname": "舊名"}]}, ctx)[1]],
         [True])

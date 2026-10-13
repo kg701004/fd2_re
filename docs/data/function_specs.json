@@ -1091,7 +1091,7 @@
    "name": "printf_core",
    "source": {
     "summary_of": "0x3e117",
-    "quote": "(回呼參數, 格式, 參數表, 輸出回呼)"
+    "quote": "(輸出目標*, 格式, 參數表, 輸出回呼)"
    },
    "claims": [
     {
