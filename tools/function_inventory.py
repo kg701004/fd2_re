@@ -2214,8 +2214,8 @@ def _selftest_live(fails: list[str]) -> bool:
           "是 leaf_get[0x52814]",
           "0x37028" not in sd["names"] and sd["names"].get("0x4670c", {}).get("name") == "leaf_get[0x52814]",
           str((sd["names"].get("0x37028"), sd["names"].get("0x4670c"))))
-    check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 sprite_walk_on",
-          sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
+    check("0x2185f 依呼叫順序帶參數:先 play_sfx 再 lut_circle_ramp_at_unit(2026-10-13 由 sprite_walk_on 改名)",
+          sd["names"].get("0x2185f", {}).get("name") == "wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0xf, 0xa))", str(sd["names"].get("0x2185f")))
     check("0x20707 的常數參數讀得出來(兩次 unit_inactive 的單位編號)",
           sd["names"].get("0x20707", {}).get("name") == "wrapper(raw_result_code_0_1_2(), unit_inactive(0x32), unit_inactive(0x33))",
           str(sd["names"].get("0x20707")))

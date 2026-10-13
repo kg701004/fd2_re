@@ -1537,7 +1537,7 @@
    "addr": "0x34317",
    "name": "fill_band_color_run6",
    "param": 1,
-   "pname": "color",
+   "pname": "符號碼",
    "basis": [
     {
      "kind": "body",
@@ -1545,7 +1545,7 @@
      "insn": "mov edx, dword ptr [esp + 0xc]"
     }
    ],
-   "note": "color:0x34331 取 & 0xf8 當基底(色號)",
+   "note": "符號碼:0x34331 取 & 0xf8 當基底;呼叫端傳的是防拷答案的一格(續一百二十一,原名 color 是誤判)",
    "date": "2026-10-13"
   },
   {

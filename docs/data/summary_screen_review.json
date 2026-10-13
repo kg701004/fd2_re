@@ -545,9 +545,9 @@
    "addr": "0x1f183",
    "name": "unit_uses_move_cost_row19",
    "screen": "param_name",
-   "key": "p1:count",
+   "key": "p1:count_or_unit",
    "verdict": "not_error",
-   "reason": "target_cursor_loop 的第 2 個參數有兩種用法:模式 6 時 0x115d6 存進區域變數 [esp + 0xc],0x116a2 乘 0x50 取單位記錄、0x116c6 推給本函式(這時它是單位);其他模式是候選個數。名稱 count 取多數用法,摘要已註明(FD2.EXE 反組譯)",
+   "reason": "target_cursor_loop 的第 2 個參數有兩種用法:模式 6 時 0x115d6 存進區域變數 [esp + 0xc],0x116a2 乘 0x50 取單位記錄、0x116c6 推給本函式(這時它是單位);其他模式是候選個數。參數名在續一百二十一由 count 改成 count_or_unit,兩種用法都寫進名字;轉交給本函式的是模式 6 的那一種(FD2.EXE 反組譯)",
    "date": "2026-10-13"
   },
   {

@@ -208,6 +208,8 @@ SMALL_NAMES = frozenset({
     "店種", "陣營", "幀號", "動畫號", "道具", "事件號", "指令號", "stride", "目的跨距", "長度", "大小", "char_id",
     "amount", "camp", "line", "cmd", "glyph", "shadow", "bg", "off", "k", "r", "g", "選擇", "選中項", "階段", "列",
     "倍率", "選擇值", "距離門檻", "陣營篩選", "回復量",
+    "count_or_unit",          # target_cursor_loop 的第 2 個:個數,模式 6 時是單位編號;兩種都是小整數
+    "符號碼",                 # 防拷畫面的符號編號(fill_band_color_run6;實機值 0x0a..0x25)
     # 續一百一十六
     "進位", "cursor", "limit", "上限", "寬度", "位數", "小數位數", "整數位數", "模式", "handle", "fd", "EFLAGS", "cx", "cy",
     "portrait", "字元", "最大值", "目前值", "格", "段", "色格", "圖格", "旗標", "人數", "筆數", "段落數", "操作數", "編號",
@@ -3079,7 +3081,7 @@ def selftest() -> int:
     base18 = {(c.addr, c.key) for c in run_sc2.cands if c.screen == "param_name"}
     chk("真實:目前的候選恰為核對過的 15 筆(續一百一十七的 4 筆 + 續一百一十九補參數列後的 11 筆,理由都在 review 檔)",
         sorted(base18),
-        [(0x11EB0, "p3:panel_buf"), (0x11EB0, "p3:strip"), (0x14742, "p5:mode"), (0x1F183, "p1:count"), (0x219AD, "p5:cy"),
+        [(0x11EB0, "p3:panel_buf"), (0x11EB0, "p3:strip"), (0x14742, "p5:mode"), (0x1F183, "p1:count_or_unit"), (0x219AD, "p5:cy"),
          (0x2EBE1, "p1:守方"), (0x2EBE1, "p2:攻方"), (0x3771C, "p2:目的"), (0x3D36C, "p1:檔名或記憶體影像"),
          (0x4584D, "p3:資料 1"), (0x49BB7, "p1:輸出"), (0x4D1F0, "p1:輸出"), (0x4D88C, "p2:整數位數"), (0x4E98D, "p4:背景圖"),
          (0x4ECBF, "p4:dst")])

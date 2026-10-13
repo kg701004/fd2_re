@@ -664,7 +664,7 @@
     "sync_party": 1,
     "increment_chapter": 1,
     "delay": 4,
-    "sprite_walk_on": 3,
+    "lut_circle_ramp_at_unit": 3,
     "buffer_flicker": 2,
     "palette_delta_ramp": 2,
     "load_res": 3,

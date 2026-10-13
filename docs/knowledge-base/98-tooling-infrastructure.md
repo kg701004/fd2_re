@@ -9409,3 +9409,77 @@ param_flow 只補實機型別沒比到的參數,所以實機比到的變多時�
 - `target_cursor_loop` 的第 2 個參數名仍是 count(模式 6 時是單位編號,摘要有寫)。
 - 呼叫紀錄的 8 格上限沒有改(只影響 `grid_path_search` 的 2 個參數)。
 - `LIBC_FUNCS` 只收了續一百一十九補參數列的 C runtime 函式。
+
+## 2026-10-13 續一百二十一:續一百二十「仍留的」沒有一項是工具做不到 —— `sprite_walk_on` 改名、`target_cursor_loop` 參數改名、防拷比對以 DOSBox-X 驗證
+
+起因:使用者問續一百二十「仍留的」六項,是不是工具不足或功能要改善才做不了。逐項拆開:沒有一項是做不到。四項只是沒做,
+兩項(呼叫紀錄的 8 格上限、`LIBC_FUNCS` 的範圍)是判斷不值得做。本輪做前四項;與續一百一十六那一次是同一種情形。
+
+| 續一百二十留的 | 本輪 | 性質 |
+|---|---|---|
+| sprite_walk_on 這個標籤與本體不符 | 改名 `lut_circle_ramp_at_unit`;名稱的錨點由 doc58 的一句話換成 doc35 §18(本體讀完) | 靜態 |
+| 那個函式沒有登錄在 `function_names.json` | 不是漏登:它的名稱在 `DOC_OP_NAMES`,同一個位址不能兩邊都登(`--check-names` 的規則)。它的說明現在是 doc35 §18 | — |
+| 防拷比對恆通過,沒有實機驗證 | 在 DOSBox-X 上輸入錯的答案:屬實 | 實機 |
+| `target_cursor_loop` 的第 2 個參數叫 count | 改成 count_or_unit | 靜態 |
+
+**一、`0x2189a` 改名**(細節與反組譯在 doc35 §18)。
+
+- 本體是以單位為圓心、半徑逐幀變化的圓形查表換色,固定 10 幀;三個引數是 (單位編號, 起始半徑, 每幀加多少)(FD2.EXE 反組譯)。
+- 直接呼叫它的有 6 處,不是先前以為的 5 處:多的一處是 `ai_item_action` 的 0x151a2,傳 (單位, 0x50, −4),半徑是往回縮的(FD2.EXE 反組譯)。
+  所以名稱不寫 expand / burst;與游標版 `lut_circle_burst_at_cursor` 同一族,取 `lut_circle_ramp_at_unit`。
+- 讀的時候發現兩處舊記載把引數順序寫反:doc58 把第 22 章三次呼叫列成 (10,15,1)、(10,15,1)、(16,30,1) 並稱為座標,那是 push 的順序;
+  依引數順序是 (1, 15, 10)、(1, 15, 10)、(1, 30, 16),0x24976 / 0x249c2 / 0x24a0e 都是 `push 1`(FD2.EXE 反組譯)。`chapter_beats_notes.json` 的兩條註記照著寫反,
+  另一條把 malloc 寫成三個引數。三條註記改寫,doc58 原句保留、後面加訂正。
+- 第 22 章那三次呼叫的數字與 `command_handler_11`、`command_handler_12` 傳的兩組相同(0xf / 0xa 與 0x1e / 0x10,FD2.EXE 反組譯)。
+- 改的檔:`tools/derive_native_argcounts.py`(`DOC_OP_NAMES` 那一筆)、`tools/function_inventory.py`(selftest 釘的結構名)、
+  `docs/data/function_names.json`(`command_handler_11` / `12` 的摘要;`ai_item_action` 補這一個呼叫)、`docs/data/chapter_beats_notes.json`。
+  重生的產物:`docs/data/native_argcounts.json`、`docs/data/chapter_beats/ch22_post.json`、`docs/data/chapter_beats/_stats.json`(只有 op 名稱與註記不同)。
+
+**二、`target_cursor_loop` 的第 2 個參數**:count -> count_or_unit(模式 6 時是單位編號,其餘是候選個數;續一百二十已寫在摘要)。
+新名稱加進 `SMALL_NAMES`(兩種用法都是小整數),所以實機型別照常比,機器比過的數目不變。`param_name` 的候選鍵含呼叫者的參數名,
+`unit_uses_move_cost_row19` 那一筆由 `p1:count` 變成 `p1:count_or_unit`:review 的那一列與 selftest 的釘值跟著改(判定仍是 not_error,理由不變)。
+
+**三、防拷比對:DOSBox-X 驗證**(原版 FD2.EXE,md5 33464c81e6a364fd0660141139aa8e6e;只改模擬器記憶體,沒有動任何檔案)。
+路線與續四十相同:第 1 章存檔 -> 城鎮 -> 出口 -> 戰前劇情 -> 戰場游標。
+
+| 步驟 | 讀到的(DOSBox-X) |
+|---|---|
+| 改之前,0x118a3 起 16 bytes | `80 3d 44 fa 1e 00 00 eb 07 e8 fe 26 02 00 eb f0`;[0x51a42] = 2、[0x53a44] = 0 |
+| 0x118aa 的 EB 改 75、[0x51a42] 設 0 | 讀回 `... 75 07 ...`;[0x51a42] = 0 |
+| 設 4 個斷點 | 0x34228(比對一格)、0x34235(記「有不一樣」)、0x34243(答錯的路)、0x342af(答對的路) |
+| 游標在索爾上按 Enter | 密碼畫面,題號 54 |
+| 三格都選第 3 個候選 | — |
+| 斷點 0x34228 第 1 次停 | 已輸入 [esp+0x30..0x32] = `0c 0c 22`;答案 [edi..] = `0d 0f 21`:三格都不同 |
+| 恢復兩次 | 都停在 0x34228(EAX = 1、2) |
+| 再恢復 | 停在 0x342af。0x34235 與 0x34243 都沒有停 |
+| 清斷點、恢復 | [0x53a44] = 1;回到戰場,游標所在單位進入移動選格 |
+
+- 四個斷點是同一批設的,0x34228 與 0x342af 都停了,所以「另外兩個沒停」不是斷點沒生效(DOSBox-X)。
+- 答案列的身分另由檔案核對:FD2.EXE 檔案 0x60223(= 0x60181 + 54×3)的 3 bytes 是 `0d 0f 21`,與執行中讀到的相同(FD2.EXE 反組譯的資料段)。
+- 只驗了一題、一組輸入。靜態上 0x34233 是無條件 jmp,與輸入無關;這一次實機的用途是否證「反組譯讀錯了」,不是窮舉。
+- 截圖:`evidence/copyprot_wrong_answer_entry_20261013.png`(第 54 題,已選兩格)、`evidence/copyprot_wrong_answer_passed_20261013.png`(通過後回到戰場)。
+- 這個 instance 的呼叫紀錄沒有收進 `.wsl_build/`:執行中的記憶體被改過,不當成一般的遊玩紀錄(實機紀錄仍是 12 份)。
+
+**四、實機順帶看到的一筆參數名錯誤**。`fill_band_color_run6` 的第 1 個參數在續一百一十八由 v 改名 color(色號),是錯的:它收的是答案的一格,
+輸出的 6 個值就是畫面上那一列候選符號(原樣交給 `draw_password_screen` 的「候選符號陣列」,0x34091 / 0x340b8,FD2.EXE 反組譯)。DOSBox-X 上答案 0d / 0f / 21
+的三格,選第 3 個候選得到 0c / 0c / 22,與式子 (v & 0xf8) + (v%8 > 3 ? 2 : 0) + i 相符。參數名改成「符號碼」(加進 `SMALL_NAMES`),
+`param_read_review.json` 那一筆跟著改;函式名沒有改。`table_60181_entry` 的摘要補上它是防拷的答案表(題號 = prng_next() % 100,0x3404f,FD2.EXE 反組譯)。
+
+**結果**(12 份紀錄;`python tools/screen_summaries_by_calllog.py`、`python tools/param_dossier.py --coverage`):
+
+| | 續一百二十 | 本輪 |
+|---|---|---|
+| 具名參數 | 1525 | 1525 |
+| 機器比過 / 只有人工讀過 / 都沒有 | 1176 / 349 / 0 | 1176 / 349 / 0 |
+| 候選 / 已改正 / 非錯誤 / 未核對 | 42 / 43 / 42 / 0 | 42 / 43 / 42 / 0 |
+| `DOC_OP_NAMES` | 27 筆 | 27 筆(1 筆改名、換錨點) |
+| 動態驗證過的結論 | — | 防拷比對恆通過(DOSBox-X,第 54 題、1 組輸入;斷點 0x342af) |
+
+**驗證**:`function_inventory.py --check-names` 1149 筆的反組譯證據全部相符(FD2.EXE 反組譯;本輪新增的 0x151a2、0x34233 兩條在內);其餘閘門的結果寫在提交訊息。工具的邏輯沒有新增(兩個名單各加一個名稱、兩處釘值改字串),所以沒有另做突變。
+
+**仍留的**:
+- 呼叫紀錄的 8 格上限、`LIBC_FUNCS` 的範圍:維持不做,理由同續一百二十。
+- `lut_circle_ramp_at_unit` 在畫面上的樣子沒有錄;doc35 §18 全部是靜態讀到的。
+- 防拷比對只驗了一題一組輸入;這個參考版為什麼兩處(0x118aa、0x34233)都是無條件跳躍,是發行商的版本還是第三方修改,仍無法判定。
+- 真正屬於工具能力不足的只有一類,不在上面的清單:型別相同的兩個參數對調。續一百二十量過,4 筆已知的對調篩選工具只抓得到 1 筆;
+  能補的只有實機呼叫紀錄或人工讀反組譯。

@@ -617,8 +617,10 @@ DOC_OP_NAMES = {
               "indexed double-buffer visual adapter"),
     0x24d22: ("reveal_wipe", 1, "58-remake-live-verification-log.md",
               "設定/觸發」雙模式函式"),
-    0x2189a: ("sprite_walk_on", 3, "58-remake-live-verification-log.md",
-              "10-iteration 的 sprite walk-on 動畫迴圈"),
+    # 2026-10-13:原名 sprite_walk_on,錨在 doc58「10-iteration 的 sprite walk-on 動畫迴圈」。那句話只確認了圈數,
+    # 「walk-on」是沒讀本體就取的;本體讀完後寫成 doc35 §18,名稱與游標版 lut_circle_burst_at_cursor(0x21eb1)同族。
+    0x2189a: ("lut_circle_ramp_at_unit", 3, "35-battle-animation-rendering.md",
+              "以單位為圓心、半徑逐幀變化的圓形查表換色"),
     0x11d40: ("palette_brightness_ramp", 3, "35-battle-animation-rendering.md",
               "figure/台座的色盤淡入(brightness ramp 0→48)"),
     # 2026-09-10:8 個「argc 已 CONFIRMED 但無名稱」的原語之一,先前留白的理由是

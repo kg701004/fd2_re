@@ -1186,7 +1186,7 @@
   {
    "addr": "0x115b6",
    "name": "target_cursor_loop",
-   "summary": "(mode, count, targets) verified_addresses 已記載:攻擊/道具/法術三條玩家路徑共用的目標游標與確認迴圈。方向鍵 0x48/0x50/0x4b/0x4d 移動游標;確認鍵 0x39/0x1c 先看地圖緩衝 byte(0xff 拒絕、targetCode 4 直接接受),否則呼叫 0x14742 做合法性判定。 移動用的模式 4(呼叫端 0x18981)2026-10-01 DOSBox-X(doc98 續六十六):可達格與自己的格子按確認都回 1(返回點 0x18986);之後 0x4e4f6 的路徑結果同格回 0(原地開指令環)、相鄰格回 1(移過去再開環)。瞬移與沒瞬移的單位讀值相同。 續六十七(DOSBox-X):游標在隊員 #1 佔的格(0x146d1 標 0xff)按 Return 不會返回(0x18986 沒有停點),移到旁邊空格才回 1。 續一百零九(呼叫紀錄篩選,補回傳值):move_confirm_key_poll 讀到鍵碼 1(Esc)時回 -1(0x117b0 / 0x117b9)= 取消。舊摘要只寫了回 1;實機 41 次回傳:-1 有 27 次、1 有 14 次。 續一百一十九(直接讀反組譯):補參數名 —— 第 1 個是模式(0x115d1 與 6 比;原樣當 find_unit_near_cursor 的陣營篩選);第 3 個是候選單位編號的 byte 陣列、第 2 個是它的個數:不為 0 時先把游標移到 targets[0](0x115fa),按 0x2c / 0x4c 鍵換下一個並繞回(0x11779..0x11784)。模式 6 時第 2 個不是個數,是一個單位編號(續一百二十,靜態):0x115d6 存進區域變數後把個數當 0;按確認時 0x11664 掃「有沒有別的單位站在游標格」會跳過它,0x116a2 起以它的單位記錄([0x53a45] + 編號×0x50)的 [+0x20] / [+7] 與 unit_uses_move_cost_row19 選移動成本列。呼叫端 player_item_action 0x1bdf2、player_spell_select 0x1d238 以模式 6 呼叫時,第 2 個推的是區域變數裡的一個 byte、第 3 個推 0。",
+   "summary": "(mode, count_or_unit, targets) verified_addresses 已記載:攻擊/道具/法術三條玩家路徑共用的目標游標與確認迴圈。方向鍵 0x48/0x50/0x4b/0x4d 移動游標;確認鍵 0x39/0x1c 先看地圖緩衝 byte(0xff 拒絕、targetCode 4 直接接受),否則呼叫 0x14742 做合法性判定。 移動用的模式 4(呼叫端 0x18981)2026-10-01 DOSBox-X(doc98 續六十六):可達格與自己的格子按確認都回 1(返回點 0x18986);之後 0x4e4f6 的路徑結果同格回 0(原地開指令環)、相鄰格回 1(移過去再開環)。瞬移與沒瞬移的單位讀值相同。 續六十七(DOSBox-X):游標在隊員 #1 佔的格(0x146d1 標 0xff)按 Return 不會返回(0x18986 沒有停點),移到旁邊空格才回 1。 續一百零九(呼叫紀錄篩選,補回傳值):move_confirm_key_poll 讀到鍵碼 1(Esc)時回 -1(0x117b0 / 0x117b9)= 取消。舊摘要只寫了回 1;實機 41 次回傳:-1 有 27 次、1 有 14 次。 續一百一十九(直接讀反組譯):補參數名 —— 第 1 個是模式(0x115d1 與 6 比;原樣當 find_unit_near_cursor 的陣營篩選);第 3 個是候選單位編號的 byte 陣列、第 2 個是它的個數:不為 0 時先把游標移到 targets[0](0x115fa),按 0x2c / 0x4c 鍵換下一個並繞回(0x11779..0x11784)。模式 6 時第 2 個不是個數,是一個單位編號(續一百二十,靜態;續一百二十一把參數名由 count 改成 count_or_unit):0x115d6 存進區域變數後把個數當 0;按確認時 0x11664 掃「有沒有別的單位站在游標格」會跳過它,0x116a2 起以它的單位記錄([0x53a45] + 編號×0x50)的 [+0x20] / [+7] 與 unit_uses_move_cost_row19 選移動成本列。呼叫端 player_item_action 0x1bdf2、player_spell_select 0x1d238 以模式 6 呼叫時,第 2 個推的是區域變數裡的一個 byte、第 3 個推 0。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4386,7 +4386,7 @@
   {
    "addr": "0x2185f",
    "name": "command_handler_11",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))。 sprite_walk_on 是 doc58 沿用的 op 標籤(tools/derive_native_argcounts.py 的 DOC_OP_NAMES),不是讀本體得到的名字:0x2189a 的本體(靜態,續一百二十)以第 1 個引數那個單位的畫面座標為圓心((x-捲動x)×24+12, (y-捲動y)×24+0x12),固定跑 10 幀(0x21993 cmp ebx, 0xa),第 i 幀以 [0x53a6d] 資源第 i 項為 LUT 呼叫 remap_circle_scanlines(0x21955),半徑由第 2 個引數起、每幀加第 3 個引數(0x2198e) —— 這裡是 0xf 起每幀 +0xa 的圓形換色效果。之後 push 0xb 並 jmp 0x2153b 進入 earthquake_spell_effect。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0xf, 0xa))。 lut_circle_ramp_at_unit(0x2189a;續一百二十一由 sprite_walk_on 改名,舊名出自 doc58 一句沒讀本體的說法,見 doc35 §18)的本體(靜態)以第 1 個引數那個單位的畫面座標為圓心((x-捲動x)×24+12, (y-捲動y)×24+0x12),固定跑 10 幀(0x21993 cmp ebx, 0xa),第 i 幀以 [0x53a6d] 資源第 i 項為 LUT 呼叫 remap_circle_scanlines(0x21955),半徑由第 2 個引數起、每幀加第 3 個引數(0x2198e) —— 這裡是 0xf 起每幀 +0xa 的圓形換色效果。之後 push 0xb 並 jmp 0x2153b 進入 earthquake_spell_effect。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4424,7 +4424,7 @@
   {
    "addr": "0x21a9e",
    "name": "command_handler_12",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、sprite_walk_on 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。 sprite_walk_on 這個標籤指的 0x2189a,本體是以單位為圓心的圓形換色效果(見 command_handler_11 的說明);這裡半徑 0x1e 起每幀 +0x10。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、lut_circle_ramp_at_unit 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。 lut_circle_ramp_at_unit(0x2189a,續一百二十一由 sprite_walk_on 改名)是以單位為圓心的圓形換色效果(見 command_handler_11 的說明與 doc35 §18);這裡半徑 0x1e 起每幀 +0x10。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -7616,7 +7616,7 @@
   {
    "addr": "0x33faf",
    "name": "copy_protection_password_check",
-   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。 2026-09-28 DOSBox-X 動態驗證(doc98 續四十):戰場上連按 Enter,[0x51a42] 由 3 遞減到 0(該分支確實執行),之後的 Enter 都經過 0x118a3,只出現單位面板、[0x53a44] 始終 0;執行中記憶體的 0x118a3 是 80 3d .. 00 eb 07(載入後未改寫)。正向對照:只把執行中 0x118aa 的 EB 改成 75,下一次 Enter 即出現「NO. 01」密碼畫面(evidence/copyprot_positive_byte75_20260928.png)。 比對迴圈(靜態,FD2.EXE 反組譯,續一百二十):0x34228..0x34231 逐格比已輸入的符號與答案,但 0x34233 是無條件的 jmp 0x3421e(2 bytes),緊接著 0x34235 的 mov byte ptr [esp + 0x34], 1(記「有不一樣」)函式內沒有任何指令跳得到;所以 0x3423c 的旗標恆為 0、0x34241 的 je 恆成立,輸入什麼都算答對,上面「答錯」那一段在這個參考版走不到。型態與 0x118aa 的 EB 07 相同;沒有用實機驗證。",
+   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。 2026-09-28 DOSBox-X 動態驗證(doc98 續四十):戰場上連按 Enter,[0x51a42] 由 3 遞減到 0(該分支確實執行),之後的 Enter 都經過 0x118a3,只出現單位面板、[0x53a44] 始終 0;執行中記憶體的 0x118a3 是 80 3d .. 00 eb 07(載入後未改寫)。正向對照:只把執行中 0x118aa 的 EB 改成 75,下一次 Enter 即出現「NO. 01」密碼畫面(evidence/copyprot_positive_byte75_20260928.png)。 比對迴圈(靜態,FD2.EXE 反組譯,續一百二十):0x34228..0x34231 逐格比已輸入的符號與答案,但 0x34233 是無條件的 jmp 0x3421e(2 bytes),緊接著 0x34235 的 mov byte ptr [esp + 0x34], 1(記「有不一樣」)函式內沒有任何指令跳得到;所以 0x3423c 的旗標恆為 0、0x34241 的 je 恆成立,輸入什麼都算答對,上面「答錯」那一段在這個參考版走不到。型態與 0x118aa 的 EB 07 相同。 2026-10-13 DOSBox-X 驗證(doc98 續一百二十一):只改執行中的記憶體(0x118aa 的 EB 改 75、[0x51a42] 設 0),在戰場游標上按 Enter 出現第 54 題;答案列 0x60223(= 0x60181 + 54×3)讀到 0d 0f 21,三格都選第 3 個候選,輸入的是 0c 0c 22(三格都與答案不同)。斷點 0x34228 停 3 次(一格一次),0x34235 與 0x34243 都沒有停,接著停在 0x342af;恢復後 [0x53a44] 由 0 變 1,回到戰場繼續(evidence/copyprot_wrong_answer_entry_20261013.png、copyprot_wrong_answer_passed_20261013.png)。 出題方式(FD2.EXE 反組譯):題號 = prng_next() % 100(0x3404f idiv),答案 = table_60181_entry(題號) 指到的 3 bytes;第 i 格的 6 個候選由 fill_band_color_run6(答案[i]) 產生(0x34070 / 0x34202),正解一定在 6 個裡面。",
    "confidence": "verified_dynamic",
    "date": "2026-10-13",
    "evidence": [
@@ -7718,7 +7718,7 @@
   {
    "addr": "0x34317",
    "name": "fill_band_color_run6",
-   "summary": "(color, out):out[0..5] = (color & 0xf8) + (color%8 > 3 ? 2 : 0) + i,六個連續色號。唯一呼叫端 copy_protection_password_check。 續一百一十八:第 1 個由 v 改名 color(色號)。",
+   "summary": "(符號碼, out):out[0..5] = (符號碼 & 0xf8) + (符號碼%8 > 3 ? 2 : 0) + i,六個連續的符號碼,傳入的那一個一定在裡面。唯一呼叫端 copy_protection_password_check:以答案的第 i 格呼叫(0x34070 / 0x34202),out 就是畫面上那一列 6 個候選(原樣交給 draw_password_screen 的「候選符號陣列」)。 續一百一十八把第 1 個由 v 改名 color(色號)是錯的;續一百二十一改成「符號碼」:DOSBox-X 上答案 0d / 0f / 21 的三格,選第 3 個候選得到 0c / 0c / 22,與本式相符(0d、0f -> 0a..0f;21 -> 20..25)。函式名裡的 color 沿用舊名,沒有改。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -19457,9 +19457,9 @@
   {
    "addr": "0x4ded4",
    "name": "table_60181_entry",
-   "summary": "(索引) 回傳 0x60181 + 索引 x 3(3 bytes 一筆的表)。copy_protection_password_check 呼叫。",
+   "summary": "(索引) 回傳 0x60181 + 索引 x 3(3 bytes 一筆的表)。copy_protection_password_check 呼叫。 續一百二十一:這張表是防拷的答案表 —— 索引是題號(prng_next() % 100),一筆 3 bytes = 三格的符號碼;DOSBox-X 上第 54 題讀到 0d 0f 21,與 FD2.EXE 檔案 0x60223 的 3 bytes 相同。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x4dedc",
@@ -25015,7 +25015,7 @@
   {
    "addr": "0x15055",
    "name": "ai_item_action",
-   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。",
+   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -25034,6 +25034,10 @@
     {
      "at": "0x1509b",
      "insn": "cmp dword ptr [esp + 0x3c], 0"
+    },
+    {
+     "at": "0x151a2",
+     "insn": "call 0x2189a"
     }
    ]
   },

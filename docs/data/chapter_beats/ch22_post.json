@@ -178,7 +178,7 @@
    ]
   },
   {
-   "op": "sprite_walk_on",
+   "op": "lut_circle_ramp_at_unit",
    "addr": "0x24978",
    "target": "0x2189a",
    "args": [
@@ -187,7 +187,7 @@
     10
    ],
    "op_name_source": "doc-anchored",
-   "note": "2026-09-06: FUN_0002189a(unit_idx, frame_start, frame_step) is byte-exact disassembled. Once: compute unit_idx's battlefield screen position from its grid X/Y ([0x53a45]+unit_idx*0x50, bytes 0/1, each *24(0x18) minus camera offsets [0x53aa9]/[0x53aad]), call FUN_0003706e(px,py,0x25680) -> EBP (a resource/buffer handle). Then a fixed 10-iteration loop (hardcoded CMP EBX,0xa -- NOT read from any argument, despite superficially matching this call's frame_start=10): each iteration looks up a per-frame offset from table [0x53a6d] indexed by the loop counter, copies via the known memcpy primitive FUN_0003771c, calls FUN_000219ad/FUN_000127a9 (uncharacterized helpers) with an accumulator ESI that starts at frame_start and increments by frame_step each frame, then presents via the same known primitive FUN_00011eb0(dst=0xA0000+0x504,...) used by 0x24b4d/animate_toggle. Net effect: plays a 10-frame animation over the given unit's screen position, indexed by an accumulating frame cursor. Exact visual content (which effect/sprite) undetermined -- see 91-worklist.md 1511."
+   "note": "2026-10-13 (replaces the 2026-09-06 note, which left the visual content undetermined and misread FUN_0003706e): FUN_0002189a(unit_idx, radius_start, radius_step) = lut_circle_ramp_at_unit, read in full in 35-battle-animation-rendering.md section 18 (static only). Circle centre = unit_idx's tile on screen: ((x - [0x53aa9])*24 + 12, (y - [0x53aad])*24 + 0x12), x/y = bytes 0/1 of [0x53a45] + unit_idx*0x50. FUN_0003706e(0x25680) is malloc with ONE argument (a save buffer); draw_terrain_layer draws the terrain into it. Fixed 10 frames (CMP EBX,0xa at 0x21993, not an argument): memmove the save buffer back to the off-screen buffer [0x53a49], FUN_000219ad = remap_circle_scanlines(cx, cy, radius, 0xc, 0, 0xc0, lut) with lut = item i of the [0x53a6d] resource, FUN_000127a9 = draw_unit_layer, then copy_rect FUN_00011eb0 to the screen; radius += radius_step each frame; no delay call inside the loop. This call: unit_idx=1, radius_start=15, radius_step=10 (pushes 0x24972..0x24976: 0xa, 0xf, 1) -- the same pair command_handler_11 passes at 0x21883."
   },
   {
    "op": "buffer_flicker",
@@ -217,7 +217,7 @@
    ]
   },
   {
-   "op": "sprite_walk_on",
+   "op": "lut_circle_ramp_at_unit",
    "addr": "0x249c4",
    "target": "0x2189a",
    "args": [
@@ -226,7 +226,7 @@
     10
    ],
    "op_name_source": "doc-anchored",
-   "note": "2026-09-06: same FUN_0002189a(unit_idx=10, frame_start=15, frame_step=1) as the 0x24978 call site -- see that note for the full derivation."
+   "note": "2026-10-13: same lut_circle_ramp_at_unit(unit_idx=1, radius_start=15, radius_step=10) as the 0x24978 call site (pushes 0x249be..0x249c2: 0xa, 0xf, 1). The 2026-09-06 note listed the arguments in push order (unit_idx=10, 15, step=1), which is reversed."
   },
   {
    "op": "buffer_flicker",
@@ -256,7 +256,7 @@
    ]
   },
   {
-   "op": "sprite_walk_on",
+   "op": "lut_circle_ramp_at_unit",
    "addr": "0x24a10",
    "target": "0x2189a",
    "args": [
@@ -265,7 +265,7 @@
     16
    ],
    "op_name_source": "doc-anchored",
-   "note": "2026-09-06: same FUN_0002189a(unit_idx=16, frame_start=30, frame_step=1) as the 0x24978/0x249c4 call sites -- see that note for the full derivation."
+   "note": "2026-10-13: same lut_circle_ramp_at_unit(unit_idx=1, radius_start=30, radius_step=16) as the 0x24978 call site (pushes 0x24a0a..0x24a0e: 0x10, 0x1e, 1) -- the pair command_handler_12 passes at 0x21ac2. The 2026-09-06 note listed the arguments in push order (unit_idx=16, 30, step=1), which is reversed."
   },
   {
    "op": "palette_delta_ramp",

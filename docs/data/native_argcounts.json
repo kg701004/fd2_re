@@ -141,7 +141,7 @@
     },
     "merged_cleanup_sites": [],
     "known_op": null,
-    "doc_op_name": "sprite_walk_on",
+    "doc_op_name": "lut_circle_ramp_at_unit",
     "callee_argc": 3
   },
   "0x22253": {
