@@ -4386,7 +4386,7 @@
   {
    "addr": "0x2185f",
    "name": "command_handler_11",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0xf, 0xa))。 lut_circle_ramp_at_unit(0x2189a;續一百二十一由 sprite_walk_on 改名,舊名出自 doc58 一句沒讀本體的說法,見 doc35 §18)的本體(靜態)以第 1 個引數那個單位的畫面座標為圓心((x-捲動x)×24+12, (y-捲動y)×24+0x12),固定跑 10 幀(0x21993 cmp ebx, 0xa),第 i 幀以 [0x53a6d] 資源第 i 項為 LUT 呼叫 remap_circle_scanlines(0x21955),半徑由第 2 個引數起、每幀加第 3 個引數(0x2198e) —— 這裡是 0xf 起每幀 +0xa 的圓形換色效果。之後 push 0xb 並 jmp 0x2153b 進入 earthquake_spell_effect。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0xf, 0xa))。 lut_circle_ramp_at_unit(0x2189a;續一百二十一由 sprite_walk_on 改名,舊名出自 doc58 一句沒讀本體的說法,見 doc35 §18)的本體(靜態)以第 1 個引數那個單位的畫面座標為圓心((x-捲動x)×24+12, (y-捲動y)×24+0x12),固定跑 10 幀(0x21993 cmp ebx, 0xa),第 i 幀以 [0x53a6d] 資源第 i 項為 LUT 呼叫 remap_circle_scanlines(0x21955),半徑由第 2 個引數起、每幀加第 3 個引數(0x2198e) —— 這裡是 0xf 起每幀 +0xa 的圓形換色效果。之後 push 0xb 並 jmp 0x2153b 進入 earthquake_spell_effect。 續一百二十二(DOSBox-X,doc35 §18):法術 11 在法術清單上是「地震術 -MP 45」。索爾施放時 0x2189a 入口讀到返回位址 0x21888、引數 (0, 15, 10),十幀的半徑 15、25、…、105;施放後 MP 805 -> 760。畫面上是以施法者為圓心的亮圈往外擴、越擴越淡。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4424,7 +4424,7 @@
   {
    "addr": "0x21a9e",
    "name": "command_handler_12",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、lut_circle_ramp_at_unit 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。 lut_circle_ramp_at_unit(0x2189a,續一百二十一由 sprite_walk_on 改名)是以單位為圓心的圓形換色效果(見 command_handler_11 的說明與 doc35 §18);這裡半徑 0x1e 起每幀 +0x10。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), lut_circle_ramp_at_unit(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、lut_circle_ramp_at_unit 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。 lut_circle_ramp_at_unit(0x2189a,續一百二十一由 sprite_walk_on 改名)是以單位為圓心的圓形換色效果(見 command_handler_11 的說明與 doc35 §18);這裡半徑 0x1e 起每幀 +0x10。 續一百二十二(DOSBox-X,doc35 §18):索爾施放裂地術時 0x2189a 入口讀到返回位址 0x21ac7、引數 (0, 30, 16),十幀的半徑 30、46、…、174;施放後 MP 805 -> 725。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -25015,7 +25015,7 @@
   {
    "addr": "0x15055",
    "name": "ai_item_action",
-   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。",
+   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。 續一百二十二訂正:上一句漏了條件。0x1514d 以道具列 +0x10 分兩路 —— < 0x10 走 0x1514f(0x12cea)後 jmp 0x152e5,不經過圓形換色;>= 0x10 才走 0x15168 起的 0x1f04a、redraw(1)、0x17aa9、0x2dfc8 與 0x151a2 的 lut_circle_ramp_at_unit。全道具表(0x602ad,209 列)只有 79 號光束炮的 +0x10(0x1f)符合。 DOSBox-X(doc35 §18):敵 #11 用道具 38 閃電鎚(+0x10 = 2)時本函式有進(返回位址 0x1503e、單位 11、camp 0),整個敵方回合 0x2189a 的斷點沒有停;換成道具 79 後 0x2189a 入口讀到返回位址 0x151a7、引數 (11, 80, -4),十幀的半徑 80、76、…、44。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -25038,6 +25038,10 @@
     {
      "at": "0x151a2",
      "insn": "call 0x2189a"
+    },
+    {
+     "at": "0x1514d",
+     "insn": "jge 0x15168"
     }
    ]
   },

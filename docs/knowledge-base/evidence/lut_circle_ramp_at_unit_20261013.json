@@ -1,0 +1,807 @@
+{
+ "date": "2026-10-13",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點:0x2189a 入口讀堆疊;0x2198e(每幀 copy_rect 之後)讀 EBX / ESI 並傾印線性 0xa0000 起 64000 bytes;調色盤取 [0x53a65] 指到的 768 bytes(6 位元);基準畫面是同一視角、沒有效果的一幀。",
+ "runs": [
+  {
+   "tag": "s12",
+   "what": "玩家施放裂地術(法術 12,command_handler_12)",
+   "entry": {
+    "ret": "0x21ac7",
+    "unit": 0,
+    "radius0": 30,
+    "step": 16,
+    "unit_xy": [
+     20,
+     14
+    ],
+    "scroll": [
+     9,
+     13
+    ],
+    "centre": [
+     276,
+     42
+    ]
+   },
+   "ai_item_action": null,
+   "frames_radius_ESI": [
+    30,
+    46,
+    62,
+    78,
+    94,
+    110,
+    126,
+    142,
+    158,
+    174
+   ],
+   "screen_centre": [
+    280,
+    46
+   ],
+   "excluded_rects": [
+    [
+     4,
+     158,
+     74,
+     197
+    ],
+    [
+     268,
+     16,
+     291,
+     51
+    ],
+    [
+     172,
+     16,
+     195,
+     51
+    ],
+    [
+     148,
+     4,
+     171,
+     27
+    ],
+    [
+     244,
+     16,
+     267,
+     51
+    ],
+    [
+     52,
+     136,
+     75,
+     171
+    ],
+    [
+     28,
+     112,
+     51,
+     147
+    ],
+    [
+     4,
+     136,
+     27,
+     171
+    ]
+   ],
+   "shape": [
+    {
+     "i": 0,
+     "r": 30,
+     "inside_px": 1932,
+     "changed_in": 1874,
+     "changed_out": 0,
+     "edge_rows": 80,
+     "edge_ok": 80,
+     "mean_lum_delta": 12.08,
+     "centre_col_top_y": 52,
+     "centre_col_bottom_y": 75,
+     "frame_md5": "52c11e10dcc54043f31c98e8651f3d53"
+    },
+    {
+     "i": 1,
+     "r": 46,
+     "inside_px": 5185,
+     "changed_in": 5165,
+     "changed_out": 0,
+     "edge_rows": 107,
+     "edge_ok": 107,
+     "mean_lum_delta": 12.44,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 91,
+     "frame_md5": "038c39c8ada29b4dcad6a36092183210"
+    },
+    {
+     "i": 2,
+     "r": 62,
+     "inside_px": 8404,
+     "changed_in": 8396,
+     "changed_out": 0,
+     "edge_rows": 111,
+     "edge_ok": 111,
+     "mean_lum_delta": 11.18,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 107,
+     "frame_md5": "d278f6c4b11a15203e0ccf2c878a8798"
+    },
+    {
+     "i": 3,
+     "r": 78,
+     "inside_px": 11726,
+     "changed_in": 11720,
+     "changed_out": 0,
+     "edge_rows": 89,
+     "edge_ok": 89,
+     "mean_lum_delta": 9.69,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 123,
+     "frame_md5": "a50893f3f27141209383cc504fb4d132"
+    },
+    {
+     "i": 4,
+     "r": 94,
+     "inside_px": 15140,
+     "changed_in": 15135,
+     "changed_out": 0,
+     "edge_rows": 126,
+     "edge_ok": 126,
+     "mean_lum_delta": 7.78,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 139,
+     "frame_md5": "06dd1f63ad971a976b061940c5b8543f"
+    },
+    {
+     "i": 5,
+     "r": 110,
+     "inside_px": 19197,
+     "changed_in": 19192,
+     "changed_out": 0,
+     "edge_rows": 132,
+     "edge_ok": 132,
+     "mean_lum_delta": 7.29,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 155,
+     "frame_md5": "0430bcc2245a196d183b65f5896ce55c"
+    },
+    {
+     "i": 6,
+     "r": 126,
+     "inside_px": 24028,
+     "changed_in": 24024,
+     "changed_out": 0,
+     "edge_rows": 171,
+     "edge_ok": 171,
+     "mean_lum_delta": 6.17,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 171,
+     "frame_md5": "af897261f2d1a4dddf06a81eab6f982f"
+    },
+    {
+     "i": 7,
+     "r": 142,
+     "inside_px": 29477,
+     "changed_in": 29450,
+     "changed_out": 0,
+     "edge_rows": 187,
+     "edge_ok": 187,
+     "mean_lum_delta": 5.12,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 187,
+     "frame_md5": "0b50591f1f519bec07c67fb0b948b2af"
+    },
+    {
+     "i": 8,
+     "r": 158,
+     "inside_px": 34789,
+     "changed_in": 34647,
+     "changed_out": 0,
+     "edge_rows": 192,
+     "edge_ok": 192,
+     "mean_lum_delta": 3.84,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "3e35d5efdf2f3b903ff5ca08db6fe3ae"
+    },
+    {
+     "i": 9,
+     "r": 174,
+     "inside_px": 39194,
+     "changed_in": 30523,
+     "changed_out": 0,
+     "edge_rows": 192,
+     "edge_ok": 186,
+     "mean_lum_delta": 2.82,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "ee748130b97c78837881a1639d82ae63"
+    }
+   ],
+   "controls": {
+    "圓心 x 偏 3": "FAIL",
+    "每幀增量反號": "FAIL",
+    "起始半徑 +6": "FAIL",
+    "起始半徑 -6": "FAIL"
+   }
+  },
+  {
+   "tag": "s11",
+   "what": "玩家施放地震術(法術 11,command_handler_11)",
+   "entry": {
+    "ret": "0x21888",
+    "unit": 0,
+    "radius0": 15,
+    "step": 10,
+    "unit_xy": [
+     20,
+     14
+    ],
+    "scroll": [
+     9,
+     13
+    ],
+    "centre": [
+     276,
+     42
+    ]
+   },
+   "ai_item_action": null,
+   "frames_radius_ESI": [
+    15,
+    25,
+    35,
+    45,
+    55,
+    65,
+    75,
+    85,
+    95,
+    105
+   ],
+   "screen_centre": [
+    280,
+    46
+   ],
+   "excluded_rects": [
+    [
+     4,
+     158,
+     74,
+     197
+    ],
+    [
+     268,
+     16,
+     291,
+     51
+    ],
+    [
+     172,
+     16,
+     195,
+     51
+    ],
+    [
+     148,
+     4,
+     171,
+     27
+    ],
+    [
+     244,
+     16,
+     267,
+     51
+    ],
+    [
+     52,
+     136,
+     75,
+     171
+    ],
+    [
+     28,
+     112,
+     51,
+     147
+    ],
+    [
+     4,
+     136,
+     27,
+     171
+    ]
+   ],
+   "shape": [
+    {
+     "i": 0,
+     "r": 15,
+     "inside_px": 312,
+     "changed_in": 285,
+     "changed_out": 0,
+     "edge_rows": 33,
+     "edge_ok": 33,
+     "mean_lum_delta": 11.03,
+     "centre_col_top_y": 52,
+     "centre_col_bottom_y": 60,
+     "frame_md5": "2036acf051696ac63980a90600d8ca4f"
+    },
+    {
+     "i": 1,
+     "r": 25,
+     "inside_px": 1255,
+     "changed_in": 1207,
+     "changed_out": 0,
+     "edge_rows": 66,
+     "edge_ok": 66,
+     "mean_lum_delta": 11.01,
+     "centre_col_top_y": 52,
+     "centre_col_bottom_y": 70,
+     "frame_md5": "27a568bf9fefef81a7cd002fba543579"
+    },
+    {
+     "i": 2,
+     "r": 35,
+     "inside_px": 2799,
+     "changed_in": 2765,
+     "changed_out": 0,
+     "edge_rows": 83,
+     "edge_ok": 83,
+     "mean_lum_delta": 10.4,
+     "centre_col_top_y": 12,
+     "centre_col_bottom_y": 80,
+     "frame_md5": "d022c132bcc29389ee96aab2c16c1973"
+    },
+    {
+     "i": 3,
+     "r": 45,
+     "inside_px": 4965,
+     "changed_in": 4944,
+     "changed_out": 0,
+     "edge_rows": 107,
+     "edge_ok": 107,
+     "mean_lum_delta": 9.79,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 90,
+     "frame_md5": "9d09923b5dba6e6c5e74bdf8711b62cb"
+    },
+    {
+     "i": 4,
+     "r": 55,
+     "inside_px": 6964,
+     "changed_in": 6955,
+     "changed_out": 0,
+     "edge_rows": 105,
+     "edge_ok": 105,
+     "mean_lum_delta": 8.12,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 100,
+     "frame_md5": "a59c7f9019782af5f807e00b4e854028"
+    },
+    {
+     "i": 5,
+     "r": 65,
+     "inside_px": 9040,
+     "changed_in": 9032,
+     "changed_out": 0,
+     "edge_rows": 114,
+     "edge_ok": 114,
+     "mean_lum_delta": 7.46,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 110,
+     "frame_md5": "9be66ebe0fb7123f7185cf5d315542b3"
+    },
+    {
+     "i": 6,
+     "r": 75,
+     "inside_px": 11150,
+     "changed_in": 11143,
+     "changed_out": 0,
+     "edge_rows": 93,
+     "edge_ok": 93,
+     "mean_lum_delta": 6.17,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 120,
+     "frame_md5": "51c3937e3800218e20bdf5705bc09b3a"
+    },
+    {
+     "i": 7,
+     "r": 85,
+     "inside_px": 13120,
+     "changed_in": 13091,
+     "changed_out": 0,
+     "edge_rows": 96,
+     "edge_ok": 96,
+     "mean_lum_delta": 5.26,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 130,
+     "frame_md5": "c5de4228a73d9247c2c81a096b3f4283"
+    },
+    {
+     "i": 8,
+     "r": 95,
+     "inside_px": 15384,
+     "changed_in": 15314,
+     "changed_out": 0,
+     "edge_rows": 129,
+     "edge_ok": 129,
+     "mean_lum_delta": 3.91,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 140,
+     "frame_md5": "03a73a33c4530cd12006190b0e98ce8d"
+    },
+    {
+     "i": 9,
+     "r": 105,
+     "inside_px": 17894,
+     "changed_in": 13672,
+     "changed_out": 0,
+     "edge_rows": 127,
+     "edge_ok": 125,
+     "mean_lum_delta": 2.86,
+     "centre_col_top_y": 4,
+     "centre_col_bottom_y": 150,
+     "frame_md5": "f58a3f10c611db418ebcfc1acf81e6d4"
+    }
+   ],
+   "controls": {
+    "圓心 x 偏 3": "FAIL",
+    "每幀增量反號": "FAIL",
+    "起始半徑 +6": "FAIL",
+    "起始半徑 -6": "FAIL"
+   }
+  },
+  {
+   "tag": "ai79",
+   "what": "敵 #11 在敵方回合使用道具 79(ai_item_action)",
+   "entry": {
+    "ret": "0x151a7",
+    "unit": 11,
+    "radius0": 80,
+    "step": -4,
+    "unit_xy": [
+     19,
+     14
+    ],
+    "scroll": [
+     8,
+     8
+    ],
+    "centre": [
+     276,
+     162
+    ]
+   },
+   "ai_item_action": {
+    "ret": "0x1503e",
+    "unit": 11,
+    "camp": 0
+   },
+   "frames_radius_ESI": [
+    80,
+    76,
+    72,
+    68,
+    64,
+    60,
+    56,
+    52,
+    48,
+    44
+   ],
+   "screen_centre": [
+    280,
+    166
+   ],
+   "excluded_rects": [
+    [
+     292,
+     136,
+     315,
+     171
+    ],
+    [
+     76,
+     40,
+     99,
+     75
+    ],
+    [
+     52,
+     4,
+     75,
+     27
+    ],
+    [
+     28,
+     16,
+     51,
+     51
+    ],
+    [
+     268,
+     136,
+     291,
+     171
+    ],
+    [
+     28,
+     160,
+     51,
+     195
+    ],
+    [
+     76,
+     160,
+     99,
+     195
+    ],
+    [
+     52,
+     136,
+     75,
+     171
+    ]
+   ],
+   "shape": [
+    {
+     "i": 0,
+     "r": 80,
+     "inside_px": 10878,
+     "changed_in": 10872,
+     "changed_out": 0,
+     "edge_rows": 114,
+     "edge_ok": 114,
+     "mean_lum_delta": 13.92,
+     "centre_col_top_y": 87,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "2761416e1fd44fdf706219cb21928740"
+    },
+    {
+     "i": 1,
+     "r": 76,
+     "inside_px": 10009,
+     "changed_in": 10002,
+     "changed_out": 0,
+     "edge_rows": 111,
+     "edge_ok": 111,
+     "mean_lum_delta": 13.04,
+     "centre_col_top_y": 91,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "3c63e1a07b1c43f7490bb1ac3dc92b48"
+    },
+    {
+     "i": 2,
+     "r": 72,
+     "inside_px": 9158,
+     "changed_in": 9151,
+     "changed_out": 0,
+     "edge_rows": 107,
+     "edge_ok": 107,
+     "mean_lum_delta": 11.71,
+     "centre_col_top_y": 95,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "5885d4ff850c89717b37af28988ca8ec"
+    },
+    {
+     "i": 3,
+     "r": 68,
+     "inside_px": 8335,
+     "changed_in": 8328,
+     "changed_out": 0,
+     "edge_rows": 103,
+     "edge_ok": 103,
+     "mean_lum_delta": 9.78,
+     "centre_col_top_y": 99,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "175d04f92fb81b5579984381ff0d90b4"
+    },
+    {
+     "i": 4,
+     "r": 64,
+     "inside_px": 7544,
+     "changed_in": 7536,
+     "changed_out": 0,
+     "edge_rows": 100,
+     "edge_ok": 100,
+     "mean_lum_delta": 8.31,
+     "centre_col_top_y": 103,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "80133c4cc5e73aab0cf401b0ff7a2df7"
+    },
+    {
+     "i": 5,
+     "r": 60,
+     "inside_px": 6776,
+     "changed_in": 6767,
+     "changed_out": 0,
+     "edge_rows": 97,
+     "edge_ok": 97,
+     "mean_lum_delta": 7.74,
+     "centre_col_top_y": 107,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "a108103354b914c73c8f25c637b96566"
+    },
+    {
+     "i": 6,
+     "r": 56,
+     "inside_px": 6050,
+     "changed_in": 6041,
+     "changed_out": 0,
+     "edge_rows": 93,
+     "edge_ok": 93,
+     "mean_lum_delta": 6.14,
+     "centre_col_top_y": 111,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "48583405e263ab100f44e1bb9a4f68a1"
+    },
+    {
+     "i": 7,
+     "r": 52,
+     "inside_px": 5346,
+     "changed_in": 5336,
+     "changed_out": 0,
+     "edge_rows": 90,
+     "edge_ok": 90,
+     "mean_lum_delta": 5.26,
+     "centre_col_top_y": 115,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "ac9d726ab8460cab2a9a5fc77542118c"
+    },
+    {
+     "i": 8,
+     "r": 48,
+     "inside_px": 4657,
+     "changed_in": 4645,
+     "changed_out": 0,
+     "edge_rows": 87,
+     "edge_ok": 87,
+     "mean_lum_delta": 3.87,
+     "centre_col_top_y": 119,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "7a6328eddcbe4487de6a4ffbb389c417"
+    },
+    {
+     "i": 9,
+     "r": 44,
+     "inside_px": 4005,
+     "changed_in": 3269,
+     "changed_out": 0,
+     "edge_rows": 84,
+     "edge_ok": 83,
+     "mean_lum_delta": 2.98,
+     "centre_col_top_y": 123,
+     "centre_col_bottom_y": 195,
+     "frame_md5": "a5a5caf741de7a18af1eeaad5d6dfd6b"
+    }
+   ],
+   "controls": {
+    "圓心 x 偏 3": "FAIL",
+    "每幀增量反號": "FAIL",
+    "起始半徑 +6": "FAIL",
+    "起始半徑 -6": "FAIL"
+   }
+  }
+ ],
+ "window_screenshot_match": [
+  {
+   "screenshot": "060_Return",
+   "best": "s12_f01",
+   "mean_abs_diff": 0.264,
+   "second": "s12_f00",
+   "second_diff": 3.495
+  },
+  {
+   "screenshot": "061_live12",
+   "best": "s12_f04",
+   "mean_abs_diff": 0.28,
+   "second": "s12_f05",
+   "second_diff": 3.762
+  },
+  {
+   "screenshot": "062_live12",
+   "best": "s12_f06",
+   "mean_abs_diff": 0.298,
+   "second": "s12_f07",
+   "second_diff": 3.818
+  },
+  {
+   "screenshot": "063_live12",
+   "best": "s12_f07",
+   "mean_abs_diff": 0.312,
+   "second": "s12_f06",
+   "second_diff": 3.814
+  },
+  {
+   "screenshot": "064_live12",
+   "best": "s12_f08",
+   "mean_abs_diff": 0.242,
+   "second": "s12_f07",
+   "second_diff": 4.15
+  },
+  {
+   "screenshot": "074_live11",
+   "best": "s11_f01",
+   "mean_abs_diff": 0.248,
+   "second": "s11_f00",
+   "second_diff": 1.181
+  },
+  {
+   "screenshot": "075_live11",
+   "best": "s11_f01",
+   "mean_abs_diff": 0.248,
+   "second": "s11_f00",
+   "second_diff": 1.181
+  },
+  {
+   "screenshot": "076_live11",
+   "best": "s11_f02",
+   "mean_abs_diff": 0.258,
+   "second": "s11_f01",
+   "second_diff": 1.89
+  },
+  {
+   "screenshot": "077_live11",
+   "best": "s11_f04",
+   "mean_abs_diff": 0.256,
+   "second": "s11_f05",
+   "second_diff": 2.019
+  },
+  {
+   "screenshot": "078_live11",
+   "best": "s11_f05",
+   "mean_abs_diff": 0.262,
+   "second": "s11_f04",
+   "second_diff": 2.028
+  },
+  {
+   "screenshot": "079_live11",
+   "best": "s11_f06",
+   "mean_abs_diff": 0.261,
+   "second": "s11_f07",
+   "second_diff": 1.625
+  },
+  {
+   "screenshot": "080_live11",
+   "best": "s11_f07",
+   "mean_abs_diff": 0.265,
+   "second": "s11_f06",
+   "second_diff": 1.627
+  },
+  {
+   "screenshot": "081_live11",
+   "best": "s11_f08",
+   "mean_abs_diff": 0.232,
+   "second": "s11_f07",
+   "second_diff": 2.09
+  },
+  {
+   "screenshot": "082_live11",
+   "best": "s11_f08",
+   "mean_abs_diff": 0.232,
+   "second": "s11_f07",
+   "second_diff": 2.09
+  }
+ ],
+ "negative_run": {
+  "what": "敵 #11 使用道具 38(道具列 +0x10 = 2):ai_item_action 有進,整個敵方回合 0x2189a 的斷點沒有停",
+  "ai_item_action": {
+   "ret": "0x1503e",
+   "unit": 11,
+   "camp": 0
+  },
+  "frames": 0
+ },
+ "files": {
+  "lut_circle_ramp_spell12_frames_20261013.png": "6138e43ad9107f23511527c7ee25b115",
+  "lut_circle_ramp_spell11_frames_20261013.png": "56f2feadb2805742f9053cea4995aaf7",
+  "lut_circle_ramp_item79_frames_20261013.png": "7d11ec0d1822230404b13bafb992c103",
+  "lut_circle_ramp_spell12_window_20261013.png": "80852d8f36a96f49a5489f352b441507"
+ }
+}
