@@ -1186,7 +1186,7 @@
   {
    "addr": "0x115b6",
    "name": "target_cursor_loop",
-   "summary": "(mode, count, targets) verified_addresses 已記載:攻擊/道具/法術三條玩家路徑共用的目標游標與確認迴圈。方向鍵 0x48/0x50/0x4b/0x4d 移動游標;確認鍵 0x39/0x1c 先看地圖緩衝 byte(0xff 拒絕、targetCode 4 直接接受),否則呼叫 0x14742 做合法性判定。 移動用的模式 4(呼叫端 0x18981)2026-10-01 DOSBox-X(doc98 續六十六):可達格與自己的格子按確認都回 1(返回點 0x18986);之後 0x4e4f6 的路徑結果同格回 0(原地開指令環)、相鄰格回 1(移過去再開環)。瞬移與沒瞬移的單位讀值相同。 續六十七(DOSBox-X):游標在隊員 #1 佔的格(0x146d1 標 0xff)按 Return 不會返回(0x18986 沒有停點),移到旁邊空格才回 1。 續一百零九(呼叫紀錄篩選,補回傳值):move_confirm_key_poll 讀到鍵碼 1(Esc)時回 -1(0x117b0 / 0x117b9)= 取消。舊摘要只寫了回 1;實機 41 次回傳:-1 有 27 次、1 有 14 次。 續一百一十九(直接讀反組譯):補參數名 —— 第 1 個是模式(0x115d1 與 6 比;原樣當 find_unit_near_cursor 的陣營篩選);第 3 個是候選單位編號的 byte 陣列、第 2 個是它的個數:不為 0 時先把游標移到 targets[0](0x115fa),按 0x2c / 0x4c 鍵換下一個並繞回(0x11779..0x11784)。模式 6 時第 2 個另有用途:0x115d6 存進區域變數後把個數當 0。",
+   "summary": "(mode, count, targets) verified_addresses 已記載:攻擊/道具/法術三條玩家路徑共用的目標游標與確認迴圈。方向鍵 0x48/0x50/0x4b/0x4d 移動游標;確認鍵 0x39/0x1c 先看地圖緩衝 byte(0xff 拒絕、targetCode 4 直接接受),否則呼叫 0x14742 做合法性判定。 移動用的模式 4(呼叫端 0x18981)2026-10-01 DOSBox-X(doc98 續六十六):可達格與自己的格子按確認都回 1(返回點 0x18986);之後 0x4e4f6 的路徑結果同格回 0(原地開指令環)、相鄰格回 1(移過去再開環)。瞬移與沒瞬移的單位讀值相同。 續六十七(DOSBox-X):游標在隊員 #1 佔的格(0x146d1 標 0xff)按 Return 不會返回(0x18986 沒有停點),移到旁邊空格才回 1。 續一百零九(呼叫紀錄篩選,補回傳值):move_confirm_key_poll 讀到鍵碼 1(Esc)時回 -1(0x117b0 / 0x117b9)= 取消。舊摘要只寫了回 1;實機 41 次回傳:-1 有 27 次、1 有 14 次。 續一百一十九(直接讀反組譯):補參數名 —— 第 1 個是模式(0x115d1 與 6 比;原樣當 find_unit_near_cursor 的陣營篩選);第 3 個是候選單位編號的 byte 陣列、第 2 個是它的個數:不為 0 時先把游標移到 targets[0](0x115fa),按 0x2c / 0x4c 鍵換下一個並繞回(0x11779..0x11784)。模式 6 時第 2 個不是個數,是一個單位編號(續一百二十,靜態):0x115d6 存進區域變數後把個數當 0;按確認時 0x11664 掃「有沒有別的單位站在游標格」會跳過它,0x116a2 起以它的單位記錄([0x53a45] + 編號×0x50)的 [+0x20] / [+7] 與 unit_uses_move_cost_row19 選移動成本列。呼叫端 player_item_action 0x1bdf2、player_spell_select 0x1d238 以模式 6 呼叫時,第 2 個推的是區域變數裡的一個 byte、第 3 個推 0。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -1221,6 +1221,22 @@
     {
      "at": "0x117b9",
      "insn": "mov eax, 0xffffffff"
+    },
+    {
+     "at": "0x115d6",
+     "insn": "mov dword ptr [esp + 0xc], ebp"
+    },
+    {
+     "at": "0x11664",
+     "insn": "cmp ebx, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x116a2",
+     "insn": "mov edx, dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x116ca",
+     "insn": "call 0x1f183"
     }
    ]
   },
@@ -4370,7 +4386,7 @@
   {
    "addr": "0x2185f",
    "name": "command_handler_11",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 11 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0xf, 0xa))。 sprite_walk_on 是 doc58 沿用的 op 標籤(tools/derive_native_argcounts.py 的 DOC_OP_NAMES),不是讀本體得到的名字:0x2189a 的本體(靜態,續一百二十)以第 1 個引數那個單位的畫面座標為圓心((x-捲動x)×24+12, (y-捲動y)×24+0x12),固定跑 10 幀(0x21993 cmp ebx, 0xa),第 i 幀以 [0x53a6d] 資源第 i 項為 LUT 呼叫 remap_circle_scanlines(0x21955),半徑由第 2 個引數起、每幀加第 3 個引數(0x2198e) —— 這裡是 0xf 起每幀 +0xa 的圓形換色效果。之後 push 0xb 並 jmp 0x2153b 進入 earthquake_spell_effect。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4390,13 +4406,25 @@
     {
      "at": "0x2188b",
      "insn": "push dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x21883",
+     "insn": "call 0x2189a"
+    },
+    {
+     "at": "0x21893",
+     "insn": "push 0xb"
+    },
+    {
+     "at": "0x21895",
+     "insn": "jmp 0x2153b"
     }
    ]
   },
   {
    "addr": "0x21a9e",
    "name": "command_handler_12",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、sprite_walk_on 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 12 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(play_sfx(_, 2, 1), sprite_walk_on(_, 0x1e, 0x10))。 這是裂地術(spell 12)的 handler:play_sfx、sprite_walk_on 之後 push 0xc 並 jmp 0x2153b,進入 earthquake_spell_effect;DOSBox-X 施放裂地術時 spell_damage_resolve 入口讀到 spell=12(doc98 續四十五)。 sprite_walk_on 這個標籤指的 0x2189a,本體是以單位為圓心的圓形換色效果(見 command_handler_11 的說明);這裡半徑 0x1e 起每幀 +0x10。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4549,7 +4577,7 @@
   {
    "addr": "0x226ea",
    "name": "command_handler_17",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 17 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 17 項的 handler(身分由跳表 fixup 決定)。 本體(靜態,續一百二十):清 [0x53ec4],以 unit_spend_mp(使用者, 0x12) 扣 MP,再呼叫 effect_ap_percent_buff(使用者, count, targets)。扣 MP 用的 id 是 0x12(0x226fe),不是自己的號碼 0x11 —— 與 command_handler_18 的 0x22843 相同;第 9 / 19 / 23 / 25 項推的都是自己的號碼(0x214df / 0x2297a / 0x221ab / 0x22c29 之前的 push)。法術表 0x619fd 的第 17、18 筆位元組相同(00 00 00 04 02 05 01,MP 都是 5),所以這個差別在這個參考版看不出來;是不是原作筆誤無從判斷。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -4569,6 +4597,18 @@
     {
      "at": "0x2270c",
      "insn": "push dword ptr [esp + 0xc]"
+    },
+    {
+     "at": "0x226fe",
+     "insn": "push 0x12"
+    },
+    {
+     "at": "0x22704",
+     "insn": "call 0x1ca89"
+    },
+    {
+     "at": "0x22718",
+     "insn": "call 0x22721"
     }
    ]
   },
@@ -7576,9 +7616,9 @@
   {
    "addr": "0x33faf",
    "name": "copy_protection_password_check",
-   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。 2026-09-28 DOSBox-X 動態驗證(doc98 續四十):戰場上連按 Enter,[0x51a42] 由 3 遞減到 0(該分支確實執行),之後的 Enter 都經過 0x118a3,只出現單位面板、[0x53a44] 始終 0;執行中記憶體的 0x118a3 是 80 3d .. 00 eb 07(載入後未改寫)。正向對照:只把執行中 0x118aa 的 EB 改成 75,下一次 Enter 即出現「NO. 01」密碼畫面(evidence/copyprot_positive_byte75_20260928.png)。",
+   "summary": "防拷密碼檢查:載入資源、prng_next 出題,畫面顯示兩位數(%02d)與符號列,左右鍵選、Enter 確認;答錯時 AIL_shutdown 後以 \"Sorry your password is wrong !!!\"(0x502c5)結束程式,答對設 [0x53a44] = 1。唯一呼叫點 0x118ac(戰場游標迴圈 0x117e7 的 Enter 分支,Enter 計數器 [0x51a42] 初值 3 減到 0 時)在本參考版不可達:0x118a3 是 cmp byte ptr [0x53a44], 0,接著 0x118aa 是 EB 07(無條件跳過),不是條件跳躍。見 doc98 續三十六。 2026-09-28 DOSBox-X 動態驗證(doc98 續四十):戰場上連按 Enter,[0x51a42] 由 3 遞減到 0(該分支確實執行),之後的 Enter 都經過 0x118a3,只出現單位面板、[0x53a44] 始終 0;執行中記憶體的 0x118a3 是 80 3d .. 00 eb 07(載入後未改寫)。正向對照:只把執行中 0x118aa 的 EB 改成 75,下一次 Enter 即出現「NO. 01」密碼畫面(evidence/copyprot_positive_byte75_20260928.png)。 比對迴圈(靜態,FD2.EXE 反組譯,續一百二十):0x34228..0x34231 逐格比已輸入的符號與答案,但 0x34233 是無條件的 jmp 0x3421e(2 bytes),緊接著 0x34235 的 mov byte ptr [esp + 0x34], 1(記「有不一樣」)函式內沒有任何指令跳得到;所以 0x3423c 的旗標恆為 0、0x34241 的 je 恆成立,輸入什麼都算答對,上面「答錯」那一段在這個參考版走不到。型態與 0x118aa 的 EB 07 相同;沒有用實機驗證。",
    "confidence": "verified_dynamic",
-   "date": "2026-09-28",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x34040",
@@ -7599,13 +7639,21 @@
     {
      "at": "0x342b4",
      "insn": "mov byte ptr [0x3a44], 1"
+    },
+    {
+     "at": "0x34233",
+     "insn": "jmp 0x3421e"
+    },
+    {
+     "at": "0x34235",
+     "insn": "mov byte ptr [esp + 0x34], 1"
     }
    ]
   },
   {
    "addr": "0x34366",
    "name": "draw_password_screen",
-   "summary": "(res, 背景圖, 題號, 候選符號陣列, count, 已輸入符號陣列, cursor) copy_protection_password_check 的畫面:備份畫面,以 sprintf(\"%02d\") 把題號畫成兩個數字格(0x40+數字,(0x96,0x4b)/(0xa2,0x4b)),畫一列 6 格符號(0x56+i×0x19, 0x84)、一列 n 格選項(0x74+i×32, 0x61)與游標格,再整頁貼到 VGA。",
+   "summary": "(res, 背景圖, 題號, 候選符號陣列, count, 已輸入符號陣列, cursor) copy_protection_password_check 的畫面:備份畫面,以 sprintf(\"%02d\") 把題號畫成兩個數字格(0x40+數字,(0x96,0x4b)/(0xa2,0x4b)),畫一列 6 格候選符號(0x56+i×0x19, 0x84;讀 候選符號陣列[i])、一列 count 格已輸入的符號(0x74+i×32, 0x61;讀 已輸入符號陣列[i]),游標格([0x53a4d] 資源第 0 格)畫在候選列的第 cursor 格(0x56+cursor×0x19, 0x84),再整頁貼到 VGA。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -7656,6 +7704,14 @@
     {
      "at": "0x34471",
      "insn": "imul eax, dword ptr [esp + 0x38], 0x19"
+    },
+    {
+     "at": "0x3441b",
+     "insn": "movzx eax, byte ptr [eax + ebp]"
+    },
+    {
+     "at": "0x3444f",
+     "insn": "movzx eax, byte ptr [edi + eax]"
     }
    ]
   },
@@ -8570,7 +8626,7 @@
   {
    "addr": "0x21bd0",
    "name": "rising_particles_effect",
-   "summary": "(cx, cy, 圖序號, radius, 幀數, 上限, 背景緩衝) 粒子上升效果:共 N 幀,每幀補生到上限個粒子(spawn_random_particle_in_circle),還原背景,把在 0..0x136 × 0..0xbe 內的粒子以 0x4e795 畫成 [0x53a6d] 資源的小圖,貼到畫面,每個粒子 y -= 速度,超出 -10 就在圓內重生;每幀 10ms。",
+   "summary": "(cx, cy, 圖序號, radius, 幀數, 上限, 背景緩衝) 粒子上升效果:共 N 幀,每幀補生到上限個粒子(spawn_random_particle_in_circle),還原背景,把在 0..0x136 × 0..0xbe 內的粒子以 blit_mask_remap(0x4e795)畫上去 —— 遮罩圖是 [0x53ad1] 資源的第「圖序號」項(0x21c0e),換色表是 [0x53a6d] 資源的第 3 項(0x21ce8 加 [資源+0x12]),遮罩非 0 的位置把背景像素經換色表換色 —— 再貼到畫面,每個粒子 y -= 速度,超出 -10 就在圓內重生;每幀 10ms。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -8625,6 +8681,14 @@
     {
      "at": "0x21c86",
      "insn": "push dword ptr [esp + 0x13c]"
+    },
+    {
+     "at": "0x21c0e",
+     "insn": "mov eax, dword ptr [edx + eax*4 + 6]"
+    },
+    {
+     "at": "0x21ce8",
+     "insn": "add eax, dword ptr [eax + 0x12]"
     }
    ]
   },
@@ -21397,7 +21461,7 @@
   {
    "addr": "0x448a0",
    "name": "ail_impl_resume_sequence",
-   "summary": "(序列) AIL_resume_sequence(0x3afc8)的實作:AIL_resume_sequence 是 AIL_DEBUG 追蹤字串命名的公開 API,本體只做除錯前導(0x37c9c)、取 [0x52be6](0x3f22a)、追蹤輸出(0x3f46b)並呼叫本函式;本函式唯一的呼叫端就是 AIL_resume_sequence。名稱由呼叫關係決定(呼叫圖,FD2.EXE 反組譯);本體逐條讀過,與名稱一致:狀態 [Q+4] 是 8(暫停)才做:16 個通道裡對映到 >= 0x40 的([Q+0x190+i*4])重新 AIL_lock_channel,鎖不到就用原通道,寫回 [Q+0x90+i*4];再對 16 個通道 ail_channel_resend_state 重送控制器狀態,狀態設回 4。",
+   "summary": "(序列) AIL_resume_sequence(0x3afc8)的實作:AIL_resume_sequence 是 AIL_DEBUG 追蹤字串命名的公開 API,本體只做除錯前導(0x37c9c)、取 [0x52be6](0x3f22a)、追蹤輸出(0x3f46b)並呼叫本函式;本函式唯一的呼叫端就是 AIL_resume_sequence。名稱由呼叫關係決定(呼叫圖,FD2.EXE 反組譯);本體逐條讀過,與名稱一致:狀態 [Q+4] 是 8(暫停)才做:16 個通道裡控制器 110(通道鎖定)的記錄值 [Q+0x190+i*4] >= 0x40 的,重新 AIL_lock_channel,鎖不到(回傳 0)就用自己的通道號 i,把結果寫進通道對映 [Q+0x90+i*4](記錄值的位置:ail_channel_state_update 0x4285e 比 0x6e、0x428bc 寫 [狀態表+0xc0+通道*4],ail_xmidi_event 0x429df 傳的狀態表是 序列+0xd0;對映的位置:ail_xmidi_event 0x429ab 以 [序列+通道*4+0x90] 換成實體通道);再對 16 個通道 ail_channel_resend_state 重送控制器狀態,狀態設回 4。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -21424,6 +21488,10 @@
     {
      "at": "0x448a6",
      "insn": "mov ebp, dword ptr [esp + 0x14]"
+    },
+    {
+     "at": "0x448ed",
+     "insn": "mov dword ptr [edi + 0x90], eax"
     }
    ]
   },
@@ -22823,9 +22891,9 @@
   {
    "addr": "0x40b40",
    "name": "ail_dig_probe_io",
-   "summary": "(驅動, IO 參數) 複製 6 個 dword 的 IO 參數,依驅動描述表逐一以 AIL_call_driver(驅動, 0x304, ...) 偵測硬體。ail_dig_install_core 呼叫 3 次。",
+   "summary": "(DIG 驅動, IO 參數) 複製 6 個 dword 的 IO 參數到區域變數;[DIG 驅動+0] 是 AIL 驅動(ail_dig_install_core 0x40d2a 寫入),它的 [+0xc] 是驅動標頭:標頭的 word [+0x10](預設 IO 組數)非 0 時,以標頭 [+0xc] 的 seg:off 指到的預設表補上值為負(沒有指定)的欄位;結果寫回標頭 +0x16,再以 AIL_call_driver([DIG 驅動+0], 0x304, ...) 偵測一次(只有 0x40c2a 一處呼叫,兩條路徑只差傳入結構的一個 word 是 1 或 3)。ail_dig_install_core 呼叫 3 次。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x40b55",
@@ -22838,6 +22906,22 @@
     {
      "at": "0x40c2a",
      "insn": "call 0x382e9"
+    },
+    {
+     "at": "0x40b46",
+     "insn": "mov ebp, dword ptr [esp + 0x34]"
+    },
+    {
+     "at": "0x40b4a",
+     "insn": "mov esi, dword ptr [esp + 0x38]"
+    },
+    {
+     "at": "0x40b57",
+     "insn": "mov eax, dword ptr [ebp]"
+    },
+    {
+     "at": "0x40be4",
+     "insn": "lea edi, [esi + 0x16]"
     }
    ]
   },

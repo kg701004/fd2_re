@@ -52,6 +52,7 @@
   第一個 `...` 之前的名稱位置確定,照常比;之後的名稱位置不明,不比(實機篩選原本會拿錯的位置去比)。
   `..` 是「省略一個參數」,佔一格,個數照算。
 - `param_unread`(靜態):堆疊傳參的函式,摘要具名的參數本體一次都沒引用它的堆疊格 -> 候選(名稱放錯位置的徵兆)。
+  本體跳到本體外(共用收尾段、尾端呼叫)之後才引用的也算有人讀(續一百二十)。
 - 參數名登錄:每個位置確定的參數名必須有型別(四份名單),或列在 `OPAQUE_NAMES`(審過,名稱本身不含可比的型別)。
   兩邊都不在 = 未分類,rc 1 —— 新名稱不會再無聲地落在所有篩選之外。
 
@@ -1059,18 +1060,95 @@ def screen_roles(sc: Screen, names: list[dict], cg, entries: list[int], argc: di
 
 # ---------------------------------------------------------------- 沒讀的具名參數(靜態,續一百一十六)
 
-def stack_params_read(cg, target: int, entries: list[int]) -> set[int] | None:
-    """本體引用過哪幾個堆疊參數格(1 起;讀、`push [esp+X]` 轉交、`lea` 取位址都算)-> 集合;走不出本體回 None。"""
+TAIL_BUDGET = 256          # 跟出本體之後最多走幾條指令(真實 EXE 最多 115 條,0x22aa8;用完就停 = 少算引用 = 照報候選)
+
+Exit = tuple[int, int, int | None]          # (跳到的位址, 跳出當下的 ESP 位移, ebp 基底或 None)
+
+
+def _refs(i, delta: int, ebp: int | None) -> set[int]:
+    """指令 i 的運算元引用到的堆疊參數格(1 起)。"""
+    return {k for o in (i.op_str.split(",") if i.op_str else []) if (k := _stack_param(o.strip(), delta, ebp))}
+
+
+def body_stack_refs(cg, target: int, entries: list[int]) -> tuple[set[int], list[Exit], set[int]] | None:
+    """(本體引用過的堆疊參數格, 跳出本體的出口, 本體的指令位址);走不出本體回 None。
+
+    出口 = 目標不在本體內的 `jmp imm` / 條件跳躍 / loop(共用收尾段、尾端呼叫),依位址排序。
+    """
     res = cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
     if res is None:
         return None
     _, trace, ins = res
     out: set[int] = set()
-    for at, i in ins.items():
-        for o in (i.op_str.split(",") if i.op_str else []):
-            k = _stack_param(o.strip(), *trace[at])
-            if k:
-                out.add(k)
+    exits: list[Exit] = []
+    for at in sorted(ins):
+        i = ins[at]
+        out |= _refs(i, *trace[at])
+        if i.mnemonic.startswith(("j", "loop")) and i.op_str.startswith("0x") and int(i.op_str, 16) not in ins:
+            exits.append((int(i.op_str, 16), *trace[at]))
+    return out, exits, set(ins)
+
+
+def stack_params_read(cg, target: int, entries: list[int]) -> set[int] | None:
+    """本體引用過哪幾個堆疊參數格(1 起;讀、`push [esp+X]` 轉交、`lea` 取位址都算)-> 集合;走不出本體回 None。"""
+    res = body_stack_refs(cg, target, entries)
+    return None if res is None else res[0]
+
+
+def tail_params_read(cg, exits: list[Exit], own: set[int], budget: int = TAIL_BUDGET,
+                     walked: set[int] | None = None) -> set[int]:
+    """跳出本體之後(共用收尾段、尾端呼叫的對象)又引用了哪幾個堆疊參數格(續一百二十)。
+
+    推完自己的常數就 jmp 到另一個函式收尾段的 handler(`command_handler_1` -> 0x2121a),參數是那一段才讀的;
+    只走本體會報成「沒有人讀」。位移從跳出當下接著算,所以 `[esp+X]` 換算回來仍是本函式入口的第幾格。
+    走法同 `callee_argc`:條件跳躍兩邊都走、`jmp imm` 跟過去、ret / 間接 jmp 停;push / pop / add・sub esp / leave /
+    堆疊探測調整位移。不跟進 call(被呼叫端讀的是它自己的引數)。
+    每一條都往「少算」的方向停(少算 = 候選照報,不會漏):
+    - 走回本體(那裡已經算過);ESP 被暫存器調整(之後的位移不可知);落入(不是跳到)另一個函式的序頭。
+    - `[ebp+X]` 只在 ebp 是框架時算:本體自己設的框架帶過來,或這一段自己 `mov ebp, esp`;對方函式序頭設的框架
+      我們沒有走過,不算。
+    - 一共走超過 budget 條指令。
+    `walked`(選用):傳入空集合時,填入走過的指令位址(量用量與測試用),不影響回傳值。
+    """
+    out: set[int] = set()
+    seen: set[int] = set() if walked is None else walked
+    work = [(t, d, e, True) for t, d, e in reversed(exits)]
+    while work:
+        a, delta, ebp, via_jmp = work.pop()
+        while a not in seen and a not in own and budget > 0:
+            i = cg._insn(a)
+            if i is None or (not via_jmp and DNA._is_stack_check_prologue(cg, a)):
+                break
+            seen.add(a)
+            budget -= 1
+            via_jmp = False
+            m, op = i.mnemonic, i.op_str
+            if m == "mov" and op == "ebp, esp":
+                ebp = delta
+            out |= _refs(i, delta, ebp)
+            if m == "push":
+                delta += 4
+            elif m == "pop":
+                delta -= 4
+            elif m in ("sub", "add") and op.startswith("esp,"):
+                n = DNA._esp_imm(op)
+                if n is None:
+                    break
+                delta += n if m == "sub" else -n
+            elif m == "leave" and ebp is not None:
+                delta = ebp - 4
+            elif m == "call" and op.startswith("0x") and int(op, 16) == DNA.STACK_CHECK:
+                delta -= 4
+            if m.startswith("ret") or m == "iretd":
+                break
+            if m == "jmp":
+                if not op.startswith("0x"):
+                    break
+                a, via_jmp = int(op, 16), True
+                continue
+            if m.startswith(("j", "loop")) and op.startswith("0x"):
+                work.append((int(op, 16), delta, ebp, True))
+            a += i.size
     return out
 
 
@@ -1081,6 +1159,8 @@ def screen_unread(sc: Screen, names: list[dict], cg, entries: list[int], argc: d
     名稱宣稱這個參數有用途;本體完全不碰,多半是名稱放錯位置(實例 `dpmi_dos_free`:摘要寫第 1 個是選擇子,
     本體只讀第 3 個)。真的沒用到的參數(呼叫慣例上留著的)核對後記 not_error。
     省略記號(`...` / `..`)不比;暫存器傳參不比(入口暫存器有沒有被用,要追值才知道)。
+    續一百二十:本體跳到本體外(共用收尾段、尾端呼叫)之後才引用的也算有人讀(`tail_params_read`),另計
+    「param_unread 跳出本體後才引用」—— 原本這類 handler 有 13 筆靠人工記 not_error。
     """
     for x in names:
         a = int(x["addr"], 16)
@@ -1089,9 +1169,11 @@ def screen_unread(sc: Screen, names: list[dict], cg, entries: list[int], argc: d
         slots = n_slots(params, n)
         if not slots or role_convention(slots, c, argc.get(a)) != "stack":
             continue
-        read = stack_params_read(cg, a, entries)
-        if read is None:
+        res = body_stack_refs(cg, a, entries)
+        if res is None:
             continue
+        read, exits, own = res
+        tail = tail_params_read(cg, exits, own)
         _bump(sc, "param_unread 函式")
         starts = slot_starts(params)
         for k, pn in enumerate(params, 1):
@@ -1099,6 +1181,9 @@ def screen_unread(sc: Screen, names: list[dict], cg, entries: list[int], argc: d
                 continue
             _bump(sc, "param_unread 可比")
             mine = {starts[k - 1], starts[k - 1] + 1} if pn == "double" else {starts[k - 1]}
+            if not mine & read and mine & tail:
+                _bump(sc, "param_unread 跳出本體後才引用")
+                continue
             if not mine & read:
                 sc.cands.append(Cand(a, x["name"], "param_unread", f"p{k}",
                                      f"第 {k} 參數 {pn}:本體沒有引用它的堆疊格(本體引用的格:{sorted(read)})",
@@ -2713,6 +2798,77 @@ def selftest() -> int:
     chk("沒讀的具名參數:暫存器傳參不比", unread("(a, b):…", [RET], None, 0), ([], 0, 0))
     chk("沒讀的具名參數:個數對不上不比", unread("(a, b):…", B13, {3}), ([], 0, 0))
     chk("沒讀的具名參數:走不出本體不比", unread("(a, b, c):…", [], {3}), ([], 0, 0))
+    # 續一百二十:跳出本體之後才引用的堆疊格(本體在 0x100,尾段依序在 0x200、0x300)
+    SCHK = ("call", f"{DNA.STACK_CHECK:#x}")
+    P5, XOR, RD1 = ("push", "5"), ("xor", "eax, eax"), ("mov", "eax, dword ptr [esp + 4]")
+    T1 = [("push", "dword ptr [esp + 8]"), ("call", "0x9999"), ("add", "esp, 8"), RET]
+
+    def tl(body: list[tuple[str, str]], *tails: list[tuple[str, str]], budget: int = TAIL_BUDGET) -> tuple:
+        ents = [0x100] + [0x200 + 0x100 * k for k in range(len(tails))]
+        g = _G({0x100: body, **dict(zip(ents[1:], tails))})
+        read, exits, own = body_stack_refs(g, 0x100, ents)
+        w: set[int] = set()
+        return sorted(read), sorted(tail_params_read(g, exits, own, budget, w)), sorted(w)
+
+    chk("尾跳:推 1 個常數再 jmp,收尾段的 push [esp+8] 是第 1 格", tl([P5, ("jmp", "0x200")], T1),
+        ([], [1], [0x200, 0x201, 0x202, 0x203]))
+    chk("尾跳:位移從跳出當下接著算(推 2 個之後 [esp+8] 是回傳位址,不是參數)", tl([P5, P5, ("jmp", "0x200")], T1)[:2], ([], []))
+    chk("尾跳:本體引用的歸本體,尾段的另計", tl([("mov", "eax, dword ptr [esp + 8]"), P5, ("jmp", "0x200")], T1)[:2], ([2], [1]))
+    chk("尾跳:本體的條件跳躍跳出本體也是出口", tl([("test", "eax, eax"), ("jne", "0x200"), RET],
+                                    [("mov", "eax, dword ptr [esp + 0xc]"), RET])[:2], ([], [3]))
+    chk("尾跳:不跟進 call", tl([XOR, ("jmp", "0x200")], [("call", "0x300"), RET], [RD1, RET]), ([], [], [0x200, 0x201]))
+    chk("尾跳:尾段的條件跳躍兩邊都走", tl([XOR, ("jmp", "0x200")], [("jne", "0x300"), RET], [RD1, RET]),
+        ([], [1], [0x200, 0x201, 0x300, 0x301]))
+    chk("尾跳:尾段的 jmp imm 跟過去", tl([XOR, ("jmp", "0x200")], [("jmp", "0x300")], [RD1, RET])[:2], ([], [1]))
+    chk("尾跳:迴圈會停", tl([XOR, ("jmp", "0x200")], [RD1, ("jmp", "0x200")]), ([], [1], [0x200, 0x201]))
+    chk("尾跳:迴圈不耗上限,之後的另一條路徑照走", tl([XOR, ("jmp", "0x200")], [("jne", "0x400"), ("jmp", "0x300")],
+                                     [("nop", ""), ("jmp", "0x300")], [RD1, RET]),
+        ([], [1], [0x200, 0x201, 0x300, 0x301, 0x400, 0x401]))
+    chk("尾跳:尾段的條件跳躍跳到帶序頭的函式也照走", tl([XOR, ("jmp", "0x200")], [("jne", "0x300"), RET],
+                                       [("push", "0x10"), SCHK, RD1, RET])[:2], ([], [1]))
+    chk("尾跳:尾段的 jmp imm 跳到帶序頭的函式也照走", tl([XOR, ("jmp", "0x200")], [("nop", ""), ("jmp", "0x300")],
+                                          [("push", "0x10"), SCHK, RD1, RET])[:2], ([], [1]))
+    chk("尾跳:尾段的條件跳躍目標帶著當下的位移", tl([XOR, ("jmp", "0x200")], [P5, ("jne", "0x300"), ("add", "esp, 4"), RET],
+                                    [("mov", "eax, dword ptr [esp + 8]"), ("add", "esp, 4"), RET])[:2], ([], [1]))
+    chk("尾跳:ret 停", tl([XOR, ("jmp", "0x200")], [RET, RD1]), ([], [], [0x200]))
+    chk("尾跳:間接 jmp 停", tl([XOR, ("jmp", "0x200")], [("jmp", "eax"), RD1]), ([], [], [0x200]))
+    chk("尾跳:ESP 被暫存器調整就停", tl([XOR, ("jmp", "0x200")], [("sub", "esp, eax"), RD1, RET]), ([], [], [0x200]))
+    chk("尾跳:sub esp 之後換算位移", tl([XOR, ("jmp", "0x200")], [("sub", "esp, 8"), ("mov", "eax, dword ptr [esp + 0xc]"),
+                                                       ("add", "esp, 8"), RET])[:2], ([], [1]))
+    chk("尾跳:add esp 換回來", tl([XOR, ("jmp", "0x200")], [("sub", "esp, 8"), ("add", "esp, 8"), RD1, RET])[:2], ([], [1]))
+    chk("尾跳:pop 之後換算位移", tl([P5, ("jmp", "0x200")], [("pop", "ecx"), ("mov", "eax, dword ptr [esp + 8]"), RET])[:2],
+        ([], [2]))
+    chk("尾跳:跳到帶堆疊探測序頭的函式(尾端呼叫)照走,探測不佔位移",
+        tl([XOR, ("jmp", "0x200")], [("push", "0x10"), SCHK, RD1, RET])[:2], ([], [1]))
+    chk("尾跳:落入(不是跳到)另一個函式的序頭就停", tl([XOR, ("jmp", "0x200")], [("nop", ""), ("push", "0x10"), SCHK, RD1, RET]),
+        ([], [], [0x200]))
+    chk("尾跳:本體設的 ebp 框架帶過去", tl([("push", "ebp"), ("mov", "ebp, esp"), ("jmp", "0x200")],
+                                [("mov", "eax, dword ptr [ebp + 0xc]"), ("pop", "ebp"), RET])[:2], ([], [2]))
+    chk("尾跳:對方序頭設的框架沒走過,[ebp+X] 不算", tl([P5, ("jmp", "0x200")], [("mov", "eax, dword ptr [ebp + 8]"), RET])[:2],
+        ([], []))
+    chk("尾跳:這一段自己 mov ebp, esp 之後才算", tl([XOR, ("jmp", "0x200")], [
+        ("push", "ebp"), ("mov", "ebp, esp"), ("mov", "eax, dword ptr [ebp + 8]"), ("pop", "ebp"), RET])[:2], ([], [1]))
+    chk("尾跳:leave 把位移收回框架", tl([XOR, ("jmp", "0x200")], [
+        ("push", "ebp"), ("mov", "ebp, esp"), ("sub", "esp, 0x10"), ("leave", ""), RD1, RET])[:2], ([], [1]))
+    chk("尾跳:走回本體就停(那裡已經算過)", tl([RD1, ("jne", "0x200"), RET], [("jmp", "0x100")]), ([1], [], [0x200]))
+    TB = [("nop", ""), ("nop", ""), RD1, RET]
+    chk("尾跳:上限用完就停(少算)", (tl([XOR, ("jmp", "0x200")], TB, budget=2), tl([XOR, ("jmp", "0x200")], TB, budget=3)),
+        (([], [], [0x200, 0x201]), ([], [1], [0x200, 0x201, 0x202])))
+
+    def unread_t(sig: str, body: list[tuple[str, str]], tail: list[tuple[str, str]], cleanup: set[int]) -> tuple:
+        usc = Screen()
+        screen_unread(usc, [{"addr": "0x100", "name": "f", "summary": sig}], _G({0x100: body, 0x200: tail}), [0x100, 0x200],
+                      {}, {0x100: cleanup})
+        return ([(c.screen, c.key) for c in usc.cands], usc.denom.get("param_unread 可比", 0),
+                usc.denom.get("param_unread 跳出本體後才引用", 0))
+
+    BT = [("mov", "eax, dword ptr [esp + 8]"), P5, ("jmp", "0x200")]
+    chk("沒讀的具名參數:第 1 個只在跳出本體後引用 -> 不報,另計", unread_t("(a, b):…", BT, T1, {2}), ([], 2, 1))
+    chk("沒讀的具名參數:跳出本體後也沒有人引用 -> 照報", unread_t("(a, b):…", BT, [("call", "0x9999"), ("add", "esp, 4"), RET], {2}),
+        ([("param_unread", "p1")], 2, 0))
+    chk("沒讀的具名參數:本體引用過的不另計", unread_t("(a, b):…", [RD1] + BT, T1, {2}), ([], 2, 0))
+    chk("沒讀的具名參數:double 兩格只有一格在跳出後引用也算", unread_t("(double, n):…", [("mov", "eax, dword ptr [esp + 0xc]"), P5,
+                                                              ("jmp", "0x200")], T1, {3}), ([], 2, 1))
     chk("登錄:有型別 / 審過無型別 / 未分類", (name_class("dst"), name_class("值"), name_class("zzz_unknown")),
         ("typed", "opaque", None))
     chk("登錄:OPAQUE_NAMES 與型別名單不重疊", sorted(nm for nm in OPAQUE_NAMES if type_of(nm)), [])
@@ -2752,6 +2908,26 @@ def selftest() -> int:
     screen_unread(usc2, [{**cur[0x365AB], "summary": "(選擇子, ...) …"}], rcg, st.entries, st.argc, clean)
     chk("召回:dpmi_dos_free 舊摘要 (選擇子, ...) -> param_unread p1(本體只讀第 3 個)",
         [(c.screen, c.key) for c in usc2.cands], [("param_unread", "p1")])
+    # 續一百二十:13 個推完常數就尾跳到別的 handler 收尾段的 command_handler —— 原本各記一筆 not_error
+    H13 = (0x2134B, 0x21364, 0x2137D, 0x21449, 0x21462, 0x2147B, 0x21494, 0x21B99, 0x2211C, 0x22153, 0x22BC6, 0x22CBF, 0x22E41)
+
+    def body_tail(a: int, budget: int = TAIL_BUDGET) -> tuple[set[int], set[int], int]:
+        read, exits, own = body_stack_refs(rcg, a, st.entries)
+        w: set[int] = set()
+        return read, tail_params_read(rcg, exits, own, budget, w), len(w)
+
+    chk("真實召回(反向):13 個 handler 的第 1 格本體不引用、跳出本體後引用",
+        [a for a in H13 if not (1 not in body_tail(a)[0] and 1 in body_tail(a)[1])], [])
+    chk("真實對照:command_handler_23 的第 2 格跳出本體後也沒有人引用(仍是候選)",
+        (2 in set.union(*body_tail(0x2218A)[:2]), (0x2218A, "p2") in {(c.addr, c.key) for c in run_all[0].cands
+                                                                     if c.screen == "param_unread"}), (False, True))
+    chk("真實:run() 有接上(跳出本體後才引用 ≥ 13),13 個 handler 都不再是候選",
+        (run_sc2.denom.get("param_unread 跳出本體後才引用", 0) >= 13,
+         [c.addr for c in run_all[0].cands if c.screen == "param_unread" and c.addr in H13]), (True, []))
+    # 「不設上限」以 65536 代替(最長一段的 500 倍以上):真的不設,走訪寫壞時這一題會空轉而不是報 FAIL
+    walk_all = [(body_tail(a, 1 << 16), body_tail(a)) for a in sorted(cur) if body_stack_refs(rcg, a, st.entries) is not None]
+    chk("真實:上限沒有改變任何函式的結果;最長的一段 < 上限的一半(用量見 TAIL_BUDGET 的註解)",
+        (sum(f[1] != c[1] for f, c in walk_all), 0 < max(f[2] for f, _ in walk_all) < TAIL_BUDGET // 2), (0, True))
     rsc5 = Screen()
     screen_roles(rsc5, [{**cur[0x2BF83], "summary": "(影格索引*, 計時*, 動畫, ...) …"}], rcg, st.entries, st.argc, clean,
                  st.code, st.base)
