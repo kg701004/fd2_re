@@ -24,6 +24,10 @@
   - `body`:`at` 是本體裡的指令,而且那個指令**引用這個參數的堆疊格**;`insn` 必須與反組譯相同。
   - `caller`:`at` 是 EXE 裡直接呼叫這個函式的呼叫點(本體不讀的參數,名稱只能依呼叫端)。
   - `live`:實機紀錄在這個參數的位置有值(名稱依實機值;`at` 不用填)。
+  - `reg`(續一百一十八):Watcom 暫存器傳參的函式(`SS.call_conv` 回 'reg'),第 k 個參數在 eax / edx / ebx / ecx 的
+    第 k 個。`at` 必須是本體依位址順序、第一個 call 之前**第一個提到那個暫存器(含 ax / al 這類部分暫存器)**的指令,
+    而且不是單純覆寫它(`mov r, …` / `xor r, r`);`insn` 必須與反組譯相同。這只擋寫錯暫存器或指到已被覆寫之後的
+    指令 —— 依位址順序不等於執行順序,它是人工閱讀的佐證,不是證明。
 - 同一個 (函式, 參數) 只能一筆。
 
 `--coverage` 的三個數字:機器比過(實機型別 / 值流 / 讀寫角色任一個篩選比到)、只有人工讀過、兩者都沒有。
@@ -41,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,8 +55,14 @@ import screen_summaries_by_calllog as SS  # noqa: E402
 
 ROOT = SS.ROOT
 READS_JSON = ROOT / "docs" / "data" / "param_read_review.json"
-BASIS_KINDS = ("body", "caller", "live")
+BASIS_KINDS = ("body", "caller", "live", "reg")
 Refs = dict[int, list[tuple[int, str]]]
+RegUses = dict[str, tuple[int, str, bool]]
+# 暫存器參數與它的部分暫存器:先寫 al 再讀 eax,讀到的已經不是入口值
+REG_ALIASES = {"eax": ("eax", "ax", "al", "ah"), "edx": ("edx", "dx", "dl", "dh"),
+               "ebx": ("ebx", "bx", "bl", "bh"), "ecx": ("ecx", "cx", "cl", "ch")}
+_OVERWRITE = ("mov", "lea", "pop", "movzx", "movsx")     # 第一個運算元是目的、不讀它原本的值
+_ZEROING = ("xor", "sub")                                # 兩個運算元相同時是清 0
 
 
 # ---------------------------------------------------------------- 純函式(selftest 直接測)
@@ -87,11 +98,40 @@ def body_refs(cg, target: int, entries: list[int]) -> Refs | None:
     return out
 
 
-def check_entry(r: dict, fn: dict | None, refs: Refs | None, sites: set[int], live_slots: set[int]) -> str | None:
+def reg_first_uses(cg, target: int, entries: list[int]) -> RegUses | None:
+    """本體依位址順序、第一個 call 之前,第一個提到各暫存器參數的指令 -> {暫存器: (位址, 指令文字, 是不是單純覆寫)}。
+
+    「提到」含部分暫存器(`REG_ALIASES`)。單純覆寫 = `mov` / `lea` / `pop` 把它當目的而來源沒有用到它,或
+    `xor r, r` / `sub r, r`:入口值沒有被讀。call 之後不再看 —— 入口值可能已交給被呼叫端或被它改掉。
+    走不出本體回 None。"""
+    res = SS.cfg_states(cg, target, entries, {}, lambda i, td, st: st, frozenset())
+    if res is None:
+        return None
+    ins = res[2]
+    out: RegUses = {}
+    for at in sorted(ins):
+        i = ins[at]
+        ops = [o.strip() for o in i.op_str.split(",")] if i.op_str else []
+        for reg, al in REG_ALIASES.items():
+            pat = re.compile(r"\b(?:" + "|".join(al) + r")\b")
+            if reg in out or not pat.search(i.op_str or ""):
+                continue
+            dest_only = ops[0] in al and not any(pat.search(o) for o in ops[1:])
+            same = len(ops) == 2 and ops[0] == ops[1] and ops[0] in al
+            out[reg] = (at, f"{i.mnemonic} {i.op_str}".strip(),
+                        (i.mnemonic in _OVERWRITE and dest_only) or (i.mnemonic in _ZEROING and same))
+        if i.mnemonic == "call":
+            break
+    return out
+
+
+def check_entry(r: dict, fn: dict | None, refs: Refs | None, sites: set[int], live_slots: set[int],
+                regs: RegUses | None = None, conv: str | None = None) -> str | None:
     """登錄的一筆 -> 錯誤訊息(None = 成立)。
 
     fn:登錄檔指到的函式(function_names.json 的條目;None = 不存在)。refs:`body_refs` 的結果(None = 走不出本體)。
     sites:EXE 裡直接呼叫它的呼叫點。live_slots:實機紀錄有值的堆疊格。
+    regs:`reg_first_uses` 的結果(None = 走不出本體);conv:`SS.call_conv` 的結果。兩個只有 `reg` 依據會用到。
     """
     if fn is None:
         return "函式不在 function_names.json"
@@ -124,6 +164,24 @@ def check_entry(r: dict, fn: dict | None, refs: Refs | None, sites: set[int], li
         if kind == "caller":
             if at not in sites:
                 return f"basis caller:{at:#x} 不是直接呼叫這個函式的呼叫點"
+            continue
+        if kind == "reg":
+            if conv != "reg":
+                return "basis reg:這個函式不是暫存器傳參"
+            if k > len(SS.VC.REG_ARGS):
+                return f"basis reg:第 {k} 個參數不在暫存器(只有前 {len(SS.VC.REG_ARGS)} 個)"
+            if regs is None:
+                return "basis reg:走不出這個函式的本體,無從檢查"
+            reg = SS.VC.REG_ARGS[k - 1]
+            hit = regs.get(reg)
+            if hit is None:
+                return f"basis reg:本體在第一個 call 之前沒有提到 {reg}"
+            if hit[0] != at:
+                return f"basis reg:第一個提到 {reg} 的指令在 {hit[0]:#x},登錄寫 {at:#x}"
+            if hit[2]:
+                return f"basis reg:{at:#x} 只是覆寫 {reg},沒有讀入口值"
+            if b.get("insn") != hit[1]:
+                return f"basis reg:{at:#x} 的指令是 {hit[1]!r},登錄寫 {b.get('insn')!r}"
             continue
         if refs is None:
             return "basis body:走不出這個函式的本體,無從檢查(改用 caller / live)"
@@ -178,6 +236,7 @@ def load_reads(doc: dict, ctx: Ctx) -> tuple[dict[tuple[int, int], dict], list[s
     out: dict[tuple[int, int], dict] = {}
     errs: list[str] = []
     memo: dict[int, Refs | None] = {}
+    rmemo: dict[int, RegUses | None] = {}
     for i, r in enumerate(doc.get("reads", [])):
         try:
             a = int(r["addr"], 16)
@@ -186,7 +245,9 @@ def load_reads(doc: dict, ctx: Ctx) -> tuple[dict[tuple[int, int], dict], list[s
             continue
         if a not in memo:
             memo[a] = body_refs(ctx.cg, a, ctx.st.entries) if a in ctx.by else None
-        e = check_entry(r, ctx.by.get(a), memo[a], set(ctx.sources.get(a, {})), live_slots(ctx, a))
+            rmemo[a] = reg_first_uses(ctx.cg, a, ctx.st.entries) if a in ctx.by else None
+        e = check_entry(r, ctx.by.get(a), memo[a], set(ctx.sources.get(a, {})), live_slots(ctx, a), rmemo[a],
+                        SS.call_conv(a, ctx.cleanups, ctx.st.argc))
         key = (a, r.get("param"))
         if e is None and key in out:
             e = "重複"
@@ -333,6 +394,45 @@ def selftest() -> int:
     chk("多筆 basis:caller 成立後仍檢查下一筆", "沒有值" in (ce(basis=[{"kind": "caller", "at": "0x900"}, {"kind": "live"}]) or ""),
         True)
 
+    print("[3b] 暫存器傳參的依據(reg)")
+    gr = _G({0x200: [("push", "esi"), ("sub", "ecx, ecx"), ("mov", "cx, word ptr [eax + 8]"), ("mov", "ebx, 1"),
+                     ("cmp", "word ptr [edx + 8], 0"), ("pop", "esi"), ("ret", "")]})
+    ru = reg_first_uses(gr, 0x200, [0x200])
+    chk("第一個提到:讀 [eax + 8] 算讀;sub ecx, ecx 與 mov ebx, 1 是覆寫", ru,
+        {"ecx": (0x201, "sub ecx, ecx", True), "eax": (0x202, "mov cx, word ptr [eax + 8]", False),
+         "ebx": (0x203, "mov ebx, 1", True), "edx": (0x204, "cmp word ptr [edx + 8], 0", False)})
+    chk("部分暫存器先被寫 -> 第一個提到的是那一條(覆寫)",
+        reg_first_uses(_G({0x200: [("mov", "al, 1"), ("test", "eax, eax"), ("ret", "")]}), 0x200, [0x200]),
+        {"eax": (0x200, "mov al, 1", True)})
+    chk("mov 的來源用到自己不算覆寫;xor 兩個不同暫存器不算清 0",
+        reg_first_uses(_G({0x200: [("mov", "eax, dword ptr [eax + 4]"), ("xor", "edx, ebx"), ("ret", "")]}), 0x200, [0x200]),
+        {"eax": (0x200, "mov eax, dword ptr [eax + 4]", False), "edx": (0x201, "xor edx, ebx", False),
+         "ebx": (0x201, "xor edx, ebx", False)})
+    chk("call 之後不看(call 那一條自己算)",
+        reg_first_uses(_G({0x200: [("test", "edx, edx"), ("call", "eax"), ("test", "ebx, ebx"), ("ret", "")]}), 0x200,
+                       [0x200]),
+        {"edx": (0x200, "test edx, edx", False), "eax": (0x201, "call eax", False)})
+    chk("走不出本體 -> None", reg_first_uses(_G({}), 0x200, [0x200]), None)
+    fr = {"addr": "0x200", "name": "r", "summary": "(p, q, cnt, m, extra):…"}
+    okr = {"addr": "0x200", "name": "r", "param": 1, "pname": "p", "note": "讀到了", "date": "2026-10-13",
+           "basis": [{"kind": "reg", "at": "0x202", "insn": "mov cx, word ptr [eax + 8]"}]}
+
+    def cr(conv: str | None = "reg", regs=ru, **kw) -> str | None:
+        return check_entry({**okr, **kw}, fr, None, set(), set(), regs, conv)
+
+    chk("reg:成立(不需要堆疊引用)", cr(), None)
+    chk("reg:不是暫存器傳參的函式", (cr(conv="stack"), cr(conv=None)), ("basis reg:這個函式不是暫存器傳參",) * 2)
+    chk("reg:第 2 個(edx)指到別的暫存器的指令", "第一個提到 edx 的指令在 0x204" in (cr(param=2, pname="q") or ""), True)
+    chk("reg:第 3 個(ebx)第一次提到就是覆寫", "只是覆寫 ebx" in (cr(param=3, pname="cnt", basis=[
+        {"kind": "reg", "at": "0x203", "insn": "mov ebx, 1"}]) or ""), True)
+    chk("reg:指令文字不同", "的指令是" in (cr(basis=[{"kind": "reg", "at": "0x202", "insn": "mov cx, 1"}]) or ""), True)
+    chk("reg:第 4 個(ecx)還在暫存器範圍內,錯在它是覆寫", "只是覆寫 ecx" in (cr(param=4, pname="m", basis=[
+        {"kind": "reg", "at": "0x201", "insn": "sub ecx, ecx"}]) or ""), True)
+    chk("reg:第 5 個不在暫存器", "不在暫存器" in (cr(param=5, pname="extra") or ""), True)
+    chk("reg:本體沒有提到那個暫存器", "沒有提到 eax" in (cr(regs={}) or ""), True)
+    chk("reg:走不出本體", "走不出" in (cr(regs=None) or ""), True)
+    chk("reg:at 格式錯", "at 格式錯" in (cr(basis=[{"kind": "reg", "insn": "x"}]) or ""), True)
+
     print("[4] 三個數字")
     chk("機器比過 / 只有人工 / 都沒有", classify([(1, 1), (1, 2), (2, 1), (3, 1)], {(1, 1), (2, 1)}, {(2, 1), (1, 2)}),
         (2, 1, [(3, 1)]))
@@ -358,6 +458,11 @@ def selftest() -> int:
     chk("資料卡:effect_cure_status_flag 第 2 格原樣轉交給 play_map_effect_animation 的第 2 個(動畫號)",
         ("play_map_effect_animation", 2, "動畫號") in {f[:3] for f in d2["slots"][1]["forwards"]}, True)
     chk("資料卡:印得出來", any("原樣轉交" in ln for ln in format_dossier(d2)), True)
+    chk("真實:emu_fprem 是暫存器傳參,第一個提到 edx 的是 0x4c4d2(讀除數的指數)",
+        (SS.call_conv(0x4C4BD, ctx.cleanups, ctx.st.argc), (reg_first_uses(ctx.cg, 0x4C4BD, ctx.st.entries) or {}).get("edx")),
+        ("reg", (0x4C4D2, "cmp word ptr [edx + 8], 0", False)))
+    chk("真實:登錄裡有 reg 依據的條目(≥ 5 筆),全數成立",
+        sum(any(b.get("kind") == "reg" for b in r["basis"]) for r in reads.values()) >= 5, True)
     first = raw["reads"][0]                           # 取原始條目:登錄全數不成立時也不會因為空清單當機
     chk("真實:把一筆登錄的 pname 改掉 -> 過期", ["過期" in e for e in load_reads({"reads": [{**first, "pname": "舊名"}]}, ctx)[1]],
         [True])

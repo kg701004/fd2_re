@@ -9060,3 +9060,132 @@ selftest 加 9 題;突變 11 個全 KILLED。沒納入的 1 個突變:拿掉「u
     `verify_names_by_calllog.py` 的 `len(stack) != 8`、`param_slot`、`param_slots`;再重編 debug.o、補錄一場有 AI 移動的
     戰鬥。舊紀錄仍是 8 格,剖析器要兩種都收。
 - 23 筆摘要仍以 `...` / `..` 省略部分參數。
+
+## 2026-10-13 續一百一十八:續一百一十七「仍留的」前三項做完、實機補錄 cl13 / cl14 —— 省略的參數列 23 -> 0、沒有依據的參數 91 -> 5、無型別名稱 36 -> 18;改正 1 筆參數列、2 筆內文
+
+照續一百一十七「仍留的」的順序做不需要實機的三項,量第四項值不值得蓋,最後實機補錄紀錄太少的參數(第六節)。
+
+**一、以 `...` / `..` 省略的 23 筆摘要全部補齊**(逐筆讀反組譯與呼叫點;`docs/data/function_names.json`)。
+補完後具名參數 864 -> 900,新的參數自動進各篩選。讀的過程中發現內文寫錯的 2 筆、寫漏的 2 筆:
+
+| 函式 | 舊 -> 新 | 讀到的 |
+|---|---|---|
+| `ail_ini_parse_line` 0x3f5b4 | (行字串, ...)「解析 INI 的一行…把鍵 / 值存回呼叫端」-> (數字串, 進位, 結尾指標) 把一段數字轉成整數 | 0x3f614 把累計值乘上第 2 個;位數取自 0x511b4 的 "0123456789ABCDEF";'-' 反號、空白類跳過;0x3f645 把停下的位置寫進第 3 個。函式名沿用(不改登錄名) |
+| `action_ring_select` 0x177fc | 「在項目表對應欄為 0(可用)時」-> 判斷的是第 2 個(4 格啟用表) | 0x17807 把第 2 個載入 ebx,0x1783a 等四處比的是它;第 1 個只轉交 |
+| `play_command_cast_animation` 0x30e9d | (caster, cmd, script, ...) -> 補 目標動畫, strip, panel_buf, 背景圖, 面板附圖;呼叫端位址 0x2ff45 改成三個呼叫點 | 0x2ff45 不是函式入口(續一百一十二已記);第 7 / 8 個在 `spell_cast_scene` 分別從 BG.DAT、TAI.DAT 載入 |
+| `ail_drv_fn_0502_release` 0x423e0 | (結構, ...) -> (結構, 來源, 長度),補上本體後半 | 送出後把 來源 的 min(長度, 0x200) bytes 複製到 [結構 + 8] + 0x100,再送一次 |
+
+其餘 19 筆只是補名稱:指令環家族 5 個函式的第 2 個都是 4 格啟用表(圖示格號 = 項目表[i]*3 + 啟用表[i]*2);
+`item_panel_session` / `item_grid_select` 的第 2 個是「限可使用」(非 0 時道具效果列 +0xd 非 0 才收);
+`ani_player` (動畫號, delay_ms, 可跳過);`tavern_menu` / `church_menu` 的參數與 `shop_menu` 同為 畫面備份;
+`command_generic_damage` 兩個與 `type21_effect_presentation` 是 (使用者, 指令號, count, targets);
+`info_card_build` / `draw_unit_status_panel` (單位, dst);`draw_map_hud` (dst, stride);
+`info_card_present_frame` 第 4 個是 畫面備份;`ai_item_action` (單位, camp);`lx_load_file` 第 3 個 載入緩衝;
+`title_anim_or_still` (動畫號, delay_ms, FDOTHER 索引)。
+
+補齊後篩選報出 4 個候選:`blit_rle_sprite_remap` 的 p1:背景圖 / p1:面板附圖(泛稱與特稱,加進 `NAME_ISA`);
+`type21_effect_presentation` 的 p1 / p2 本體確實不讀(記 not_error,名稱依呼叫端)。
+
+**二、沒有任何依據的 92 個參數逐個讀完**(`param_dossier.py --worklist`;補齊後由 91 變 92)。
+- 名稱與本體相符的 86 個登錄進 `docs/data/param_read_review.json`(95 -> 181 筆)。
+- 參數列錯誤 1 筆:`io_set_mode` 0x3d253 (handle, 模式) -> (handle)。本體只讀第 1 個,加上去的 0x40 是寫死的。
+  它沒有呼叫端、摘要列 2 個而本體只讀 1 個,`role_convention` 對不上,所有靜態篩選整筆跳過。量過這種情形
+  (沒有清堆疊資訊、本體讀得比摘要少)全登錄只有這 1 筆,所以沒有為它改工具。
+- 剩 5 個列得出原因:`stack_switch_and_jump` 的 3 個(本體以 `jmp ecx` 離開,控制流走不出來;直接反組譯讀過,
+  0x3f0fe / 0x3f101 / 0x3f104 依序載入 ss / esp / ebp,名稱相符,但登錄的 body 依據驗不了)、
+  `emu_ld_fma_store` 的 項數(ebx 在本體沒有被提到,原樣留給 `emu_ld_mul_add`)、
+  `ail_wavesynth_event_cb` 的 序列(回呼,本體不讀、沒有靜態呼叫點)。
+
+**登錄多一種依據 `reg`**(`tools/param_dossier.py`):Watcom 暫存器傳參的函式沒有堆疊格可以指。`reg_first_uses` 取本體
+依位址順序、第一個 call 之前第一個提到 eax / edx / ebx / ecx(含 ax / al 這類部分暫存器)的指令;登錄的 `at` 必須是它,
+而且不能是單純覆寫(`mov r, …`、`xor r, r`)。依位址順序不等於執行順序,這只擋寫錯暫存器或指到覆寫之後的指令,
+是人工閱讀的佐證。目前 6 筆(FD2.EXE 反組譯):`emu_fprem` 的 0x4c4bd / 0x4c4d2、`emu_split_exponent` 的 0x4c6ef、
+`emu_ld_fma_store` 的 0x4ce66 / 0x4ce67、`raise_via_hook` 的 0x4d726。
+
+**三、無型別名稱 36 -> 18 個參數**(`OPAQUE_NAMES` 20 -> 9 個名稱)。讀過之後:
+- 其實是小整數,移進 `SMALL_NAMES`:a / b(`compare_to_glyph` 的兩個字形碼、`vga_palette_fade_range` 的藍)、
+  view_arg、錯誤旗標。
+- 其實是指標,在摘要改名:`memcmp_n` / `dst_compare_dates` 的 a / b -> a* / b*、`emu_fprem` 的 被除數 / 除數 與
+  `emu_split_exponent` 的 擴展精度值 加 *、`printf_fmt_fixed_short` 的 規格 -> 規格*、`map_attack_sequence` 的
+  panel_pos -> panels、`dialog_box_close_anim` 的 saved -> saved_ptr、`swap_hook_52758` 的 新值 -> 掛鉤指標。
+- `fill_band_color_run6` 的 v -> color。
+- 留下的 18 個:值 7、double 4,以及 位移、增量、請求大小、dword、arg、回呼參數、新值 各 1 —— 任意大小的整數、
+  浮點值、用途不明的值,名稱本身講不出型別。
+
+**結果**(中間一欄是只做完前三項、仍是 10 份紀錄時的數字;右邊一欄加上第六節的 cl13 / cl14,共 12 份):
+
+| | 續一百一十七 | 本輪(10 份紀錄) | 本輪(12 份紀錄) |
+|---|---|---|---|
+| param_type 可比 | 549 | 580 | 597 |
+| param_type 紀錄太少 | 93 | 94 | 78 |
+| param_role 可比 | 128 | 130 | 130 |
+| param_flow 可比 | 187 | 202 | 192 |
+| param_unread 可比 | 847 | 884 | 884 |
+| param_name 邊 / 可比的參數 | 597 / 397 | 642 / 432 | 642 / 432 |
+| 參數名 有型別 / 審過無型別 | 828 / 36 | 881 / 18 | 881 / 18 |
+| 候選 / 已改正 / 非錯誤 / 未核對 | 11 / 43 / 11 / 0 | 13 / 43 / 13 / 0 | 13 / 43 / 13 / 0 |
+
+param_flow 只補實機型別沒比到的參數,所以實機比到的變多時它會變少(202 -> 192)。
+
+具名參數 899 個(12 份紀錄):機器比過 799、只有人工讀過 95(登錄 181 筆,其中 86 筆機器也比過)、兩者都沒有 5。
+只做完前三項時是 792 / 102 / 5。
+續一百一十四起累計:參數列錯誤 19 筆(另 3 筆只有內文錯)。
+
+**四、量測:分母之外還有多少**(暫存腳本,只讀,沒有入庫)。把 1149 個有名稱的函式依參數列的寫法分類:
+
+| 參數列的寫法 | 函式 | 堆疊格 |
+|---|---|---|
+| 完整具名 | 377 | 897 |
+| 沒有參數列,但呼叫端清堆疊或本體讀堆疊參數 | 245 | 664 |
+| 只寫「(N 個參數)」 | 10 | 45 |
+| 沒有參數列,也看不出有參數 | 507 | 0 |
+| `()` / 暫存器寫法 | 10 | 0 |
+
+也就是說「具名參數 899」只是有名稱的那一半:另有 255 個函式、709 個堆疊格**沒有參數名**。它們不宣稱任何事,
+所以不會錯,也沒有任何篩選會看;續一百一十七以前的「仍留的」沒有列出這一項。
+
+**五、量測:同型別對調要不要再蓋一種檢查**。續一百一十七說要再往下需要「全域變數或結構欄位的名稱登錄」。
+先拿已知漏抓的 4 筆評估,再用最便宜的一種特徵做原型(暫存腳本,只依位址順序掃一次,沒有入庫):
+「當成單位編號用」= 參數乘 0x50 後加上單位陣列基底 [0x53a45],或原樣轉交到這樣用的參數。
+
+- 名稱是單位型別的 101 個參數:有這個用法 90、沒有 11。沒有的 11 個是 `map_block_cells_of_side` 的 排除單位
+  (只拿來比)與 10 個 caster / 使用者:3 個本體不讀(`play_map_effect_animation`、`flash_listed_units_band_cycle`、
+  `type21_effect_presentation`,都有 param_unread 的核對紀錄),7 個只把它轉交給前面那幾個,或轉交給 0x1c2da 的第 1 個
+  (那裡也沒有單位用法)。
+- 名稱不是單位型別、卻有這個用法的 1 個:`set_units_byte34_low_nibble` 的 first(單位編號範圍的起點,名稱沒錯)。
+- 對 4 筆已知漏抓的對調:抓得到 1 筆(`unit_present_intro_frames` 當時的第 1 個叫「單位」,本體沒有單位用法)。
+  `queue_unit_number_popup` 錯的是另外兩個小整數;`phase_banner_split_slide` 是兩個小整數;
+  `dpmi_dos_alloc_locked` 是兩個輸出指標,要 DPMI 的暫存器語意才分得出來。全域 / 欄位名稱登錄對這 3 筆也沒有幫助。
+
+結論:不蓋全域名稱登錄(4 筆裡它一筆都不多抓)。「單位用法」這一種特徵精確(101 個裡 90 個相符、12 個例外都講得出
+原因),可以把單位型別的名稱從「只靠實機值與值流」變成另有一個靜態依據,但召回只有 1 / 4;本輪沒有做,列在下面。
+
+**六、實機補錄 cl13 / cl14**(原版 FD2.EXE,md5 33464c81e6a364fd0660141139aa8e6e,修補版 DOSBox-X;兩份都以 `T exit` 結束)。
+- cl13(DOS 環境變數 `AIL_DEBUG=AILDBG.TXT`,讀檔進城鎮的武器店,DOSBox-X 觀察):買 布衣、皮甲 各一件,
+  `equip_compare_select` 2 次(count 0xc / 8);再把兩件賣掉,`gold_add_with_counter_anim` 2 次(delta 0x25 / 0xe1)。
+  買的時候畫面上的金錢從 10070183 變成 10070133,但 `gold_add_with_counter_anim` 仍是 0 次 —— 它只在賣出時被呼叫,
+  買入走的是別的路。
+- cl14(同樣的環境變數,標題選 START 開新遊戲,到第一場戰鬥後離開,DOSBox-X 觀察):`localtime` 再 1 次。
+- `gold_add_with_counter_anim` 的 delta、`equip_compare_select` 的 count、`localtime` 的 time_t* 各滿 3 次,
+  實機型別篩選都比到了,沒有新的候選(DOSBox-X 呼叫紀錄)。
+- 沒補到的 2 個:`show_fdother_static_screen` 的 起始列 —— 讀檔與開新遊戲兩條路都沒有呼叫它(cl13 / cl14 都是 0 次,
+  DOSBox-X 呼叫紀錄),既有的 2 次都在 cl1,觸發條件還沒找到;`roster_reorder_selected_first` 的 選取旗標陣列 ——
+  要出擊選人畫面(名冊超過 16 人),這輪沒有做。
+- 8 格上限沒有做:受影響的只有 `grid_path_search` 的 2 個參數,要改補丁、重編模擬器,剖析器還要兩種格式都收。
+- 12 份紀錄(`verify_names_by_calllog.py --logs-dir .wsl_build`,DOSBox-X 呼叫紀錄):E 407582 筆、解析錯誤 0;
+  被執行的入口 616 -> 621;規格 77 條有紀錄,全部成立。事實檔 `docs/data/function_call_profiles.json` 已重產。
+
+**驗證**:
+- selftest:篩選工具 381 題(本輪只動名單,沒有動邏輯)、`param_dossier.py` 51 題(新增 [3b] 15 題與 2 題真實資料),全過。
+- 突變:`param_dossier.py` 新增的 `reg` 依據 14 個,全部 KILLED(都有 FAIL 行、沒有 Traceback,未突變對照通過)。
+  沒有列入的 3 個條件(regs 是 None、沒提到那個暫存器、k 超過暫存器個數)拿掉後下一行就當機,是防當機的守門;
+  k 的範圍改用差一的突變測,為它補了 1 題。
+- `function_inventory.py --check-names`:1149 筆的反組譯證據全部相符(本輪新增的證據指令都在內)。
+- 重產事實檔之後三支工具的 selftest 重跑:381 / 51 / 118 題全過。
+
+**仍留的**:
+- 255 個函式、709 個堆疊格沒有參數名(見第四節)。這是比前三項加起來都大的一塊,要逐函式讀才補得上。
+- 5 個具名參數沒有依據(見第二節,各有原因)。
+- 18 個無型別名稱的參數。
+- 「單位用法」特徵的靜態篩選(第五節):原型量過,沒有做成工具。
+- 實機紀錄太少的參數剩 2 個具名的有人工閱讀、但實機型別沒比到(見第六節);呼叫紀錄的 8 格上限沒有改。

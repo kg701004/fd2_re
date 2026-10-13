@@ -601,7 +601,7 @@
    "addr": "0x3f5b4",
    "name": "ail_ini_parse_line",
    "param": 1,
-   "pname": "行字串",
+   "pname": "數字串",
    "basis": [
     {
      "kind": "body",
@@ -609,7 +609,7 @@
      "insn": "mov ebp, dword ptr [esp + 0x18]"
     }
    ],
-   "note": "行字串:toupper 正規化、strlen 量長度(續一百一十七:參數由 行 改名 行字串,重讀資料卡,依據不變)",
+   "note": "數字串:0x3f5cf 以 [edi + ebp] 逐字元讀,toupper 後在數字表 0x511b4 裡找(續一百一十八:參數由 行字串 改名 數字串,摘要改成「把一段數字轉成整數」;重讀反組譯,依據的指令不變)",
    "date": "2026-10-13"
   },
   {
@@ -751,7 +751,7 @@
    "addr": "0x1e856",
    "name": "map_attack_sequence",
    "param": 3,
-   "pname": "panel_pos",
+   "pname": "panels",
    "basis": [
     {
      "kind": "body",
@@ -759,8 +759,8 @@
      "insn": "mov esi, dword ptr [esp + 0x28]"
     }
    ],
-   "note": "open_attack_hp_panels 回傳的面板位置指標(實機 0x1efa30)",
-   "date": "2026-10-12"
+   "note": "open_attack_hp_panels 回傳的面板位置指標(實機 0x1efa30)(續一百一十八:參數由 panel_pos 改名 panels,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x1e7f6",
@@ -796,7 +796,7 @@
    "addr": "0x16b43",
    "name": "dialog_box_close_anim",
    "param": 1,
-   "pname": "saved",
+   "pname": "saved_ptr",
    "basis": [
     {
      "kind": "body",
@@ -804,8 +804,8 @@
      "insn": "mov esi, dword ptr [esp + 0x1c]"
     }
    ],
-   "note": "dialog_box_open_anim 回傳的背景條存檔指標(實機 0x1efa18)",
-   "date": "2026-10-12"
+   "note": "dialog_box_open_anim 回傳的背景條存檔指標(實機 0x1efa18)(續一百一十八:參數由 saved 改名 saved_ptr,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x1c81f",
@@ -1019,7 +1019,7 @@
    "addr": "0x4997e",
    "name": "memcmp_n",
    "param": 1,
-   "pname": "a",
+   "pname": "a*",
    "basis": [
     {
      "kind": "body",
@@ -1027,14 +1027,14 @@
      "insn": "mov eax, dword ptr [ebp + 0xc]"
     }
    ],
-   "note": "被比較的第一塊記憶體",
-   "date": "2026-10-12"
+   "note": "被比較的第一塊記憶體(續一百一十八:參數由 a 改名 a*,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x4997e",
    "name": "memcmp_n",
    "param": 2,
-   "pname": "b",
+   "pname": "b*",
    "basis": [
     {
      "kind": "body",
@@ -1042,8 +1042,8 @@
      "insn": "mov edx, dword ptr [ebp + 0x10]"
     }
    ],
-   "note": "被比較的第二塊記憶體",
-   "date": "2026-10-12"
+   "note": "被比較的第二塊記憶體(續一百一十八:參數由 b 改名 b*,依據不變)",
+   "date": "2026-10-13"
   },
   {
    "addr": "0x37940",
@@ -1418,6 +1418,1296 @@
     }
    ],
    "note": "非 0 時原樣推成 blit_anim_frame 的 mode;0x311f4 與 0 比,是 0 只把影格計數歸零",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1145a",
+   "name": "roster_recalc_equipped_stats",
+   "param": 1,
+   "pname": "名冊索引",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x1146a",
+     "insn": "mov edx, dword ptr [esp + 0x20]"
+    }
+   ],
+   "note": "名冊索引:乘 0x50 後加 [0x53bf7](名冊記錄的位址)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x15da2",
+   "name": "sum_if_unit_byte_zero",
+   "param": 3,
+   "pname": "off",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x15db4",
+     "insn": "mov esi, dword ptr [esp + 0x1c]"
+    }
+   ],
+   "note": "off:0x15de0 以 [esi + 單位記錄] 讀一個 byte(記錄內的位移;呼叫端推 0x25 / 0x26)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21db2",
+   "name": "spawn_random_particle_in_circle",
+   "param": 1,
+   "pname": "radius",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x21dd2",
+     "insn": "imul edx, dword ptr [esp + 0x30]"
+    }
+   ],
+   "note": "radius:rand%64 乘它再除 64、減 1,得到距離",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21db2",
+   "name": "spawn_random_particle_in_circle",
+   "param": 6,
+   "pname": "cx",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x21e2d",
+     "insn": "fild dword ptr [esp + 0x44]"
+    }
+   ],
+   "note": "cx:加上 距離 x 三角函數後取整,寫成第 i 個粒子的 x",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x21db2",
+   "name": "spawn_random_particle_in_circle",
+   "param": 7,
+   "pname": "cy",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x21e6f",
+     "insn": "fild dword ptr [esp + 0x48]"
+    }
+   ],
+   "note": "cy:同 cx 的算法再加 [0x50200],寫成 y",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22470",
+   "name": "unit_present_intro_frames",
+   "param": 1,
+   "pname": "x",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x224af",
+     "insn": "mov eax, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "x:減鏡頭 X [0x53aa9] 後乘 24(0x224b3 / 0x224b9)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x22470",
+   "name": "unit_present_intro_frames",
+   "param": 2,
+   "pname": "y",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x2247e",
+     "insn": "mov ebp, dword ptr [esp + 0x18]"
+    }
+   ],
+   "note": "y:0x224c9 起減鏡頭 Y [0x53aad] 後乘 0x1c8 x 24",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x34317",
+   "name": "fill_band_color_run6",
+   "param": 1,
+   "pname": "color",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x34325",
+     "insn": "mov edx, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "color:0x34331 取 & 0xf8 當基底(色號)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x364b4",
+   "name": "swap_hook_52758",
+   "param": 1,
+   "pname": "掛鉤指標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x364b9",
+     "insn": "mov edx, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "掛鉤指標:寫進 [0x52758](0x364bd)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x364c4",
+   "name": "swap_hook_5275c",
+   "param": 1,
+   "pname": "新值",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x364c9",
+     "insn": "mov edx, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "新值:寫進 [0x5275c](0x364cd);lx_load_file 沒有用到 [0x5275c],用途不明,名稱照舊",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3669a",
+   "name": "lx_image_size",
+   "param": 2,
+   "pname": "旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x366b1",
+     "insn": "test byte ptr [esp + 0xe0], 1"
+    }
+   ],
+   "note": "旗標:bit 0 決定第 1 個是記憶體影像還是檔名",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x367d1",
+   "name": "lx_load_file",
+   "param": 2,
+   "pname": "旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x367f6",
+     "insn": "test byte ptr [esp + 0x2d4], 1"
+    }
+   ],
+   "note": "旗標:bit 0 同 lx_image_size;0x3682c 另測 bit 2(由掛鉤配置緩衝)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3739e",
+   "name": "freopen",
+   "param": 3,
+   "pname": "FILE*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x373a1",
+     "insn": "push dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "FILE*:原樣交給 stdio_reclaim_stream 的 FILE*",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3d253",
+   "name": "io_set_mode",
+   "param": 1,
+   "pname": "handle",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3d25b",
+     "insn": "mov esi, dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "handle:原樣交給 io_get_mode / io_set_mode_flags 的 handle,0x3d27a 當 int 21h AH=44h 的 bx",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3e4e3",
+   "name": "fmt_hex_zero_pad",
+   "param": 1,
+   "pname": "值",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3e4ef",
+     "insn": "push dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "值:原樣交給 itoa_via_utoa 的 值",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3e536",
+   "name": "printf_fmt_fixed_short",
+   "param": 2,
+   "pname": "值",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3e541",
+     "insn": "mov eax, dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "值:0x3e54a 測正負,負的取絕對值並寫 '-'",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x3e536",
+   "name": "printf_fmt_fixed_short",
+   "param": 3,
+   "pname": "規格*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x3e544",
+     "insn": "mov esi, dword ptr [ebp + 0x18]"
+    }
+   ],
+   "note": "規格*:0x3e555 讀 [esi + 8](精度),-1 時寫成 4",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x40090",
+   "name": "ctime_into",
+   "param": 1,
+   "pname": "time_t*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4009d",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "time_t*:交給 0x3fee0(_localtime)的第 1 個",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x40090",
+   "name": "ctime_into",
+   "param": 2,
+   "pname": "緩衝區",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x40096",
+     "insn": "push dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "緩衝區:原樣交給 asctime_into 的 緩衝區",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x400b3",
+   "name": "ctime",
+   "param": 1,
+   "pname": "time_t*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x400b6",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "time_t*:原樣交給 localtime 的 time_t*",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x401c0",
+   "name": "ail_drv_fn_0401_if_idle",
+   "param": 1,
+   "pname": "驅動結構",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x401c4",
+     "insn": "mov esi, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "驅動結構:讀 [esi + 0x54]、[esi + 0x18]、[esi + 0x14]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x40210",
+   "name": "ail_drv_fn_0402_if_active",
+   "param": 1,
+   "pname": "驅動結構",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x40211",
+     "insn": "mov esi, dword ptr [esp + 8]"
+    }
+   ],
+   "note": "驅動結構:比 [esi + 0x54],取 [esi] 當驅動",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x41b1c",
+   "name": "voc_block_len",
+   "param": 1,
+   "pname": "區塊指標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x41b1c",
+     "insn": "mov eax, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "區塊指標:讀 [eax] 後右移 8",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x42210",
+   "name": "midi_msg_length",
+   "param": 1,
+   "pname": "MIDI 狀態位元組",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x42210",
+     "insn": "mov eax, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "MIDI 狀態位元組:& 0xf0 後與 0xb0 / 0xd0 比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x423e0",
+   "name": "ail_drv_fn_0502_release",
+   "param": 1,
+   "pname": "結構",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x423e6",
+     "insn": "mov esi, dword ptr [esp + 0x28]"
+    }
+   ],
+   "note": "結構:讀寫 [esi + 0x1a8]、[esi + 8]、[esi]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x423e0",
+   "name": "ail_drv_fn_0502_release",
+   "param": 3,
+   "pname": "長度",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4242a",
+     "insn": "mov ecx, dword ptr [esp + 0x30]"
+    }
+   ],
+   "note": "長度:與 0x200 取小的,當 memmove 的長度",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x424e0",
+   "name": "bswap32",
+   "param": 1,
+   "pname": "dword",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x424e0",
+     "insn": "mov eax, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "dword:拆成 4 個位元組重排",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x42640",
+   "name": "ail_channel_controller_value",
+   "param": 1,
+   "pname": "序列",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x42641",
+     "insn": "mov esi, dword ptr [esp + 8]"
+    }
+   ],
+   "note": "序列:當基底:[esi + 通道*4 + …]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x42640",
+   "name": "ail_channel_controller_value",
+   "param": 2,
+   "pname": "狀態",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x42645",
+     "insn": "mov ebx, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "狀態:& 0xf 取通道、& 0xf0 分類",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x42640",
+   "name": "ail_channel_controller_value",
+   "param": 3,
+   "pname": "控制器",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x42649",
+     "insn": "mov eax, dword ptr [esp + 0x10]"
+    }
+   ],
+   "note": "控制器:0xb0 類時與控制器號 0x5b / 0x70 / 0x73 / 0x77 比(0x42699 起)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x42f50",
+   "name": "ail_channel_resend_state",
+   "param": 2,
+   "pname": "通道",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x42f57",
+     "insn": "mov edi, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "通道:乘 4 加序列後讀 [+0x250]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x43210",
+   "name": "reset_43160_and_rewind",
+   "param": 1,
+   "pname": "結構",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x43211",
+     "insn": "mov esi, dword ptr [esp + 8]"
+    }
+   ],
+   "note": "結構:交給 ail_seq_reset_state,再寫 [esi + 0x14] = [esi + 0x10] + 8",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45698",
+   "name": "ail_wavesynth_midi_event",
+   "param": 1,
+   "pname": "合成器",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4569a",
+     "insn": "mov edi, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "合成器:當基底:通道*4 + edi",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45698",
+   "name": "ail_wavesynth_midi_event",
+   "param": 2,
+   "pname": "狀態",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x456a6",
+     "insn": "mov esi, dword ptr [esp + 0x10]"
+    }
+   ],
+   "note": "狀態:& 0xf0 分類,0x456b0 再取 & 0xf 當通道",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45698",
+   "name": "ail_wavesynth_midi_event",
+   "param": 3,
+   "pname": "d1",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4569e",
+     "insn": "mov edx, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "d1:0xc0 類存成音色、0xe0 類存彎音低位,0xb0 類當控制器號比(0x456ff)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45698",
+   "name": "ail_wavesynth_midi_event",
+   "param": 4,
+   "pname": "d2",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x456a2",
+     "insn": "mov ebx, dword ptr [esp + 0x18]"
+    }
+   ],
+   "note": "d2:0xe0 類存彎音高位(0x456f4)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45880",
+   "name": "ail_wavesynth_update_volume_pan",
+   "param": 1,
+   "pname": "合成器",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4588b",
+     "insn": "mov edx, dword ptr [esp + 0x14]"
+    }
+   ],
+   "note": "合成器:當基底",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45880",
+   "name": "ail_wavesynth_update_volume_pan",
+   "param": 2,
+   "pname": "聲部",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45884",
+     "insn": "mov esi, dword ptr [esp + 0x18]"
+    }
+   ],
+   "note": "聲部:乘 4 後讀 [+0x4d8](所屬通道)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x458f0",
+   "name": "ail_wavesynth_update_pitch",
+   "param": 1,
+   "pname": "合成器",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x458fe",
+     "insn": "add eax, dword ptr [esp + 0x18]"
+    }
+   ],
+   "note": "合成器:當基底",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x458f0",
+   "name": "ail_wavesynth_update_pitch",
+   "param": 2,
+   "pname": "聲部",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x458f7",
+     "insn": "mov eax, dword ptr [esp + 0x1c]"
+    }
+   ],
+   "note": "聲部:乘 4 後讀 [+0x4d8] / [+0x558] / [+0x598]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x459f5",
+   "name": "ail_wavesynth_timbre_cb",
+   "param": 1,
+   "pname": "MDI 驅動",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x459f5",
+     "insn": "mov eax, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "MDI 驅動:讀 [eax + 0x1b0](合成器)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x459f5",
+   "name": "ail_wavesynth_timbre_cb",
+   "param": 2,
+   "pname": "bank",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45a04",
+     "insn": "mov ebx, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "bank:原樣交給 find_in_neg1_list 的 bank",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x459f5",
+   "name": "ail_wavesynth_timbre_cb",
+   "param": 3,
+   "pname": "patch",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x459ff",
+     "insn": "mov edx, dword ptr [esp + 0xc]"
+    }
+   ],
+   "note": "patch:原樣交給 find_in_neg1_list 的 patch",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "param": 1,
+   "pname": "MDI 驅動",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45a2a",
+     "insn": "mov edi, dword ptr [esp + 0x18]"
+    }
+   ],
+   "note": "MDI 驅動:讀 [edi + 0x1b0](合成器)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "param": 3,
+   "pname": "狀態 byte",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45a26",
+     "insn": "mov eax, dword ptr [esp + 0x20]"
+    }
+   ],
+   "note": "狀態 byte:& 0xf0 分類、& 0xf 取通道",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "param": 4,
+   "pname": "資料 1",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45ae1",
+     "insn": "mov ebx, dword ptr [esp + 0x24]"
+    }
+   ],
+   "note": "資料 1:0xb0 類時與控制器號 7 / 0xa / 0xb 比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x45a20",
+   "name": "ail_wavesynth_event_cb",
+   "param": 5,
+   "pname": "資料 2",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x45a7c",
+     "insn": "cmp dword ptr [esp + 0x28], 0"
+    }
+   ],
+   "note": "資料 2:為 0(力度 0)時把類別改成 0x80(note off)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x463db",
+   "name": "fpu_fnsave",
+   "param": 1,
+   "pname": "緩衝區",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x463de",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "緩衝區:fnsave [eax]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x463e7",
+   "name": "fpu_frstor",
+   "param": 1,
+   "pname": "緩衝區",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x463ea",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "緩衝區:frstor [eax]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x46715",
+   "name": "heap_enable",
+   "param": 1,
+   "pname": "旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x46718",
+     "insn": "mov edx, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "旗標:寫進 [0x537ec]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x46728",
+   "name": "heap_get_os_memory",
+   "param": 1,
+   "pname": "大小",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4672e",
+     "insn": "mov eax, dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "大小:0x46747 檢查 > 0 後當配置的大小",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x467c5",
+   "name": "sbrk",
+   "param": 1,
+   "pname": "增量",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x467cf",
+     "insn": "mov eax, dword ptr [ebp + 0x18]"
+    }
+   ],
+   "note": "增量:與界限 [0x52818] 比,之後加 0xf 右移 4",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x46f0a",
+   "name": "ltoa_via_ultoa",
+   "param": 1,
+   "pname": "值",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x46f0e",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "值:進位 10 時測正負,原樣交給 ultoa 的 值",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4728a",
+   "name": "tz_parse_number",
+   "param": 1,
+   "pname": "字串",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4728e",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "字串:逐字元比 '0'..'9'",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x47654",
+   "name": "gmtime_into",
+   "param": 1,
+   "pname": "time_t*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x47664",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "time_t*:push [eax](取出時間值)",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x47678",
+   "name": "gmtime",
+   "param": 1,
+   "pname": "time_t*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x47680",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "time_t*:原樣交給 gmtime_into 的 time_t*",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x47922",
+   "name": "dst_compare_dates",
+   "param": 1,
+   "pname": "a*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x47926",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "a*:讀 [eax + 8]、[eax + 4]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x47922",
+   "name": "dst_compare_dates",
+   "param": 2,
+   "pname": "b*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x47929",
+     "insn": "mov edx, dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "b*:比 [edx + 8]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x499b0",
+   "name": "math_err_one_arg",
+   "param": 1,
+   "pname": "錯誤旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x499bb",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "錯誤旗標:交給 math_err_build_exception 的 錯誤旗標",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x499da",
+   "name": "math_err_build_exception",
+   "param": 1,
+   "pname": "錯誤旗標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x499e2",
+     "insn": "mov edx, dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "錯誤旗標:0x49a47 起依位元決定錯誤種類",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x49c03",
+   "name": "scanf_store_double",
+   "param": 1,
+   "pname": "字串",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x49c0b",
+     "insn": "push dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "字串:交給 strtod_core 的 字串",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x49c03",
+   "name": "scanf_store_double",
+   "param": 2,
+   "pname": "double*",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x49c1c",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "double*:fstp qword [eax]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4c4bd",
+   "name": "emu_fprem",
+   "param": 1,
+   "pname": "被除數*",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4c4bd",
+     "insn": "cmp word ptr [eax + 8], 0"
+    }
+   ],
+   "note": "被除數*:eax:讀 [eax + 8] / [eax + 4] / [eax] 判斷是不是 0",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4c4bd",
+   "name": "emu_fprem",
+   "param": 2,
+   "pname": "除數*",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4c4d2",
+     "insn": "cmp word ptr [edx + 8], 0"
+    }
+   ],
+   "note": "除數*:edx:同樣三段判斷是不是 0",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4c6e8",
+   "name": "emu_split_exponent",
+   "param": 1,
+   "pname": "擴展精度值*",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4c6ef",
+     "insn": "mov cx, word ptr [eax + 8]"
+    }
+   ],
+   "note": "擴展精度值*:eax:讀指數 word",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ce64",
+   "name": "emu_ld_fma_store",
+   "param": 1,
+   "pname": "x*",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4ce66",
+     "insn": "push eax"
+    }
+   ],
+   "note": "x*:eax:先存起來(0x4ce77 取回當寫回的位置),再讀 [eax] / [eax + 4] / [eax + 8]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ce64",
+   "name": "emu_ld_fma_store",
+   "param": 2,
+   "pname": "係數表",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4ce67",
+     "insn": "mov ecx, edx"
+    }
+   ],
+   "note": "係數表:edx:搬到 ecx 交給 emu_ld_mul_add",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d031",
+   "name": "set_matherr_hook",
+   "param": 1,
+   "pname": "函式指標",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d034",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "函式指標:寫進 [0x539a8]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d0c3",
+   "name": "set_hook_539ac",
+   "param": 1,
+   "pname": "值",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d0c6",
+     "insn": "mov eax, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "值:寫進 [0x539ac];用途不明,名稱照舊",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d0d0",
+   "name": "fmt_exponent",
+   "param": 2,
+   "pname": "指數",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d0dc",
+     "insn": "mov esi, dword ptr [ebp + 0x18]"
+    }
+   ],
+   "note": "指數:測正負,負的取絕對值並記 '-'",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d0d0",
+   "name": "fmt_exponent",
+   "param": 4,
+   "pname": "上限",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d12b",
+     "insn": "cmp edx, dword ptr [ebp + 0x20]"
+    }
+   ],
+   "note": "上限:1 + 位數 超過它就不寫",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d174",
+   "name": "fmt_fixed_digits",
+   "param": 4,
+   "pname": "小數位數",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d182",
+     "insn": "mov ebx, dword ptr [ebp + 0x1c]"
+    }
+   ],
+   "note": "小數位數:0x4d185 測是不是 0",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d1f0",
+   "name": "fmt_insert_zeros",
+   "param": 2,
+   "pname": "舊長",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d1fc",
+     "insn": "mov esi, dword ptr [ebp + 0x18]"
+    }
+   ],
+   "note": "舊長:與 新長 比,相等就不動",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d49c",
+   "name": "strtod_core",
+   "param": 1,
+   "pname": "字串",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d4a5",
+     "insn": "mov eax, dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "字串:逐字元跳過空白",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d726",
+   "name": "raise_via_hook",
+   "param": 1,
+   "pname": "訊號",
+   "basis": [
+    {
+     "kind": "reg",
+     "at": "0x4d726",
+     "insn": "push eax"
+    }
+   ],
+   "note": "訊號:eax:推給 [0x5283c] 的處理函式",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d731",
+   "name": "fmt_inf_nan",
+   "param": 1,
+   "pname": "double",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d73b",
+     "insn": "mov eax, dword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "double:複製 8 bytes 後看指數是不是 0x7ff",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d7a0",
+   "name": "dbl_fabs_bits",
+   "param": 1,
+   "pname": "double",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d7a5",
+     "insn": "mov eax, dword ptr [esp + 4]"
+    }
+   ],
+   "note": "double:0x4d7a0 先清最高位元,兩個 dword 以 edx:eax 回傳",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d88c",
+   "name": "dbl_scale_pow10",
+   "param": 1,
+   "pname": "double",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d896",
+     "insn": "fld qword ptr [ebp + 0xc]"
+    }
+   ],
+   "note": "double:與兩個特殊值比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d966",
+   "name": "dbl_to_digits",
+   "param": 1,
+   "pname": "double",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d982",
+     "insn": "push dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "double:交給 fmt_inf_nan 的 double;0x4d9b0 與 0 比",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4d966",
+   "name": "dbl_to_digits",
+   "param": 2,
+   "pname": "位數",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4d96f",
+     "insn": "mov ebx, dword ptr [ebp + 0x1c]"
+    }
+   ],
+   "note": "位數:要取的有效位數",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4e795",
+   "name": "blit_mask_remap",
+   "param": 4,
+   "pname": "換色表",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4e7a4",
+     "insn": "mov ebp, dword ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "換色表:0x4e7ca 以 [eax + ebp] 查表",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ee36",
+   "name": "blit_scaled_transparent",
+   "param": 1,
+   "pname": "來源圖",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4ee3a",
+     "insn": "mov esi, dword ptr [ebp + 8]"
+    }
+   ],
+   "note": "來源圖:0x4ee5e / 0x4ee66 以 lodsw 讀寬、高",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ee36",
+   "name": "blit_scaled_transparent",
+   "param": 3,
+   "pname": "目的跨距",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4ee40",
+     "insn": "mov eax, dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "目的跨距:存進 [0x627ba]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ee36",
+   "name": "blit_scaled_transparent",
+   "param": 4,
+   "pname": "目的寬",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4ee48",
+     "insn": "mov ax, word ptr [ebp + 0x14]"
+    }
+   ],
+   "note": "目的寬:存進 [0x627c4]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4ee36",
+   "name": "blit_scaled_transparent",
+   "param": 5,
+   "pname": "目的高",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4ee52",
+     "insn": "mov ax, word ptr [ebp + 0x18]"
+    }
+   ],
+   "note": "目的高:存進 [0x627c6]",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x4eee0",
+   "name": "blit_rows_wave_offset",
+   "param": 3,
+   "pname": "起始相位",
+   "basis": [
+    {
+     "kind": "body",
+     "at": "0x4eeef",
+     "insn": "mov edx, dword ptr [ebp + 0x10]"
+    }
+   ],
+   "note": "起始相位:0x4eefe 以 [0x627c8 + edx] 取每列的水平偏移",
    "date": "2026-10-13"
   }
  ]

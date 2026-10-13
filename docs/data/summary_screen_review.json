@@ -486,6 +486,24 @@
    "verdict": "not_error",
    "reason": "它從畫面擷取一塊存起來:decode_blit_transparent / draw_res_image_frame 把自己要畫上去的 dst 當擷取來源傳進來(之後才在同一塊上繪製),所以呼叫者的 dst 是這裡的 src;實機第 4 個多為 VGA 0xa0000",
    "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1cac7",
+   "name": "type21_effect_presentation",
+   "screen": "param_unread",
+   "key": "p1",
+   "verdict": "not_error",
+   "reason": "第 1 個參數本體確實不讀(本體只引用第 3 / 4 格,0x1cad5 / 0x1cad9);兩個呼叫端 command_generic_damage_type21(0x213f3)與 item_effect_type21_damage 推的是自己的 使用者 / 使用者,名稱 使用者 依呼叫端",
+   "date": "2026-10-13"
+  },
+  {
+   "addr": "0x1cac7",
+   "name": "type21_effect_presentation",
+   "screen": "param_unread",
+   "key": "p2",
+   "verdict": "not_error",
+   "reason": "第 2 個參數本體確實不讀(本體只引用第 3 / 4 格,0x1cad5 / 0x1cad9);兩個呼叫端 command_generic_damage_type21(0x213f3)與 item_effect_type21_damage 推的是自己的 指令號 / spell,名稱 指令號 依呼叫端",
+   "date": "2026-10-13"
   }
  ]
 }

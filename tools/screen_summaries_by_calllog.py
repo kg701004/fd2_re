@@ -182,7 +182,7 @@ def resolve_sig(summary: str, cleanups: set[int], argc: int | None) -> tuple[lis
 
 UNIT_NAMES = frozenset({"unit", "單位", "attacker", "defender", "target", "caster", "攻方", "守方", "使用者",
                         "排除單位", "面板 1 單位", "面板 2 單位"})
-STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path", "行字串"})
+STR_NAMES = frozenset({"名稱", "模式字串", "檔名", "msg", "格式", "name", "file", "filename", "fmt", "path"})
 PTR_NAMES = frozenset({
     "dst", "src", "out", "buf", "目的", "緩衝區", "輸出", "來源", "res", "anim", "img", "records", "units", "targets",
     "grid", "terrainTable", "FILE*", "項目表", "items", "work", "tmpl", "font", "list", "fp", "script", "ctx", "ptr",
@@ -194,7 +194,9 @@ PTR_NAMES = frozenset({
     "4 格啟用表", "清單", "命令列", "畫面備份", "數字串", "xs", "ys", "speeds", "panels",
     "tiles", "回呼", "輸出回呼", "double* a", "double* b", "檔名或記憶體影像", "argv 或 NULL", "起點", "終點", "start",
     # 續一百一十七(原本的無型別名稱,讀過之後改成有型別的)
-    "遮罩圖", "處理常式", "esp", "ebp"})
+    "遮罩圖", "處理常式", "esp", "ebp",
+    # 續一百一十八(補齊以 ... 省略的參數列時新增)
+    "目標動畫"})
 SMALL_NAMES = frozenset({
     "x", "y", "mode", "count", "item", "idx", "sel", "sell", "len", "id", "n", "spell", "selector", "value", "delta",
     "budget", "row", "kind", "slot", "res_idx", "originX", "originY", "class", "color", "w", "h", "cursorX",
@@ -213,16 +215,24 @@ SMALL_NAMES = frozenset({
     "續播", "選擇子", "raw key", "通道", "bank", "patch", "控制器", "d1", "d2", "狀態", "狀態 byte", "資料 1", "資料 2",
     "MIDI 狀態位元組", "數值", "字形基底", "起始列",
     # 續一百一十七
-    "mask", "聲部", "ss", "PIT 除數", "dx", "基礎傷害", "色彩基底"})
+    "mask", "聲部", "ss", "PIT 除數", "dx", "基礎傷害", "色彩基底",
+    # 續一百一十八
+    "限可使用", "delay_ms", "可跳過",
+    # 原本的無型別名稱,讀過之後確定是小整數:compare_to_glyph 的兩個字形碼與 vga_palette_fade_range 的藍(a / b;
+    # 指標的 a / b 已改名 a* / b*)、save_game_menu 的 byte 旗標、數學錯誤的位元旗標(0x40 / 0x80 / 0x100 / 0x800)
+    "a", "b", "view_arg", "錯誤旗標"})
 # 審過、名稱本身不含可機械比對的型別(續一百一十六):泛稱(值 / a / b)、可大可小的量(位移 / 增量 / 請求大小)、
 # 浮點值(double 以值傳佔 2 格,個數篩選有算;除數 / 被除數 / 擴展精度值是 387 模擬器的運算元)。
 # 這些參數任何型別篩選都比不到,只能靠讀反組譯(`tools/param_dossier.py`)。
 # 續一百一十七:15 個名稱移出 —— base / 偏移 / 遮罩 / 行 / pos / box_arg 在各函式改成講得出型別的名稱;聲部 / mask / ss / esp / ebp
 # 本來就有型別;0..15 / 線性位址 / 段<<16 改用值規則(`VALUE_KINDS`);scale 已沒有摘要在用。
+# 續一百一十八:11 個名稱移出 —— a / b / view_arg / 錯誤旗標 是小整數(進 SMALL_NAMES);saved / panel_pos / v / 規格 /
+# 除數 / 被除數 / 擴展精度值 在各函式改成講得出型別的名稱(saved_ptr / panels / color / 規格* / 除數* / 被除數* /
+# 擴展精度值*)。留下的 9 個:任意大小的整數(值 / 位移 / 增量 / 請求大小 / dword)、浮點值(double)、
+# 用途不明的指標或值(arg / 回呼參數 / 新值)。
 # selftest 檢查這份名單裡沒有摘要已經不用的名稱。
 OPAQUE_NAMES = frozenset({
-    "值", "新值", "a", "b", "double", "位移", "arg", "saved", "panel_pos", "除數", "被除數", "增量", "請求大小",
-    "規格", "v", "dword", "view_arg", "回呼參數", "擴展精度值", "錯誤旗標"})
+    "值", "新值", "double", "位移", "arg", "增量", "請求大小", "dword", "回呼參數"})
 
 
 # 比「小整數」更窄的值規則(續一百一十七)。名稱 -> 型別;`violates` 有對應的判定。
@@ -1493,9 +1503,10 @@ NAME_SAME: tuple[frozenset[str], ...] = tuple(frozenset(g) for g in (
 NAME_ISA: dict[str, tuple[str, ...]] = {
     "attacker": ("unit",), "defender": ("unit",), "caster": ("unit",), "target": ("unit",),
     "排除單位": ("unit",), "面板 1 單位": ("unit",), "面板 2 單位": ("unit",),
-    "攻方動畫": ("anim",), "守方動畫": ("anim",), "script": ("anim",),
+    "攻方動畫": ("anim",), "守方動畫": ("anim",), "script": ("anim",), "目標動畫": ("anim",),
     "panel_buf": ("dst",), "strip": ("dst",), "dst": ("緩衝區",),
-    "背景圖": ("src",), "面板附圖": ("src",), "img": ("src",),
+    # 背景圖 / 面板附圖 也是「精靈」(帶寬高標頭的 RLE 圖):play_command_cast_animation 把它們交給 blit_rle_sprite_remap
+    "背景圖": ("src", "精靈"), "面板附圖": ("src", "精靈"), "img": ("src",),
     "originX": ("x",), "tgtX": ("x",), "dx": ("x",), "originY": ("y",), "tgtY": ("y",),
     "src_stride": ("stride",), "目的跨距": ("stride",),
     "targets": ("單位清單",), "單位清單": ("list",),
