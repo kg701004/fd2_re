@@ -1,0 +1,3564 @@
+{
+ "date": "2026-10-14",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點,第 1 章戰場,連續 3 個回合(只改模擬器記憶體裡的單位資料與法術列 3 的命中率,程式碼不動)。休息:0x19077(指令環 cmp [esp+0xa0], 0)、0x13fd4 入口、0x1410a 寫 HP、0x19087 返回。0x14 / 0x18 分支:0x20c6f、0x20f80 / 0x20f85(play_map_effect_animation)、0x1c640(每幀)、0x20f9b / 0x20fa0(flash)、0x1cd8e(每幀)、0x1c75e / 0x1c7ed / 0x1c7fe / 0x1c816 / 0x1c81f / 0x1c87f / 0x1c897 / 0x20fd0(傷害)、0x20fae / 0x20fdb(跳字)、0x20fe5、0x1dfd7(action_finish_effect 每幀)、0x20ff4、0x21062 / 0x21067 / 0x21072 / 0x2107a、0x152f5、0x152fd。分支斷點在 ai_item_action 入口停下之後才設,避免別的動作也停。每幀傾印線性 0xa0000 起 64000 bytes。",
+ "runs": [
+  {
+   "tag": "r1",
+   "what": "第 1 回合。arm 時索爾 HP 設 3、敵 #11 搬到 (19,14)、slot2 = 道具 79;索爾沒移動就休息。ai_item_action 入口把索爾 HP 改回 823。道具 79 打到 #5、#10(友軍 NPC),兩個都命中。",
+   "stops": [
+    {
+     "at": "0x19077",
+     "t": 9.0,
+     "name": "指令環:不是攻擊 / 法術 / 道具的那一支",
+     "unit": 0,
+     "g": {
+      "target_x": 0,
+      "target_y": 0,
+      "slot": 0,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 1
+     },
+     "moved_flag": 0
+    },
+    {
+     "at": "0x13fd4",
+     "t": 17.4,
+     "name": "rest_hp_recover 入口",
+     "ret": "0x19087",
+     "unit": 0,
+     "row": {
+      "i": 0,
+      "x": 20,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 32,
+      "cls": 9,
+      "lv": 6,
+      "poison": 0,
+      "para": 0,
+      "hp": 3,
+      "mhp": 823
+     }
+    },
+    {
+     "at": "0x1410a",
+     "t": 21.1,
+     "name": "rest_hp_recover 寫 HP 之前",
+     "edi_new_hp": 167,
+     "esi_mhp": 823,
+     "eax_quot": 164
+    },
+    {
+     "at": "0x19087",
+     "t": 23.5,
+     "name": "rest_hp_recover 返回(玩家)",
+     "eax": 1,
+     "g": {
+      "target_x": 0,
+      "target_y": 0,
+      "slot": 0,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 1
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 167,
+       "mhp": 823
+      }
+     ]
+    },
+    {
+     "at": "0x15055",
+     "t": 51.7,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "g": {
+      "target_x": 19,
+      "target_y": 13,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 167,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 42,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "set_hero_hp": 823,
+     "hero_hp_after_set": 823,
+     "hit_row3": "cfcfcfcfcecece"
+    },
+    {
+     "at": "0x20c6f",
+     "t": 81.7,
+     "name": "item_effect_dispatch 入口",
+     "ret": "0x152f5",
+     "user": 11,
+     "slot": 2,
+     "count": 2,
+     "targets": "050a",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 42,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x20f80",
+     "t": 85.8,
+     "name": "call play_map_effect_animation",
+     "args": [
+      11,
+      3,
+      2,
+      "0x1f15a8"
+     ],
+     "targets": "050a",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 13,
+      "scroll_x": 12,
+      "scroll_y": 7,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_first_frame_1f33": "31313131404040404c5731313139393939b77e93ccd9aa3131bf8a9e3131000040",
+     "tbl_frame_count_1f54": "080808080a0a0a0a0b1b08080807070707080c0b0d0d0d08080d090c080800000a",
+     "tbl_sfx_1f75": "06060606090909090a0e0000000c0c0c0c06070804040300000503020000000009"
+    },
+    {
+     "at": "0x1c640",
+     "t": 97.3,
+     "name": "動畫幀",
+     "k": 0,
+     "anim": 3,
+     "dump": "r1_anim00"
+    },
+    {
+     "at": "0x1c640",
+     "t": 100.1,
+     "name": "動畫幀",
+     "k": 1,
+     "anim": 3,
+     "dump": "r1_anim01"
+    },
+    {
+     "at": "0x1c640",
+     "t": 102.9,
+     "name": "動畫幀",
+     "k": 2,
+     "anim": 3,
+     "dump": "r1_anim02"
+    },
+    {
+     "at": "0x1c640",
+     "t": 105.7,
+     "name": "動畫幀",
+     "k": 3,
+     "anim": 3,
+     "dump": "r1_anim03"
+    },
+    {
+     "at": "0x1c640",
+     "t": 108.5,
+     "name": "動畫幀",
+     "k": 4,
+     "anim": 3,
+     "dump": "r1_anim04"
+    },
+    {
+     "at": "0x1c640",
+     "t": 111.4,
+     "name": "動畫幀",
+     "k": 5,
+     "anim": 3,
+     "dump": "r1_anim05"
+    },
+    {
+     "at": "0x1c640",
+     "t": 114.2,
+     "name": "動畫幀",
+     "k": 6,
+     "anim": 3,
+     "dump": "r1_anim06"
+    },
+    {
+     "at": "0x1c640",
+     "t": 116.9,
+     "name": "動畫幀",
+     "k": 7,
+     "anim": 3,
+     "dump": "r1_anim07"
+    },
+    {
+     "at": "0x20f85",
+     "t": 119.8,
+     "name": "play_map_effect_animation 返回",
+     "dump": "r1_ret20f85_00"
+    },
+    {
+     "at": "0x20f9b",
+     "t": 122.6,
+     "name": "call flash_listed_units_band_cycle",
+     "args": [
+      11,
+      3,
+      2,
+      "0x1f15a8"
+     ],
+     "targets": "050a",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 13,
+      "scroll_x": 12,
+      "scroll_y": 7,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_band_2006": "2020202008080808c8080808080810101010080810101008081010100808",
+     "unit_set_3c0b": 2
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 132.4,
+     "name": "閃爍幀",
+     "k": 0,
+     "dump": "r1_flash00"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 135.2,
+     "name": "閃爍幀",
+     "k": 1,
+     "dump": "r1_flash01"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 138.0,
+     "name": "閃爍幀",
+     "k": 2,
+     "dump": "r1_flash02"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 140.8,
+     "name": "閃爍幀",
+     "k": 3,
+     "dump": "r1_flash03"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 143.7,
+     "name": "閃爍幀",
+     "k": 4,
+     "dump": "r1_flash04"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 146.6,
+     "name": "閃爍幀",
+     "k": 5,
+     "dump": "r1_flash05"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 149.4,
+     "name": "閃爍幀",
+     "k": 6,
+     "dump": "r1_flash06"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 152.3,
+     "name": "閃爍幀",
+     "k": 7,
+     "dump": "r1_flash07"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 155.1,
+     "name": "閃爍幀",
+     "k": 8,
+     "dump": "r1_flash08"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 157.9,
+     "name": "閃爍幀",
+     "k": 9,
+     "dump": "r1_flash09"
+    },
+    {
+     "at": "0x20fa0",
+     "t": 160.7,
+     "name": "flash 返回",
+     "dump": "r1_ret20fa0_00"
+    },
+    {
+     "at": "0x1c75e",
+     "t": 163.6,
+     "name": "spell_damage_resolve 入口",
+     "ret": "0x20fd0",
+     "target": 5,
+     "spell": 3,
+     "row": {
+      "i": 5,
+      "x": 19,
+      "y": 13,
+      "f5": 0,
+      "camp": 1,
+      "f7": 134,
+      "cls": 27,
+      "lv": 3,
+      "poison": 0,
+      "para": 0,
+      "hp": 42,
+      "mhp": 42
+     }
+    },
+    {
+     "at": "0x1c7ed",
+     "t": 167.4,
+     "name": "命中亂數之前",
+     "esi_base": 500,
+     "spell_row": "f4015505012a00",
+     "spell_row_at": "0x57a12",
+     "hit": 85,
+     "resist_tbl": [
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      10,
+      10,
+      10,
+      10,
+      9,
+      10,
+      5,
+      5,
+      8,
+      10,
+      6,
+      8,
+      10,
+      9,
+      5,
+      5,
+      10,
+      8,
+      8,
+      4,
+      10,
+      7
+     ]
+    },
+    {
+     "at": "0x1c7fe",
+     "t": 171.2,
+     "name": "命中亂數",
+     "edx_roll": 42,
+     "hit": 85
+    },
+    {
+     "at": "0x1c81f",
+     "t": 174.0,
+     "name": "spell_damage_apply 入口",
+     "ret": "0x1c811",
+     "target": 5,
+     "base": 500
+    },
+    {
+     "at": "0x1c87f",
+     "t": 176.9,
+     "name": "傷害亂數",
+     "edx_roll": 33,
+     "ebp_nine_tenths": 450,
+     "edi_hp": 42
+    },
+    {
+     "at": "0x1c897",
+     "t": 179.2,
+     "name": "扣 HP 之前",
+     "ebp_damage": 466,
+     "edi_hp": 42
+    },
+    {
+     "at": "0x20fd0",
+     "t": 181.6,
+     "name": "spell_damage_resolve 返回",
+     "eax": 466,
+     "esi_index": 0
+    },
+    {
+     "at": "0x20fae",
+     "t": 184.0,
+     "name": "call queue_unit_number_popup",
+     "args": [
+      466,
+      94,
+      5
+     ]
+    },
+    {
+     "at": "0x1c75e",
+     "t": 186.8,
+     "name": "spell_damage_resolve 入口",
+     "ret": "0x20fd0",
+     "target": 10,
+     "spell": 3,
+     "row": {
+      "i": 10,
+      "x": 19,
+      "y": 6,
+      "f5": 0,
+      "camp": 1,
+      "f7": 133,
+      "cls": 27,
+      "lv": 3,
+      "poison": 0,
+      "para": 0,
+      "hp": 36,
+      "mhp": 36
+     }
+    },
+    {
+     "at": "0x1c7ed",
+     "t": 190.6,
+     "name": "命中亂數之前",
+     "esi_base": 500,
+     "spell_row": "f4015505012a00",
+     "spell_row_at": "0x57a12",
+     "hit": 85,
+     "resist_tbl": [
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      10,
+      10,
+      10,
+      10,
+      9,
+      10,
+      5,
+      5,
+      8,
+      10,
+      6,
+      8,
+      10,
+      9,
+      5,
+      5,
+      10,
+      8,
+      8,
+      4,
+      10,
+      7
+     ]
+    },
+    {
+     "at": "0x1c7fe",
+     "t": 194.4,
+     "name": "命中亂數",
+     "edx_roll": 43,
+     "hit": 85
+    },
+    {
+     "at": "0x1c81f",
+     "t": 197.2,
+     "name": "spell_damage_apply 入口",
+     "ret": "0x1c811",
+     "target": 10,
+     "base": 500
+    },
+    {
+     "at": "0x1c87f",
+     "t": 200.1,
+     "name": "傷害亂數",
+     "edx_roll": 28,
+     "ebp_nine_tenths": 450,
+     "edi_hp": 36
+    },
+    {
+     "at": "0x1c897",
+     "t": 202.4,
+     "name": "扣 HP 之前",
+     "ebp_damage": 464,
+     "edi_hp": 36
+    },
+    {
+     "at": "0x20fd0",
+     "t": 204.8,
+     "name": "spell_damage_resolve 返回",
+     "eax": 464,
+     "esi_index": 1
+    },
+    {
+     "at": "0x20fae",
+     "t": 207.2,
+     "name": "call queue_unit_number_popup",
+     "args": [
+      464,
+      94,
+      10
+     ]
+    },
+    {
+     "at": "0x20fe5",
+     "t": 210.0,
+     "name": "逐目標迴圈結束",
+     "popups": 8,
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 13,
+      "scroll_x": 12,
+      "scroll_y": 7,
+      "result": 0,
+      "popups": 8,
+      "exp": 6,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "glyph": "0062646400626462",
+     "dx": "02070c1102070c11",
+     "owner": "050505050a0a0a0a",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "tbl_curve_202c": "0f0f0f0f07030100000103070f0f0b090808090b0f0f0f0f0f",
+     "fmt_501b6": "2564007262004644",
+     "fixed_5204a": "74757676"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 222.5,
+     "name": "收尾幀",
+     "k": 0,
+     "dump": "r1_fin00"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 225.6,
+     "name": "收尾幀",
+     "k": 1,
+     "dump": "r1_fin01"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 228.5,
+     "name": "收尾幀",
+     "k": 2,
+     "dump": "r1_fin02"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 231.3,
+     "name": "收尾幀",
+     "k": 3,
+     "dump": "r1_fin03"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 234.2,
+     "name": "收尾幀",
+     "k": 4,
+     "dump": "r1_fin04"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 237.1,
+     "name": "收尾幀",
+     "k": 5,
+     "dump": "r1_fin05"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 239.9,
+     "name": "收尾幀",
+     "k": 6,
+     "dump": "r1_fin06"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 242.7,
+     "name": "收尾幀",
+     "k": 7,
+     "dump": "r1_fin07"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 245.5,
+     "name": "收尾幀",
+     "k": 8,
+     "dump": "r1_fin08"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 248.4,
+     "name": "收尾幀",
+     "k": 9,
+     "dump": "r1_fin09"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 251.2,
+     "name": "收尾幀",
+     "k": 10,
+     "dump": "r1_fin10"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 254.1,
+     "name": "收尾幀",
+     "k": 11,
+     "dump": "r1_fin11"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 256.9,
+     "name": "收尾幀",
+     "k": 12,
+     "dump": "r1_fin12"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 259.7,
+     "name": "收尾幀",
+     "k": 13,
+     "dump": "r1_fin13"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 262.5,
+     "name": "收尾幀",
+     "k": 14,
+     "dump": "r1_fin14"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 265.3,
+     "name": "收尾幀",
+     "k": 15,
+     "dump": "r1_fin15"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 268.1,
+     "name": "收尾幀",
+     "k": 16,
+     "dump": "r1_fin16"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 270.9,
+     "name": "收尾幀",
+     "k": 17,
+     "dump": "r1_fin17"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 273.7,
+     "name": "收尾幀",
+     "k": 18,
+     "dump": "r1_fin18"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 276.6,
+     "name": "收尾幀",
+     "k": 19,
+     "dump": "r1_fin19"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 279.5,
+     "name": "收尾幀",
+     "k": 20,
+     "dump": "r1_fin20"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 282.4,
+     "name": "收尾幀",
+     "k": 21,
+     "dump": "r1_fin21"
+    },
+    {
+     "at": "0x20ff4",
+     "t": 285.3,
+     "name": "action_finish_effect 返回",
+     "dump": "r1_ret20ff4_00",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x21062",
+     "t": 289.5,
+     "name": "call unit_death_sweep",
+     "ebx_reward_rows": 2,
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 13,
+      "scroll_x": 12,
+      "scroll_y": 7,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     }
+    },
+    {
+     "at": "0x21067",
+     "t": 298.3,
+     "name": "unit_death_sweep 返回",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x21072",
+     "t": 301.6,
+     "name": "call grant_reward_rows",
+     "args": [
+      11,
+      2,
+      "0x1f1518"
+     ],
+     "rows": "030b000310001d0070010100"
+    },
+    {
+     "at": "key",
+     "t": 317.9,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 331.2,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "0x2107a",
+     "t": 331.9,
+     "name": "item_effect_dispatch 收尾",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 1
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x152f5",
+     "t": 341.1,
+     "name": "item_effect_dispatch 返回(ai_item_action 內)",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 1
+     }
+    },
+    {
+     "at": "0x152fd",
+     "t": 349.9,
+     "name": "ai_item_action 返回前",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 1
+     }
+    }
+   ],
+   "vga_dump_md5": {
+    "r1_anim00": "45954355c28fad84423decc8cccfd544",
+    "r1_anim01": "71002fbe6e34137cea20d2072d192ee4",
+    "r1_anim02": "df8aaf4fc903e1325fb6713e591fb2d4",
+    "r1_anim03": "4f767f0ae3760aa9e222035660bdaac5",
+    "r1_anim04": "40d0ad1346831a66b0f87c3e1c96f57e",
+    "r1_anim05": "a3e0845430db3864d81b27947f287f9a",
+    "r1_anim06": "0ccab4bb6d7f68f7c446008c2c119c5e",
+    "r1_anim07": "503eb354a91b2521c1ccc937e0406506",
+    "r1_fin00": "e07f0c2fe43c17cf9718807762aa8807",
+    "r1_fin01": "2443f9d8c2278b5cbcda6e246bf76618",
+    "r1_fin02": "ec02068102c3fb367a4c4aa480a470b8",
+    "r1_fin03": "8fdfdbf74640252b391fa4edd12c5a89",
+    "r1_fin04": "ac55ea448602fa1d93688ea467f9e750",
+    "r1_fin05": "40a42c497ffd8780038b2eec353ea847",
+    "r1_fin06": "807851e509a6037ba8302f33b0096ef5",
+    "r1_fin07": "68e15838811f618631e02e69981dde22",
+    "r1_fin08": "5985a246b80f9351ab36c4c3aad91055",
+    "r1_fin09": "c88d0ad58891752dbbc45b1ee8f23392",
+    "r1_fin10": "031b5aaa45e7e32879f6cfa2e0b7f5ff",
+    "r1_fin11": "cfd08dc68ec2357b30fbc8d6953f902f",
+    "r1_fin12": "1d84a33edc3f8c1aa28a8d72a8840aec",
+    "r1_fin13": "5d90bd0c2f3d388e24e495973ca82e33",
+    "r1_fin14": "68bbc87ee327e74ba6eedd74d186a22b",
+    "r1_fin15": "b3c11333134f509199ebe33620ebb27e",
+    "r1_fin16": "6e374e42416bd79d8fd4f974aeb13913",
+    "r1_fin17": "3f5a61fa16796b3cc7972a6b7ab63f28",
+    "r1_fin18": "0fccd3bc0be6f833836b360c92966b4b",
+    "r1_fin19": "e07f0c2fe43c17cf9718807762aa8807",
+    "r1_fin20": "e07f0c2fe43c17cf9718807762aa8807",
+    "r1_fin21": "e07f0c2fe43c17cf9718807762aa8807",
+    "r1_flash00": "965b8d7942cf7cacd60cb46b307a228d",
+    "r1_flash01": "469f9c79852812160eb35095fdf0e73f",
+    "r1_flash02": "2bbe910cad8b1a30d8c0757b3888d6ac",
+    "r1_flash03": "32e1cee5ab8cc32f72ea7a336b8ee8c0",
+    "r1_flash04": "f81bd8531be56f6bee1ce126ed5c93ac",
+    "r1_flash05": "4b621788574e396479bce4ebe25f6e7d",
+    "r1_flash06": "f3045f04bfe29ed1e6991f8c89211035",
+    "r1_flash07": "219ada1a9ece6c8f860db3303a5ef818",
+    "r1_flash08": "965b8d7942cf7cacd60cb46b307a228d",
+    "r1_flash09": "469f9c79852812160eb35095fdf0e73f",
+    "r1_post00": "132019b15ebcac79d9b50109111fb3c9",
+    "r1_pre00": "077f15d8b9cd81ff10271cc222e19e05",
+    "r1_ret20f85_00": "6fab2254d9aa315248fe1c3cf2e2111c",
+    "r1_ret20fa0_00": "6fab2254d9aa315248fe1c3cf2e2111c",
+    "r1_ret20ff4_00": "e07f0c2fe43c17cf9718807762aa8807"
+   }
+  },
+  {
+   "tag": "r2",
+   "what": "第 2 回合。法術列 3 的命中率在記憶體裡改成 0(執行期線性 0x1f3a14);索爾滿血休息。打到 #0 索爾與 #3,兩個都沒命中。",
+   "stops": [
+    {
+     "at": "0x19077",
+     "t": 8.4,
+     "name": "指令環:不是攻擊 / 法術 / 道具的那一支",
+     "unit": 0,
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 9,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 1
+     },
+     "moved_flag": 0
+    },
+    {
+     "at": "0x13fd4",
+     "t": 16.8,
+     "name": "rest_hp_recover 入口",
+     "ret": "0x19087",
+     "unit": 0,
+     "row": {
+      "i": 0,
+      "x": 20,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 32,
+      "cls": 9,
+      "lv": 6,
+      "poison": 0,
+      "para": 0,
+      "hp": 823,
+      "mhp": 823
+     }
+    },
+    {
+     "at": "0x19087",
+     "t": 20.5,
+     "name": "rest_hp_recover 返回(玩家)",
+     "eax": 0,
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 9,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 1
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      }
+     ]
+    },
+    {
+     "at": "0x15055",
+     "t": 44.2,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 11,
+      "cursor_y": 7,
+      "scroll_x": 8,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "hit_row3": "f4010005012a00"
+    },
+    {
+     "at": "0x20c6f",
+     "t": 73.6,
+     "name": "item_effect_dispatch 入口",
+     "ret": "0x152f5",
+     "user": 11,
+     "slot": 2,
+     "count": 2,
+     "targets": "0003",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x20f80",
+     "t": 78.0,
+     "name": "call play_map_effect_animation",
+     "args": [
+      11,
+      3,
+      2,
+      "0x1f15a8"
+     ],
+     "targets": "0003",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_first_frame_1f33": "31313131404040404c5731313139393939b77e93ccd9aa3131bf8a9e3131000040",
+     "tbl_frame_count_1f54": "080808080a0a0a0a0b1b08080807070707080c0b0d0d0d08080d090c080800000a",
+     "tbl_sfx_1f75": "06060606090909090a0e0000000c0c0c0c06070804040300000503020000000009"
+    },
+    {
+     "at": "0x1c640",
+     "t": 90.3,
+     "name": "動畫幀",
+     "k": 0,
+     "anim": 3,
+     "dump": "r2_anim00"
+    },
+    {
+     "at": "0x1c640",
+     "t": 93.1,
+     "name": "動畫幀",
+     "k": 1,
+     "anim": 3,
+     "dump": "r2_anim01"
+    },
+    {
+     "at": "0x1c640",
+     "t": 95.9,
+     "name": "動畫幀",
+     "k": 2,
+     "anim": 3,
+     "dump": "r2_anim02"
+    },
+    {
+     "at": "0x1c640",
+     "t": 98.7,
+     "name": "動畫幀",
+     "k": 3,
+     "anim": 3,
+     "dump": "r2_anim03"
+    },
+    {
+     "at": "0x1c640",
+     "t": 101.5,
+     "name": "動畫幀",
+     "k": 4,
+     "anim": 3,
+     "dump": "r2_anim04"
+    },
+    {
+     "at": "0x1c640",
+     "t": 104.3,
+     "name": "動畫幀",
+     "k": 5,
+     "anim": 3,
+     "dump": "r2_anim05"
+    },
+    {
+     "at": "0x1c640",
+     "t": 107.1,
+     "name": "動畫幀",
+     "k": 6,
+     "anim": 3,
+     "dump": "r2_anim06"
+    },
+    {
+     "at": "0x1c640",
+     "t": 109.9,
+     "name": "動畫幀",
+     "k": 7,
+     "anim": 3,
+     "dump": "r2_anim07"
+    },
+    {
+     "at": "0x20f85",
+     "t": 112.7,
+     "name": "play_map_effect_animation 返回",
+     "dump": "r2_ret20f85_00"
+    },
+    {
+     "at": "0x20f9b",
+     "t": 115.5,
+     "name": "call flash_listed_units_band_cycle",
+     "args": [
+      11,
+      3,
+      2,
+      "0x1f15a8"
+     ],
+     "targets": "0003",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_band_2006": "2020202008080808c8080808080810101010080810101008081010100808",
+     "unit_set_3c0b": 2
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 125.7,
+     "name": "閃爍幀",
+     "k": 0,
+     "dump": "r2_flash00"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 128.5,
+     "name": "閃爍幀",
+     "k": 1,
+     "dump": "r2_flash01"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 131.4,
+     "name": "閃爍幀",
+     "k": 2,
+     "dump": "r2_flash02"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 134.2,
+     "name": "閃爍幀",
+     "k": 3,
+     "dump": "r2_flash03"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 137.1,
+     "name": "閃爍幀",
+     "k": 4,
+     "dump": "r2_flash04"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 140.0,
+     "name": "閃爍幀",
+     "k": 5,
+     "dump": "r2_flash05"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 142.8,
+     "name": "閃爍幀",
+     "k": 6,
+     "dump": "r2_flash06"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 145.6,
+     "name": "閃爍幀",
+     "k": 7,
+     "dump": "r2_flash07"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 148.4,
+     "name": "閃爍幀",
+     "k": 8,
+     "dump": "r2_flash08"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 151.3,
+     "name": "閃爍幀",
+     "k": 9,
+     "dump": "r2_flash09"
+    },
+    {
+     "at": "0x20fa0",
+     "t": 154.1,
+     "name": "flash 返回",
+     "dump": "r2_ret20fa0_00"
+    },
+    {
+     "at": "0x1c75e",
+     "t": 157.0,
+     "name": "spell_damage_resolve 入口",
+     "ret": "0x20fd0",
+     "target": 0,
+     "spell": 3,
+     "row": {
+      "i": 0,
+      "x": 20,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 32,
+      "cls": 9,
+      "lv": 6,
+      "poison": 0,
+      "para": 0,
+      "hp": 823,
+      "mhp": 823
+     }
+    },
+    {
+     "at": "0x1c7ed",
+     "t": 160.8,
+     "name": "命中亂數之前",
+     "esi_base": 500,
+     "spell_row": "f4010005012a00",
+     "spell_row_at": "0x57a12",
+     "hit": 0,
+     "resist_tbl": [
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      10,
+      10,
+      10,
+      10,
+      9,
+      10,
+      5,
+      5,
+      8,
+      10,
+      6,
+      8,
+      10,
+      9,
+      5,
+      5,
+      10,
+      8,
+      8,
+      4,
+      10,
+      7
+     ]
+    },
+    {
+     "at": "0x1c7fe",
+     "t": 164.8,
+     "name": "命中亂數",
+     "edx_roll": 34,
+     "hit": 0
+    },
+    {
+     "at": "0x1c816",
+     "t": 167.6,
+     "name": "沒命中(回 0)"
+    },
+    {
+     "at": "0x20fd0",
+     "t": 170.0,
+     "name": "spell_damage_resolve 返回",
+     "eax": 0,
+     "esi_index": 0
+    },
+    {
+     "at": "0x20fdb",
+     "t": 172.3,
+     "name": "call queue_unit_fixed_popup",
+     "args": [
+      0
+     ]
+    },
+    {
+     "at": "0x1c75e",
+     "t": 175.2,
+     "name": "spell_damage_resolve 入口",
+     "ret": "0x20fd0",
+     "target": 3,
+     "spell": 3,
+     "row": {
+      "i": 3,
+      "x": 23,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 30,
+      "cls": 25,
+      "lv": 40,
+      "poison": 0,
+      "para": 0,
+      "hp": 867,
+      "mhp": 867
+     }
+    },
+    {
+     "at": "0x1c7ed",
+     "t": 179.1,
+     "name": "命中亂數之前",
+     "esi_base": 400,
+     "spell_row": "f4010005012a00",
+     "spell_row_at": "0x57a12",
+     "hit": 0,
+     "resist_tbl": [
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      10,
+      10,
+      10,
+      10,
+      9,
+      10,
+      5,
+      5,
+      8,
+      10,
+      6,
+      8,
+      10,
+      9,
+      5,
+      5,
+      10,
+      8,
+      8,
+      4,
+      10,
+      7
+     ]
+    },
+    {
+     "at": "0x1c7fe",
+     "t": 183.0,
+     "name": "命中亂數",
+     "edx_roll": 69,
+     "hit": 0
+    },
+    {
+     "at": "0x1c816",
+     "t": 185.8,
+     "name": "沒命中(回 0)"
+    },
+    {
+     "at": "0x20fd0",
+     "t": 188.2,
+     "name": "spell_damage_resolve 返回",
+     "eax": 0,
+     "esi_index": 1
+    },
+    {
+     "at": "0x20fdb",
+     "t": 190.5,
+     "name": "call queue_unit_fixed_popup",
+     "args": [
+      3
+     ]
+    },
+    {
+     "at": "0x20fe5",
+     "t": 193.3,
+     "name": "逐目標迴圈結束",
+     "popups": 8,
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "glyph": "7475767674757676",
+     "dx": "02080c1102080c11",
+     "owner": "0000000003030303",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "tbl_curve_202c": "0f0f0f0f07030100000103070f0f0b090808090b0f0f0f0f0f",
+     "fmt_501b6": "2564007262004644",
+     "fixed_5204a": "74757676"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 205.4,
+     "name": "收尾幀",
+     "k": 0,
+     "dump": "r2_fin00"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 208.2,
+     "name": "收尾幀",
+     "k": 1,
+     "dump": "r2_fin01"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 211.0,
+     "name": "收尾幀",
+     "k": 2,
+     "dump": "r2_fin02"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 213.8,
+     "name": "收尾幀",
+     "k": 3,
+     "dump": "r2_fin03"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 216.6,
+     "name": "收尾幀",
+     "k": 4,
+     "dump": "r2_fin04"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 219.4,
+     "name": "收尾幀",
+     "k": 5,
+     "dump": "r2_fin05"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 222.2,
+     "name": "收尾幀",
+     "k": 6,
+     "dump": "r2_fin06"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 224.9,
+     "name": "收尾幀",
+     "k": 7,
+     "dump": "r2_fin07"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 227.8,
+     "name": "收尾幀",
+     "k": 8,
+     "dump": "r2_fin08"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 230.7,
+     "name": "收尾幀",
+     "k": 9,
+     "dump": "r2_fin09"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 233.6,
+     "name": "收尾幀",
+     "k": 10,
+     "dump": "r2_fin10"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 236.5,
+     "name": "收尾幀",
+     "k": 11,
+     "dump": "r2_fin11"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 239.3,
+     "name": "收尾幀",
+     "k": 12,
+     "dump": "r2_fin12"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 242.1,
+     "name": "收尾幀",
+     "k": 13,
+     "dump": "r2_fin13"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 244.9,
+     "name": "收尾幀",
+     "k": 14,
+     "dump": "r2_fin14"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 247.7,
+     "name": "收尾幀",
+     "k": 15,
+     "dump": "r2_fin15"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 250.6,
+     "name": "收尾幀",
+     "k": 16,
+     "dump": "r2_fin16"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 253.4,
+     "name": "收尾幀",
+     "k": 17,
+     "dump": "r2_fin17"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 256.2,
+     "name": "收尾幀",
+     "k": 18,
+     "dump": "r2_fin18"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 259.0,
+     "name": "收尾幀",
+     "k": 19,
+     "dump": "r2_fin19"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 261.8,
+     "name": "收尾幀",
+     "k": 20,
+     "dump": "r2_fin20"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 264.7,
+     "name": "收尾幀",
+     "k": 21,
+     "dump": "r2_fin21"
+    },
+    {
+     "at": "0x20ff4",
+     "t": 267.5,
+     "name": "action_finish_effect 返回",
+     "dump": "r2_ret20ff4_00",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x21062",
+     "t": 271.4,
+     "name": "call unit_death_sweep",
+     "ebx_reward_rows": 0,
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     }
+    },
+    {
+     "at": "0x21067",
+     "t": 279.0,
+     "name": "unit_death_sweep 返回",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x21072",
+     "t": 282.2,
+     "name": "call grant_reward_rows",
+     "args": [
+      11,
+      0,
+      "0x1f1518"
+     ],
+     "rows": "0a0008000000000061371d00"
+    },
+    {
+     "at": "0x2107a",
+     "t": 285.4,
+     "name": "item_effect_dispatch 收尾",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x152f5",
+     "t": 294.0,
+     "name": "item_effect_dispatch 返回(ai_item_action 內)",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     }
+    },
+    {
+     "at": "0x152fd",
+     "t": 302.4,
+     "name": "ai_item_action 返回前",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     }
+    }
+   ],
+   "vga_dump_md5": {
+    "r2_anim00": "36bd409baab07b72a961df2d137d2972",
+    "r2_anim01": "40d64fd50444cb384449238851499b0f",
+    "r2_anim02": "102402e8b862099d816868cceedab42c",
+    "r2_anim03": "eb63d4ce568abd4ade3a7329cc5d7e43",
+    "r2_anim04": "45f1f2ae044aa62d362f0cba8b5ba0a6",
+    "r2_anim05": "a48ea64238e4629c54951a812cd7186b",
+    "r2_anim06": "75a4df4fad48956cb8e523e30bde6288",
+    "r2_anim07": "ccb79178a72249e2611b68f602864f23",
+    "r2_fin00": "3f2d8bba17858a0e7f121b21385abd87",
+    "r2_fin01": "b219d8e9247627e453b08f51ae7fd711",
+    "r2_fin02": "2a40bb5b52c7e16e036ca5e8d98b8618",
+    "r2_fin03": "a1b0454fe922850d6734a451af032ab6",
+    "r2_fin04": "56cab0e9fc975502872f268c70974563",
+    "r2_fin05": "d28242f113a8605c1f8115d343dba921",
+    "r2_fin06": "ef0a9ff72d6e322fed03d7731bd78a8c",
+    "r2_fin07": "cca7da8b0618d3d618bc3febdd101b98",
+    "r2_fin08": "5f6e15da2fdaecfbda46239e48b0b2a6",
+    "r2_fin09": "04b975f2954c3d6199da27811c369c11",
+    "r2_fin10": "b5ca6115cf298845ab356080a43c54db",
+    "r2_fin11": "0e6fb2cbac88e55a17f420be8623d091",
+    "r2_fin12": "ca93efc4a0699b316e91a039222cb04c",
+    "r2_fin13": "2877851909e1b0128e00315cf38c6008",
+    "r2_fin14": "1c653f0299bfce35f4146ec88b1ebeb4",
+    "r2_fin15": "b44e3cd4512f169be958269362ac130b",
+    "r2_fin16": "d47e36c8a28bf789475aa8084605b030",
+    "r2_fin17": "ecd33ff6d79a2c10c201be3e270f5be7",
+    "r2_fin18": "d6fe73078099628c49f638c48c58ca69",
+    "r2_fin19": "d833a948183dc902ab1b7982c1098a0e",
+    "r2_fin20": "3f2d8bba17858a0e7f121b21385abd87",
+    "r2_fin21": "3f2d8bba17858a0e7f121b21385abd87",
+    "r2_flash00": "7daf708ee6d4a3a005e2475ac35820a6",
+    "r2_flash01": "dd98d627c66dfd60ee5f8bd35d172774",
+    "r2_flash02": "d33b1dbfe49fc3606da69f7042a7624f",
+    "r2_flash03": "1958debafffdd9691cca742cf08985ef",
+    "r2_flash04": "1b4d97cd95519f8c8da004f55d081d56",
+    "r2_flash05": "71c2963bd7dccce24c79e98e39d4af13",
+    "r2_flash06": "44d6e7c38e0cf1c1ef902e57fd125347",
+    "r2_flash07": "ec6e0a550d97050a2cd2185792657565",
+    "r2_flash08": "7daf708ee6d4a3a005e2475ac35820a6",
+    "r2_flash09": "dd98d627c66dfd60ee5f8bd35d172774",
+    "r2_post00": "3f2d8bba17858a0e7f121b21385abd87",
+    "r2_pre00": "c292011c8e88d8c138d6612ff8b53343",
+    "r2_ret20f85_00": "20f9d08bf966beccb92ef5b65682cc38",
+    "r2_ret20fa0_00": "20f9d08bf966beccb92ef5b65682cc38",
+    "r2_ret20ff4_00": "3f2d8bba17858a0e7f121b21385abd87"
+   }
+  },
+  {
+   "tag": "r3",
+   "what": "第 3 回合。命中率改回 85(0x55);索爾 HP 設 3,先往上移一格再休息。只打到 #3,亂數 91 >= 85 沒命中。收尾第 9 幀之後 WSL 虛擬機停掉(原因不明,發生在使用者暫停期間),instance 隨之消失;之後的站沒有錄到。",
+   "stops": [
+    {
+     "at": "0x19077",
+     "t": 25.1,
+     "name": "指令環:不是攻擊 / 法術 / 道具的那一支",
+     "unit": 0,
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 20,
+      "cursor_y": 13,
+      "scroll_x": 9,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 1
+     },
+     "moved_flag": 1
+    },
+    {
+     "at": "0x15055",
+     "t": 622.9,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 11,
+      "cursor_y": 8,
+      "scroll_x": 10,
+      "scroll_y": 5,
+      "result": 0,
+      "popups": 8,
+      "exp": 0,
+      "ring_cmd": 3,
+      "step_sel": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 13,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 3,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "hit_row3": "f4015505012a00"
+    },
+    {
+     "at": "0x20c6f",
+     "t": 651.2,
+     "name": "item_effect_dispatch 入口",
+     "ret": "0x152f5",
+     "user": 11,
+     "slot": 2,
+     "count": 1,
+     "targets": "03",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 13,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 3,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ]
+    },
+    {
+     "at": "0x20f80",
+     "t": 655.3,
+     "name": "call play_map_effect_animation",
+     "args": [
+      11,
+      3,
+      1,
+      "0x1f15a8"
+     ],
+     "targets": "03",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 23,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_first_frame_1f33": "31313131404040404c5731313139393939b77e93ccd9aa3131bf8a9e3131000040",
+     "tbl_frame_count_1f54": "080808080a0a0a0a0b1b08080807070707080c0b0d0d0d08080d090c080800000a",
+     "tbl_sfx_1f75": "06060606090909090a0e0000000c0c0c0c06070804040300000503020000000009"
+    },
+    {
+     "at": "0x1c640",
+     "t": 666.6,
+     "name": "動畫幀",
+     "k": 0,
+     "anim": 3,
+     "dump": "r3_anim00"
+    },
+    {
+     "at": "0x1c640",
+     "t": 669.5,
+     "name": "動畫幀",
+     "k": 1,
+     "anim": 3,
+     "dump": "r3_anim01"
+    },
+    {
+     "at": "0x1c640",
+     "t": 672.4,
+     "name": "動畫幀",
+     "k": 2,
+     "anim": 3,
+     "dump": "r3_anim02"
+    },
+    {
+     "at": "0x1c640",
+     "t": 675.3,
+     "name": "動畫幀",
+     "k": 3,
+     "anim": 3,
+     "dump": "r3_anim03"
+    },
+    {
+     "at": "0x1c640",
+     "t": 678.1,
+     "name": "動畫幀",
+     "k": 4,
+     "anim": 3,
+     "dump": "r3_anim04"
+    },
+    {
+     "at": "0x1c640",
+     "t": 680.8,
+     "name": "動畫幀",
+     "k": 5,
+     "anim": 3,
+     "dump": "r3_anim05"
+    },
+    {
+     "at": "0x1c640",
+     "t": 683.7,
+     "name": "動畫幀",
+     "k": 6,
+     "anim": 3,
+     "dump": "r3_anim06"
+    },
+    {
+     "at": "0x1c640",
+     "t": 686.5,
+     "name": "動畫幀",
+     "k": 7,
+     "anim": 3,
+     "dump": "r3_anim07"
+    },
+    {
+     "at": "0x20f85",
+     "t": 689.4,
+     "name": "play_map_effect_animation 返回",
+     "dump": "r3_ret20f85_00"
+    },
+    {
+     "at": "0x20f9b",
+     "t": 692.3,
+     "name": "call flash_listed_units_band_cycle",
+     "args": [
+      11,
+      3,
+      1,
+      "0x1f15a8"
+     ],
+     "targets": "03",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 23,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 0,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "tbl_band_2006": "2020202008080808c8080808080810101010080810101008081010100808",
+     "unit_set_3c0b": 3
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 702.9,
+     "name": "閃爍幀",
+     "k": 0,
+     "dump": "r3_flash00"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 705.8,
+     "name": "閃爍幀",
+     "k": 1,
+     "dump": "r3_flash01"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 708.6,
+     "name": "閃爍幀",
+     "k": 2,
+     "dump": "r3_flash02"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 711.6,
+     "name": "閃爍幀",
+     "k": 3,
+     "dump": "r3_flash03"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 714.6,
+     "name": "閃爍幀",
+     "k": 4,
+     "dump": "r3_flash04"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 717.5,
+     "name": "閃爍幀",
+     "k": 5,
+     "dump": "r3_flash05"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 720.4,
+     "name": "閃爍幀",
+     "k": 6,
+     "dump": "r3_flash06"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 723.1,
+     "name": "閃爍幀",
+     "k": 7,
+     "dump": "r3_flash07"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 725.9,
+     "name": "閃爍幀",
+     "k": 8,
+     "dump": "r3_flash08"
+    },
+    {
+     "at": "0x1cd8e",
+     "t": 728.8,
+     "name": "閃爍幀",
+     "k": 9,
+     "dump": "r3_flash09"
+    },
+    {
+     "at": "0x20fa0",
+     "t": 731.6,
+     "name": "flash 返回",
+     "dump": "r3_ret20fa0_00"
+    },
+    {
+     "at": "0x1c75e",
+     "t": 734.4,
+     "name": "spell_damage_resolve 入口",
+     "ret": "0x20fd0",
+     "target": 3,
+     "spell": 3,
+     "row": {
+      "i": 3,
+      "x": 23,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 30,
+      "cls": 25,
+      "lv": 40,
+      "poison": 0,
+      "para": 0,
+      "hp": 867,
+      "mhp": 867
+     }
+    },
+    {
+     "at": "0x1c7ed",
+     "t": 738.1,
+     "name": "命中亂數之前",
+     "esi_base": 400,
+     "spell_row": "f4015505012a00",
+     "spell_row_at": "0x57a12",
+     "hit": 85,
+     "resist_tbl": [
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      10,
+      10,
+      10,
+      10,
+      9,
+      10,
+      5,
+      5,
+      8,
+      10,
+      6,
+      8,
+      10,
+      9,
+      5,
+      5,
+      10,
+      8,
+      8,
+      4,
+      10,
+      7
+     ]
+    },
+    {
+     "at": "0x1c7fe",
+     "t": 742.0,
+     "name": "命中亂數",
+     "edx_roll": 91,
+     "hit": 85
+    },
+    {
+     "at": "0x1c816",
+     "t": 744.7,
+     "name": "沒命中(回 0)"
+    },
+    {
+     "at": "0x20fd0",
+     "t": 747.1,
+     "name": "spell_damage_resolve 返回",
+     "eax": 0,
+     "esi_index": 0
+    },
+    {
+     "at": "0x20fdb",
+     "t": 749.5,
+     "name": "call queue_unit_fixed_popup",
+     "args": [
+      3
+     ]
+    },
+    {
+     "at": "0x20fe5",
+     "t": 752.3,
+     "name": "逐目標迴圈結束",
+     "popups": 4,
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "cursor_x": 23,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "result": 0,
+      "popups": 4,
+      "exp": 0,
+      "ring_cmd": 79,
+      "step_sel": 0
+     },
+     "glyph": "74757676",
+     "dx": "02080c11",
+     "owner": "03030303",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 13,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 3,
+       "mhp": 823
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28
+      }
+     ],
+     "tbl_curve_202c": "0f0f0f0f07030100000103070f0f0b090808090b0f0f0f0f0f",
+     "fmt_501b6": "2564007262004644",
+     "fixed_5204a": "74757676"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 765.0,
+     "name": "收尾幀",
+     "k": 0,
+     "dump": "r3_fin00"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 767.8,
+     "name": "收尾幀",
+     "k": 1,
+     "dump": "r3_fin01"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 770.8,
+     "name": "收尾幀",
+     "k": 2,
+     "dump": "r3_fin02"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 773.8,
+     "name": "收尾幀",
+     "k": 3,
+     "dump": "r3_fin03"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 776.7,
+     "name": "收尾幀",
+     "k": 4,
+     "dump": "r3_fin04"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 779.6,
+     "name": "收尾幀",
+     "k": 5,
+     "dump": "r3_fin05"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 782.5,
+     "name": "收尾幀",
+     "k": 6,
+     "dump": "r3_fin06"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 785.4,
+     "name": "收尾幀",
+     "k": 7,
+     "dump": "r3_fin07"
+    },
+    {
+     "at": "0x1dfd7",
+     "t": 788.2,
+     "name": "收尾幀",
+     "k": 8,
+     "dump": "r3_fin08"
+    },
+    {
+     "at": "-0x19c000",
+     "t": 790.8,
+     "name": "不是設的斷點",
+     "regs": {}
+    }
+   ],
+   "vga_dump_md5": {
+    "r3_anim00": "5d7e4ce6c534c6db19371966648f1d9d",
+    "r3_anim01": "484788985c3be32a69080c2f9ca8295e",
+    "r3_anim02": "65c47cb6ffceb098e5123b2d254c4bf3",
+    "r3_anim03": "69ea7e3da3fafaf2b94112e9aa1dbc41",
+    "r3_anim04": "83d0635d8d43a3a8bb75dc64b5a71b4b",
+    "r3_anim05": "647812e6a149ad06051e9de643e3274c",
+    "r3_anim06": "7497569d932852f8e4686aaf0d32cb91",
+    "r3_anim07": "11d740f7cf8625b1275287efdd205d70",
+    "r3_fin00": "71ea0ddbae24768872d4c9d6d8fb19e4",
+    "r3_fin01": "e27a16524559d0263f96570d242624b1",
+    "r3_fin02": "2c030d4a2781d70f9dc8a8f860a48c07",
+    "r3_fin03": "f6a1724b14e792b080e7e003a5d4ac23",
+    "r3_fin04": "5e2b33c57c52561c0c80044765c91385",
+    "r3_fin05": "4c4e21abb1faa18967a9d3a91268f225",
+    "r3_fin06": "5946a747c28b87872576d9b2f4cabaec",
+    "r3_fin07": "4b9e6e839b04e118bef4a602b1a23d13",
+    "r3_fin08": "d216b1e800ff65f5c4f0f2867c788b26",
+    "r3_flash00": "c6f1cf92aaf4d202feba56c7fd2ef55a",
+    "r3_flash01": "ae25f932b412aa9b3ca586cbd9b6251d",
+    "r3_flash02": "099ba402cf2e7d6e8e1934862f89d957",
+    "r3_flash03": "8cf3fec836eb9225f85734eb316664b1",
+    "r3_flash04": "b9efc5cd8a804228ee3c51f1b18ec83d",
+    "r3_flash05": "4787a013b330c86039240b3834d09175",
+    "r3_flash06": "910eb73c4c7ad226de37a5c72ba0ff40",
+    "r3_flash07": "9a12acb6b885005df64c69bd1536a079",
+    "r3_flash08": "c6f1cf92aaf4d202feba56c7fd2ef55a",
+    "r3_flash09": "ae25f932b412aa9b3ca586cbd9b6251d",
+    "r3_pre00": "8cef1b8a8b19aaee54b5d91dd455b0fd",
+    "r3_ret20f85_00": "8cef1b8a8b19aaee54b5d91dd455b0fd",
+    "r3_ret20fa0_00": "8cef1b8a8b19aaee54b5d91dd455b0fd"
+   }
+  }
+ ],
+ "analysis": {
+  "script": "an124.py(暫存)",
+  "checks": 44,
+  "pass": 44,
+  "controls": 26,
+  "controls_fail_as_expected": 23,
+  "controls_not_applicable": 3,
+  "items": [
+   {
+    "name": "動畫表 = EXE 靜態(0x51f33 / 0x51f54 / 0x51f75)",
+    "ok": true,
+    "control": false,
+    "detail": "動畫 3:起始幀 49、幀數 8、音效 6"
+   },
+   {
+    "name": "r1 休息",
+    "ok": true,
+    "control": false,
+    "detail": "HP 3 + 823//5 = 167;寫入前 EDI 167 商 164; 回傳 1;之後 HP 167;返回位址 0x19087"
+   },
+   {
+    "name": "r1 對照:四捨五入",
+    "ok": false,
+    "control": true,
+    "detail": "預測 168,實際 167"
+   },
+   {
+    "name": "r2 休息(滿血)",
+    "ok": true,
+    "control": false,
+    "detail": "HP 823/823 預測不寫、回 0;寫入站=無 回傳 0 之後 HP 823"
+   },
+   {
+    "name": "r3 移動後休息不回血",
+    "ok": true,
+    "control": false,
+    "detail": "moved_flag=1 rest 入口=無 ai_item_action 入口時索爾 HP=3"
+   },
+   {
+    "name": "r3 對照:休息不看移動旗標",
+    "ok": false,
+    "control": true,
+    "detail": "預測 167,實際 3"
+   },
+   {
+    "name": "r1 目標個數",
+    "ok": true,
+    "control": false,
+    "detail": "dispatch count 2,逐目標 2 筆"
+   },
+   {
+    "name": "r1 目標 #5 基礎傷害",
+    "ok": true,
+    "control": false,
+    "detail": "法術 3 威力 500 × 魔抗表[職業 27 - 1] 10 / 10 = 500;實際 500"
+   },
+   {
+    "name": "r1 目標 #5 對照:魔抗表不減 1",
+    "ok": false,
+    "control": true,
+    "detail": "預測 350,實際 500"
+   },
+   {
+    "name": "r1 目標 #5 命中與傷害",
+    "ok": true,
+    "control": false,
+    "detail": "亂數 42 < 85 命中;500×9//10 + 33×500//1000 = 466;扣 HP 前 EBP 466, 回傳 466,跳字 [466, 94, 5];HP 42 -> 預測 0 實際 0"
+   },
+   {
+    "name": "r1 目標 #5 對照:用另一個目標的傷害亂數",
+    "ok": false,
+    "control": true,
+    "detail": "預測 464,實際 466"
+   },
+   {
+    "name": "r1 目標 #5 對照:命中判定反過來",
+    "ok": false,
+    "control": true,
+    "detail": "亂數 42 命中 85"
+   },
+   {
+    "name": "r1 目標 #10 基礎傷害",
+    "ok": true,
+    "control": false,
+    "detail": "法術 3 威力 500 × 魔抗表[職業 27 - 1] 10 / 10 = 500;實際 500"
+   },
+   {
+    "name": "r1 目標 #10 對照:魔抗表不減 1",
+    "ok": false,
+    "control": true,
+    "detail": "預測 350,實際 500"
+   },
+   {
+    "name": "r1 目標 #10 命中與傷害",
+    "ok": true,
+    "control": false,
+    "detail": "亂數 43 < 85 命中;500×9//10 + 28×500//1000 = 464;扣 HP 前 EBP 464, 回傳 464,跳字 [464, 94, 10];HP 36 -> 預測 0 實際 0"
+   },
+   {
+    "name": "r1 目標 #10 對照:用另一個目標的傷害亂數",
+    "ok": false,
+    "control": true,
+    "detail": "預測 466,實際 464"
+   },
+   {
+    "name": "r1 目標 #10 對照:命中判定反過來",
+    "ok": false,
+    "control": true,
+    "detail": "亂數 43 命中 85"
+   },
+   {
+    "name": "r1 跳字佇列",
+    "ok": true,
+    "control": false,
+    "detail": "預測字形 0062646400626462 位移 02070c1102070c11 所屬 050505050a0a0a0a;實際 0062646400626462 02070c1102070c11 050505050a0a0a0a"
+   },
+   {
+    "name": "r1 對照:數字靠左",
+    "ok": false,
+    "control": true,
+    "detail": "預測 6264640062646200,實際 0062646400626462"
+   },
+   {
+    "name": "r1 魔抗表 = EXE 靜態 0x51f96",
+    "ok": true,
+    "control": false,
+    "detail": "[10, 10, 10, 10, 7, 7, 10, 10]…"
+   },
+   {
+    "name": "r1 法術列 3 = EXE 靜態 0x61a12(r2 命中率改 0)",
+    "ok": true,
+    "control": false,
+    "detail": "靜態 f4015505012a00,實際 f4015505012a00,執行期位址 0x57a12(+0x19c000 讀到的線性)"
+   },
+   {
+    "name": "r2 目標個數",
+    "ok": true,
+    "control": false,
+    "detail": "dispatch count 2,逐目標 2 筆"
+   },
+   {
+    "name": "r2 目標 #0 基礎傷害",
+    "ok": true,
+    "control": false,
+    "detail": "法術 3 威力 500 × 魔抗表[職業 9 - 1] 10 / 10 = 500;實際 500"
+   },
+   {
+    "name": "r2 目標 #0 對照:魔抗表不減 1",
+    "ok": null,
+    "control": true,
+    "detail": "與正確預測相同(500),不適用"
+   },
+   {
+    "name": "r2 目標 #0 沒命中",
+    "ok": true,
+    "control": false,
+    "detail": "亂數 34 >= 命中 0;回 0,固定跳字 [0], HP 823 -> 823"
+   },
+   {
+    "name": "r2 目標 #0 對照:命中判定反過來",
+    "ok": false,
+    "control": true,
+    "detail": "亂數 34 命中 0"
+   },
+   {
+    "name": "r2 目標 #3 基礎傷害",
+    "ok": true,
+    "control": false,
+    "detail": "法術 3 威力 500 × 魔抗表[職業 25 - 1] 8 / 10 = 400;實際 400"
+   },
+   {
+    "name": "r2 目標 #3 對照:魔抗表不減 1",
+    "ok": false,
+    "control": true,
+    "detail": "預測 200,實際 400"
+   },
+   {
+    "name": "r2 目標 #3 沒命中",
+    "ok": true,
+    "control": false,
+    "detail": "亂數 69 >= 命中 0;回 0,固定跳字 [3], HP 867 -> 867"
+   },
+   {
+    "name": "r2 目標 #3 對照:命中判定反過來",
+    "ok": false,
+    "control": true,
+    "detail": "亂數 69 命中 0"
+   },
+   {
+    "name": "r2 跳字佇列",
+    "ok": true,
+    "control": false,
+    "detail": "預測字形 7475767674757676 位移 02080c1102080c11 所屬 0000000003030303;實際 7475767674757676 02080c1102080c11 0000000003030303"
+   },
+   {
+    "name": "r2 對照:數字靠左",
+    "ok": null,
+    "control": true,
+    "detail": "與正確預測相同(7475767674757676),不適用"
+   },
+   {
+    "name": "r2 魔抗表 = EXE 靜態 0x51f96",
+    "ok": true,
+    "control": false,
+    "detail": "[10, 10, 10, 10, 7, 7, 10, 10]…"
+   },
+   {
+    "name": "r2 法術列 3 = EXE 靜態 0x61a12(r2 命中率改 0)",
+    "ok": true,
+    "control": false,
+    "detail": "靜態 f4015505012a00,實際 f4010005012a00,執行期位址 0x57a12(+0x19c000 讀到的線性)"
+   },
+   {
+    "name": "r3 目標個數",
+    "ok": true,
+    "control": false,
+    "detail": "dispatch count 1,逐目標 1 筆"
+   },
+   {
+    "name": "r3 目標 #3 基礎傷害",
+    "ok": true,
+    "control": false,
+    "detail": "法術 3 威力 500 × 魔抗表[職業 25 - 1] 8 / 10 = 400;實際 400"
+   },
+   {
+    "name": "r3 目標 #3 對照:魔抗表不減 1",
+    "ok": false,
+    "control": true,
+    "detail": "預測 200,實際 400"
+   },
+   {
+    "name": "r3 目標 #3 沒命中",
+    "ok": true,
+    "control": false,
+    "detail": "亂數 91 >= 命中 85;回 0,固定跳字 [3], HP 867 -> 867"
+   },
+   {
+    "name": "r3 目標 #3 對照:命中判定反過來",
+    "ok": false,
+    "control": true,
+    "detail": "亂數 91 命中 85"
+   },
+   {
+    "name": "r3 跳字佇列",
+    "ok": true,
+    "control": false,
+    "detail": "預測字形 74757676 位移 02080c11 所屬 03030303;實際 74757676 02080c11 03030303"
+   },
+   {
+    "name": "r3 對照:數字靠左",
+    "ok": null,
+    "control": true,
+    "detail": "與正確預測相同(74757676),不適用"
+   },
+   {
+    "name": "r3 魔抗表 = EXE 靜態 0x51f96",
+    "ok": true,
+    "control": false,
+    "detail": "[10, 10, 10, 10, 7, 7, 10, 10]…"
+   },
+   {
+    "name": "r3 法術列 3 = EXE 靜態 0x61a12(r2 命中率改 0)",
+    "ok": true,
+    "control": false,
+    "detail": "靜態 f4015505012a00,實際 f4015505012a00,執行期位址 0x57a12(+0x19c000 讀到的線性)"
+   },
+   {
+    "name": "r1 動畫幀數",
+    "ok": true,
+    "control": false,
+    "detail": "表 0x51f54[3] = 8;實際幀序 [0, 1, 2, 3, 4, 5, 6, 7]"
+   },
+   {
+    "name": "r1 閃爍幀數",
+    "ok": true,
+    "control": false,
+    "detail": "實際 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+   },
+   {
+    "name": "r1 收尾幀數",
+    "ok": true,
+    "control": false,
+    "detail": "實際 22 幀"
+   },
+   {
+    "name": "r1 動畫畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "7 組比較、7 種畫面;共改 1069 像素,目標格外 0;各目標格內 {5: 1069}(畫面內目標 [5],畫面外 [10])"
+   },
+   {
+    "name": "r1 動畫對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 1069"
+   },
+   {
+    "name": "r1 閃爍畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "10 組比較、8 種畫面;共改 4420 像素,目標格外 0;各目標格內 {5: 4420}(畫面內目標 [5],畫面外 [10])"
+   },
+   {
+    "name": "r1 閃爍對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 4420"
+   },
+   {
+    "name": "r1 收尾畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "21 組比較、19 種畫面;共改 1192 像素,目標格外 0;各目標格內 {5: 1192}(畫面內目標 [5],畫面外 [10])"
+   },
+   {
+    "name": "r1 收尾對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 1192"
+   },
+   {
+    "name": "r2 動畫幀數",
+    "ok": true,
+    "control": false,
+    "detail": "表 0x51f54[3] = 8;實際幀序 [0, 1, 2, 3, 4, 5, 6, 7]"
+   },
+   {
+    "name": "r2 閃爍幀數",
+    "ok": true,
+    "control": false,
+    "detail": "實際 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+   },
+   {
+    "name": "r2 收尾幀數",
+    "ok": true,
+    "control": false,
+    "detail": "實際 22 幀"
+   },
+   {
+    "name": "r2 動畫畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "7 組比較、7 種畫面;共改 2138 像素,目標格外 0;各目標格內 {0: 1069, 3: 1069}(畫面內目標 [0, 3],畫面外 [])"
+   },
+   {
+    "name": "r2 動畫對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 2138"
+   },
+   {
+    "name": "r2 閃爍畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "10 組比較、8 種畫面;共改 8981 像素,目標格外 0;各目標格內 {0: 4631, 3: 4350}(畫面內目標 [0, 3],畫面外 [])"
+   },
+   {
+    "name": "r2 閃爍對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 8981"
+   },
+   {
+    "name": "r2 收尾畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "21 組比較、20 種畫面;共改 3494 像素,目標格外 0;各目標格內 {0: 1802, 3: 1692}(畫面內目標 [0, 3],畫面外 [])"
+   },
+   {
+    "name": "r2 收尾對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 3494"
+   },
+   {
+    "name": "r3 動畫幀數",
+    "ok": true,
+    "control": false,
+    "detail": "表 0x51f54[3] = 8;實際幀序 [0, 1, 2, 3, 4, 5, 6, 7]"
+   },
+   {
+    "name": "r3 閃爍幀數",
+    "ok": true,
+    "control": false,
+    "detail": "實際 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+   },
+   {
+    "name": "r3 收尾幀數(本輪中途斷線,只看前段)",
+    "ok": true,
+    "control": false,
+    "detail": "實際 9 幀"
+   },
+   {
+    "name": "r3 動畫畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "7 組比較、7 種畫面;共改 1069 像素,目標格外 0;各目標格內 {3: 1069}(畫面內目標 [3],畫面外 [])"
+   },
+   {
+    "name": "r3 動畫對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 1069"
+   },
+   {
+    "name": "r3 閃爍畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "10 組比較、8 種畫面;共改 4350 像素,目標格外 0;各目標格內 {3: 4350}(畫面內目標 [3],畫面外 [])"
+   },
+   {
+    "name": "r3 閃爍對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 4350"
+   },
+   {
+    "name": "r3 收尾畫面只動在目標格",
+    "ok": true,
+    "control": false,
+    "detail": "8 組比較、8 種畫面;共改 674 像素,目標格外 0;各目標格內 {3: 674}(畫面內目標 [3],畫面外 [])"
+   },
+   {
+    "name": "r3 收尾對照:目標格往左移 5 格",
+    "ok": false,
+    "control": true,
+    "detail": "移位後格內 0 / 674"
+   }
+  ]
+ },
+ "mutation": {
+  "script": "mut_an124.py(暫存)",
+  "stdout": [
+   "抓到  傷害 +1: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  休息寫入值 +1: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  移動後 HP 被補: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  跳字位移改錯: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  沒命中卻扣血: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  動畫幀目標格外改一點: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  收尾幀目標格外改一點: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  動畫表幀數改 9: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "抓到  基礎傷害改錯: 目標檢查 有跑、FAIL、輸出有 FAIL 標記 True、Traceback 無;其他一起 FAIL 的 []",
+   "突變 9 漏掉 0"
+  ]
+ },
+ "files": {
+  "item_effect_dispatch_item79_branch_hit_20261014.png": "a5a6a0e51896b37f76e5887a2c120bc0",
+  "item_effect_dispatch_item79_branch_miss_20261014.png": "62161855dbe5a6df0118e3945e01c8cf"
+ }
+}

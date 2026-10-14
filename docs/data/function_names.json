@@ -1692,9 +1692,9 @@
   {
    "addr": "0x1e0db",
    "name": "queue_unit_number_popup",
-   "summary": "(數值, 字形基底, unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,以 sprintf(0x501b6 的格式)把數值轉成字串,4 個字元依序寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位),水平位移 = i*5 + 2。知識庫記載以 0x69/0x5e 呼叫時顯示回復量/傷害。續一百一十六(直接讀反組譯,勘誤):舊參數列 (?, value, unit) 把數值寫在第 2 個。數值是第 1 個(0x1e0ec 載入 ebp,0x1e170 推給 sprintf);第 2 個是字形基底 —— 每個數字字元加上它再減 0x30 寫進字形陣列(0x1e1bd),呼叫端只推 0x69(回復)或 0x5e(傷害)。",
+   "summary": "(數值, 字形基底, unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,以 sprintf(0x501b6 的格式)把數值轉成字串,4 個字元依序寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位),水平位移 = i*5 + 2。知識庫記載以 0x69/0x5e 呼叫時顯示回復量/傷害。續一百一十六(直接讀反組譯,勘誤):舊參數列 (?, value, unit) 把數值寫在第 2 個。數值是第 1 個(0x1e0ec 載入 ebp,0x1e170 推給 sprintf);第 2 個是字形基底 —— 每個數字字元加上它再減 0x30 寫進字形陣列(0x1e1bd),呼叫端只推 0x69(回復)或 0x5e(傷害)。 續一百二十四(DOSBox-X):傷害 466 / 464 寫進佇列的字形是 00 62 64 64 / 00 62 64 62(靠右、空位寫 0、0x5e + 數字),水平位移 2、7、12、17,所屬單位 4 格都是目標;0x501b6 的格式字串是 \"%d\"。",
    "confidence": "static_re",
-   "date": "2026-10-12",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1e0f2",
@@ -1729,9 +1729,9 @@
   {
    "addr": "0x1e1dc",
    "name": "queue_unit_fixed_popup",
-   "summary": "(unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,把 0x5204a 的固定 4 個字形寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位)(第 2 個字位移多 1),筆數 +4。知識庫記載為「失敗」顯示。",
+   "summary": "(unit):單位記錄(80 bytes,基底 [0x53a45];+0 x、+1 y)在視窗內時,把 0x5204a 的固定 4 個字形寫入浮字佇列:筆數 [0x53ec4],平行陣列 0x53c6c(字形)、0x53d34(水平位移)、0x53dfc(所屬單位)(第 2 個字位移多 1),筆數 +4。知識庫記載為「失敗」顯示。 續一百二十四(DOSBox-X):道具 79 沒命中時寫入字形 74 75 76 76、位移 2、8、12、17;重建圖上是「MISS」四個字。",
    "confidence": "static_re",
-   "date": "2026-09-19",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1e1ee",
@@ -1837,9 +1837,9 @@
   {
    "addr": "0x1c4cc",
    "name": "play_map_effect_animation",
-   "summary": "(caster, 動畫號, count, targets):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(當時 inventory argc 記 3,線性掃描少算;續一百一十改為沿控制流後是 4)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。續一百一十五(直接讀反組譯):佔位名 a1..a4 改名。第 1 個本體不讀(呼叫端推施放者 / 使用者);第 2 個是特效編號(0x1c4dd 載入 ebp,0x1c6b0 起與 0x16 / 0x19 / 0x12 / 0x13 / 8 / 9 比);第 3 個是目標個數(0x1c55d 的迴圈上限);第 4 個是目標單位序號的 byte 陣列(0x1c571)。實機第 2 個 0xd / 0x13 等、第 3 個 1 / 3、第 4 個是呼叫端堆疊上的陣列。",
+   "summary": "(caster, 動畫號, count, targets):地圖上的特效動畫。redraw → 配置緩衝存下地圖畫面 → 每個影格:還原、以 RLE 貼上影格、copy_rect 上 VGA、play_sfx、wait_ticks → 釋放緩衝 → redraw。知識庫記載為事件 handler 裡與 0x1C2DA 並用的動畫。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要寫 3 個參數(當時 inventory argc 記 3,線性掃描少算;續一百一十改為沿控制流後是 4)。實機呼叫端 0x211c2 / 0x22c39 都推 4 個(add esp, 0x10),本體 0x1c56a 讀第 4 個;沿控制流沒有讀到 a1。續一百一十五(直接讀反組譯):佔位名 a1..a4 改名。第 1 個本體不讀(呼叫端推施放者 / 使用者);第 2 個是特效編號(0x1c4dd 載入 ebp,0x1c6b0 起與 0x16 / 0x19 / 0x12 / 0x13 / 8 / 9 比);第 3 個是目標個數(0x1c55d 的迴圈上限);第 4 個是目標單位序號的 byte 陣列(0x1c571)。實機第 2 個 0xd / 0x13 等、第 3 個 1 / 3、第 4 個是呼叫端堆疊上的陣列。 續一百二十四(DOSBox-X,doc35 §18):動畫號 3(道具 79)每幀停在 0x1c640,edi = 0 .. 7 共 8 幀,等於表 0x51f54[3];幀從 [0x53ad1] 的第 0x51f33[3] + edi = 49 .. 56 張取,第 0 幀播 0x51f75[3] = 6 號音效(FD2.EXE 反組譯與靜態表,執行期讀到的三張表相同)。相鄰兩幀的改動全在畫面內目標格附近(三輪 21 組)。開頭的 redraw(0) 會清掉呼叫前畫面上的東西(光束亮帶)。",
    "confidence": "static_re",
-   "date": "2026-10-12",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1c517",
@@ -1884,6 +1884,10 @@
     {
      "at": "0x1c571",
      "insn": "movzx edx, byte ptr [esi + eax]"
+    },
+    {
+     "at": "0x1c66f",
+     "insn": "movzx eax, byte ptr [esp + ebp]"
     }
    ]
   },
@@ -3956,9 +3960,9 @@
   {
    "addr": "0x1cd17",
    "name": "flash_listed_units_band_cycle",
-   "summary": "(caster, tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(色彩基底 = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。續一百一十一(呼叫紀錄篩選,勘誤):舊參數列只列 3 個。呼叫端 0x21259..0x21263 推 4 個(add esp, 0x10),與緊接在前呼叫 play_map_effect_animation 的 4 個相同;本體 0x1cd28 / 0x1ce02 / 0x1ce0c 讀第 2..4 個,第 1 個不讀。實機 s1 = 施法者序號 0xb、s2 = 指令號 0。",
+   "summary": "(caster, tbl_idx, count, list):從 0x52006 複製 30 bytes 的色帶基底表,保存離屏緩衝;10 幀:還原緩衝,名單內且在攝影機視窗內的單位以 blit_tile24_rle_band_cycled(色彩基底 = 表[tbl_idx]、shift = 7 - 幀%8)畫,貼到畫面,每幀 1 tick。續一百一十一(呼叫紀錄篩選,勘誤):舊參數列只列 3 個。呼叫端 0x21259..0x21263 推 4 個(add esp, 0x10),與緊接在前呼叫 play_map_effect_animation 的 4 個相同;本體 0x1cd28 / 0x1ce02 / 0x1ce0c 讀第 2..4 個,第 1 個不讀。實機 s1 = 施法者序號 0xb、s2 = 指令號 0。 續一百二十四(DOSBox-X,doc35 §18):道具 79 由 0x20f9b 呼叫,引數 (11, 3, 筆數, targets);每幀停在 0x1cd8e,esi = 0 .. 9 共 10 幀,目標的單位圖塊變成紅色剪影、明暗逐幀變化,改動全在目標格內(三輪 30 幀);[0x53c0b] 讀到 2。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1cd33",
@@ -9123,8 +9127,8 @@
    "addr": "0x1c75e",
    "name": "spell_damage_resolve",
    "confidence": "verified_dynamic",
-   "date": "2026-09-28",
-   "summary": "(target, spell):法術傷害的命中與基礎值。把 [0x51f96] 起 28 個 dword(職業魔抗表)複製到堆疊,resist = 表[守方 +0x20 職業 - 1];spell 列 = row7_ptr_619fd(spell),base = (int16)列+0 × resist / 10;spell 為 10..12 且 unit_uses_move_cost_row19(target) 為真時直接回 0;否則 rand%100 < 列+2(命中率)才呼叫 spell_damage_apply(target, base),未命中回 0。施法者的屬性不參與。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):悠妮施放聖光彈(spell 8,傷害 440、命中 100),斷點在 0x1c7fe 讀 ESI=base —— 守方職業 7/13/26 分別得 440/220/176(魔抗 10/5/4);把記憶體中命中率改 30 時亂數 25 與 0 命中,改 10 時亂數 73 未命中(HP 不變、MP 仍扣)。 範圍法術與種族閘門(doc98 續四十五):裂地術(spell 12)對 4 個目標各呼叫本函式一次(入口斷點,返回位址 0x21833),每個目標各有自己的命中亂數與傷害亂數,3 次施法共 11 個命中全部逐點符合;目標種族改成 5 時入口有進、但沒有到 0x1c7fe 就返回且 HP 不變,改回種族 1 後同一目標正常受傷(670)。",
+   "date": "2026-10-14",
+   "summary": "(target, spell):法術傷害的命中與基礎值。把 [0x51f96] 起 28 個 dword(職業魔抗表)複製到堆疊,resist = 表[守方 +0x20 職業 - 1];spell 列 = row7_ptr_619fd(spell),base = (int16)列+0 × resist / 10;spell 為 10..12 且 unit_uses_move_cost_row19(target) 為真時直接回 0;否則 rand%100 < 列+2(命中率)才呼叫 spell_damage_apply(target, base),未命中回 0。施法者的屬性不參與。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):悠妮施放聖光彈(spell 8,傷害 440、命中 100),斷點在 0x1c7fe 讀 ESI=base —— 守方職業 7/13/26 分別得 440/220/176(魔抗 10/5/4);把記憶體中命中率改 30 時亂數 25 與 0 命中,改 10 時亂數 73 未命中(HP 不變、MP 仍扣)。 範圍法術與種族閘門(doc98 續四十五):裂地術(spell 12)對 4 個目標各呼叫本函式一次(入口斷點,返回位址 0x21833),每個目標各有自己的命中亂數與傷害亂數,3 次施法共 11 個命中全部逐點符合;目標種族改成 5 時入口有進、但沒有到 0x1c7fe 就返回且 HP 不變,改回種族 1 後同一目標正常受傷(670)。 續一百二十四(DOSBox-X,道具 79 走 item_effect_dispatch 的 0x14 / 0x18 分支,spell = 3):法術列 3 讀到 f4 01 55 05 01 2a 00(威力 500、命中 85),職業 27 與 9 的 base 500、職業 25 的 400(魔抗 10 / 8);亂數 42、43 命中,34、69(命中率改 0)與 91 沒命中、回 0。法術列在 obj3,執行期指標 0x1f3a12 = 0x61a12 + 0x192000。",
    "evidence": [
     {
      "at": "0x1c775",
@@ -9160,8 +9164,8 @@
    "addr": "0x1c81f",
    "name": "spell_damage_apply",
    "confidence": "verified_dynamic",
-   "date": "2026-10-13",
-   "summary": "(target, 基礎傷害):HP(+0x40)-= 基礎傷害 × 9 / 10 + (rand%100) × 基礎傷害 / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— 基礎傷害 440 亂數 75 -> 429(999->570)、基礎傷害 220 亂數 65 -> 212(999->787)、基礎傷害 176 亂數 58 -> 168(999->831)、基礎傷害 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。 續一百一十七:第 2 個由 base 改名 基礎傷害。",
+   "date": "2026-10-14",
+   "summary": "(target, 基礎傷害):HP(+0x40)-= 基礎傷害 × 9 / 10 + (rand%100) × 基礎傷害 / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— 基礎傷害 440 亂數 75 -> 429(999->570)、基礎傷害 220 亂數 65 -> 212(999->787)、基礎傷害 176 亂數 58 -> 168(999->831)、基礎傷害 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。 續一百一十七:第 2 個由 base 改名 基礎傷害。 續一百二十四(DOSBox-X):基礎傷害 500、亂數 33 -> 466(42 -> 0),亂數 28 -> 464(36 -> 0);回傳值就是扣的量(0x14230 mov eax, ebp)。",
    "evidence": [
     {
      "at": "0x1c845",
@@ -9251,8 +9255,8 @@
    "addr": "0x18d8c",
    "name": "player_action_ring",
    "confidence": "static_re",
-   "date": "2026-10-13",
-   "summary": "(unit, 4 格啟用表, 已移動) 玩家單位的指令環流程(唯一呼叫端在 0x18890)。以 [0x53c57] 為選到的項目:1 = 法術,反覆呼叫 player_spell_select 直到非 0,回傳不是 -1 時 unit_set_flag5_bit7(已行動),並把 [0x53ec8] 除以施法者等級(+0x21;職業 +0x20 > 8 時再 +0x1e);2 = 道具,走 0x1bbdc,之後 [0x53ec8] = 0。開環前以 collect_targets_in_range(range 1、threshold 1、selector 0、outBuf 0)數可攻擊的目標。DOSBox-X 觀察(doc98 續四十七):該次 collect 的返回位址 0x18e2a、筆數 1;兩次治療後施法者 EX(+0x3c)增加 13 與 3,等於累加值 446、106 各除以 32(Lv 2 + 30)。除法本身未下斷點,是由讀值反推。 續一百一十九(直接讀反組譯):補參數名 —— 第 3 個是呼叫端給的旗標:0x18a82 推 1、0x18b33 推 0。",
+   "date": "2026-10-14",
+   "summary": "(unit, 4 格啟用表, 已移動) 玩家單位的指令環流程(唯一呼叫端在 0x18890)。以 [0x53c57] 為選到的項目:1 = 法術,反覆呼叫 player_spell_select 直到非 0,回傳不是 -1 時 unit_set_flag5_bit7(已行動),並把 [0x53ec8] 除以施法者等級(+0x21;職業 +0x20 > 8 時再 +0x1e);2 = 道具,走 0x1bbdc,之後 [0x53ec8] = 0。開環前以 collect_targets_in_range(range 1、threshold 1、selector 0、outBuf 0)數可攻擊的目標。DOSBox-X 觀察(doc98 續四十七):該次 collect 的返回位址 0x18e2a、筆數 1;兩次治療後施法者 EX(+0x3c)增加 13 與 3,等於累加值 446、106 各除以 32(Lv 2 + 30)。除法本身未下斷點,是由讀值反推。 續一百一十九(直接讀反組譯):補參數名 —— 第 3 個是呼叫端給的旗標:0x18a82 推 1、0x18b33 推 0。 續一百二十四(DOSBox-X,doc98 續一百二十四):第 3 個 已移動 在 0x19077 讀(實機:沒移動 0、往上移一格後 1);[0x53c57] = 3(休息)時只有 0 才呼叫 rest_hp_recover(返回 0x19087),之後兩種情況都走 field_cell_treasure_check 與 unit_set_flag5_bit7。",
    "evidence": [
     {
      "at": "0x18e25",
@@ -9860,8 +9864,8 @@
    "addr": "0x13fd4",
    "name": "rest_hp_recover",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(unit):HP(+0x40)等於 MaxHP(+0x42),或 +0x25(中毒計數)、+0x26(麻痺計數)任一非 0 時回 0、不寫;否則播放演出後寫入 min(HP + MaxHP/5, MaxHP)(整數除法),[0x51a83] = 1,回 1。呼叫端:AI 模式 0/1/2 的備援收尾(0x13c0f,返回 0x13c14;在 0x13e9c 沒有移動時)、其他 AI 模式分支(0x13bc5、0x13c84、0x13d58、0x13e52)與玩家指令環的休息(0x19082)。2026-09-30 DOSBox-X 動態驗證(doc98 續五十九):兩輪 12 次停點全部符合 —— MaxHP 28 的 HP 9 -> 14、26 -> 28(封頂)、28 回 0;MaxHP 34 的 HP 9 -> 15(34/5 取整為 6,四捨五入會是 7);+0x25 = 2 回 0;+0x26 仍非 0 的單位沒有進來。玩家休息的一次實測見 doc36(20 + 42/5 = 28)。 續六十:模式 0 備援的休息只在 ai_move_toward_nearest 回 0(沒有目標或 0x14b78 沒移動)時發生。",
+   "date": "2026-10-14",
+   "summary": "(unit):HP(+0x40)等於 MaxHP(+0x42),或 +0x25(中毒計數)、+0x26(麻痺計數)任一非 0 時回 0、不寫;否則播放演出後寫入 min(HP + MaxHP/5, MaxHP)(整數除法),[0x51a83] = 1,回 1。呼叫端:AI 模式 0/1/2 的備援收尾(0x13c0f,返回 0x13c14;在 0x13e9c 沒有移動時)、其他 AI 模式分支(0x13bc5、0x13c84、0x13d58、0x13e52)與玩家指令環的休息(0x19082)。2026-09-30 DOSBox-X 動態驗證(doc98 續五十九):兩輪 12 次停點全部符合 —— MaxHP 28 的 HP 9 -> 14、26 -> 28(封頂)、28 回 0;MaxHP 34 的 HP 9 -> 15(34/5 取整為 6,四捨五入會是 7);+0x25 = 2 回 0;+0x26 仍非 0 的單位沒有進來。玩家休息的一次實測見 doc36(20 + 42/5 = 28)。 續六十:模式 0 備援的休息只在 ai_move_toward_nearest 回 0(沒有目標或 0x14b78 沒移動)時發生。 續一百二十四(DOSBox-X,doc98 續一百二十四):玩家呼叫點前的 0x19077 先看 player_action_ring 的第 3 個參數(已移動),非 0 時不呼叫本函式。索爾 HP 改成 3、沒移動就休息:入口返回位址 0x19087、讀到 3 / 823,寫入前 EDI = 167(商 164),回 1;滿血再休息回 0、沒有停到寫入;先移動一格再休息不進本函式,到敵方回合 HP 仍是 3。續一百二十三「索爾 HP 由 3 變成 167」就是結束回合時選的休息。",
    "evidence": [
     {
      "at": "0x13ff6",
@@ -25624,9 +25628,9 @@
   {
    "addr": "0x1aa1d",
    "name": "grant_reward_rows",
-   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。當時 inventory argc 記 2 是線性掃描少算(續一百一十改為沿控制流後是 3)。",
+   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。當時 inventory argc 記 2 是線性掃描少算(續一百一十改為沿控制流後是 3)。 續一百二十四(DOSBox-X):道具 79 打死兩個友軍 NPC 後以 (11, 2, 列表) 呼叫,兩列是 {3, 0x000b}、{3, 0x0010};這一站之後按兩次 Return 才到 item_effect_dispatch 的 0x2107a,陣亡台詞在本函式裡。沒有人陣亡的一輪筆數 0。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1ab12",
@@ -25887,9 +25891,9 @@
   {
    "addr": "0x1df58",
    "name": "action_finish_effect",
-   "summary": "() 動作收尾的畫面效果:複製 0x5202c 的 25 項曲線表(15, 15, 15, 15, 7, 3, 1, 0, 0, 1, 3, 7, 15 ..),malloc 0x25680 bytes 保存畫面,逐幀以 copy_rect 輸出並 delay,最後 blit_rle_c0_transparent 畫回、釋放緩衝並 delay(500)(FD2.EXE 反組譯)。單一目標傷害動作(command_handler_9)、地震法術等 8 處的收尾呼叫(doc91)。 續一百一十九(直接讀反組譯):沒有堆疊參數。資料卡的清堆疊個數是呼叫者在 call 之後用 add esp 收自己的區域框架,被算成替它清引數。",
+   "summary": "() 動作收尾的畫面效果:複製 0x5202c 的 25 項曲線表(15, 15, 15, 15, 7, 3, 1, 0, 0, 1, 3, 7, 15 ..),malloc 0x25680 bytes 保存畫面,逐幀以 copy_rect 輸出並 delay,最後 blit_rle_c0_transparent 畫回、釋放緩衝並 delay(500)(FD2.EXE 反組譯)。單一目標傷害動作(command_handler_9)、地震法術等 8 處的收尾呼叫(doc91)。 續一百一十九(直接讀反組譯):沒有堆疊參數。資料卡的清堆疊個數是呼叫者在 call 之後用 add esp 收自己的區域框架,被算成替它清引數。 續一百二十四(DOSBox-X,doc35 §18):每幀停在 0x1dfd7,ebp = 0 .. 21 共 22 幀;0x5202c 的表執行期讀到 0f 0f 0f 0f 07 03 01 00 00 01 03 07 0f 0f 0b 09 08 08 09 0b 0f 0f 0f 0f 0f,跳字依它上下彈跳。[0x53ec4] = 8 或 4(命中、沒命中都跑)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x1df70",
@@ -25902,6 +25906,10 @@
     {
      "at": "0x1e0c9",
      "insn": "push 0x1f4"
+    },
+    {
+     "at": "0x1dfe5",
+     "insn": "cmp ebp, 0x16"
     }
    ]
   },
@@ -26442,9 +26450,9 @@
   {
    "addr": "0x20c6f",
    "name": "item_effect_dispatch",
-   "summary": "(使用者, slot, 數量, targets) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (使用者, 道具, ...)。第 2 個是道具欄位序號,不是道具編號 —— 0x20c96 原樣推給 unit_item_id 的 slot(實機 2 / 4;呼叫端推 [0x53c3f] / [0x53c57])。第 3 個是目標個數(原樣推給 item_effect_heal / effect_cure_status_flag 的 數量;實機 1),第 4 個是目標清單(0x20c80 載入 ebp,原樣推成 targets;實機 0x1f14f8)。 續一百二十三(直接讀反組譯):上面的分派清單不完整。另有 0xb -> play_map_effect_animation 與 0x1c2da 後逐目標 item_mp_restore;0xc -> effect_hit_ev_buff;0x11 / 0x12 / 0x13 -> item_effect_stat_up;0x14 / 0x18(0x20f6d)-> play_map_effect_animation 與 flash_listed_units_band_cycle(動畫號 = 道具列 +0xe 的 word),再逐目標 spell_damage_resolve(目標, 道具列 +0xe),非 0 以 queue_unit_number_popup 跳字、0 以 queue_unit_fixed_popup,redraw(0) 後 action_finish_effect;0x16 -> apply_status_spell_to_targets(併入 0x20e80)。 DOSBox-X(doc35 §18):道具 79 光束炮的道具列 +0xd = 0x18、+0xe = 3;入口讀到 (11, 2, 2, [5, 10]) 與 (11, 2, 2, [0, 3]),返回位址 0x152f5;返回後 #5 的 HP 42 -> 0、#10 36 -> 0(+5 都變成 1),另一輪 #0 167 -> 0(+5 = 1)、#3 867 -> 493。0x14 / 0x18 分支內部沒有下斷點。",
+   "summary": "(使用者, slot, 數量, targets) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (使用者, 道具, ...)。第 2 個是道具欄位序號,不是道具編號 —— 0x20c96 原樣推給 unit_item_id 的 slot(實機 2 / 4;呼叫端推 [0x53c3f] / [0x53c57])。第 3 個是目標個數(原樣推給 item_effect_heal / effect_cure_status_flag 的 數量;實機 1),第 4 個是目標清單(0x20c80 載入 ebp,原樣推成 targets;實機 0x1f14f8)。 續一百二十三(直接讀反組譯):上面的分派清單不完整。另有 0xb -> play_map_effect_animation 與 0x1c2da 後逐目標 item_mp_restore;0xc -> effect_hit_ev_buff;0x11 / 0x12 / 0x13 -> item_effect_stat_up;0x14 / 0x18(0x20f6d)-> play_map_effect_animation 與 flash_listed_units_band_cycle(動畫號 = 道具列 +0xe 的 word),再逐目標 spell_damage_resolve(目標, 道具列 +0xe),非 0 以 queue_unit_number_popup 跳字、0 以 queue_unit_fixed_popup,redraw(0) 後 action_finish_effect;0x16 -> apply_status_spell_to_targets(併入 0x20e80)。 DOSBox-X(doc35 §18):道具 79 光束炮的道具列 +0xd = 0x18、+0xe = 3;入口讀到 (11, 2, 2, [5, 10]) 與 (11, 2, 2, [0, 3]),返回位址 0x152f5;返回後 #5 的 HP 42 -> 0、#10 36 -> 0(+5 都變成 1),另一輪 #0 167 -> 0(+5 = 1)、#3 867 -> 493。0x14 / 0x18 分支內部沒有下斷點。 續一百二十四(DOSBox-X,doc35 §18):0x14 / 0x18 分支逐站錄了三個回合。play_map_effect_animation 與 flash_listed_units_band_cycle 都收到 (11, 3, 筆數, targets);逐目標 spell_damage_resolve(目標, 3),回傳非 0 時 queue_unit_number_popup(傷害, 0x5e, 目標)(實機 466、464),回 0 時 queue_unit_fixed_popup(目標)(命中率改 0 的兩次與亂數 91 >= 85 的一次);命中與否都 redraw(0) 後跑 action_finish_effect。迴圈結束時 [0x53ec8] = 6,0x21046 清 0 後才收尾;獎勵列 2 筆時 grant_reward_rows(11, 2, 列表),陣亡台詞在這個呼叫裡等按鍵。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x20c87",
@@ -26465,6 +26473,10 @@
     {
      "at": "0x20f64",
      "insn": "cmp eax, 0x18"
+    },
+    {
+     "at": "0x20fd5",
+     "insn": "jne 0x20fa7"
     }
    ]
   },
