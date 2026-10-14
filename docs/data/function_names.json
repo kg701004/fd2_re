@@ -24974,7 +24974,7 @@
   {
    "addr": "0x149f8",
    "name": "build_target_candidates",
-   "summary": "(施放點 x, 施放點 y, out, 起點 x, 起點 y, 步數, 陣營選擇子) 目標候選建構:從起點朝目標格逐步前進 N 步建立候選格,以 unit_at_cursor 檢查格上單位,寫進輸出陣列(FD2.EXE 反組譯)。player_spell_select、ai_item_candidate_select 與 ai_item_action 呼叫(doc13 的 target-candidate builder;doc11 稱評分端的路徑建構器)。",
+   "summary": "(施放點 x, 施放點 y, out, 起點 x, 起點 y, 步數, 陣營選擇子) 目標候選建構:從起點朝目標格逐步前進 N 步建立候選格,以 unit_at_cursor 檢查格上單位,寫進輸出陣列(FD2.EXE 反組譯)。player_spell_select、ai_item_candidate_select 與 ai_item_action 呼叫(doc13 的 target-candidate builder;doc11 稱評分端的路徑建構器)。 續一百二十三(DOSBox-X,doc35 §18):ai_item_action 的呼叫(0x150f1)返回時讀到引數 (19, 13, out, 19, 14, 15, 0)、回 2、out = [5, 10];另一輪 (20, 14, out, 19, 14, 15, 0)、回 2、out = [0, 3]。兩輪的目標都在起點 (19,14) 朝施放點方向的直線上(#5 在 (19,13)、#10 在 (19,6);#0 在 (20,14)、#3 在 (23,14))。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -25015,7 +25015,7 @@
   {
    "addr": "0x15055",
    "name": "ai_item_action",
-   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。 續一百二十二訂正:上一句漏了條件。0x1514d 以道具列 +0x10 分兩路 —— < 0x10 走 0x1514f(0x12cea)後 jmp 0x152e5,不經過圓形換色;>= 0x10 才走 0x15168 起的 0x1f04a、redraw(1)、0x17aa9、0x2dfc8 與 0x151a2 的 lut_circle_ramp_at_unit。全道具表(0x602ad,209 列)只有 79 號光束炮的 +0x10(0x1f)符合。 DOSBox-X(doc35 §18):敵 #11 用道具 38 閃電鎚(+0x10 = 2)時本函式有進(返回位址 0x1503e、單位 11、camp 0),整個敵方回合 0x2189a 的斷點沒有停;換成道具 79 後 0x2189a 入口讀到返回位址 0x151a7、引數 (11, 80, -4),十幀的半徑 80、76、…、44。",
+   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。 續一百二十二訂正:上一句漏了條件。0x1514d 以道具列 +0x10 分兩路 —— < 0x10 走 0x1514f(0x12cea)後 jmp 0x152e5,不經過圓形換色;>= 0x10 才走 0x15168 起的 0x1f04a、redraw(1)、0x17aa9、0x2dfc8 與 0x151a2 的 lut_circle_ramp_at_unit。全道具表(0x602ad,209 列)只有 79 號光束炮的 +0x10(0x1f)符合。 DOSBox-X(doc35 §18):敵 #11 用道具 38 閃電鎚(+0x10 = 2)時本函式有進(返回位址 0x1503e、單位 11、camp 0),整個敵方回合 0x2189a 的斷點沒有停;換成道具 79 後 0x2189a 入口讀到返回位址 0x151a7、引數 (11, 80, -4),十幀的半徑 80、76、…、44。 續一百二十三(DOSBox-X,doc35 §18):道具 79 跑兩輪,逐站停到的順序與反組譯相同 —— build_target_candidates(瞄準點, out, 使用者座標, 15, 0) 回 2;圓形換色;delay(200);0x151be 的 palette_delta_ramp(0, 255, ebx) 停 65 次(ebx = 64 .. 0),畫面是一次白閃後淡回;延伸點 = 游標 + 15 ×(瞄準點 − 游標)夾在地圖內((19,13) -> (19,0)、(20,14) -> (26,14)),camera_step_to 過去;0x152a0 把 [0x53c1f] 設成 1 .. 8 各 redraw(1) 一次,畫面是使用者到延伸點之間一格寬的亮帶逐圈變暗;focus_unit(out[0]);item_effect_dispatch(11, 2, 2, out)。 0x15309 起的結尾(add esp, 0x24、四個 pop、ret)是共用的:0x164e3(0x15f84)與 0x1cfa8(draw_command_list)也跳進來,在這裡下斷點會在玩家回合停下;本函式的收尾要用 0x152fd。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -25042,6 +25042,14 @@
     {
      "at": "0x1514d",
      "insn": "jge 0x15168"
+    },
+    {
+     "at": "0x151c6",
+     "insn": "call 0x11df2"
+    },
+    {
+     "at": "0x152a0",
+     "insn": "mov dword ptr [0x3c1f], ebx"
     }
    ]
   },
@@ -26434,7 +26442,7 @@
   {
    "addr": "0x20c6f",
    "name": "item_effect_dispatch",
-   "summary": "(使用者, slot, 數量, targets) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (使用者, 道具, ...)。第 2 個是道具欄位序號,不是道具編號 —— 0x20c96 原樣推給 unit_item_id 的 slot(實機 2 / 4;呼叫端推 [0x53c3f] / [0x53c57])。第 3 個是目標個數(原樣推給 item_effect_heal / effect_cure_status_flag 的 數量;實機 1),第 4 個是目標清單(0x20c80 載入 ebp,原樣推成 targets;實機 0x1f14f8)。",
+   "summary": "(使用者, slot, 數量, targets) 道具效果分派:載入效果音(load_fdother_80_to_53b13),依道具列 +0xd 的 type 分派 —— 5 / 0xd -> item_effect_heal、6 / 7 -> 0x22af6、8 / 9 / 0xa -> item_effect_stat_up、0xe / 0xf / 0x10 -> apply_status_spell_to_targets / 0x22866 / 0x22721、0x15 -> item_effect_type21_damage、0x17 -> command_handler_23;收尾 unit_death_sweep 與獎勵(collect_unit_reward_rows / grant_reward_rows)(FD2.EXE 反組譯)。player_item_action 與 ai_item_action 呼叫(doc13)。 續一百一十七(名稱沿呼叫邊,勘誤):舊參數列寫 (使用者, 道具, ...)。第 2 個是道具欄位序號,不是道具編號 —— 0x20c96 原樣推給 unit_item_id 的 slot(實機 2 / 4;呼叫端推 [0x53c3f] / [0x53c57])。第 3 個是目標個數(原樣推給 item_effect_heal / effect_cure_status_flag 的 數量;實機 1),第 4 個是目標清單(0x20c80 載入 ebp,原樣推成 targets;實機 0x1f14f8)。 續一百二十三(直接讀反組譯):上面的分派清單不完整。另有 0xb -> play_map_effect_animation 與 0x1c2da 後逐目標 item_mp_restore;0xc -> effect_hit_ev_buff;0x11 / 0x12 / 0x13 -> item_effect_stat_up;0x14 / 0x18(0x20f6d)-> play_map_effect_animation 與 flash_listed_units_band_cycle(動畫號 = 道具列 +0xe 的 word),再逐目標 spell_damage_resolve(目標, 道具列 +0xe),非 0 以 queue_unit_number_popup 跳字、0 以 queue_unit_fixed_popup,redraw(0) 後 action_finish_effect;0x16 -> apply_status_spell_to_targets(併入 0x20e80)。 DOSBox-X(doc35 §18):道具 79 光束炮的道具列 +0xd = 0x18、+0xe = 3;入口讀到 (11, 2, 2, [5, 10]) 與 (11, 2, 2, [0, 3]),返回位址 0x152f5;返回後 #5 的 HP 42 -> 0、#10 36 -> 0(+5 都變成 1),另一輪 #0 167 -> 0(+5 = 1)、#3 867 -> 493。0x14 / 0x18 分支內部沒有下斷點。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -26453,6 +26461,10 @@
     {
      "at": "0x20c80",
      "insn": "mov ebp, dword ptr [esp + 0x8c]"
+    },
+    {
+     "at": "0x20f64",
+     "insn": "cmp eax, 0x18"
     }
    ]
   },
@@ -26713,9 +26725,9 @@
   {
    "addr": "0x22e5c",
    "name": "show_result_resource_79",
-   "summary": "戰役迴圈在 pending 碼 [0x53ecc] = 1 時的固定呈現:以 load_res 載入資源 #79,bgm 換曲,blit_anim_frame 逐幀播放並淡入淡出(FD2.EXE 反組譯)。game_main 呼叫(doc23:1 -> 資源 #79,2 -> 章節戰後表)。",
+   "summary": "戰役迴圈在 pending 碼 [0x53ecc] = 1 時的固定呈現:以 load_res 載入資源 #79,bgm 換曲,blit_anim_frame 逐幀播放並淡入淡出(FD2.EXE 反組譯)。game_main 呼叫(doc23:1 -> 資源 #79,2 -> 章節戰後表)。 續一百二十三(DOSBox-X,doc35 §18):敵方用道具 79 把 #0 索爾打到 HP 0(+5 = 1)、ai_item_action 返回之後,本函式入口停下,返回位址 0x25dea、[0x53ecc] = 1;接著 title_menu_dispatch 入口停下(返回位址 0x25dc2),視窗進標題序列。同一場的前一回合索爾沒有陣亡,戰鬥照常進到我方第 2 回合。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-13",
    "evidence": [
     {
      "at": "0x22e8b",

@@ -1,0 +1,1261 @@
+{
+ "date": "2026-10-13",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點,第 1 章戰場,敵 #11 的道具欄第 2 格放道具 79(只改模擬器記憶體裡的單位資料)。斷點(native):0x15055 入口、0x150f6 build_target_candidates 返回、0x151a7 圓形換色返回、0x151b7、0x151ce(調色盤迴圈每一圈)、0x151dd、0x1528c camera_step_to 返回、0x152ba(相位迴圈每一圈)、0x152e5、0x20c6f item_effect_dispatch 入口、0x152f5 返回、0x152fd;另有 0x22e5c 與 0x25ebb。畫面是停下時傾印線性 0xa0000 起 64000 bytes,配 [0x53a65] 指到的 768 bytes 調色盤重建。",
+ "runs": [
+  {
+   "tag": "runA",
+   "what": "索爾 HP 823(滿)。敵 #11 在 (19,14),瞄準點 (19,13),目標 #5、#10(友軍 NPC)",
+   "stops": [
+    {
+     "at": "0x15055",
+     "t": 64.1,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "g": {
+      "target_x": 19,
+      "target_y": 13,
+      "slot": 2,
+      "phase": 0,
+      "step_sel": 0,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 823,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 867,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "hp": 42,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "hp": 36,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x150f6",
+     "t": 73.1,
+     "name": "build_target_candidates 返回",
+     "args": [
+      19,
+      13,
+      "0x1f15a8",
+      19,
+      14,
+      15,
+      0
+     ],
+     "eax": 2,
+     "out": "050a260004000000130000000e000000",
+     "item_row": "0cc201500000000000000000001803001f000400000000",
+     "row_0d": 24,
+     "row_10": 31,
+     "row_12": 4
+    },
+    {
+     "at": "0x151a7",
+     "t": 79.2,
+     "name": "圓形換色返回",
+     "g": {
+      "target_x": 19,
+      "target_y": 13,
+      "slot": 2,
+      "phase": 6,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 12,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 1,
+     "edi": 2
+    },
+    {
+     "at": "0x151b7",
+     "t": 88.2,
+     "name": "delay(200) 之後",
+     "g": {
+      "target_x": 19,
+      "target_y": 13,
+      "slot": 2,
+      "phase": 6,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 12,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 1,
+     "edi": 2
+    },
+    {
+     "at": "0x151dd",
+     "t": 251.7,
+     "name": "調色盤迴圈結束",
+     "g": {
+      "target_x": 19,
+      "target_y": 13,
+      "slot": 2,
+      "phase": 6,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 12,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 4294967295,
+     "edi": 2
+    },
+    {
+     "at": "0x1528c",
+     "t": 260.7,
+     "name": "camera_step_to 返回",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "phase": 5,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 0,
+      "scroll_x": 12,
+      "scroll_y": 0,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 4294967281,
+     "edi": 2
+    },
+    {
+     "at": "0x152ba",
+     "t": 269.7,
+     "name": "相位幀",
+     "ebx": 1,
+     "phase": 2
+    },
+    {
+     "at": "0x152ba",
+     "t": 272.9,
+     "name": "相位幀",
+     "ebx": 2,
+     "phase": 2
+    },
+    {
+     "at": "0x152ba",
+     "t": 276.1,
+     "name": "相位幀",
+     "ebx": 3,
+     "phase": 4
+    },
+    {
+     "at": "0x152ba",
+     "t": 279.2,
+     "name": "相位幀",
+     "ebx": 4,
+     "phase": 4
+    },
+    {
+     "at": "0x152ba",
+     "t": 282.4,
+     "name": "相位幀",
+     "ebx": 5,
+     "phase": 5
+    },
+    {
+     "at": "0x152ba",
+     "t": 285.7,
+     "name": "相位幀",
+     "ebx": 6,
+     "phase": 7
+    },
+    {
+     "at": "0x152ba",
+     "t": 288.9,
+     "name": "相位幀",
+     "ebx": 7,
+     "phase": 7
+    },
+    {
+     "at": "0x152ba",
+     "t": 292.1,
+     "name": "相位幀",
+     "ebx": 8,
+     "phase": 8
+    },
+    {
+     "at": "0x152e5",
+     "t": 295.3,
+     "name": "item_effect_dispatch 之前",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "phase": 11,
+      "step_sel": 0,
+      "cursor_x": 19,
+      "cursor_y": 13,
+      "scroll_x": 12,
+      "scroll_y": 7,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 9,
+     "edi": 2,
+     "targets": "050a260004000000130000000e000000"
+    },
+    {
+     "at": "0x20c6f",
+     "t": 304.5,
+     "name": "item_effect_dispatch 入口",
+     "ret": "0x152f5",
+     "user": 11,
+     "slot": 2,
+     "count": 2,
+     "targets_ptr": "0x1f15a8",
+     "targets": "050a260004000000130000000e000000",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 823,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 867,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "hp": 42,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 0,
+       "camp": 1,
+       "hp": 36,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x152f5",
+     "t": 960.7,
+     "name": "item_effect_dispatch 返回",
+     "eax": 658383,
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "phase": 1,
+      "step_sel": 1,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 823,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 867,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x152fd",
+     "t": 970.7,
+     "name": "返回前",
+     "g": {
+      "target_x": 19,
+      "target_y": 0,
+      "slot": 2,
+      "phase": 1,
+      "step_sel": 1,
+      "cursor_x": 19,
+      "cursor_y": 6,
+      "scroll_x": 12,
+      "scroll_y": 5,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 9,
+     "edi": 2
+    }
+   ],
+   "palette_loop_EBX_at_0x151ce": {
+    "count": 65,
+    "first": 64,
+    "last": 0,
+    "strictly_descending_by_1": true
+   },
+   "palette_loop_window_screenshots": [
+    {
+     "stopped_at": "delta = 64",
+     "mean_rgb": [
+      82.3,
+      83.0,
+      57.5
+     ]
+    },
+    {
+     "stopped_at": "delta = 48",
+     "mean_rgb": [
+      243.8,
+      245.4,
+      235.8
+     ]
+    },
+    {
+     "stopped_at": "delta = 32",
+     "mean_rgb": [
+      208.9,
+      214.1,
+      188.4
+     ]
+    },
+    {
+     "stopped_at": "delta = 16",
+     "mean_rgb": [
+      152.0,
+      153.1,
+      127.2
+     ]
+    },
+    {
+     "stopped_at": "delta = 0",
+     "mean_rgb": [
+      86.8,
+      87.6,
+      62.0
+     ]
+    },
+    {
+     "stopped_at": "迴圈結束(0x151dd)",
+     "mean_rgb": [
+      86.8,
+      87.6,
+      62.0
+     ]
+    }
+   ],
+   "strip": {
+    "tag": "runA",
+    "band_rect": [
+     172,
+     4,
+     195,
+     195
+    ],
+    "control_rect": [
+     148,
+     4,
+     171,
+     195
+    ],
+    "rows": [
+     {
+      "frame": "ph1",
+      "forced_phase_EBX": 1,
+      "phase_read_at_stop": 2,
+      "band": 29.22,
+      "control": 18.27,
+      "map_area": 19.88
+     },
+     {
+      "frame": "ph2",
+      "forced_phase_EBX": 2,
+      "phase_read_at_stop": 2,
+      "band": 29.22,
+      "control": 18.27,
+      "map_area": 19.88
+     },
+     {
+      "frame": "ph3",
+      "forced_phase_EBX": 3,
+      "phase_read_at_stop": 4,
+      "band": 26.07,
+      "control": 18.27,
+      "map_area": 19.64
+     },
+     {
+      "frame": "ph4",
+      "forced_phase_EBX": 4,
+      "phase_read_at_stop": 4,
+      "band": 26.07,
+      "control": 18.27,
+      "map_area": 19.64
+     },
+     {
+      "frame": "ph5",
+      "forced_phase_EBX": 5,
+      "phase_read_at_stop": 5,
+      "band": 25.39,
+      "control": 18.27,
+      "map_area": 19.58
+     },
+     {
+      "frame": "ph6",
+      "forced_phase_EBX": 6,
+      "phase_read_at_stop": 7,
+      "band": 22.75,
+      "control": 18.27,
+      "map_area": 19.38
+     },
+     {
+      "frame": "ph7",
+      "forced_phase_EBX": 7,
+      "phase_read_at_stop": 7,
+      "band": 22.75,
+      "control": 18.27,
+      "map_area": 19.38
+     },
+     {
+      "frame": "ph8",
+      "forced_phase_EBX": 8,
+      "phase_read_at_stop": 8,
+      "band": 21.61,
+      "control": 18.27,
+      "map_area": 19.29
+     }
+    ],
+    "verdict": "PASS",
+    "control_wrong_position": "FAIL",
+    "control_reasons": [
+     "亮帶頭尾只差 0.00"
+    ],
+    "control_reversed_phases": "FAIL",
+    "control_reversed_reasons": [
+     "相位 2 的兩站亮度差 1.14",
+     "相位 4 比 2 亮",
+     "相位 4 的兩站亮度差 2.64",
+     "相位 5 比 4 亮",
+     "相位 7 比 5 亮",
+     "相位 7 的兩站亮度差 3.15",
+     "相位 8 比 7 亮",
+     "亮帶頭尾只差 -6.47"
+    ]
+   },
+   "dump_md5": {
+    "151a7": "e0e6298348b6c363afdadf9f43f9fe85",
+    "151b7": "e0e6298348b6c363afdadf9f43f9fe85",
+    "151dd": "e0e6298348b6c363afdadf9f43f9fe85",
+    "1528c": "fe49f8055f7ac145dd9aa3273d9f87bd",
+    "ph1": "9ab679cdfc2cd8772d3f14cfeb41d922",
+    "ph2": "9ab679cdfc2cd8772d3f14cfeb41d922",
+    "ph3": "5923df0f8e686bdfe178edcf7c78ef76",
+    "ph4": "5923df0f8e686bdfe178edcf7c78ef76",
+    "ph5": "86554212c5bb9c1624352aa4d5448d20",
+    "ph6": "c6b1b4be068e6c3fb888037e14dbdb13",
+    "ph7": "c6b1b4be068e6c3fb888037e14dbdb13",
+    "ph8": "ce021069a57363609c21d246c7bcf0fd",
+    "152e5": "6fab2254d9aa315248fe1c3cf2e2111c",
+    "152f5": "1d49af0b2d5583b64d3dc4e6305f29c8",
+    "152fd": "1d49af0b2d5583b64d3dc4e6305f29c8"
+   }
+  },
+  {
+   "tag": "runB",
+   "what": "下一回合,索爾 HP 設成 3(敵方回合開始時讀到 167)。瞄準點 (20,14),目標 #0 索爾、#3",
+   "stops": [
+    {
+     "at": "0x15055",
+     "t": 46.9,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 6,
+      "step_sel": 0,
+      "cursor_x": 11,
+      "cursor_y": 7,
+      "scroll_x": 8,
+      "scroll_y": 5,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 167,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 867,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x150f6",
+     "t": 55.8,
+     "name": "build_target_candidates 返回",
+     "args": [
+      20,
+      14,
+      "0x1f15a8",
+      19,
+      14,
+      15,
+      0
+     ],
+     "eax": 2,
+     "out": "0003260004000000130000000e000000",
+     "item_row": "0cc201500000000000000000001803001f000400000000",
+     "row_0d": 24,
+     "row_10": 31,
+     "row_12": 4
+    },
+    {
+     "at": "0x151a7",
+     "t": 62.0,
+     "name": "圓形換色返回",
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 12,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 8,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 1,
+     "edi": 2
+    },
+    {
+     "at": "0x151b7",
+     "t": 70.8,
+     "name": "delay(200) 之後",
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 12,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 8,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 1,
+     "edi": 2
+    },
+    {
+     "at": "0x151dd",
+     "t": 232.3,
+     "name": "調色盤迴圈結束",
+     "g": {
+      "target_x": 20,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 12,
+      "step_sel": 6,
+      "cursor_x": 19,
+      "cursor_y": 14,
+      "scroll_x": 8,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 4294967295,
+     "edi": 2
+    },
+    {
+     "at": "0x1528c",
+     "t": 241.3,
+     "name": "camera_step_to 返回",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 3,
+      "step_sel": 6,
+      "cursor_x": 26,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 0,
+     "edi": 2
+    },
+    {
+     "at": "0x152ba",
+     "t": 250.3,
+     "name": "相位幀",
+     "ebx": 1,
+     "phase": 1
+    },
+    {
+     "at": "0x152ba",
+     "t": 253.4,
+     "name": "相位幀",
+     "ebx": 2,
+     "phase": 3
+    },
+    {
+     "at": "0x152ba",
+     "t": 256.6,
+     "name": "相位幀",
+     "ebx": 3,
+     "phase": 3
+    },
+    {
+     "at": "0x152ba",
+     "t": 259.8,
+     "name": "相位幀",
+     "ebx": 4,
+     "phase": 5
+    },
+    {
+     "at": "0x152ba",
+     "t": 262.9,
+     "name": "相位幀",
+     "ebx": 5,
+     "phase": 5
+    },
+    {
+     "at": "0x152ba",
+     "t": 266.1,
+     "name": "相位幀",
+     "ebx": 6,
+     "phase": 7
+    },
+    {
+     "at": "0x152ba",
+     "t": 269.3,
+     "name": "相位幀",
+     "ebx": 7,
+     "phase": 7
+    },
+    {
+     "at": "0x152ba",
+     "t": 272.5,
+     "name": "相位幀",
+     "ebx": 8,
+     "phase": 9
+    },
+    {
+     "at": "0x152e5",
+     "t": 275.7,
+     "name": "item_effect_dispatch 之前",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 10,
+      "step_sel": 0,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 9,
+     "edi": 2,
+     "targets": "0003260004000000130000000e000000"
+    },
+    {
+     "at": "0x20c6f",
+     "t": 284.9,
+     "name": "item_effect_dispatch 入口",
+     "ret": "0x152f5",
+     "user": 11,
+     "slot": 2,
+     "count": 2,
+     "targets_ptr": "0x1f15a8",
+     "targets": "0003260004000000130000000e000000",
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 167,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 867,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x152f5",
+     "t": 291.3,
+     "name": "item_effect_dispatch 返回",
+     "eax": 2037016,
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 18,
+      "step_sel": 0,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 1,
+       "camp": 2,
+       "hp": 0,
+       "mhp": 823,
+       "inv": "401f40a380c980c980c980c980c980c9"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "hp": 493,
+       "mhp": 867,
+       "inv": "401f40a380ed80ed80ed80ed80ed80ed"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 42,
+       "inv": "4080800280ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "hp": 0,
+       "mhp": 36,
+       "inv": "408080fe80ff80ff80ff80ff80ff80ff"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "hp": 28,
+       "mhp": 28,
+       "inv": "40004080004f80ff80ff80ff80ff80ff"
+      }
+     ]
+    },
+    {
+     "at": "0x152fd",
+     "t": 301.3,
+     "name": "返回前",
+     "g": {
+      "target_x": 26,
+      "target_y": 14,
+      "slot": 2,
+      "phase": 18,
+      "step_sel": 0,
+      "cursor_x": 20,
+      "cursor_y": 14,
+      "scroll_x": 14,
+      "scroll_y": 8,
+      "map_w": 27,
+      "map_h": 21,
+      "result": 0
+     },
+     "ebx": 9,
+     "edi": 2
+    }
+   ],
+   "palette_loop_EBX_at_0x151ce": {
+    "count": 65,
+    "first": 64,
+    "last": 0,
+    "strictly_descending_by_1": true
+   },
+   "palette_loop_window_screenshots": [
+    {
+     "stopped_at": "delta = 64",
+     "mean_rgb": [
+      95.2,
+      95.5,
+      67.8
+     ]
+    },
+    {
+     "stopped_at": "delta = 48",
+     "mean_rgb": [
+      246.0,
+      246.6,
+      235.5
+     ]
+    },
+    {
+     "stopped_at": "delta = 32",
+     "mean_rgb": [
+      213.3,
+      218.2,
+      188.3
+     ]
+    },
+    {
+     "stopped_at": "delta = 16",
+     "mean_rgb": [
+      152.9,
+      154.2,
+      122.6
+     ]
+    },
+    {
+     "stopped_at": "delta = 0",
+     "mean_rgb": [
+      87.8,
+      88.7,
+      57.4
+     ]
+    },
+    {
+     "stopped_at": "迴圈結束(0x151dd)",
+     "mean_rgb": [
+      87.8,
+      88.7,
+      57.4
+     ]
+    }
+   ],
+   "strip": {
+    "tag": "runB",
+    "band_rect": [
+     124,
+     148,
+     315,
+     171
+    ],
+    "control_rect": [
+     124,
+     124,
+     315,
+     147
+    ],
+    "rows": [
+     {
+      "frame": "ph1",
+      "forced_phase_EBX": 1,
+      "phase_read_at_stop": 1,
+      "band": 27.24,
+      "control": 18.25,
+      "map_area": 20.69
+     },
+     {
+      "frame": "ph2",
+      "forced_phase_EBX": 2,
+      "phase_read_at_stop": 3,
+      "band": 24.75,
+      "control": 18.39,
+      "map_area": 20.51
+     },
+     {
+      "frame": "ph3",
+      "forced_phase_EBX": 3,
+      "phase_read_at_stop": 3,
+      "band": 24.75,
+      "control": 18.39,
+      "map_area": 20.51
+     },
+     {
+      "frame": "ph4",
+      "forced_phase_EBX": 4,
+      "phase_read_at_stop": 5,
+      "band": 22.9,
+      "control": 18.39,
+      "map_area": 20.37
+     },
+     {
+      "frame": "ph5",
+      "forced_phase_EBX": 5,
+      "phase_read_at_stop": 5,
+      "band": 22.92,
+      "control": 18.25,
+      "map_area": 20.36
+     },
+     {
+      "frame": "ph6",
+      "forced_phase_EBX": 6,
+      "phase_read_at_stop": 7,
+      "band": 20.78,
+      "control": 18.25,
+      "map_area": 20.2
+     },
+     {
+      "frame": "ph7",
+      "forced_phase_EBX": 7,
+      "phase_read_at_stop": 7,
+      "band": 20.78,
+      "control": 18.25,
+      "map_area": 20.2
+     },
+     {
+      "frame": "ph8",
+      "forced_phase_EBX": 8,
+      "phase_read_at_stop": 9,
+      "band": 18.62,
+      "control": 18.39,
+      "map_area": 20.04
+     }
+    ],
+    "verdict": "PASS",
+    "control_wrong_position": "FAIL",
+    "control_reasons": [
+     "亮帶頭尾只差 0.01"
+    ],
+    "control_reversed_phases": "FAIL",
+    "control_reversed_reasons": [
+     "相位 3 比 1 亮",
+     "相位 5 比 3 亮",
+     "相位 7 比 5 亮",
+     "相位 9 比 7 亮",
+     "亮帶頭尾只差 -8.62"
+    ]
+   },
+   "dump_md5": {
+    "151a7": "14d547726e50a3c44cb43acdcebb6223",
+    "151b7": "14d547726e50a3c44cb43acdcebb6223",
+    "151dd": "14d547726e50a3c44cb43acdcebb6223",
+    "1528c": "4647b8a85b1df82122c1b06168bfbdca",
+    "ph1": "4b6c2c661f3182f15d10ffc58c267d72",
+    "ph2": "8dbeea9055970a72190c72ffea1e299e",
+    "ph3": "8dbeea9055970a72190c72ffea1e299e",
+    "ph4": "6e68003ccdb1859fa9946defe8640049",
+    "ph5": "0b971b29af6c88cf06bdf6071d673066",
+    "ph6": "93120af4c03c0bc330fdbebe974ebca9",
+    "ph7": "93120af4c03c0bc330fdbebe974ebca9",
+    "ph8": "e064795b65b61ebd3fae4dc6c1fa818d",
+    "152e5": "35668d941b77ec1d132d7590b2d21d40",
+    "152f5": "d46e5a512971c9f1632ee76edc5a8c43",
+    "152fd": "d46e5a512971c9f1632ee76edc5a8c43"
+   }
+  }
+ ],
+ "files": {
+  "ai_item_action_item79_flow_runA_20261013.png": "b16be6c2075580cf609dbf7fece87c90",
+  "ai_item_action_item79_flow_runB_20261013.png": "16c3855d744e4e2e1a4ba67018a1c151",
+  "ai_item_action_item79_palette_window_20261013.png": "483298699c119d65561a1d76474d48b7",
+  "ai_item_action_item79_defeat_title_20261013.png": "dafa0004c4b72aec062f88441088ebdc"
+ },
+ "after_runB": {
+  "what": "runB 的 ai_item_action 返回之後,只留 0x22e5c 與 0x25ebb 兩個斷點",
+  "stops": [
+   {
+    "at": "0x22e5c",
+    "t": 1.3,
+    "ret": "0x25dea",
+    "g": {
+     "target_x": 26,
+     "target_y": 14,
+     "slot": 2,
+     "phase": 18,
+     "step_sel": 1,
+     "cursor_x": 20,
+     "cursor_y": 14,
+     "scroll_x": 14,
+     "scroll_y": 8,
+     "map_w": 27,
+     "map_h": 21,
+     "result": 1
+    },
+    "units": [
+     {
+      "i": 0,
+      "x": 20,
+      "y": 14,
+      "f5": 1,
+      "camp": 2,
+      "hp": 0,
+      "mhp": 823,
+      "inv": "401f40a380c980c980c980c980c980c9"
+     },
+     {
+      "i": 11,
+      "x": 19,
+      "y": 14,
+      "f5": 128,
+      "camp": 0,
+      "hp": 28,
+      "mhp": 28,
+      "inv": "40004080004f80ff80ff80ff80ff80ff"
+     }
+    ]
+   },
+   {
+    "at": "0x25ebb",
+    "t": 13.0,
+    "ret": "0x25dc2",
+    "g": {
+     "target_x": 26,
+     "target_y": 14,
+     "slot": 2,
+     "phase": 18,
+     "step_sel": 1,
+     "cursor_x": 20,
+     "cursor_y": 14,
+     "scroll_x": 14,
+     "scroll_y": 8,
+     "map_w": 27,
+     "map_h": 21,
+     "result": 0
+    },
+    "units": []
+   }
+  ]
+ },
+ "shared_epilogue_probe": {
+  "what": "第一次把收尾斷點下在 0x15309,玩家回合選取索爾時就停了(ai_item_action 入口的斷點沒有停過)",
+  "EIP_native": "0x15309",
+  "ESP": "0x1f157c",
+  "EBX": "0x720",
+  "EDI": "0x1c8",
+  "return_address_at_ESP_plus_0x34_native": "0x18d84",
+  "static": "0x164e3 jmp 0x15309(0x15f84 的結尾)、0x1cfa8 jge 0x15309(draw_command_list);0x18d7f call 0x15f84 在 draw_unit_panel 裡"
+ }
+}
