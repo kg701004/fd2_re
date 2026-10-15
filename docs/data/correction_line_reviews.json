@@ -101,6 +101,13 @@
    "excerpt": "`file_load_whole`(0x36cab)第 2 參數是「緩衝區或 NULL」,傳 NULL 時自行配置。宣稱改為依摘要開頭的參數列定位第幾個參數,",
    "verdict": "not_address_erratum",
    "note": "改為 指的是 verify_names_by_calllog.py 的宣稱定位規則改變,0x36cab 是正確入口(file_load_whole),不是位址訂正"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "43b6ff4d93e06af48fb83d682b5c79ea5659a15e",
+   "excerpt": "2. `an128.py` 第一版把 `0x1534f` 後面的 `jl` 當成 rel8(`7c`),實際是 rel32(`0f 8c`),檢查判為不符合;讀位元組後改正。",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是暫存檢查腳本對 jl 編碼長度(rel8 / rel32)的假設,0x1534f 這個位址本身沒有錯"
   }
  ]
 }

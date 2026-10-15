@@ -191,7 +191,9 @@ FINDINGS = [
     # 表本身從來沒有整張被登記過。
     ("212-event-table", "0x51b91 全域事件跳表格數(含共用尾段殘樁)", 90,
      lambda: pointer_table_len(0x51B91, probe=120, predicate=is_handler_entry)),
-    ("212-command-table", "0x51d01 指令/法術跳表格數(含共用尾段殘樁)", 88,
+    # 2026-10-15(續一百二十七/一百二十八):這 88 格是首尾相接的三張表(指令 28 + 戰前章節 30
+    # + 戰後章節 30),序頭判定只量得到連續入口的總長;分段由 verify_event_dispatch_table 的 (11) 涵蓋。
+    ("212-command-table", "0x51d01 起連續 handler 格數(指令 28 + 戰前章節 30 + 戰後章節 30 三張表;含共用尾段殘樁)", 88,
      lambda: pointer_table_len(0x51D01, probe=120, predicate=is_handler_entry)),
     ("248-class-151", "FDTXT_000[151] = 劍士", "劍士", lambda: _names()[151]),
     ("248-class-159", "class 9 + 0x96 -> 劍聖", "劍聖", lambda: _names()[159]),

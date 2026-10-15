@@ -209,6 +209,24 @@
    "base": "0x51b91",
    "count": 90,
    "all_entries": true,
+   "dispatch": [
+    {
+     "base": "0x51b91",
+     "first": 0,
+     "count": 90,
+     "aligned": true,
+     "sites": [
+      "0x1199c",
+      "0x1712d",
+      "0x19511",
+      "0x1a85a",
+      "0x1ac1a",
+      "0x1d890",
+      "0x1d95c",
+      "0x1d9ec"
+     ]
+    }
+   ],
    "slots": {
     "0": {
      "entry": "0x34531",
@@ -666,6 +684,38 @@
    "base": "0x51d01",
    "count": 88,
    "all_entries": true,
+   "dispatch": [
+    {
+     "base": "0x51d01",
+     "first": 0,
+     "count": 28,
+     "aligned": true,
+     "sites": [
+      "0x1541f",
+      "0x1d479"
+     ]
+    },
+    {
+     "base": "0x51d71",
+     "first": 28,
+     "count": 30,
+     "aligned": true,
+     "sites": [
+      "0x25e3a",
+      "0x25f10",
+      "0x260f5"
+     ]
+    },
+    {
+     "base": "0x51de9",
+     "first": 58,
+     "count": 30,
+     "aligned": true,
+     "sites": [
+      "0x25e23"
+     ]
+    }
+   ],
    "slots": {
     "0": {
      "entry": "0x21206",

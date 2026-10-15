@@ -3269,3 +3269,21 @@ handler 的開頭**(例如 event 61 的前 0x22 bytes),搬過去之後仍是不�
 - 沒有改的(範圍外,只記錄):`verify_findings.py` 的 `212-command-table` 仍是 88、`docs/data/event_dispatch_table_58_89.json` 的 `command` 區塊仍是
   `count: 88`。兩者量的是「每格都是函式入口」,數字本身沒有錯,只是名稱暗示一張表。
 - 證據:`evidence/lut_ch22_post_cycles2500_chapter_tables_20261015.json` 的 `static_tables`。
+
+### 20.7 兩處指令 dispatch 的索引上限;表內分段改由 dispatch 指令導出(2026-10-15 續一百二十八)
+
+§20.6 留下的「`0x1541f` / `0x1d479` 兩處 `eax` 的上限」(STATIC ANALYSIS,FD2.EXE 位元組與 fixup 表;沒有執行遊戲):
+
+| dispatch 點 | 索引來源 | 進表條件 | 最大 |
+|---|---|---|---|
+| `0x1d479`(player_spell_select) | 已選的法術編號 | `0x1d414`..`0x1d421`:9 ≤ x ≤ 0x1b 且 x ≠ 0x18,其餘走 `spell_cast_scene` | 27 |
+| `0x1541f`(ai_spell_execute) | `[0x53c2f]`,唯一寫入端 `0x15b12` | `0x1534f` 要 `[0x53c23]` ≥ 6;`ai_spell_target_score` 只對 0..0x16、0x1a、0x1b 可能回非 0;x < 10 且 `[0x53af9]` 為 0 時走場景 | 27 |
+
+- 兩處都 < 28,不會讀到 `0x51d71` 的戰前章節表;指令表 28 格中只有第 24 格(0x18)兩處都送不到,它和第 16 格同為 `0x22153`。
+- 已學法術有 40 個 bit(`unit_list_bits_1a`),只看 bit 數會以為上限是 39;拿它當對照,檢查判為不符合。
+- `tools/verify_event_dispatch_table.py` 改為由程式碼裡的 `call/jmp [reg*4 + disp32]`(fixup 表 + 位元組樣式)導出每張表的分段,
+  輸出多一個 `dispatch` 欄:`0x51b91` 一段 90 格、8 個 dispatch 點;`0x51d01` 起 88 格切成 28 / 30 / 30,dispatch 點 2 / 3 / 1。
+  與 capstone 線性反組譯整個 obj1 的結果相同(selftest (11));鍵名 `command` 與 `count: 88` 保留。
+- `verify_findings.py` 的 `212-command-table` 只改說明字串(代號與 88 不變)。§20.6 末「沒有改的」兩項到此處理完。
+- 沒有做的:AI 在 `[0x53af9]` 不為 0 時才會用到第 0..9 格,這條路徑沒有實機驗。
+- 證據:`evidence/dispatch_index_bounds_table_split_20261015.json`。

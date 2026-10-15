@@ -9737,3 +9737,41 @@ param_flow 只補實機型別沒比到的參數,所以實機比到的變多時�
 - 沒有斷點時相位迴圈實際畫出哪幾階沒有量(要連續擷取畫面,等使用者決定)。
 - `212-command-table` / `event_dispatch_table_58_89.json` 的命名(範圍外);`0x1541f` / `0x1d479` 兩處 dispatch 的索引上限沒有追。
 - 防拷比對只驗了一題一組輸入、兩處無條件跳躍的來源、型別相同的兩個參數對調、呼叫紀錄的 8 格上限:同續一百二十六。
+
+## 2026-10-15 續一百二十八:`0x1541f` / `0x1d479` 兩處 dispatch 的索引上限;`verify_event_dispatch_table.py` 由 dispatch 指令切出表內分段
+
+起因:續一百二十七「仍留的」依建議逐項處理。細節在 doc25 §20.7。
+
+**做法**(STATIC ANALYSIS;原版 FD2.EXE,md5 33464c81e6a364fd0660141139aa8e6e;沒有執行遊戲)。
+- 索引上限:暫存的 `an128.py` 讀 FD2.EXE 的位元組與 fixup 表,取各判斷的立即值,推出兩處能送進表的索引集合。
+- 工具:`verify_event_dispatch_table.py` 加 `is_indexed_dispatch` / `dispatch_sites` / `split_by_dispatch`,每張表的輸出多一個 `dispatch` 欄
+  (鍵名、格數、其他欄位不變);selftest 加 (11)(12)。`verify_findings.py` 只改 `212-command-table` 的說明字串。
+  `docs/data/event_dispatch_table_58_89.json` 以工具重產,diff 只有新增的 `dispatch` 欄。
+
+**結果**。
+- 玩家 `0x1d479`:9 ≤ x ≤ 0x1b 且 x ≠ 0x18 才進表;AI `0x1541f`:索引只由 `0x15b12` 寫入,`0x1534f` 要分數 ≥ 6,評分只對 0..0x16、0x1a、0x1b 可能非 0。
+  兩處最大都是 27,指令表 28 格;第 24 格兩處都送不到(與第 16 格同位址)。
+- 分段:事件表一段 90 格、8 個 dispatch 點;`0x51d01` 起 88 格是 28 / 30 / 30,dispatch 點 2 / 3 / 1;與 capstone 線性反組譯整個 obj1 的結果相同。
+
+**過程中的失誤**:
+1. 用 heredoc 改 `an128.py`,位元組字面值被弄壞;斷言擋下、沒有寫入,改用 Edit(修補要走 Write / Edit,記憶裡有記)。
+2. `an128.py` 第一版把 `0x1534f` 後面的 `jl` 當成 rel8(`7c`),實際是 rel32(`0f 8c`),檢查判為不符合;讀位元組後改正。
+3. `mut_an128.py` 把「`je` 改 `jmp`」預期成全部仍符合;那個突變讓玩家端一格都進不了表,「到不了的只有 24」本來就該不符合。
+   改成「上限兩項必須符合、那一項必須不符合」。
+
+**檢查**:
+- `an128.py` 9 項符合,對照(只用已學法術 40 個 bit 當上限)判為不符合;`mut_an128.py` 改映像 7 處,7 個都符合預期,沒有 Traceback。
+- `mut128.py` 改工具新程式碼 13 處,13 個都被 (11) 或 (12) 判為 FAIL,沒有例外。第一輪漏掉 `off` 的下界,(12) 補「off 2 回繞」控制;
+  另補 `mov edx,[eax*4+d]`(modrm 也是 0x14)與「表頭沒有 dispatch 點」兩個控制。
+- 工具 selftest 12 題、`verify_generated_artifacts.py` 24 項相同、`verify_findings.py` 14 項相符、等價突變登錄表 108 筆沒有過期。
+- AGENTS.md 要求的 `verify_selftest_discrimination.py --precommit` 沒有跑(使用者指示不用);改跑 `--tool verify_event_dispatch_table.py --exhaustive`:
+  可達突變 63 / 67 被 selftest 抓到,其餘 2 個是已登錄的等價突變、2 個由 artifacts 軸抓到(重生產物漂移);未登錄的逃逸 0。
+- selftest 耗時沒有變:HEAD 26.0 / 28.0 秒、新版 28.1 / 28.3 秒(各自獨立程序、交錯兩輪;主要花在 (7) 的 `verify_findings`)。
+
+**數字**:`function_names.json` 仍是 1149 筆,摘要改 1 筆(`command_handler_16`)。evidence 加 1 個 JSON(`dispatch_index_bounds_table_split_20261015.json`)。
+
+**仍留的**:
+- 沒有斷點時相位迴圈實際畫出哪幾階沒有量(要連續擷取畫面,等使用者決定)。
+- cycles 2500 / 5000 以外的設定、裂地術在 cycles 2500 下的計時沒有做。
+- AI 在 `[0x53af9]` 不為 0 時才會用到指令表第 0..9 格,沒有實機驗。
+- 防拷比對的範圍:同續一百二十六。

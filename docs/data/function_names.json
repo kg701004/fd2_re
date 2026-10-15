@@ -4536,9 +4536,9 @@
   {
    "addr": "0x22153",
    "name": "command_handler_16",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 16 項、指令/行動 dispatch 表 0x51d01 第 24 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 16 項、指令/行動 dispatch 表 0x51d01 第 24 項的 handler(身分由跳表 fixup 決定)。 續一百二十八(STATIC ANALYSIS):第 24 格(0x18)兩個 dispatch 點都送不到 —— player_spell_select 對 0x18 走 spell_cast_scene,ai_spell_target_score 對 0x18 回 0、ai_spell_execute 要分數 ≥ 6(doc25 §20.7)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d41",

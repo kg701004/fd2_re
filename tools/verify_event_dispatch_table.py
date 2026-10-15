@@ -43,7 +43,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from le_xref import parse_le                                     # noqa: E402
-from disasm_le import object_bytes, load_code                    # noqa: E402
+from disasm_le import object_bytes, load_code, build_fixups      # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EXE = ROOT / "org_game" / "炎龍騎士團" / "FLAME2" / "FD2.EXE"
@@ -55,15 +55,26 @@ FIRST_INDEX, LAST_INDEX = 58, 89
 #   A `0x51b91` 90 格(0..89)   —— 全域事件,dispatch 見 `0x1d890` 等 8 處
 #   兩個 dword 變數 `0x51cf9`/`0x51cfd` —— **不是表格**,是游標 x/y 備份
 #                                    (寫入端 `0x1be07`/`0x1be11`,各 5 個程式端參照)
-#   B `0x51d01` 88 格(0..87)   —— 指令/行動,只有 2 個 dispatch 點:
-#                                  `0x1541f`(AI 路徑)與 `0x1d479`(玩家 command ring),
-#                                  兩者都是 `call [eax*4+0x51d01]` 且都接 `call 0x1d4f6`
+#   B `0x51d01` 88 格(0..87)   —— 連續 88 格都是入口,但**不是一張表**(2026-10-15 續一百二十七更正):
+#       0..27  `0x51d01` 指令/法術表,2 個 dispatch 點 `0x1541f`(AI)與 `0x1d479`(玩家),
+#              兩者都是 `call [eax*4+0x51d01]` 且都接 `call 0x1d4f6`;
+#       28..57 `0x51d71` 戰前章節表(`0x25e3a`/`0x25f10`/`0x260f5`);
+#       58..87 `0x51de9` 戰後章節表(`0x25e23`)。
+#   三張表首尾相接,序頭判定分不出界線;界線由程式碼裡的 dispatch 指令決定,見 `dispatch_sites`。
+#   鍵名 "command" 與 88 格保留(資料格式不變),分段另記在每張表的 "dispatch" 欄。
 TABLES = {
     "event":   (0x51B91, 90),
     "command": (0x51D01, 88),
 }
 # 兩張表之間那兩格:必須**通不過**序頭判定,否則「兩張表」的分界就是我畫出來的而非資料決定的。
 BETWEEN_TABLES = (0x51CF9, 0x51CFD)
+# 2026-10-15 續一百二十八:dispatch 點的真值,由另一條路徑(capstone 線性反組譯整個 obj1,
+# 搜 `call dword ptr [eax*4 + 表內位址]`)取得;`dispatch_sites` 走 fixup 表 + 位元組樣式,
+# 不反組譯,兩條路徑必須給出同一組 {基底: 指令位址}。
+DISPATCH_TRUTH = {
+    "event":   {0x51B91: [0x1199C, 0x1712D, 0x19511, 0x1A85A, 0x1AC1A, 0x1D890, 0x1D95C, 0x1D9EC]},
+    "command": {0x51D01: [0x1541F, 0x1D479], 0x51D71: [0x25E3A, 0x25F10, 0x260F5], 0x51DE9: [0x25E23]},
+}
 CODE_BASE = 0x10000         # 跳表存的是相對 obj1 的位移
 STACK_PROBE = 0x3702F       # Watcom __STK;每個 handler 序頭都先呼叫它
 DOC25_SHIFT = 0x356         # doc25 §10 位址欄的系統性偏差(未重定位值)
@@ -168,6 +179,45 @@ def build(exe: str | Path) -> dict:
     }
 
 
+def is_indexed_dispatch(code: bytes, off: int) -> bool:
+    """`off` 是 disp32 的位置;前 3 個 byte 必須是 `FF /2` 或 `FF /4` 配 SIB(scale 4、無基底暫存器)。
+
+    也就是 `call dword ptr [reg*4 + disp32]` 或 `jmp dword ptr [reg*4 + disp32]`。
+    `mov reg, [reg*4 + disp32]` 之類讀表的指令不算 dispatch。
+    """
+    if off < 3 or off > len(code):
+        return False
+    op, modrm, sib = code[off - 3], code[off - 2], code[off - 1]
+    return op == 0xFF and modrm in (0x14, 0x24) and (sib & 0xC7) == 0x85
+
+
+def dispatch_sites(data: bytes, meta: dict, base: int, count: int) -> dict[int, list[int]]:
+    """{程式碼裡被當成跳表基底的位址: [dispatch 指令位址, ...]},只取落在 [base, base + 4*count) 的。
+
+    走 obj1 的 fixup 表(每個指向資料段的 disp32 都有一筆),再以 `is_indexed_dispatch`
+    確認是索引式間接呼叫/跳躍;不做線性反組譯。
+    """
+    code, code_base = load_code(data, meta)
+    out: dict[int, list[int]] = {}
+    for src, tgt in sorted(build_fixups(data, meta, objects={1}).items()):
+        if base <= tgt < base + 4 * count and is_indexed_dispatch(code, src - code_base):
+            out.setdefault(tgt, []).append(src - 3)
+    return out
+
+
+def split_by_dispatch(base: int, count: int, sites: dict[int, list[int]]) -> list[dict]:
+    """依 dispatch 基底把連續的格子切段;表頭沒有 dispatch 點時第一段的 sites 為空。"""
+    starts = sorted(set(sites) | {base})
+    end = base + 4 * count
+    segs = []
+    for i, s in enumerate(starts):
+        nxt = starts[i + 1] if i + 1 < len(starts) else end
+        segs.append({"base": hex(s), "first": (s - base) // 4, "count": (nxt - s) // 4,
+                     "aligned": (s - base) % 4 == 0,
+                     "sites": [hex(a) for a in sites.get(s, [])]})
+    return segs
+
+
 def all_tables(exe: str | Path) -> dict:
     """兩張表的全表判定,外加中間那兩個 dword 的分界控制。"""
     data = Path(exe).read_bytes()
@@ -182,6 +232,7 @@ def all_tables(exe: str | Path) -> dict:
         out[name] = {
             "base": hex(base), "count": count,
             "all_entries": all(r["verdict"] != "MID_BODY" for r in rows.values()),
+            "dispatch": split_by_dispatch(base, count, dispatch_sites(data, meta, base, count)),
             "slots": rows,
         }
     out["between_tables"] = {
@@ -365,6 +416,52 @@ def selftest() -> int:
     if not ok10:
         fails.append(f"序頭尾端邊界或尾段的有號位移不對:{v10a}/{v10b}/r2={r2_10}")
 
+    print("\n(11) 表內分段:fixup + 位元組樣式導出的 dispatch 基底必須等於另一條路徑的真值")
+    # 2026-10-15 續一百二十八:`0x51d01` 那 88 格曾被當成一張指令表(doc25 §20.4),
+    # 實際是首尾相接的三張表;序頭判定(5)看不出界線,所以界線改由 dispatch 指令決定。
+    tb = all_tables(exe)
+    got = {k: {int(s["base"], 16): [int(a, 16) for a in s["sites"]] for s in tb[k]["dispatch"]}
+           for k in TABLES}
+    ok11a = got == DISPATCH_TRUTH
+    ok11b = all(sum(s["count"] for s in tb[k]["dispatch"]) == tb[k]["count"]
+                and all(s["aligned"] for s in tb[k]["dispatch"]) for k in TABLES)
+    cmd = [(s["base"], s["first"], s["count"]) for s in tb["command"]["dispatch"]]
+    ok11c = cmd == [("0x51d01", 0, 28), ("0x51d71", 28, 30), ("0x51de9", 58, 30)]
+    print(f"    {'PASS' if ok11a and ok11b and ok11c else 'FAIL'}: "
+          + " / ".join(f"{k} {[(s['base'], s['count'], len(s['sites'])) for s in tb[k]['dispatch']]}"
+                       for k in TABLES))
+    if not ok11a:
+        fails.append(f"dispatch 基底與真值不同:{ {k: {hex(b): [hex(a) for a in v] for b, v in d.items()} for k, d in got.items()} }")
+    if not ok11b:
+        fails.append("分段的格數加總不等於整表格數,或有基底不在 4 的倍數上")
+    if not ok11c:
+        fails.append(f"0x51d01 那 88 格的分段不是 28 / 30 / 30:{cmd}")
+
+    print("\n(12) 合成案例:只有索引式 call/jmp 算 dispatch;切段在缺少中間基底時必須合併")
+    # 控制組:讀表的 mov、scale 2、沒有 SIB 的 call [disp32] 都不能算;
+    # 拿掉 0x51d71 那組 dispatch 點時,前兩段必須併成 58 格 —— 否則切段不是由 sites 決定的。
+    def pat(b: bytes) -> bool:
+        return is_indexed_dispatch(b + b"\0\0\0\0", len(b))
+    v12 = {"call [eax*4+d]": pat(b"\xff\x14\x85"), "jmp [ecx*4+d]": pat(b"\xff\x24\x8d"),
+           "mov eax,[eax*4+d]": pat(b"\x8b\x04\x85"), "call [eax*2+d]": pat(b"\xff\x14\x45"),
+           "call [d]": pat(b"\x90\xff\x15"), "call [ebx+eax*4+d]": pat(b"\xff\x14\x83"),
+           "mov edx,[eax*4+d]": pat(b"\x8b\x14\x85"),
+           # off = 2:code[off-3] 是 code[-1];尾端放 0xFF,下界沒擋住就會湊成 FF 14 85
+           "off 2 回繞": is_indexed_dispatch(b"\x14\x85\0\0\0\0\xff", 2)}
+    want12 = {"call [eax*4+d]": True, "jmp [ecx*4+d]": True, "mov eax,[eax*4+d]": False,
+              "call [eax*2+d]": False, "call [d]": False, "call [ebx+eax*4+d]": False,
+              "mov edx,[eax*4+d]": False, "off 2 回繞": False}
+    merged = split_by_dispatch(0x51D01, 88, {0x51D01: [1], 0x51DE9: [2]})
+    # 表頭沒有 dispatch 點時,表頭仍是第一段的起點(sites 為空),不能被丟掉
+    headless = split_by_dispatch(0x51D01, 88, {0x51D71: [1]})
+    seg = [(s["first"], s["count"]) for s in merged]
+    seg_h = [(s["first"], s["count"], len(s["sites"])) for s in headless]
+    ok12 = v12 == want12 and seg == [(0, 58), (58, 30)] and seg_h == [(0, 28, 0), (28, 60, 1)]
+    print(f"    {'PASS' if ok12 else 'FAIL'}: 樣式 {v12};缺中間基底 -> {seg}(應 [(0, 58), (58, 30)]);"
+          f"表頭沒有 dispatch 點 -> {seg_h}(應 [(0, 28, 0), (28, 60, 1)])")
+    if not ok12:
+        fails.append(f"dispatch 樣式或切段的合成案例不對:{v12} / {seg} / {seg_h}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -372,7 +469,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(獨立路徑真值重現 + 32 格全為入口 + 嚴格遞增 + "
           "doc25 偏移的負向控制 + 兩張表全格判定 + 分界控制 + 與 verify_findings 的逐格一致 + "
-          "往回呼叫的合成案例 + TAIL_MERGED_STUB 越界邊界)。")
+          "往回呼叫的合成案例 + TAIL_MERGED_STUB 越界邊界 + dispatch 分段與真值 + 分段的合成案例)。")
     return 0
 
 
