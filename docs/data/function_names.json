@@ -1816,9 +1816,9 @@
   {
    "addr": "0x11eee",
    "name": "draw_terrain_layer",
-   "summary": "(dst, stride, 欄數, 列數, 捲動 x, 捲動 y) 地圖地形層:依捲動位置把可見範圍的每一格以 blit_tile24_rle 畫進地圖緩衝(stride 456,每格 24 px),必要時經 reveal_wipe 與 copy_rect。redraw 的第二步(參數依 redraw 呼叫端:緩衝 + 0x8088、456、13、8、捲動 x、捲動 y)。",
+   "summary": "(dst, stride, 欄數, 列數, 捲動 x, 捲動 y) 地圖地形層:依捲動位置把可見範圍的每一格以 blit_tile24_rle 畫進地圖緩衝(stride 456,每格 24 px),必要時經 reveal_wipe 與 copy_rect。redraw 的第二步(參數依 redraw 呼叫端:緩衝 + 0x8088、456、13、8、捲動 x、捲動 y)。 續一百二十五(直接讀反組譯):畫完底圖後(0x12106 起),[0x51a93] 為 -1 時,距上次推進超過 2 個 BIOS tick(或 tick 回繞)就把 [0x53c1f] 加 1、到 20 歸 0,並把 tick 記到 [0x539f4];再以 0x51a97 的三角表(0 .. 10 .. 1)取 [0x53a6d] 的換色表,地圖格 byte3 不是 0xff 的格用 blit_tile24_rle_remap 畫。[0x51a93] 在 obj1 沒有直接寫入(位元組掃描)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x11fcf",
@@ -1831,6 +1831,10 @@
     {
      "at": "0x1220c",
      "insn": "call 0x4e22a"
+    },
+    {
+     "at": "0x12132",
+     "insn": "inc dword ptr [0x3c1f]"
     }
    ]
   },
@@ -9165,7 +9169,7 @@
    "name": "spell_damage_apply",
    "confidence": "verified_dynamic",
    "date": "2026-10-14",
-   "summary": "(target, 基礎傷害):HP(+0x40)-= 基礎傷害 × 9 / 10 + (rand%100) × 基礎傷害 / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— 基礎傷害 440 亂數 75 -> 429(999->570)、基礎傷害 220 亂數 65 -> 212(999->787)、基礎傷害 176 亂數 58 -> 168(999->831)、基礎傷害 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。 續一百一十七:第 2 個由 base 改名 基礎傷害。 續一百二十四(DOSBox-X):基礎傷害 500、亂數 33 -> 466(42 -> 0),亂數 28 -> 464(36 -> 0);回傳值就是扣的量(0x14230 mov eax, ebp)。",
+   "summary": "(target, 基礎傷害):HP(+0x40)-= 基礎傷害 × 9 / 10 + (rand%100) × 基礎傷害 / 1000,下限 0;守方 +7 >= 0x44 時以 high_class_row10_ptr(+7 - 0x44) 的 +9 × 守方等級(未死時再 × 傷害 / MaxHP)累加到經驗值 [0x53ec8]。2026-09-28 DOSBox-X 動態驗證(doc98 續四十四):斷點在 0x1c87f 讀傷害亂數後預測,4 次命中全部逐點相同 —— 基礎傷害 440 亂數 75 -> 429(999->570)、基礎傷害 220 亂數 65 -> 212(999->787)、基礎傷害 176 亂數 58 -> 168(999->831)、基礎傷害 440 亂數 32 -> 410(999->589,兩次)。 AI 施法同樣走這條累加(doc98 續五十三):擊殺 +7 = 0x85、等級 3 的 NPC 後 [0x53ec8] = 3,再由 ai_spell_execute 歸 0。 續一百一十七:第 2 個由 base 改名 基礎傷害。 續一百二十四(DOSBox-X):基礎傷害 500、亂數 33 -> 466(42 -> 0),亂數 28 -> 464(36 -> 0);回傳值就是扣的量(0x14230 mov eax, ebp)。 續一百二十五(DOSBox-X,0x1c8e2 的 EAX):陣亡的 #5(+7 = 0x86)、#10(0x85)等級 3 各累加 3(高階職業表 +9 = 1,不縮放),合計 6 就是迴圈結束時的 [0x53ec8];存活的 #3(+7 改 0x85、等級 40)傷害 361、MaxHP 867、新 HP 506 -> 16(不縮放會是 40、除以新 HP 會是 28)。+7 < 0x44 的目標沒有停點。",
    "evidence": [
     {
      "at": "0x1c845",
@@ -9770,8 +9774,8 @@
    "addr": "0x1567e",
    "name": "ai_item_candidate_select",
    "confidence": "verified_dynamic",
-   "date": "2026-10-13",
-   "summary": "(unit, camp):AI 道具候選。[0x53c33] = 0;以 0x1b8a6(旗標 bit7 清除的 slot 數)掃 slot 0..count-1,道具 = +0xb + 2*slot,列 = item_effect_row_ptr;列 +0xd 為 0 跳過。施放點 = 距施法者 <= 列 +0x10 的格(> 0xf 時改 1),依 y 再 x;每格以 collect_targets_in_range(範圍 = 列 +0x12,選擇子:camp 為 0 時取「列 +0x11 為 0 ? 1 : 0」)取目標(列 +0x10 > 0xf 時改呼叫 0x149f8),有目標才呼叫 ai_item_target_score;嚴格大於才換,寫入 [0x53c33] 分數、[0x53c37]/[0x53c3b] 施放點、[0x53c3f] slot。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):4 個持道具的敵人,候選清單(施放點、目標、順序)與勝出的 (分數, 施放點, slot) 全部與重算相同。 續一百一十七:第 2 個由 mode 改名 camp(呼叫端 ai_choose_action 推行動單位的陣營)。",
+   "date": "2026-10-14",
+   "summary": "(unit, camp):AI 道具候選。[0x53c33] = 0;以 0x1b8a6(旗標 bit7 清除的 slot 數)掃 slot 0..count-1,道具 = +0xb + 2*slot,列 = item_effect_row_ptr;列 +0xd 為 0 跳過。施放點 = 距施法者 <= 列 +0x10 的格(> 0xf 時改 1),依 y 再 x;每格以 collect_targets_in_range(範圍 = 列 +0x12,選擇子:camp 為 0 時取「列 +0x11 為 0 ? 1 : 0」)取目標(列 +0x10 > 0xf 時改呼叫 0x149f8),有目標才呼叫 ai_item_target_score;嚴格大於才換,寫入 [0x53c33] 分數、[0x53c37]/[0x53c3b] 施放點、[0x53c3f] slot。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):4 個持道具的敵人,候選清單(施放點、目標、順序)與勝出的 (分數, 施放點, slot) 全部與重算相同。 續一百一十七:第 2 個由 mode 改名 camp(呼叫端 ai_choose_action 推行動單位的陣營)。 續一百二十五(DOSBox-X):道具 79(列 +0x10 = 0x1f)走 > 0xf 的分支 —— 施放點是距離 1 的上、左、右、下 4 格(collect_targets_in_range 的內圈門檻 1 把中心排除),每格交 build_target_candidates(施放點, out, 使用者, 15, 0),沒有目標的格不評分。兩輪 4 次呼叫的施放點、目標、分數與勝出者都與重算相同;同分 16 時留在先掃到的 (19,13)(改成「>=」會選 (20,14))。",
    "evidence": [
     {
      "at": "0x1568f",
@@ -9815,8 +9819,8 @@
    "addr": "0x15880",
    "name": "ai_item_target_score",
    "confidence": "verified_dynamic",
-   "date": "2026-09-30",
-   "summary": "(item, count, targets):AI 道具評分。列 +0xd 為 5 或 0xd(恢復):逐目標 HP <= MaxHP/3 得 8、否則 HP <= MaxHP/2 得 3、否則 0(與法術評分的「<」不同),目標 +0x34 bit7 時 × 3;為 0x14/0x15:數值 = row7_ptr_619fd(列 +0xe) 的 +0 word,為 0x18:數值 = 列 +0xe;逐目標數值 >= HP 得 0x12、否則 8;其他 type 回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):40 次回傳值全部等於重算 —— 恢復道具 58 對 MaxHP 28 的 HP 9/10(bit7)/14/15 得 8/9/3/0,道具 38(數值 = 法術 1 的 120)對 HP 120 得 0x12、HP 121 得 8。0x18 型未測。",
+   "date": "2026-10-14",
+   "summary": "(item, count, targets):AI 道具評分。列 +0xd 為 5 或 0xd(恢復):逐目標 HP <= MaxHP/3 得 8、否則 HP <= MaxHP/2 得 3、否則 0(與法術評分的「<」不同),目標 +0x34 bit7 時 × 3;為 0x14/0x15:數值 = row7_ptr_619fd(列 +0xe) 的 +0 word,為 0x18:數值 = 列 +0xe;逐目標數值 >= HP 得 0x12、否則 8;其他 type 回 0。2026-09-30 DOSBox-X 動態驗證(doc98 續五十八):40 次回傳值全部等於重算 —— 恢復道具 58 對 MaxHP 28 的 HP 9/10(bit7)/14/15 得 8/9/3/0,道具 38(數值 = 法術 1 的 120)對 HP 120 得 0x12、HP 121 得 8。0x18 型未測。 續一百二十五(DOSBox-X):0x18 型實測 —— 0x15944 對 0x18 跳過重讀,數值就是道具列 +0xe(道具 79 為 3),不是法術 3 的威力 500;HP 36 .. 867 的目標各得 8,兩個目標 16(用 500 會是 36)。",
    "evidence": [
     {
      "at": "0x15897",
@@ -9857,6 +9861,10 @@
     {
      "at": "0x1594d",
      "insn": "mov eax, 0x12"
+    },
+    {
+     "at": "0x15944",
+     "insn": "je 0x15949"
     }
    ]
   },
@@ -24978,9 +24986,9 @@
   {
    "addr": "0x149f8",
    "name": "build_target_candidates",
-   "summary": "(施放點 x, 施放點 y, out, 起點 x, 起點 y, 步數, 陣營選擇子) 目標候選建構:從起點朝目標格逐步前進 N 步建立候選格,以 unit_at_cursor 檢查格上單位,寫進輸出陣列(FD2.EXE 反組譯)。player_spell_select、ai_item_candidate_select 與 ai_item_action 呼叫(doc13 的 target-candidate builder;doc11 稱評分端的路徑建構器)。 續一百二十三(DOSBox-X,doc35 §18):ai_item_action 的呼叫(0x150f1)返回時讀到引數 (19, 13, out, 19, 14, 15, 0)、回 2、out = [5, 10];另一輪 (20, 14, out, 19, 14, 15, 0)、回 2、out = [0, 3]。兩輪的目標都在起點 (19,14) 朝施放點方向的直線上(#5 在 (19,13)、#10 在 (19,6);#0 在 (20,14)、#3 在 (23,14))。",
+   "summary": "(施放點 x, 施放點 y, out, 起點 x, 起點 y, 步數, 陣營選擇子) 目標候選建構:從起點朝目標格逐步前進 N 步建立候選格,以 unit_at_cursor 檢查格上單位,寫進輸出陣列(FD2.EXE 反組譯)。player_spell_select、ai_item_candidate_select 與 ai_item_action 呼叫(doc13 的 target-candidate builder;doc11 稱評分端的路徑建構器)。 續一百二十三(DOSBox-X,doc35 §18):ai_item_action 的呼叫(0x150f1)返回時讀到引數 (19, 13, out, 19, 14, 15, 0)、回 2、out = [5, 10];另一輪 (20, 14, out, 19, 14, 15, 0)、回 2、out = [0, 3]。兩輪的目標都在起點 (19,14) 朝施放點方向的直線上(#5 在 (19,13)、#10 在 (19,6);#0 在 (20,14)、#3 在 (23,14))。 續一百二十五(直接讀反組譯 + DOSBox-X):方向 —— 起點與施放點同一欄時,起點 y 大於施放點 y 往上、否則往下;不同欄時起點 x 大於施放點 x 往左、否則往右(斜的一律走橫向);出界的步略過;unit_at_cursor 跳過陣亡;選擇子 0 收 +6 != 0、非 0 收 +6 == 0。ai_item_candidate_select 的 4 次呼叫裡,直線上的敵人 #15 與陣亡的 #5、#10 都沒有收。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x14ac2",
@@ -25013,15 +25021,19 @@
     {
      "at": "0x14a08",
      "insn": "mov edi, dword ptr [esp + 0x38]"
+    },
+    {
+     "at": "0x14a46",
+     "insn": "jle 0x14a52"
     }
    ]
   },
   {
    "addr": "0x15055",
    "name": "ai_item_action",
-   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。 續一百二十二訂正:上一句漏了條件。0x1514d 以道具列 +0x10 分兩路 —— < 0x10 走 0x1514f(0x12cea)後 jmp 0x152e5,不經過圓形換色;>= 0x10 才走 0x15168 起的 0x1f04a、redraw(1)、0x17aa9、0x2dfc8 與 0x151a2 的 lut_circle_ramp_at_unit。全道具表(0x602ad,209 列)只有 79 號光束炮的 +0x10(0x1f)符合。 DOSBox-X(doc35 §18):敵 #11 用道具 38 閃電鎚(+0x10 = 2)時本函式有進(返回位址 0x1503e、單位 11、camp 0),整個敵方回合 0x2189a 的斷點沒有停;換成道具 79 後 0x2189a 入口讀到返回位址 0x151a7、引數 (11, 80, -4),十幀的半徑 80、76、…、44。 續一百二十三(DOSBox-X,doc35 §18):道具 79 跑兩輪,逐站停到的順序與反組譯相同 —— build_target_candidates(瞄準點, out, 使用者座標, 15, 0) 回 2;圓形換色;delay(200);0x151be 的 palette_delta_ramp(0, 255, ebx) 停 65 次(ebx = 64 .. 0),畫面是一次白閃後淡回;延伸點 = 游標 + 15 ×(瞄準點 − 游標)夾在地圖內((19,13) -> (19,0)、(20,14) -> (26,14)),camera_step_to 過去;0x152a0 把 [0x53c1f] 設成 1 .. 8 各 redraw(1) 一次,畫面是使用者到延伸點之間一格寬的亮帶逐圈變暗;focus_unit(out[0]);item_effect_dispatch(11, 2, 2, out)。 0x15309 起的結尾(add esp, 0x24、四個 pop、ret)是共用的:0x164e3(0x15f84)與 0x1cfa8(draw_command_list)也跳進來,在這裡下斷點會在玩家回合停下;本函式的收尾要用 0x152fd。",
+   "summary": "(單位, camp) AI 的道具 / 法術行動:以 unit_item_id 與 item_effect_row_ptr 取道具列,collect_targets_in_range 與 build_target_candidates 選目標,鏡頭移動(camera_step_to / focus_unit)、0x1f04a 轉向,交 0x20c6f 執行效果、0x2dfc8 演出(FD2.EXE 反組譯)。ai_choose_action 呼叫;doc11:武器道具列 +0xd 非 0 時 AI 會走這裡。 續一百一十八(直接讀反組譯):補第 2 個 camp(ai_choose_action 把自己的 camp 原樣推入;實機 0)。0x1509b:camp 為 0 時取 (道具效果列 +0x11 == 0),非 0 時取 道具效果列 +0x11。 續一百二十一(直接讀反組譯):0x2dfc8 之後 0x151a2 呼叫 lut_circle_ramp_at_unit(單位, 0x50, -4)—— 以這個單位為圓心的圓形換色,半徑由 80 每幀減 4,共 10 幀(doc35 §18)。 續一百二十二訂正:上一句漏了條件。0x1514d 以道具列 +0x10 分兩路 —— < 0x10 走 0x1514f(0x12cea)後 jmp 0x152e5,不經過圓形換色;>= 0x10 才走 0x15168 起的 0x1f04a、redraw(1)、0x17aa9、0x2dfc8 與 0x151a2 的 lut_circle_ramp_at_unit。全道具表(0x602ad,209 列)只有 79 號光束炮的 +0x10(0x1f)符合。 DOSBox-X(doc35 §18):敵 #11 用道具 38 閃電鎚(+0x10 = 2)時本函式有進(返回位址 0x1503e、單位 11、camp 0),整個敵方回合 0x2189a 的斷點沒有停;換成道具 79 後 0x2189a 入口讀到返回位址 0x151a7、引數 (11, 80, -4),十幀的半徑 80、76、…、44。 續一百二十三(DOSBox-X,doc35 §18):道具 79 跑兩輪,逐站停到的順序與反組譯相同 —— build_target_candidates(瞄準點, out, 使用者座標, 15, 0) 回 2;圓形換色;delay(200);0x151be 的 palette_delta_ramp(0, 255, ebx) 停 65 次(ebx = 64 .. 0),畫面是一次白閃後淡回;延伸點 = 游標 + 15 ×(瞄準點 − 游標)夾在地圖內((19,13) -> (19,0)、(20,14) -> (26,14)),camera_step_to 過去;0x152a0 把 [0x53c1f] 設成 1 .. 8 各 redraw(1) 一次,畫面是使用者到延伸點之間一格寬的亮帶逐圈變暗;focus_unit(out[0]);item_effect_dispatch(11, 2, 2, out)。 0x15309 起的結尾(add esp, 0x24、四個 pop、ret)是共用的:0x164e3(0x15f84)與 0x1cfa8(draw_command_list)也跳進來,在這裡下斷點會在玩家回合停下;本函式的收尾要用 0x152fd。 續一百二十五(直接讀反組譯):0x152a0 的相位迴圈每圈寫 [0x53c1f] = k、redraw(1)、0x17aa9(1)(忙等 1 個 tick);draw_terrain_layer 會依 BIOS tick 自己把相位加 1,所以畫出的是 k 或 k + 1;續一百二十三斷點讀到的 16 個值都在其中。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-14",
    "evidence": [
     {
      "at": "0x150f1",
@@ -25628,7 +25640,7 @@
   {
    "addr": "0x1aa1d",
    "name": "grant_reward_rows",
-   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。當時 inventory argc 記 2 是線性掃描少算(續一百一十改為沿控制流後是 3)。 續一百二十四(DOSBox-X):道具 79 打死兩個友軍 NPC 後以 (11, 2, 列表) 呼叫,兩列是 {3, 0x000b}、{3, 0x0010};這一站之後按兩次 Return 才到 item_effect_dispatch 的 0x2107a,陣亡台詞在本函式裡。沒有人陣亡的一輪筆數 0。",
+   "summary": "(單位, 筆數, 列表) 依三位元組列 {種類 u8, payload u16} 發放:0 物品(unit_add_item,滿了以 item_panel_session 換)、1 金錢、2 以 payload 索引 0x51b91 事件表呼叫、3 走另一條呈現(FD2.EXE 反組譯)。攻擊 / 法術收尾與 4 個事件處理呼叫(doc25 §6.3)。 續一百零九(呼叫紀錄篩選,勘誤):舊摘要漏了第 2 參數「筆數」。本體 0x1aa32 筆數為 0 直接返回,0x1ac52 以它為迴圈上限,0x1ac68 以第 3 參數 + 序號 × 3 取列;實機呼叫端都清 3 個參數(add esp, 0xc),第 2 參數是 0 / 1。當時 inventory argc 記 2 是線性掃描少算(續一百一十改為沿控制流後是 3)。 續一百二十四(DOSBox-X):道具 79 打死兩個友軍 NPC 後以 (11, 2, 列表) 呼叫,兩列是 {3, 0x000b}、{3, 0x0010};這一站之後按兩次 Return 才到 item_effect_dispatch 的 0x2107a,陣亡台詞在本函式裡。沒有人陣亡的一輪筆數 0。 續一百二十五(反組譯 + DOSBox-X):種類 3 是 0x15f84([0x53a79], payload, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1)—— 目前章節對白檔的第 payload 條。FDTXT_002(羅德鎮)的友軍 NPC #5 .. #10 的 +0x31 .. +0x33 是 {3, 11} .. {3, 16},第 11 .. 16 條的開框運算元就是 unit 5 .. 10;實機兩站 payload 11、16,執行期字碼與 FDTXT_002 相同,畫面是「啊‥‥!」「哇‥啊‥‥!」。",
    "confidence": "static_re",
    "date": "2026-10-14",
    "evidence": [
@@ -25651,6 +25663,10 @@
     {
      "at": "0x1ac68",
      "insn": "add eax, dword ptr [esp + 0x20]"
+    },
+    {
+     "at": "0x1ac43",
+     "insn": "push dword ptr [0x3a79]"
     }
    ]
   },

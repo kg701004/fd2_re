@@ -1,0 +1,1605 @@
+{
+ "date": "2026-10-14",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點,FDTXT_002 那一場(章節位元組 1,羅德鎮),連續 2 個回合;只改模擬器記憶體裡的單位資料與法術列 3 的命中率,程式碼不動。ai_item_candidate_select:0x1567e、0x1576e、0x157fd、0x1586a(arm 時就設)。ai_item_action 入口 0x15055 停下後才設:0x1c8e2(經驗值累加)、0x20fe5、0x21072、0x1ac2b / 0x1ac4e(種類 3)、0x2107a、0x152fd。種類 3 停點之後恢復執行,6 秒後截視窗。",
+ "static": {
+  "high_class_row_0x41_+7_0x85": "011b0c00000103010401",
+  "high_class_row_0x42_+7_0x86": "011b0e00000102010401",
+  "high_class_row_0x1c_+7_0x60_anchor": "01070e00000701010415",
+  "item79_row_0x602ad": "0cc201500000000000000000001803001f000400000000",
+  "phase_table_0x51a97": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   9,
+   8,
+   7,
+   6,
+   5,
+   4,
+   3,
+   2,
+   1
+  ],
+  "fixed_phase_0x51a93": "ffffffff"
+ },
+ "fdtxt": {
+  "FDTXT_001": {
+   "bytes": 4360,
+   "md5": "2b8e471a694fb123a996371589c110fa"
+  },
+  "FDTXT_002": {
+   "bytes": 3498,
+   "md5": "c0218b47b38bd98e0dfca517abe7d4d5"
+  }
+ },
+ "runs": [
+  {
+   "tag": "a1",
+   "what": "round A(第 1 回合)。arm:敵 #11 搬到 (19,14)、slot2 = 道具 79,#1..#4 設已行動,法術列 3 命中率 100;#11 第一次進 ai_item_candidate_select 時把 #5、#10 搬到 (19,13)、(19,6)(續一百二十三第一輪的位置)。錄製腳本在第一個種類 3 停點之後,於遊戲執行中傾印 VGA 失敗而結束;這份是它印在 stdout 的每一站(印出時略過 units / codes / row)。",
+   "stops": [
+    {
+     "at": "0x1567e",
+     "t": 93.7,
+     "placed": [
+      [
+       5,
+       19,
+       13
+      ],
+      [
+       10,
+       19,
+       6
+      ]
+     ],
+     "name": "ai_item_candidate_select 入口",
+     "ret": "0x1d92a",
+     "unit": 11,
+     "camp": 0,
+     "map_w": 27,
+     "map_h": 21,
+     "inv": "004080004f80ff80ff80ff80ff80ff00"
+    },
+    {
+     "at": "0x1576e",
+     "t": 100.3,
+     "name": "施放點清單",
+     "count": 4,
+     "cells": [
+      [
+       19,
+       13
+      ],
+      [
+       18,
+       14
+      ],
+      [
+       20,
+       14
+      ],
+      [
+       19,
+       15
+      ]
+     ]
+    },
+    {
+     "at": "0x157fd",
+     "t": 103.8,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      5,
+      10
+     ],
+     "cast": [
+      19,
+      13
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 0,
+      "x": 0,
+      "y": 0,
+      "slot": 0
+     }
+    },
+    {
+     "at": "0x157fd",
+     "t": 110.8,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      0,
+      3
+     ],
+     "cast": [
+      20,
+      14
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 16,
+      "x": 19,
+      "y": 13,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1586a",
+     "t": 117.9,
+     "name": "ai_item_candidate_select 掃完",
+     "best": {
+      "score": 16,
+      "x": 19,
+      "y": 13,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1567e",
+     "t": 122.3,
+     "name": "ai_item_candidate_select 入口",
+     "ret": "0x14f24",
+     "unit": 11,
+     "camp": 0,
+     "map_w": 27,
+     "map_h": 21,
+     "inv": "004080004f80ff80ff80ff80ff80ff00"
+    },
+    {
+     "at": "0x1576e",
+     "t": 127.7,
+     "name": "施放點清單",
+     "count": 4,
+     "cells": [
+      [
+       19,
+       13
+      ],
+      [
+       18,
+       14
+      ],
+      [
+       20,
+       14
+      ],
+      [
+       19,
+       15
+      ]
+     ]
+    },
+    {
+     "at": "0x157fd",
+     "t": 131.3,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      5,
+      10
+     ],
+     "cast": [
+      19,
+      13
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 0,
+      "x": 19,
+      "y": 13,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x157fd",
+     "t": 138.3,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      0,
+      3
+     ],
+     "cast": [
+      20,
+      14
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 16,
+      "x": 19,
+      "y": 13,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1586a",
+     "t": 145.2,
+     "name": "ai_item_candidate_select 掃完",
+     "best": {
+      "score": 16,
+      "x": 19,
+      "y": 13,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x15055",
+     "t": 149.7,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "exp": 0,
+     "table": {
+      "txt_ptr": "0x26b018",
+      "lbl_ptr": "0x234018",
+      "FDTXT_001": {
+       "bytes": 4360,
+       "diff_bytes": 3809,
+       "first_diff": 0
+      },
+      "FDTXT_002": {
+       "bytes": 3498,
+       "diff_bytes": 0,
+       "first_diff": null
+      }
+     },
+     "hit_row3": "f4016405012a00"
+    },
+    {
+     "at": "0x1c8e2",
+     "t": 168.1,
+     "name": "經驗值累加之前",
+     "eax_add": 3,
+     "unit": 5,
+     "edi_new_hp": 0,
+     "ebp_damage": 497,
+     "exp_before": 0
+    },
+    {
+     "at": "0x1c8e2",
+     "t": 172.1,
+     "name": "經驗值累加之前",
+     "eax_add": 3,
+     "unit": 10,
+     "edi_new_hp": 0,
+     "ebp_damage": 450,
+     "exp_before": 3
+    },
+    {
+     "at": "0x20fe5",
+     "t": 176.1,
+     "name": "逐目標迴圈結束",
+     "exp": 6
+    },
+    {
+     "at": "0x21072",
+     "t": 181.4,
+     "name": "call grant_reward_rows",
+     "args": [
+      11,
+      2,
+      "0x1f1518"
+     ],
+     "rows": "030b000310001d0070010100"
+    },
+    {
+     "at": "0x1ac2b",
+     "t": 185.0,
+     "name": "種類 3:呼叫 0x15f84 之前",
+     "payload": 11,
+     "row_index": 0,
+     "unit": 11,
+     "txt_ptr": "0x26b018",
+     "str_off": 3378,
+     "file_match": {
+      "FDTXT_001": false,
+      "FDTXT_002": true
+     },
+     "file_strings": {
+      "FDTXT_001": 12,
+      "FDTXT_002": 17
+     }
+    }
+   ]
+  },
+  {
+   "tag": "a1b",
+   "what": "round A 的後半:以 LC_MIDRUN 從第一句台詞等按鍵處接續(斷點沿用第二階段那組)。",
+   "stops": [
+    {
+     "at": "key",
+     "t": 13.9,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "0x1ac4e",
+     "t": 14.6,
+     "name": "種類 3:0x15f84 返回",
+     "eax": 658351
+    },
+    {
+     "at": "0x1ac2b",
+     "t": 17.1,
+     "name": "種類 3:呼叫 0x15f84 之前",
+     "payload": 16,
+     "row_index": 1,
+     "unit": 11,
+     "txt_ptr": "0x26b018",
+     "str_off": 3476,
+     "codes": [
+      65517,
+      10,
+      558,
+      900,
+      585,
+      465,
+      585,
+      585,
+      342,
+      561
+     ],
+     "file_match": {
+      "FDTXT_001": false,
+      "FDTXT_002": true
+     },
+     "file_strings": {
+      "FDTXT_001": 12,
+      "FDTXT_002": 17
+     }
+    },
+    {
+     "at": "shot",
+     "t": 26.9,
+     "name": "a1b_k3_1",
+     "running": true
+    },
+    {
+     "at": "key",
+     "t": 40.8,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "0x1ac4e",
+     "t": 41.6,
+     "name": "種類 3:0x15f84 返回",
+     "eax": 658383
+    },
+    {
+     "at": "0x2107a",
+     "t": 44.0,
+     "name": "item_effect_dispatch 收尾",
+     "exp": 0,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 30,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 18,
+       "y": 13,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 18,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ]
+    },
+    {
+     "at": "0x152fd",
+     "t": 48.1,
+     "name": "ai_item_action 返回前",
+     "exp": 0
+    }
+   ]
+  },
+  {
+   "tag": "b1",
+   "what": "round B(第 2 回合)。arm 同上,另把 #3 的 +7 由 0x1e 改成 0x85,讓存活目標也累加經驗值;沒有搬單位。",
+   "stops": [
+    {
+     "at": "0x1567e",
+     "t": 63.0,
+     "name": "ai_item_candidate_select 入口",
+     "ret": "0x1d92a",
+     "unit": 11,
+     "camp": 0,
+     "map_w": 27,
+     "map_h": 21,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 133,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 20,
+       "y": 11,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ],
+     "inv": "004080004f80ff80ff80ff80ff80ff00"
+    },
+    {
+     "at": "0x1576e",
+     "t": 68.7,
+     "name": "施放點清單",
+     "count": 4,
+     "cells": [
+      [
+       19,
+       13
+      ],
+      [
+       18,
+       14
+      ],
+      [
+       20,
+       14
+      ],
+      [
+       19,
+       15
+      ]
+     ]
+    },
+    {
+     "at": "0x157fd",
+     "t": 72.2,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      0,
+      3
+     ],
+     "cast": [
+      20,
+      14
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 0,
+      "x": 19,
+      "y": 0,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1586a",
+     "t": 79.2,
+     "name": "ai_item_candidate_select 掃完",
+     "best": {
+      "score": 16,
+      "x": 20,
+      "y": 14,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1567e",
+     "t": 83.8,
+     "name": "ai_item_candidate_select 入口",
+     "ret": "0x14f24",
+     "unit": 11,
+     "camp": 0,
+     "map_w": 27,
+     "map_h": 21,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 133,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 20,
+       "y": 11,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ],
+     "inv": "004080004f80ff80ff80ff80ff80ff00"
+    },
+    {
+     "at": "0x1576e",
+     "t": 89.4,
+     "name": "施放點清單",
+     "count": 4,
+     "cells": [
+      [
+       19,
+       13
+      ],
+      [
+       18,
+       14
+      ],
+      [
+       20,
+       14
+      ],
+      [
+       19,
+       15
+      ]
+     ]
+    },
+    {
+     "at": "0x157fd",
+     "t": 93.0,
+     "name": "ai_item_target_score 返回",
+     "score": 16,
+     "item": 79,
+     "count": 2,
+     "targets": [
+      0,
+      3
+     ],
+     "cast": [
+      20,
+      14
+     ],
+     "slot": 2,
+     "best_before": {
+      "score": 0,
+      "x": 20,
+      "y": 14,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x1586a",
+     "t": 100.1,
+     "name": "ai_item_candidate_select 掃完",
+     "best": {
+      "score": 16,
+      "x": 20,
+      "y": 14,
+      "slot": 2
+     }
+    },
+    {
+     "at": "0x15055",
+     "t": 104.6,
+     "name": "ai_item_action 入口",
+     "ret": "0x1503e",
+     "unit": 11,
+     "camp": 0,
+     "exp": 0,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 823,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 133,
+       "cls": 25,
+       "lv": 40,
+       "hp": 867,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 20,
+       "y": 11,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ],
+     "table": {
+      "txt_ptr": "0x26b018",
+      "lbl_ptr": "0x234018",
+      "FDTXT_001": {
+       "bytes": 4360,
+       "diff_bytes": 3808,
+       "first_diff": 0
+      },
+      "FDTXT_002": {
+       "bytes": 3498,
+       "diff_bytes": 0,
+       "first_diff": null
+      }
+     },
+     "hit_row3": "f4016405012a00"
+    },
+    {
+     "at": "0x1c8e2",
+     "t": 123.0,
+     "name": "經驗值累加之前",
+     "eax_add": 16,
+     "unit": 3,
+     "edi_new_hp": 506,
+     "ebp_damage": 361,
+     "exp_before": 0,
+     "row": {
+      "i": 3,
+      "x": 23,
+      "y": 14,
+      "f5": 0,
+      "camp": 2,
+      "f7": 133,
+      "cls": 25,
+      "lv": 40,
+      "hp": 506,
+      "mhp": 867,
+      "reward": "fff0ee"
+     }
+    },
+    {
+     "at": "0x20fe5",
+     "t": 127.1,
+     "name": "逐目標迴圈結束",
+     "exp": 16,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 356,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 133,
+       "cls": 25,
+       "lv": 40,
+       "hp": 506,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 20,
+       "y": 11,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ]
+    },
+    {
+     "at": "0x21072",
+     "t": 131.3,
+     "name": "call grant_reward_rows",
+     "args": [
+      11,
+      0,
+      "0x1f1518"
+     ],
+     "rows": "000040151f00160000007801"
+    },
+    {
+     "at": "0x2107a",
+     "t": 134.8,
+     "name": "item_effect_dispatch 收尾",
+     "exp": 0,
+     "units": [
+      {
+       "i": 0,
+       "x": 20,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 32,
+       "cls": 9,
+       "lv": 6,
+       "hp": 356,
+       "mhp": 823,
+       "reward": "ff00c1"
+      },
+      {
+       "i": 3,
+       "x": 23,
+       "y": 14,
+       "f5": 0,
+       "camp": 2,
+       "f7": 133,
+       "cls": 25,
+       "lv": 40,
+       "hp": 506,
+       "mhp": 867,
+       "reward": "fff0ee"
+      },
+      {
+       "i": 5,
+       "x": 19,
+       "y": 13,
+       "f5": 1,
+       "camp": 1,
+       "f7": 134,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 42,
+       "reward": "030b00"
+      },
+      {
+       "i": 6,
+       "x": 20,
+       "y": 11,
+       "f5": 0,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 36,
+       "mhp": 36,
+       "reward": "030c00"
+      },
+      {
+       "i": 10,
+       "x": 19,
+       "y": 6,
+       "f5": 1,
+       "camp": 1,
+       "f7": 133,
+       "cls": 27,
+       "lv": 3,
+       "hp": 0,
+       "mhp": 36,
+       "reward": "031000"
+      },
+      {
+       "i": 11,
+       "x": 19,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      },
+      {
+       "i": 15,
+       "x": 10,
+       "y": 14,
+       "f5": 0,
+       "camp": 0,
+       "f7": 96,
+       "cls": 7,
+       "lv": 2,
+       "hp": 28,
+       "mhp": 28,
+       "reward": "ff0000"
+      }
+     ]
+    },
+    {
+     "at": "0x152fd",
+     "t": 138.9,
+     "name": "ai_item_action 返回前",
+     "exp": 0
+    }
+   ]
+  }
+ ],
+ "analysis": {
+  "script": "an125.py(暫存)",
+  "checks": 35,
+  "pass": 35,
+  "controls": 21,
+  "controls_fail_as_expected": 16,
+  "controls_not_applicable": 5,
+  "items": [
+   {
+    "group": "K",
+    "name": "a1 入口的文字表",
+    "ok": true,
+    "control": false,
+    "detail": "[0x53a79] = 0x26b018;與 FDTXT_002 差 0 bytes、FDTXT_001 差 3809 bytes"
+   },
+   {
+    "group": "K",
+    "name": "b1 入口的文字表",
+    "ok": true,
+    "control": false,
+    "detail": "[0x53a79] = 0x26b018;與 FDTXT_002 差 0 bytes、FDTXT_001 差 3808 bytes"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 施放點",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [[19, 13], [18, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 目標(只用 #0 #3 #5 #10 #11 的位置)",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [([19, 13], [5, 10]), ([20, 14], [0, 3])],紀錄 [([19, 13], [5, 10]), ([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 分數",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [16, 16],紀錄 [16, 16](目標 HP 取 b1 單位表的 MaxHP;NPC 在 round A 之前沒有受傷)"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 數值用法術威力 500",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [36, 16],紀錄 [16, 16]"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 同分不換",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [19, 13] 分數 16,紀錄 {'score': 16, 'x': 19, 'y': 13, 'slot': 2}"
+   },
+   {
+    "group": "S",
+    "name": "a1#0 同分改換(>=)",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [20, 14],紀錄 [19, 13]"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 施放點",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [[19, 13], [18, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 目標(只用 #0 #3 #5 #10 #11 的位置)",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [([19, 13], [5, 10]), ([20, 14], [0, 3])],紀錄 [([19, 13], [5, 10]), ([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 分數",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [16, 16],紀錄 [16, 16](目標 HP 取 b1 單位表的 MaxHP;NPC 在 round A 之前沒有受傷)"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 數值用法術威力 500",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [36, 16],紀錄 [16, 16]"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 同分不換",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [19, 13] 分數 16,紀錄 {'score': 16, 'x': 19, 'y': 13, 'slot': 2}"
+   },
+   {
+    "group": "S",
+    "name": "a1#1 同分改換(>=)",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [20, 14],紀錄 [19, 13]"
+   },
+   {
+    "group": "S",
+    "name": "b1 呼叫次數",
+    "ok": true,
+    "control": false,
+    "detail": "入口 2、施放點清單 2、掃完 2(ai_choose_action 的兩個呼叫點 0x1d92a / 0x14f24)"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 施放點",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [[19, 13], [18, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 施放點含中心",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [[19, 13], [18, 14], [19, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 有目標的施放點與目標",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 直線也收敵方",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [([18, 14], [15]), ([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 直線也收陣亡",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [([19, 13], [5, 10]), ([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 分數",
+    "ok": true,
+    "control": false,
+    "detail": "type 0x18 數值 = 列 +0xe = 3;預測 [16],紀錄 [16]"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 數值用法術威力 500",
+    "ok": null,
+    "control": true,
+    "detail": "對照值 [16] 與預測相同,樣本分辨不了"
+   },
+   {
+    "group": "S",
+    "name": "b1#0 勝出",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [20, 14] 分數 16 slot 2,紀錄 {'score': 16, 'x': 20, 'y': 14, 'slot': 2}"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 施放點",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [[19, 13], [18, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 施放點含中心",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [[19, 13], [18, 14], [19, 14], [20, 14], [19, 15]],紀錄 [[19, 13], [18, 14], [20, 14], [19, 15]]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 有目標的施放點與目標",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 直線也收敵方",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [([18, 14], [15]), ([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 直線也收陣亡",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 [([19, 13], [5, 10]), ([20, 14], [0, 3])],紀錄 [([20, 14], [0, 3])]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 分數",
+    "ok": true,
+    "control": false,
+    "detail": "type 0x18 數值 = 列 +0xe = 3;預測 [16],紀錄 [16]"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 數值用法術威力 500",
+    "ok": null,
+    "control": true,
+    "detail": "對照值 [16] 與預測相同,樣本分辨不了"
+   },
+   {
+    "group": "S",
+    "name": "b1#1 勝出",
+    "ok": true,
+    "control": false,
+    "detail": "預測 [20, 14] 分數 16 slot 2,紀錄 {'score': 16, 'x': 20, 'y': 14, 'slot': 2}"
+   },
+   {
+    "group": "E",
+    "name": "a1 #5 累加",
+    "ok": true,
+    "control": false,
+    "detail": "表 +9 = 1 × 等級 3(陣亡,不縮放) = 3,紀錄 3"
+   },
+   {
+    "group": "E",
+    "name": "a1 #5 一律不縮放",
+    "ok": null,
+    "control": true,
+    "detail": "對照值 3 與預測相同,樣本分辨不了"
+   },
+   {
+    "group": "E",
+    "name": "a1 #5 一律縮放",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 35,紀錄 3"
+   },
+   {
+    "group": "E",
+    "name": "a1 #10 累加",
+    "ok": true,
+    "control": false,
+    "detail": "表 +9 = 1 × 等級 3(陣亡,不縮放) = 3,紀錄 3"
+   },
+   {
+    "group": "E",
+    "name": "a1 #10 一律不縮放",
+    "ok": null,
+    "control": true,
+    "detail": "對照值 3 與預測相同,樣本分辨不了"
+   },
+   {
+    "group": "E",
+    "name": "a1 #10 一律縮放",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 37,紀錄 3"
+   },
+   {
+    "group": "E",
+    "name": "a1 迴圈結束的 [0x53ec8]",
+    "ok": true,
+    "control": false,
+    "detail": "累加合計 6,紀錄 [6]"
+   },
+   {
+    "group": "E",
+    "name": "a1 +7 < 0x44 的目標沒有累加停點",
+    "ok": true,
+    "control": false,
+    "detail": "有停點的目標 [5, 10]"
+   },
+   {
+    "group": "E",
+    "name": "b1 #3 累加",
+    "ok": true,
+    "control": false,
+    "detail": "表 +9 = 1 × 等級 40 × 傷害 361 / MaxHP 867 = 16,紀錄 16"
+   },
+   {
+    "group": "E",
+    "name": "b1 #3 一律不縮放",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 40,紀錄 16"
+   },
+   {
+    "group": "E",
+    "name": "b1 #3 一律縮放",
+    "ok": null,
+    "control": true,
+    "detail": "對照值 16 與預測相同,樣本分辨不了"
+   },
+   {
+    "group": "E",
+    "name": "b1 #3 除以新 HP",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 28,紀錄 16"
+   },
+   {
+    "group": "E",
+    "name": "b1 迴圈結束的 [0x53ec8]",
+    "ok": true,
+    "control": false,
+    "detail": "累加合計 16,紀錄 [16]"
+   },
+   {
+    "group": "E",
+    "name": "b1 +7 < 0x44 的目標沒有累加停點",
+    "ok": true,
+    "control": false,
+    "detail": "有停點的目標 [3]"
+   },
+   {
+    "group": "K",
+    "name": "a1 種類 3 停點的 payload",
+    "ok": true,
+    "control": false,
+    "detail": "獎勵列 030b00031000 -> [11, 16],紀錄 [11, 16]"
+   },
+   {
+    "group": "K",
+    "name": "a1 payload 來自陣亡單位的 +0x31..0x33",
+    "ok": true,
+    "control": false,
+    "detail": "陣亡 [5, 10] 的獎勵列 ['030b00', '031000']"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 11 條 = FDTXT_002 第 11 條",
+    "ok": true,
+    "control": false,
+    "detail": "執行期字碼與檔案字串相同 = {'FDTXT_001': False, 'FDTXT_002': True};FDTXT_002 有 17 條"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 11 條當成 FDTXT_001",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 True,紀錄 False"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 11 條的說話者",
+    "ok": true,
+    "control": false,
+    "detail": "開框碼 0xFFEC/0xFFED 運算元 = unit 5;台詞 啊‥‥！"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 11 條用 [0x53a79]",
+    "ok": true,
+    "control": false,
+    "detail": "0x1ac2b 讀到 0x26b018"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 16 條 = FDTXT_002 第 16 條",
+    "ok": true,
+    "control": false,
+    "detail": "執行期字碼與檔案字串相同 = {'FDTXT_001': False, 'FDTXT_002': True};FDTXT_002 有 17 條"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 16 條當成 FDTXT_001",
+    "ok": false,
+    "control": true,
+    "detail": "對照值 True,紀錄 False"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 16 條的說話者",
+    "ok": true,
+    "control": false,
+    "detail": "開框碼 0xFFEC/0xFFED 運算元 = unit 10;台詞 哇‥啊‥‥！"
+   },
+   {
+    "group": "K",
+    "name": "a1 第 16 條用 [0x53a79]",
+    "ok": true,
+    "control": false,
+    "detail": "0x1ac2b 讀到 0x26b018"
+   },
+   {
+    "group": "K",
+    "name": "b1 沒有陣亡 -> 筆數 0、沒有種類 3 停點",
+    "ok": true,
+    "control": false,
+    "detail": "grant_reward_rows 引數 [11, 0, '0x1f1518']"
+   }
+  ]
+ },
+ "mutation": {
+  "script": "mut_an125.py(暫存)",
+  "stdout": [
+   "抓到 分數 +1: rc=1 指定檢查=True Traceback=False FAIL ['S b1#0 分數']",
+   "抓到 施放點多出中心: rc=1 指定檢查=True Traceback=False FAIL ['S b1#0 施放點', 'S b1#0 施放點含中心']",
+   "抓到 目標少一個: rc=1 指定檢查=True Traceback=False FAIL ['S b1#0 有目標的施放點與目標']",
+   "抓到 同分時換成後者: rc=1 指定檢查=True Traceback=False FAIL ['S a1#0 同分不換', 'S a1#0 同分改換(>=)']",
+   "抓到 陣亡目標的經驗值 +1: rc=1 指定檢查=True Traceback=False FAIL ['E a1 #5 累加', 'E a1 迴圈結束的 [0x53ec8]']",
+   "抓到 存活目標不縮放: rc=1 指定檢查=True Traceback=False FAIL ['E b1 #3 累加', 'E b1 迴圈結束的 [0x53ec8]', 'E b1 #3 一律不縮放']",
+   "抓到 迴圈結束的經驗值 +1: rc=1 指定檢查=True Traceback=False FAIL ['E a1 迴圈結束的 [0x53ec8]']",
+   "抓到 payload 改 12: rc=1 指定檢查=True Traceback=False FAIL ['K a1 種類 3 停點的 payload', 'K a1 第 12 條的說話者']",
+   "抓到 第 16 條字碼不符: rc=1 指定檢查=True Traceback=False FAIL ['K a1 第 16 條 = FDTXT_002 第 16 條']",
+   "抓到 直線上的敵人改成友軍: rc=1 指定檢查=True Traceback=False FAIL ['S b1#0 有目標的施放點與目標', 'S b1#0 分數']",
+   "抓到 文字表差 5 bytes: rc=1 指定檢查=True Traceback=False FAIL ['K b1 入口的文字表']",
+   "抓到 第 2 列種類改 0: rc=1 指定檢查=True Traceback=False FAIL ['K a1 種類 3 停點的 payload', 'K a1 payload 來自陣亡單位的 +0x31..0x33', 'K a1 第 16 條的說話者']",
+   "突變 12 個,抓到 12,漏掉 0"
+  ]
+ },
+ "files": {
+  "grant_reward_rows_kind3_line_unit5_20261014.png": "af030999f5bf84e87060f42ce5aa362f",
+  "grant_reward_rows_kind3_line_unit10_20261014.png": "af15b61ea0793bae3747a2574ecbca07"
+ }
+}
