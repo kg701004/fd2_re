@@ -1,0 +1,2036 @@
+{
+ "date": "2026-10-15",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點(core=normal;harness cycles=5000,cycles 2500 那兩份經包裝腳本只換 cycles);只改模擬器記憶體裡的資料,程式碼不動。計時讀線性 0x46c 的 BIOS tick(約 54.93 ms);停在除錯器時模擬器不跑。",
+ "abandoned_first_attempt": {
+  "instance": "lc127",
+  "note": "先用 cl.py battle 把預設存檔的章節位元組改成 22:出戰選擇格只有 12 名候選、目標 15,選不滿。在 0x2b0e3 cmp eax, ebp 把 EBP 改成已選人數(兩次:11、12),遊戲兩次都顯示「本章希爾法必須出場」退回選擇畫面(這份存檔沒有希爾法)。放棄這個 instance,沒有任何紀錄出自它。"
+ },
+ "ch22_roster": "prepare_chapter_save 的完整隊伍 16 人(roster_cap=16),選擇格 15 名全選,遊戲自己的 cmp eax, ebp 成立後進戰場,沒有改暫存器。",
+ "cycles_wrapper": "#!/bin/bash\n# 續一百二十七:只把 harness 傳來的 \"config -set cycles=5000\" 換成 2500,其他參數原樣交給同一個 calllog 版 dosbox-x。\n# harness 第 337 行以 grep FD2_CALLLOG_ENTRIES 確認 binary 有 call-log 修補;實際執行的就是下面那個有修補的 binary。\nargs=()\nn=0\nfor a in \"$@\"; do\n  if [ \"$a\" = \"config -set cycles=5000\" ]; then\n    a=\"config -set cycles=2500\"\n    n=$((n + 1))\n  fi\n  args+=(\"$a\")\ndone\necho \"wrap cycles replaced=$n\" > \"$PWD/WRAP_CYCLES.TXT\"\nexec /home/kg701004/fd2-dosbox-calllog/dosbox-x/src/dosbox-x \"${args[@]}\"\n",
+ "static_tables": {
+  "rows": [
+   {
+    "index": 0,
+    "slot": "0x51d01",
+    "table": "cmd",
+    "chapter_or_cmd": 0,
+    "addr": "0x21206",
+    "name": "command_handler_0",
+    "conf": "static_re"
+   },
+   {
+    "index": 1,
+    "slot": "0x51d05",
+    "table": "cmd",
+    "chapter_or_cmd": 1,
+    "addr": "0x2134b",
+    "name": "command_handler_1",
+    "conf": "static_re"
+   },
+   {
+    "index": 2,
+    "slot": "0x51d09",
+    "table": "cmd",
+    "chapter_or_cmd": 2,
+    "addr": "0x21364",
+    "name": "command_handler_2",
+    "conf": "static_re"
+   },
+   {
+    "index": 3,
+    "slot": "0x51d0d",
+    "table": "cmd",
+    "chapter_or_cmd": 3,
+    "addr": "0x2137d",
+    "name": "command_handler_3",
+    "conf": "static_re"
+   },
+   {
+    "index": 4,
+    "slot": "0x51d11",
+    "table": "cmd",
+    "chapter_or_cmd": 4,
+    "addr": "0x21396",
+    "name": "command_handler_4",
+    "conf": "static_re"
+   },
+   {
+    "index": 5,
+    "slot": "0x51d15",
+    "table": "cmd",
+    "chapter_or_cmd": 5,
+    "addr": "0x21449",
+    "name": "command_handler_5",
+    "conf": "static_re"
+   },
+   {
+    "index": 6,
+    "slot": "0x51d19",
+    "table": "cmd",
+    "chapter_or_cmd": 6,
+    "addr": "0x21462",
+    "name": "command_handler_6",
+    "conf": "static_re"
+   },
+   {
+    "index": 7,
+    "slot": "0x51d1d",
+    "table": "cmd",
+    "chapter_or_cmd": 7,
+    "addr": "0x2147b",
+    "name": "command_handler_7",
+    "conf": "static_re"
+   },
+   {
+    "index": 8,
+    "slot": "0x51d21",
+    "table": "cmd",
+    "chapter_or_cmd": 8,
+    "addr": "0x21494",
+    "name": "command_handler_8",
+    "conf": "static_re"
+   },
+   {
+    "index": 9,
+    "slot": "0x51d25",
+    "table": "cmd",
+    "chapter_or_cmd": 9,
+    "addr": "0x214ad",
+    "name": "command_handler_9",
+    "conf": "verified_dynamic"
+   },
+   {
+    "index": 10,
+    "slot": "0x51d29",
+    "table": "cmd",
+    "chapter_or_cmd": 10,
+    "addr": "0x21527",
+    "name": "command_handler_10",
+    "conf": "static_re"
+   },
+   {
+    "index": 11,
+    "slot": "0x51d2d",
+    "table": "cmd",
+    "chapter_or_cmd": 11,
+    "addr": "0x2185f",
+    "name": "command_handler_11",
+    "conf": "static_re"
+   },
+   {
+    "index": 12,
+    "slot": "0x51d31",
+    "table": "cmd",
+    "chapter_or_cmd": 12,
+    "addr": "0x21a9e",
+    "name": "command_handler_12",
+    "conf": "static_re"
+   },
+   {
+    "index": 13,
+    "slot": "0x51d35",
+    "table": "cmd",
+    "chapter_or_cmd": 13,
+    "addr": "0x21ad9",
+    "name": "command_handler_13",
+    "conf": "static_re"
+   },
+   {
+    "index": 14,
+    "slot": "0x51d39",
+    "table": "cmd",
+    "chapter_or_cmd": 14,
+    "addr": "0x21b99",
+    "name": "command_handler_14",
+    "conf": "static_re"
+   },
+   {
+    "index": 15,
+    "slot": "0x51d3d",
+    "table": "cmd",
+    "chapter_or_cmd": 15,
+    "addr": "0x2211c",
+    "name": "command_handler_15",
+    "conf": "static_re"
+   },
+   {
+    "index": 16,
+    "slot": "0x51d41",
+    "table": "cmd",
+    "chapter_or_cmd": 16,
+    "addr": "0x22153",
+    "name": "command_handler_16",
+    "conf": "static_re"
+   },
+   {
+    "index": 17,
+    "slot": "0x51d45",
+    "table": "cmd",
+    "chapter_or_cmd": 17,
+    "addr": "0x226ea",
+    "name": "command_handler_17",
+    "conf": "static_re"
+   },
+   {
+    "index": 18,
+    "slot": "0x51d49",
+    "table": "cmd",
+    "chapter_or_cmd": 18,
+    "addr": "0x2282f",
+    "name": "command_handler_18",
+    "conf": "static_re"
+   },
+   {
+    "index": 19,
+    "slot": "0x51d4d",
+    "table": "cmd",
+    "chapter_or_cmd": 19,
+    "addr": "0x22960",
+    "name": "command_handler_19",
+    "conf": "static_re"
+   },
+   {
+    "index": 20,
+    "slot": "0x51d51",
+    "table": "cmd",
+    "chapter_or_cmd": 20,
+    "addr": "0x22a85",
+    "name": "command_handler_20",
+    "conf": "static_re"
+   },
+   {
+    "index": 21,
+    "slot": "0x51d55",
+    "table": "cmd",
+    "chapter_or_cmd": 21,
+    "addr": "0x22bc6",
+    "name": "command_handler_21",
+    "conf": "static_re"
+   },
+   {
+    "index": 22,
+    "slot": "0x51d59",
+    "table": "cmd",
+    "chapter_or_cmd": 22,
+    "addr": "0x22be1",
+    "name": "command_handler_22",
+    "conf": "static_re"
+   },
+   {
+    "index": 23,
+    "slot": "0x51d5d",
+    "table": "cmd",
+    "chapter_or_cmd": 23,
+    "addr": "0x2218a",
+    "name": "command_handler_23",
+    "conf": "static_re"
+   },
+   {
+    "index": 24,
+    "slot": "0x51d61",
+    "table": "cmd",
+    "chapter_or_cmd": 24,
+    "addr": "0x22153",
+    "name": "command_handler_16",
+    "conf": "static_re"
+   },
+   {
+    "index": 25,
+    "slot": "0x51d65",
+    "table": "cmd",
+    "chapter_or_cmd": 25,
+    "addr": "0x22c04",
+    "name": "command_handler_25",
+    "conf": "static_re"
+   },
+   {
+    "index": 26,
+    "slot": "0x51d69",
+    "table": "cmd",
+    "chapter_or_cmd": 26,
+    "addr": "0x22cbf",
+    "name": "command_handler_26",
+    "conf": "static_re"
+   },
+   {
+    "index": 27,
+    "slot": "0x51d6d",
+    "table": "cmd",
+    "chapter_or_cmd": 27,
+    "addr": "0x22e41",
+    "name": "command_handler_27",
+    "conf": "static_re"
+   },
+   {
+    "index": 28,
+    "slot": "0x51d71",
+    "table": "pre",
+    "chapter_or_cmd": 0,
+    "addr": "0x3231b",
+    "name": "command_handler_28",
+    "conf": "static_re"
+   },
+   {
+    "index": 29,
+    "slot": "0x51d75",
+    "table": "pre",
+    "chapter_or_cmd": 1,
+    "addr": "0x32d18",
+    "name": "command_handler_29",
+    "conf": "static_re"
+   },
+   {
+    "index": 30,
+    "slot": "0x51d79",
+    "table": "pre",
+    "chapter_or_cmd": 2,
+    "addr": "0x32e8c",
+    "name": "command_handler_30",
+    "conf": "static_re"
+   },
+   {
+    "index": 31,
+    "slot": "0x51d7d",
+    "table": "pre",
+    "chapter_or_cmd": 3,
+    "addr": "0x32fb2",
+    "name": "command_handler_31",
+    "conf": "static_re"
+   },
+   {
+    "index": 32,
+    "slot": "0x51d81",
+    "table": "pre",
+    "chapter_or_cmd": 4,
+    "addr": "0x33049",
+    "name": "command_handler_32",
+    "conf": "static_re"
+   },
+   {
+    "index": 33,
+    "slot": "0x51d85",
+    "table": "pre",
+    "chapter_or_cmd": 5,
+    "addr": "0x3314b",
+    "name": "command_handler_33",
+    "conf": "static_re"
+   },
+   {
+    "index": 34,
+    "slot": "0x51d89",
+    "table": "pre",
+    "chapter_or_cmd": 6,
+    "addr": "0x33169",
+    "name": "command_handler_34",
+    "conf": "static_re"
+   },
+   {
+    "index": 35,
+    "slot": "0x51d8d",
+    "table": "pre",
+    "chapter_or_cmd": 7,
+    "addr": "0x33219",
+    "name": "command_handler_35",
+    "conf": "static_re"
+   },
+   {
+    "index": 36,
+    "slot": "0x51d91",
+    "table": "pre",
+    "chapter_or_cmd": 8,
+    "addr": "0x3327d",
+    "name": "command_handler_36",
+    "conf": "static_re"
+   },
+   {
+    "index": 37,
+    "slot": "0x51d95",
+    "table": "pre",
+    "chapter_or_cmd": 9,
+    "addr": "0x3332b",
+    "name": "command_handler_37",
+    "conf": "static_re"
+   },
+   {
+    "index": 38,
+    "slot": "0x51d99",
+    "table": "pre",
+    "chapter_or_cmd": 10,
+    "addr": "0x33367",
+    "name": "command_handler_38",
+    "conf": "static_re"
+   },
+   {
+    "index": 39,
+    "slot": "0x51d9d",
+    "table": "pre",
+    "chapter_or_cmd": 11,
+    "addr": "0x333f5",
+    "name": "command_handler_39",
+    "conf": "static_re"
+   },
+   {
+    "index": 40,
+    "slot": "0x51da1",
+    "table": "pre",
+    "chapter_or_cmd": 12,
+    "addr": "0x3346b",
+    "name": "command_handler_40",
+    "conf": "static_re"
+   },
+   {
+    "index": 41,
+    "slot": "0x51da5",
+    "table": "pre",
+    "chapter_or_cmd": 13,
+    "addr": "0x3347c",
+    "name": "command_handler_41",
+    "conf": "static_re"
+   },
+   {
+    "index": 42,
+    "slot": "0x51da9",
+    "table": "pre",
+    "chapter_or_cmd": 14,
+    "addr": "0x334d9",
+    "name": "command_handler_42",
+    "conf": "static_re"
+   },
+   {
+    "index": 43,
+    "slot": "0x51dad",
+    "table": "pre",
+    "chapter_or_cmd": 15,
+    "addr": "0x335a0",
+    "name": "command_handler_43",
+    "conf": "static_re"
+   },
+   {
+    "index": 44,
+    "slot": "0x51db1",
+    "table": "pre",
+    "chapter_or_cmd": 16,
+    "addr": "0x335aa",
+    "name": "command_handler_44",
+    "conf": "static_re"
+   },
+   {
+    "index": 45,
+    "slot": "0x51db5",
+    "table": "pre",
+    "chapter_or_cmd": 17,
+    "addr": "0x335da",
+    "name": "command_handler_45",
+    "conf": "static_re"
+   },
+   {
+    "index": 46,
+    "slot": "0x51db9",
+    "table": "pre",
+    "chapter_or_cmd": 18,
+    "addr": "0x33674",
+    "name": "command_handler_46",
+    "conf": "static_re"
+   },
+   {
+    "index": 47,
+    "slot": "0x51dbd",
+    "table": "pre",
+    "chapter_or_cmd": 19,
+    "addr": "0x33674",
+    "name": "command_handler_46",
+    "conf": "static_re"
+   },
+   {
+    "index": 48,
+    "slot": "0x51dc1",
+    "table": "pre",
+    "chapter_or_cmd": 20,
+    "addr": "0x33674",
+    "name": "command_handler_46",
+    "conf": "static_re"
+   },
+   {
+    "index": 49,
+    "slot": "0x51dc5",
+    "table": "pre",
+    "chapter_or_cmd": 21,
+    "addr": "0x3367e",
+    "name": "command_handler_49",
+    "conf": "static_re"
+   },
+   {
+    "index": 50,
+    "slot": "0x51dc9",
+    "table": "pre",
+    "chapter_or_cmd": 22,
+    "addr": "0x336a0",
+    "name": "command_handler_50",
+    "conf": "static_re"
+   },
+   {
+    "index": 51,
+    "slot": "0x51dcd",
+    "table": "pre",
+    "chapter_or_cmd": 23,
+    "addr": "0x338c4",
+    "name": "command_handler_51",
+    "conf": "static_re"
+   },
+   {
+    "index": 52,
+    "slot": "0x51dd1",
+    "table": "pre",
+    "chapter_or_cmd": 24,
+    "addr": "0x3396a",
+    "name": "command_handler_52",
+    "conf": "static_re"
+   },
+   {
+    "index": 53,
+    "slot": "0x51dd5",
+    "table": "pre",
+    "chapter_or_cmd": 25,
+    "addr": "0x33aae",
+    "name": "command_handler_53",
+    "conf": "static_re"
+   },
+   {
+    "index": 54,
+    "slot": "0x51dd9",
+    "table": "pre",
+    "chapter_or_cmd": 26,
+    "addr": "0x33af1",
+    "name": "command_handler_54",
+    "conf": "static_re"
+   },
+   {
+    "index": 55,
+    "slot": "0x51ddd",
+    "table": "pre",
+    "chapter_or_cmd": 27,
+    "addr": "0x33c9d",
+    "name": "command_handler_55",
+    "conf": "static_re"
+   },
+   {
+    "index": 56,
+    "slot": "0x51de1",
+    "table": "pre",
+    "chapter_or_cmd": 28,
+    "addr": "0x33dba",
+    "name": "command_handler_56",
+    "conf": "static_re"
+   },
+   {
+    "index": 57,
+    "slot": "0x51de5",
+    "table": "pre",
+    "chapter_or_cmd": 29,
+    "addr": "0x33e3c",
+    "name": "command_handler_57",
+    "conf": "static_re"
+   },
+   {
+    "index": 58,
+    "slot": "0x51de9",
+    "table": "post",
+    "chapter_or_cmd": 0,
+    "addr": "0x22ef6",
+    "name": "command_handler_58",
+    "conf": "static_re"
+   },
+   {
+    "index": 59,
+    "slot": "0x51ded",
+    "table": "post",
+    "chapter_or_cmd": 1,
+    "addr": "0x22f37",
+    "name": "command_handler_59",
+    "conf": "static_re"
+   },
+   {
+    "index": 60,
+    "slot": "0x51df1",
+    "table": "post",
+    "chapter_or_cmd": 2,
+    "addr": "0x230f2",
+    "name": "command_handler_60",
+    "conf": "static_re"
+   },
+   {
+    "index": 61,
+    "slot": "0x51df5",
+    "table": "post",
+    "chapter_or_cmd": 3,
+    "addr": "0x231bc",
+    "name": "command_handler_61",
+    "conf": "static_re"
+   },
+   {
+    "index": 62,
+    "slot": "0x51df9",
+    "table": "post",
+    "chapter_or_cmd": 4,
+    "addr": "0x231f9",
+    "name": "command_handler_62",
+    "conf": "static_re"
+   },
+   {
+    "index": 63,
+    "slot": "0x51dfd",
+    "table": "post",
+    "chapter_or_cmd": 5,
+    "addr": "0x23296",
+    "name": "command_handler_63",
+    "conf": "static_re"
+   },
+   {
+    "index": 64,
+    "slot": "0x51e01",
+    "table": "post",
+    "chapter_or_cmd": 6,
+    "addr": "0x232e8",
+    "name": "command_handler_64",
+    "conf": "static_re"
+   },
+   {
+    "index": 65,
+    "slot": "0x51e05",
+    "table": "post",
+    "chapter_or_cmd": 7,
+    "addr": "0x234bb",
+    "name": "command_handler_65",
+    "conf": "static_re"
+   },
+   {
+    "index": 66,
+    "slot": "0x51e09",
+    "table": "post",
+    "chapter_or_cmd": 8,
+    "addr": "0x235bc",
+    "name": "command_handler_66",
+    "conf": "static_re"
+   },
+   {
+    "index": 67,
+    "slot": "0x51e0d",
+    "table": "post",
+    "chapter_or_cmd": 9,
+    "addr": "0x235f9",
+    "name": "command_handler_67",
+    "conf": "static_re"
+   },
+   {
+    "index": 68,
+    "slot": "0x51e11",
+    "table": "post",
+    "chapter_or_cmd": 10,
+    "addr": "0x23790",
+    "name": "command_handler_68",
+    "conf": "static_re"
+   },
+   {
+    "index": 69,
+    "slot": "0x51e15",
+    "table": "post",
+    "chapter_or_cmd": 11,
+    "addr": "0x237d5",
+    "name": "command_handler_69",
+    "conf": "static_re"
+   },
+   {
+    "index": 70,
+    "slot": "0x51e19",
+    "table": "post",
+    "chapter_or_cmd": 12,
+    "addr": "0x2389f",
+    "name": "command_handler_70",
+    "conf": "static_re"
+   },
+   {
+    "index": 71,
+    "slot": "0x51e1d",
+    "table": "post",
+    "chapter_or_cmd": 13,
+    "addr": "0x238dc",
+    "name": "command_handler_71",
+    "conf": "static_re"
+   },
+   {
+    "index": 72,
+    "slot": "0x51e21",
+    "table": "post",
+    "chapter_or_cmd": 14,
+    "addr": "0x239bd",
+    "name": "command_handler_72",
+    "conf": "static_re"
+   },
+   {
+    "index": 73,
+    "slot": "0x51e25",
+    "table": "post",
+    "chapter_or_cmd": 15,
+    "addr": "0x23a0a",
+    "name": "command_handler_73",
+    "conf": "static_re"
+   },
+   {
+    "index": 74,
+    "slot": "0x51e29",
+    "table": "post",
+    "chapter_or_cmd": 16,
+    "addr": "0x23b5f",
+    "name": "command_handler_74",
+    "conf": "static_re"
+   },
+   {
+    "index": 75,
+    "slot": "0x51e2d",
+    "table": "post",
+    "chapter_or_cmd": 17,
+    "addr": "0x23cd5",
+    "name": "command_handler_75",
+    "conf": "static_re"
+   },
+   {
+    "index": 76,
+    "slot": "0x51e31",
+    "table": "post",
+    "chapter_or_cmd": 18,
+    "addr": "0x23e39",
+    "name": "command_handler_76",
+    "conf": "static_re"
+   },
+   {
+    "index": 77,
+    "slot": "0x51e35",
+    "table": "post",
+    "chapter_or_cmd": 19,
+    "addr": "0x23e74",
+    "name": "command_handler_77",
+    "conf": "static_re"
+   },
+   {
+    "index": 78,
+    "slot": "0x51e39",
+    "table": "post",
+    "chapter_or_cmd": 20,
+    "addr": "0x240fa",
+    "name": "command_handler_78",
+    "conf": "static_re"
+   },
+   {
+    "index": 79,
+    "slot": "0x51e3d",
+    "table": "post",
+    "chapter_or_cmd": 21,
+    "addr": "0x244b6",
+    "name": "command_handler_79",
+    "conf": "static_re"
+   },
+   {
+    "index": 80,
+    "slot": "0x51e41",
+    "table": "post",
+    "chapter_or_cmd": 22,
+    "addr": "0x24754",
+    "name": "command_handler_80",
+    "conf": "static_re"
+   },
+   {
+    "index": 81,
+    "slot": "0x51e45",
+    "table": "post",
+    "chapter_or_cmd": 23,
+    "addr": "0x24c1e",
+    "name": "command_handler_81",
+    "conf": "static_re"
+   },
+   {
+    "index": 82,
+    "slot": "0x51e49",
+    "table": "post",
+    "chapter_or_cmd": 24,
+    "addr": "0x24df2",
+    "name": "command_handler_82",
+    "conf": "static_re"
+   },
+   {
+    "index": 83,
+    "slot": "0x51e4d",
+    "table": "post",
+    "chapter_or_cmd": 25,
+    "addr": "0x24e80",
+    "name": "command_handler_83",
+    "conf": "static_re"
+   },
+   {
+    "index": 84,
+    "slot": "0x51e51",
+    "table": "post",
+    "chapter_or_cmd": 26,
+    "addr": "0x250cc",
+    "name": "command_handler_84",
+    "conf": "static_re"
+   },
+   {
+    "index": 85,
+    "slot": "0x51e55",
+    "table": "post",
+    "chapter_or_cmd": 27,
+    "addr": "0x25464",
+    "name": "command_handler_85",
+    "conf": "static_re"
+   },
+   {
+    "index": 86,
+    "slot": "0x51e59",
+    "table": "post",
+    "chapter_or_cmd": 28,
+    "addr": "0x2548c",
+    "name": "command_handler_86",
+    "conf": "static_re"
+   },
+   {
+    "index": 87,
+    "slot": "0x51e5d",
+    "table": "post",
+    "chapter_or_cmd": 29,
+    "addr": "0x25757",
+    "name": "command_handler_87",
+    "conf": "static_re"
+   }
+  ],
+  "next_after_0x51e61": "0x13140101(不在程式段,表結束)",
+  "pre_table_calls": [
+   "0x25e3a",
+   "0x25f10",
+   "0x260f5"
+  ],
+  "post_table_call": "0x25e23"
+ },
+ "runs": [
+  {
+   "tag": "ch22_r1",
+   "what": "正式第 22 章戰場:fd2_chapter_sweep.prepare_chapter_save(chapter_n=23,roster_cap=16)產生的完整隊伍存檔,章節位元組 22;出戰選擇後經 attempt_camp_exit 進戰場。0x1d8aa 停下時把 [0x53ecc] 寫成 2,我方用系統環 END 結束回合;0x25e1e 只記錄 [0x53c03](= 22,沒有寫入)。處理器裡在呼叫點、delay / lut / flicker 前後下斷點,lut #1 逐幀停。",
+   "stops": [
+    {
+     "at": "0x1d8aa",
+     "t": 120.2,
+     "tick": 916540,
+     "name": "結果碼檢查:[0x53ecc] 寫成 2",
+     "before": {
+      "ecc": 0,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     },
+     "after": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 20,
+      "y": 35,
+      "f5": 0,
+      "camp": 2,
+      "hp": 253
+     }
+    },
+    {
+     "at": "0x25dd5",
+     "t": 149.0,
+     "tick": 916540,
+     "name": "戰役迴圈",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x25e1e",
+     "t": 154.2,
+     "tick": 916540,
+     "name": "戰後表之前(不寫入)",
+     "before": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     },
+     "table_22": "0x24754"
+    },
+    {
+     "at": "0x24754",
+     "t": 159.7,
+     "tick": 916540,
+     "name": "0x24754 入口",
+     "ret": "0x25e2a",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 20,
+      "y": 35,
+      "f5": 0,
+      "camp": 2,
+      "hp": 253
+     },
+     "count": 42
+    },
+    {
+     "at": "0x247b4",
+     "t": 167.5,
+     "tick": 916540,
+     "name": "call layout_units",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 29,
+      "turn": 1
+     },
+     "vga": "r1_seq_247b4"
+    },
+    {
+     "at": "0x247be",
+     "t": 173.2,
+     "tick": 916561,
+     "name": "call party_has_item(100)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r1_seq_247be"
+    },
+    {
+     "at": "0x2481a",
+     "t": 178.9,
+     "tick": 916561,
+     "name": "call dialog 9",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r1_seq_2481a"
+    },
+    {
+     "at": "key",
+     "t": 197.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key01"
+    },
+    {
+     "at": "key",
+     "t": 211.9,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key02"
+    },
+    {
+     "at": "key",
+     "t": 226.0,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key03"
+    },
+    {
+     "at": "key",
+     "t": 240.2,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key04"
+    },
+    {
+     "at": "key",
+     "t": 254.2,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key05"
+    },
+    {
+     "at": "key",
+     "t": 268.2,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key06"
+    },
+    {
+     "at": "key",
+     "t": 281.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key07"
+    },
+    {
+     "at": "key",
+     "t": 295.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key08"
+    },
+    {
+     "at": "key",
+     "t": 309.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key09"
+    },
+    {
+     "at": "key",
+     "t": 323.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key10"
+    },
+    {
+     "at": "key",
+     "t": 337.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key11"
+    },
+    {
+     "at": "0x2482e",
+     "t": 338.2,
+     "tick": 919336,
+     "name": "call act(71)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_2482e"
+    },
+    {
+     "at": "0x24838",
+     "t": 345.1,
+     "tick": 919385,
+     "name": "call roster_has(13)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24838"
+    },
+    {
+     "at": "0x24921",
+     "t": 350.7,
+     "tick": 919385,
+     "name": "call dialog 13",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24921"
+    },
+    {
+     "at": "key",
+     "t": 369.6,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key12"
+    },
+    {
+     "at": "key",
+     "t": 383.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key13"
+    },
+    {
+     "at": "key",
+     "t": 397.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key14"
+    },
+    {
+     "at": "key",
+     "t": 411.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key15"
+    },
+    {
+     "at": "key",
+     "t": 425.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key16"
+    },
+    {
+     "at": "key",
+     "t": 439.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key17"
+    },
+    {
+     "at": "key",
+     "t": 453.8,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key18"
+    },
+    {
+     "at": "key",
+     "t": 467.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key19"
+    },
+    {
+     "at": "key",
+     "t": 481.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key20"
+    },
+    {
+     "at": "0x2492b",
+     "t": 482.4,
+     "tick": 921660,
+     "name": "call join(19)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_2492b"
+    },
+    {
+     "at": "0x24933",
+     "t": 487.9,
+     "tick": 921660,
+     "name": "call sync_party",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24933"
+    },
+    {
+     "at": "0x2495d",
+     "t": 493.8,
+     "tick": 921660,
+     "name": "dialog 14 之前(inc 之後)",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "dialog_idx": 14,
+     "vga": "r1_dlg14"
+    },
+    {
+     "at": "key",
+     "t": 513.3,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key21"
+    },
+    {
+     "at": "key",
+     "t": 527.1,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key22"
+    },
+    {
+     "at": "key",
+     "t": 541.1,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key23"
+    },
+    {
+     "at": "key",
+     "t": 554.9,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key24"
+    },
+    {
+     "at": "0x24962",
+     "t": 555.6,
+     "tick": 922661,
+     "name": "dialog 14 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24962"
+    },
+    {
+     "at": "0x24965",
+     "t": 561.0,
+     "tick": 922661,
+     "name": "delay(400) #1 之前",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24965"
+    },
+    {
+     "at": "0x2496f",
+     "t": 566.4,
+     "tick": 922668,
+     "name": "delay(400) #1 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_2496f"
+    },
+    {
+     "at": "0x24978",
+     "t": 571.8,
+     "tick": 922668,
+     "name": "call lut #1",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24978"
+    },
+    {
+     "at": "0x2189a",
+     "t": 577.3,
+     "tick": 922668,
+     "name": "lut_circle_ramp_at_unit 入口 #1",
+     "ret": "0x2497d",
+     "args": [
+      1,
+      15,
+      10
+     ],
+     "u": {
+      "i": 1,
+      "x": 20,
+      "y": 17,
+      "f5": 0,
+      "camp": 2,
+      "hp": 253
+     },
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x2198e",
+     "t": 583.2,
+     "tick": 922670,
+     "name": "lut #1 幀",
+     "frame": 0,
+     "radius": 15,
+     "vga": "r1_lut1_f0"
+    },
+    {
+     "at": "0x2198e",
+     "t": 586.5,
+     "tick": 922671,
+     "name": "lut #1 幀",
+     "frame": 1,
+     "radius": 25,
+     "vga": "r1_lut1_f1"
+    },
+    {
+     "at": "0x2198e",
+     "t": 589.7,
+     "tick": 922671,
+     "name": "lut #1 幀",
+     "frame": 2,
+     "radius": 35,
+     "vga": "r1_lut1_f2"
+    },
+    {
+     "at": "0x2198e",
+     "t": 593.0,
+     "tick": 922672,
+     "name": "lut #1 幀",
+     "frame": 3,
+     "radius": 45,
+     "vga": "r1_lut1_f3"
+    },
+    {
+     "at": "0x2198e",
+     "t": 596.3,
+     "tick": 922673,
+     "name": "lut #1 幀",
+     "frame": 4,
+     "radius": 55,
+     "vga": "r1_lut1_f4"
+    },
+    {
+     "at": "0x2198e",
+     "t": 599.6,
+     "tick": 922674,
+     "name": "lut #1 幀",
+     "frame": 5,
+     "radius": 65,
+     "vga": "r1_lut1_f5"
+    },
+    {
+     "at": "0x2198e",
+     "t": 602.8,
+     "tick": 922675,
+     "name": "lut #1 幀",
+     "frame": 6,
+     "radius": 75,
+     "vga": "r1_lut1_f6"
+    },
+    {
+     "at": "0x2198e",
+     "t": 606.1,
+     "tick": 922676,
+     "name": "lut #1 幀",
+     "frame": 7,
+     "radius": 85,
+     "vga": "r1_lut1_f7"
+    },
+    {
+     "at": "0x2198e",
+     "t": 609.4,
+     "tick": 922678,
+     "name": "lut #1 幀",
+     "frame": 8,
+     "radius": 95,
+     "vga": "r1_lut1_f8"
+    },
+    {
+     "at": "0x2198e",
+     "t": 612.7,
+     "tick": 922679,
+     "name": "lut #1 幀",
+     "frame": 9,
+     "radius": 105,
+     "vga": "r1_lut1_f9"
+    },
+    {
+     "at": "0x2497d",
+     "t": 615.9,
+     "tick": 922681,
+     "name": "lut #1 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_2497d"
+    },
+    {
+     "at": "0x24980",
+     "t": 621.5,
+     "tick": 922681,
+     "name": "call flicker #1",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24980"
+    },
+    {
+     "at": "0x24987",
+     "t": 626.8,
+     "tick": 922697,
+     "name": "flicker #1 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24987"
+    },
+    {
+     "at": "key",
+     "t": 645.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key25"
+    },
+    {
+     "at": "0x249b1",
+     "t": 646.2,
+     "tick": 922948,
+     "name": "delay(400) #2 之前",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249b1"
+    },
+    {
+     "at": "0x249bb",
+     "t": 651.6,
+     "tick": 922955,
+     "name": "delay(400) #2 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249bb"
+    },
+    {
+     "at": "0x249c4",
+     "t": 657.2,
+     "tick": 922955,
+     "name": "call lut #2",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249c4"
+    },
+    {
+     "at": "0x2189a",
+     "t": 662.8,
+     "tick": 922955,
+     "name": "lut_circle_ramp_at_unit 入口 #2",
+     "ret": "0x249c9",
+     "args": [
+      1,
+      15,
+      10
+     ],
+     "u": {
+      "i": 1,
+      "x": 20,
+      "y": 17,
+      "f5": 0,
+      "camp": 2,
+      "hp": 253
+     },
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x249c9",
+     "t": 688.6,
+     "tick": 922968,
+     "name": "lut #2 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249c9"
+    },
+    {
+     "at": "0x249cc",
+     "t": 694.1,
+     "tick": 922968,
+     "name": "call flicker #2",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249cc"
+    },
+    {
+     "at": "0x249d3",
+     "t": 699.5,
+     "tick": 922984,
+     "name": "flicker #2 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249d3"
+    },
+    {
+     "at": "key",
+     "t": 718.4,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key26"
+    },
+    {
+     "at": "key",
+     "t": 732.4,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key27"
+    },
+    {
+     "at": "0x249fd",
+     "t": 733.1,
+     "tick": 923490,
+     "name": "delay(400) #3 之前",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_249fd"
+    },
+    {
+     "at": "0x24a07",
+     "t": 738.7,
+     "tick": 923497,
+     "name": "delay(400) #3 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24a07"
+    },
+    {
+     "at": "0x24a10",
+     "t": 744.1,
+     "tick": 923497,
+     "name": "call lut #3",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24a10"
+    },
+    {
+     "at": "0x2189a",
+     "t": 749.7,
+     "tick": 923497,
+     "name": "lut_circle_ramp_at_unit 入口 #3",
+     "ret": "0x24a15",
+     "args": [
+      1,
+      30,
+      16
+     ],
+     "u": {
+      "i": 1,
+      "x": 20,
+      "y": 17,
+      "f5": 0,
+      "camp": 2,
+      "hp": 253
+     },
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x24a15",
+     "t": 775.7,
+     "tick": 923514,
+     "name": "lut #3 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24a15"
+    },
+    {
+     "at": "0x24a3e",
+     "t": 781.6,
+     "tick": 923519,
+     "name": "調色盤迴圈結束",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 15,
+      "turn": 1
+     },
+     "vga": "r1_seq_24a3e"
+    },
+    {
+     "at": "key",
+     "t": 800.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key28"
+    },
+    {
+     "at": "key",
+     "t": 814.4,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key29"
+    },
+    {
+     "at": "key",
+     "t": 828.4,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key30"
+    },
+    {
+     "at": "key",
+     "t": 842.5,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key31"
+    },
+    {
+     "at": "key",
+     "t": 856.6,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key32"
+    },
+    {
+     "at": "key",
+     "t": 870.6,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key33"
+    },
+    {
+     "at": "key",
+     "t": 884.6,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key34"
+    },
+    {
+     "at": "key",
+     "t": 898.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key35"
+    },
+    {
+     "at": "key",
+     "t": 912.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key36"
+    },
+    {
+     "at": "key",
+     "t": 926.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key37"
+    },
+    {
+     "at": "key",
+     "t": 940.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key38"
+    },
+    {
+     "at": "key",
+     "t": 954.7,
+     "name": "送 Return(等待中)",
+     "shot": "r1_key39"
+    },
+    {
+     "at": "0x25e2a",
+     "t": 955.4,
+     "tick": 926558,
+     "name": "0x24754 返回",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r1_seq_25e2a"
+    }
+   ]
+  },
+  {
+   "tag": "c2500_nof",
+   "what": "第 1 章戰場,cycles 2500(dosbox-x-c2500 包裝只把 harness 的 cycles=5000 換成 2500);索爾施放地震術,盜賊 #11 搬到 (19,14)、HP 9999;只停入口、迴圈結束、redraw(0) 之後。",
+   "stops": [
+    {
+     "at": "0x2189a",
+     "t": 119.1,
+     "tick": 945893,
+     "name": "入口",
+     "ret": "0x21888",
+     "args": [
+      0,
+      15,
+      10
+     ]
+    },
+    {
+     "at": "0x21998",
+     "t": 122.4,
+     "tick": 945909,
+     "name": "迴圈結束",
+     "ebx": 10
+    },
+    {
+     "at": "0x219a8",
+     "t": 125.3,
+     "tick": 945911,
+     "name": "redraw(0) 之後"
+    }
+   ]
+  },
+  {
+   "tag": "c2500_frames",
+   "what": "同一場再施放一次地震術,逐幀停。",
+   "stops": [
+    {
+     "at": "0x2189a",
+     "t": 66.8,
+     "tick": 947356,
+     "name": "入口",
+     "ret": "0x21888",
+     "args": [
+      0,
+      15,
+      10
+     ]
+    },
+    {
+     "at": "0x2198e",
+     "t": 70.0,
+     "tick": 947358,
+     "name": "幀",
+     "frame": 0,
+     "radius": 15
+    },
+    {
+     "at": "0x2198e",
+     "t": 72.7,
+     "tick": 947359,
+     "name": "幀",
+     "frame": 1,
+     "radius": 25
+    },
+    {
+     "at": "0x2198e",
+     "t": 75.5,
+     "tick": 947360,
+     "name": "幀",
+     "frame": 2,
+     "radius": 35
+    },
+    {
+     "at": "0x2198e",
+     "t": 78.2,
+     "tick": 947362,
+     "name": "幀",
+     "frame": 3,
+     "radius": 45
+    },
+    {
+     "at": "0x2198e",
+     "t": 81.0,
+     "tick": 947363,
+     "name": "幀",
+     "frame": 4,
+     "radius": 55
+    },
+    {
+     "at": "0x2198e",
+     "t": 83.7,
+     "tick": 947364,
+     "name": "幀",
+     "frame": 5,
+     "radius": 65
+    },
+    {
+     "at": "0x2198e",
+     "t": 86.4,
+     "tick": 947366,
+     "name": "幀",
+     "frame": 6,
+     "radius": 75
+    },
+    {
+     "at": "0x2198e",
+     "t": 89.2,
+     "tick": 947368,
+     "name": "幀",
+     "frame": 7,
+     "radius": 85
+    },
+    {
+     "at": "0x2198e",
+     "t": 91.9,
+     "tick": 947370,
+     "name": "幀",
+     "frame": 8,
+     "radius": 95
+    },
+    {
+     "at": "0x2198e",
+     "t": 94.7,
+     "tick": 947372,
+     "name": "幀",
+     "frame": 9,
+     "radius": 105
+    },
+    {
+     "at": "0x21998",
+     "t": 97.4,
+     "tick": 947372,
+     "name": "迴圈結束",
+     "ebx": 10
+    },
+    {
+     "at": "0x219a8",
+     "t": 100.1,
+     "tick": 947374,
+     "name": "redraw(0) 之後"
+    }
+   ]
+  }
+ ],
+ "analysis": {
+  "script": "an127.py(暫存)",
+  "checks": 21,
+  "pass": 21,
+  "controls": 2,
+  "controls_fail_as_expected": 2,
+  "items": [
+   {
+    "group": "S",
+    "name": "戰後表第 22 格 = 0x24754",
+    "ok": true,
+    "control": false,
+    "detail": "0x24754"
+   },
+   {
+    "group": "S",
+    "name": "0x25e3a 以 [0x53c03] 索引 0x51d71",
+    "ok": true,
+    "control": false,
+    "detail": "a1033c0000ff1485711d0000"
+   },
+   {
+    "group": "S",
+    "name": "0x25f10 以 [0x53c03] 索引 0x51d71",
+    "ok": true,
+    "control": false,
+    "detail": "a1033c0000ff1485711d0000"
+   },
+   {
+    "group": "S",
+    "name": "0x260f5 以 [0x53c03] 索引 0x51d71",
+    "ok": true,
+    "control": false,
+    "detail": "a1033c0000ff1485711d0000"
+   },
+   {
+    "group": "S",
+    "name": "0x25e23 以 [0x53c03] 索引 0x51de9",
+    "ok": true,
+    "control": false,
+    "detail": "a1033c0000ff1485e91d0000"
+   },
+   {
+    "group": "S",
+    "name": "表界",
+    "ok": true,
+    "control": false,
+    "detail": "0x51e61 讀到 0x13140101"
+   },
+   {
+    "group": "L r1",
+    "name": "戰後表之前章節索引本來就是 22(沒有寫入)",
+    "ok": true,
+    "control": false,
+    "detail": "{'ecc': 2, 'chap': 22, 'scroll_x': 14, 'scroll_y': 29, 'turn': 1}"
+   },
+   {
+    "group": "L r1",
+    "name": "執行期戰後表第 22 格",
+    "ok": true,
+    "control": false,
+    "detail": "0x24754"
+   },
+   {
+    "group": "L r1",
+    "name": "處理器入口的返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 0x25e2a,靜態 0x25e2a"
+   },
+   {
+    "group": "L r1",
+    "name": "dialog 14 之前章節索引已加 1",
+    "ok": true,
+    "control": false,
+    "detail": "chap 23,dialog 14"
+   },
+   {
+    "group": "L r1",
+    "name": "三次 lut 的返回位址與引數",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [('0x2497d', [1, 15, 10]), ('0x249c9', [1, 15, 10]), ('0x24a15', [1, 30, 16])],靜態 [('0x2497d', [1, 15, 10]), ('0x249c9', [1, 15, 10]), ('0x24a15', [1, 30, 16])]"
+   },
+   {
+    "group": "L r1",
+    "name": "lut #1 十幀、半徑 = 起始 + 每幀加 × 幀序",
+    "ok": true,
+    "control": false,
+    "detail": "幀 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],半徑 [15, 25, 35, 45, 55, 65, 75, 85, 95, 105]"
+   },
+   {
+    "group": "L r1",
+    "name": "處理器內停點依位址遞增",
+    "ok": true,
+    "control": false,
+    "detail": "0x247b4 -> 0x247be -> 0x2481a -> 0x2482e -> 0x24838 -> 0x24921 -> 0x2492b -> 0x24933 -> 0x2495d -> 0x24962 -> 0x24965 -> 0x2496f -> 0x24978 -> 0x2497d -> 0x24980 -> 0x24987 -> 0x249b1 -> 0x249bb -> 0x249c4 -> 0x249c9 -> 0x249cc -> 0x249d3 -> 0x249fd -> 0x24a07 -> 0x24a10 -> 0x24a15 -> 0x24a3e"
+   },
+   {
+    "group": "L r1",
+    "name": "跑到 0x25e2a 返回、模擬器沒有結束",
+    "ok": true,
+    "control": false,
+    "detail": "最後一站 0x25e2a"
+   },
+   {
+    "group": "L r1",
+    "name": "#1(逐幀停)與 #2(不停)tick 數相同",
+    "ok": true,
+    "control": false,
+    "detail": "#1 13,#2 13,#3 17(BIOS tick,約 54.93 ms)"
+   },
+   {
+    "group": "C",
+    "name": "續一百二十六借道紀錄(第 1 章資料)套同一檢查",
+    "ok": false,
+    "control": true,
+    "detail": "紀錄 [],靜態 [('0x2497d', [1, 15, 10]), ('0x249c9', [1, 15, 10]), ('0x24a15', [1, 30, 16])]"
+   },
+   {
+    "group": "T",
+    "name": "c2500_nof 入口引數與返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 ([0, 15, 10], '0x21888'),靜態 ([0, 15, 10], '0x21888')"
+   },
+   {
+    "group": "T",
+    "name": "c2500_frames 入口引數與返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 ([0, 15, 10], '0x21888'),靜態 ([0, 15, 10], '0x21888')"
+   },
+   {
+    "group": "T",
+    "name": "c2500_frames 十幀的序號與半徑",
+    "ok": true,
+    "control": false,
+    "detail": "[(0, 15), (1, 25), (2, 35), (3, 45), (4, 55), (5, 65), (6, 75), (7, 85), (8, 95), (9, 105)]"
+   },
+   {
+    "group": "T",
+    "name": "c2500_nof 沒有逐幀停",
+    "ok": true,
+    "control": false,
+    "detail": "0 站"
+   },
+   {
+    "group": "T",
+    "name": "cycles 2500 逐幀停與不停的 tick 相同",
+    "ok": true,
+    "control": false,
+    "detail": "[16, 16]"
+   },
+   {
+    "group": "T",
+    "name": "cycles 減半,tick 約變兩倍(受 CPU 限制)",
+    "ok": true,
+    "control": false,
+    "detail": "2500 [16, 16],5000 [7, 7](1 tick 量化,容許 1.6 ~ 2.6 倍)"
+   },
+   {
+    "group": "C",
+    "name": "對照:等垂直回掃(與 cycles 無關)的預測",
+    "ok": false,
+    "control": true,
+    "detail": "2500 [16, 16],5000 [7, 7]"
+   }
+  ]
+ },
+ "mutation": {
+  "script": "mut_an127.py(暫存)",
+  "stdout": [
+   "抓到 戰後表之前章節索引 1: rc=1 指定檢查=True Traceback=False FAIL L r1 戰後表之前章節索引本來就是 22(沒有寫入)",
+   "抓到 紀錄裡有寫入: rc=1 指定檢查=True Traceback=False FAIL L r1 戰後表之前章節索引本來就是 22(沒有寫入)",
+   "抓到 戰後表第 22 格換成第 21 格: rc=1 指定檢查=True Traceback=False FAIL L r1 執行期戰後表第 22 格",
+   "抓到 入口返回位址錯: rc=1 指定檢查=True Traceback=False FAIL L r1 處理器入口的返回位址",
+   "抓到 dialog 14 之前沒有加 1: rc=1 指定檢查=True Traceback=False FAIL L r1 dialog 14 之前章節索引已加 1",
+   "抓到 #3 每幀加 15: rc=1 指定檢查=True Traceback=False FAIL L r1 三次 lut 的返回位址與引數",
+   "抓到 #2 返回位址換成 #1 的: rc=1 指定檢查=True Traceback=False FAIL L r1 三次 lut 的返回位址與引數",
+   "抓到 少錄 #3 入口: rc=1 指定檢查=True Traceback=False FAIL L r1 三次 lut 的返回位址與引數",
+   "抓到 第 4 幀半徑 +1: rc=1 指定檢查=True Traceback=False FAIL L r1 lut #1 十幀、半徑 = 起始 + 每幀加 × 幀序",
+   "抓到 少錄第 9 幀: rc=1 指定檢查=True Traceback=False FAIL L r1 lut #1 十幀、半徑 = 起始 + 每幀加 × 幀序",
+   "抓到 兩個停點順序對調: rc=1 指定檢查=True Traceback=False FAIL L r1 處理器內停點依位址遞增",
+   "抓到 最後模擬器結束: rc=1 指定檢查=True Traceback=False FAIL L r1 跑到 0x25e2a 返回、模擬器沒有結束",
+   "抓到 #2 多 1 個 tick: rc=1 指定檢查=True Traceback=False FAIL L r1 #1(逐幀停)與 #2(不停)tick 數相同",
+   "抓到 2500 不停的那次每幀加 11: rc=1 指定檢查=True Traceback=False FAIL T c2500_nof 入口引數與返回位址",
+   "抓到 2500 第 3 幀半徑 +1: rc=1 指定檢查=True Traceback=False FAIL T c2500_frames 十幀的序號與半徑",
+   "抓到 2500 不停的那次多一個逐幀停點: rc=1 指定檢查=True Traceback=False FAIL T c2500_nof 沒有逐幀停",
+   "抓到 2500 逐幀停那次多 1 tick: rc=1 指定檢查=True Traceback=False FAIL T cycles 2500 逐幀停與不停的 tick 相同",
+   "抓到 2500 兩份都只有 7 tick: rc=1 指定檢查=True Traceback=False FAIL T cycles 減半,tick 約變兩倍(受 CPU 限制) | C 對照:等垂直回掃(與 cycles 無關)的預測(對照沒有判為不符合)",
+   "抓到 5000 不停的那次多 4 tick: rc=1 指定檢查=True Traceback=False FAIL T cycles 減半,tick 約變兩倍(受 CPU 限制)",
+   "抓到 對照換成會通過的紀錄: rc=1 指定檢查=True Traceback=False FAIL C 續一百二十六借道紀錄(第 1 章資料)套同一檢查(對照沒有判為不符合)",
+   "突變 20 個,抓到 20,漏掉 0"
+  ]
+ }
+}

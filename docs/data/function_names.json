@@ -4819,9 +4819,9 @@
   {
    "addr": "0x22ef6",
    "name": "command_handler_58",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 58 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 58 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 58 項是戰後章節表第 0 格(章節位元組 0),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51de9",
@@ -4833,9 +4833,9 @@
   {
    "addr": "0x22f37",
    "name": "command_handler_59",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 59 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 59 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 59 項是戰後章節表第 1 格(章節位元組 1),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51ded",
@@ -4847,9 +4847,9 @@
   {
    "addr": "0x230f2",
    "name": "command_handler_60",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 60 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(6), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), layout_units(_, _, _, _, 6, _, _, _, _, 2, _), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(2))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 60 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(6), dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), layout_units(_, _, _, _, 6, _, _, _, _, 2, _), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(2))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 60 項是戰後章節表第 2 格(章節位元組 2),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51df1",
@@ -4861,9 +4861,9 @@
   {
    "addr": "0x231bc",
    "name": "command_handler_61",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 61 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 61 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 61 項是戰後章節表第 3 格(章節位元組 3),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51df5",
@@ -4875,9 +4875,9 @@
   {
    "addr": "0x231f9",
    "name": "command_handler_62",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 62 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 6, 0x29, 0xc, 8, 0, 6, 4), dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xa), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 62 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 6, 0x29, 0xc, 8, 0, 6, 4), dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xa), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 62 項是戰後章節表第 4 格(章節位元組 4),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51df9",
@@ -4889,9 +4889,9 @@
   {
    "addr": "0x23296",
    "name": "command_handler_63",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 63 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(0xd), spawn(3), pan(5, 0xe), act(0x1b))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 63 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(join(0xd), spawn(3), pan(5, 0xe), act(0x1b))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 63 項是戰後章節表第 5 格(章節位元組 5),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dfd",
@@ -4903,9 +4903,9 @@
   {
    "addr": "0x232e8",
    "name": "command_handler_64",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 64 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(0x2b), layout_units(_, _, _, _, 8, 0x2b, 0xc, 7, 2, 6, 2), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xc), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 64 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), unit_inactive(0x2b), layout_units(_, _, _, _, 8, 0x2b, 0xc, 7, 2, 6, 2), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0xc), dialog(_, 5, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 64 項是戰後章節表第 6 格(章節位元組 6),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e01",
@@ -4917,9 +4917,9 @@
   {
    "addr": "0x234bb",
    "name": "command_handler_65",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 65 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 65 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 65 項是戰後章節表第 7 格(章節位元組 7),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e05",
@@ -4931,9 +4931,9 @@
   {
    "addr": "0x235bc",
    "name": "command_handler_66",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 66 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(6, 1), spawn(4), act(0x24))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 66 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(pan(6, 1), spawn(4), act(0x24))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 66 項是戰後章節表第 8 格(章節位元組 8),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e09",
@@ -4945,9 +4945,9 @@
   {
    "addr": "0x235f9",
    "name": "command_handler_67",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 67 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 67 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 67 項是戰後章節表第 9 格(章節位元組 9),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e0d",
@@ -4959,9 +4959,9 @@
   {
    "addr": "0x23790",
    "name": "command_handler_68",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 68 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0xe))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 68 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0xe))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 68 項是戰後章節表第 10 格(章節位元組 10),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e11",
@@ -4973,9 +4973,9 @@
   {
    "addr": "0x237d5",
    "name": "command_handler_69",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 69 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 0xd, 0xe, 0xa, 2, 0, 4, 0), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2d), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0x11))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 69 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(layout_units(_, _, _, 0, 0xd, 0xe, 0xa, 2, 0, 4, 0), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2d), dialog(_, 4, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party(), join(0x11))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 69 項是戰後章節表第 11 格(章節位元組 11),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e15",
@@ -4987,9 +4987,9 @@
   {
    "addr": "0x2389f",
    "name": "command_handler_70",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 70 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 70 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 9, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 70 項是戰後章節表第 12 格(章節位元組 12),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e19",
@@ -5001,9 +5001,9 @@
   {
    "addr": "0x238dc",
    "name": "command_handler_71",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 71 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1), layout_units(_, _, _, 0, 0xf, 0, 0, 0, 0, 0xc, 0xa), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2f), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 71 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(spawn(1), layout_units(_, _, _, 0, 0xf, 0, 0, 0, 0, 0xc, 0xa), dialog(_, 2, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x2f), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 71 項是戰後章節表第 13 格(章節位元組 13),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e1d",
@@ -5015,9 +5015,9 @@
   {
    "addr": "0x239bd",
    "name": "command_handler_72",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 72 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 72 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 72 項是戰後章節表第 14 格(章節位元組 14),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e21",
@@ -5029,9 +5029,9 @@
   {
    "addr": "0x23a0a",
    "name": "command_handler_73",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 73 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 73 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 73 項是戰後章節表第 15 格(章節位元組 15),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e25",
@@ -5043,9 +5043,9 @@
   {
    "addr": "0x23b5f",
    "name": "command_handler_74",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 74 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 74 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 74 項是戰後章節表第 16 格(章節位元組 16),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e29",
@@ -5057,9 +5057,9 @@
   {
    "addr": "0x23cd5",
    "name": "command_handler_75",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 75 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 75 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 75 項是戰後章節表第 17 格(章節位元組 17),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e2d",
@@ -5071,9 +5071,9 @@
   {
    "addr": "0x23e39",
    "name": "command_handler_76",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 76 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 76 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(sync_party(), dialog(_, 3, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 76 項是戰後章節表第 18 格(章節位元組 18),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e31",
@@ -5085,9 +5085,9 @@
   {
    "addr": "0x23e74",
    "name": "command_handler_77",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 77 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 77 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 77 項是戰後章節表第 19 格(章節位元組 19),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e35",
@@ -5099,9 +5099,9 @@
   {
    "addr": "0x240fa",
    "name": "command_handler_78",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 78 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 78 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 78 項是戰後章節表第 20 格(章節位元組 20),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e39",
@@ -5113,9 +5113,9 @@
   {
    "addr": "0x244b6",
    "name": "command_handler_79",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 79 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 79 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 79 項是戰後章節表第 21 格(章節位元組 21),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e3d",
@@ -5127,7 +5127,7 @@
   {
    "addr": "0x24754",
    "name": "command_handler_80",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 80 項的 handler(身分由跳表 fixup 決定)。 續一百二十六(DOSBox-X + 反組譯):fixup 來源 0x51e41 同時是戰後章節表 0x51de9 的第 22 格(0x51de9 + 22 × 4);戰役迴圈 0x25e23 call dword ptr [eax*4 + 0x51de9] 以 [0x53c03] = 22 呼叫到這裡,入口讀到的返回位址是 0x25e2a。本體就是 chapter_beats 的 ch22_post(戰後處理器:dialog、join、act、sync_party、inc [0x53c03],再三次 lut_circle_ramp_at_unit)。0x51d01 往後 28 格就是 0x51d71(戰前章節表),所以第 28 格以後不是指令表;名稱沿用(不改登錄名)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 80 項的 handler(身分由跳表 fixup 決定)。 續一百二十六(DOSBox-X + 反組譯):fixup 來源 0x51e41 同時是戰後章節表 0x51de9 的第 22 格(0x51de9 + 22 × 4);戰役迴圈 0x25e23 call dword ptr [eax*4 + 0x51de9] 以 [0x53c03] = 22 呼叫到這裡,入口讀到的返回位址是 0x25e2a。本體就是 chapter_beats 的 ch22_post(戰後處理器:dialog、join、act、sync_party、inc [0x53c03],再三次 lut_circle_ramp_at_unit)。0x51d01 往後 28 格就是 0x51d71(戰前章節表),所以第 28 格以後不是指令表;名稱沿用(不改登錄名)。 續一百二十七(DOSBox-X,正式第 22 章戰場,[0x53c03] 沒有改寫):三次 lut_circle_ramp_at_unit 的引數是 (1, 15, 10)、(1, 15, 10)、(1, 30, 16),返回 0x2497d / 0x249c9 / 0x24a15,處理器返回 0x25e2a。",
    "confidence": "static_re",
    "date": "2026-10-15",
    "evidence": [
@@ -5145,9 +5145,9 @@
   {
    "addr": "0x24c1e",
    "name": "command_handler_81",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 81 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 81 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 81 項是戰後章節表第 23 格(章節位元組 23),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e45",
@@ -5159,9 +5159,9 @@
   {
    "addr": "0x24df2",
    "name": "command_handler_82",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 82 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(4, 0x10), spawn(2), act(0x4b), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0x1a), sync_party())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 82 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(dialog(_, 6, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(4, 0x10), spawn(2), act(0x4b), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), join(0x1a), sync_party())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 82 項是戰後章節表第 24 格(章節位元組 24),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e49",
@@ -5173,9 +5173,9 @@
   {
    "addr": "0x24e80",
    "name": "command_handler_83",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 83 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 83 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 83 項是戰後章節表第 25 格(章節位元組 25),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e4d",
@@ -5187,9 +5187,9 @@
   {
    "addr": "0x250cc",
    "name": "command_handler_84",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 84 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 84 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 84 項是戰後章節表第 26 格(章節位元組 26),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e51",
@@ -5201,9 +5201,9 @@
   {
    "addr": "0x25464",
    "name": "command_handler_85",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 85 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 85 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 85 項是戰後章節表第 27 格(章節位元組 27),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e55",
@@ -5215,9 +5215,9 @@
   {
    "addr": "0x2548c",
    "name": "command_handler_86",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 86 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 86 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 86 項是戰後章節表第 28 格(章節位元組 28),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e59",
@@ -5229,9 +5229,9 @@
   {
    "addr": "0x25757",
    "name": "command_handler_87",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 87 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 87 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 87 項是戰後章節表第 29 格(章節位元組 29),由 0x25e23 的 call [eax*4 + 0x51de9] 呼叫([0x53ecc] == 2 時,eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e5d",
@@ -5243,9 +5243,9 @@
   {
    "addr": "0x3231b",
    "name": "command_handler_28",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 28 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 28 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 28 項是戰前章節表第 0 格(章節位元組 0),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d71",
@@ -5257,9 +5257,9 @@
   {
    "addr": "0x32d18",
    "name": "command_handler_29",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 29 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 29 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 29 項是戰前章節表第 1 格(章節位元組 1),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d75",
@@ -5271,9 +5271,9 @@
   {
    "addr": "0x32e8c",
    "name": "command_handler_30",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 30 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 30 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 30 項是戰前章節表第 2 格(章節位元組 2),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d79",
@@ -5285,9 +5285,9 @@
   {
    "addr": "0x32fb2",
    "name": "command_handler_31",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 31 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 0xb), act(0x14), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(4, 0), delay(0xc8))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 31 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 0xb), act(0x14), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(4, 0), delay(0xc8))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 31 項是戰前章節表第 3 格(章節位元組 3),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d7d",
@@ -5299,9 +5299,9 @@
   {
    "addr": "0x33049",
    "name": "command_handler_32",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 32 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 32 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 32 項是戰前章節表第 4 格(章節位元組 4),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d81",
@@ -5313,9 +5313,9 @@
   {
    "addr": "0x3314b",
    "name": "command_handler_33",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 33 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 33 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 33 項是戰前章節表第 5 格(章節位元組 5),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d85",
@@ -5327,9 +5327,9 @@
   {
    "addr": "0x33169",
    "name": "command_handler_34",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 34 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(8, 1), act(0x1c), pan(8, 0), act(0x1d), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 34 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(8, 1), act(0x1c), pan(8, 0), act(0x1d), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 34 項是戰前章節表第 6 格(章節位元組 6),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d89",
@@ -5341,9 +5341,9 @@
   {
    "addr": "0x33219",
    "name": "command_handler_35",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 35 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(7, 0x20), act(0x1f), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(7, 0x17), act(0x20))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 35 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(7, 0x20), act(0x1f), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(7, 0x17), act(0x20))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 35 項是戰前章節表第 7 格(章節位元組 7),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d8d",
@@ -5355,9 +5355,9 @@
   {
    "addr": "0x3327d",
    "name": "command_handler_36",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 36 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(6, 0), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x23), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0), reset_pose())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 36 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(6, 0), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x23), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0), reset_pose())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 36 項是戰前章節表第 8 格(章節位元組 8),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d91",
@@ -5369,9 +5369,9 @@
   {
    "addr": "0x3332b",
    "name": "command_handler_37",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 37 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0xa, 0))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 37 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0xa, 0))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 37 項是戰前章節表第 9 格(章節位元組 9),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d95",
@@ -5383,9 +5383,9 @@
   {
    "addr": "0x33367",
    "name": "command_handler_38",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 38 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0xa, 7), spawn(1), act(0x26), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 38 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0xa, 7), spawn(1), act(0x26), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 38 項是戰前章節表第 10 格(章節位元組 10),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d99",
@@ -5397,9 +5397,9 @@
   {
    "addr": "0x333f5",
    "name": "command_handler_39",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 39 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 4), spawn(1), act(0x28), pan(0xb, 0x28), act(0x29), reset_pose())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 39 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(4, 4), spawn(1), act(0x28), pan(0xb, 0x28), act(0x29), reset_pose())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 39 項是戰前章節表第 11 格(章節位元組 11),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51d9d",
@@ -5411,9 +5411,9 @@
   {
    "addr": "0x3346b",
    "name": "command_handler_40",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 40 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 40 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call())。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 40 項是戰前章節表第 12 格(章節位元組 12),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51da1",
@@ -5425,9 +5425,9 @@
   {
    "addr": "0x3347c",
    "name": "command_handler_41",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 41 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x14, 0x14))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 41 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x14, 0x14))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 41 項是戰前章節表第 13 格(章節位元組 13),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51da5",
@@ -5439,9 +5439,9 @@
   {
    "addr": "0x334d9",
    "name": "command_handler_42",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 42 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x18, 0x11), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x30), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 42 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0xc), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x18, 0x11), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), act(0x30), dialog(_, _, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), focus_unit(0))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 42 項是戰前章節表第 14 格(章節位元組 14),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51da9",
@@ -5453,9 +5453,9 @@
   {
    "addr": "0x335aa",
    "name": "command_handler_44",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 44 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0x12), spawn(1))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 44 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), roster_has(0x12), spawn(1))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 44 項是戰前章節表第 16 格(章節位元組 16),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51db1",
@@ -5467,9 +5467,9 @@
   {
    "addr": "0x335da",
    "name": "command_handler_45",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 45 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4), act(0x36), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 45 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4), act(0x36), dialog(_, 1, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan(0x10, 4))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 45 項是戰前章節表第 17 格(章節位元組 17),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51db5",
@@ -5481,9 +5481,9 @@
   {
    "addr": "0x3367e",
    "name": "command_handler_49",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 49 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x10, 0x1c))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 49 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(0x10, 0x1c))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 49 項是戰前章節表第 21 格(章節位元組 21),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dc5",
@@ -5495,9 +5495,9 @@
   {
    "addr": "0x336a0",
    "name": "command_handler_50",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 50 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 50 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 50 項是戰前章節表第 22 格(章節位元組 22),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dc9",
@@ -5509,9 +5509,9 @@
   {
    "addr": "0x338c4",
    "name": "command_handler_51",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 51 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(0, 4), delay(0x190), pan(0, 0x16), delay(0x190), pan(0x1a, 0x18), delay(0x190), pan(0x1a, 2), delay(0x190))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 51 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), dialog(_, 0, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), spawn(1), pan(0, 4), delay(0x190), pan(0, 0x16), delay(0x190), pan(0x1a, 0x18), delay(0x190), pan(0x1a, 2), delay(0x190))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 51 項是戰前章節表第 23 格(章節位元組 23),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dcd",
@@ -5523,9 +5523,9 @@
   {
    "addr": "0x3396a",
    "name": "command_handler_52",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 52 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 52 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 52 項是戰前章節表第 24 格(章節位元組 24),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dd1",
@@ -5537,9 +5537,9 @@
   {
    "addr": "0x33aae",
    "name": "command_handler_53",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 53 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x27), act(0x4c))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 53 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x27), act(0x4c))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 53 項是戰前章節表第 25 格(章節位元組 25),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dd5",
@@ -5551,9 +5551,9 @@
   {
    "addr": "0x33af1",
    "name": "command_handler_54",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 54 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 54 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 54 項是戰前章節表第 26 格(章節位元組 26),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dd9",
@@ -5565,9 +5565,9 @@
   {
    "addr": "0x33c9d",
    "name": "command_handler_55",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 55 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 55 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 55 項是戰前章節表第 27 格(章節位元組 27),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51ddd",
@@ -5579,9 +5579,9 @@
   {
    "addr": "0x33dba",
    "name": "command_handler_56",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 56 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x38), act(0x56), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(9, 0x13, 8))。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 56 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(loadch_call(), pan(9, 0x38), act(0x56), dialog(_, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1), pan_spawn_group(9, 0x13, 8))。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 56 項是戰前章節表第 28 格(章節位元組 28),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51de1",
@@ -5593,9 +5593,9 @@
   {
    "addr": "0x33e3c",
    "name": "command_handler_57",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 57 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 57 項的 handler(身分由跳表 fixup 決定)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 57 項是戰前章節表第 29 格(章節位元組 29),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51de5",
@@ -16537,9 +16537,9 @@
   {
    "addr": "0x335a0",
    "name": "command_handler_43",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 43 項的 handler(身分由跳表 fixup 決定;事件表 0x51b91 第 135 格也指向這裡,但那已超過 90 格)。本體只是 `push 0x28 ; jmp 0x33470`:以 0x28 的堆疊需求進入另一個 handler 本體中段的共用入口。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 43 項的 handler(身分由跳表 fixup 決定;事件表 0x51b91 第 135 格也指向這裡,但那已超過 90 格)。本體只是 `push 0x28 ; jmp 0x33470`:以 0x28 的堆疊需求進入另一個 handler 本體中段的共用入口。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 43 項是戰前章節表第 15 格(章節位元組 15),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51dad",
@@ -27442,9 +27442,9 @@
   {
    "addr": "0x33674",
    "name": "command_handler_46",
-   "summary": "push 0x28 ; jmp 0x33470 —— 指令處理表 0x51d01 的第 46 / 47 / 48 格共用的本體樁(堆疊檢查大小 0x28 後跳進共用本體)(FD2.EXE 反組譯)。只經表格引用(doc98 續七十九)。",
+   "summary": "push 0x28 ; jmp 0x33470 —— 指令處理表 0x51d01 的第 46 / 47 / 48 格共用的本體樁(堆疊檢查大小 0x28 後跳進共用本體)(FD2.EXE 反組譯)。只經表格引用(doc98 續七十九)。續一百二十七更正(STATIC ANALYSIS):0x51d01 起 88 格其實是三張首尾相接的表(指令 28 格、0x51d71 戰前章節表 30 格、0x51de9 戰後章節表 30 格);第 46 / 47 / 48 項是戰前章節表第 18 / 19 / 20 格(章節位元組 18 / 19 / 20),由 0x25e3a / 0x25f10 / 0x260f5 的 call [eax*4 + 0x51d71] 呼叫(eax = [0x53c03]),不是指令 dispatch。名稱保留。",
    "confidence": "static_re",
-   "date": "2026-10-07",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51db9",

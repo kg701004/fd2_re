@@ -9700,3 +9700,40 @@ param_flow 只補實機型別沒比到的參數,所以實機比到的變多時�
 - 兩處無條件跳躍(0x118aa、0x34233)是發行商的版本還是第三方修改:手上只有這一份 FD2.EXE,判定不了。
 - 型別相同的兩個參數對調,篩選工具抓不到;能補的只有更多實機呼叫紀錄或人工讀反組譯。
 - 呼叫紀錄的 8 格上限、`LIBC_FUNCS` 的範圍:維持不做。
+
+## 2026-10-15 續一百二十七:正式第 22 章戰後處理器的三次 `lut_circle_ramp_at_unit` 以 DOSBox-X 錄到;cycles 2500 的每幀時間;`0x51d01` 起 88 格更正為三張表
+
+起因:續一百二十六「仍留的」依建議逐項處理。細節在 doc35 §18 末與 doc25 §20.6。
+
+**做法**(原版 FD2.EXE,md5 33464c81e6a364fd0660141139aa8e6e;只改模擬器記憶體裡的資料,程式碼沒有動)。
+- 第 22 章:`fd2_chapter_sweep.prepare_chapter_save`(chapter_n = 23、roster_cap = 16)做完整隊伍存檔,`attempt_camp_exit` 選滿 15 人進戰場;
+  `ensure_battle_hud` 之後還有對白,手動按完。結束回合前在 `0x1d8aa` 寫 `[0x53ecc]` = 2;`[0x53c03]` 不寫。
+- cycles:harness 固定 `cycles=5000`(`tools/dosbox_harness.sh` 第 365 行)。工具沒有改:WSL 放一個包裝腳本 `~/fd2-cycles-wrap/dosbox-x-c2500`,
+  經 `FD2_HARNESS_DOSBOX_BIN` 指過去,只把那個參數換成 2500 再 exec 同一個 calllog 版 dosbox-x。執行中的程序參數讀到 `cycles=2500`,包裝腳本記錄換了 1 處。
+- 三張表:暫存的 `tbl127.py` 從 FD2.EXE 逐格讀 88 格,對照 `function_names.json`;`patch_s127_names.py` 補 57 筆摘要。
+
+**結果**。
+- 第 22 章:三次呼叫 (1, 15, 10)、(1, 15, 10)、(1, 30, 16),返回 0x2497d / 0x249c9 / 0x24a15,入口到返回 13 / 13 / 17 tick;
+  處理器返回 0x25e2a,模擬器沒有結束(DOSBox-X 斷點讀值)。
+- cycles 2500:地震術入口到迴圈結束 16 tick(兩次相同),cycles 5000 是 7;對照「與 cycles 無關」的預測不符(DOSBox-X 斷點讀值)。
+- 三張表:60 格(58 個不重複位址)都登記成 `command_handler_*`,摘要說是指令 dispatch;補上更正句,名稱不改(FD2.EXE 反組譯)。
+- 範圍外(只記錄):`verify_findings.py` 的 `212-command-table`、`event_dispatch_table_58_89.json` 的 `command` 區塊仍以一張 88 格表的名義記錄;
+  doc25 §20.4 原文保留,由 §20.6 更正。
+
+**過程中的失誤**:
+1. 第一次直接把預設存檔的章節位元組改成 22:出戰選擇只有 12 名候選、目標 15。在 `0x2b0e3` 改了兩次 EBP,遊戲都以「本章希爾法必須出場」退回(DOSBox-X 視窗截圖)。
+   記憶裡記著要用 `prepare_chapter_save` 的完整隊伍(續六十五),應該先查。那個 instance 放棄,沒有紀錄出自它。
+2. `ensure_battle_hud` 把對白框當成戰場 HUD(已知的誤判),之後手動按 6 次 Return(DOSBox-X 視窗截圖)。
+3. 第 22 章結束回合時按鍵只隔 2 秒,一次選了索爾的移動、一次轉了環;續一百二十六記的是 6 ~ 7 秒,改回 6 秒後正常(DOSBox-X 視窗截圖)。
+4. 包裝腳本第一次被 harness 第 337 行擋下(binary 裡要有 `FD2_CALLLOG_ENTRIES` 字串);加一行說明的註解後通過,實際執行的仍是有修補的 binary。
+
+**檢查**:暫存的 `an127.py` 21 項全部符合,對照 2 項(續一百二十六借道紀錄套同一檢查、與 cycles 無關的預測)都判為不符合;
+`mut_an127.py` 改錯 20 處,20 個都被指定的檢查判為不符合,沒有 Traceback。
+
+**數字**:`function_names.json` 仍是 1149 筆;摘要改 58 筆(57 筆更正句、`command_handler_80` 一句實機結果),名稱、證據列、具名參數沒有動。
+工具沒有改。evidence 加 1 個 JSON(`lut_ch22_post_cycles2500_chapter_tables_20261015.json`)。
+
+**仍留的**:
+- 沒有斷點時相位迴圈實際畫出哪幾階沒有量(要連續擷取畫面,等使用者決定)。
+- `212-command-table` / `event_dispatch_table_58_89.json` 的命名(範圍外);`0x1541f` / `0x1d479` 兩處 dispatch 的索引上限沒有追。
+- 防拷比對只驗了一題一組輸入、兩處無條件跳躍的來源、型別相同的兩個參數對調、呼叫紀錄的 8 格上限:同續一百二十六。
