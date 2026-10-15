@@ -5127,14 +5127,18 @@
   {
    "addr": "0x24754",
    "name": "command_handler_80",
-   "summary": "指令/行動 dispatch 表 0x51d01 第 80 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "指令/行動 dispatch 表 0x51d01 第 80 項的 handler(身分由跳表 fixup 決定)。 續一百二十六(DOSBox-X + 反組譯):fixup 來源 0x51e41 同時是戰後章節表 0x51de9 的第 22 格(0x51de9 + 22 × 4);戰役迴圈 0x25e23 call dword ptr [eax*4 + 0x51de9] 以 [0x53c03] = 22 呼叫到這裡,入口讀到的返回位址是 0x25e2a。本體就是 chapter_beats 的 ch22_post(戰後處理器:dialog、join、act、sync_party、inc [0x53c03],再三次 lut_circle_ramp_at_unit)。0x51d01 往後 28 格就是 0x51d71(戰前章節表),所以第 28 格以後不是指令表;名稱沿用(不改登錄名)。",
    "confidence": "static_re",
-   "date": "2026-09-28",
+   "date": "2026-10-15",
    "evidence": [
     {
      "fixup_from": "0x51e41",
      "table": "0x51d01",
      "index": 80
+    },
+    {
+     "at": "0x24957",
+     "insn": "inc dword ptr [0x3c03]"
     }
    ]
   },

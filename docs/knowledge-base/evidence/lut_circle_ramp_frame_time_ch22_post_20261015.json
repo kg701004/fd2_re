@@ -1,0 +1,1024 @@
+{
+ "date": "2026-10-15",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "method": "DOSBox-X 除錯器斷點(core=normal、cycles=5000,tools/dosbox_harness.sh);只改模擬器記憶體裡的資料,程式碼不動。計時讀線性 0x46c 的 BIOS tick(1 tick = 65536 / 1193182 秒 ≈ 54.93 ms);停在除錯器時模擬器不跑,所以 tick 是模擬時間。執行中隔 10.71 秒(含兩次停住)讀兩次,tick 增加 112(lc126,設定前的檢查)。",
+ "static": {
+  "post_table_0x51de9_22": "0x24754",
+  "ret_after_0x25e23": "0x25e2a",
+  "ch22_post_lut_pushes": {
+   "0x24978": [
+    1,
+    15,
+    10
+   ],
+   "0x249c4": [
+    1,
+    15,
+    10
+   ],
+   "0x24a10": [
+    1,
+    30,
+    16
+   ]
+  },
+  "spell_lut_pushes": {
+   "11": {
+    "call": "0x21883",
+    "radius_start_step": [
+     15,
+     10
+    ]
+   },
+   "12": {
+    "call": "0x21ac2",
+    "radius_start_step": [
+     30,
+     16
+    ]
+   }
+  },
+  "table_ranges": "0x51d01 + 28*4 = 0x51d71(戰前章節表),0x51d71 + 30*4 = 0x51de9(戰後章節表),0x51de9 + 30*4 = 0x51e61"
+ },
+ "runs": [
+  {
+   "tag": "r1",
+   "what": "第 1 章戰場(章節位元組 1)。0x1d8aa 停下時把 [0x53ecc] 寫成 2、0x25e1e 停下時把 [0x53c03] 寫成 22,讓 0x25e23 呼叫戰後表第 22 格;處理器裡只在入口、dialog 14 之前與 delay / lut / flicker 前後下斷點。dialog 14 之前那一站之後模擬器結束。",
+   "stops": [
+    {
+     "at": "0x1d8aa",
+     "t": 52.6,
+     "tick": 775557,
+     "name": "結果碼檢查:[0x53ecc] 寫成 2",
+     "before": {
+      "ecc": 0,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "after": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 23,
+      "y": 16,
+      "f5": 0,
+      "camp": 2,
+      "hp": 782
+     }
+    },
+    {
+     "at": "0x25dd5",
+     "t": 72.8,
+     "tick": 775557,
+     "name": "戰役迴圈",
+     "g": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x25e1e",
+     "t": 77.7,
+     "tick": 775557,
+     "name": "戰後表之前:[0x53c03] 寫成 22",
+     "before": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "after": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "table_22": "0x24754"
+    },
+    {
+     "at": "0x24754",
+     "t": 85.7,
+     "tick": 775557,
+     "name": "0x24754 入口",
+     "ret": "0x25e2a",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 23,
+      "y": 16,
+      "f5": 0,
+      "camp": 2,
+      "hp": 782
+     },
+     "count": 21
+    },
+    {
+     "at": "key",
+     "t": 105.8,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 119.4,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 133.1,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 146.8,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 160.6,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 174.3,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 188.0,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 201.6,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 215.3,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 229.0,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "key",
+     "t": 242.6,
+     "name": "送 Return(等待中)"
+    },
+    {
+     "at": "0x2495d",
+     "t": 243.3,
+     "tick": 778271,
+     "name": "dialog 14 之前(inc 之後)",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "dialog_idx": 14
+    },
+    {
+     "at": "-0x19c000",
+     "t": 248.6,
+     "tick": 1,
+     "name": "不是設的斷點",
+     "regs": {}
+    }
+   ]
+  },
+  {
+   "tag": "r2",
+   "what": "同 r1(新 instance),另在處理器前半每個呼叫點下斷點、每按一次 Return 截圖,定位結束的位置。",
+   "stops": [
+    {
+     "at": "0x1d8aa",
+     "t": 91.1,
+     "tick": 787492,
+     "name": "結果碼檢查:[0x53ecc] 寫成 2",
+     "before": {
+      "ecc": 0,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "after": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 23,
+      "y": 16,
+      "f5": 0,
+      "camp": 2,
+      "hp": 782
+     }
+    },
+    {
+     "at": "0x25dd5",
+     "t": 119.8,
+     "tick": 787492,
+     "name": "戰役迴圈",
+     "g": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     }
+    },
+    {
+     "at": "0x25e1e",
+     "t": 124.8,
+     "tick": 787492,
+     "name": "戰後表之前:[0x53c03] 寫成 22",
+     "before": {
+      "ecc": 2,
+      "chap": 1,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "after": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "table_22": "0x24754"
+    },
+    {
+     "at": "0x24754",
+     "t": 132.7,
+     "tick": 787492,
+     "name": "0x24754 入口",
+     "ret": "0x25e2a",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "u1": {
+      "i": 1,
+      "x": 23,
+      "y": 16,
+      "f5": 0,
+      "camp": 2,
+      "hp": 782
+     },
+     "count": 21
+    },
+    {
+     "at": "0x247b4",
+     "t": 139.9,
+     "tick": 787492,
+     "name": "call layout_units",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 9,
+      "scroll_y": 13,
+      "turn": 1
+     },
+     "vga": "r2_seq_247b4"
+    },
+    {
+     "at": "0x247be",
+     "t": 145.3,
+     "tick": 787513,
+     "name": "call party_has_item(100)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_247be"
+    },
+    {
+     "at": "0x2481a",
+     "t": 150.6,
+     "tick": 787513,
+     "name": "call dialog 9",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_2481a"
+    },
+    {
+     "at": "key",
+     "t": 169.3,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key01"
+    },
+    {
+     "at": "key",
+     "t": 183.2,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key02"
+    },
+    {
+     "at": "key",
+     "t": 197.0,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key03"
+    },
+    {
+     "at": "key",
+     "t": 210.8,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key04"
+    },
+    {
+     "at": "key",
+     "t": 224.8,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key05"
+    },
+    {
+     "at": "key",
+     "t": 238.8,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key06"
+    },
+    {
+     "at": "key",
+     "t": 252.8,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key07"
+    },
+    {
+     "at": "key",
+     "t": 266.8,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key08"
+    },
+    {
+     "at": "key",
+     "t": 280.9,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key09"
+    },
+    {
+     "at": "0x2482e",
+     "t": 281.6,
+     "tick": 789770,
+     "name": "call act(71)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_2482e"
+    },
+    {
+     "at": "0x24838",
+     "t": 288.9,
+     "tick": 789820,
+     "name": "call roster_has(13)",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_24838"
+    },
+    {
+     "at": "0x24863",
+     "t": 294.5,
+     "tick": 789820,
+     "name": "call dialog 10",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_24863"
+    },
+    {
+     "at": "key",
+     "t": 313.7,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key10"
+    },
+    {
+     "at": "0x24877",
+     "t": 314.3,
+     "tick": 790071,
+     "name": "call act(72) a",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_24877"
+    },
+    {
+     "at": "0x24881",
+     "t": 321.1,
+     "tick": 790120,
+     "name": "call deactivate(17) a",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_24881"
+    },
+    {
+     "at": "0x248a8",
+     "t": 326.6,
+     "tick": 790120,
+     "name": "call dialog 11",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_248a8"
+    },
+    {
+     "at": "key",
+     "t": 345.6,
+     "name": "送 Return(等待中)",
+     "shot": "r2_key11"
+    },
+    {
+     "at": "0x24933",
+     "t": 346.2,
+     "tick": 790372,
+     "name": "call sync_party",
+     "g": {
+      "ecc": 2,
+      "chap": 22,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "vga": "r2_seq_24933"
+    },
+    {
+     "at": "0x2495d",
+     "t": 351.8,
+     "tick": 790372,
+     "name": "dialog 14 之前(inc 之後)",
+     "g": {
+      "ecc": 2,
+      "chap": 23,
+      "scroll_x": 14,
+      "scroll_y": 14,
+      "turn": 1
+     },
+     "dialog_idx": 14,
+     "vga": "r2_dlg14"
+    },
+    {
+     "at": "exit",
+     "t": 357.9,
+     "pane": [
+      "LOG: XRandR CRTC 0: pos=(0,0) size=(1024,768) outputs=1",
+      "LOG: Our window lies on this CRTC display (window pos=(0,0) size=(640,417) match=(320,208)).",
+      "LOG:   Goes to output 0: name='screen' size_mm=(0 x 0)",
+      "E_Exit: Illegal descriptor type 0 for int 8"
+     ]
+    }
+   ]
+  },
+  {
+   "tag": "s11_frames",
+   "what": "第 1 章戰場,索爾施放地震術(法術 11);盜賊 #11 搬到 (19,14)、HP 9999。入口、每幀、迴圈結束、redraw(0) 之後各讀 BIOS tick。",
+   "stops": [
+    {
+     "at": "0x2189a",
+     "t": 31.5,
+     "tick": 812040,
+     "name": "入口",
+     "ret": "0x21888",
+     "args": [
+      0,
+      15,
+      10
+     ]
+    },
+    {
+     "at": "0x2198e",
+     "t": 34.8,
+     "tick": 812041,
+     "name": "幀",
+     "frame": 0,
+     "radius": 15
+    },
+    {
+     "at": "0x2198e",
+     "t": 37.6,
+     "tick": 812041,
+     "name": "幀",
+     "frame": 1,
+     "radius": 25
+    },
+    {
+     "at": "0x2198e",
+     "t": 40.4,
+     "tick": 812042,
+     "name": "幀",
+     "frame": 2,
+     "radius": 35
+    },
+    {
+     "at": "0x2198e",
+     "t": 43.2,
+     "tick": 812042,
+     "name": "幀",
+     "frame": 3,
+     "radius": 45
+    },
+    {
+     "at": "0x2198e",
+     "t": 46.1,
+     "tick": 812043,
+     "name": "幀",
+     "frame": 4,
+     "radius": 55
+    },
+    {
+     "at": "0x2198e",
+     "t": 48.9,
+     "tick": 812044,
+     "name": "幀",
+     "frame": 5,
+     "radius": 65
+    },
+    {
+     "at": "0x2198e",
+     "t": 51.7,
+     "tick": 812045,
+     "name": "幀",
+     "frame": 6,
+     "radius": 75
+    },
+    {
+     "at": "0x2198e",
+     "t": 54.5,
+     "tick": 812045,
+     "name": "幀",
+     "frame": 7,
+     "radius": 85
+    },
+    {
+     "at": "0x2198e",
+     "t": 57.3,
+     "tick": 812046,
+     "name": "幀",
+     "frame": 8,
+     "radius": 95
+    },
+    {
+     "at": "0x2198e",
+     "t": 60.2,
+     "tick": 812047,
+     "name": "幀",
+     "frame": 9,
+     "radius": 105
+    },
+    {
+     "at": "0x21998",
+     "t": 63.0,
+     "tick": 812047,
+     "name": "迴圈結束",
+     "ebx": 10
+    },
+    {
+     "at": "0x219a8",
+     "t": 65.8,
+     "tick": 812048,
+     "name": "redraw(0) 之後"
+    }
+   ]
+  },
+  {
+   "tag": "s11_nof",
+   "what": "同一場再施放一次地震術(索爾 +5 清 0),只停入口、迴圈結束與 redraw(0) 之後。",
+   "stops": [
+    {
+     "at": "0x2189a",
+     "t": 40.3,
+     "tick": 813524,
+     "name": "入口",
+     "ret": "0x21888",
+     "args": [
+      0,
+      15,
+      10
+     ]
+    },
+    {
+     "at": "0x21998",
+     "t": 43.5,
+     "tick": 813531,
+     "name": "迴圈結束",
+     "ebx": 10
+    },
+    {
+     "at": "0x219a8",
+     "t": 46.3,
+     "tick": 813532,
+     "name": "redraw(0) 之後"
+    }
+   ]
+  },
+  {
+   "tag": "s12_frames",
+   "what": "同一場施放裂地術(法術 12),逐幀停。",
+   "stops": [
+    {
+     "at": "0x2189a",
+     "t": 24.4,
+     "tick": 814673,
+     "name": "入口",
+     "ret": "0x21ac7",
+     "args": [
+      0,
+      30,
+      16
+     ]
+    },
+    {
+     "at": "0x2198e",
+     "t": 27.6,
+     "tick": 814674,
+     "name": "幀",
+     "frame": 0,
+     "radius": 30
+    },
+    {
+     "at": "0x2198e",
+     "t": 30.4,
+     "tick": 814674,
+     "name": "幀",
+     "frame": 1,
+     "radius": 46
+    },
+    {
+     "at": "0x2198e",
+     "t": 33.2,
+     "tick": 814675,
+     "name": "幀",
+     "frame": 2,
+     "radius": 62
+    },
+    {
+     "at": "0x2198e",
+     "t": 36.0,
+     "tick": 814676,
+     "name": "幀",
+     "frame": 3,
+     "radius": 78
+    },
+    {
+     "at": "0x2198e",
+     "t": 38.7,
+     "tick": 814677,
+     "name": "幀",
+     "frame": 4,
+     "radius": 94
+    },
+    {
+     "at": "0x2198e",
+     "t": 41.5,
+     "tick": 814678,
+     "name": "幀",
+     "frame": 5,
+     "radius": 110
+    },
+    {
+     "at": "0x2198e",
+     "t": 44.3,
+     "tick": 814679,
+     "name": "幀",
+     "frame": 6,
+     "radius": 126
+    },
+    {
+     "at": "0x2198e",
+     "t": 47.1,
+     "tick": 814680,
+     "name": "幀",
+     "frame": 7,
+     "radius": 142
+    },
+    {
+     "at": "0x2198e",
+     "t": 49.9,
+     "tick": 814682,
+     "name": "幀",
+     "frame": 8,
+     "radius": 158
+    },
+    {
+     "at": "0x2198e",
+     "t": 52.7,
+     "tick": 814683,
+     "name": "幀",
+     "frame": 9,
+     "radius": 174
+    },
+    {
+     "at": "0x21998",
+     "t": 55.5,
+     "tick": 814683,
+     "name": "迴圈結束",
+     "ebx": 10
+    },
+    {
+     "at": "0x219a8",
+     "t": 58.3,
+     "tick": 814684,
+     "name": "redraw(0) 之後"
+    }
+   ]
+  }
+ ],
+ "timing": [
+  {
+   "tag": "s11_frames",
+   "spell": 11,
+   "ticks_entry_to_loop_end": 7,
+   "ms_entry_to_loop_end": 384.5,
+   "ms_per_frame_avg": 38.4,
+   "tick_steps": [
+    1,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    0
+   ],
+   "real_s_entry_to_loop_end": 31.5
+  },
+  {
+   "tag": "s11_nof",
+   "spell": 11,
+   "ticks_entry_to_loop_end": 7,
+   "ms_entry_to_loop_end": 384.5,
+   "ms_per_frame_avg": 38.4,
+   "tick_steps": [],
+   "real_s_entry_to_loop_end": 3.2
+  },
+  {
+   "tag": "s12_frames",
+   "spell": 12,
+   "ticks_entry_to_loop_end": 10,
+   "ms_entry_to_loop_end": 549.3,
+   "ms_per_frame_avg": 54.9,
+   "tick_steps": [
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    0
+   ],
+   "real_s_entry_to_loop_end": 31.1
+  }
+ ],
+ "analysis": {
+  "script": "an126.py(暫存)",
+  "checks": 21,
+  "pass": 21,
+  "controls": 1,
+  "controls_fail_as_expected": 1,
+  "controls_not_applicable": 0,
+  "items": [
+   {
+    "group": "H r1",
+    "name": "執行期戰後表第 22 格",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 0x24754,靜態 0x24754"
+   },
+   {
+    "group": "H r1",
+    "name": "改寫前後的章節索引",
+    "ok": true,
+    "control": false,
+    "detail": "before 1,after 22"
+   },
+   {
+    "group": "H r1",
+    "name": "處理器入口的返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 0x25e2a,靜態 0x25e2a(0x25e23 的 call 長度)"
+   },
+   {
+    "group": "H r1",
+    "name": "dialog 14 之前章節索引已加 1",
+    "ok": true,
+    "control": false,
+    "detail": "chap 23,dialog 14"
+   },
+   {
+    "group": "H r1",
+    "name": "dialog 14 之後模擬器結束、沒有進 lut",
+    "ok": true,
+    "control": false,
+    "detail": "最後一站 -0x19c000 {},前一站 0x2495d,lut 入口 0 次"
+   },
+   {
+    "group": "H r2",
+    "name": "執行期戰後表第 22 格",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 0x24754,靜態 0x24754"
+   },
+   {
+    "group": "H r2",
+    "name": "改寫前後的章節索引",
+    "ok": true,
+    "control": false,
+    "detail": "before 1,after 22"
+   },
+   {
+    "group": "H r2",
+    "name": "處理器入口的返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 0x25e2a,靜態 0x25e2a(0x25e23 的 call 長度)"
+   },
+   {
+    "group": "H r2",
+    "name": "dialog 14 之前章節索引已加 1",
+    "ok": true,
+    "control": false,
+    "detail": "chap 23,dialog 14"
+   },
+   {
+    "group": "H r2",
+    "name": "dialog 14 之後模擬器結束、沒有進 lut",
+    "ok": true,
+    "control": false,
+    "detail": "最後一站 exit ['LOG: XRandR CRTC 0: pos=(0,0) size=(1024,768) outputs=1', 'LOG: Our window lies on this CRTC display (window pos=(0,0) size=(640,417) match=(320,208)).', \"LOG:   Goes to output 0: name='screen' size_mm=(0 x 0)\", 'E_Exit: Illegal descriptor type 0 for int 8'],前一站 0x2495d,lut 入口 0 次"
+   },
+   {
+    "group": "H r2",
+    "name": "處理器內停點依位址遞增、終於 dialog 14",
+    "ok": true,
+    "control": false,
+    "detail": "0x247b4 -> 0x247be -> 0x2481a -> 0x2482e -> 0x24838 -> 0x24863 -> 0x24877 -> 0x24881 -> 0x248a8 -> 0x24933 -> 0x2495d"
+   },
+   {
+    "group": "T s11_frames",
+    "name": "入口引數與返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [0, 15, 10] 0x21888,靜態 [0, 15, 10] 0x21888"
+   },
+   {
+    "group": "T s11_frames",
+    "name": "十幀的序號與半徑",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [(0, 15), (1, 25), (2, 35), (3, 45), (4, 55), (5, 65), (6, 75), (7, 85), (8, 95), (9, 105)]"
+   },
+   {
+    "group": "T s11_frames",
+    "name": "迴圈結束時 ebx = 10",
+    "ok": true,
+    "control": false,
+    "detail": "ebx 10"
+   },
+   {
+    "group": "T s11_nof",
+    "name": "入口引數與返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [0, 15, 10] 0x21888,靜態 [0, 15, 10] 0x21888"
+   },
+   {
+    "group": "T s11_nof",
+    "name": "沒有逐幀停",
+    "ok": true,
+    "control": false,
+    "detail": "逐幀停點 0 個"
+   },
+   {
+    "group": "T s11_nof",
+    "name": "迴圈結束時 ebx = 10",
+    "ok": true,
+    "control": false,
+    "detail": "ebx 10"
+   },
+   {
+    "group": "T s12_frames",
+    "name": "入口引數與返回位址",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [0, 30, 16] 0x21ac7,靜態 [0, 30, 16] 0x21ac7"
+   },
+   {
+    "group": "T s12_frames",
+    "name": "十幀的序號與半徑",
+    "ok": true,
+    "control": false,
+    "detail": "紀錄 [(0, 30), (1, 46), (2, 62), (3, 78), (4, 94), (5, 110), (6, 126), (7, 142), (8, 158), (9, 174)]"
+   },
+   {
+    "group": "T s12_frames",
+    "name": "迴圈結束時 ebx = 10",
+    "ok": true,
+    "control": false,
+    "detail": "ebx 10"
+   },
+   {
+    "group": "T",
+    "name": "逐幀停與不停,入口到迴圈結束的 tick 相同",
+    "ok": true,
+    "control": false,
+    "detail": "逐幀 7,不停 7"
+   },
+   {
+    "group": "T",
+    "name": "停住時 tick 照實際時間走",
+    "ok": false,
+    "control": true,
+    "detail": "這個說法預測多 283 個以上,紀錄多 0"
+   }
+  ]
+ },
+ "mutation": {
+  "script": "mut_an126.py(暫存)",
+  "stdout": [
+   "抓到 戰後表第 22 格改成第 21 格的值: rc=1 指定檢查=True Traceback=False FAIL ['H r1 執行期戰後表第 22 格']",
+   "抓到 改寫後的章節索引 21: rc=1 指定檢查=True Traceback=False FAIL ['H r2 改寫前後的章節索引']",
+   "抓到 入口返回位址錯: rc=1 指定檢查=True Traceback=False FAIL ['H r2 處理器入口的返回位址']",
+   "抓到 dialog 14 之前沒有加 1: rc=1 指定檢查=True Traceback=False FAIL ['H r1 dialog 14 之前章節索引已加 1']",
+   "抓到 多出一次 lut 入口: rc=1 指定檢查=True Traceback=False FAIL ['H r2 dialog 14 之後模擬器結束、沒有進 lut']",
+   "抓到 最後沒有 E_Exit: rc=1 指定檢查=True Traceback=False FAIL ['H r2 dialog 14 之後模擬器結束、沒有進 lut']",
+   "抓到 兩個停點順序對調: rc=1 指定檢查=True Traceback=False FAIL ['H r2 處理器內停點依位址遞增、終於 dialog 14']",
+   "抓到 地震術每幀加 11: rc=1 指定檢查=True Traceback=False FAIL ['T s11_frames 入口引數與返回位址']",
+   "抓到 裂地術返回位址換成地震術的: rc=1 指定檢查=True Traceback=False FAIL ['T s12_frames 入口引數與返回位址']",
+   "抓到 第 5 幀半徑 +1: rc=1 指定檢查=True Traceback=False FAIL ['T s12_frames 十幀的序號與半徑']",
+   "抓到 少錄第 9 幀: rc=1 指定檢查=True Traceback=False FAIL ['T s11_frames 十幀的序號與半徑']",
+   "抓到 不停的那次多一個逐幀停點: rc=1 指定檢查=True Traceback=False FAIL ['T s11_nof 沒有逐幀停']",
+   "抓到 迴圈結束 ebx = 9: rc=1 指定檢查=True Traceback=False FAIL ['T s11_nof 迴圈結束時 ebx = 10']",
+   "抓到 不停的那次多 1 個 tick: rc=1 指定檢查=True Traceback=False FAIL ['T 逐幀停與不停,入口到迴圈結束的 tick 相同']",
+   "突變 14 個,抓到 14,漏掉 0"
+  ]
+ }
+}
