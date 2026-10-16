@@ -29,7 +29,9 @@ GENERATORS = ["ev_s65", "ev_s65b", "ev_s66", "ev_s67", "ev_s68", "ev_s69", "ev_s
               "ev_ai_physical_candidate", "ev_ai_physical_untested_branches", "ev_ai_spell_path", "ev_ai_spell_score",
               "ev_attack_exp", "ev_attack_path_selection", "ev_collect_targets_in_range", "ev_heal_spell_targets",
               "ev_level_up", "ev_move_landing_select", "ev_real_kill_corpse", "ev_rest_recover", "ev_spell9_path",
-              "ev_terrain_modifier", "ev_terrain_types_3_5"]
+              "ev_terrain_modifier", "ev_terrain_types_3_5",
+              # 2026-10-16(續一百三十)
+              "ev_s130"]
 
 
 def _norm(p: str) -> str:

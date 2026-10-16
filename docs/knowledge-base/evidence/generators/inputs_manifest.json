@@ -4724,6 +4724,21 @@
     ]
    }
   },
+  "ev_s130": {
+   "outputs": [
+    "phase_loop_no_breakpoint_calllog_20261016.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc130a_phase_eips.txt": [
+     3684167,
+     "9a56484988668611fab4aa1f6b6c26b81d760794de45a6243bc072a3d7422c2d"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

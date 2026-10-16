@@ -1,0 +1,273 @@
+{
+ "_meta": {
+  "topic": "續一百三十:沒有斷點時光束炮相位迴圈畫出哪幾階(DOSBox-X 呼叫紀錄只列 5 個 EIP,途中不下斷點)",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "raw": {
+   "path": ".wsl_build/lc130a_phase_eips.txt",
+   "sha256": "9a56484988668611fab4aa1f6b6c26b81d760794de45a6243bc072a3d7422c2d",
+   "header": "H fd2calllog 1 cs=0170 entries=5 cap=100000000 dump=0 lo=001ae117 hi=001b12bb",
+   "E_records": 14295,
+   "T_lines": 76
+  },
+  "generator": "evidence/generators/ev_s130.py(變異測試 mut_s130.py)",
+  "harness": "cycles 5000(tools/dosbox_harness.sh 預設);FD2_HARNESS_CALLLOG_CAP=100000000、FD2_HARNESS_CALLLOG_DUMP=0;第 1 章戰場,敵 #11 搬到 (19, 14)、道具欄第 2 格放道具 79,只改模擬器記憶體裡的單位資料"
+ },
+ "static_sites": {
+  "0x152a0": {
+   "desc": "相位迴圈每圈開頭 mov [0x53c1f], ebx(ebx = k)",
+   "exe_16": "891d1f3c00006a01e8ffc9ffff83c404",
+   "runtime_16": "891d1ffc1e006a01e8ffc9ffff83c404",
+   "reloc_disp_at": [
+    2
+   ]
+  },
+  "0x12117": {
+   "desc": "draw_terrain_layer [0x51a93] == -1 分支 sub eax, [0x539f4](eax = BIOS tick)",
+   "exe_16": "2b05f439000083f8027f10b86c040000",
+   "runtime_16": "2b05f4f91e0083f8027f10b86c040000",
+   "reloc_disp_at": [
+    2
+   ]
+  },
+  "0x12132": {
+   "desc": "推進 inc [0x53c1f]",
+   "exe_16": "ff051f3c0000833d1f3c000014750ac7",
+   "runtime_16": "ff051ffc1e00833d1ffc1e0014750ac7",
+   "reloc_disp_at": [
+    2,
+    8
+   ]
+  },
+  "0x12169": {
+   "desc": "取換色表 movzx eax, byte [eax + 0x51a97](eax = 這次畫的階)",
+   "exe_16": "0fb680971a00008b156d3a00008b4482",
+   "runtime_16": "0fb68097da1e008b156dfa1e008b4482",
+   "reloc_disp_at": [
+    3,
+    9
+   ]
+  },
+  "0x152ba": {
+   "desc": "inc ebx(redraw(1) + wait_ticks(1) 之後;eax = tick、ebx = k)",
+   "exe_16": "4383fb097ce0ff35513a0000e8818c03",
+   "runtime_16": "4383fb097ce0ff3551fa1e00e8818c03",
+   "reloc_disp_at": [
+    8
+   ]
+  }
+ },
+ "loop": {
+  "frames": [
+   {
+    "k": 1,
+    "seq": 1337,
+    "ticks": [
+     43307
+    ],
+    "adv": 1,
+    "drawn": [
+     2
+    ],
+    "tick_after": 43309,
+    "k_after": 1
+   },
+   {
+    "k": 2,
+    "seq": 1342,
+    "ticks": [
+     43309
+    ],
+    "adv": 0,
+    "drawn": [
+     2
+    ],
+    "tick_after": 43310,
+    "k_after": 2
+   },
+   {
+    "k": 3,
+    "seq": 1346,
+    "ticks": [
+     43310
+    ],
+    "adv": 1,
+    "drawn": [
+     4
+    ],
+    "tick_after": 43311,
+    "k_after": 3
+   },
+   {
+    "k": 4,
+    "seq": 1351,
+    "ticks": [
+     43311
+    ],
+    "adv": 0,
+    "drawn": [
+     4
+    ],
+    "tick_after": 43312,
+    "k_after": 4
+   },
+   {
+    "k": 5,
+    "seq": 1355,
+    "ticks": [
+     43312
+    ],
+    "adv": 0,
+    "drawn": [
+     5
+    ],
+    "tick_after": 43313,
+    "k_after": 5
+   },
+   {
+    "k": 6,
+    "seq": 1359,
+    "ticks": [
+     43313
+    ],
+    "adv": 1,
+    "drawn": [
+     7
+    ],
+    "tick_after": 43314,
+    "k_after": 6
+   },
+   {
+    "k": 7,
+    "seq": 1364,
+    "ticks": [
+     43314
+    ],
+    "adv": 0,
+    "drawn": [
+     7
+    ],
+    "tick_after": 43315,
+    "k_after": 7
+   },
+   {
+    "k": 8,
+    "seq": 1368,
+    "ticks": [
+     43315
+    ],
+    "adv": 0,
+    "drawn": [
+     8
+    ],
+    "tick_after": 43316,
+    "k_after": 8
+   }
+  ],
+  "drawn": [
+   2,
+   2,
+   4,
+   4,
+   5,
+   7,
+   7,
+   8
+  ],
+  "last_advance_tick_before_loop": 43304,
+  "checks": {
+   "八圈 k = 1..8 依序": true,
+   "每圈收尾 ebx 仍是 k": true,
+   "每圈只畫一次地形": true,
+   "每圈都走 -1 分支一次": true,
+   "畫的階 ∈ {k, k + 1}": true,
+   "推進 ⇔ 畫 k + 1": true,
+   "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true,
+   "至少一圈畫 k + 1": true,
+   "兩次推進至少隔 2 圈": true,
+   "每圈 1 ~ 2 tick": true
+  },
+  "control_drawn_equals_k": {
+   "八圈 k = 1..8 依序": true,
+   "每圈收尾 ebx 仍是 k": true,
+   "每圈只畫一次地形": true,
+   "每圈都走 -1 分支一次": true,
+   "畫的階 ∈ {k, k + 1}": true,
+   "推進 ⇔ 畫 k + 1": false,
+   "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true,
+   "至少一圈畫 k + 1": false,
+   "兩次推進至少隔 2 圈": true,
+   "每圈 1 ~ 2 tick": true
+  },
+  "control_shift_one_frame": {
+   "八圈 k = 1..8 依序": true,
+   "每圈收尾 ebx 仍是 k": true,
+   "每圈只畫一次地形": true,
+   "每圈都走 -1 分支一次": true,
+   "畫的階 ∈ {k, k + 1}": false,
+   "推進 ⇔ 畫 k + 1": false,
+   "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true,
+   "至少一圈畫 k + 1": true,
+   "兩次推進至少隔 2 圈": true,
+   "每圈 1 ~ 2 tick": true
+  }
+ },
+ "s123_breakpoint_runs": {
+  "runA": [
+   2,
+   2,
+   4,
+   4,
+   5,
+   7,
+   7,
+   8
+  ],
+  "runB": [
+   1,
+   3,
+   3,
+   5,
+   5,
+   7,
+   7,
+   9
+  ],
+  "same_as_runA": true
+ },
+ "outside_loop": {
+  "counts": {
+   "tick": 5055,
+   "adv": 4150,
+   "draw": 5055
+  },
+  "drawn_value_histogram": {
+   "0": 250,
+   "1": 259,
+   "2": 261,
+   "3": 258,
+   "4": 259,
+   "5": 254,
+   "6": 255,
+   "7": 249,
+   "8": 246,
+   "9": 257,
+   "10": 251,
+   "11": 254,
+   "12": 255,
+   "13": 248,
+   "14": 251,
+   "15": 249,
+   "16": 243,
+   "17": 251,
+   "18": 250,
+   "19": 255
+  }
+ },
+ "status": {
+  "drawn_levels": "LOG CONFIRMED:沒有斷點時八圈畫的是 2、2、4、4、5、7、7、8(k 或 k + 1,第 1、3、6 圈推進)",
+  "advance_rule": "LOG CONFIRMED:八圈的推進都等於「tick − 上次推進 > 2」,第 1 圈的上次推進取自迴圈外紀錄",
+  "vs_breakpoints": "LOG CONFIRMED:與續一百二十三第一輪(斷點下)逐圈相同;第二輪不同(1、3、3、5、5、7、7、9),不同在哪一個 tick 開始,這裡沒有追",
+  "outside": "LOG CONFIRMED:這次 instance 從開機到結束,迴圈外每次地形重畫都走 [0x51a93] == -1 分支;移動範圍的明暗循環用的是這一段仍是 INFERRED(沒有對應到畫面上的哪一格)"
+ }
+}
