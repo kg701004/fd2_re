@@ -1,0 +1,618 @@
+{
+ "date": "2026-10-16",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "cmd_table_0_9": {
+  "method": "STATIC ANALYSIS(FD2.EXE 位元組 + capstone 解碼)+ 既有實機軌跡 docs/data/live_exec_addresses.json + 既有 evidence;本輪沒有為這一項執行遊戲。",
+  "table_0x51d01_0_9": {
+   "0": "0x21206",
+   "1": "0x2134b",
+   "2": "0x21364",
+   "3": "0x2137d",
+   "4": "0x21396",
+   "5": "0x21449",
+   "6": "0x21462",
+   "7": "0x2147b",
+   "8": "0x21494",
+   "9": "0x214ad"
+  },
+  "stub_shape": {
+   "說明": "跳板 = push 0x14; call __CHK; push [esp+0xc] ×2; push k; jmp 目標;值為 [k, 目標],null 表示不是跳板",
+   "rows": {
+    "0": null,
+    "1": [
+     1,
+     "0x2121a"
+    ],
+    "2": [
+     2,
+     "0x2121a"
+    ],
+    "3": [
+     3,
+     "0x2121a"
+    ],
+    "4": null,
+    "5": [
+     5,
+     "0x213aa"
+    ],
+    "6": [
+     6,
+     "0x213aa"
+    ],
+    "7": [
+     7,
+     "0x213aa"
+    ],
+    "8": [
+     8,
+     "0x2121a"
+    ],
+    "9": null
+   }
+  },
+  "ran_in_traces": [
+   0,
+   3,
+   4,
+   6,
+   9
+  ],
+  "traces": {
+   "s103c0_spell27_enemy_phase": {
+    "sha256": "24c05f4091730e1114659c5065911b5ba45b2fcae2703ca8e303d215e87c6e4e",
+    "doc98": "續一百零四:玩家法術 27 → NPC / 敵方回合,[0x53af9]=1;含 0x1541f 與第 0、3、4、6 格入口"
+   },
+   "s103a_spells_9_12": {
+    "sha256": "d01dd2c26e97dd6f34b8d399ca55429bc64378fd6a43d3fae6c42c8966ade333",
+    "doc98": "含第 9 格入口 0x214ad"
+   }
+  },
+  "earlier_breakpoint_evidence": {
+   "ai_spell_path_20260929.json C1": "[0x53af9]=1、法術 8:spell_damage_resolve 返回 0x212a4(command_generic_damage 內)",
+   "spell9_path_20260930.json A2": "[0x53af9]=1、法術 9:0x214ad 返回 0x15426"
+  },
+  "checks": [
+   [
+    "stub_1238",
+    true,
+    "1:0x2134b->(1, '0x2121a'), 2:0x21364->(2, '0x2121a'), 3:0x2137d->(3, '0x2121a'), 8:0x21494->(8, '0x2121a')"
+   ],
+   [
+    "stub_567",
+    true,
+    "5:0x21449->(5, '0x213aa'), 6:0x21462->(6, '0x213aa'), 7:0x2147b->(7, '0x213aa')"
+   ],
+   [
+    "head_0",
+    true,
+    "0x21206: 第 6 條 0x2121a push dword ptr [esp + 0x10];第 7 條 call 0x21227"
+   ],
+   [
+    "head_4",
+    true,
+    "0x21396: 第 6 條 0x213aa push dword ptr [esp + 0x10];第 7 條 call 0x213b7"
+   ],
+   [
+    "control_9_not_stub",
+    true,
+    "0x214ad shape=None"
+   ],
+   [
+    "live_entries",
+    true,
+    "跑過的格 [0, 3, 4, 6, 9]"
+   ],
+   [
+    "live_bodies",
+    true,
+    "0x2121a、0x213aa、0x21227、0x213b7、0x1541f 都在軌跡裡"
+   ],
+   [
+    "ev52_C1_spell8",
+    true,
+    "flag 1 stop [{'function': 'spell_damage_resolve', 'return_static': '0x212a4', 'arg1': 10, 'arg2': 8}]"
+   ],
+   [
+    "ev55_A2_spell9",
+    true,
+    "spell9_path_20260930.json 有 A2 與返回 0x15426"
+   ],
+   [
+    "not_ran",
+    true,
+    "1、2、5、7、8 的入口不在軌跡"
+   ]
+  ]
+ },
+ "lut_cycles": {
+  "method": "DOSBox-X 除錯器斷點(core=normal);harness 固定 cycles=5000,包裝腳本只把那一個參數換成 2500 / 10000(執行中的 dosbox-x 程序參數讀到 cycles=2500 / cycles=10000,包裝腳本各記錄換了 1 處)。只改模擬器記憶體裡的資料(索爾已學法術、+5、MP;盜賊 #11 位置與 HP),程式碼不動。計時讀線性 0x46c 的 BIOS tick(約 54.93 ms)。",
+  "key_delivery": "cycles 2500 下 harness 的 send-keys(xdotool key,按下即放)有幾次沒被遊戲讀到;改用暫存 holdkey.sh(同一個視窗 keydown → 0.3 秒 → keyup)後每一鍵都有反應。harness 沒有改。",
+  "prediction_before_measuring": "續一百二十九 預測(量測之前寫下,2026-10-16)\n已知:cycles 5000 地震術 7 tick、裂地術 10 tick;cycles 2500 地震術 16 tick。\n主要假設 H1:迴圈受 CPU 速度限制,時間約與 cycles 成反比。\n  - cycles 2500 裂地術:約 20 tick(容許 17..24)\n  - cycles 10000 地震術:約 3..4 tick(容許 2..5)\n  - cycles 10000 裂地術:約 5 tick(容許 4..7)\n對照 H0:有與 cycles 無關的下限(例如等垂直回掃):cycles 10000 仍約 7 / 10 tick。\n",
+  "wrappers": {
+   "dosbox-x-c2500": "#!/bin/bash\n# 續一百二十七:只把 harness 傳來的 \"config -set cycles=5000\" 換成 2500,其他參數原樣交給同一個 calllog 版 dosbox-x。\n# harness 第 337 行以 grep FD2_CALLLOG_ENTRIES 確認 binary 有 call-log 修補;實際執行的就是下面那個有修補的 binary。\nargs=()\nn=0\nfor a in \"$@\"; do\n  if [ \"$a\" = \"config -set cycles=5000\" ]; then\n    a=\"config -set cycles=2500\"\n    n=$((n + 1))\n  fi\n  args+=(\"$a\")\ndone\necho \"wrap cycles replaced=$n\" > \"$PWD/WRAP_CYCLES.TXT\"\nexec /home/kg701004/fd2-dosbox-calllog/dosbox-x/src/dosbox-x \"${args[@]}\"\n",
+   "dosbox-x-c10000": "#!/bin/bash\n# 續一百二十九:只把 harness 傳來的 \"config -set cycles=5000\" 換成 10000,其他參數原樣交給同一個 calllog 版 dosbox-x(同 dosbox-x-c2500)。\n# harness 第 337 行以 grep FD2_CALLLOG_ENTRIES 確認 binary 有 call-log 修補;實際執行的就是下面那個有修補的 binary。\nargs=()\nn=0\nfor a in \"$@\"; do\n  if [ \"$a\" = \"config -set cycles=5000\" ]; then\n    a=\"config -set cycles=10000\"\n    n=$((n + 1))\n  fi\n  args+=(\"$a\")\ndone\necho \"wrap cycles replaced=$n\" > \"$PWD/WRAP_CYCLES.TXT\"\nexec /home/kg701004/fd2-dosbox-calllog/dosbox-x/src/dosbox-x \"${args[@]}\"\n"
+  },
+  "runs": [
+   {
+    "tag": "c2500_s12_nof",
+    "instance": "lc129a",
+    "what": "第 1 章戰場,cycles 2500(dosbox-x-c2500);索爾只留裂地術(法術 12)、MP 805,盜賊 #11 搬到 (19,14)、HP 9999;只停入口、迴圈結束、redraw(0) 之後。",
+    "stops": [
+     {
+      "at": "0x2189a",
+      "t": 245.5,
+      "tick": 890250,
+      "name": "入口",
+      "ret": "0x21ac7",
+      "args": [
+       0,
+       30,
+       16
+      ]
+     },
+     {
+      "at": "0x21998",
+      "t": 248.8,
+      "tick": 890272,
+      "name": "迴圈結束",
+      "ebx": 10
+     },
+     {
+      "at": "0x219a8",
+      "t": 251.6,
+      "tick": 890274,
+      "name": "redraw(0) 之後"
+     }
+    ]
+   },
+   {
+    "tag": "c2500_s12_frames",
+    "instance": "lc129a",
+    "what": "同一場再施放一次裂地術(+5 清 0、MP 回 805),逐幀停。",
+    "stops": [
+     {
+      "at": "0x2189a",
+      "t": 70.3,
+      "tick": 891923,
+      "name": "入口",
+      "ret": "0x21ac7",
+      "args": [
+       0,
+       30,
+       16
+      ]
+     },
+     {
+      "at": "0x2198e",
+      "t": 73.5,
+      "tick": 891925,
+      "name": "幀",
+      "frame": 0,
+      "radius": 30
+     },
+     {
+      "at": "0x2198e",
+      "t": 76.3,
+      "tick": 891926,
+      "name": "幀",
+      "frame": 1,
+      "radius": 46
+     },
+     {
+      "at": "0x2198e",
+      "t": 79.0,
+      "tick": 891928,
+      "name": "幀",
+      "frame": 2,
+      "radius": 62
+     },
+     {
+      "at": "0x2198e",
+      "t": 81.7,
+      "tick": 891930,
+      "name": "幀",
+      "frame": 3,
+      "radius": 78
+     },
+     {
+      "at": "0x2198e",
+      "t": 84.5,
+      "tick": 891932,
+      "name": "幀",
+      "frame": 4,
+      "radius": 94
+     },
+     {
+      "at": "0x2198e",
+      "t": 87.3,
+      "tick": 891934,
+      "name": "幀",
+      "frame": 5,
+      "radius": 110
+     },
+     {
+      "at": "0x2198e",
+      "t": 90.0,
+      "tick": 891936,
+      "name": "幀",
+      "frame": 6,
+      "radius": 126
+     },
+     {
+      "at": "0x2198e",
+      "t": 92.8,
+      "tick": 891939,
+      "name": "幀",
+      "frame": 7,
+      "radius": 142
+     },
+     {
+      "at": "0x2198e",
+      "t": 95.5,
+      "tick": 891942,
+      "name": "幀",
+      "frame": 8,
+      "radius": 158
+     },
+     {
+      "at": "0x2198e",
+      "t": 98.2,
+      "tick": 891945,
+      "name": "幀",
+      "frame": 9,
+      "radius": 174
+     },
+     {
+      "at": "0x21998",
+      "t": 101.0,
+      "tick": 891945,
+      "name": "迴圈結束",
+      "ebx": 10
+     },
+     {
+      "at": "0x219a8",
+      "t": 103.7,
+      "tick": 891947,
+      "name": "redraw(0) 之後"
+     }
+    ]
+   },
+   {
+    "tag": "c10000_s11_nof",
+    "instance": "lc129d",
+    "what": "第 1 章戰場,cycles 10000(dosbox-x-c10000);索爾只留地震術(法術 11),其餘同上;只停兩端。",
+    "stops": [
+     {
+      "at": "0x2189a",
+      "t": 113.6,
+      "tick": 903712,
+      "name": "入口",
+      "ret": "0x21888",
+      "args": [
+       0,
+       15,
+       10
+      ]
+     },
+     {
+      "at": "0x21998",
+      "t": 116.8,
+      "tick": 903715,
+      "name": "迴圈結束",
+      "ebx": 10
+     },
+     {
+      "at": "0x219a8",
+      "t": 119.6,
+      "tick": 903716,
+      "name": "redraw(0) 之後"
+     }
+    ]
+   },
+   {
+    "tag": "c10000_s12_nof",
+    "instance": "lc129d",
+    "what": "同一場改成只留裂地術,只停兩端。",
+    "stops": [
+     {
+      "at": "0x2189a",
+      "t": 58.6,
+      "tick": 905297,
+      "name": "入口",
+      "ret": "0x21ac7",
+      "args": [
+       0,
+       30,
+       16
+      ]
+     },
+     {
+      "at": "0x21998",
+      "t": 61.8,
+      "tick": 905302,
+      "name": "迴圈結束",
+      "ebx": 10
+     },
+     {
+      "at": "0x219a8",
+      "t": 64.6,
+      "tick": 905302,
+      "name": "redraw(0) 之後"
+     }
+    ]
+   },
+   {
+    "tag": "c10000_s12_frames",
+    "instance": "lc129d",
+    "what": "同一場再施放一次裂地術,逐幀停。",
+    "stops": [
+     {
+      "at": "0x2189a",
+      "t": 49.3,
+      "tick": 906643,
+      "name": "入口",
+      "ret": "0x21ac7",
+      "args": [
+       0,
+       30,
+       16
+      ]
+     },
+     {
+      "at": "0x2198e",
+      "t": 52.5,
+      "tick": 906643,
+      "name": "幀",
+      "frame": 0,
+      "radius": 30
+     },
+     {
+      "at": "0x2198e",
+      "t": 55.3,
+      "tick": 906643,
+      "name": "幀",
+      "frame": 1,
+      "radius": 46
+     },
+     {
+      "at": "0x2198e",
+      "t": 58.1,
+      "tick": 906644,
+      "name": "幀",
+      "frame": 2,
+      "radius": 62
+     },
+     {
+      "at": "0x2198e",
+      "t": 60.8,
+      "tick": 906644,
+      "name": "幀",
+      "frame": 3,
+      "radius": 78
+     },
+     {
+      "at": "0x2198e",
+      "t": 63.6,
+      "tick": 906645,
+      "name": "幀",
+      "frame": 4,
+      "radius": 94
+     },
+     {
+      "at": "0x2198e",
+      "t": 66.4,
+      "tick": 906645,
+      "name": "幀",
+      "frame": 5,
+      "radius": 110
+     },
+     {
+      "at": "0x2198e",
+      "t": 69.1,
+      "tick": 906646,
+      "name": "幀",
+      "frame": 6,
+      "radius": 126
+     },
+     {
+      "at": "0x2198e",
+      "t": 71.9,
+      "tick": 906646,
+      "name": "幀",
+      "frame": 7,
+      "radius": 142
+     },
+     {
+      "at": "0x2198e",
+      "t": 74.7,
+      "tick": 906647,
+      "name": "幀",
+      "frame": 8,
+      "radius": 158
+     },
+     {
+      "at": "0x2198e",
+      "t": 77.4,
+      "tick": 906648,
+      "name": "幀",
+      "frame": 9,
+      "radius": 174
+     },
+     {
+      "at": "0x21998",
+      "t": 80.2,
+      "tick": 906648,
+      "name": "迴圈結束",
+      "ebx": 10
+     },
+     {
+      "at": "0x219a8",
+      "t": 82.9,
+      "tick": 906648,
+      "name": "redraw(0) 之後"
+     }
+    ]
+   }
+  ],
+  "entry_to_loop_end_ticks": {
+   "2500_11": [
+    16,
+    16
+   ],
+   "2500_12": [
+    22,
+    22
+   ],
+   "5000_11": [
+    7,
+    7
+   ],
+   "5000_12": [
+    10
+   ],
+   "10000_11": [
+    3
+   ],
+   "10000_12": [
+    5,
+    5
+   ]
+  },
+  "older_runs": "5000_11 / 5000_12 取自 lut_circle_ramp_frame_time_ch22_post_20261015.json(續一百二十六);2500_11 取自 lut_ch22_post_cycles2500_chapter_tables_20261015.json(續一百二十七)",
+  "checks": [
+   {
+    "name": "c2500_s12_nof 站序 / 引數 / 半徑",
+    "ok": true,
+    "control": false,
+    "detail": "站 3(期望 3),ret 0x21ac7 args [0, 30, 16],期望 ('0x21ac7', [0, 30, 16])"
+   },
+   {
+    "name": "c2500_s12_frames 站序 / 引數 / 半徑",
+    "ok": true,
+    "control": false,
+    "detail": "站 13(期望 13),ret 0x21ac7 args [0, 30, 16],期望 ('0x21ac7', [0, 30, 16])"
+   },
+   {
+    "name": "c10000_s11_nof 站序 / 引數 / 半徑",
+    "ok": true,
+    "control": false,
+    "detail": "站 3(期望 3),ret 0x21888 args [0, 15, 10],期望 ('0x21888', [0, 15, 10])"
+   },
+   {
+    "name": "c10000_s12_nof 站序 / 引數 / 半徑",
+    "ok": true,
+    "control": false,
+    "detail": "站 3(期望 3),ret 0x21ac7 args [0, 30, 16],期望 ('0x21ac7', [0, 30, 16])"
+   },
+   {
+    "name": "c10000_s12_frames 站序 / 引數 / 半徑",
+    "ok": true,
+    "control": false,
+    "detail": "站 13(期望 13),ret 0x21ac7 args [0, 30, 16],期望 ('0x21ac7', [0, 30, 16])"
+   },
+   {
+    "name": "每份紀錄都有一個入口與一個迴圈結束",
+    "ok": true,
+    "control": false,
+    "detail": "缺的 []"
+   },
+   {
+    "name": "cycles 2500 法術 12:逐幀停與只停兩端相同",
+    "ok": true,
+    "control": false,
+    "detail": "[22, 22]"
+   },
+   {
+    "name": "cycles 10000 法術 12:逐幀停與只停兩端相同",
+    "ok": true,
+    "control": false,
+    "detail": "[5, 5]"
+   },
+   {
+    "name": "預測 cycles 2500 法術 12 在 17..24",
+    "ok": true,
+    "control": false,
+    "detail": "[22, 22]"
+   },
+   {
+    "name": "預測 cycles 10000 法術 11 在 2..5",
+    "ok": true,
+    "control": false,
+    "detail": "[3]"
+   },
+   {
+    "name": "預測 cycles 10000 法術 12 在 4..7",
+    "ok": true,
+    "control": false,
+    "detail": "[5, 5]"
+   },
+   {
+    "name": "法術 11:2500 > 5000 > 10000",
+    "ok": true,
+    "control": false,
+    "detail": "[16, 7, 3]"
+   },
+   {
+    "name": "法術 11:tick × cycles 在 ±1 tick 內有共同值",
+    "ok": true,
+    "control": false,
+    "detail": "共同區間 [37500, 40000]"
+   },
+   {
+    "name": "法術 12:2500 > 5000 > 10000",
+    "ok": true,
+    "control": false,
+    "detail": "[22, 10, 5]"
+   },
+   {
+    "name": "法術 12:tick × cycles 在 ±1 tick 內有共同值",
+    "ok": true,
+    "control": false,
+    "detail": "共同區間 [52500, 55000]"
+   },
+   {
+    "name": "cycles 2500:裂地術 > 地震術",
+    "ok": true,
+    "control": false,
+    "detail": "[22, 22] vs [16, 16]"
+   },
+   {
+    "name": "cycles 10000:裂地術 > 地震術",
+    "ok": true,
+    "control": false,
+    "detail": "[5, 5] vs [3]"
+   },
+   {
+    "name": "對照 H0:cycles 10000 與 5000 相同(±1 tick)",
+    "ok": false,
+    "control": true,
+    "detail": "10000 [3]/[5, 5];5000 [7, 7]/[10]"
+   },
+   {
+    "name": "對照:cycles 越大越慢",
+    "ok": false,
+    "control": true,
+    "detail": "2500 的時間小於 10000"
+   }
+  ]
+ },
+ "mutation": [
+  "抓到 stub5_push6 | rc 1 | 缺 []",
+  "抓到 stub2_jmp_off | rc 1 | 缺 []",
+  "抓到 head0_push1 | rc 1 | 缺 []",
+  "抓到 head4_call_off | rc 1 | 缺 []",
+  "抓到 table9_to_stub8 | rc 1 | 缺 []",
+  "抓到 live_drop_h4 | rc 1 | 缺 []",
+  "抓到 live_add_h7 | rc 1 | 缺 []",
+  "抓到 live_drop_body_b | rc 1 | 缺 []",
+  "抓到 t_nof_plus3 | rc 1 | 缺 []",
+  "抓到 t_radius | rc 1 | 缺 []",
+  "抓到 t_args | rc 1 | 缺 []",
+  "抓到 t_ret | rc 1 | 缺 []",
+  "抓到 t_drop_end | rc 1 | 缺 []",
+  "抓到 t_s11_10000_is_7 | rc 1 | 缺 []",
+  "抓到 t_h0_world | rc 1 | 缺 []",
+  "抓到 15 / 15,漏掉 0"
+ ]
+}

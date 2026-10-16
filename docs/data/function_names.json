@@ -4120,9 +4120,9 @@
   {
    "addr": "0x21206",
    "name": "command_handler_0",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x21227(_, 0, _, _))。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 0 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x21227(_, 0, _, _))。 續一百二十九:入口在 s103c0 軌跡(續一百零四,敵方回合、[0x53af9]=1)有執行(live_exec_addresses.json)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d01",
@@ -4146,9 +4146,9 @@
   {
    "addr": "0x2134b",
    "name": "command_handler_1",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 1 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 1 項的 handler(身分由跳表 fixup 決定)。 續一百二十九(STATIC ANALYSIS):25 位元組跳板,push 1 後 jmp 0x2121a(與第 0 格同一本體 0x21227);入口沒有實機紀錄。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d05",
@@ -4168,9 +4168,9 @@
   {
    "addr": "0x21364",
    "name": "command_handler_2",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 2 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 2 項的 handler(身分由跳表 fixup 決定)。 續一百二十九(STATIC ANALYSIS):25 位元組跳板,push 2 後 jmp 0x2121a(與第 0 格同一本體 0x21227);入口沒有實機紀錄。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d09",
@@ -4190,9 +4190,9 @@
   {
    "addr": "0x2137d",
    "name": "command_handler_3",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 3 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 3 項的 handler(身分由跳表 fixup 決定)。 續一百二十九:跳板,push 3 後 jmp 0x2121a;入口在 s103c0 軌跡(續一百零四,敵方回合、[0x53af9]=1)有執行。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d0d",
@@ -4212,9 +4212,9 @@
   {
    "addr": "0x21396",
    "name": "command_handler_4",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 4 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x213b7(_, 4, _, _))。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 4 項的 handler(身分由跳表 fixup 決定)。結構性呼叫序列:wrapper(~0x213b7(_, 4, _, _))。 續一百二十九:入口在 s103c0 軌跡(續一百零四,敵方回合、[0x53af9]=1)有執行(live_exec_addresses.json)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d11",
@@ -4238,9 +4238,9 @@
   {
    "addr": "0x21449",
    "name": "command_handler_5",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 5 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 5 項的 handler(身分由跳表 fixup 決定)。 續一百二十九(STATIC ANALYSIS):25 位元組跳板,push 5 後 jmp 0x213aa(與第 4 格同一本體 0x213b7);入口沒有實機紀錄。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d15",
@@ -4260,9 +4260,9 @@
   {
    "addr": "0x21462",
    "name": "command_handler_6",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 6 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 6 項的 handler(身分由跳表 fixup 決定)。 續一百二十九:跳板,push 6 後 jmp 0x213aa;入口在 s103c0 軌跡(續一百零四,敵方回合、[0x53af9]=1)有執行。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d19",
@@ -4282,9 +4282,9 @@
   {
    "addr": "0x2147b",
    "name": "command_handler_7",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 7 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 7 項的 handler(身分由跳表 fixup 決定)。 續一百二十九(STATIC ANALYSIS):25 位元組跳板,push 7 後 jmp 0x213aa(與第 4 格同一本體 0x213b7);入口沒有實機紀錄。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d1d",
@@ -4304,9 +4304,9 @@
   {
    "addr": "0x21494",
    "name": "command_handler_8",
-   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 8 項的 handler(身分由跳表 fixup 決定)。",
+   "summary": "(使用者, count, targets) 指令/行動 dispatch 表 0x51d01 第 8 項的 handler(身分由跳表 fixup 決定)。 續一百二十九:跳板,push 8 後 jmp 0x2121a;續五十二 C1([0x53af9]=1、法術 8)spell_damage_resolve 返回 0x212a4 即經此格(入口本身不在軌跡)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "fixup_from": "0x51d21",
@@ -26599,9 +26599,9 @@
   {
    "addr": "0x213b7",
    "name": "command_generic_damage_type21",
-   "summary": "(使用者, 指令號, count, targets) 指令處理表第 4 格的傷害路線:與 command_generic_damage 相同(unit_spend_mp、spell_damage_resolve),呈現改用 type21_effect_presentation(FD2.EXE 反組譯)。command_handler_4 呼叫(doc56)。 續一百一十八(直接讀反組譯):補第 3 / 4 個 —— 原樣當 play_map_effect_animation 的 count / targets(0x213e1),0x21425 把第 4 個載入 ebx 逐目標讀。",
+   "summary": "(使用者, 指令號, count, targets) 指令處理表第 4 格的傷害路線:與 command_generic_damage 相同(unit_spend_mp、spell_damage_resolve),呈現改用 type21_effect_presentation(FD2.EXE 反組譯)。command_handler_4 呼叫(doc56)。 續一百一十八(直接讀反組譯):補第 3 / 4 個 —— 原樣當 play_map_effect_animation 的 count / targets(0x213e1),0x21425 把第 4 個載入 ebx 逐目標讀。 續一百二十九:在 s103c0 軌跡(續一百零四,敵方回合、[0x53af9]=1)有執行;第 4..7 格共用(doc25 §20.8)。",
    "confidence": "static_re",
-   "date": "2026-10-13",
+   "date": "2026-10-16",
    "evidence": [
     {
      "at": "0x213cd",

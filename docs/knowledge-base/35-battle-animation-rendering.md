@@ -5278,3 +5278,22 @@ harness 固定 `core=normal`、`cycles=5000`(`tools/dosbox_harness.sh`)。
 - 證據:`evidence/lut_ch22_post_cycles2500_chapter_tables_20261015.json`(三份紀錄的每一站、逐項檢查 21 項與對照 2 項、突變 20 個、`0x51d01` 起 88 格對照)。
 
 **沒有做的**:沒有斷點時相位迴圈實際畫出哪幾階(要連續擷取畫面);cycles 2500 / 5000 以外的設定;裂地術在 cycles 2500 的時間。
+
+**cycles 2500 / 10000 的時間(2026-10-16 續一百二十九,DOSBox-X 實機)**。原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e),第 1 章戰場;只改模擬器記憶體裡的資料,程式碼沒有動。
+cycles 由 WSL 包裝腳本只換 harness 的 `cycles=5000`(執行中的 dosbox-x 程序參數讀到 `cycles=2500` / `cycles=10000`)。量之前先寫下預測:時間與 cycles 成反比。
+
+| 法術(入口引數) | cycles 2500 | cycles 5000 | cycles 10000 |
+|---|---|---|---|
+| 地震術(0, 15, 10) | 16 tick(續一百二十七) | 7 tick(續一百二十六) | 3 tick |
+| 裂地術(0, 30, 16) | 22 tick | 10 tick(續一百二十六) | 5 tick |
+
+數字是入口到迴圈結束。本輪新量的是 cycles 2500 裂地術兩次、cycles 10000 地震術一次、裂地術兩次(DOSBox-X 斷點讀值)。
+- 同一個 cycles 下,逐幀停與只停兩端相同(2500:22 / 22;10000:5 / 5)。
+- 三個 cycles 的「tick × cycles」在 ±1 tick 量化誤差內有共同值(地震術 37500 ~ 40000、裂地術 52500 ~ 55000),也就是時間與 cycles 成反比。
+  對照「cycles 10000 與 5000 一樣」判為不符。
+- cycles 2500 逐幀的 tick 增量是 2、1、2、2、2、2、2、3、3、3,半徑大的後幾幀比較慢,和 cycles 5000 的趨勢相同。
+- 入口引數、返回位址(0x21888、0x21ac7)、十幀半徑都等於 FD2.EXE 兩個呼叫點的 push 立即值(FD2.EXE 反組譯;DOSBox-X 斷點讀值)。
+- 操作備註:cycles 2500 下 harness 送的按鍵(按下立刻放開)有幾次沒被遊戲讀到。改成對同一視窗 keydown、0.3 秒後 keyup,每一鍵都有反應;harness 沒有改。
+- 證據:`evidence/cmd_table_0_9_coverage_lut_cycles_20261016.json`。
+
+**仍沒有做的**:沒有斷點時相位迴圈實際畫出哪幾階(要連續擷取畫面)。

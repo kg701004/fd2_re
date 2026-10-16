@@ -3285,5 +3285,24 @@ handler 的開頭**(例如 event 61 的前 0x22 bytes),搬過去之後仍是不�
   輸出多一個 `dispatch` 欄:`0x51b91` 一段 90 格、8 個 dispatch 點;`0x51d01` 起 88 格切成 28 / 30 / 30,dispatch 點 2 / 3 / 1。
   與 capstone 線性反組譯整個 obj1 的結果相同(selftest (11));鍵名 `command` 與 `count: 88` 保留。
 - `verify_findings.py` 的 `212-command-table` 只改說明字串(代號與 88 不變)。§20.6 末「沒有改的」兩項到此處理完。
-- 沒有做的:AI 在 `[0x53af9]` 不為 0 時才會用到第 0..9 格,這條路徑沒有實機驗。
+- 沒有做的:AI 在 `[0x53af9]` 不為 0 時才會用到第 0..9 格,這條路徑沒有實機驗。(續一百二十九更正:這句過時,舊紀錄已經走過第 0、3、4、6、8、9 格,見 §20.8。)
 - 證據:`evidence/dispatch_index_bounds_table_split_20261015.json`。
+
+### 20.8 指令表第 0..9 格的實機覆蓋(2026-10-16 續一百二十九,更正 §20.7)
+
+§20.7 說「AI 在 `[0x53af9]` 不為 0 時才會用到第 0..9 格,這條路徑沒有實機驗」是過時的:舊的實機紀錄已經走過這條路。
+本輪沒有為這一項執行遊戲;依據是 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)的 capstone 解碼、`docs/data/live_exec_addresses.json` 的既有軌跡與兩份既有 evidence。
+
+| 格 | handler 入口 | 形狀(FD2.EXE 反組譯) | 實機紀錄 |
+|---|---|---|---|
+| 0 | `0x21206` | push 0 後接著走 `0x2121a`,call `command_generic_damage`(0x21227) | s103c0 軌跡有入口 |
+| 1、2、3 | `0x2134b`、`0x21364`、`0x2137d` | 跳板:push k,jmp `0x2121a` | 只有第 3 格在 s103c0 軌跡 |
+| 4 | `0x21396` | push 4 後接著走 `0x213aa`,call `command_generic_damage_type21`(0x213b7) | s103c0 軌跡有入口 |
+| 5、6、7 | `0x21449`、`0x21462`、`0x2147b` | 跳板:push k,jmp `0x213aa` | 只有第 6 格在 s103c0 軌跡 |
+| 8 | `0x21494` | 跳板:push 8,jmp `0x2121a` | 續五十二 C1(`[0x53af9]` = 1、法術 8):`spell_damage_resolve` 返回 0x212a4,在 0x21227 裡 |
+| 9 | `0x214ad` | 自有本體,不是跳板 | 續五十五 A2(`[0x53af9]` = 1):返回 0x15426;s103a 軌跡有入口 |
+
+- s103c0 是續一百零四錄的「玩家法術 27 → 敵方回合」,當時 `[0x53af9]` = 1(doc98 續一百零四);軌跡 sha256 `24c05f40…` 收在 `live_exec_addresses.json` 的來源清單。
+- 第 0..8 格只用兩個本體:0、1、2、3、8 走 `0x21227`,4、5、6、7 走 `0x213b7`(兩者只差呈現呼叫 `0x1cd17` 或 `0x1cac7`)。兩個本體與 `0x1541f` 都在軌跡裡。
+- 入口沒在任何軌跡出現的是第 1、2、5、7 格(第 8 格由返回位址間接證實)。這 4 格是 25 位元組跳板,和已執行的同組格子只差 push 的常數(STATIC ANALYSIS,FD2.EXE 的 capstone 反組譯)。
+- 證據:`evidence/cmd_table_0_9_coverage_lut_cycles_20261016.json`。
