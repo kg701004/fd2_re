@@ -4861,6 +4861,53 @@
     ]
    }
   },
+  "ev_s133": {
+   "outputs": [
+    "hud_icon_hp_digits_20261017.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc131a_moverange/D/buf.bin": [
+     153216,
+     "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d"
+    ],
+    ".wsl_build/lc131a_moverange/D/g.json": [
+     593,
+     "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5"
+    ],
+    ".wsl_build/lc131a_moverange/D/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/E/buf.bin": [
+     153216,
+     "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6"
+    ],
+    ".wsl_build/lc131a_moverange/E/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/F/buf.bin": [
+     153216,
+     "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28"
+    ],
+    ".wsl_build/lc131a_moverange/F/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    ],
+    "{GAME}/FDOTHER.DAT": [
+     3382481,
+     "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

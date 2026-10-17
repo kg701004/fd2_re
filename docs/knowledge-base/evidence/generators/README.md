@@ -1,7 +1,13 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 36 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 37 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百三十三(2026-10-17)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s133.py` | `hud_icon_hp_digits_20261017.json` | `mut_s133.py`(23) |
 
 ## 續一百三十二(2026-10-17)
 

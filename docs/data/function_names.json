@@ -25677,7 +25677,7 @@
   {
    "addr": "0x1acf3",
    "name": "draw_map_hud",
-   "summary": "(dst, stride) 地圖的地形 / 單位 HUD:旗標 [0x51aab] 決定是否顯示,以 map_cell_info 取游標格,blit_tile24_rle 畫地形圖格、draw_signed_number2 畫地形加成,單位格再畫圖示與 HP 數字(draw_number_full_color)(FD2.EXE 反組譯)。redraw 與指令環家族呼叫(doc10)。 續一百一十八(直接讀反組譯):補第 2 個 stride(0x1ad08 載入 edi,原樣當 blit_tile24_rle / draw_signed_number2 等的 stride;實機 2000 次都是 0x1c8)。 續一百三十二(DOSBox-X 除錯器傾印地圖緩衝):游標在索爾時,單位圖示框(視窗 x 7..30、列 162..185,[0x51a0c] 初值 1)隨影格變動,續一百三十一 (10, 20) 那 53 個像素就是它。",
+   "summary": "(dst, stride) 地圖的地形 / 單位 HUD:旗標 [0x51aab] 決定是否顯示,以 map_cell_info 取游標格,blit_tile24_rle 畫地形圖格、draw_signed_number2 畫地形加成,單位格再畫圖示與 HP 數字(draw_number_full_color)(FD2.EXE 反組譯)。redraw 與指令環家族呼叫(doc10)。 續一百一十八(直接讀反組譯):補第 2 個 stride(0x1ad08 載入 edi,原樣當 blit_tile24_rle / draw_signed_number2 等的 stride;實機 2000 次都是 0x1c8)。 續一百三十二(DOSBox-X 除錯器傾印地圖緩衝):游標在索爾時,單位圖示框(視窗 x 7..30、列 162..185,[0x51a0c] 初值 1)隨影格變動,續一百三十一 (10, 20) 那 53 個像素就是它。 續一百三十三(傾印逐像素):框 = FDICON 圖示(cache slot × 12 + 時脈)再蓋 HP 數字(draw_number_full_color,框的下 8 列);索爾三幀是 sprite 385 / 385 / 384,已知像素全部相符。",
    "confidence": "static_re",
    "date": "2026-10-17",
    "evidence": [

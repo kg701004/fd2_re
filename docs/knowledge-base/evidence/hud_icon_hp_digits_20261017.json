@@ -1,0 +1,233 @@
+{
+ "_meta": {
+  "topic": "續一百三十三:draw_map_hud 單位圖示框逐像素 = FDICON 單位圖示 + HP 數字格;lc131a 第 6 圈畫 6 的原因",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "assets": {
+   "org_game/炎龍騎士團/FLAME2/FDICON.B24": "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44",
+   "org_game/炎龍騎士團/FLAME2/FDOTHER.DAT": "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
+  },
+  "raw": {
+   "D/buf.bin": "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d",
+   "D/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "E/buf.bin": "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6",
+   "E/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "F/buf.bin": "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28",
+   "F/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "D/g.json": "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5"
+  },
+  "s132_evidence": "docs/knowledge-base/evidence/phase_loop_runB_hud_icon_20261017.json",
+  "generator": "evidence/generators/ev_s133.py(變異測試 mut_s133.py)",
+  "harness": "傾印是續一百三十一的 D/E/F(DOSBox-X 除錯器,停在 draw_terrain_layer 入口,緩衝是上一幀畫完的畫面);本輪沒有開新的 instance"
+ },
+ "static_code": {
+  "0x1ae8e": "0fb746400fb756426a035250576bff1501fd83c50955e8b4d8ffff83c414",
+  "0x18767": "b82a0000008b54240c3b5424107505b81f000000ff74241450ff742414ff742414ff742414e84500000083c414",
+  "0x187e7": "8b6c24348b4424388d7c2414bebf1e0000a566a585c07d0231c0",
+  "0x1883c": "8a5c244080c330885c2417508d442418508d44240850e8d2f2010083c40c31dbeb240fb6041c0344243c83e83050ff35813a0000556bc3060344243c50e808e0ffff83c410433b5c24407cd6",
+  "0x16891": "8b5424108b442414035482066affff742410ff7424106a006a0052e8dc80030083c418",
+  "0x51ebf": "25302e356400"
+ },
+ "cursor_unit": {
+  "index": 0,
+  "cell": [
+   20,
+   14
+  ],
+  "slot_+2": 0,
+  "key_+7": 32,
+  "hp_+40_+42": [
+   823,
+   823
+  ]
+ },
+ "box_view_px": {
+  "x0": 7,
+  "y0": 162,
+  "hp_x0": 10,
+  "hp_y0": 178
+ },
+ "blank_sprites": 225,
+ "exact_sprite_matches_nonblank": {
+  "D": [
+   385
+  ],
+  "E": [
+   385
+  ],
+  "F": [
+   384
+  ]
+ },
+ "fit_known_bad": {
+  "D": [
+   463,
+   0
+  ],
+  "E": [
+   463,
+   0
+  ],
+  "F": [
+   478,
+   0
+  ]
+ },
+ "digits_only_known_bad": {
+  "D": [
+   101,
+   0
+  ],
+  "E": [
+   101,
+   0
+  ],
+  "F": [
+   101,
+   0
+  ]
+ },
+ "controls_known_bad": {
+  "color_0x2a": {
+   "D": [
+    463,
+    63
+   ],
+   "F": [
+    478,
+    63
+   ]
+  },
+  "codec_c0": {
+   "D": [
+    465,
+    124
+   ],
+   "F": [
+    481,
+    122
+   ]
+  },
+  "advance_7": {
+   "D": [
+    466,
+    70
+   ],
+   "F": [
+    481,
+    69
+   ]
+  },
+  "digits_dy_-1": {
+   "D": [
+    463,
+    108
+   ],
+   "F": [
+    470,
+    101
+   ]
+  },
+  "digits_dy_+1": {
+   "D": [
+    464,
+    97
+   ],
+   "F": [
+    479,
+    95
+   ]
+  },
+  "no_digits": {
+   "D": [
+    455,
+    93
+   ],
+   "F": [
+    462,
+    85
+   ]
+  },
+  "swap_cycle": {
+   "D": [
+    478,
+    287
+   ],
+   "F": [
+    463,
+    272
+   ]
+  },
+  "hp_822": {
+   "D": [
+    463,
+    15
+   ],
+   "F": [
+    478,
+    15
+   ]
+  }
+ },
+ "mode1_runs_in_used_cells": {
+  "sprite_385": 0,
+  "sprite_384": 0,
+  "digit_8": 0,
+  "digit_2": 0,
+  "digit_3": 0
+ },
+ "both_transparent_pixels": 82,
+ "diff_D_F_in_box": 303,
+ "diff_D_F_in_cell_10_20": 53,
+ "lc131a_k6": {
+  "lc131a": {
+   "tick_k4": 59967,
+   "tick_k6": 59969,
+   "gap": 2,
+   "crossings_k4_k5": [
+    0,
+    0
+   ],
+   "adv_k5_k6": [
+    0,
+    0
+   ],
+   "drawn_k6": 6
+  },
+  "lc131b": {
+   "tick_k4": 7216,
+   "tick_k6": 7219,
+   "gap": 3,
+   "crossings_k4_k5": [
+    0,
+    1
+   ],
+   "adv_k5_k6": [
+    0,
+    1
+   ],
+   "drawn_k6": 7
+  },
+  "lc131d": {
+   "tick_k4": 51170,
+   "tick_k6": 51174,
+   "gap": 4,
+   "crossings_k4_k5": [
+    1,
+    1
+   ],
+   "adv_k5_k6": [
+    0,
+    1
+   ],
+   "drawn_k6": 7
+  }
+ },
+ "status": {
+  "hud_icon_pixels": "CODE + LOG CONFIRMED:圖示框 24 × 24 = FDICON sprite 再蓋 HP 數字。D、E 是 sprite 385、F 是 384(第 32 組 = 游標下索爾的 +7,cycle 1 / 0),1455 個非空白 sprite 裡各只有這一個對得上(已知像素 463 / 478 個全中;另 225 個全透明的 sprite 合成後只剩數字格,不算);HP 823 / 823 滿血,數字格 = FDOTHER #5 的 #31 + 位數(四模式 RLE),間距 6,蓋在框的下 8 列。換色組 0x2a、0xC0 codec、間距 7、上下錯一列、不畫數字、對調 cycle、HP 822 都對不上。範圍:用到的 sprite 與數字 8、2、3 都沒有模式 1(隔一格),所以模式 1 的次序這裡沒有驗到",
+  "cache_slot": "INFERRED:單位 +2 = 0(cache slot 0)的 12 格對到 FDICON 第 32 組(+7 = 32);cache 本身沒有傾印,是由像素唯一相符推得",
+  "clock": "INFERRED:D、E 的 [0x53c0b] 是 1 或 3(HUD 把 3 當 1),F 是 0;時脈值沒有傾印",
+  "s132_link": "D-F 在框內的差異有 303 個像素,其中落在 (10, 20) 格(視窗 x 24..47、列 168..191)的 53 個就是續一百三十一那 53 個;兩幀都透明的像素(地形)三幀相同",
+  "lc131a_k6": "LOG CONFIRMED(續一百三十二已提交的 tick):三份都在第 4 圈推進;lc131a 第 4、5 圈 redraw 都沒跨 tick,第 6 圈的 tick 只比上次推進多 2(不大於 2)所以不推進、畫 6;lc131b、lc131d 第 5 圈跨 1 個 tick,差 3、4,第 6 圈推進、畫 7。redraw 為什麼有時跨、有時不跨沒有量"
+ }
+}
