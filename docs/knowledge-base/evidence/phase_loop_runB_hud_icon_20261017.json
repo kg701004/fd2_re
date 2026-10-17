@@ -1,0 +1,510 @@
+{
+ "_meta": {
+  "topic": "續一百三十二:續一百二十三第二輪的擺法在沒有斷點時畫的階(更正續一百三十一的 BLOCKED);(10, 20) 那 53 個像素是 draw_map_hud 的單位圖示",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "raw": {
+   "calllogs": {
+    "lc130a": ".wsl_build/lc130a_phase_eips.txt",
+    "lc131a": ".wsl_build/lc131_runB_calllogs/lc131a.txt",
+    "lc131b": ".wsl_build/lc131_runB_calllogs/lc131b.txt",
+    "lc131d": ".wsl_build/lc131_runB_calllogs/lc131d.txt"
+   },
+   "moverange": {
+    "D/buf.bin": "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d",
+    "E/buf.bin": "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6",
+    "F/buf.bin": "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28",
+    "D/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+   }
+  },
+  "generator": "evidence/generators/ev_s132.py(變異測試 mut_s132.py)",
+  "harness": "DOSBox-X(tools/dosbox_harness.sh 預設 cycles 5000);原版 FD2.EXE;呼叫紀錄只列 5 個 EIP,途中不下斷點;lc131a/b/d 的擺法同續一百二十三第二輪(#11 在 (19, 14)、道具 79,索爾 HP 167;#5、#10 設倒下(a、b)或搬走(d))"
+ },
+ "static_code": {
+  "0x17ab3": "8b542404b86c0400000fbf00a32c3a0000b86c0400000fbf002b052c3a000085c07d05050000010039d07ce5b86c0400000fbf00a32c3a0000c3",
+  "0x152a0": "891d1f3c00006a01e8ffc9ffff83c4046a01e8f227000083c4044383fb097ce0",
+  "0x11cbc": "837c2408007505e854c60300",
+  "0x1ad2a": "833dbd3a0000057e15833db93a0000037d0cc7050c1a0000f2000000eb1c833dbd3a0000057e13833db93a0000097e0ac7050c1a00000100000069c79d00000001c5032d0c1a0000",
+  "0x1ae4d": "0fb656026bd20ca10b3c000083f8037505b80100000001d08b15613a00008b048201d0894424085789f8c1e00201f801e883c00650ff742410e89f330300"
+ },
+ "hud_x0_initial_51a0c": 1,
+ "s123_breakpoint_runs": {
+  "runA": [
+   2,
+   2,
+   4,
+   4,
+   5,
+   7,
+   7,
+   8
+  ],
+  "runB": [
+   1,
+   3,
+   3,
+   5,
+   5,
+   7,
+   7,
+   9
+  ]
+ },
+ "runs": {
+  "lc130a": {
+   "raw_sha256": "9a56484988668611fab4aa1f6b6c26b81d760794de45a6243bc072a3d7422c2d",
+   "E_records": 14295,
+   "drawn": [
+    2,
+    2,
+    4,
+    4,
+    5,
+    7,
+    7,
+    8
+   ],
+   "adv": [
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+   ],
+   "tick_at_draw": [
+    43307,
+    43309,
+    43310,
+    43311,
+    43312,
+    43313,
+    43314,
+    43315
+   ],
+   "tick_after": [
+    43309,
+    43310,
+    43311,
+    43312,
+    43313,
+    43314,
+    43315,
+    43316
+   ],
+   "last_adv_before_loop": 43304,
+   "redraw_tick_crossings": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "normal_redraw_gaps_before_loop": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_after_loop": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    10,
+    11,
+    18,
+    2
+   ],
+   "checks": {
+    "八圈 k = 1..8 依序": true,
+    "每圈收尾 ebx 仍是 k": true,
+    "每圈只畫一次地形、走 -1 分支一次": true,
+    "畫的階 ∈ {k, k + 1}": true,
+    "推進 ⇔ 畫 k + 1": true,
+    "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+   }
+  },
+  "lc131a": {
+   "raw_sha256": "b0d4b7742eebd1641e7eb5440c65b019f2f3b62eb03805fc41e9334a73a2c7c3",
+   "E_records": 19627,
+   "drawn": [
+    1,
+    3,
+    3,
+    5,
+    5,
+    6,
+    8,
+    8
+   ],
+   "adv": [
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0
+   ],
+   "tick_at_draw": [
+    59961,
+    59963,
+    59965,
+    59967,
+    59968,
+    59969,
+    59971,
+    59973
+   ],
+   "tick_after": [
+    59963,
+    59965,
+    59967,
+    59968,
+    59969,
+    59971,
+    59973,
+    59974
+   ],
+   "last_adv_before_loop": 59959,
+   "redraw_tick_crossings": [
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0
+   ],
+   "normal_redraw_gaps_before_loop": [
+    4,
+    43,
+    9,
+    6,
+    15,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_after_loop": [
+    1,
+    10,
+    11,
+    18,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "checks": {
+    "八圈 k = 1..8 依序": true,
+    "每圈收尾 ebx 仍是 k": true,
+    "每圈只畫一次地形、走 -1 分支一次": true,
+    "畫的階 ∈ {k, k + 1}": true,
+    "推進 ⇔ 畫 k + 1": true,
+    "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+   }
+  },
+  "lc131b": {
+   "raw_sha256": "81e1452ac5e6d1602ba120edeccbe633dd06e4d322c7d4233ea9cf8a28d69a9b",
+   "E_records": 1265,
+   "drawn": [
+    1,
+    3,
+    3,
+    5,
+    5,
+    7,
+    7,
+    9
+   ],
+   "adv": [
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1
+   ],
+   "tick_at_draw": [
+    7209,
+    7212,
+    7214,
+    7216,
+    7217,
+    7219,
+    7221,
+    7223
+   ],
+   "tick_after": [
+    7212,
+    7214,
+    7216,
+    7217,
+    7219,
+    7221,
+    7223,
+    7225
+   ],
+   "last_adv_before_loop": 7207,
+   "redraw_tick_crossings": [
+    2,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_before_loop": [
+    4,
+    43,
+    8,
+    7,
+    15,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_after_loop": [
+    1,
+    10,
+    11,
+    18,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2
+   ],
+   "checks": {
+    "八圈 k = 1..8 依序": true,
+    "每圈收尾 ebx 仍是 k": true,
+    "每圈只畫一次地形、走 -1 分支一次": true,
+    "畫的階 ∈ {k, k + 1}": true,
+    "推進 ⇔ 畫 k + 1": true,
+    "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+   }
+  },
+  "lc131d": {
+   "raw_sha256": "023a56f80ef41a7c833cf9aa69053cc8cb398e6329f17f17e1500c65e25cfc32",
+   "E_records": 1389,
+   "drawn": [
+    1,
+    3,
+    3,
+    5,
+    5,
+    7,
+    7,
+    9
+   ],
+   "adv": [
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1
+   ],
+   "tick_at_draw": [
+    51165,
+    51167,
+    51168,
+    51170,
+    51172,
+    51174,
+    51175,
+    51177
+   ],
+   "tick_after": [
+    51167,
+    51168,
+    51170,
+    51172,
+    51174,
+    51175,
+    51177,
+    51179
+   ],
+   "last_adv_before_loop": 51163,
+   "redraw_tick_crossings": [
+    1,
+    0,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_before_loop": [
+    5,
+    43,
+    9,
+    7,
+    15,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "normal_redraw_gaps_after_loop": [
+    1,
+    10,
+    11,
+    18,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "checks": {
+    "八圈 k = 1..8 依序": true,
+    "每圈收尾 ebx 仍是 k": true,
+    "每圈只畫一次地形、走 -1 分支一次": true,
+    "畫的階 ∈ {k, k + 1}": true,
+    "推進 ⇔ 畫 k + 1": true,
+    "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+   }
+  }
+ },
+ "ticks_per_two_iterations": {
+  "lc130a": [
+   3,
+   2,
+   2,
+   2
+  ],
+  "lc131a": [
+   4,
+   3,
+   3,
+   3
+  ],
+  "lc131b": [
+   5,
+   3,
+   4,
+   4
+  ],
+  "lc131d": [
+   3,
+   4,
+   3,
+   4
+  ]
+ },
+ "query_bug_s131": {
+  "lc131a": {
+   "old_pattern_1b12a0": 0,
+   "padded_001b12a0": 8
+  },
+  "lc131b": {
+   "old_pattern_1b12a0": 0,
+   "padded_001b12a0": 8
+  },
+  "lc131d": {
+   "old_pattern_1b12a0": 0,
+   "padded_001b12a0": 8
+  }
+ },
+ "hud_icon_box_view_px": {
+  "x": [
+   7,
+   30
+  ],
+  "y": [
+   162,
+   185
+  ]
+ },
+ "hud_pairs": {
+  "D-E": {
+   "in_cell_10_20": 0,
+   "component": 0,
+   "bbox": null,
+   "band_diffs": 0,
+   "band_outside_icon": 0
+  },
+  "D-F": {
+   "in_cell_10_20": 53,
+   "component": 259,
+   "bbox": [
+    10,
+    30,
+    162,
+    185
+   ],
+   "band_diffs": 303,
+   "band_outside_icon": 0
+  },
+  "E-F": {
+   "in_cell_10_20": 53,
+   "component": 259,
+   "bbox": [
+    10,
+    30,
+    162,
+    185
+   ],
+   "band_diffs": 303,
+   "band_outside_icon": 0
+  }
+ },
+ "status": {
+  "s131_blocked_retracted": "LOG CONFIRMED:續一百三十一的「四次都沒錄到 0x152a0」是查詢寫錯 —— 等待條件 grep `^E [0-9]* 1b12a0`,紀錄的 EIP 是補零的 001b12a0;lc131a、b、d 三份各有 8 筆(lc131c 停在城鎮,沒有走到戰場)",
+  "runB_levels": "LOG CONFIRMED:第二輪擺法、沒有斷點的 lc131b、lc131d 逐圈畫 1、3、3、5、5、7、7、9,與續一百二十三第二輪(有斷點)相同;lc131a(之前做過選取與 Esc、改過游標)是 1、3、3、5、5、6、8、8。第二輪不同不是斷點造成的",
+  "cause": "LOG CONFIRMED + 反組譯:每圈 = redraw(1) + wait_ticks(1),wait_ticks 等到 tick 換掉為止;推進條件是 tick − 上次推進 > 2。第一輪 8 圈裡 7 圈 redraw 沒有跨 tick(每圈 1 tick);第二輪擺法 redraw 大多跨 1 個 tick(每圈 2 tick),所以每兩圈推進一次、畫 k、k + 1 交替。迴圈前後的一般畫面四份都是每幀 1 tick",
+  "cause_open": "NOT CONFIRMED:第二輪擺法的 redraw 為什麼比較久(鏡頭位置、亮帶方向或畫面內容)沒有量",
+  "s131_inference": "量之前寫下的推論「第二輪每兩圈至少 3 tick」符合(lc131b、lc131d);第一輪不符合",
+  "hud_icon": "CODE + LOG CONFIRMED:(10, 20) 那 53 個像素所在的差異塊外框落在 draw_map_hud 的單位圖示框(視窗 x 7..30、列 162..185,[0x51a0c] 初值 1)內,列剛好是框的 24 列;圖示框列帶內沒有框外差異;(9, 20)、(10, 20) 沒有單位,單位圖的 ±4 px 位移框不住。續一百三十一寫的「旁邊單位的圖(推論)」更正。圖示的影格內容(表 [0x53a61]、時脈 [0x53c0b])沒有逐像素核對"
+ }
+}

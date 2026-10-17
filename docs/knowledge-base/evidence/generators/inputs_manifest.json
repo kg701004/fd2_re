@@ -4818,6 +4818,49 @@
     ]
    }
   },
+  "ev_s132": {
+   "outputs": [
+    "phase_loop_runB_hud_icon_20261017.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc130a_phase_eips.txt": [
+     3684167,
+     "9a56484988668611fab4aa1f6b6c26b81d760794de45a6243bc072a3d7422c2d"
+    ],
+    ".wsl_build/lc131_runB_calllogs/lc131a.txt": [
+     5065453,
+     "b0d4b7742eebd1641e7eb5440c65b019f2f3b62eb03805fc41e9334a73a2c7c3"
+    ],
+    ".wsl_build/lc131_runB_calllogs/lc131b.txt": [
+     323385,
+     "81e1452ac5e6d1602ba120edeccbe633dd06e4d322c7d4233ea9cf8a28d69a9b"
+    ],
+    ".wsl_build/lc131_runB_calllogs/lc131d.txt": [
+     355253,
+     "023a56f80ef41a7c833cf9aa69053cc8cb398e6329f17f17e1500c65e25cfc32"
+    ],
+    ".wsl_build/lc131a_moverange/D/buf.bin": [
+     153216,
+     "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d"
+    ],
+    ".wsl_build/lc131a_moverange/D/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/E/buf.bin": [
+     153216,
+     "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6"
+    ],
+    ".wsl_build/lc131a_moverange/F/buf.bin": [
+     153216,
+     "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
