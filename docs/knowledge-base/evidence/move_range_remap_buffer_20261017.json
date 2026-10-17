@@ -1,0 +1,339 @@
+{
+ "_meta": {
+  "topic": "續一百三十一:移動範圍的明暗 = draw_terrain_layer 換色段(byte3 != 0xff 的格以三角表的階換色)",
+  "raw": {
+   "D/g.json": "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5",
+   "D/map.bin": "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef",
+   "D/buf.bin": "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d",
+   "D/remap_res.bin": "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff",
+   "D/tri.bin": "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d",
+   "D/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "E/g.json": "7aabeeb88bca87244132786dd0d656f33902a5f9fadd7d71e9489899673af9ee",
+   "E/map.bin": "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef",
+   "E/buf.bin": "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6",
+   "E/remap_res.bin": "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff",
+   "E/tri.bin": "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d",
+   "E/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "F/g.json": "f07664540278bee95970eddecf31b31c7c83c3706874cd3e14fac747697fc992",
+   "F/map.bin": "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef",
+   "F/buf.bin": "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28",
+   "F/remap_res.bin": "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff",
+   "F/tri.bin": "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d",
+   "F/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+  },
+  "generator": "evidence/generators/ev_s131.py(變異測試 mut_s131.py)",
+  "harness": "DOSBox-X(tools/dosbox_harness.sh 預設 cycles 5000);原版 FD2.EXE;第 1 章戰場,索爾 MV(+0x3b)由 30 改成 3 後選取;只改模擬器記憶體"
+ },
+ "snaps": {
+  "D": {
+   "phase": 8,
+   "last_adv": -17137,
+   "scroll_x": 9,
+   "scroll_y": 13,
+   "cursor_x": 20,
+   "cursor_y": 14,
+   "sel_51a93": -1,
+   "level": 8
+  },
+  "E": {
+   "phase": 4,
+   "last_adv": -17073,
+   "scroll_x": 9,
+   "scroll_y": 13,
+   "cursor_x": 20,
+   "cursor_y": 14,
+   "sel_51a93": -1,
+   "level": 4
+  },
+  "F": {
+   "phase": 0,
+   "last_adv": -17009,
+   "scroll_x": 9,
+   "scroll_y": 13,
+   "cursor_x": 20,
+   "cursor_y": 14,
+   "sel_51a93": -1,
+   "level": 0
+  }
+ },
+ "marks": {
+  "17,14": 0,
+  "18,13": 0,
+  "18,14": 1,
+  "18,15": 0,
+  "19,12": 0,
+  "19,13": 1,
+  "19,14": 2,
+  "19,15": 1,
+  "19,16": 0,
+  "20,11": 0,
+  "20,12": 1,
+  "20,13": 2,
+  "20,14": 3,
+  "20,15": 2,
+  "20,16": 1,
+  "20,17": 0,
+  "21,12": 0,
+  "21,13": 1,
+  "21,14": 2,
+  "21,15": 1,
+  "21,16": 0,
+  "22,14": 1,
+  "22,15": 0
+ },
+ "allies_in_diamond": [
+  [
+   22,
+   13
+  ],
+  [
+   23,
+   14
+  ]
+ ],
+ "pairs": {
+  "D-E": {
+   "compare": {
+    "levels": [
+     8,
+     4
+    ],
+    "visible": 104,
+    "marked": 17,
+    "marked_changed": 17,
+    "marked_clean": 14,
+    "clean_unexplained": [],
+    "plain": 70,
+    "plain_changed": [],
+    "plain_changed_not_near8": [],
+    "unit_cells_changed": [
+     [
+      20,
+      14,
+      81
+     ]
+    ]
+   },
+   "checks": {
+    "兩幀的階不同": true,
+    "可見的標記格全部變動": true,
+    "不貼單位的標記格都能用換色表解釋": true,
+    "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": true
+   },
+   "control_shift": {
+    "-1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": true,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    },
+    "1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": true,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    }
+   },
+   "control_wrong_level_unexplained": {
+    "0": 14,
+    "1": 14,
+    "2": 14,
+    "3": 14,
+    "5": 13,
+    "6": 14,
+    "7": 14,
+    "8": 14,
+    "9": 14,
+    "10": 14
+   }
+  },
+  "D-F": {
+   "compare": {
+    "levels": [
+     8,
+     0
+    ],
+    "visible": 104,
+    "marked": 17,
+    "marked_changed": 17,
+    "marked_clean": 14,
+    "clean_unexplained": [],
+    "plain": 70,
+    "plain_changed": [
+     [
+      10,
+      20,
+      53
+     ]
+    ],
+    "plain_changed_not_near8": [],
+    "unit_cells_changed": [
+     [
+      15,
+      13,
+      184
+     ],
+     [
+      16,
+      14,
+      268
+     ],
+     [
+      20,
+      14,
+      360
+     ],
+     [
+      9,
+      17,
+      269
+     ],
+     [
+      10,
+      18,
+      269
+     ],
+     [
+      9,
+      19,
+      278
+     ],
+     [
+      11,
+      19,
+      218
+     ]
+    ]
+   },
+   "checks": {
+    "兩幀的階不同": true,
+    "可見的標記格全部變動": true,
+    "不貼單位的標記格都能用換色表解釋": true,
+    "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": true
+   },
+   "control_shift": {
+    "-1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": false,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    },
+    "1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": false,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    }
+   },
+   "control_wrong_level_unexplained": {
+    "1": 13,
+    "2": 14,
+    "3": 14,
+    "4": 14,
+    "5": 14,
+    "6": 14,
+    "7": 14,
+    "8": 14,
+    "9": 14,
+    "10": 14
+   }
+  },
+  "E-F": {
+   "compare": {
+    "levels": [
+     4,
+     0
+    ],
+    "visible": 104,
+    "marked": 17,
+    "marked_changed": 17,
+    "marked_clean": 14,
+    "clean_unexplained": [],
+    "plain": 70,
+    "plain_changed": [
+     [
+      10,
+      20,
+      53
+     ]
+    ],
+    "plain_changed_not_near8": [],
+    "unit_cells_changed": [
+     [
+      15,
+      13,
+      184
+     ],
+     [
+      16,
+      14,
+      268
+     ],
+     [
+      20,
+      14,
+      360
+     ],
+     [
+      9,
+      17,
+      269
+     ],
+     [
+      10,
+      18,
+      269
+     ],
+     [
+      9,
+      19,
+      278
+     ],
+     [
+      11,
+      19,
+      218
+     ]
+    ]
+   },
+   "checks": {
+    "兩幀的階不同": true,
+    "可見的標記格全部變動": true,
+    "不貼單位的標記格都能用換色表解釋": true,
+    "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": true
+   },
+   "control_shift": {
+    "-1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": false,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    },
+    "1": {
+     "兩幀的階不同": true,
+     "可見的標記格全部變動": false,
+     "不貼單位的標記格都能用換色表解釋": false,
+     "沒標記、不貼單位的格:變動只出現在單位換幀時,且都與單位相鄰(8 方向)": false
+    }
+   },
+   "control_wrong_level_unexplained": {
+    "1": 13,
+    "2": 14,
+    "3": 14,
+    "4": 14,
+    "5": 14,
+    "6": 14,
+    "7": 14,
+    "8": 14,
+    "9": 14,
+    "10": 14
+   }
+  }
+ },
+ "status": {
+  "marks": "LOG CONFIRMED:選取索爾(MV 3)後,地圖格 byte3 != 0xff 的是以 (20, 14) 為中心的菱形(值 3 − 距離)扣掉我方 #2、#3 站的兩格;預測沒有扣這兩格,實測後才改判準",
+  "remap": "LOG CONFIRMED:三對幀(階 8/4、8/0、4/0)中,可見的 17 個標記格全部變動;不貼單位的 14 格,每個變動像素都能用兩幀各自的換色表解釋,換成其他任何一階就解釋不了",
+  "plain": "LOG CONFIRMED:70 個沒標記、不貼單位的格在 D-E(單位沒換幀)完全相同;D-F、E-F 只有 (10, 20) 左緣 53 個像素不同,這兩對單位都換了幀,(10, 20) 與 (9, 19)、(11, 19) 的單位斜向相鄰;單位圖蓋過去是推論(INFERRED)",
+  "scope": "只量了第 1 章、一個單位、MV 3;其他地圖或敵方單位的移動範圍沒有量"
+ }
+}

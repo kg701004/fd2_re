@@ -4739,6 +4739,85 @@
     ]
    }
   },
+  "ev_s131": {
+   "outputs": [
+    "move_range_remap_buffer_20261017.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc131a_moverange/D/buf.bin": [
+     153216,
+     "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d"
+    ],
+    ".wsl_build/lc131a_moverange/D/g.json": [
+     593,
+     "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5"
+    ],
+    ".wsl_build/lc131a_moverange/D/map.bin": [
+     2272,
+     "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef"
+    ],
+    ".wsl_build/lc131a_moverange/D/remap_res.bin": [
+     4096,
+     "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff"
+    ],
+    ".wsl_build/lc131a_moverange/D/tri.bin": [
+     20,
+     "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d"
+    ],
+    ".wsl_build/lc131a_moverange/D/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/E/buf.bin": [
+     153216,
+     "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6"
+    ],
+    ".wsl_build/lc131a_moverange/E/g.json": [
+     593,
+     "7aabeeb88bca87244132786dd0d656f33902a5f9fadd7d71e9489899673af9ee"
+    ],
+    ".wsl_build/lc131a_moverange/E/map.bin": [
+     2272,
+     "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef"
+    ],
+    ".wsl_build/lc131a_moverange/E/remap_res.bin": [
+     4096,
+     "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff"
+    ],
+    ".wsl_build/lc131a_moverange/E/tri.bin": [
+     20,
+     "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d"
+    ],
+    ".wsl_build/lc131a_moverange/E/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/F/buf.bin": [
+     153216,
+     "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28"
+    ],
+    ".wsl_build/lc131a_moverange/F/g.json": [
+     593,
+     "f07664540278bee95970eddecf31b31c7c83c3706874cd3e14fac747697fc992"
+    ],
+    ".wsl_build/lc131a_moverange/F/map.bin": [
+     2272,
+     "5a4f4270f8676e74861dc7d06d0554419ba552e779ad92158ce5bc2ea42eb0ef"
+    ],
+    ".wsl_build/lc131a_moverange/F/remap_res.bin": [
+     4096,
+     "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff"
+    ],
+    ".wsl_build/lc131a_moverange/F/tri.bin": [
+     20,
+     "f75c235c65119efbd47dad4c7fb96cf1c20ce503ed709c5aaf0616dd7e5cd46d"
+    ],
+    ".wsl_build/lc131a_moverange/F/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
