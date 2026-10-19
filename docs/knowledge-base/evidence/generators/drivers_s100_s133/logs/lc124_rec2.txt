@@ -1,0 +1,77 @@
+{'at': '0x19077', 't': 8.4, 'name': '指令環:不是攻擊 / 法術 / 道具的那一支', 'unit': 0, 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 9, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 3, 'step_sel': 1}, 'moved_flag': 0}
+{'at': '0x13fd4', 't': 16.8, 'name': 'rest_hp_recover 入口', 'ret': '0x19087', 'unit': 0, 'row': {'i': 0, 'x': 20, 'y': 14, 'f5': 0, 'camp': 2, 'f7': 32, 'cls': 9, 'lv': 6, 'poison': 0, 'para': 0, 'hp': 823, 'mhp': 823, 'inv': '401f40a380c980c980c980c980c980c9'}}
+{'at': '0x19087', 't': 20.5, 'name': 'rest_hp_recover 返回(玩家)', 'eax': 0, 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 9, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 3, 'step_sel': 1}}
+{'at': '0x15055', 't': 44.2, 'name': 'ai_item_action 入口', 'ret': '0x1503e', 'unit': 11, 'camp': 0, 'g': {'target_x': 20, 'target_y': 14, 'slot': 2, 'cursor_x': 11, 'cursor_y': 7, 'scroll_x': 8, 'scroll_y': 5, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 3, 'step_sel': 0}, 'hit_row3': 'f4010005012a00'}
+{'at': '0x20c6f', 't': 73.6, 'name': 'item_effect_dispatch 入口', 'ret': '0x152f5', 'user': 11, 'slot': 2, 'count': 2, 'targets': '0003'}
+{'at': '0x20f80', 't': 78.0, 'name': 'call play_map_effect_animation', 'args': [11, 3, 2, '0x1f15a8'], 'targets': '0003', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 0, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+{'at': '0x1c640', 't': 90.3, 'name': '動畫幀', 'k': 0, 'anim': 3, 'dump': 'r2_anim00'}
+{'at': '0x1c640', 't': 93.1, 'name': '動畫幀', 'k': 1, 'anim': 3, 'dump': 'r2_anim01'}
+{'at': '0x1c640', 't': 95.9, 'name': '動畫幀', 'k': 2, 'anim': 3, 'dump': 'r2_anim02'}
+{'at': '0x1c640', 't': 98.7, 'name': '動畫幀', 'k': 3, 'anim': 3, 'dump': 'r2_anim03'}
+{'at': '0x1c640', 't': 101.5, 'name': '動畫幀', 'k': 4, 'anim': 3, 'dump': 'r2_anim04'}
+{'at': '0x1c640', 't': 104.3, 'name': '動畫幀', 'k': 5, 'anim': 3, 'dump': 'r2_anim05'}
+{'at': '0x1c640', 't': 107.1, 'name': '動畫幀', 'k': 6, 'anim': 3, 'dump': 'r2_anim06'}
+{'at': '0x1c640', 't': 109.9, 'name': '動畫幀', 'k': 7, 'anim': 3, 'dump': 'r2_anim07'}
+{'at': '0x20f85', 't': 112.7, 'name': 'play_map_effect_animation 返回', 'dump': 'r2_ret20f85_00'}
+{'at': '0x20f9b', 't': 115.5, 'name': 'call flash_listed_units_band_cycle', 'args': [11, 3, 2, '0x1f15a8'], 'targets': '0003', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 0, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}, 'unit_set_3c0b': 2}
+{'at': '0x1cd8e', 't': 125.7, 'name': '閃爍幀', 'k': 0, 'dump': 'r2_flash00'}
+{'at': '0x1cd8e', 't': 128.5, 'name': '閃爍幀', 'k': 1, 'dump': 'r2_flash01'}
+{'at': '0x1cd8e', 't': 131.4, 'name': '閃爍幀', 'k': 2, 'dump': 'r2_flash02'}
+{'at': '0x1cd8e', 't': 134.2, 'name': '閃爍幀', 'k': 3, 'dump': 'r2_flash03'}
+{'at': '0x1cd8e', 't': 137.1, 'name': '閃爍幀', 'k': 4, 'dump': 'r2_flash04'}
+{'at': '0x1cd8e', 't': 140.0, 'name': '閃爍幀', 'k': 5, 'dump': 'r2_flash05'}
+{'at': '0x1cd8e', 't': 142.8, 'name': '閃爍幀', 'k': 6, 'dump': 'r2_flash06'}
+{'at': '0x1cd8e', 't': 145.6, 'name': '閃爍幀', 'k': 7, 'dump': 'r2_flash07'}
+{'at': '0x1cd8e', 't': 148.4, 'name': '閃爍幀', 'k': 8, 'dump': 'r2_flash08'}
+{'at': '0x1cd8e', 't': 151.3, 'name': '閃爍幀', 'k': 9, 'dump': 'r2_flash09'}
+{'at': '0x20fa0', 't': 154.1, 'name': 'flash 返回', 'dump': 'r2_ret20fa0_00'}
+{'at': '0x1c75e', 't': 157.0, 'name': 'spell_damage_resolve 入口', 'ret': '0x20fd0', 'target': 0, 'spell': 3, 'row': {'i': 0, 'x': 20, 'y': 14, 'f5': 0, 'camp': 2, 'f7': 32, 'cls': 9, 'lv': 6, 'poison': 0, 'para': 0, 'hp': 823, 'mhp': 823, 'inv': '401f40a380c980c980c980c980c980c9'}}
+{'at': '0x1c7ed', 't': 160.8, 'name': '命中亂數之前', 'esi_base': 500, 'spell_row': 'f4010005012a00', 'spell_row_at': '0x57a12', 'hit': 0}
+{'at': '0x1c7fe', 't': 164.8, 'name': '命中亂數', 'edx_roll': 34, 'hit': 0}
+{'at': '0x1c816', 't': 167.6, 'name': '沒命中(回 0)'}
+{'at': '0x20fd0', 't': 170.0, 'name': 'spell_damage_resolve 返回', 'eax': 0, 'esi_index': 0}
+{'at': '0x20fdb', 't': 172.3, 'name': 'call queue_unit_fixed_popup', 'args': [0]}
+{'at': '0x1c75e', 't': 175.2, 'name': 'spell_damage_resolve 入口', 'ret': '0x20fd0', 'target': 3, 'spell': 3, 'row': {'i': 3, 'x': 23, 'y': 14, 'f5': 0, 'camp': 2, 'f7': 30, 'cls': 25, 'lv': 40, 'poison': 0, 'para': 0, 'hp': 867, 'mhp': 867, 'inv': '401f40a380ed80ed80ed80ed80ed80ed'}}
+{'at': '0x1c7ed', 't': 179.1, 'name': '命中亂數之前', 'esi_base': 400, 'spell_row': 'f4010005012a00', 'spell_row_at': '0x57a12', 'hit': 0}
+{'at': '0x1c7fe', 't': 183.0, 'name': '命中亂數', 'edx_roll': 69, 'hit': 0}
+{'at': '0x1c816', 't': 185.8, 'name': '沒命中(回 0)'}
+{'at': '0x20fd0', 't': 188.2, 'name': 'spell_damage_resolve 返回', 'eax': 0, 'esi_index': 1}
+{'at': '0x20fdb', 't': 190.5, 'name': 'call queue_unit_fixed_popup', 'args': [3]}
+{'at': '0x20fe5', 't': 193.3, 'name': '逐目標迴圈結束', 'popups': 8, 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}, 'glyph': '7475767674757676', 'dx': '02080c1102080c11', 'owner': '0000000003030303', 'fmt_501b6': '2564007262004644', 'fixed_5204a': '74757676'}
+{'at': '0x1dfd7', 't': 205.4, 'name': '收尾幀', 'k': 0, 'dump': 'r2_fin00'}
+{'at': '0x1dfd7', 't': 208.2, 'name': '收尾幀', 'k': 1, 'dump': 'r2_fin01'}
+{'at': '0x1dfd7', 't': 211.0, 'name': '收尾幀', 'k': 2, 'dump': 'r2_fin02'}
+{'at': '0x1dfd7', 't': 213.8, 'name': '收尾幀', 'k': 3, 'dump': 'r2_fin03'}
+{'at': '0x1dfd7', 't': 216.6, 'name': '收尾幀', 'k': 4, 'dump': 'r2_fin04'}
+{'at': '0x1dfd7', 't': 219.4, 'name': '收尾幀', 'k': 5, 'dump': 'r2_fin05'}
+{'at': '0x1dfd7', 't': 222.2, 'name': '收尾幀', 'k': 6, 'dump': 'r2_fin06'}
+{'at': '0x1dfd7', 't': 224.9, 'name': '收尾幀', 'k': 7, 'dump': 'r2_fin07'}
+{'at': '0x1dfd7', 't': 227.8, 'name': '收尾幀', 'k': 8, 'dump': 'r2_fin08'}
+{'at': '0x1dfd7', 't': 230.7, 'name': '收尾幀', 'k': 9, 'dump': 'r2_fin09'}
+{'at': '0x1dfd7', 't': 233.6, 'name': '收尾幀', 'k': 10, 'dump': 'r2_fin10'}
+{'at': '0x1dfd7', 't': 236.5, 'name': '收尾幀', 'k': 11, 'dump': 'r2_fin11'}
+{'at': '0x1dfd7', 't': 239.3, 'name': '收尾幀', 'k': 12, 'dump': 'r2_fin12'}
+{'at': '0x1dfd7', 't': 242.1, 'name': '收尾幀', 'k': 13, 'dump': 'r2_fin13'}
+{'at': '0x1dfd7', 't': 244.9, 'name': '收尾幀', 'k': 14, 'dump': 'r2_fin14'}
+{'at': '0x1dfd7', 't': 247.7, 'name': '收尾幀', 'k': 15, 'dump': 'r2_fin15'}
+{'at': '0x1dfd7', 't': 250.6, 'name': '收尾幀', 'k': 16, 'dump': 'r2_fin16'}
+{'at': '0x1dfd7', 't': 253.4, 'name': '收尾幀', 'k': 17, 'dump': 'r2_fin17'}
+{'at': '0x1dfd7', 't': 256.2, 'name': '收尾幀', 'k': 18, 'dump': 'r2_fin18'}
+{'at': '0x1dfd7', 't': 259.0, 'name': '收尾幀', 'k': 19, 'dump': 'r2_fin19'}
+{'at': '0x1dfd7', 't': 261.8, 'name': '收尾幀', 'k': 20, 'dump': 'r2_fin20'}
+{'at': '0x1dfd7', 't': 264.7, 'name': '收尾幀', 'k': 21, 'dump': 'r2_fin21'}
+{'at': '0x20ff4', 't': 267.5, 'name': 'action_finish_effect 返回', 'dump': 'r2_ret20ff4_00'}
+{'at': '0x21062', 't': 271.4, 'name': 'call unit_death_sweep', 'ebx_reward_rows': 0, 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+{'at': '0x21067', 't': 279.0, 'name': 'unit_death_sweep 返回'}
+{'at': '0x21072', 't': 282.2, 'name': 'call grant_reward_rows', 'args': [11, 0, '0x1f1518'], 'rows': '0a0008000000000061371d00'}
+{'at': '0x2107a', 't': 285.4, 'name': 'item_effect_dispatch 收尾', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+{'at': '0x152f5', 't': 294.0, 'name': 'item_effect_dispatch 返回(ai_item_action 內)', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+{'at': '0x152fd', 't': 302.4, 'name': 'ai_item_action 返回前', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+DEBUG: Set breakpoint at 0170:1C1EBB
+Breakpoint list:
+-------------------------------------------------------------------------
+00. BP 0170:1C1EBB
+01. BP 0170:1BEE5C
+I-> _
+stops 69 done True
+rc=0

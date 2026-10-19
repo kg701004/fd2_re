@@ -1,0 +1,43 @@
+{'at': '0x19077', 't': 25.1, 'name': '指令環:不是攻擊 / 法術 / 道具的那一支', 'unit': 0, 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 20, 'cursor_y': 13, 'scroll_x': 9, 'scroll_y': 8, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 3, 'step_sel': 1}, 'moved_flag': 1}
+{'at': '0x15055', 't': 622.9, 'name': 'ai_item_action 入口', 'ret': '0x1503e', 'unit': 11, 'camp': 0, 'g': {'target_x': 20, 'target_y': 14, 'slot': 2, 'cursor_x': 11, 'cursor_y': 8, 'scroll_x': 10, 'scroll_y': 5, 'result': 0, 'popups': 8, 'exp': 0, 'ring_cmd': 3, 'step_sel': 0}, 'hit_row3': 'f4015505012a00'}
+{'at': '0x20c6f', 't': 651.2, 'name': 'item_effect_dispatch 入口', 'ret': '0x152f5', 'user': 11, 'slot': 2, 'count': 1, 'targets': '03'}
+{'at': '0x20f80', 't': 655.3, 'name': 'call play_map_effect_animation', 'args': [11, 3, 1, '0x1f15a8'], 'targets': '03', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 23, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 0, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}}
+{'at': '0x1c640', 't': 666.6, 'name': '動畫幀', 'k': 0, 'anim': 3, 'dump': 'r3_anim00'}
+{'at': '0x1c640', 't': 669.5, 'name': '動畫幀', 'k': 1, 'anim': 3, 'dump': 'r3_anim01'}
+{'at': '0x1c640', 't': 672.4, 'name': '動畫幀', 'k': 2, 'anim': 3, 'dump': 'r3_anim02'}
+{'at': '0x1c640', 't': 675.3, 'name': '動畫幀', 'k': 3, 'anim': 3, 'dump': 'r3_anim03'}
+{'at': '0x1c640', 't': 678.1, 'name': '動畫幀', 'k': 4, 'anim': 3, 'dump': 'r3_anim04'}
+{'at': '0x1c640', 't': 680.8, 'name': '動畫幀', 'k': 5, 'anim': 3, 'dump': 'r3_anim05'}
+{'at': '0x1c640', 't': 683.7, 'name': '動畫幀', 'k': 6, 'anim': 3, 'dump': 'r3_anim06'}
+{'at': '0x1c640', 't': 686.5, 'name': '動畫幀', 'k': 7, 'anim': 3, 'dump': 'r3_anim07'}
+{'at': '0x20f85', 't': 689.4, 'name': 'play_map_effect_animation 返回', 'dump': 'r3_ret20f85_00'}
+{'at': '0x20f9b', 't': 692.3, 'name': 'call flash_listed_units_band_cycle', 'args': [11, 3, 1, '0x1f15a8'], 'targets': '03', 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 23, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 0, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}, 'unit_set_3c0b': 3}
+{'at': '0x1cd8e', 't': 702.9, 'name': '閃爍幀', 'k': 0, 'dump': 'r3_flash00'}
+{'at': '0x1cd8e', 't': 705.8, 'name': '閃爍幀', 'k': 1, 'dump': 'r3_flash01'}
+{'at': '0x1cd8e', 't': 708.6, 'name': '閃爍幀', 'k': 2, 'dump': 'r3_flash02'}
+{'at': '0x1cd8e', 't': 711.6, 'name': '閃爍幀', 'k': 3, 'dump': 'r3_flash03'}
+{'at': '0x1cd8e', 't': 714.6, 'name': '閃爍幀', 'k': 4, 'dump': 'r3_flash04'}
+{'at': '0x1cd8e', 't': 717.5, 'name': '閃爍幀', 'k': 5, 'dump': 'r3_flash05'}
+{'at': '0x1cd8e', 't': 720.4, 'name': '閃爍幀', 'k': 6, 'dump': 'r3_flash06'}
+{'at': '0x1cd8e', 't': 723.1, 'name': '閃爍幀', 'k': 7, 'dump': 'r3_flash07'}
+{'at': '0x1cd8e', 't': 725.9, 'name': '閃爍幀', 'k': 8, 'dump': 'r3_flash08'}
+{'at': '0x1cd8e', 't': 728.8, 'name': '閃爍幀', 'k': 9, 'dump': 'r3_flash09'}
+{'at': '0x20fa0', 't': 731.6, 'name': 'flash 返回', 'dump': 'r3_ret20fa0_00'}
+{'at': '0x1c75e', 't': 734.4, 'name': 'spell_damage_resolve 入口', 'ret': '0x20fd0', 'target': 3, 'spell': 3, 'row': {'i': 3, 'x': 23, 'y': 14, 'f5': 0, 'camp': 2, 'f7': 30, 'cls': 25, 'lv': 40, 'poison': 0, 'para': 0, 'hp': 867, 'mhp': 867, 'inv': '401f40a380ed80ed80ed80ed80ed80ed'}}
+{'at': '0x1c7ed', 't': 738.1, 'name': '命中亂數之前', 'esi_base': 400, 'spell_row': 'f4015505012a00', 'spell_row_at': '0x57a12', 'hit': 85}
+{'at': '0x1c7fe', 't': 742.0, 'name': '命中亂數', 'edx_roll': 91, 'hit': 85}
+{'at': '0x1c816', 't': 744.7, 'name': '沒命中(回 0)'}
+{'at': '0x20fd0', 't': 747.1, 'name': 'spell_damage_resolve 返回', 'eax': 0, 'esi_index': 0}
+{'at': '0x20fdb', 't': 749.5, 'name': 'call queue_unit_fixed_popup', 'args': [3]}
+{'at': '0x20fe5', 't': 752.3, 'name': '逐目標迴圈結束', 'popups': 4, 'g': {'target_x': 26, 'target_y': 14, 'slot': 2, 'cursor_x': 23, 'cursor_y': 14, 'scroll_x': 14, 'scroll_y': 8, 'result': 0, 'popups': 4, 'exp': 0, 'ring_cmd': 79, 'step_sel': 0}, 'glyph': '74757676', 'dx': '02080c11', 'owner': '03030303', 'fmt_501b6': '2564007262004644', 'fixed_5204a': '74757676'}
+{'at': '0x1dfd7', 't': 765.0, 'name': '收尾幀', 'k': 0, 'dump': 'r3_fin00'}
+{'at': '0x1dfd7', 't': 767.8, 'name': '收尾幀', 'k': 1, 'dump': 'r3_fin01'}
+{'at': '0x1dfd7', 't': 770.8, 'name': '收尾幀', 'k': 2, 'dump': 'r3_fin02'}
+{'at': '0x1dfd7', 't': 773.8, 'name': '收尾幀', 'k': 3, 'dump': 'r3_fin03'}
+{'at': '0x1dfd7', 't': 776.7, 'name': '收尾幀', 'k': 4, 'dump': 'r3_fin04'}
+{'at': '0x1dfd7', 't': 779.6, 'name': '收尾幀', 'k': 5, 'dump': 'r3_fin05'}
+{'at': '0x1dfd7', 't': 782.5, 'name': '收尾幀', 'k': 6, 'dump': 'r3_fin06'}
+{'at': '0x1dfd7', 't': 785.4, 'name': '收尾幀', 'k': 7, 'dump': 'r3_fin07'}
+{'at': '0x1dfd7', 't': 788.2, 'name': '收尾幀', 'k': 8, 'dump': 'r3_fin08'}
+{'at': '-0x19c000', 't': 790.8, 'name': '不是設的斷點', 'regs': {}}
+stops 42 done False

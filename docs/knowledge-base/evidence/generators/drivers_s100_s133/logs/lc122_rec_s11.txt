@@ -1,0 +1,14 @@
+入口 {'ret': '0x21888', 'unit': 0, 'radius0': 15, 'step': 10, 'unit_xy': [20, 14], 'scroll': [9, 13], 'centre': [276, 42]}
+幀 0 半徑 15
+幀 1 半徑 25
+幀 2 半徑 35
+幀 3 半徑 45
+幀 4 半徑 55
+幀 5 半徑 65
+幀 6 半徑 75
+幀 7 半徑 85
+幀 8 半徑 95
+幀 9 半徑 105
+迴圈結束,斷點已清 [lc122] sent debugger command: BPLIST
+frames 10 end True
+rc=0

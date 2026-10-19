@@ -1,0 +1,21 @@
+{'at': '0x15055', 't': 64.1, 'name': 'ai_item_action 入口', 'ret': '0x1503e', 'unit': 11, 'camp': 0, 'g': {'target_x': 19, 'target_y': 13, 'slot': 2, 'phase': 0, 'step_sel': 0, 'cursor_x': 19, 'cursor_y': 6, 'scroll_x': 12, 'scroll_y': 5, 'map_w': 27, 'map_h': 21, 'result': 0}}
+{'at': '0x150f6', 't': 73.1, 'name': 'build_target_candidates 返回', 'args': [19, 13, '0x1f15a8', 19, 14, 15, 0], 'eax': 2, 'out': '050a260004000000130000000e000000', 'item_row': '0cc201500000000000000000001803001f000400000000', 'row_0d': 24, 'row_10': 31, 'row_12': 4}
+{'at': '0x151a7', 't': 79.2, 'name': '圓形換色返回', 'g': {'target_x': 19, 'target_y': 13, 'slot': 2, 'phase': 6, 'step_sel': 6, 'cursor_x': 19, 'cursor_y': 14, 'scroll_x': 12, 'scroll_y': 8, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 1, 'edi': 2}
+{'at': '0x151b7', 't': 88.2, 'name': 'delay(200) 之後', 'g': {'target_x': 19, 'target_y': 13, 'slot': 2, 'phase': 6, 'step_sel': 6, 'cursor_x': 19, 'cursor_y': 14, 'scroll_x': 12, 'scroll_y': 8, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 1, 'edi': 2}
+{'at': '0x151dd', 't': 251.7, 'name': '調色盤迴圈結束', 'g': {'target_x': 19, 'target_y': 13, 'slot': 2, 'phase': 6, 'step_sel': 6, 'cursor_x': 19, 'cursor_y': 14, 'scroll_x': 12, 'scroll_y': 8, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 4294967295, 'edi': 2}
+{'at': '0x1528c', 't': 260.7, 'name': 'camera_step_to 返回', 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'phase': 5, 'step_sel': 6, 'cursor_x': 19, 'cursor_y': 0, 'scroll_x': 12, 'scroll_y': 0, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 4294967281, 'edi': 2}
+{'at': '0x152ba', 't': 269.7, 'name': '相位幀', 'ebx': 1, 'phase': 2}
+{'at': '0x152ba', 't': 272.9, 'name': '相位幀', 'ebx': 2, 'phase': 2}
+{'at': '0x152ba', 't': 276.1, 'name': '相位幀', 'ebx': 3, 'phase': 4}
+{'at': '0x152ba', 't': 279.2, 'name': '相位幀', 'ebx': 4, 'phase': 4}
+{'at': '0x152ba', 't': 282.4, 'name': '相位幀', 'ebx': 5, 'phase': 5}
+{'at': '0x152ba', 't': 285.7, 'name': '相位幀', 'ebx': 6, 'phase': 7}
+{'at': '0x152ba', 't': 288.9, 'name': '相位幀', 'ebx': 7, 'phase': 7}
+{'at': '0x152ba', 't': 292.1, 'name': '相位幀', 'ebx': 8, 'phase': 8}
+{'at': '0x152e5', 't': 295.3, 'name': 'item_effect_dispatch 之前', 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'phase': 11, 'step_sel': 0, 'cursor_x': 19, 'cursor_y': 13, 'scroll_x': 12, 'scroll_y': 7, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 9, 'edi': 2, 'targets': '050a260004000000130000000e000000'}
+{'at': '0x20c6f', 't': 304.5, 'name': 'item_effect_dispatch 入口', 'ret': '0x152f5', 'user': 11, 'slot': 2, 'count': 2, 'targets_ptr': '0x1f15a8', 'targets': '050a260004000000130000000e000000'}
+{'at': '0x152f5', 't': 960.7, 'name': 'item_effect_dispatch 返回', 'eax': 658383, 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'phase': 1, 'step_sel': 1, 'cursor_x': 19, 'cursor_y': 6, 'scroll_x': 12, 'scroll_y': 5, 'map_w': 27, 'map_h': 21, 'result': 0}}
+{'at': '0x152fd', 't': 970.7, 'name': '返回前', 'g': {'target_x': 19, 'target_y': 0, 'slot': 2, 'phase': 1, 'step_sel': 1, 'cursor_x': 19, 'cursor_y': 6, 'scroll_x': 12, 'scroll_y': 5, 'map_w': 27, 'map_h': 21, 'result': 0}, 'ebx': 9, 'edi': 2}
+流程斷點已清 [lc123] sent debugger command: BPLIST
+stops 18 pal 65 [64, 63, 62] [2, 1, 0] phase [1, 2, 3, 4, 5, 6, 7, 8] done True
+rc=0

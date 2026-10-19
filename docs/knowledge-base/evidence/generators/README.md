@@ -1,7 +1,16 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 46 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 47 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百三十五(2026-10-19)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s135.py` | `fdicon_mode1_vga_frames_20261019.json` | `mut_s135.py`(24) |
+
+續一百 ~ 一百三十三在 DOSBox-X / WSL 上用過的驅動腳本(40 個)與 lc122 ~ lc131 的執行紀錄(23 份)在
+[`drivers_s100_s133/`](drivers_s100_s133/README.md)。
 
 ## 續一百三十四(2026-10-17)
 
@@ -179,11 +188,16 @@ python sweep_literals.py --selftest
 以及兩個資料本身分不出來的值:`ev_heal_spell_targets` 的經驗值係數 40 / 36 / 32(取自 doc98 續四十七,規則未明)、
 `ev_real_kill_corpse` 0x1dc61 那列的回合(#7 在第 1、2 回合都被重寫)。`KILLED` 1596 → 1857。
 
+2026-10-19(續一百三十五)判定器改正:原本只看 stderr 最後一行是不是 `AssertionError`,`assert x, 多行字串` 會被判成 CRASH。
+現在產生器以 sitecustomize 包住 `sys.excepthook`,在 stderr 補一行 `__SWEEP_FINAL_EXC__ <型別>`,判定看最後一個標記
+(只裝在產生器本身,它再開的子行程不受影響)。另修了對照失敗那一筆的欄位錯位(印出時崩潰)。移植的 7 個產生器與分析模組都掃過,
+逃過項的處理見 doc98 續一百三十五。
+
 ## 限制
 
 - `IDENTICAL` 證明可重現,不證明正確;正確性由產生器裡的 `assert` 與變異測試負責。
-- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261019.tar.xz`
-  含清單上全部 2042 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
+- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261019b.tar.xz`
+  含清單上全部 2081 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
 - 終端輸出的原始來源是 Claude Code 對話紀錄(本機 `~/.claude/projects/` 下約 1.7 GB 的 jsonl),可能被 Claude Code 依保留期限清除。
   同一備份夾的 `transcript_records_20261006.jsonl.xz`(旁有 `.sha256`)保留 86 個 id 的 291 行原始紀錄:
   59 份終端輸出,加上切出摘錄的 27 個指令(`rebuild_excerpts.py` 的切法出處);只能證明匯出與紀錄一致,

@@ -1,0 +1,22 @@
+ok True  [('instance_up', True, 'instance lc131b alive and drawing a non-black frame'), ('patch_chapter', True, "chapter byte -> 1: ['wrote /home/kg701004/fd2-run-harness-lc131b/FD2.SAV (22987 bytes)']"), ('poll_title', True, 'title reached on try 7 (diff 0.40)')]
+33464c81e6a364fd0660141139aa8e6e  /home/kg701004/fd2-run-harness-lc131b/FD2.EXE
+-rw-r--r-- 1 kg701004 kg701004 41079 Oct 17 14:05 /home/kg701004/fd2-run-harness-lc131b/CALLLOG.TXT
+H fd2calllog 1 cs=0170 entries=5 cap=100000000 dump=0 lo=001ae117 hi=001b12bb
+(True, 32)
+[hud] no battle HUD visible -- clearing dialogue
+[hud] battle HUD recovered after 32 clear-Return(s)
+ubase 0x26bdc8 #0 xy (20, 14) #11 xy (19, 14) #11 inv 40004080004f80ff80ff80ff80ff80ff
+DEBUG: Memory changed (1 bytes)
+DEBUG: Memory changed (1 bytes)
+DEBUG: Memory dump binary success.
+DEBUG: Memory changed (8 bytes)
+DEBUG: Memory dump binary success.
+Breakpoint list:
+-------------------------------------------------------------------------
+I-> _
+#5/#10 [1, 1]
+engine_code 0
+find_empty_adjacent_tile: starting tile cursor_tile_is_empty=True
+find_empty_adjacent_tile: cursor already on an empty tile, no movement needed
+confirm_end_turn: [0x53ecc] never reached a resolved code (2=win/1=event) within 15s of polling (last read: 0) -- honestly inconclusive, not assumed to be a win
+confirm_end_turn: find_empty_adjacent_tile(found=True)->Enter(open ring)->Down(END)->Enter(confirm)->[re-kill]->Enter(YES)->poll[0x53ecc]

@@ -1,0 +1,639 @@
+{
+ "_meta": {
+  "topic": "續一百三十五:四模式 RLE 長度 > 1 的模式 1 在資產裡的分布,與 VGA 幀上模式 1 次序的再驗證",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "assets": {
+   "org_game/炎龍騎士團/FLAME2/FDICON.B24": "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+  },
+  "fdshap_sha256": {
+   "FDSHAP_000.bin": "36054eed120a335b4d6d9fb3ee3a58f98115a364b18e5d904aaac2147b880f30",
+   "FDSHAP_001.bin": "2401a8cabb1728c0fb5f9e7a0e40352fa8716ac2b4d30750ff44351ec9c9d092",
+   "FDSHAP_002.bin": "2ed0c673f8ca21f28394d26706154516bb189f2deb44a5711ac6702775f69b98",
+   "FDSHAP_003.bin": "4e2f58c83beb9bad05be7697f1a90520e387c1f037964145d4b8b27ccccc7bb1",
+   "FDSHAP_004.bin": "3183baf8f8a20dad4caeded3084ddfe1e2b3aee5fc82e9f34aaa6d443a4130b5",
+   "FDSHAP_005.bin": "092bbb4277fffcb2bcfa12b69b84b09a5d401536fd82193b9dc06615cd4924e6",
+   "FDSHAP_006.bin": "0fe62abbca1cebabfa7e88e9b9a574dfbe5bbacea43cd6b6730b4b57491b79ca",
+   "FDSHAP_007.bin": "0985b57d2b77a69ddabdeb7acadb72295fdfdae1864d2937f086a3fa6157d05b",
+   "FDSHAP_008.bin": "99b81c5622986b809d22be176bddff048cfd8dd8ccbcaa4e1eca45a787cfc3ac",
+   "FDSHAP_009.bin": "2e7ea1f8e56210811f9ee8078b717b88aa3241aa926fff10fab61efe4f900759",
+   "FDSHAP_010.bin": "c376b999b32c97822129c793ed6f1e144e0a292c41488f91dfdba9821b14bfce",
+   "FDSHAP_011.bin": "bc8ef50db5006cb5e4592bc71f732f8d3940a506e26bd2e9dcc4c43bb09474b3",
+   "FDSHAP_012.bin": "07203ec18bfb82338e17db884c0bc6991d14d9aee77fcebff8ac398fc0a21193",
+   "FDSHAP_013.bin": "e8b046916e8c011705b72ad25a698c3e3ea8cfeafa3f93c00b8ae4397bac15fe",
+   "FDSHAP_014.bin": "a8f86e173cacba2e8a28194c419f33e8057703b5b4237fba1487959d2ed86085",
+   "FDSHAP_015.bin": "b9ff9e897d6a96d80954df2c937c8f079923a44f5dddc87b514f25a35bfaa567",
+   "FDSHAP_016.bin": "13a494113fdfacd614235c796f4f35a60912a74d41ea9abde45421fc484b6757",
+   "FDSHAP_017.bin": "6c04ecfed32f1025fd2a0ac6f7e394984b55a9399c8f9633aac098dc057785e6",
+   "FDSHAP_018.bin": "d02c8e208dc5c7cac4aa9fecd7eff8c6867a8134a0f83f003408e1d80607dd21",
+   "FDSHAP_019.bin": "ada88caa2661aa0d762842018a10e09d65fc357f897b1a37ec04425ed658733b",
+   "FDSHAP_020.bin": "3857996cf3aff7913900b72b56a1fd317fabb99b525ca8befaef78847d4e8d0b",
+   "FDSHAP_021.bin": "175a463a3e94e9376d2f67da500d24edf07d12ae8b65486f07fdddbbb70055b6",
+   "FDSHAP_022.bin": "01fa2a01f29d8f9b9559db0847ce1963f8c67abd302cfd111de05f7126d5a2e3",
+   "FDSHAP_023.bin": "be06c463d5f1166329c731c7cebdcf2f66fd966a17c08b61bfc22d17f1a699a6",
+   "FDSHAP_024.bin": "ce04683f21ac82186a93668ee0f7575eb6e6002f717ac37beaaa5c85d803051b",
+   "FDSHAP_025.bin": "7dbac97eccf6b15cb69262a5aedb11652686c6c39683539b28fb76cc9b929dcf",
+   "FDSHAP_026.bin": "c17b56938626a4d72f5dd1f4ba3aa86346dd9cbb83408e41c2b94d47924874ca",
+   "FDSHAP_027.bin": "256f859a2e98bc04922a5436dc26f8c40632e0b9aa8e5a35847fa40c83474418",
+   "FDSHAP_028.bin": "612aef8160a4550daf6325fb1ecd227b6644b55efd68c4d22c7dfb5147e331fc",
+   "FDSHAP_029.bin": "1f5a7ba5c3f185d34195b7aaf09485a19029165fa87696bdf333b42a01d8b324",
+   "FDSHAP_030.bin": "449e776c47ba224aadc40b0a1f0389cbe8502a2bc3e9aa7c4fda76c18779a24a",
+   "FDSHAP_031.bin": "3ff45657456a064ef2bb7350711e4760045069f4e813c0c624ea671acb4509fd",
+   "FDSHAP_032.bin": "d1187a94d3bec0429909c5d7917cf69070ed69c5744030533e9c4de121017dd0",
+   "FDSHAP_033.bin": "3e098fa8aa0787b3d8f065e4846e9a0fb46d271a5f31aed594cf15daad24d555",
+   "FDSHAP_034.bin": "3042540521334b56d6cbb121f098c2ff0a294f0f4fdcc7354be951cf30217f7a",
+   "FDSHAP_035.bin": "3103920319055ac94008fd8d6961e86aba80331ae3bb9c760d27ba8c5c9790c3",
+   "FDSHAP_036.bin": "acf1c9ead66a860371bbed9a9f4b54fca274440d0969415e3322596632de8536",
+   "FDSHAP_037.bin": "9d242b1024b2d16dfabb7151cb5b4e652444c12bc0863f040195d289c2be7aa6",
+   "FDSHAP_038.bin": "88afa54fc28b35aedf240b4583ce9063c63a7fb28f8d7c137814135acee194f5",
+   "FDSHAP_039.bin": "3c87cd81f9e880ab962d25ea8fb99f3f49e1b08ef30d727aa2538041dac5b677",
+   "FDSHAP_040.bin": "581d1238204aea122ec816322a6e49b1400cb3e82c2fa2fdd603892ea7f6d1cf",
+   "FDSHAP_041.bin": "0c221587ba2793f163b0d5d942d7d55bd8f478c49949497e5d686eb7aef3f69f",
+   "FDSHAP_042.bin": "20e440a1c0f4237cd3efc4d5b075ba23ab02586e8e3b28fe7f622c7b6f728b34",
+   "FDSHAP_043.bin": "579da9e17743e41c8400353eca66128561279fdee661a7a1ea7b480c318fe5ae",
+   "FDSHAP_044.bin": "2652545a61512199ec83956fd9b910a5fb4132adfee0eaffbe7ec2e03160995e",
+   "FDSHAP_045.bin": "1919c26b0417d2149e5cd87e3a502a32f93ba1d4b364884eb9826d5fcb243f30",
+   "FDSHAP_046.bin": "1056eb8b1f7a530f8ecf84847295ecd2f8b682d85a75eaaad4557f374cb5bcf0",
+   "FDSHAP_047.bin": "b1aa7836772bde116c6f02446109e65fa58f6508387fbfb50b2fe508b8602581",
+   "FDSHAP_048.bin": "6e18bdd8802133798fd786b14bcbdf3456a84ef13cdec4c0fad2d218fc451d13",
+   "FDSHAP_049.bin": "847b580cc32a44b02e7567d8e4faf251a33048a6fd27e4b97359b6a2ecf3d429",
+   "FDSHAP_050.bin": "e6ceef38741b5d34951a2c2e89a3a7ce21ef64c97431cd23f788d282829e68ef",
+   "FDSHAP_051.bin": "786002c205b156aaf5c618afa5098997be184568ff95a47492d712b6a2e2d1a3",
+   "FDSHAP_052.bin": "7a90946da3c9709366c482eb9a83fb502b58683e07fd842b48809f55be8bb4bd",
+   "FDSHAP_053.bin": "c10bc222785f0933ec9230da495b5c011c0446c039cd7a0230194855a980d1d9",
+   "FDSHAP_054.bin": "c12ffb10861db595eaa04e74f1cde73ba9de0482b7575718dbd72b57828ef685",
+   "FDSHAP_055.bin": "db90ce2b6204dc351d9c2f7787457ab960d742873197d2d97f13bad1afef81f0",
+   "FDSHAP_056.bin": "4c510b3832c10443d386c7b764530d26be1d1198545e3a47cf238033f6a78bbf",
+   "FDSHAP_057.bin": "14541b903f214b938584de38066398d850954246d8c17e3602c6025770051639",
+   "FDSHAP_058.bin": "3e69acb30eed79c72009f1964e8f3718b2f3834b455aae89f3190280e0e81abf",
+   "FDSHAP_059.bin": "7155bd3712435330b25c47f5dde29290a3b45be2d65e23d00b74830448ad2b8a",
+   "FDSHAP_060.bin": "3857996cf3aff7913900b72b56a1fd317fabb99b525ca8befaef78847d4e8d0b",
+   "FDSHAP_061.bin": "67042dfda5683aead81b6055d19c4dba238341f9dd82f49c0e7cc0c19c5f10d1",
+   "FDSHAP_062.bin": "f9286cd44cbc1e79e0caaed05f4b2eb34a19416999526f9fcaad1091f4d3be1f",
+   "FDSHAP_063.bin": "67042dfda5683aead81b6055d19c4dba238341f9dd82f49c0e7cc0c19c5f10d1",
+   "FDSHAP_064.bin": "0acbb9f8734978c8e7d45a5448571655e4b7ab87b7f1296c1ac6f75ff69dcc98",
+   "FDSHAP_065.bin": "655a3ef0465a9f30fddf25f4dde0c19a05c6f9069b83961800c1944165955273",
+   "FDSHAP_066.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fdfield_sha256": {
+   "FDFIELD_075.bin": "2e803280c4dda87c67223c10efafb70219a82570c7070da3dfed529eecc268ec",
+   "FDFIELD_084.bin": "b1fe12eee7c8c6022988f1714f3aaa9b317c0574a9ade88fd38b9dc32ef52583",
+   "FDFIELD_087.bin": "c87802539597b11f1e03daacde287d6d61cd5bda88aa5f293f9a69865ca2cacd"
+  },
+  "vga_frames_sha256": {
+   "lc122_live/ai79_entry.bin": "4f0c2bf9395ee82bb5afb92fa1a3466de5d0f08fc48086e0c839b654ecbc0ab1",
+   "lc122_live/ai79_f00.bin": "e4289b72d28d9b408c9efa28129b5b8f7870c4a6fc8d51d3c5a7f43f3049b2b6",
+   "lc122_live/ai79_f01.bin": "0d9cc09484752aa0938c7eace93db42d075f4b0ef242ce2351e0684852515ae1",
+   "lc122_live/ai79_f02.bin": "e9b00d3b3148ef9539faade0b61cee5af5df70067464b444a43fa7b625c1d8fe",
+   "lc122_live/ai79_f03.bin": "60e1ef44dab0e11c8875d0a24dcc5fd76a40fcd619f29849b14ff9d1f1607f45",
+   "lc122_live/ai79_f04.bin": "4c69058f5f56e0b0af737dae231a73531691f2db84c0e781fd360d5f65a07b08",
+   "lc122_live/ai79_f05.bin": "c3579c35ce439223acfea0be79733302f7de41ad4556e705c5902ce36d24ceab",
+   "lc122_live/ai79_f06.bin": "dd66ad8dbc197fa2ccb303a929bc4ba491a4452f2fd1f757099132b9615ff19e",
+   "lc122_live/ai79_f07.bin": "555052e700e4e4ebb64fc314f2f5765c7aa3b4ba76f0550e21a74f0e869e7c1f",
+   "lc122_live/ai79_f08.bin": "a7795a6c2eeb101a3d400536fe8140861887b1e5f371dd296ca57e3a8b292378",
+   "lc122_live/ai79_f09.bin": "d10b34499d362a52d8bf84833785c7ceb9001cc714e93e077a4728689c218068",
+   "lc122_live/ai79_ref.bin": "c8926488e7839a91c136d32d2eb145aca207f1a0999ab27438d1bf03877e3eb7",
+   "lc122_live/s11_f00.bin": "043f9a267d412dee264e41cba14005df7372dc1c3e23b8c13b389de765cf33d7",
+   "lc122_live/s11_f01.bin": "3da6fd54561bc050b17c8dc81f07a1718028be65b9d9207de296ac97f37eac5b",
+   "lc122_live/s11_f02.bin": "a7e27e57705e373ffa4a15ad7909b709e40de7e588fa9057ca7c28321dd859c8",
+   "lc122_live/s11_f03.bin": "989d40aa6c2c696a2ed4e8e53f921069c3fa945f676e0c455a85c6b8a28901a1",
+   "lc122_live/s11_f04.bin": "674aef3cfe561e25bab74b79f937bc6a0cf5a5231b40e8cb9ffe03039764d83b",
+   "lc122_live/s11_f05.bin": "19da49597a256aa89d2b39a32a4167ae6bd9550039e438a71e9aa232f98ff147",
+   "lc122_live/s11_f06.bin": "117f94264434471f0c76d5116dd78f554131e286489539e1e0168fb36b1cc726",
+   "lc122_live/s11_f07.bin": "7b6845331b417174a71d3d354badbfba85658effa124e4aab0e22b343c1d34b1",
+   "lc122_live/s11_f08.bin": "7319446142d5b540743d5057dccb5be0f742d0b32e6988c6658d77ca30adc262",
+   "lc122_live/s11_f09.bin": "4e4085cd00ce3787818f26d310e890beab6c733d854644f10ab80139e333b979",
+   "lc122_live/s11_ref.bin": "9ae408198f235905a23d5d0a5be28e51dd0fb1f18cffd3b548a4ad18f09c2813",
+   "lc122_live/s12_f00.bin": "fe6f8cf824fe735e29c41013f35f5023a6b3ffac1a9a852e690c188a2dbd199e",
+   "lc122_live/s12_f01.bin": "2ead6b4169454a2918f8bb4fc91c29ca695927adc12a2b7cb8a604c260ba2fea",
+   "lc122_live/s12_f02.bin": "120fbc30cb180f3ce48a10e34dec89224508d4a86b1a3232fb3afd0ff3aac8ce",
+   "lc122_live/s12_f03.bin": "d9b571dfb40f65ebd4e7955a00771132b0335a2d87214062dee528105235baf3",
+   "lc122_live/s12_f04.bin": "b5699156082487e65bd8fdb3edb107eb9f242760dc78f3b702505637fb4950e4",
+   "lc122_live/s12_f05.bin": "15d4378a20d8d613943640c530fab4448d98fce4f0d5c780aa98b97c7578ef91",
+   "lc122_live/s12_f06.bin": "9096cbc658fd8474f4323d31692780d82f9f6d6410e360190c8f02686e6e7889",
+   "lc122_live/s12_f07.bin": "00d269fccff06cc19446c1ddb869fd87d53309429e78a1d298066518d32bbc2e",
+   "lc122_live/s12_f08.bin": "ab2ce1a8918d579d5eabe4c7deea8eb58303c167c3deb78852fdd4fb83deb70a",
+   "lc122_live/s12_f09.bin": "e356f7cf33cd466823ad8320fa41be9aedd870358e17aa36f9caa17b4b329039",
+   "lc123_live/runA_151a7.bin": "db93ac26279ad29097aaaf465fbefe509a4c6241a213f24d4cf4ed6ad037278e",
+   "lc123_live/runA_1528c.bin": "1b99b9840aee27e04f59db0bd5b38e9129cc77d2171b57433f12f94337fac672",
+   "lc123_live/runA_152e5.bin": "b040a16e92e58102af768e38cdf306f4dcf7003a28dbdf27f5f5160c0177f384",
+   "lc123_live/runA_152f5.bin": "607eef5bbe628c962a213eb825c9dfd1dc761b95b9097c9e4f1b60c30225d18c",
+   "lc123_live/runA_15309.bin": "f27e1b51e39d670d11d331a86c9cff09fd0b41978fa06703f2230e26a1ffe26f",
+   "lc123_live/runA_ph1.bin": "fa30129e47a86b968ebebc4bab0cf69d707276dcaa8dfa9d9d292b1241438c68",
+   "lc123_live/runA_ph3.bin": "04fff609c562262a64d87581d3dafbdd79c921aa7732b04c8889265f45512a81",
+   "lc123_live/runA_ph5.bin": "ceb4de4b70625ac8824814f56b5e49876e26710ccda12f52cae19174a7f213fc",
+   "lc123_live/runA_ph6.bin": "141c661cb786aa0b9871f70dd308d168992a86c3f8f0bf99efb73c7dc11d11be",
+   "lc123_live/runA_ph8.bin": "df9e9522e1f7ccd0be41ceca5fa011dd4013a9ab5d66c995092ddccf9ac978e3",
+   "lc123_live/runB_151a7.bin": "de196f3a5f8955c77059574c13cf9675b69691678b71bccd32f557bd2a5fc26b",
+   "lc123_live/runB_1528c.bin": "ccc6cdb16eb369809989d8eb912aa986225ed0cff32574abfa7aa08bce316ad2",
+   "lc123_live/runB_152e5.bin": "14c4b380d3cd28bf1c6c8f034d6743bf86d188385d30e2c53fee3af4c09fdbcc",
+   "lc123_live/runB_152f5.bin": "a096f4d792ee2227c336089590ee62a23ec67c20f4820e24b255ecc54c7326f9",
+   "lc123_live/runB_ph1.bin": "23a53676ea142a0ea21b50c14a4d1fa5ab06d0dd2c949cacffe21d29168dcc1f",
+   "lc123_live/runB_ph2.bin": "75d6ab89817f6c2a335e52f5a805320a74fa36bc4e495bd8c2b7a62001d22b62",
+   "lc123_live/runB_ph4.bin": "e633f493f545f66d31b6eb69bb58305114591604c3ceed27c7431fb7a09ed4ae",
+   "lc123_live/runB_ph5.bin": "9da352c87fbd8b53a0516a9b9efbaed8251d73402c4ab2428e039c4ba4039e2f",
+   "lc123_live/runB_ph6.bin": "88b0da9f8489cdd3143186e50c756595a35fbc51f660f16efef0f2cf2c09d550",
+   "lc123_live/runB_ph8.bin": "0012bbbadef1b9ca46c5e0d0cc426b7bbee70b809bfba259227b131f8de30d7c",
+   "lc124_live/r1_anim00.bin": "bfc7459f601352f7f52475a6db934fc33499372e2d7457851801b46187516413",
+   "lc124_live/r1_anim01.bin": "3c24909c28ad2432de79618fd5fae321121e002f27b01d17e49eeb97bd019594",
+   "lc124_live/r1_anim02.bin": "063e2fa1a19ab3ffbf8a764e28f74a3acb67fc17afea2844c98b2c045dfcb1f6",
+   "lc124_live/r1_anim03.bin": "0790b2134220b9d0613000ccdda6dbd4b78769e5859539dfd44e6f1f83aa62cc",
+   "lc124_live/r1_anim04.bin": "e9e92862c6b5a5f3a6757e9582af0fcbd24b28847f9ab90512fe98e09ee2b275",
+   "lc124_live/r1_anim05.bin": "b097798afbbcc315b4c7d783ea6a5832d0a322c283f8acc7aab8a26fd9d97ec9",
+   "lc124_live/r1_anim06.bin": "13e52a1cc40ed55110e2edb2730ecc28870b6f0510d1a2094d17a4e302ebac2b",
+   "lc124_live/r1_anim07.bin": "fa4cf79f6ea49c57e00192dcb2bde196dfce12b79014fef1152abf25a6c6b95f",
+   "lc124_live/r1_fin00.bin": "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704",
+   "lc124_live/r1_fin01.bin": "c758d8d2847e8ad1d9cdaa5e07b20055784619bf2d51e6d45378ffb57a4d1511",
+   "lc124_live/r1_fin02.bin": "f3d0a0c6d9c46478c190a9ff12fd152a8f207d4203c9f8794a576f7024243a11",
+   "lc124_live/r1_fin03.bin": "e3421bda12be371fe745ab6f100508e374d00dd7e219c9865189876e11bccf40",
+   "lc124_live/r1_fin04.bin": "c75b49a12ee19d654b4ca2cc9755e84161239c8c3ef19e6eb8904f8368cabaa1",
+   "lc124_live/r1_fin05.bin": "adfb00cda5e12c800febc0f4178b186dec4ffb1d89d98524ebcc3d8b6ffecc29",
+   "lc124_live/r1_fin06.bin": "6a8a3b3cc43c4c17fec19b6b8a70b7d8bafbf05400f082547860809eff69fec9",
+   "lc124_live/r1_fin07.bin": "08e9ab80ca8d4ea64bbaf2d9f2515fb5f186b3a5b4902ce0450d2f55b9b2a71c",
+   "lc124_live/r1_fin08.bin": "e5d46128cc0c14063cfc21594bb12d091c5631914a3a6e35fbc0809915658e7d",
+   "lc124_live/r1_fin09.bin": "50756aa5826f3f53ff8d6318a4b53355c4eed2186b420a813f81865e55c675dd",
+   "lc124_live/r1_fin10.bin": "925745663a1c39404011dc9ff633bb5aaeb90a6e6b39c699f5fbac1d9f507cde",
+   "lc124_live/r1_fin11.bin": "dec68eb278e10be73ec235ba440726d0f63fc0dde1de58388e067eae97ea2830",
+   "lc124_live/r1_fin12.bin": "82e94f1dd266537627e2085ce468d28ecb250b1c3479da86bd1dcfb97fec9b5f",
+   "lc124_live/r1_fin13.bin": "a3163231bb70e9bca2aae34f984c31ac7be690f2fc46d864a2b283356a955043",
+   "lc124_live/r1_fin14.bin": "b09e16f3c1ebf95d9e4afdc0aafa7c536362330aa3d335427e2991df046740ca",
+   "lc124_live/r1_fin15.bin": "fbf09daa70af019b49254e34e59edf868b3073ebfbd1e75e8c9ca0ebc1472093",
+   "lc124_live/r1_fin16.bin": "283c21f5b5519f01d24523463e1f0ebb7278cd31fcaf756d3b142e2b15311eb9",
+   "lc124_live/r1_fin17.bin": "74c43ed6fa1b0ebaa931346fe2e6d4ef2d63ed333396cab413ea685a5bff4ca5",
+   "lc124_live/r1_fin18.bin": "539e523e885c87be191bce15daf29b883bf1a083496261b17183f09a7989d9a4",
+   "lc124_live/r1_flash00.bin": "e4ec12566cf6fb5cad96e578c435e3092bb08a0b33567203abe4efd8c1fc3998",
+   "lc124_live/r1_flash01.bin": "3def1bbcee8e687263d50951759b1509ba6c9f01ac3561d3c1ed99dad6951b62",
+   "lc124_live/r1_flash02.bin": "d500645becc9864a80cf1c076dd9996235a156a36c8928bd61e29edb9c8291ee",
+   "lc124_live/r1_flash03.bin": "54dca0c4c1c7070502559bf3a422d883e9449cb3f4bc709d63313039eb705468",
+   "lc124_live/r1_flash04.bin": "9c6f58aa77cecf3d9e56a831b743bbb8c60338f5cd18a64e1e62d344751fad60",
+   "lc124_live/r1_flash05.bin": "67d98aaab82543ab6e4536e89aa196342209c34b589b4664675fbdb010770b48",
+   "lc124_live/r1_flash06.bin": "317dfcd59c09d3b0c1f851a17f0551acc0e7d5d3544c990ed6a23addb55ec893",
+   "lc124_live/r1_flash07.bin": "ad5fabba79d12a794a0ce616f3e1f4941bbaf95d8ac0abfa58ea0a9cf8769ddc",
+   "lc124_live/r1_post00.bin": "fe94356d813a921ed14e0c0f90787649511de966ca3211acefe2359b47363d6e",
+   "lc124_live/r1_pre00.bin": "8fb93eb7a93677ddc09a675116cfe0551a97411fa192eeda41298a7df8ecbe29",
+   "lc124_live/r2_anim00.bin": "17e030d9b1635553fe378619a3a7cc5f45bbbfac6a83e891920869902b6ad1d0",
+   "lc124_live/r2_anim01.bin": "5211d6d2bb7a119cc1fcd333f7ccb9dc7ae53b23f7cfeae29611ce689931c2d5",
+   "lc124_live/r2_anim02.bin": "d22f3a760e1db121717f3ecf2cffb1a9fdafc73a8615a39a9cbd46830add8c1f",
+   "lc124_live/r2_anim03.bin": "73e1f8fbf029bf79203a9c19ceecb004288304a778c5702b5582cf4271c1db1e",
+   "lc124_live/r2_anim04.bin": "f9b34c3bebfe799a1c2267cbbf1f00018d60a179b3cc93707ba3f93bc7d4acbd",
+   "lc124_live/r2_anim05.bin": "eaeb39693cecf07ca29f5cd2fa05624da618578652b9977e5e8a3bcbb7d771e7",
+   "lc124_live/r2_anim06.bin": "97ea1353eadaa42a5559d577bd15e2de8f8c5d9f88eea1c3bf5f3c04445cc56a",
+   "lc124_live/r2_anim07.bin": "7bab9ecc79a776ac1ab15c3c131eeb2ff774c69c2a8e6d4438aa1887bce9788b",
+   "lc124_live/r2_fin00.bin": "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70",
+   "lc124_live/r2_fin01.bin": "1463c28c9a9ec6f6ea305e9fbcbe8f3990db058fd72661c17002315dc02fd63e",
+   "lc124_live/r2_fin02.bin": "198163fe0d5f197a372f031806e89811e20d5b73df015ffb3155b34f17f6ef7d",
+   "lc124_live/r2_fin03.bin": "2190355196d0f98dad54e3958fd64c5b66430484e0aed440fbcf14d78c5bdeee",
+   "lc124_live/r2_fin04.bin": "4860d1d0d6ddb44009c59af65f90aaa47dcba1d9710097971dbe740559bf6e24",
+   "lc124_live/r2_fin05.bin": "90e0c1a71c216cb6cb4537a6ed843fcf78b92c24273b77779ba0c240ef9c814e",
+   "lc124_live/r2_fin06.bin": "5120c24e4a3bcbc4e653d241d13f61172b3bfc333cc607f2de580493bcf9e55c",
+   "lc124_live/r2_fin07.bin": "d0861256fa44e47b4cdc8084c918fb01522af29b333079ebd68512fbf30aec26",
+   "lc124_live/r2_fin08.bin": "1b05c49389f45fe93983807419c9457b6046c1cdbf35f2240fa17ce07bd8d905",
+   "lc124_live/r2_fin09.bin": "f6f590781f0b9816430d91281386a361bed85b889d14fd94516a52dbe1b26045",
+   "lc124_live/r2_fin10.bin": "672369ae38f8ce693f448c6646fc705269f2790f8414c50288aadeae8b253c27",
+   "lc124_live/r2_fin11.bin": "f66d5bb8e8a2d09886c90dc93accbd1ab761cbfbaf1b50fd932e8677620e3f1f",
+   "lc124_live/r2_fin12.bin": "99a760ee59913e04ab0b69bddebfcdb463dbc69f346dfd0b3f4717d5577a7e20",
+   "lc124_live/r2_fin13.bin": "32c5f212a95df867478f9a9bd610b0bcffd42b1c2a5964c0d64ed2da31aa06f6",
+   "lc124_live/r2_fin14.bin": "f9a8f7b635d665e34bb18f30bc88483b851dff7c4faf36225291073ece5508b6",
+   "lc124_live/r2_fin15.bin": "49fd04e21b3c1b4e5ce2b663b4e80d8f03e3f38bd245ccc557311b249e5296b4",
+   "lc124_live/r2_fin16.bin": "6d0abff09fc1a7799fdfae88bedc958e01d48f6a9765f3dabcb3b0cacd4a914a",
+   "lc124_live/r2_fin17.bin": "59adf53e66f4a8858aa3d8c929e51009ee51558c683d46718f31a5896d10ef02",
+   "lc124_live/r2_fin18.bin": "49fa14dea4ec663eec84c52c6842418a3be44b2ec385c43bac6aa3315896a6fd",
+   "lc124_live/r2_fin19.bin": "75cc0594b1b65227ae3e582f17acdbca4f488cf1867dc2ffd652cd907f5be137",
+   "lc124_live/r2_flash00.bin": "a7655cb29fc0c02cd776ae2e35acc4842c54ef1bbe4170fed0e77c3045d4acfa",
+   "lc124_live/r2_flash01.bin": "bd6d0b57023c6ae6906fb93587c3c6ddcc892ccb1e89b316fcd24390e10c8faf",
+   "lc124_live/r2_flash02.bin": "659752053a1f947cbdae23766ab955b9b3c4020681dcefee1c9789d5f76045a0",
+   "lc124_live/r2_flash03.bin": "676882ead2b4873911af30e3575a54653ed0d6e166cde8c21b71e0579def685b",
+   "lc124_live/r2_flash04.bin": "f92820646e540fce95328bcd8e2f2e4e8297a680d0fa53459df0aadd77107d2c",
+   "lc124_live/r2_flash05.bin": "22009c2122a9186559ac9e1958583f8f160719ccadc34a3fd56f7f1474b1a7e4",
+   "lc124_live/r2_flash06.bin": "ab548f5e2bec207f151fa9144d5d9d77f168d9a5b72afcdcfdc97c15581e66fa",
+   "lc124_live/r2_flash07.bin": "6b381d03563c867e4b7226efea4446f07e6ad8a22396c30860c4f322f2ffc885",
+   "lc124_live/r2_pre00.bin": "d317995e44fb634c3bd15f0e4b3e55ae85090fdd065757151b0e17d96ca798b8",
+   "lc124_live/r2_ret20f85_00.bin": "d96ca125e599cf81bc877de9cd67b1399bece8046369b28d5c2fd1f3fbe407e5",
+   "lc124_live/r3_anim00.bin": "aaf2869bcdd8882a178cd10e31417d363328bd7db19946a9c041464ad837fa3e",
+   "lc124_live/r3_anim01.bin": "66c7bf73e07ff75bf7add2c82c207304ad322e5eae8111411cc73b128c0a0758",
+   "lc124_live/r3_anim02.bin": "3ba3efdd20afd5db25852f2ac433e3d28fcabe3cb1c738f3eae9e168890ad2c6",
+   "lc124_live/r3_anim03.bin": "330fb777eaba72b4d48cc55752921b2252bd93bdfb18940a4ee67e99a86477de",
+   "lc124_live/r3_anim04.bin": "60877aa0987dc164ee8b8b87532b355984553458f183d46dc88625ebe15d0cbb",
+   "lc124_live/r3_anim05.bin": "8ab4b41b595d7ee248d656672f29f7b57dc36ec2656bb6b2fca4c12f09c12408",
+   "lc124_live/r3_anim06.bin": "249747e1082c3b009ff6a799815428d971c78f08aae4ae37cbc193024f4d44c2",
+   "lc124_live/r3_anim07.bin": "2f8aa59d99643920b4051d2735c57c163a6784fa275b9ee5957ab075ffc0e1bc",
+   "lc124_live/r3_fin00.bin": "2ff84ea83fe4d9ac3b79eee3b10be88a4022cc3210b4d24b99cbf1a6d316dd3e",
+   "lc124_live/r3_fin01.bin": "43a6196a74f3c90fe42e04d4f9da35ca4fb8189d4d793f31ffbf16f33b119a49",
+   "lc124_live/r3_fin02.bin": "b0d3421c0640348a8ff4b7475fd616947737fe0401c2a39dba93c9e809d99cda",
+   "lc124_live/r3_fin03.bin": "283253a77ba206b0ab2d7885977ffde9784eb078a6e4043fb0ee38a6d56bebcc",
+   "lc124_live/r3_fin04.bin": "fb8a10584a59d6f3eb9f87e05bfe39f08d5a2a9d9460c9e791bdd515a199deda",
+   "lc124_live/r3_fin05.bin": "18bee454fbe73f6a5f62a90dad144a02b763c8601b82b5975ef94f5d1537edba",
+   "lc124_live/r3_fin06.bin": "87567ee6cb156717d166270e09346124b14cedd05b20181f5de97e4ce3da807d",
+   "lc124_live/r3_fin07.bin": "2d3d75d2c1206c1855fc540a846ef46985effd1da27e8b5352e57f1d5972ef26",
+   "lc124_live/r3_fin08.bin": "8a858ea4792d0fb2cbea4fdb60499e870e9439378ee0c81eff5bb4af80d8411d",
+   "lc124_live/r3_flash00.bin": "5ea5af55eb9881e8554808448886d24854e5daec581db4e90497d2e32b7477b8",
+   "lc124_live/r3_flash01.bin": "c8ed8e9ad806e8281e7596ed9516479c44be87b2ef76f904deea602ce074e95c",
+   "lc124_live/r3_flash02.bin": "1c05cec23c4479cd1e22be5e5ccfe6f673377bd9432507dca4867342f5571d8a",
+   "lc124_live/r3_flash03.bin": "8b4b555198d241a219a0947dbaa6d85f663efc29f73234177a69979ac73308cf",
+   "lc124_live/r3_flash04.bin": "06ab8c05ee6ba5f8939459473551ad8861fab59d80d2fcad8e334b9a4cf41e22",
+   "lc124_live/r3_flash05.bin": "91209c1716eaccdd7fb9b602888f7244e53648a1611f9000188f5be5b1f05b00",
+   "lc124_live/r3_flash06.bin": "e8f68a702b6d93186b9baf55a200f4536fbac70b96e46e3b280ad3064324bc65",
+   "lc124_live/r3_flash07.bin": "83191d38a4deaceaf276201c46db29bfb4006a858c9939e16dda301a7167224d",
+   "lc124_live/r3_pre00.bin": "ec95d27f2996204f74e6e5bdf6742cd533952fc1a37b58eb11c5e4e09a83eb37"
+  },
+  "generator": "evidence/generators/ev_s135.py(變異測試 mut_s135.py)",
+  "harness": "VGA 幀是續一百二十二 ~ 一百二十四的 DOSBox-X 傾印(線性 0xa0000 起 64000 bytes,185 個檔、154 個不同);本輪沒有開新的 instance"
+ },
+ "static_code": {
+  "0x4e25d": "c0e902fec12af92af9ac47aae2fc",
+  "0x4e1e1": "c0e902fec12af92af9ac22c402c247aae2fc",
+  "0x4e052": "c0e902fec12af92af9ac8a44050047aae2fc",
+  "0x4e0de": "c0e902fec12af92af9ac8a44050047aae2fc"
+ },
+ "fdicon_mode1_lengths": {
+  "1": 818
+ },
+ "fdshap_mode1_lengths_total": {
+  "1": 325,
+  "2": 5
+ },
+ "fdshap_tilesets": {
+  "FDSHAP_000.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_002.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_004.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_006.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_008.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_010.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_012.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_014.bin": {
+   "tiles": 384,
+   "mode1": {
+    "1": 1
+   }
+  },
+  "FDSHAP_016.bin": {
+   "tiles": 192,
+   "mode1": {
+    "1": 1
+   }
+  },
+  "FDSHAP_018.bin": {
+   "tiles": 192,
+   "mode1": {
+    "1": 32
+   }
+  },
+  "FDSHAP_020.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_022.bin": {
+   "tiles": 288,
+   "mode1": {
+    "1": 4
+   }
+  },
+  "FDSHAP_024.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_026.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_028.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_030.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_032.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_034.bin": {
+   "tiles": 384,
+   "mode1": {
+    "1": 36
+   }
+  },
+  "FDSHAP_036.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_038.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_040.bin": {
+   "tiles": 288,
+   "mode1": {}
+  },
+  "FDSHAP_042.bin": {
+   "tiles": 288,
+   "mode1": {
+    "1": 2
+   }
+  },
+  "FDSHAP_044.bin": {
+   "tiles": 384,
+   "mode1": {
+    "1": 2
+   }
+  },
+  "FDSHAP_046.bin": {
+   "tiles": 96,
+   "mode1": {}
+  },
+  "FDSHAP_048.bin": {
+   "tiles": 192,
+   "mode1": {
+    "1": 17
+   }
+  },
+  "FDSHAP_050.bin": {
+   "tiles": 96,
+   "mode1": {
+    "1": 21,
+    "2": 2
+   }
+  },
+  "FDSHAP_052.bin": {
+   "tiles": 288,
+   "mode1": {
+    "1": 35
+   }
+  },
+  "FDSHAP_054.bin": {
+   "tiles": 288,
+   "mode1": {
+    "1": 43
+   }
+  },
+  "FDSHAP_056.bin": {
+   "tiles": 384,
+   "mode1": {
+    "1": 49,
+    "2": 1
+   }
+  },
+  "FDSHAP_058.bin": {
+   "tiles": 288,
+   "mode1": {
+    "1": 80,
+    "2": 2
+   }
+  },
+  "FDSHAP_060.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_062.bin": {
+   "tiles": 192,
+   "mode1": {}
+  },
+  "FDSHAP_064.bin": {
+   "tiles": 192,
+   "mode1": {
+    "1": 2
+   }
+  }
+ },
+ "fdshap_long_mode1_runs": [
+  {
+   "tileset": "FDSHAP_050.bin",
+   "tile": 38,
+   "cell_xy": [
+    4,
+    13
+   ],
+   "k": 2,
+   "value": 245,
+   "map": 25,
+   "map_cells": [
+    [
+     17,
+     10
+    ],
+    [
+     29,
+     10
+    ],
+    [
+     10,
+     16
+    ],
+    [
+     6,
+     22
+    ],
+    [
+     13,
+     25
+    ],
+    [
+     30,
+     27
+    ],
+    [
+     9,
+     34
+    ]
+   ]
+  },
+  {
+   "tileset": "FDSHAP_050.bin",
+   "tile": 40,
+   "cell_xy": [
+    7,
+    8
+   ],
+   "k": 2,
+   "value": 103,
+   "map": 25,
+   "map_cells": []
+  },
+  {
+   "tileset": "FDSHAP_056.bin",
+   "tile": 218,
+   "cell_xy": [
+    4,
+    13
+   ],
+   "k": 2,
+   "value": 245,
+   "map": 28,
+   "map_cells": []
+  },
+  {
+   "tileset": "FDSHAP_058.bin",
+   "tile": 167,
+   "cell_xy": [
+    5,
+    19
+   ],
+   "k": 2,
+   "value": 245,
+   "map": 29,
+   "map_cells": [
+    [
+     23,
+     10
+    ]
+   ]
+  },
+  {
+   "tileset": "FDSHAP_058.bin",
+   "tile": 219,
+   "cell_xy": [
+    4,
+    13
+   ],
+   "k": 2,
+   "value": 245,
+   "map": 29,
+   "map_cells": []
+  }
+ ],
+ "vga_unit_offset_probe": {
+  "unit": 11,
+  "cell_in_view": [
+   11,
+   6
+  ],
+  "hits": [
+   [
+    4,
+    -2,
+    1163
+   ]
+  ],
+  "view_origin": [
+   4,
+   4
+  ]
+ },
+ "terrain_fdshap_002_hits_by_shift": {
+  "0,0": 94,
+  "1,0": 0,
+  "0,1": 0,
+  "-1,0": 0,
+  "0,-1": 0
+ },
+ "vga_unique_hits": {
+  "skip_then_value": {
+   "unique_hits": 733,
+   "with_mode1": 75,
+   "sprites": 24
+  },
+  "value_then_skip": {
+   "unique_hits": 658,
+   "with_mode1": 0,
+   "sprites": 19
+  },
+  "value_both": {
+   "unique_hits": 658,
+   "with_mode1": 0,
+   "sprites": 19
+  }
+ },
+ "mode1_runs_on_screen": {
+  "1609:20,22": {
+   "value": 254,
+   "places": 13,
+   "discriminating": 13,
+   "skipped_values": [
+    27,
+    108,
+    109
+   ]
+  },
+  "1610:20,21": {
+   "value": 254,
+   "places": 12,
+   "discriminating": 12,
+   "skipped_values": [
+    24,
+    105,
+    106,
+    107
+   ]
+  },
+  "361:0,20": {
+   "value": 254,
+   "places": 35,
+   "discriminating": 35,
+   "skipped_values": [
+    71,
+    126,
+    136,
+    138
+   ]
+  },
+  "362:0,18": {
+   "value": 254,
+   "places": 12,
+   "discriminating": 12,
+   "skipped_values": [
+    70,
+    162
+   ]
+  },
+  "360:21,18": {
+   "value": 254,
+   "places": 3,
+   "discriminating": 3,
+   "skipped_values": [
+    107,
+    108,
+    111
+   ]
+  },
+  "360:0,19": {
+   "value": 254,
+   "places": 3,
+   "discriminating": 3,
+   "skipped_values": [
+    71,
+    125,
+    126
+   ]
+  }
+ },
+ "grey_hits": [
+  [
+   "lc122_live/s11_ref.bin",
+   11,
+   1,
+   [
+    386
+   ]
+  ]
+ ],
+ "status": {
+  "long_mode1_assets": "CODE + 資產 CONFIRMED:FDICON 的 818 個模式 1 run 長度全是 1,所以地圖單位、HUD 圖示(0x4e22a / 0x4e1a6)不會遇到長度 > 1 的模式 1。整個家族的資產裡只有 FDSHAP 5 個長度 2(tileset 050 / 056 / 058),放在地圖上的是地圖 25 的圖塊 38(7 格)與地圖 29 的圖塊 167(1 格),由 0x4e016 / 0x4e0a2 畫。",
+  "long_mode1_order": "CODE CONFIRMED:四個函式的模式 1 迴圈本體都只有 inc edi; stosb(loop 跳回 inc edi),長度 k 就是同一對指令重複 k 次;長度 1 的次序已在畫面上驗到,長度 2 的 5 個 run 沒有在畫面上出現(要地圖 25 / 29 的實機畫面)。",
+  "mode1_order_vga": "LOG CONFIRMED:VGA 幀上以先跳過再寫畫,唯一全中 733 處、帶模式 1 的 75 處(sprite 360 ~ 362、1609、1610,6 個 run、78 處,跳過格全部 ≠ 值);先寫再跳過、兩格都寫都只有 658 處、帶模式 1 的 0 處,且是前者的子集。",
+  "vga_geometry": "INFERRED → 由像素定:地圖單位圖示在 VGA (24·cx + 4, 24·cy − 2),視窗原點 (4, 4);地形以 (4, 4) 為原點有 94 / 104 格與 FDSHAP_002 全中,錯一格 0 格。",
+  "grey": "灰階版 0x4e1a6 在 VGA 幀上只有一處全中(s11_ref,索爾的格子,sprite 386),該張沒有模式 1:灰階版的模式 1 仍只有靜態證據。",
+  "terrain_mode1": "第 1 章戰場的圖塊組 FDSHAP_002 沒有模式 1;地形繪製 0x4e016 / 0x4e0a2 的模式 1 在畫面上沒有驗到。"
+ }
+}

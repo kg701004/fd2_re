@@ -1,0 +1,10 @@
+送 Return
+{'at': '0x1ac4e', 't': 14.6, 'name': '種類 3:0x15f84 返回', 'eax': 658351}
+{'at': '0x1ac2b', 't': 17.1, 'name': '種類 3:呼叫 0x15f84 之前', 'payload': 16, 'row_index': 1, 'unit': 11, 'txt_ptr': '0x26b018', 'str_off': 3476, 'file_match': {'FDTXT_001': False, 'FDTXT_002': True}, 'file_strings': {'FDTXT_001': 12, 'FDTXT_002': 17}}
+shot a1b_k3_1 running True
+送 Return
+{'at': '0x1ac4e', 't': 41.6, 'name': '種類 3:0x15f84 返回', 'eax': 658383}
+{'at': '0x2107a', 't': 44.0, 'name': 'item_effect_dispatch 收尾', 'exp': 0}
+{'at': '0x152fd', 't': 48.1, 'name': 'ai_item_action 返回前', 'exp': 0}
+stops 8 done True
+exit=0

@@ -77,7 +77,9 @@ def main() -> int:
     # 1. 第 1、2、3、8 格:push i 後跳進第 0 格的 0x2121a;第 5、6、7 格跳進第 4 格的 0x213aa
     for grp, join in (((1, 2, 3, 8), BODY_A_JOIN), ((5, 6, 7), BODY_B_JOIN)):
         got = {i: shapes[i] for i in grp}
-        chk(f"stub_{''.join(map(str, grp))}", all(got[i] == (i, join) for i in grp),
+        # 組員也要等於「push 自己格號再跳進這個 join」的全部格(續一百三十五 sweep_literals:寫成 (2, 2, 3, 8) 也照樣逐格通過)
+        members = {i for i, s in shapes.items() if s == (i, join)}
+        chk(f"stub_{''.join(map(str, grp))}", all(got[i] == (i, join) for i in grp) and set(grp) == members,
             ", ".join(f"{i}:{hex(tbl[i])}->{got[i] and (got[i][0], hex(got[i][1]))}" for i in grp))
     # 2. 第 0 / 4 格:前 5 條同形狀(push 0 / 4),第 6 條就是被跳進來的那一條,之後 call 本體
     for i, join, body in ((0, BODY_A_JOIN, BODY_A), (4, BODY_B_JOIN, BODY_B)):

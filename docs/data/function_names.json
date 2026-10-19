@@ -14088,7 +14088,7 @@
   {
    "addr": "0x4e0a2",
    "name": "blit_rle_icon_24x24_remap",
-   "summary": "(來源, 目的, 目的跨距, 換色表) 與 blit_rle_icon_24x24 同一種 24 x 24 RLE,但每個寫出的像素都先經第 4 個參數的換色表([ebp + 值]),而且 11 型命令是跳過 n 格(透明)而不是填 0x49。redraw_map_cell 呼叫。",
+   "summary": "(來源, 目的, 目的跨距, 換色表) 與 blit_rle_icon_24x24 同一種 24 x 24 RLE,但每個寫出的像素都先經第 4 個參數的換色表([ebp + 值]),而且 11 型命令是跳過 n 格(透明)而不是填 0x49。redraw_map_cell 呼叫。01 與 blit_tile24_rle 相同,先跳過一格再寫(inc edi; stosb 的迴圈),續一百三十五靜態確認。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -24522,7 +24522,7 @@
   {
    "addr": "0x4e016",
    "name": "blit_tile24_rle_remap",
-   "summary": "(src, dst, stride, 換色表) 24 x 24 地圖格的 RLE 繪製,與 blit_tile24_rle 同格式,但每個像素都經換色表:控制 byte 高兩 bit 00 填色、01 隔一格寫、10 逐點複製、11 把目的原有像素過換色表(覆蓋陰影);低 6 bits + 1 為長度(FD2.EXE 反組譯)。draw_terrain_layer 呼叫。",
+   "summary": "(src, dst, stride, 換色表) 24 x 24 地圖格的 RLE 繪製,與 blit_tile24_rle 同格式,但每個像素都經換色表:控制 byte 高兩 bit 00 填色、01 隔一格寫、10 逐點複製、11 把目的原有像素過換色表(覆蓋陰影);低 6 bits + 1 為長度(FD2.EXE 反組譯)。draw_terrain_layer 呼叫。01 與 blit_tile24_rle 相同,先跳過一格再寫(inc edi; stosb 的迴圈),續一百三十五靜態確認。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [

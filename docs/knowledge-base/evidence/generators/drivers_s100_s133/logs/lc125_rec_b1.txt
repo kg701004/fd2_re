@@ -1,0 +1,16 @@
+{'at': '0x1567e', 't': 63.0, 'name': 'ai_item_candidate_select 入口', 'ret': '0x1d92a', 'unit': 11, 'camp': 0, 'map_w': 27, 'map_h': 21, 'inv': '004080004f80ff80ff80ff80ff80ff00'}
+{'at': '0x1576e', 't': 68.7, 'name': '施放點清單', 'count': 4, 'cells': [[19, 13], [18, 14], [20, 14], [19, 15]]}
+{'at': '0x157fd', 't': 72.2, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [0, 3], 'cast': [20, 14], 'slot': 2, 'best_before': {'score': 0, 'x': 19, 'y': 0, 'slot': 2}}
+{'at': '0x1586a', 't': 79.2, 'name': 'ai_item_candidate_select 掃完', 'best': {'score': 16, 'x': 20, 'y': 14, 'slot': 2}}
+{'at': '0x1567e', 't': 83.8, 'name': 'ai_item_candidate_select 入口', 'ret': '0x14f24', 'unit': 11, 'camp': 0, 'map_w': 27, 'map_h': 21, 'inv': '004080004f80ff80ff80ff80ff80ff00'}
+{'at': '0x1576e', 't': 89.4, 'name': '施放點清單', 'count': 4, 'cells': [[19, 13], [18, 14], [20, 14], [19, 15]]}
+{'at': '0x157fd', 't': 93.0, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [0, 3], 'cast': [20, 14], 'slot': 2, 'best_before': {'score': 0, 'x': 20, 'y': 14, 'slot': 2}}
+{'at': '0x1586a', 't': 100.1, 'name': 'ai_item_candidate_select 掃完', 'best': {'score': 16, 'x': 20, 'y': 14, 'slot': 2}}
+{'at': '0x15055', 't': 104.6, 'name': 'ai_item_action 入口', 'ret': '0x1503e', 'unit': 11, 'camp': 0, 'exp': 0, 'table': {'txt_ptr': '0x26b018', 'lbl_ptr': '0x234018', 'FDTXT_001': {'bytes': 4360, 'diff_bytes': 3808, 'first_diff': 0}, 'FDTXT_002': {'bytes': 3498, 'diff_bytes': 0, 'first_diff': None}}, 'hit_row3': 'f4016405012a00'}
+{'at': '0x1c8e2', 't': 123.0, 'name': '經驗值累加之前', 'eax_add': 16, 'unit': 3, 'edi_new_hp': 506, 'ebp_damage': 361, 'exp_before': 0}
+{'at': '0x20fe5', 't': 127.1, 'name': '逐目標迴圈結束', 'exp': 16}
+{'at': '0x21072', 't': 131.3, 'name': 'call grant_reward_rows', 'args': [11, 0, '0x1f1518'], 'rows': '000040151f00160000007801'}
+{'at': '0x2107a', 't': 134.8, 'name': 'item_effect_dispatch 收尾', 'exp': 0}
+{'at': '0x152fd', 't': 138.9, 'name': 'ai_item_action 返回前', 'exp': 0}
+stops 14 done True
+exit=0

@@ -52,11 +52,34 @@ def sbytes(addr: int, n: int) -> bytes:
     return D.object_bytes(_data, _meta, addr, n)
 
 
+# 高階職業表的基底、列距與 +7 要減的值都從 FD2.EXE 讀(續一百三十五 sweep_literals:原本手寫,而實測資料沒有高階職業,改了沒有判準擋)。
+# 存取函式 0x4e84f:mov eax, [ebp+8]; mov edx, 列距; mul edx; lea edx, [表](fixup);呼叫端都是 sub eax, imm8; push eax; call。
+_acc = sbytes(0x4E852, 12)
+assert _acc[:4] == bytes.fromhex("8b4508ba") and _acc[8:12] == bytes.fromhex("f7e28d15"), _acc.hex()
+HC_STRIDE = struct.unpack_from("<I", _acc, 4)[0]
+HC_BASE = D.build_fixups(_data, _meta)[0x4E85E]
+_code, _cbase = D.load_code(_data, _meta)
+_hc_callers = [_cbase + i for i in range(len(_code) - 5)
+               if _code[i] == 0xE8 and _cbase + i + 5 + struct.unpack_from("<i", _code, i + 1)[0] == 0x4E84F]
+_hc_pre = {sbytes(c - 4, 4) for c in _hc_callers}
+assert len(_hc_callers) == 4 and len(_hc_pre) == 1, (_hc_callers, _hc_pre)
+_pre = _hc_pre.pop()
+assert _pre[:2] == b"\x83\xe8" and _pre[3] == 0x50, _pre.hex()
+HC_SUB = _pre[2]
+assert (HC_BASE, HC_STRIDE, HC_SUB) == (0x61AF9, 10, 0x44), (hex(HC_BASE), HC_STRIDE, hex(HC_SUB))
+
+
+def high_class_row(f7: int) -> bytes:
+    """高階職業表的一列(基底 0x61af9、10 bytes),列號 = 單位 +7 − 0x44。"""
+    return sbytes(HC_BASE + (f7 - HC_SUB) * HC_STRIDE, HC_STRIDE)
+
+
 def high_class_exp(f7: int) -> int:
-    return sbytes(0x61AF9 + (f7 - 0x44) * 10, 10)[9]
+    return high_class_row(f7)[9]
 
 
-ITEM79 = sbytes(0x602AD + 79 * 0x17, 0x17)
+ITEM_SIZE = 0x17   # 道具表每列 23 bytes(列距與讀的長度同一個值;續一百三十五 sweep_literals:長度原本另外手寫)
+ITEM79 = sbytes(0x602AD + 79 * ITEM_SIZE, ITEM_SIZE)
 ITEM_TYPE, ITEM_VALUE = ITEM79[0xD], struct.unpack_from("<H", ITEM79, 0xE)[0]
 ITEM_RANGE = ITEM79[0x10]
 SPELL3_POWER = struct.unpack_from("<H", sbytes(0x619FD + ITEM_VALUE * 7, 2), 0)[0]

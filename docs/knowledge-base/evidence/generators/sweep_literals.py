@@ -26,12 +26,15 @@ from __future__ import annotations
 
 import argparse
 import ast
+import atexit
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
@@ -43,6 +46,38 @@ from _evpaths import EVIDENCE, GEN_DIR, MANIFEST, MISSING_INPUT_RC
 TIMEOUT_S = 180
 # 只影響輸出排版、不是資料的常數(改了必然 ESCAPED,沒有判讀價值)
 SKIP_KEYWORDS = {"indent"}
+
+# 變異版最後拋出的例外型別由子行程自己報:sitecustomize 包住 sys.excepthook,印完 traceback 後在 stderr 補一行標記。
+# 只看 stderr 最後一行時,`assert x, 多行字串` 的訊息最後一行不是 "AssertionError..." 而被誤判成 CRASH(續一百三十五)。
+# 只裝在產生器本身:環境變數讀到就刪掉,產生器再開的子行程(內層突變測試)不受影響,它們的 stderr 原樣不變。
+EXC_MARK = "__SWEEP_FINAL_EXC__"
+_HOOK_ENV = "FD2_SWEEP_EXC_HOOK"
+_HOOK_SRC = (
+    "import os\n"
+    "import sys\n"
+    f"if os.environ.pop({_HOOK_ENV!r}, None) == '1':\n"
+    "    _prev = sys.excepthook\n"
+    "\n"
+    "    def _sweep_hook(t, v, tb):\n"
+    "        _prev(t, v, tb)\n"
+    f"        sys.stderr.write('\\n{EXC_MARK} ' + t.__name__ + '\\n')\n"
+    "\n"
+    "    sys.excepthook = _sweep_hook\n"
+)
+_hook_lock = threading.Lock()
+_hook_dir: Path | None = None
+
+
+def hook_dir() -> Path:
+    """放 sitecustomize.py 的暫存目錄(整個行程共用一個,結束時刪除)。"""
+    global _hook_dir
+    with _hook_lock:
+        if _hook_dir is None:
+            d = Path(tempfile.mkdtemp(prefix="swl_hook_"))
+            (d / "sitecustomize.py").write_text(_HOOK_SRC, encoding="utf-8", newline="\n")
+            atexit.register(shutil.rmtree, d, True)
+            _hook_dir = d
+        return _hook_dir
 
 
 @dataclass
@@ -199,8 +234,17 @@ def classify(rc: int | None, stderr: str, out_dir: Path, outputs: list[str]) -> 
     if rc == MISSING_INPUT_RC and "MISSING_INPUT" in stderr:
         return "MISSING_INPUT", []
     if rc != 0:
-        tail = [x for x in stderr.strip().splitlines() if x.strip()]
+        lines = stderr.strip().splitlines()
+        marks = [x.split(None, 1)[1].strip() for x in lines if x.startswith(EXC_MARK + " ")]
+        tail = [x for x in lines if x.strip() and not x.startswith(EXC_MARK)]
         last = tail[-1][:200] if tail else f"rc={rc}"
+        if marks:
+            # 子行程自報的最後例外(取最後一個標記:訊息裡嵌入的字串不會排在 excepthook 之後)
+            if marks[-1] == "AssertionError" and "Traceback" in stderr:
+                head = next((x for x in reversed(tail) if x.startswith("AssertionError")), last)
+                return "KILLED", [head[:200]]
+            return "CRASH", [f"{marks[-1]}: {last}"[:200]]
+        # 沒有標記(不是未攔截的例外結束,例如 sys.exit):沿用最後一行
         # AssertionError 必須是最後拋出的例外,且有 Traceback(不是印出來的字串)
         if "Traceback" in stderr and last.startswith("AssertionError"):
             return "KILLED", [last]
@@ -222,7 +266,8 @@ def classify(rc: int | None, stderr: str, out_dir: Path, outputs: list[str]) -> 
 
 
 def _run(script: Path, out_dir: Path) -> tuple[int | None, str]:
-    env = dict(os.environ, FD2_EVIDENCE_OUT_DIR=str(out_dir), PYTHONPATH=str(GEN_DIR))
+    env = dict(os.environ, FD2_EVIDENCE_OUT_DIR=str(out_dir),
+               PYTHONPATH=os.pathsep.join([str(hook_dir()), str(GEN_DIR)]), **{_HOOK_ENV: "1"})
     env.pop("FD2_EVIDENCE_MANIFEST_BUILD", None)
     try:
         r = subprocess.run([sys.executable, "-X", "utf8", "-W", "ignore", str(script)], cwd=GEN_DIR, env=env,
@@ -266,7 +311,7 @@ def sweep(gen: str, module: str | None = None, src: str | None = None) -> list[R
         td = Path(tdn)
         v, det = run_variant(gen, outputs, td, "control", gen_src, module, tsrc if module else None)
         if v != "INERT":
-            return [Result(gen, target, 0, "", "", False, "", "CONTROL_FAIL", [v] + det)]
+            return [Result(gen, target, 0, "", "", False, "", "CONTROL_FAIL", detail=[v] + det)]
         for i, s in enumerate(find_sites(tsrc)):
             m = apply(tsrc, s)
             if module:
@@ -275,6 +320,12 @@ def sweep(gen: str, module: str | None = None, src: str | None = None) -> list[R
                 v, det = run_variant(gen, outputs, td, f"m{i}", m)
             res.append(Result(gen, target, s.line, s.text, s.new, s.in_assert, s.context, v, detail=det, role=s.role))
     return res
+
+
+def fmt_result(r: Result) -> str:
+    """main 印出 ESCAPED / CONTROL_FAIL / TIMEOUT 的一行。"""
+    return (f"{r.verdict:12s} {r.role:8s} {r.module}:{r.line} {r.text}→{r.new} | {r.context[:90]} | "
+            f"{'; '.join(r.detail[:3])}")
 
 
 def selftest() -> int:
@@ -303,6 +354,11 @@ def selftest() -> int:
             ((1, "Traceback (most recent call last):\n  ...\nAssertionError: x"), "KILLED"),
             ((1, "AssertionError 只是印出來的字\n"), "CRASH"),
             ((1, "Traceback (most recent call last):\nAssertionError\n\nDuring handling...\nTraceback (most recent call last):\nIndexError: x"), "CRASH"),
+            # 多行訊息:最後一行不是 AssertionError,以子行程自報的標記為準
+            ((1, f"Traceback (most recent call last):\n  ...\nAssertionError: FAIL a\nFAIL b\n\n{EXC_MARK} AssertionError\n"), "KILLED"),
+            # 訊息裡嵌了別的 traceback(子行程輸出),最後的標記才算
+            ((1, f"Traceback (most recent call last):\nIndexError: 內層\n{EXC_MARK} AssertionError\n...\n"
+                 f"Traceback (most recent call last):\nKeyError: 1\nAssertionError: 字串\n\n{EXC_MARK} KeyError\n"), "CRASH"),
             ((MISSING_INPUT_RC, "MISSING_INPUT\n  a.bin 缺檔"), "MISSING_INPUT"),
             ((None, ""), "TIMEOUT"),
             ((0, ""), "ESCAPED"),   # 沒有產生清單上的輸出
@@ -321,6 +377,8 @@ def selftest() -> int:
         (SPAWN_COMPUTED, SPAWN_COMPUTED, '"terrain_of_spawn_cells": 6}', "ESCAPED"),
         ('print("ok", OUT)', 'print("ok", OUT)', 'print("ok", OUT, 1)', "INERT"),
         ("indent=1)", 'ensure_ascii=False, indent=1)\nopen(OUT', 'ensure_ascii=False, indent=2)\nopen(OUT', "ESCAPED"),
+        # 真的跑一次:多行訊息的 assert 要經 excepthook 標記判成 KILLED(只看最後一行時是 CRASH)
+        ('print("ok", OUT)', 'print("ok", OUT)', 'assert False, "第一行\\n第二行"\nprint("ok", OUT)', "KILLED"),
     ]
     with tempfile.TemporaryDirectory(prefix="swl_self_") as tdn:
         td = Path(tdn)
@@ -345,6 +403,15 @@ def selftest() -> int:
         bad = [r for r in rs if not (isinstance(r.detail, list) and r.role in ROLES)]
         if bad:
             fails.append(f"sweep({gen}) 結果欄位錯位:{bad[0]}")
+        # 對照失敗那一筆也要能印(續一百三十五之前 detail 落在 role,main 印出時崩潰)
+        cf = sweep(gen, src=gsrc + "\nraise SystemExit(5)\n")
+        try:
+            line = fmt_result(cf[0]) if len(cf) == 1 else ""
+        except (TypeError, ValueError) as e:
+            line = f"<{e}>"
+        if not (len(cf) == 1 and cf[0].verdict == "CONTROL_FAIL" and isinstance(cf[0].detail, list)
+                and cf[0].detail[:1] == ["CRASH"] and line.startswith("CONTROL_FAIL")):
+            fails.append(f"對照失敗的結果格式錯誤:{cf} {line!r}")
     for f in fails:
         print("FAIL", f)
     print("selftest", "PASS" if not fails else f"FAIL ({len(fails)})")
@@ -374,7 +441,7 @@ def main(argv: list[str]) -> int:
         print(f"{g:40s} " + " ".join(f"{k}={c[k]}" for k in sorted(c)))
     for r in allres:
         if r.verdict in ("ESCAPED", "CONTROL_FAIL", "TIMEOUT"):
-            print(f"{r.verdict:12s} {r.role:8s} {r.module}:{r.line} {r.text}→{r.new} | {r.context[:90]} | {'; '.join(r.detail[:3])}")
+            print(fmt_result(r))
     tot = Counter(r.verdict for r in allres)
     print("ESCAPED 依語法位置", dict(Counter(r.role for r in allres if r.verdict == "ESCAPED")))
     print("合計", dict(sorted(tot.items())))

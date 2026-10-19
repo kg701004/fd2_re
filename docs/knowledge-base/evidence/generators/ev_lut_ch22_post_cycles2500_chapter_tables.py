@@ -48,18 +48,26 @@ def table_rows() -> list[dict]:
     fn = json.loads(git_blob(NAMES_BLOB, "docs/data/function_names.json"))
     by = {int(x["addr"], 16): x for x in fn["names"]}
     rows = []
-    for i in range(88):
-        a = entry(0x51D01, i)
-        tbl, ch = ("cmd", i) if i < 28 else (("pre", i - 28) if i < 58 else ("post", i - 58))
+    # 表界由各表的基底定(續一百三十五 sweep_literals:28 / 58 / 88 與 slot 字串原本是手寫、改了沒有判準擋):
+    # 指令表 0x51d01、戰前 0x51d71、戰後 0x51de9(呼叫點的 disp32 由 lc127_analyze 的靜態檢查驗),表尾 0x51e61
+    cmd0, pre0, post0, end0 = 0x51D01, 0x51D71, 0x51DE9, 0x51E61
+    n_cmd, n_pre, n_all = (pre0 - cmd0) // 4, (post0 - cmd0) // 4, (end0 - cmd0) // 4
+    assert (n_cmd, n_pre - n_cmd, n_all - n_pre) == (28, 30, 30)
+    for i in range(n_all):
+        slot = cmd0 + 4 * i
+        a = entry(slot, 0)
+        tbl, ch = ("cmd", i) if i < n_cmd else (("pre", i - n_cmd) if i < n_pre else ("post", i - n_pre))
         n = by.get(a)
-        rows.append({"index": i, "slot": hex(0x51D01 + 4 * i), "table": tbl, "chapter_or_cmd": ch, "addr": hex(a),
+        rows.append({"index": i, "slot": hex(slot), "table": tbl, "chapter_or_cmd": ch, "addr": hex(a),
                      "name": n["name"] if n else None, "conf": n["confidence"] if n else None})
     # 用各表自己的基底讀同一格必須一致(三張表首尾相接)
     for r in rows:
         if r["table"] == "pre":
-            assert entry(0x51D71, r["chapter_or_cmd"]) == int(r["addr"], 16)
+            assert entry(pre0, r["chapter_or_cmd"]) == int(r["addr"], 16)
         if r["table"] == "post":
-            assert entry(0x51DE9, r["chapter_or_cmd"]) == int(r["addr"], 16)
+            assert entry(post0, r["chapter_or_cmd"]) == int(r["addr"], 16)
+    # 表尾那格不是程式段位址(與下面的 nxt 同一格)
+    assert not (0x10000 <= entry(end0, 0) < 0x50000)
     return rows
 
 

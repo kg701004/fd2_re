@@ -10,6 +10,7 @@ import contextlib
 import hashlib
 import io
 import json
+import struct
 import subprocess
 import sys
 
@@ -53,9 +54,10 @@ out: dict = {
               "ai_item_candidate_select:0x1567e、0x1576e、0x157fd、0x1586a(arm 時就設)。ai_item_action 入口 0x15055 停下後才設:"
               "0x1c8e2(經驗值累加)、0x20fe5、0x21072、0x1ac2b / 0x1ac4e(種類 3)、0x2107a、0x152fd。種類 3 停點之後恢復執行,6 秒後截視窗。",
     "static": {
-        "high_class_row_0x41_+7_0x85": an125.sbytes(0x61AF9 + 0x41 * 10, 10).hex(),
-        "high_class_row_0x42_+7_0x86": an125.sbytes(0x61AF9 + 0x42 * 10, 10).hex(),
-        "high_class_row_0x1c_+7_0x60_anchor": an125.sbytes(0x61AF9 + 0x1C * 10, 10).hex(),
+        # 列由單位 +7 定(與分析用的經驗值查表同一個函式;續一百三十五 sweep_literals:原本位址與列號是手寫)
+        "high_class_row_0x41_+7_0x85": an125.high_class_row(0x85).hex(),
+        "high_class_row_0x42_+7_0x86": an125.high_class_row(0x86).hex(),
+        "high_class_row_0x1c_+7_0x60_anchor": an125.high_class_row(0x60).hex(),
         "item79_row_0x602ad": an125.ITEM79.hex(),
         "phase_table_0x51a97": list(an125.sbytes(0x51A97, 20)),
         "fixed_phase_0x51a93": an125.sbytes(0x51A93, 4).hex(),
@@ -78,6 +80,15 @@ a = out["analysis"]
 assert a["pass"] == a["checks"] and a["controls_fail_as_expected"] + a["controls_not_applicable"] == a["controls"], a
 assert (a["checks"], a["controls"], a["controls_not_applicable"]) == (35, 21, 5), a
 assert out["mutation"]["stdout"][-1] == "突變 12 個,抓到 12,漏掉 0", out["mutation"]["stdout"][-1]
+# 靜態欄位的判準(續一百三十五 sweep_literals):相位表是 0..10..1 的三角波(20 格)、[0x51a93] = -1(doc98 續一百三十一:
+# draw_terrain_layer 走自己加相位的那一支);高階列的鍵名與列號一致(列號 = +7 − 0x44),經驗值欄與分析查表同一個函式
+_st = out["static"]
+assert _st["phase_table_0x51a97"] == [min(i, 20 - i) for i in range(20)], _st["phase_table_0x51a97"]
+assert struct.unpack("<i", bytes.fromhex(_st["fixed_phase_0x51a93"]))[0] == -1, _st["fixed_phase_0x51a93"]
+for _k in ("high_class_row_0x41_+7_0x85", "high_class_row_0x42_+7_0x86", "high_class_row_0x1c_+7_0x60_anchor"):
+    _row, _f7 = int(_k.split("_")[3], 16), int(_k.split("_")[5], 16)
+    assert _row == _f7 - an125.HC_SUB and bytes.fromhex(_st[_k]) == an125.high_class_row(_f7), _k
+    assert bytes.fromhex(_st[_k])[9] == an125.high_class_exp(_f7), _k
 
 # 已提交的 PNG = 種類 3 停點之後的視窗截圖,與原始截圖逐 byte 相同
 FILES = {"a1_k3_1.png": "grant_reward_rows_kind3_line_unit5_20261014.png", "a1b_k3_1.png": "grant_reward_rows_kind3_line_unit10_20261014.png"}

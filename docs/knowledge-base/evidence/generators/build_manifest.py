@@ -44,7 +44,9 @@ GENERATORS = ["ev_s65", "ev_s65b", "ev_s66", "ev_s67", "ev_s68", "ev_s69", "ev_s
               "ev_lut_circle_ramp_at_unit", "ev_ai_item_action_item79_flow", "ev_rest_and_item79_branch",
               "ev_item79_aim_exp_reward_lines", "ev_lut_circle_ramp_frame_time_ch22_post",
               "ev_lut_ch22_post_cycles2500_chapter_tables", "ev_dispatch_index_bounds_table_split",
-              "ev_cmd_table_0_9_coverage_lut_cycles"]
+              "ev_cmd_table_0_9_coverage_lut_cycles",
+              # 2026-10-19(續一百三十五)
+              "ev_s135"]
 
 
 def _norm(p: str) -> str:

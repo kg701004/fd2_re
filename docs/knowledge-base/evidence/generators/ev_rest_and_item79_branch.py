@@ -106,6 +106,8 @@ out: dict = {
 for tag in an124.RUNS:
     st = json.loads((D / f"{tag}.json").read_text(encoding="utf-8"))["stops"]
     dumps = sorted(p.stem for p in D.glob(f"{tag}_*.bin") if p.stat().st_size == 64000)
+    # 紀錄裡每一站提到的傾印都要在清單裡(續一百三十五 sweep_literals:大小條件改錯時清單變空,沒有判準擋)
+    assert {s["dump"] for s in st if s.get("dump")} <= set(dumps) and dumps, (tag, dumps)
     out["runs"].append({"tag": tag, "what": WHAT[tag], "stops": [trim(s) for s in st],
                         "vga_dump_md5": {n: hashlib.md5((D / f"{n}.bin").read_bytes()).hexdigest() for n in dumps}})
 

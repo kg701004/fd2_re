@@ -1,0 +1,5 @@
+ok True  [('instance_up', True, 'instance lc123 alive and drawing a non-black frame'), ('patch_chapter', True, "chapter byte -> 1: ['wrote /home/kg701004/fd2-run-harness-lc123/FD2.SAV (22987 bytes)']"), ('poll_title', True, 'title reached on try 8 (diff 0.40)')]
+33464c81e6a364fd0660141139aa8e6e  /home/kg701004/fd2-run-harness-lc123/FD2.EXE
+-rw-r--r-- 1 kg701004 kg701004 14153452 Oct 13 22:55 /home/kg701004/fd2-run-harness-lc123/CALLLOG.TXT
+H fd2calllog 1 cs=0170 entries=1356 cap=200 dump=32 lo=001ac010 hi=001eaee1
+rc=0

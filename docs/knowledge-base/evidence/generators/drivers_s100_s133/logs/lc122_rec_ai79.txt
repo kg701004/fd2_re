@@ -1,0 +1,16 @@
+ai_item_action 入口 {'ret': '0x1503e', 'unit': 11, 'camp': 0}
+入口 {'ret': '0x151a7', 'unit': 11, 'radius0': 80, 'step': -4, 'unit_xy': [19, 14], 'scroll': [8, 8], 'centre': [276, 162]}
+幀 0 半徑 80
+幀 1 半徑 76
+幀 2 半徑 72
+幀 3 半徑 68
+幀 4 半徑 64
+幀 5 半徑 60
+幀 6 半徑 56
+幀 7 半徑 52
+幀 8 半徑 48
+幀 9 半徑 44
+迴圈結束
+redraw(0) 之後傾印基準畫面,斷點已清 [lc122] sent debugger command: BPLIST
+frames 10 end True
+rc=0

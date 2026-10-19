@@ -71,6 +71,12 @@ def imm_pushes(call_addr: int, n: int) -> list[int]:
 HANDLER = post_table(22)
 HANDLER_RET = ret_after_call(0x25E23)
 LUT_CALLS_22 = {0x24978: imm_pushes(0x24978, 3), 0x249C4: imm_pushes(0x249C4, 3), 0x24A10: imm_pushes(0x24A10, 3)}
+# 三個呼叫點由 FD2.EXE 定(續一百三十五 sweep_literals:位址改一個 byte 也照樣讀得出 push,沒有判準擋):
+# 處理器起 0x300 bytes 內所有 call rel32 到 lut_circle_ramp_at_unit(0x2189a)的位置
+_hb = sbytes(HANDLER, 0x300)
+_lut_sites = [HANDLER + i for i in range(len(_hb) - 4)
+              if _hb[i] == 0xE8 and HANDLER + i + 5 + struct.unpack_from("<i", _hb, i + 1)[0] == 0x2189A]
+assert _lut_sites == sorted(LUT_CALLS_22), [hex(x) for x in _lut_sites]
 SPELL = {  # 法術 -> (呼叫點, 起始半徑與每幀加多少):command_handler_11 / 12 推的是 imm、imm,再 push dword ptr [esp + 0xc](4 bytes,使用者)
     11: (0x21883, imm_pushes(0x21883 - 4, 2)),
     12: (0x21AC2, imm_pushes(0x21AC2 - 4, 2)),

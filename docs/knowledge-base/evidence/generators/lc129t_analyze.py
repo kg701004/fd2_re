@@ -111,8 +111,11 @@ def main(argv: list[str] | None = None) -> int:
     for k, (lo, hi) in PRED.items():
         check(f"預測 cycles {k[0]} 法術 {k[1]} 在 {lo}..{hi}", all(v is not None and lo <= v <= hi for v in meas[k]), f"{meas[k]}")
     # 單調:cycles 加倍,時間嚴格變短(兩個法術各自)
-    for sp in (11, 12):
-        seq = [max(meas[(c, sp)]) for c in (2500, 5000, 10000)]
+    # 法術清單取自量到的資料(續一百三十五 sweep_literals:原本手寫 (11, 12),改成 (12, 12) 也沒有判準擋)
+    spells = sorted({s for _c, s in meas})
+    assert spells == [11, 12], spells
+    for sp in spells:
+        seq =[max(meas[(c, sp)]) for c in (2500, 5000, 10000)]
         check(f"法術 {sp}:2500 > 5000 > 10000", seq[0] > seq[1] > seq[2], f"{seq}")
         # tick × cycles 在 ±1 tick 量化誤差下有共同值(反比)
         lo = max((v - 1) * c for c in (2500, 5000, 10000) for v in [min(meas[(c, sp)])])
@@ -122,11 +125,11 @@ def main(argv: list[str] | None = None) -> int:
     for c in (2500, 10000):
         check(f"cycles {c}:裂地術 > 地震術", min(meas[(c, 12)]) > max(meas[(c, 11)]), f"{meas[(c, 12)]} vs {meas[(c, 11)]}")
     # 對照 H0:與 cycles 無關(cycles 10000 仍在 cycles 5000 的 ±1 內)—— 必須不符
-    h0 = all(abs(v - w) <= 1 for sp in (11, 12) for v in meas[(10000, sp)] for w in meas[(5000, sp)])
+    h0 = all(abs(v - w) <= 1 for sp in spells for v in meas[(10000, sp)] for w in meas[(5000, sp)])
     check("對照 H0:cycles 10000 與 5000 相同(±1 tick)", h0, f"10000 {meas[(10000, 11)]}/{meas[(10000, 12)]};5000 {meas[(5000, 11)]}/{meas[(5000, 12)]}",
           control=True)
     # 對照:時間與 cycles 成正比(cycles 越大越慢)—— 必須不符
-    prop = all(max(meas[(2500, sp)]) < min(meas[(10000, sp)]) for sp in (11, 12))
+    prop = all(max(meas[(2500, sp)]) < min(meas[(10000, sp)]) for sp in spells)
     check("對照:cycles 越大越慢", prop, "2500 的時間小於 10000", control=True)
     bad = sum(1 for r in results if r["ok"] == r["control"])
     print("ALL OK" if bad == 0 else f"BAD {bad}")

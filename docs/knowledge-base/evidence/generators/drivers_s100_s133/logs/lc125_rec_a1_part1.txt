@@ -1,0 +1,36 @@
+{'at': '0x1567e', 't': 93.7, 'placed': [(5, 19, 13), (10, 19, 6)], 'name': 'ai_item_candidate_select 入口', 'ret': '0x1d92a', 'unit': 11, 'camp': 0, 'map_w': 27, 'map_h': 21, 'inv': '004080004f80ff80ff80ff80ff80ff00'}
+{'at': '0x1576e', 't': 100.3, 'name': '施放點清單', 'count': 4, 'cells': [[19, 13], [18, 14], [20, 14], [19, 15]]}
+{'at': '0x157fd', 't': 103.8, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [5, 10], 'cast': [19, 13], 'slot': 2, 'best_before': {'score': 0, 'x': 0, 'y': 0, 'slot': 0}}
+{'at': '0x157fd', 't': 110.8, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [0, 3], 'cast': [20, 14], 'slot': 2, 'best_before': {'score': 16, 'x': 19, 'y': 13, 'slot': 2}}
+{'at': '0x1586a', 't': 117.9, 'name': 'ai_item_candidate_select 掃完', 'best': {'score': 16, 'x': 19, 'y': 13, 'slot': 2}}
+{'at': '0x1567e', 't': 122.3, 'name': 'ai_item_candidate_select 入口', 'ret': '0x14f24', 'unit': 11, 'camp': 0, 'map_w': 27, 'map_h': 21, 'inv': '004080004f80ff80ff80ff80ff80ff00'}
+{'at': '0x1576e', 't': 127.7, 'name': '施放點清單', 'count': 4, 'cells': [[19, 13], [18, 14], [20, 14], [19, 15]]}
+{'at': '0x157fd', 't': 131.3, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [5, 10], 'cast': [19, 13], 'slot': 2, 'best_before': {'score': 0, 'x': 19, 'y': 13, 'slot': 2}}
+{'at': '0x157fd', 't': 138.3, 'name': 'ai_item_target_score 返回', 'score': 16, 'item': 79, 'count': 2, 'targets': [0, 3], 'cast': [20, 14], 'slot': 2, 'best_before': {'score': 16, 'x': 19, 'y': 13, 'slot': 2}}
+{'at': '0x1586a', 't': 145.2, 'name': 'ai_item_candidate_select 掃完', 'best': {'score': 16, 'x': 19, 'y': 13, 'slot': 2}}
+{'at': '0x15055', 't': 149.7, 'name': 'ai_item_action 入口', 'ret': '0x1503e', 'unit': 11, 'camp': 0, 'exp': 0, 'table': {'txt_ptr': '0x26b018', 'lbl_ptr': '0x234018', 'FDTXT_001': {'bytes': 4360, 'diff_bytes': 3809, 'first_diff': 0}, 'FDTXT_002': {'bytes': 3498, 'diff_bytes': 0, 'first_diff': None}}, 'hit_row3': 'f4016405012a00'}
+{'at': '0x1c8e2', 't': 168.1, 'name': '經驗值累加之前', 'eax_add': 3, 'unit': 5, 'edi_new_hp': 0, 'ebp_damage': 497, 'exp_before': 0}
+{'at': '0x1c8e2', 't': 172.1, 'name': '經驗值累加之前', 'eax_add': 3, 'unit': 10, 'edi_new_hp': 0, 'ebp_damage': 450, 'exp_before': 3}
+{'at': '0x20fe5', 't': 176.1, 'name': '逐目標迴圈結束', 'exp': 6}
+{'at': '0x21072', 't': 181.4, 'name': 'call grant_reward_rows', 'args': [11, 2, '0x1f1518'], 'rows': '030b000310001d0070010100'}
+{'at': '0x1ac2b', 't': 185.0, 'name': '種類 3:呼叫 0x15f84 之前', 'payload': 11, 'row_index': 0, 'unit': 11, 'txt_ptr': '0x26b018', 'str_off': 3378, 'file_match': {'FDTXT_001': False, 'FDTXT_002': True}, 'file_strings': {'FDTXT_001': 12, 'FDTXT_002': 17}}
+Traceback (most recent call last):
+  File "C:\Users\kg701\AppData\Local\Temp\claude\C--Users-kg701-Desktop-AI-stock-AI\064f5671-708e-478d-aa85-2e95400484d6\scratchpad\lc125.py", line 275, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ~~~~^^^^^^^^^^^^^^
+  File "C:\Users\kg701\AppData\Local\Temp\claude\C--Users-kg701-Desktop-AI-stock-AI\064f5671-708e-478d-aa85-2e95400484d6\scratchpad\lc125.py", line 241, in main
+    return rec(argv[1], float(argv[2]) if len(argv) > 2 else 600)
+  File "C:\Users\kg701\AppData\Local\Temp\claude\C--Users-kg701-Desktop-AI-stock-AI\064f5671-708e-478d-aa85-2e95400484d6\scratchpad\lc125.py", line 225, in rec
+    L.dump(VGA, VGA_N, after_shot)
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\kg701\AppData\Local\Temp\claude\C--Users-kg701-Desktop-AI-stock-AI\064f5671-708e-478d-aa85-2e95400484d6\scratchpad\live.py", line 54, in dump
+    return f.read_bytes()
+           ~~~~~~~~~~~~^^
+  File "C:\Program Files\Python313\Lib\pathlib\_abc.py", line 625, in read_bytes
+    with self.open(mode='rb') as f:
+         ~~~~~~~~~^^^^^^^^^^^
+  File "C:\Program Files\Python313\Lib\pathlib\_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\kg701\\AppData\\Local\\Temp\\claude\\C--Users-kg701-Desktop-AI-stock-AI\\064f5671-708e-478d-aa85-2e95400484d6\\scratchpad\\cl\\lc125_live\\a1_k3_1.bin'
+exit=1
