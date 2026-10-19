@@ -10095,7 +10095,7 @@ generators 加 33 個檔(9 個產生器、9 個變異測試、14 個分析 / 內
   2. 未變異對照失敗時,結果的 `detail` 被放進 `role` 欄,`main` 印出時 TypeError(續一百三十四曾修過一般結果的同一種錯位,這一支沒修到)。
   `--selftest` 加:多行訊息 + 標記 → KILLED;訊息裡嵌了別的 traceback、標記是 KeyError → CRASH;真的跑一次多行訊息的 assert → KILLED;
   對照失敗那一筆能印出。把兩個修正與 hook 分別改回舊行為,三種都被自我測試抓到。
-- 掃描結果:7 個移植產生器與它們的 7 個分析模組(共 14 個目標、1155 個常數;續一百二十二已在續一百三十四掃過)補判準後 KILLED 655、ESCAPED 118(補判準前 148)、CRASH 200、INERT 182;判定修正的影響例:`lc127_analyze` KILLED 0 → 48。CRASH 是變異讓程式自己跑不下去(IndexError、KeyError 等),不算判準擋下。`ev_s135` 216 個常數第一次逃過 3 個(長 run 的 `cell_xy` 兩個 24、探針記錄的單位號 11),改用 `CELL` 與紀錄裡的單位號;改後的完整重掃在提交時還沒跑完(NOT TESTED)。
+- 掃描結果:7 個移植產生器與它們的 7 個分析模組(共 14 個目標、1155 個常數;續一百二十二已在續一百三十四掃過)補判準後 KILLED 655、ESCAPED 118(補判準前 148)、CRASH 200、INERT 182;判定修正的影響例:`lc127_analyze` KILLED 0 → 48。CRASH 是變異讓程式自己跑不下去(IndexError、KeyError 等),不算判準擋下。`ev_s135` 216 個常數第一次逃過 3 個(長 run 的 `cell_xy` 兩個 24、探針記錄的單位號 11),改用 `CELL` 與紀錄裡的單位號;改後完整重掃 213 個常數逃過 0 個(KILLED 133、CRASH 48、INERT 32;在第一次提交 ccfdf2b7 之後跑完)。
 - 依逃過項補的判準(重算都與已提交檔逐 byte 相同):`lc126_analyze` 戰後處理器裡三個 lut 呼叫點改由 `call rel32` 掃出來比;
   `ev_lut_ch22_post_cycles2500_chapter_tables` 的 28 / 58 / 88 與 slot 由各表基底算;`lc129t_analyze` 的法術清單取自量到的資料;
   `ev_rest_and_item79_branch` 每一站提到的傾印都要在 md5 清單裡;`ev_item79_aim_exp_reward_lines` 相位表是三角波、`[0x51a93]` = −1、
