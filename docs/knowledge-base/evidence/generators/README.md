@@ -1,7 +1,26 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 37 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 46 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百三十四(2026-10-17)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s134.py` | `fdicon_mode1_order_map_units_20261017.json` | `mut_s134.py`(24) |
+
+續一百二十二 ~ 一百二十九的 8 份證據原本由暫存腳本產生,續一百三十四移進來(重算與已提交檔逐 byte 相同):
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_lut_circle_ramp_at_unit.py` | `lut_circle_ramp_at_unit_20261013.json` | `mut_lut_circle_ramp_at_unit.py`(13) |
+| `ev_ai_item_action_item79_flow.py` | `ai_item_action_item79_flow_20261013.json` | `mut_ai_item_action_item79_flow.py`(17) |
+| `ev_rest_and_item79_branch.py` | `rest_and_item79_branch_20261014.json` | `mut_rest_and_item79_branch.py`(16) |
+| `ev_item79_aim_exp_reward_lines.py` | `item79_aim_exp_reward_lines_20261014.json` | `mut_item79_aim_exp_reward_lines.py`(11) |
+| `ev_lut_circle_ramp_frame_time_ch22_post.py` | `lut_circle_ramp_frame_time_ch22_post_20261015.json` | `mut_lut_circle_ramp_frame_time_ch22_post.py`(12) |
+| `ev_lut_ch22_post_cycles2500_chapter_tables.py` | `lut_ch22_post_cycles2500_chapter_tables_20261015.json` | `mut_lut_ch22_post_cycles2500_chapter_tables.py`(13) |
+| `ev_dispatch_index_bounds_table_split.py` | `dispatch_index_bounds_table_split_20261015.json` | `mut_dispatch_index_bounds_table_split.py`(12) |
+| `ev_cmd_table_0_9_coverage_lut_cycles.py` | `cmd_table_0_9_coverage_lut_cycles_20261016.json` | `mut_cmd_table_0_9_coverage_lut_cycles.py`(11) |
 
 ## 續一百三十三(2026-10-17)
 
@@ -163,8 +182,8 @@ python sweep_literals.py --selftest
 ## 限制
 
 - `IDENTICAL` 證明可重現,不證明正確;正確性由產生器裡的 `assert` 與變異測試負責。
-- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261006.tar.xz`
-  含清單上全部 1759 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
+- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261019.tar.xz`
+  含清單上全部 2042 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
 - 終端輸出的原始來源是 Claude Code 對話紀錄(本機 `~/.claude/projects/` 下約 1.7 GB 的 jsonl),可能被 Claude Code 依保留期限清除。
   同一備份夾的 `transcript_records_20261006.jsonl.xz`(旁有 `.sha256`)保留 86 個 id 的 291 行原始紀錄:
   59 份終端輸出,加上切出摘錄的 27 個指令(`rebuild_excerpts.py` 的切法出處);只能證明匯出與紀錄一致,
@@ -198,6 +217,12 @@ python sweep_literals.py --selftest
 - 輔助模組(產生器會匯入或執行):`an_f.py`、`an_ev.py`、`live.py`、`rng.py`、`sim_path.py`、`sim_dialog.py`、
   `dato_match.py`、`walk_after.py`;分析模組 `pa_analyze.py`、`tr_analyze.py`、`sl_analyze.py`、`sel_analyze.py`
   (原本把結果寫成 `.wsl_build` 裡的 `analyze*.json` 再由證據腳本讀回,現在產生器直接呼叫重算)。
+- 續一百二十二 ~ 一百二十九的分析與內層突變模組(續一百三十四從暫存移進來,只改路徑與載入方式):`lc124_analyze.py` / `lc124_mut.py`、
+  `lc125_analyze.py` / `lc125_mut.py`、`lc126_analyze.py` / `lc126_mut.py`、`lc127_analyze.py` / `lc127_mut.py`、
+  `lc128_analyze.py` / `lc128_mut_image.py` / `lc128_mut_tool.py`、`lc129_analyze.py` / `lc129t_analyze.py` / `lc129_mut.py`。
+  產生器以子行程重跑內層突變,輸出原樣寫進證據。拼接圖由傾印重畫後與已提交的 PNG 逐像素比對(文字標籤不比)。
+- `_blobtools.py`:從 git blob 載入當時那一版的 `tools/verify_event_dispatch_table.py` 與 `docs/data/live_exec_addresses.json`
+  (續一百二十八 / 一百二十九的證據依賴它們;之後改了這兩個檔,證據仍照當時的版本重算)。
 - 驅動腳本存檔:當時在 DOSBox-X 上產生原始紀錄的腳本,檔頭標了「存檔」,路徑保留當時的工作環境,不保證能直接執行;
   只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)使用。
   - 續六十五~七十七:`t_v*.py`、`*_setup.py`、`mk_t_v*.py`、`reach_battle.py`、`inj_s77.py`、`v21_*.sh` 等;

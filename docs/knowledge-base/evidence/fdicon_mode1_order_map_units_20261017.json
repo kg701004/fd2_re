@@ -1,0 +1,186 @@
+{
+ "_meta": {
+  "topic": "續一百三十四:四模式 RLE 模式 1 的次序(先跳過再寫),以地圖上敵方單位 #5 的 FDICON 圖示驗",
+  "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "assets": {
+   "org_game/炎龍騎士團/FLAME2/FDICON.B24": "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+  },
+  "raw": {
+   "D/buf.bin": "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d",
+   "D/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "D/g.json": "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5",
+   "E/buf.bin": "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6",
+   "E/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "E/g.json": "7aabeeb88bca87244132786dd0d656f33902a5f9fadd7d71e9489899673af9ee",
+   "F/buf.bin": "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28",
+   "F/units.bin": "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e",
+   "F/g.json": "f07664540278bee95970eddecf31b31c7c83c3706874cd3e14fac747697fc992"
+  },
+  "s133_evidence": "docs/knowledge-base/evidence/hud_icon_hp_digits_20261017.json",
+  "generator": "evidence/generators/ev_s134.py(變異測試 mut_s134.py)",
+  "harness": "傾印是續一百三十一的 D/E/F(DOSBox-X 除錯器,停在 draw_terrain_layer 入口,緩衝是上一幀畫完的畫面);本輪沒有開新的 instance"
+ },
+ "static_code": {
+  "0x4e23e": "b318b718",
+  "0x4e25d": "c0e902fec12af92af9ac47aae2fc",
+  "0x4e1ba": "b407b218b318b718",
+  "0x4e1e1": "c0e902fec12af92af9ac22c402c247aae2fc",
+  "0x1291e": "6bff0c89f0c1e00229f001f801d08b15613a00008b048201d081c3d875000085db0f8c01e2fffff6042480751668c80100008b15493a000001d35350e8cbb80300eb1468c80100008b15493a000001da5250e831b8030083c40c"
+ },
+ "unit_draw": {
+  "origin": "0x75d8",
+  "dy_rows": -6,
+  "scroll": [
+   9,
+   13
+  ]
+ },
+ "fdicon_runs": {
+  "sprites": 1680,
+  "blank": 225,
+  "row_crossing_runs": 0,
+  "sprites_with_mode1": 450,
+  "mode1_runs": 818
+ },
+ "enemy_unit": {
+  "index": 5,
+  "cell": [
+   16,
+   14
+  ],
+  "key_+7": 134,
+  "group_mode1_runs": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   0,
+   0
+  ]
+ },
+ "exact_sprite_matches_nonblank": {
+  "D": [
+   1609
+  ],
+  "E": [
+   1609
+  ],
+  "F": [
+   1608
+  ]
+ },
+ "fit_known_bad": {
+  "D": [
+   437,
+   0
+  ],
+  "E": [
+   437,
+   0
+  ],
+  "F": [
+   442,
+   0
+  ]
+ },
+ "row_shift_known_bad": {
+  "-1": {
+   "D": [
+    437,
+    338
+   ],
+   "F": [
+    442,
+    336
+   ]
+  },
+  "1": {
+   "D": [
+    437,
+    338
+   ],
+   "F": [
+    442,
+    336
+   ]
+  }
+ },
+ "mode1_pixels": {
+  "D": {
+   "sprite": 1609,
+   "cell_xy": [
+    20,
+    22
+   ],
+   "value": 254,
+   "buf_at_skipped": 109,
+   "buf_at_written": 254
+  },
+  "E": {
+   "sprite": 1609,
+   "cell_xy": [
+    20,
+    22
+   ],
+   "value": 254,
+   "buf_at_skipped": 109,
+   "buf_at_written": 254
+  },
+  "F": {
+   "sprite": 1608,
+   "cell_xy": [
+    20,
+    20
+   ],
+   "value": 254,
+   "buf_at_skipped": 107,
+   "buf_at_written": 254
+  }
+ },
+ "controls_known_bad": {
+  "value_then_skip": {
+   "D": [
+    437,
+    1
+   ],
+   "F": [
+    442,
+    1
+   ]
+  },
+  "value_both": {
+   "D": [
+    438,
+    1
+   ],
+   "F": [
+    443,
+    1
+   ]
+  },
+  "grey_0x4e1a6": {
+   "D": [
+    437,
+    437
+   ],
+   "F": [
+    442,
+    442
+   ]
+  }
+ },
+ "status": {
+  "mode1_order": "CODE + LOG CONFIRMED:模式 1 = 先跳過一格再寫值(0x4e25d 的 inc edi; stosb)。敵方單位 #5 的圖示 D、E 是 sprite 1609、F 是 1608(+7 = 134,cycle 1 / 0),1455 個非空白 sprite 裡各只有這一個全中(已知像素 437 / 442 個);兩張各有一個模式 1(長度 1),寫入的格是原值 254,跳過的格露出背景 109 / 107。對調次序、兩格都寫、灰階版 0x4e1a6 都對不上。",
+  "scope": "只驗到長度 1 的模式 1,共兩個(兩張 sprite 各一);較長的模式 1 run 沒有在畫面上出現。FDICON 全部 818 個模式 1 run(450 張)與其他 run 都不跨列,所以整張平鋪解與組語逐列解相同",
+  "unit_draw_origin": "CODE + LOG CONFIRMED:地圖單位的原點 0x75d8 = 0x8088 − 6 × 456(上移 6 列);上下錯一列對不上",
+  "draw_list_entry": "INFERRED:單位 #5 走 0x4e22a(旗標 bit 7 清除)、姿勢 0、時脈 1 / 0 是由像素推得;繪製清單 [0x53a45] 沒有傾印",
+  "clock": "與續一百三十三的索爾一致:同一幀的時脈 D、E 為 1、F 為 0"
+ }
+}

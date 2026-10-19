@@ -330,6 +330,257 @@
     ]
    }
   },
+  "ev_ai_item_action_item79_flow": {
+   "outputs": [
+    "ai_item_action_item79_flow_20261013.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc123_live/runA.json": [
+     15893,
+     "351d6406196a21a108aa96d874d9ac784ab09f93243cda5d44b7060f8911b832"
+    ],
+    ".wsl_build/lc123_live/runA_151a7.bin": [
+     64000,
+     "db93ac26279ad29097aaaf465fbefe509a4c6241a213f24d4cf4ed6ad037278e"
+    ],
+    ".wsl_build/lc123_live/runA_151a7_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_151b7.bin": [
+     64000,
+     "db93ac26279ad29097aaaf465fbefe509a4c6241a213f24d4cf4ed6ad037278e"
+    ],
+    ".wsl_build/lc123_live/runA_151b7_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_151dd.bin": [
+     64000,
+     "db93ac26279ad29097aaaf465fbefe509a4c6241a213f24d4cf4ed6ad037278e"
+    ],
+    ".wsl_build/lc123_live/runA_151dd.png": [
+     59822,
+     "3926cd6eff19ba01cb04df0246174aa005d6b151e3145a23a918872ef5e773aa"
+    ],
+    ".wsl_build/lc123_live/runA_151dd_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_1528c.bin": [
+     64000,
+     "1b99b9840aee27e04f59db0bd5b38e9129cc77d2171b57433f12f94337fac672"
+    ],
+    ".wsl_build/lc123_live/runA_1528c_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_152e5.bin": [
+     64000,
+     "b040a16e92e58102af768e38cdf306f4dcf7003a28dbdf27f5f5160c0177f384"
+    ],
+    ".wsl_build/lc123_live/runA_152e5_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_152f5.bin": [
+     64000,
+     "607eef5bbe628c962a213eb825c9dfd1dc761b95b9097c9e4f1b60c30225d18c"
+    ],
+    ".wsl_build/lc123_live/runA_152f5_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_152fd.bin": [
+     64000,
+     "607eef5bbe628c962a213eb825c9dfd1dc761b95b9097c9e4f1b60c30225d18c"
+    ],
+    ".wsl_build/lc123_live/runA_152fd_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runA_pal00.png": [
+     59822,
+     "3926cd6eff19ba01cb04df0246174aa005d6b151e3145a23a918872ef5e773aa"
+    ],
+    ".wsl_build/lc123_live/runA_pal16.png": [
+     28853,
+     "aa7c41645b860ab769139ffffca981019593fab82ae4293797ea51e9384f528a"
+    ],
+    ".wsl_build/lc123_live/runA_pal32.png": [
+     27892,
+     "fdd95fb2ee1d090f6314c8b2711b233ebf37a617a1239196157af11800a2a174"
+    ],
+    ".wsl_build/lc123_live/runA_pal48.png": [
+     23551,
+     "3920de2d92e06348dd727284541510e37ab4e5daef7f99ef8f0d24073c52fadd"
+    ],
+    ".wsl_build/lc123_live/runA_pal64.png": [
+     27269,
+     "bcbd391380ce4ca928f7701f6dec299bc4810de9a2730d610bf6b8b5ee8012c4"
+    ],
+    ".wsl_build/lc123_live/runA_ph1.bin": [
+     64000,
+     "fa30129e47a86b968ebebc4bab0cf69d707276dcaa8dfa9d9d292b1241438c68"
+    ],
+    ".wsl_build/lc123_live/runA_ph2.bin": [
+     64000,
+     "fa30129e47a86b968ebebc4bab0cf69d707276dcaa8dfa9d9d292b1241438c68"
+    ],
+    ".wsl_build/lc123_live/runA_ph3.bin": [
+     64000,
+     "04fff609c562262a64d87581d3dafbdd79c921aa7732b04c8889265f45512a81"
+    ],
+    ".wsl_build/lc123_live/runA_ph4.bin": [
+     64000,
+     "04fff609c562262a64d87581d3dafbdd79c921aa7732b04c8889265f45512a81"
+    ],
+    ".wsl_build/lc123_live/runA_ph5.bin": [
+     64000,
+     "ceb4de4b70625ac8824814f56b5e49876e26710ccda12f52cae19174a7f213fc"
+    ],
+    ".wsl_build/lc123_live/runA_ph6.bin": [
+     64000,
+     "141c661cb786aa0b9871f70dd308d168992a86c3f8f0bf99efb73c7dc11d11be"
+    ],
+    ".wsl_build/lc123_live/runA_ph7.bin": [
+     64000,
+     "141c661cb786aa0b9871f70dd308d168992a86c3f8f0bf99efb73c7dc11d11be"
+    ],
+    ".wsl_build/lc123_live/runA_ph8.bin": [
+     64000,
+     "df9e9522e1f7ccd0be41ceca5fa011dd4013a9ab5d66c995092ddccf9ac978e3"
+    ],
+    ".wsl_build/lc123_live/runB.json": [
+     15887,
+     "97ba78147eebc5f9509a80fe98325f62c9cb33fdfddd93ec2d4d7f7f319da23e"
+    ],
+    ".wsl_build/lc123_live/runB_151a7.bin": [
+     64000,
+     "de196f3a5f8955c77059574c13cf9675b69691678b71bccd32f557bd2a5fc26b"
+    ],
+    ".wsl_build/lc123_live/runB_151a7_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_151b7.bin": [
+     64000,
+     "de196f3a5f8955c77059574c13cf9675b69691678b71bccd32f557bd2a5fc26b"
+    ],
+    ".wsl_build/lc123_live/runB_151b7_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_151dd.bin": [
+     64000,
+     "de196f3a5f8955c77059574c13cf9675b69691678b71bccd32f557bd2a5fc26b"
+    ],
+    ".wsl_build/lc123_live/runB_151dd.png": [
+     27807,
+     "bffc14733a230a69a15635d638eeb5d7646f9381d71b297679aea0cdbd411ff1"
+    ],
+    ".wsl_build/lc123_live/runB_151dd_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_1528c.bin": [
+     64000,
+     "ccc6cdb16eb369809989d8eb912aa986225ed0cff32574abfa7aa08bce316ad2"
+    ],
+    ".wsl_build/lc123_live/runB_1528c_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_152e5.bin": [
+     64000,
+     "14c4b380d3cd28bf1c6c8f034d6743bf86d188385d30e2c53fee3af4c09fdbcc"
+    ],
+    ".wsl_build/lc123_live/runB_152e5_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_152f5.bin": [
+     64000,
+     "a096f4d792ee2227c336089590ee62a23ec67c20f4820e24b255ecc54c7326f9"
+    ],
+    ".wsl_build/lc123_live/runB_152f5_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_152fd.bin": [
+     64000,
+     "a096f4d792ee2227c336089590ee62a23ec67c20f4820e24b255ecc54c7326f9"
+    ],
+    ".wsl_build/lc123_live/runB_152fd_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc123_live/runB_lose.json": [
+     1209,
+     "57463665079dd38366d87d1dc8010fb4c571b9d7fb1940a7cc269b2c5c328aae"
+    ],
+    ".wsl_build/lc123_live/runB_pal00.png": [
+     27807,
+     "bffc14733a230a69a15635d638eeb5d7646f9381d71b297679aea0cdbd411ff1"
+    ],
+    ".wsl_build/lc123_live/runB_pal16.png": [
+     27907,
+     "1b9a8c009b768535d74347aa055c847f70a5e006cac7e35c5651973875ff2f38"
+    ],
+    ".wsl_build/lc123_live/runB_pal32.png": [
+     27302,
+     "3f5f3b77ea80ab3d2eb63e400cd0849189c35baeffb1554004ebefa12038f04b"
+    ],
+    ".wsl_build/lc123_live/runB_pal48.png": [
+     22437,
+     "b6bcae56484249a1202fe9dc44f18ae65673906c4dd5c6e5677485b6a7d268ca"
+    ],
+    ".wsl_build/lc123_live/runB_pal64.png": [
+     26069,
+     "ad2a3b043590c4059e3d34c7b987f5309169bbbec923c5b571bb12ae80523f57"
+    ],
+    ".wsl_build/lc123_live/runB_ph1.bin": [
+     64000,
+     "23a53676ea142a0ea21b50c14a4d1fa5ab06d0dd2c949cacffe21d29168dcc1f"
+    ],
+    ".wsl_build/lc123_live/runB_ph2.bin": [
+     64000,
+     "75d6ab89817f6c2a335e52f5a805320a74fa36bc4e495bd8c2b7a62001d22b62"
+    ],
+    ".wsl_build/lc123_live/runB_ph3.bin": [
+     64000,
+     "75d6ab89817f6c2a335e52f5a805320a74fa36bc4e495bd8c2b7a62001d22b62"
+    ],
+    ".wsl_build/lc123_live/runB_ph4.bin": [
+     64000,
+     "e633f493f545f66d31b6eb69bb58305114591604c3ceed27c7431fb7a09ed4ae"
+    ],
+    ".wsl_build/lc123_live/runB_ph5.bin": [
+     64000,
+     "9da352c87fbd8b53a0516a9b9efbaed8251d73402c4ab2428e039c4ba4039e2f"
+    ],
+    ".wsl_build/lc123_live/runB_ph6.bin": [
+     64000,
+     "88b0da9f8489cdd3143186e50c756595a35fbc51f660f16efef0f2cf2c09d550"
+    ],
+    ".wsl_build/lc123_live/runB_ph7.bin": [
+     64000,
+     "88b0da9f8489cdd3143186e50c756595a35fbc51f660f16efef0f2cf2c09d550"
+    ],
+    ".wsl_build/lc123_live/runB_ph8.bin": [
+     64000,
+     "0012bbbadef1b9ca46c5e0d0cc426b7bbee70b809bfba259227b131f8de30d7c"
+    ],
+    ".wsl_build/lc123_shots/040_B2.png": [
+     4349,
+     "d4bfb69ad9ddf3801ab30522d41431ffb0863d0c99c2080decd85dcbcabdd753"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_ai_item_score": {
    "outputs": [
     "ai_item_score_20260930.json"
@@ -3574,6 +3825,49 @@
     ]
    }
   },
+  "ev_cmd_table_0_9_coverage_lut_cycles": {
+   "outputs": [
+    "cmd_table_0_9_coverage_lut_cycles_20261016.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc129_texts/dosbox-x-c10000": [
+     598,
+     "a1f716643ae1662e74310eba312a4a2633ae92e437cb9410aa9ba4c41c36894a"
+    ],
+    ".wsl_build/lc129_texts/dosbox-x-c2500": [
+     576,
+     "8032dec40e8ea33b241947f6bca9f72d1539152b569eeff9c595c742b3d4d4a7"
+    ],
+    ".wsl_build/lc129_texts/pred129.txt": [
+     478,
+     "18b743a442b22157fd2139cda1a59f96f7beafc6a20b5fea34c857777b589b1b"
+    ],
+    ".wsl_build/lc129a_live/c2500_s12_frames.json": [
+     1500,
+     "a69342585248fc4a665c16b72c24929d955e6e4c67dc1cec1226624e2630cec1"
+    ],
+    ".wsl_build/lc129a_live/c2500_s12_nof.json": [
+     383,
+     "2fd47b7368c41702405bd59c50318ca4335c940f95fcc764e418b15619b3a34c"
+    ],
+    ".wsl_build/lc129d_live/c10000_s11_nof.json": [
+     384,
+     "964f5d1d6bb72456e2f52fa98c41daa94a4972a940c0266bd25f8b4d20974c2a"
+    ],
+    ".wsl_build/lc129d_live/c10000_s12_frames.json": [
+     1499,
+     "f4a10610b96c8850164ac7b93ed744f9a6c25210918ae7bb6c2c7adaf9413a91"
+    ],
+    ".wsl_build/lc129d_live/c10000_s12_nof.json": [
+     381,
+     "3d309c8ff6c583c5ee79c791463782045b91e5e8360805c15ca3405a3b4cb55c"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_collect_targets_in_range": {
    "outputs": [
     "collect_targets_in_range_20260929.json"
@@ -3610,6 +3904,17 @@
     ".wsl_build/ctr/tB_units.bin": [
      1680,
      "23a6fd9028653867d50d2af2efe4ab184892a3bb48382eeca72ec5134f9e80cc"
+    ]
+   }
+  },
+  "ev_dispatch_index_bounds_table_split": {
+   "outputs": [
+    "dispatch_index_bounds_table_split_20261015.json"
+   ],
+   "inputs": {
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -3721,6 +4026,45 @@
     ".wsl_build/ctr/post_hB.bin": [
      1680,
      "add897f13045cff7362c5dae487471ab1c51f9228032357fbabd9d95321cde72"
+    ]
+   }
+  },
+  "ev_item79_aim_exp_reward_lines": {
+   "outputs": [
+    "item79_aim_exp_reward_lines_20261014.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc125_live/a1.json": [
+     4051,
+     "432c118447bd61879126af6fe840e4a2f20833ff4c3b04de7a58d883ef131d36"
+    ],
+    ".wsl_build/lc125_live/a1_k3_1.png": [
+     19417,
+     "77250329bc8cdce1a06cae7011ff71d400985f4565f02f9f91d54c340bb19089"
+    ],
+    ".wsl_build/lc125_live/a1b.json": [
+     4985,
+     "a0e55186bd45f299c50633a0e6ec3281007feeadb3de10c2cfffe87ccffce52a"
+    ],
+    ".wsl_build/lc125_live/a1b_k3_1.png": [
+     19454,
+     "9696f5f495e0a79cefa8d08874278fff4251498d526a198864e18099bb9d5091"
+    ],
+    ".wsl_build/lc125_live/b1.json": [
+     22506,
+     "214016bb878f458b74c4d4ee015cbccc6b922aa5eee38adba0a28d1f3f73c815"
+    ],
+    "extracted/raw/FDTXT/FDTXT_001.bin": [
+     4360,
+     "057c67c9c3860832da7dbc10434a2b91c419d1a596d12e177190ced58d80d984"
+    ],
+    "extracted/raw/FDTXT/FDTXT_002.bin": [
+     3498,
+     "922a58438c15996fa04d27f2fcb48cc7803cb523b5b3bdecfb6bfe5bce780088"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -3852,6 +4196,303 @@
     ".wsl_build/ctr/pre_LE.bin": [
      1680,
      "407ccb3f678b0803fee8bcbe2f8cd712c5acd7e3bdd3fb9fa43e8964924769b3"
+    ]
+   }
+  },
+  "ev_lut_ch22_post_cycles2500_chapter_tables": {
+   "outputs": [
+    "lut_ch22_post_cycles2500_chapter_tables_20261015.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc126_all/r1.json": [
+     4131,
+     "d639efb809a5e1e1093f8b43086290619f83b1cf0e4d17a026f6c4e708b26d29"
+    ],
+    ".wsl_build/lc126_all/s11_frames.json": [
+     1488,
+     "f651d28d0d6ebe39224be53249d6328f778ff59c912b6a32782af14d63f825e3"
+    ],
+    ".wsl_build/lc126_all/s11_nof.json": [
+     374,
+     "7c777bb880e8e3521f4548d01decebbd19a5a87963877d0f1fdd6d6a6b56fe63"
+    ],
+    ".wsl_build/lc127b_live/r1.json": [
+     15392,
+     "816195d90745049e9d518eb52b9330ceeac39ff79d5ec1c1d0f020d03c085f72"
+    ],
+    ".wsl_build/lc127d_live/c2500_frames.json": [
+     1491,
+     "321564f289a22b174620d235d9fabb77ab21a8392040439a031cfb5b6ade3807"
+    ],
+    ".wsl_build/lc127d_live/c2500_nof.json": [
+     379,
+     "65d1d599a949242f3764923c8a6f19152fb00160a87a6b2d9cddd349a142a928"
+    ],
+    ".wsl_build/lc127d_live/dosbox-x-c2500": [
+     576,
+     "8032dec40e8ea33b241947f6bca9f72d1539152b569eeff9c595c742b3d4d4a7"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
+  "ev_lut_circle_ramp_at_unit": {
+   "outputs": [
+    "lut_circle_ramp_at_unit_20261013.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc122_live/ai.json": [
+     128,
+     "74801cfe4a49c5cf829073e4aff6b9ecd018da627ae499ba63223926b094c583"
+    ],
+    ".wsl_build/lc122_live/ai79.json": [
+     675,
+     "ead7c63c4f4611c65d93ced9d3110528c7d75de0a422d1e8ec93804ba86641bf"
+    ],
+    ".wsl_build/lc122_live/ai79_f00.bin": [
+     64000,
+     "e4289b72d28d9b408c9efa28129b5b8f7870c4a6fc8d51d3c5a7f43f3049b2b6"
+    ],
+    ".wsl_build/lc122_live/ai79_f01.bin": [
+     64000,
+     "0d9cc09484752aa0938c7eace93db42d075f4b0ef242ce2351e0684852515ae1"
+    ],
+    ".wsl_build/lc122_live/ai79_f02.bin": [
+     64000,
+     "e9b00d3b3148ef9539faade0b61cee5af5df70067464b444a43fa7b625c1d8fe"
+    ],
+    ".wsl_build/lc122_live/ai79_f03.bin": [
+     64000,
+     "60e1ef44dab0e11c8875d0a24dcc5fd76a40fcd619f29849b14ff9d1f1607f45"
+    ],
+    ".wsl_build/lc122_live/ai79_f04.bin": [
+     64000,
+     "4c69058f5f56e0b0af737dae231a73531691f2db84c0e781fd360d5f65a07b08"
+    ],
+    ".wsl_build/lc122_live/ai79_f05.bin": [
+     64000,
+     "c3579c35ce439223acfea0be79733302f7de41ad4556e705c5902ce36d24ceab"
+    ],
+    ".wsl_build/lc122_live/ai79_f06.bin": [
+     64000,
+     "dd66ad8dbc197fa2ccb303a929bc4ba491a4452f2fd1f757099132b9615ff19e"
+    ],
+    ".wsl_build/lc122_live/ai79_f07.bin": [
+     64000,
+     "555052e700e4e4ebb64fc314f2f5765c7aa3b4ba76f0550e21a74f0e869e7c1f"
+    ],
+    ".wsl_build/lc122_live/ai79_f08.bin": [
+     64000,
+     "a7795a6c2eeb101a3d400536fe8140861887b1e5f371dd296ca57e3a8b292378"
+    ],
+    ".wsl_build/lc122_live/ai79_f09.bin": [
+     64000,
+     "d10b34499d362a52d8bf84833785c7ceb9001cc714e93e077a4728689c218068"
+    ],
+    ".wsl_build/lc122_live/ai79_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc122_live/ai79_ref.bin": [
+     64000,
+     "c8926488e7839a91c136d32d2eb145aca207f1a0999ab27438d1bf03877e3eb7"
+    ],
+    ".wsl_build/lc122_live/s11.json": [
+     584,
+     "0f8d4d7cd2a508f6b9f5a1d082c1475880f6fd8e312d8901bd402bf8ad27c01e"
+    ],
+    ".wsl_build/lc122_live/s11_f00.bin": [
+     64000,
+     "043f9a267d412dee264e41cba14005df7372dc1c3e23b8c13b389de765cf33d7"
+    ],
+    ".wsl_build/lc122_live/s11_f01.bin": [
+     64000,
+     "3da6fd54561bc050b17c8dc81f07a1718028be65b9d9207de296ac97f37eac5b"
+    ],
+    ".wsl_build/lc122_live/s11_f02.bin": [
+     64000,
+     "a7e27e57705e373ffa4a15ad7909b709e40de7e588fa9057ca7c28321dd859c8"
+    ],
+    ".wsl_build/lc122_live/s11_f03.bin": [
+     64000,
+     "989d40aa6c2c696a2ed4e8e53f921069c3fa945f676e0c455a85c6b8a28901a1"
+    ],
+    ".wsl_build/lc122_live/s11_f04.bin": [
+     64000,
+     "674aef3cfe561e25bab74b79f937bc6a0cf5a5231b40e8cb9ffe03039764d83b"
+    ],
+    ".wsl_build/lc122_live/s11_f05.bin": [
+     64000,
+     "19da49597a256aa89d2b39a32a4167ae6bd9550039e438a71e9aa232f98ff147"
+    ],
+    ".wsl_build/lc122_live/s11_f06.bin": [
+     64000,
+     "117f94264434471f0c76d5116dd78f554131e286489539e1e0168fb36b1cc726"
+    ],
+    ".wsl_build/lc122_live/s11_f07.bin": [
+     64000,
+     "7b6845331b417174a71d3d354badbfba85658effa124e4aab0e22b343c1d34b1"
+    ],
+    ".wsl_build/lc122_live/s11_f08.bin": [
+     64000,
+     "7319446142d5b540743d5057dccb5be0f742d0b32e6988c6658d77ca30adc262"
+    ],
+    ".wsl_build/lc122_live/s11_f09.bin": [
+     64000,
+     "4e4085cd00ce3787818f26d310e890beab6c733d854644f10ab80139e333b979"
+    ],
+    ".wsl_build/lc122_live/s11_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc122_live/s11_ref.bin": [
+     64000,
+     "9ae408198f235905a23d5d0a5be28e51dd0fb1f18cffd3b548a4ad18f09c2813"
+    ],
+    ".wsl_build/lc122_live/s12.json": [
+     588,
+     "27d529fc4277983193d3fe5483d918aa1faf910c22cc757b501413e556a18910"
+    ],
+    ".wsl_build/lc122_live/s12_f00.bin": [
+     64000,
+     "fe6f8cf824fe735e29c41013f35f5023a6b3ffac1a9a852e690c188a2dbd199e"
+    ],
+    ".wsl_build/lc122_live/s12_f01.bin": [
+     64000,
+     "2ead6b4169454a2918f8bb4fc91c29ca695927adc12a2b7cb8a604c260ba2fea"
+    ],
+    ".wsl_build/lc122_live/s12_f02.bin": [
+     64000,
+     "120fbc30cb180f3ce48a10e34dec89224508d4a86b1a3232fb3afd0ff3aac8ce"
+    ],
+    ".wsl_build/lc122_live/s12_f03.bin": [
+     64000,
+     "d9b571dfb40f65ebd4e7955a00771132b0335a2d87214062dee528105235baf3"
+    ],
+    ".wsl_build/lc122_live/s12_f04.bin": [
+     64000,
+     "b5699156082487e65bd8fdb3edb107eb9f242760dc78f3b702505637fb4950e4"
+    ],
+    ".wsl_build/lc122_live/s12_f05.bin": [
+     64000,
+     "15d4378a20d8d613943640c530fab4448d98fce4f0d5c780aa98b97c7578ef91"
+    ],
+    ".wsl_build/lc122_live/s12_f06.bin": [
+     64000,
+     "9096cbc658fd8474f4323d31692780d82f9f6d6410e360190c8f02686e6e7889"
+    ],
+    ".wsl_build/lc122_live/s12_f07.bin": [
+     64000,
+     "00d269fccff06cc19446c1ddb869fd87d53309429e78a1d298066518d32bbc2e"
+    ],
+    ".wsl_build/lc122_live/s12_f08.bin": [
+     64000,
+     "ab2ce1a8918d579d5eabe4c7deea8eb58303c167c3deb78852fdd4fb83deb70a"
+    ],
+    ".wsl_build/lc122_live/s12_f09.bin": [
+     64000,
+     "e356f7cf33cd466823ad8320fa41be9aedd870358e17aa36f9caa17b4b329039"
+    ],
+    ".wsl_build/lc122_live/s12_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc122_live/s12_ref.bin": [
+     64000,
+     "9ae408198f235905a23d5d0a5be28e51dd0fb1f18cffd3b548a4ad18f09c2813"
+    ],
+    ".wsl_build/lc122_shots/060_Return.png": [
+     30670,
+     "7e5f8e7f1d3d84ac12139928b34c78e7800e799d151c4e112a13705365d175af"
+    ],
+    ".wsl_build/lc122_shots/061_live12.png": [
+     31378,
+     "5da1367e5e375a0fcc3e7d45f57a56a5aa74346f928bab0adededaf58abef563"
+    ],
+    ".wsl_build/lc122_shots/062_live12.png": [
+     31380,
+     "afd804b3b3d40d3621470a01e789539dc8c602c165b427b168ab8411d75757e5"
+    ],
+    ".wsl_build/lc122_shots/063_live12.png": [
+     30487,
+     "037eac9422966fccf358d6bf672b6768698c9356ac941d989582bcfa025fc8d6"
+    ],
+    ".wsl_build/lc122_shots/064_live12.png": [
+     32001,
+     "b4ef278b559289a9a16b9c68c90a7770b351bfee15d628aa8e995ee77f38107b"
+    ],
+    ".wsl_build/lc122_shots/074_live11.png": [
+     30364,
+     "70d82376f0661e4b40dda420427e8eb24c597ddf2f69303902de4435768f02c9"
+    ],
+    ".wsl_build/lc122_shots/075_live11.png": [
+     30364,
+     "70d82376f0661e4b40dda420427e8eb24c597ddf2f69303902de4435768f02c9"
+    ],
+    ".wsl_build/lc122_shots/076_live11.png": [
+     30833,
+     "f3cd92876507bc21ae55df36ff07665b72150fd24377e66f7a11575f2109af3a"
+    ],
+    ".wsl_build/lc122_shots/077_live11.png": [
+     30962,
+     "9362340c7b37a21bb57c79f0a249848ff9170053bed274beded33c8be628d7b5"
+    ],
+    ".wsl_build/lc122_shots/078_live11.png": [
+     31607,
+     "0b5d46a8e56b04001972d3f8fa199e79ac6096f90dfeba9b37ebf82888fd7a00"
+    ],
+    ".wsl_build/lc122_shots/079_live11.png": [
+     31461,
+     "b9532f5ed6e4f2c3e5f7985f712cfbc3e30f8417f7a163fb4759bed91c2cc6e2"
+    ],
+    ".wsl_build/lc122_shots/080_live11.png": [
+     31227,
+     "22d5bc0ea71d61b89880a6e7e1ae5a52f87a52605eb3e99cbed7c117390b379a"
+    ],
+    ".wsl_build/lc122_shots/081_live11.png": [
+     31883,
+     "6af6ef0386fccbf4cce9b83061c91ff74aa2190c775aba542db47eb25b0cabe9"
+    ],
+    ".wsl_build/lc122_shots/082_live11.png": [
+     31883,
+     "6af6ef0386fccbf4cce9b83061c91ff74aa2190c775aba542db47eb25b0cabe9"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
+  "ev_lut_circle_ramp_frame_time_ch22_post": {
+   "outputs": [
+    "lut_circle_ramp_frame_time_ch22_post_20261015.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc126_all/r1.json": [
+     4131,
+     "d639efb809a5e1e1093f8b43086290619f83b1cf0e4d17a026f6c4e708b26d29"
+    ],
+    ".wsl_build/lc126_all/r2.json": [
+     6828,
+     "6f81ae83a7e4b19dfdaa1129672b3e4685d1385a4331b1d0420dd803e038908f"
+    ],
+    ".wsl_build/lc126_all/s11_frames.json": [
+     1488,
+     "f651d28d0d6ebe39224be53249d6328f778ff59c912b6a32782af14d63f825e3"
+    ],
+    ".wsl_build/lc126_all/s11_nof.json": [
+     374,
+     "7c777bb880e8e3521f4548d01decebbd19a5a87963877d0f1fdd6d6a6b56fe63"
+    ],
+    ".wsl_build/lc126_all/s12_frames.json": [
+     1492,
+     "23b99a1881fa1ea471429fb941a006bdd70f1b91de72abf7239de57eba7c404f"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -4637,6 +5278,517 @@
     ]
    }
   },
+  "ev_rest_and_item79_branch": {
+   "outputs": [
+    "rest_and_item79_branch_20261014.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc124_live/r1.json": [
+     43618,
+     "122a12f59328f98d8592ec4300872bc7b21a8a4be2dd4f83823a9bcc1dc59373"
+    ],
+    ".wsl_build/lc124_live/r1_anim00.bin": [
+     64000,
+     "bfc7459f601352f7f52475a6db934fc33499372e2d7457851801b46187516413"
+    ],
+    ".wsl_build/lc124_live/r1_anim01.bin": [
+     64000,
+     "3c24909c28ad2432de79618fd5fae321121e002f27b01d17e49eeb97bd019594"
+    ],
+    ".wsl_build/lc124_live/r1_anim02.bin": [
+     64000,
+     "063e2fa1a19ab3ffbf8a764e28f74a3acb67fc17afea2844c98b2c045dfcb1f6"
+    ],
+    ".wsl_build/lc124_live/r1_anim03.bin": [
+     64000,
+     "0790b2134220b9d0613000ccdda6dbd4b78769e5859539dfd44e6f1f83aa62cc"
+    ],
+    ".wsl_build/lc124_live/r1_anim04.bin": [
+     64000,
+     "e9e92862c6b5a5f3a6757e9582af0fcbd24b28847f9ab90512fe98e09ee2b275"
+    ],
+    ".wsl_build/lc124_live/r1_anim05.bin": [
+     64000,
+     "b097798afbbcc315b4c7d783ea6a5832d0a322c283f8acc7aab8a26fd9d97ec9"
+    ],
+    ".wsl_build/lc124_live/r1_anim06.bin": [
+     64000,
+     "13e52a1cc40ed55110e2edb2730ecc28870b6f0510d1a2094d17a4e302ebac2b"
+    ],
+    ".wsl_build/lc124_live/r1_anim07.bin": [
+     64000,
+     "fa4cf79f6ea49c57e00192dcb2bde196dfce12b79014fef1152abf25a6c6b95f"
+    ],
+    ".wsl_build/lc124_live/r1_fin00.bin": [
+     64000,
+     "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704"
+    ],
+    ".wsl_build/lc124_live/r1_fin01.bin": [
+     64000,
+     "c758d8d2847e8ad1d9cdaa5e07b20055784619bf2d51e6d45378ffb57a4d1511"
+    ],
+    ".wsl_build/lc124_live/r1_fin02.bin": [
+     64000,
+     "f3d0a0c6d9c46478c190a9ff12fd152a8f207d4203c9f8794a576f7024243a11"
+    ],
+    ".wsl_build/lc124_live/r1_fin03.bin": [
+     64000,
+     "e3421bda12be371fe745ab6f100508e374d00dd7e219c9865189876e11bccf40"
+    ],
+    ".wsl_build/lc124_live/r1_fin04.bin": [
+     64000,
+     "c75b49a12ee19d654b4ca2cc9755e84161239c8c3ef19e6eb8904f8368cabaa1"
+    ],
+    ".wsl_build/lc124_live/r1_fin05.bin": [
+     64000,
+     "adfb00cda5e12c800febc0f4178b186dec4ffb1d89d98524ebcc3d8b6ffecc29"
+    ],
+    ".wsl_build/lc124_live/r1_fin06.bin": [
+     64000,
+     "6a8a3b3cc43c4c17fec19b6b8a70b7d8bafbf05400f082547860809eff69fec9"
+    ],
+    ".wsl_build/lc124_live/r1_fin07.bin": [
+     64000,
+     "08e9ab80ca8d4ea64bbaf2d9f2515fb5f186b3a5b4902ce0450d2f55b9b2a71c"
+    ],
+    ".wsl_build/lc124_live/r1_fin08.bin": [
+     64000,
+     "e5d46128cc0c14063cfc21594bb12d091c5631914a3a6e35fbc0809915658e7d"
+    ],
+    ".wsl_build/lc124_live/r1_fin09.bin": [
+     64000,
+     "50756aa5826f3f53ff8d6318a4b53355c4eed2186b420a813f81865e55c675dd"
+    ],
+    ".wsl_build/lc124_live/r1_fin10.bin": [
+     64000,
+     "925745663a1c39404011dc9ff633bb5aaeb90a6e6b39c699f5fbac1d9f507cde"
+    ],
+    ".wsl_build/lc124_live/r1_fin11.bin": [
+     64000,
+     "dec68eb278e10be73ec235ba440726d0f63fc0dde1de58388e067eae97ea2830"
+    ],
+    ".wsl_build/lc124_live/r1_fin12.bin": [
+     64000,
+     "82e94f1dd266537627e2085ce468d28ecb250b1c3479da86bd1dcfb97fec9b5f"
+    ],
+    ".wsl_build/lc124_live/r1_fin13.bin": [
+     64000,
+     "a3163231bb70e9bca2aae34f984c31ac7be690f2fc46d864a2b283356a955043"
+    ],
+    ".wsl_build/lc124_live/r1_fin14.bin": [
+     64000,
+     "b09e16f3c1ebf95d9e4afdc0aafa7c536362330aa3d335427e2991df046740ca"
+    ],
+    ".wsl_build/lc124_live/r1_fin15.bin": [
+     64000,
+     "fbf09daa70af019b49254e34e59edf868b3073ebfbd1e75e8c9ca0ebc1472093"
+    ],
+    ".wsl_build/lc124_live/r1_fin16.bin": [
+     64000,
+     "283c21f5b5519f01d24523463e1f0ebb7278cd31fcaf756d3b142e2b15311eb9"
+    ],
+    ".wsl_build/lc124_live/r1_fin17.bin": [
+     64000,
+     "74c43ed6fa1b0ebaa931346fe2e6d4ef2d63ed333396cab413ea685a5bff4ca5"
+    ],
+    ".wsl_build/lc124_live/r1_fin18.bin": [
+     64000,
+     "539e523e885c87be191bce15daf29b883bf1a083496261b17183f09a7989d9a4"
+    ],
+    ".wsl_build/lc124_live/r1_fin19.bin": [
+     64000,
+     "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704"
+    ],
+    ".wsl_build/lc124_live/r1_fin20.bin": [
+     64000,
+     "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704"
+    ],
+    ".wsl_build/lc124_live/r1_fin21.bin": [
+     64000,
+     "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704"
+    ],
+    ".wsl_build/lc124_live/r1_flash00.bin": [
+     64000,
+     "e4ec12566cf6fb5cad96e578c435e3092bb08a0b33567203abe4efd8c1fc3998"
+    ],
+    ".wsl_build/lc124_live/r1_flash01.bin": [
+     64000,
+     "3def1bbcee8e687263d50951759b1509ba6c9f01ac3561d3c1ed99dad6951b62"
+    ],
+    ".wsl_build/lc124_live/r1_flash02.bin": [
+     64000,
+     "d500645becc9864a80cf1c076dd9996235a156a36c8928bd61e29edb9c8291ee"
+    ],
+    ".wsl_build/lc124_live/r1_flash03.bin": [
+     64000,
+     "54dca0c4c1c7070502559bf3a422d883e9449cb3f4bc709d63313039eb705468"
+    ],
+    ".wsl_build/lc124_live/r1_flash04.bin": [
+     64000,
+     "9c6f58aa77cecf3d9e56a831b743bbb8c60338f5cd18a64e1e62d344751fad60"
+    ],
+    ".wsl_build/lc124_live/r1_flash05.bin": [
+     64000,
+     "67d98aaab82543ab6e4536e89aa196342209c34b589b4664675fbdb010770b48"
+    ],
+    ".wsl_build/lc124_live/r1_flash06.bin": [
+     64000,
+     "317dfcd59c09d3b0c1f851a17f0551acc0e7d5d3544c990ed6a23addb55ec893"
+    ],
+    ".wsl_build/lc124_live/r1_flash07.bin": [
+     64000,
+     "ad5fabba79d12a794a0ce616f3e1f4941bbaf95d8ac0abfa58ea0a9cf8769ddc"
+    ],
+    ".wsl_build/lc124_live/r1_flash08.bin": [
+     64000,
+     "e4ec12566cf6fb5cad96e578c435e3092bb08a0b33567203abe4efd8c1fc3998"
+    ],
+    ".wsl_build/lc124_live/r1_flash09.bin": [
+     64000,
+     "3def1bbcee8e687263d50951759b1509ba6c9f01ac3561d3c1ed99dad6951b62"
+    ],
+    ".wsl_build/lc124_live/r1_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc124_live/r1_post00.bin": [
+     64000,
+     "fe94356d813a921ed14e0c0f90787649511de966ca3211acefe2359b47363d6e"
+    ],
+    ".wsl_build/lc124_live/r1_pre00.bin": [
+     64000,
+     "8fb93eb7a93677ddc09a675116cfe0551a97411fa192eeda41298a7df8ecbe29"
+    ],
+    ".wsl_build/lc124_live/r1_ret20f85_00.bin": [
+     64000,
+     "b040a16e92e58102af768e38cdf306f4dcf7003a28dbdf27f5f5160c0177f384"
+    ],
+    ".wsl_build/lc124_live/r1_ret20fa0_00.bin": [
+     64000,
+     "b040a16e92e58102af768e38cdf306f4dcf7003a28dbdf27f5f5160c0177f384"
+    ],
+    ".wsl_build/lc124_live/r1_ret20ff4_00.bin": [
+     64000,
+     "c3154dc5f492fddedc316a84413ff058f55c924a64ec1c60f26c3a6b6f137704"
+    ],
+    ".wsl_build/lc124_live/r2.json": [
+     42618,
+     "226bf70c06160f99fce0a58353ffbda5c252ee69f6278abfcbeb1c68f3e775cf"
+    ],
+    ".wsl_build/lc124_live/r2_anim00.bin": [
+     64000,
+     "17e030d9b1635553fe378619a3a7cc5f45bbbfac6a83e891920869902b6ad1d0"
+    ],
+    ".wsl_build/lc124_live/r2_anim01.bin": [
+     64000,
+     "5211d6d2bb7a119cc1fcd333f7ccb9dc7ae53b23f7cfeae29611ce689931c2d5"
+    ],
+    ".wsl_build/lc124_live/r2_anim02.bin": [
+     64000,
+     "d22f3a760e1db121717f3ecf2cffb1a9fdafc73a8615a39a9cbd46830add8c1f"
+    ],
+    ".wsl_build/lc124_live/r2_anim03.bin": [
+     64000,
+     "73e1f8fbf029bf79203a9c19ceecb004288304a778c5702b5582cf4271c1db1e"
+    ],
+    ".wsl_build/lc124_live/r2_anim04.bin": [
+     64000,
+     "f9b34c3bebfe799a1c2267cbbf1f00018d60a179b3cc93707ba3f93bc7d4acbd"
+    ],
+    ".wsl_build/lc124_live/r2_anim05.bin": [
+     64000,
+     "eaeb39693cecf07ca29f5cd2fa05624da618578652b9977e5e8a3bcbb7d771e7"
+    ],
+    ".wsl_build/lc124_live/r2_anim06.bin": [
+     64000,
+     "97ea1353eadaa42a5559d577bd15e2de8f8c5d9f88eea1c3bf5f3c04445cc56a"
+    ],
+    ".wsl_build/lc124_live/r2_anim07.bin": [
+     64000,
+     "7bab9ecc79a776ac1ab15c3c131eeb2ff774c69c2a8e6d4438aa1887bce9788b"
+    ],
+    ".wsl_build/lc124_live/r2_fin00.bin": [
+     64000,
+     "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70"
+    ],
+    ".wsl_build/lc124_live/r2_fin01.bin": [
+     64000,
+     "1463c28c9a9ec6f6ea305e9fbcbe8f3990db058fd72661c17002315dc02fd63e"
+    ],
+    ".wsl_build/lc124_live/r2_fin02.bin": [
+     64000,
+     "198163fe0d5f197a372f031806e89811e20d5b73df015ffb3155b34f17f6ef7d"
+    ],
+    ".wsl_build/lc124_live/r2_fin03.bin": [
+     64000,
+     "2190355196d0f98dad54e3958fd64c5b66430484e0aed440fbcf14d78c5bdeee"
+    ],
+    ".wsl_build/lc124_live/r2_fin04.bin": [
+     64000,
+     "4860d1d0d6ddb44009c59af65f90aaa47dcba1d9710097971dbe740559bf6e24"
+    ],
+    ".wsl_build/lc124_live/r2_fin05.bin": [
+     64000,
+     "90e0c1a71c216cb6cb4537a6ed843fcf78b92c24273b77779ba0c240ef9c814e"
+    ],
+    ".wsl_build/lc124_live/r2_fin06.bin": [
+     64000,
+     "5120c24e4a3bcbc4e653d241d13f61172b3bfc333cc607f2de580493bcf9e55c"
+    ],
+    ".wsl_build/lc124_live/r2_fin07.bin": [
+     64000,
+     "d0861256fa44e47b4cdc8084c918fb01522af29b333079ebd68512fbf30aec26"
+    ],
+    ".wsl_build/lc124_live/r2_fin08.bin": [
+     64000,
+     "1b05c49389f45fe93983807419c9457b6046c1cdbf35f2240fa17ce07bd8d905"
+    ],
+    ".wsl_build/lc124_live/r2_fin09.bin": [
+     64000,
+     "f6f590781f0b9816430d91281386a361bed85b889d14fd94516a52dbe1b26045"
+    ],
+    ".wsl_build/lc124_live/r2_fin10.bin": [
+     64000,
+     "672369ae38f8ce693f448c6646fc705269f2790f8414c50288aadeae8b253c27"
+    ],
+    ".wsl_build/lc124_live/r2_fin11.bin": [
+     64000,
+     "f66d5bb8e8a2d09886c90dc93accbd1ab761cbfbaf1b50fd932e8677620e3f1f"
+    ],
+    ".wsl_build/lc124_live/r2_fin12.bin": [
+     64000,
+     "99a760ee59913e04ab0b69bddebfcdb463dbc69f346dfd0b3f4717d5577a7e20"
+    ],
+    ".wsl_build/lc124_live/r2_fin13.bin": [
+     64000,
+     "32c5f212a95df867478f9a9bd610b0bcffd42b1c2a5964c0d64ed2da31aa06f6"
+    ],
+    ".wsl_build/lc124_live/r2_fin14.bin": [
+     64000,
+     "f9a8f7b635d665e34bb18f30bc88483b851dff7c4faf36225291073ece5508b6"
+    ],
+    ".wsl_build/lc124_live/r2_fin15.bin": [
+     64000,
+     "49fd04e21b3c1b4e5ce2b663b4e80d8f03e3f38bd245ccc557311b249e5296b4"
+    ],
+    ".wsl_build/lc124_live/r2_fin16.bin": [
+     64000,
+     "6d0abff09fc1a7799fdfae88bedc958e01d48f6a9765f3dabcb3b0cacd4a914a"
+    ],
+    ".wsl_build/lc124_live/r2_fin17.bin": [
+     64000,
+     "59adf53e66f4a8858aa3d8c929e51009ee51558c683d46718f31a5896d10ef02"
+    ],
+    ".wsl_build/lc124_live/r2_fin18.bin": [
+     64000,
+     "49fa14dea4ec663eec84c52c6842418a3be44b2ec385c43bac6aa3315896a6fd"
+    ],
+    ".wsl_build/lc124_live/r2_fin19.bin": [
+     64000,
+     "75cc0594b1b65227ae3e582f17acdbca4f488cf1867dc2ffd652cd907f5be137"
+    ],
+    ".wsl_build/lc124_live/r2_fin20.bin": [
+     64000,
+     "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70"
+    ],
+    ".wsl_build/lc124_live/r2_fin21.bin": [
+     64000,
+     "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70"
+    ],
+    ".wsl_build/lc124_live/r2_flash00.bin": [
+     64000,
+     "a7655cb29fc0c02cd776ae2e35acc4842c54ef1bbe4170fed0e77c3045d4acfa"
+    ],
+    ".wsl_build/lc124_live/r2_flash01.bin": [
+     64000,
+     "bd6d0b57023c6ae6906fb93587c3c6ddcc892ccb1e89b316fcd24390e10c8faf"
+    ],
+    ".wsl_build/lc124_live/r2_flash02.bin": [
+     64000,
+     "659752053a1f947cbdae23766ab955b9b3c4020681dcefee1c9789d5f76045a0"
+    ],
+    ".wsl_build/lc124_live/r2_flash03.bin": [
+     64000,
+     "676882ead2b4873911af30e3575a54653ed0d6e166cde8c21b71e0579def685b"
+    ],
+    ".wsl_build/lc124_live/r2_flash04.bin": [
+     64000,
+     "f92820646e540fce95328bcd8e2f2e4e8297a680d0fa53459df0aadd77107d2c"
+    ],
+    ".wsl_build/lc124_live/r2_flash05.bin": [
+     64000,
+     "22009c2122a9186559ac9e1958583f8f160719ccadc34a3fd56f7f1474b1a7e4"
+    ],
+    ".wsl_build/lc124_live/r2_flash06.bin": [
+     64000,
+     "ab548f5e2bec207f151fa9144d5d9d77f168d9a5b72afcdcfdc97c15581e66fa"
+    ],
+    ".wsl_build/lc124_live/r2_flash07.bin": [
+     64000,
+     "6b381d03563c867e4b7226efea4446f07e6ad8a22396c30860c4f322f2ffc885"
+    ],
+    ".wsl_build/lc124_live/r2_flash08.bin": [
+     64000,
+     "a7655cb29fc0c02cd776ae2e35acc4842c54ef1bbe4170fed0e77c3045d4acfa"
+    ],
+    ".wsl_build/lc124_live/r2_flash09.bin": [
+     64000,
+     "bd6d0b57023c6ae6906fb93587c3c6ddcc892ccb1e89b316fcd24390e10c8faf"
+    ],
+    ".wsl_build/lc124_live/r2_pal.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    ".wsl_build/lc124_live/r2_post00.bin": [
+     64000,
+     "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70"
+    ],
+    ".wsl_build/lc124_live/r2_pre00.bin": [
+     64000,
+     "d317995e44fb634c3bd15f0e4b3e55ae85090fdd065757151b0e17d96ca798b8"
+    ],
+    ".wsl_build/lc124_live/r2_ret20f85_00.bin": [
+     64000,
+     "d96ca125e599cf81bc877de9cd67b1399bece8046369b28d5c2fd1f3fbe407e5"
+    ],
+    ".wsl_build/lc124_live/r2_ret20fa0_00.bin": [
+     64000,
+     "d96ca125e599cf81bc877de9cd67b1399bece8046369b28d5c2fd1f3fbe407e5"
+    ],
+    ".wsl_build/lc124_live/r2_ret20ff4_00.bin": [
+     64000,
+     "9238b04940722d3ff167ac954ecc181fd864f8052e43845e72c4d605061b1a70"
+    ],
+    ".wsl_build/lc124_live/r3.json": [
+     26640,
+     "b2cb34dd76c745f0ca93ef5d0a330fdb9035e232304f4605af35bf1fa4ab5309"
+    ],
+    ".wsl_build/lc124_live/r3_anim00.bin": [
+     64000,
+     "aaf2869bcdd8882a178cd10e31417d363328bd7db19946a9c041464ad837fa3e"
+    ],
+    ".wsl_build/lc124_live/r3_anim01.bin": [
+     64000,
+     "66c7bf73e07ff75bf7add2c82c207304ad322e5eae8111411cc73b128c0a0758"
+    ],
+    ".wsl_build/lc124_live/r3_anim02.bin": [
+     64000,
+     "3ba3efdd20afd5db25852f2ac433e3d28fcabe3cb1c738f3eae9e168890ad2c6"
+    ],
+    ".wsl_build/lc124_live/r3_anim03.bin": [
+     64000,
+     "330fb777eaba72b4d48cc55752921b2252bd93bdfb18940a4ee67e99a86477de"
+    ],
+    ".wsl_build/lc124_live/r3_anim04.bin": [
+     64000,
+     "60877aa0987dc164ee8b8b87532b355984553458f183d46dc88625ebe15d0cbb"
+    ],
+    ".wsl_build/lc124_live/r3_anim05.bin": [
+     64000,
+     "8ab4b41b595d7ee248d656672f29f7b57dc36ec2656bb6b2fca4c12f09c12408"
+    ],
+    ".wsl_build/lc124_live/r3_anim06.bin": [
+     64000,
+     "249747e1082c3b009ff6a799815428d971c78f08aae4ae37cbc193024f4d44c2"
+    ],
+    ".wsl_build/lc124_live/r3_anim07.bin": [
+     64000,
+     "2f8aa59d99643920b4051d2735c57c163a6784fa275b9ee5957ab075ffc0e1bc"
+    ],
+    ".wsl_build/lc124_live/r3_fin00.bin": [
+     64000,
+     "2ff84ea83fe4d9ac3b79eee3b10be88a4022cc3210b4d24b99cbf1a6d316dd3e"
+    ],
+    ".wsl_build/lc124_live/r3_fin01.bin": [
+     64000,
+     "43a6196a74f3c90fe42e04d4f9da35ca4fb8189d4d793f31ffbf16f33b119a49"
+    ],
+    ".wsl_build/lc124_live/r3_fin02.bin": [
+     64000,
+     "b0d3421c0640348a8ff4b7475fd616947737fe0401c2a39dba93c9e809d99cda"
+    ],
+    ".wsl_build/lc124_live/r3_fin03.bin": [
+     64000,
+     "283253a77ba206b0ab2d7885977ffde9784eb078a6e4043fb0ee38a6d56bebcc"
+    ],
+    ".wsl_build/lc124_live/r3_fin04.bin": [
+     64000,
+     "fb8a10584a59d6f3eb9f87e05bfe39f08d5a2a9d9460c9e791bdd515a199deda"
+    ],
+    ".wsl_build/lc124_live/r3_fin05.bin": [
+     64000,
+     "18bee454fbe73f6a5f62a90dad144a02b763c8601b82b5975ef94f5d1537edba"
+    ],
+    ".wsl_build/lc124_live/r3_fin06.bin": [
+     64000,
+     "87567ee6cb156717d166270e09346124b14cedd05b20181f5de97e4ce3da807d"
+    ],
+    ".wsl_build/lc124_live/r3_fin07.bin": [
+     64000,
+     "2d3d75d2c1206c1855fc540a846ef46985effd1da27e8b5352e57f1d5972ef26"
+    ],
+    ".wsl_build/lc124_live/r3_fin08.bin": [
+     64000,
+     "8a858ea4792d0fb2cbea4fdb60499e870e9439378ee0c81eff5bb4af80d8411d"
+    ],
+    ".wsl_build/lc124_live/r3_flash00.bin": [
+     64000,
+     "5ea5af55eb9881e8554808448886d24854e5daec581db4e90497d2e32b7477b8"
+    ],
+    ".wsl_build/lc124_live/r3_flash01.bin": [
+     64000,
+     "c8ed8e9ad806e8281e7596ed9516479c44be87b2ef76f904deea602ce074e95c"
+    ],
+    ".wsl_build/lc124_live/r3_flash02.bin": [
+     64000,
+     "1c05cec23c4479cd1e22be5e5ccfe6f673377bd9432507dca4867342f5571d8a"
+    ],
+    ".wsl_build/lc124_live/r3_flash03.bin": [
+     64000,
+     "8b4b555198d241a219a0947dbaa6d85f663efc29f73234177a69979ac73308cf"
+    ],
+    ".wsl_build/lc124_live/r3_flash04.bin": [
+     64000,
+     "06ab8c05ee6ba5f8939459473551ad8861fab59d80d2fcad8e334b9a4cf41e22"
+    ],
+    ".wsl_build/lc124_live/r3_flash05.bin": [
+     64000,
+     "91209c1716eaccdd7fb9b602888f7244e53648a1611f9000188f5be5b1f05b00"
+    ],
+    ".wsl_build/lc124_live/r3_flash06.bin": [
+     64000,
+     "e8f68a702b6d93186b9baf55a200f4536fbac70b96e46e3b280ad3064324bc65"
+    ],
+    ".wsl_build/lc124_live/r3_flash07.bin": [
+     64000,
+     "83191d38a4deaceaf276201c46db29bfb4006a858c9939e16dda301a7167224d"
+    ],
+    ".wsl_build/lc124_live/r3_flash08.bin": [
+     64000,
+     "5ea5af55eb9881e8554808448886d24854e5daec581db4e90497d2e32b7477b8"
+    ],
+    ".wsl_build/lc124_live/r3_flash09.bin": [
+     64000,
+     "c8ed8e9ad806e8281e7596ed9516479c44be87b2ef76f904deea602ce074e95c"
+    ],
+    ".wsl_build/lc124_live/r3_pre00.bin": [
+     64000,
+     "ec95d27f2996204f74e6e5bdf6742cd533952fc1a37b58eb11c5e4e09a83eb37"
+    ],
+    ".wsl_build/lc124_live/r3_ret20f85_00.bin": [
+     64000,
+     "ec95d27f2996204f74e6e5bdf6742cd533952fc1a37b58eb11c5e4e09a83eb37"
+    ],
+    ".wsl_build/lc124_live/r3_ret20fa0_00.bin": [
+     64000,
+     "ec95d27f2996204f74e6e5bdf6742cd533952fc1a37b58eb11c5e4e09a83eb37"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_rest_recover": {
    "outputs": [
     "rest_recover_20260930.json"
@@ -4905,6 +6057,57 @@
     "{GAME}/FDOTHER.DAT": [
      3382481,
      "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
+    ]
+   }
+  },
+  "ev_s134": {
+   "outputs": [
+    "fdicon_mode1_order_map_units_20261017.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc131a_moverange/D/buf.bin": [
+     153216,
+     "ce212c42b6f636e0f9ee7a40450be63bcecc46005eb8d241cd38c96ca092313d"
+    ],
+    ".wsl_build/lc131a_moverange/D/g.json": [
+     593,
+     "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5"
+    ],
+    ".wsl_build/lc131a_moverange/D/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/E/buf.bin": [
+     153216,
+     "938edeed3dba025453e1ab708b6e58b258455719c746c85e47f9fa2b044c8af6"
+    ],
+    ".wsl_build/lc131a_moverange/E/g.json": [
+     593,
+     "7aabeeb88bca87244132786dd0d656f33902a5f9fadd7d71e9489899673af9ee"
+    ],
+    ".wsl_build/lc131a_moverange/E/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    ".wsl_build/lc131a_moverange/F/buf.bin": [
+     153216,
+     "44720a81fdba058d0a78fef9ea85bbec5e482a8a981a465450b0bdf5a2a6cf28"
+    ],
+    ".wsl_build/lc131a_moverange/F/g.json": [
+     593,
+     "f07664540278bee95970eddecf31b31c7c83c3706874cd3e14fac747697fc992"
+    ],
+    ".wsl_build/lc131a_moverange/F/units.bin": [
+     1680,
+     "0bc622cc6d2bfb849dfde09a51d8fc1634829e2f5df56ac075e86d83d92ed48e"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
     ]
    }
   },

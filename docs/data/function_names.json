@@ -1589,7 +1589,7 @@
   {
    "addr": "0x4e22a",
    "name": "blit_tile24_rle",
-   "summary": "(src, dst, stride):24×24 地圖格的 RLE 解碼繪製。控制 byte 高兩 bit 選操作 —— 00 填色(rep stosb)、01 隔一格寫、1x 直接複製(rep movsb)或跳過;低 6 bits + 1 為長度。每列 24 px,列尾 dst += stride - 24。",
+   "summary": "(src, dst, stride):24×24 地圖格的 RLE 解碼繪製。控制 byte 高兩 bit 選操作 —— 00 填色(rep stosb)、01 隔一格寫、1x 直接複製(rep movsb)或跳過;低 6 bits + 1 為長度。每列 24 px,列尾 dst += stride - 24。01 是先跳過一格再寫(inc edi; stosb),續一百三十四以地圖上敵方單位的圖示逐像素驗過。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [

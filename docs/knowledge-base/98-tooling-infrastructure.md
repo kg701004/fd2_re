@@ -9990,6 +9990,77 @@ param_flow 只補實機型別沒比到的參數,所以實機比到的變多時�
   需要實機,不打算主動做。
 - lc131a 為什麼進城堡劇情、lc131b / lc131d 的 `[0x53ecc]`:呼叫紀錄沒有這些,要重跑實機;續一百二十三第二輪已讀過同擺法的勝負流程,不打算主動做。
 - 模式 1(隔一格)的次序在這組圖示上沒有驗到;其他章節、敵方單位的移動範圍沒有量。
+  (續一百三十四:模式 1 的次序已在地圖上的敵方單位圖示驗到,見續一百三十四。)
 - 第 1、2、5、7 格的入口沒有實機紀錄:同續一百二十九,不打算主動做。
 - 範圍外,只記錄:續一百二十 ~ 一百二十九的 8 份 evidence JSON 沒有產生器(已另開工作項目)。
+  (續一百三十四:8 份都已補上產生器,重算與已提交檔逐 byte 相同,見續一百三十四。)
+- 防拷比對的範圍:同續一百二十六。
+
+## 2026-10-17 續一百三十四:四模式 RLE 的模式 1 是先跳過再寫(地圖上敵方單位的圖示);續一百二十二 ~ 一百二十九的 8 份證據補上產生器
+
+起因:續一百三十三「仍留的」依建議逐項處理。能離線做的有兩項:模式 1 的次序(同一組傾印裡,地圖上別的單位圖示有用到),
+與續一百二十二 ~ 一百二十九的 8 份 evidence JSON 沒有產生器(當時的暫存腳本與原始紀錄都還在)。其餘幾項要實機,沒有做。細節在 doc35 §18 末。
+
+**做法**(全部離線,沒有開新的 instance;原版 FD2.EXE,md5 33464c81e6a364fd0660141139aa8e6e)。
+- 模式 1:讀 `blit_tile24_rle` 的模式 1 分支(`0x4e25d`)、灰階版 `0x4e1a6`、地圖單位的呼叫點 `0x1295a`。
+  在續一百三十一 D/E/F 傾印裡,對視窗內每個單位的 12 張圖、上下左右 ±12 px 找位置(暫存 `an134.py`),
+  只有敵方單位 #5(+7 = 134)的圖有模式 1;再寫成產生器 `evidence/generators/ev_s134.py`。
+- 8 份證據:把暫存的 `mk_evidence122.py` ~ `mk_evidence129.py` 與它們用的分析、突變腳本移進 `evidence/generators/`。
+  分析與突變腳本只改路徑與載入方式(暫存 `port124.py` ~ `port129.py` 一條一條替換字串,改前改後看 diff),
+  原始紀錄複製到 `.wsl_build/`(`lc122_live/`、`lc122_shots/`、`lc123_live/`、`lc123_shots/`、`lc124_live/`、`lc125_live/`、`lc126_all/`、
+  `lc127b_live/`、`lc127d_live/`、`lc129a_live/`、`lc129d_live/`、`lc129_texts/`)。
+
+| 產生器 | 證據檔 | 分析 / 內層突變 | 變異測試 |
+|---|---|---|---|
+| `ev_lut_circle_ramp_at_unit.py` | `lut_circle_ramp_at_unit_20261013.json` | (併入產生器) | `mut_lut_circle_ramp_at_unit.py`(13) |
+| `ev_ai_item_action_item79_flow.py` | `ai_item_action_item79_flow_20261013.json` | (併入產生器) | `mut_ai_item_action_item79_flow.py`(17) |
+| `ev_rest_and_item79_branch.py` | `rest_and_item79_branch_20261014.json` | `lc124_analyze.py` / `lc124_mut.py` | `mut_rest_and_item79_branch.py`(16) |
+| `ev_item79_aim_exp_reward_lines.py` | `item79_aim_exp_reward_lines_20261014.json` | `lc125_analyze.py` / `lc125_mut.py` | `mut_item79_aim_exp_reward_lines.py`(11) |
+| `ev_lut_circle_ramp_frame_time_ch22_post.py` | `lut_circle_ramp_frame_time_ch22_post_20261015.json` | `lc126_analyze.py` / `lc126_mut.py` | `mut_lut_circle_ramp_frame_time_ch22_post.py`(12) |
+| `ev_lut_ch22_post_cycles2500_chapter_tables.py` | `lut_ch22_post_cycles2500_chapter_tables_20261015.json` | `lc127_analyze.py` / `lc127_mut.py` | `mut_lut_ch22_post_cycles2500_chapter_tables.py`(13) |
+| `ev_dispatch_index_bounds_table_split.py` | `dispatch_index_bounds_table_split_20261015.json` | `lc128_analyze.py` / `lc128_mut_image.py`、`lc128_mut_tool.py` | `mut_dispatch_index_bounds_table_split.py`(12) |
+| `ev_cmd_table_0_9_coverage_lut_cycles.py` | `cmd_table_0_9_coverage_lut_cycles_20261016.json` | `lc129_analyze.py`、`lc129t_analyze.py` / `lc129_mut.py` | `mut_cmd_table_0_9_coverage_lut_cycles.py`(11) |
+
+- 拼接圖是當時由傾印畫出來的衍生檔:產生器在記憶體裡重畫,與已提交的 PNG 逐像素比對(對照圖上的文字標籤不比)。視窗截圖與原始截圖逐 byte 比對。
+- 內層突變(當時 `mut_an124.py` 等)由產生器以子行程重跑,輸出原樣寫進證據(與當時的做法相同)。
+- 續一百二十七的 88 格名稱讀續一百二十七提交前那一版 `function_names.json`;續一百二十八 / 一百二十九用的 `verify_event_dispatch_table.py`、
+  `event_dispatch_table_58_89.json`、`live_exec_addresses.json` 讀當時的 git blob(`_blobtools.py`)。這幾個檔之後都沒有改過,讀 blob 是為了以後改了也能重算。
+- 每個產生器另把文件引用的結論寫成 assert(檢查數、目標、相位、tick、突變數等);原本的腳本只判 PASS / FAIL。
+
+**結果**。
+- 模式 1 = 先跳過一格再寫(`0x4e25d` 的 `inc edi; stosb`)。敵方單位 #5 的圖 D、E 是 sprite 1609、F 是 1608,已知像素 437 / 442 個全中,
+  1455 個非空白 sprite 裡只有這一個對得上;兩張各有一個長度 1 的模式 1,寫入的格是 254、跳過的格露出背景 109 / 107(FD2.EXE 反組譯;DOSBox-X 除錯器傾印)。
+- 地圖單位比格子上移 6 列(`0x75d8` = `0x8088` − 6 × 456),與 doc25 §18.1 相同;單位 #5 的時脈與同一幀索爾的 HUD 圖示相同(D、E 為 1、F 為 0)。
+- 8 份證據的重算全部與已提交檔逐 byte 相同(`run_all.py` IDENTICAL)。evidence 目錄 46 份 JSON 全部有產生器。
+
+**過程中的失誤**:
+1. `ev_s134.py` 的已知像素數第一次寫 436 / 441:探查時把模式 1 那一格分開數了,實際是 437 / 442。
+2. 上下錯一列的兩個方向不符數完全相同(都是 338),先懷疑程式寫錯;獨立重算一樣(錯兩列也對稱,都是 342),是資料本身。
+3. `ev_s134.py` 的 `sweep_literals` 第一次 4 個字面值逃過:模式 1 那格的位置與跳過格的背景值沒有釘住。補上後 0 個。
+4. 續一百二十三的突變「相位幀改用 151dd 的調色盤」存活:兩輪的 151dd 與 1528c 調色盤逐 byte 相同,是等價突變,換成別的突變。
+   另 2 個存活(判準放寬、亮度算法改變)是亮帶數值與對照理由沒有釘住,補上。
+5. 續一百二十五的突變「打得死的目標 0x12 分」存活:道具 79 的數值 3 打不死任何目標,紀錄裡的分數都是 2 × 8,那一支沒有出現在樣本裡。移除並在突變清單記範圍。
+6. 寫 `_blobtools.py` 時,續一百二十八的突變測試還在背景跑;改檔中間有一刻少了 `import json`。那一輪結果 11 / 12,存活的「AI 不算 0x1a」查過與改檔無關:0x1a 在玩家那一側本來就進得了表,是等價突變;換成「AI 可得分範圍多兩格」後重跑 12 / 12。
+7. 一次的替換腳本用 heredoc 寫,字串裡的 `\n` 沒對上,改用 Edit。
+8. 移植的產生器裡,原本的分析沒有 assert 的逐幀量值(排除框、視窗幾何、亮度權重、截圖比對的分數)在 `sweep_literals` 會逃過
+   (續一百二十二 90 個),只由 `run_all` 的逐 byte 比對擋住。沒有為了消掉逃過數而把整份輸出寫成 assert(那等於拿輸出比自己)。
+9. 判準是看過資料後才寫的(傾印與紀錄都在之前各輪錄好)。
+
+**檢查**:
+- `ev_s134.py` 的判準全部符合;5 組對照判為不符合。`mut_s134.py` 24 個突變全部以 AssertionError 失敗;`sweep_literals ev_s134` 逃過 0 個。
+- 8 個移植的產生器:`run_all` 全部 IDENTICAL;變異測試合計 105 個突變全部以 AssertionError 失敗。
+- 閘門 24 關 rc=0(`audit_evidence_provenance --diff` 第一次擋下 doc98 一行用語,改寫後通過);`run_all` 全部 45 個產生器 IDENTICAL(46 份 JSON)。
+- 原始紀錄另打包到倉庫外的本機備份 `fd2_re_evidence_raw_backup/evidence_inputs_all_20261019.tar.xz`(清單上全部 2042 個非遊戲檔)。
+
+**數字**:`function_names.json` 仍是 1149 筆,`blit_tile24_rle` 的摘要補一句,狀態沒有改。evidence 加 1 個 JSON;
+generators 加 33 個檔(9 個產生器、9 個變異測試、14 個分析 / 內層突變模組、`_blobtools.py`)。
+
+**仍留的**:
+- 第二輪擺法的 redraw 為什麼比較久、為什麼有時跨 tick 有時不跨:呼叫紀錄只掛了 5 個入口、沒有畫圖函式,離線比不出來;要在 redraw 內部加入口或讓呼叫紀錄記 cycle 數,
+  需要實機,不打算主動做。
+- lc131a 為什麼進城堡劇情、lc131b / lc131d 的 `[0x53ecc]`:同續一百三十三,不打算主動做。
+- 長度大於 1 的模式 1 沒有在畫面上驗到;其他章節、敵方單位的移動範圍沒有量。
+- 第 1、2、5、7 格的入口沒有實機紀錄:同續一百二十九,不打算主動做。
+- 續一百二十二 ~ 一百二十九當時在 DOSBox-X 上用的驅動腳本(`lc122.py` 等、`holdkey.sh`)沒有收進倉庫;要重跑實機時才需要。
+- 移植產生器的 `sweep_literals` 只跑了續一百二十二(其餘幾個產生器會在每次重算時重跑內層突變,掃一遍要很久)。
 - 防拷比對的範圍:同續一百二十六。
