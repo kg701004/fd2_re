@@ -1,0 +1,674 @@
+{
+ "note": "FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。(A) 靜態(fixup 引用逐一解碼)+ 兩份實機記憶體傾印(DOSBox-X;第 1 章 續一百三十一、第 25 章 = 地圖 24 續七十三);(B) 靜態分析:函式內控制流走訪 + 遞移呼叫,沒有實機。範圍:只談 0x4e390 / 0x4e4f6 / 0x14818 寫的 byte3;重畫裡的 0x122dc 依 [0x51a83] 模式在游標周圍寫 byte3 = 0(模式 6 是道具 79 的亮帶,續一百二十三),不是泛洪範圍,不在本表。",
+ "A_remap_table_chapter_independent": {
+  "remap_ptr_refs": [
+   {
+    "at": "0x12170",
+    "func": "0x11eee",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x12b8c",
+    "func": "0x12ac6",
+    "insn": "mov ebx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x21922",
+    "func": "0x2189a",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x21ce3",
+    "func": "0x21b99",
+    "insn": "mov eax, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x21f19",
+    "func": "0x21eb1",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x21fad",
+    "func": "0x21eb1",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x225b7",
+    "func": "0x22547",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x22672",
+    "func": "0x22656",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x24696",
+    "func": "0x24618",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x25cb3",
+    "func": "0x25bf4",
+    "insn": "push dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x25cc6",
+    "func": "0x25bf4",
+    "insn": "mov dword ptr [0x3a6d], eax",
+    "write": true
+   },
+   {
+    "at": "0x30b8a",
+    "func": "0x2ff01",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   },
+   {
+    "at": "0x30fbc",
+    "func": "0x30e9d",
+    "insn": "mov edx, dword ptr [0x3a6d]",
+    "write": false
+   }
+  ],
+  "single_write_load_bytes": "6a03ff356d3a0000684d1a0000e8f7b4feff83c40ca36d3a0000",
+  "load_name_at_0x51a4d": "FDOTHER.DAT",
+  "write_runs_once_chain": [
+   {
+    "site": "0x25cc6",
+    "func": "0x25bf4",
+    "back_edges": [],
+    "callers": [
+     "0x460dc"
+    ],
+    "fixup_refs": []
+   },
+   {
+    "site": "0x460dc",
+    "func": "0x4609b",
+    "back_edges": [],
+    "callers": [
+     "0x3cedc"
+    ],
+    "fixup_refs": []
+   },
+   {
+    "site": "0x3cedc",
+    "func": "0x3cd2a",
+    "back_edges": [],
+    "callers": [],
+    "fixup_refs": [
+     "0x3cee6"
+    ]
+   }
+  ],
+  "back_edge_control_0x11943": [
+   [
+    "0x119b0",
+    "0x1187a"
+   ],
+   [
+    "0x1194d",
+    "0x11942"
+   ]
+  ],
+  "gate_0x51a93_refs": [
+   {
+    "at": "0x12106",
+    "insn": "cmp dword ptr [0x1a93], -1"
+   },
+   {
+    "at": "0x1215a",
+    "insn": "mov eax, dword ptr [0x1a93]"
+   }
+  ],
+  "gate_0x51a93_initial": -1,
+  "fdother003": {
+   "file": "extracted/raw/FDOTHER/FDOTHER_003.bin",
+   "size": 5990,
+   "sha256": "fddfdbd91b048081ea621b5a4be7d29fb24234a62e19e2b21837df52cbb02ccc",
+   "entries": 23
+  },
+  "live": {
+   "ch1_s131": {
+    "remap_ptr": "0x1fd6c4",
+    "dump_bytes": 4096,
+    "equals_fdother003_prefix": true,
+    "files": [
+     ".wsl_build/lc131a_moverange/D/g.json",
+     ".wsl_build/lc131a_moverange/D/remap_res.bin"
+    ]
+   },
+   "ch25_map24_s73": {
+    "remap_ptr": "0x1fd6c4",
+    "bytes_at_ptr": 5990,
+    "equals_fdother003": true,
+    "files": [
+     ".wsl_build/ctr/v12/ch25/geo1_globals.bin",
+     ".wsl_build/ctr/v12/ch25/geo1_heap.bin"
+    ]
+   }
+  },
+  "phase_levels_0x51a97": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   9,
+   8,
+   7,
+   6,
+   5,
+   4,
+   3,
+   2,
+   1
+  ],
+  "table_offsets_lv0_10": [
+   "0x66",
+   "0x166",
+   "0x266",
+   "0x366",
+   "0x466",
+   "0x566",
+   "0x666",
+   "0x766",
+   "0x866",
+   "0x966",
+   "0xa66"
+  ],
+  "tables_lv0_10_end": "0xb66"
+ },
+ "B_enemy_ranges_never_drawn": {
+  "byte3_entries": [
+   "0x4e390",
+   "0x4e4f6",
+   "0x14818"
+  ],
+  "call_sites": [
+   {
+    "entry": "0x4e390",
+    "site": "0x14344",
+    "func": "0x14237",
+    "name": "ai_physical_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x14372"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e390",
+    "site": "0x14cc7",
+    "func": "0x14b78",
+    "name": "move_unit_toward_point",
+    "side": "ai",
+    "clears": [
+     "0x14d4d"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e390",
+    "site": "0x14d7d",
+    "func": "0x14b78",
+    "name": "move_unit_toward_point",
+    "side": "ai",
+    "clears": [
+     "0x14e61"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e390",
+    "site": "0x15a60",
+    "func": "0x1598a",
+    "name": "ai_spell_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x15a7e"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e390",
+    "site": "0x1894d",
+    "func": "0x18890",
+    "name": null,
+    "side": "player",
+    "clears": [
+     "0x18993"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6",
+     "0x18b84"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e4f6",
+    "site": "0x141b0",
+    "func": "0x14121",
+    "name": "ai_move_toward_reachable_opponent",
+    "side": "ai",
+    "clears": [
+     "0x141c5",
+     "0x141da"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e4f6",
+    "site": "0x14c3a",
+    "func": "0x14b78",
+    "name": "move_unit_toward_point",
+    "side": "ai",
+    "clears": [
+     "0x14c53",
+     "0x14d4d"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e4f6",
+    "site": "0x14c7d",
+    "func": "0x14b78",
+    "name": "move_unit_toward_point",
+    "side": "ai",
+    "clears": [
+     "0x14c9a",
+     "0x14d4d"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e4f6",
+    "site": "0x14e9f",
+    "func": "0x14b78",
+    "name": "move_unit_toward_point",
+    "side": "ai",
+    "clears": [
+     "0x14eaf"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x4e4f6",
+    "site": "0x189f8",
+    "func": "0x18890",
+    "name": null,
+    "side": "player",
+    "clears": [
+     "0x18a0c"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x14448",
+    "func": "0x14237",
+    "name": "ai_physical_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x1445c"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x15114",
+    "func": "0x15055",
+    "name": "ai_item_action",
+    "side": "ai",
+    "clears": [
+     "0x15124"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x15381",
+    "func": "0x15311",
+    "name": "ai_spell_execute",
+    "side": "ai",
+    "clears": [
+     "0x15395"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1575a",
+    "func": "0x1567e",
+    "name": "ai_item_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x15778"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x157d4",
+    "func": "0x1567e",
+    "name": "ai_item_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x157e4"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x15aaa",
+    "func": "0x1598a",
+    "name": "ai_spell_candidate_select",
+    "side": "ai",
+    "clears": [
+     "0x15abc"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": false,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x18e25",
+    "func": "0x18d8c",
+    "name": "player_action_ring",
+    "side": "player",
+    "clears": [
+     "0x18e44"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x18f6a",
+    "func": "0x18d8c",
+    "name": "player_action_ring",
+    "side": "player",
+    "clears": [
+     "0x18f86"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1bc3c",
+    "func": "0x1bbdc",
+    "name": "player_item_action",
+    "side": "player",
+    "clears": [
+     "0x1bc4c"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1bd43",
+    "func": "0x1bbdc",
+    "name": "player_item_action",
+    "side": "player",
+    "clears": [
+     "0x1bd64"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1bd93",
+    "func": "0x1bbdc",
+    "name": "player_item_action",
+    "side": "player",
+    "clears": [
+     "0x1bda5"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1becf",
+    "func": "0x1bbdc",
+    "name": "player_item_action",
+    "side": "player",
+    "clears": [
+     "0x1bef4"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1d1c9",
+    "func": "0x1cff0",
+    "name": "player_spell_select",
+    "side": "player",
+    "clears": [
+     "0x1d1ec"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1d211",
+    "func": "0x1cff0",
+    "name": "player_spell_select",
+    "side": "player",
+    "clears": [
+     "0x1d221"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1d2bf",
+    "func": "0x1cff0",
+    "name": "player_spell_select",
+    "side": "player",
+    "clears": [
+     "0x1d2f3"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1d32a",
+    "func": "0x1cff0",
+    "name": "player_spell_select",
+    "side": "player",
+    "clears": [
+     "0x1d3bc"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   },
+   {
+    "entry": "0x14818",
+    "site": "0x1d38e",
+    "func": "0x1cff0",
+    "name": "player_spell_select",
+    "side": "player",
+    "clears": [
+     "0x1d3bc"
+    ],
+    "ret_uncleared": false,
+    "indirect": [],
+    "draw_before_clear": [
+     "0x115b6"
+    ],
+    "rival_ignore_clear_draws": true,
+    "rival_direct_only_draws": false
+   }
+  ],
+  "ai_sites": 14,
+  "player_sites": 13,
+  "player_sites_drawing_before_clear": [
+   "0x1894d",
+   "0x18f6a",
+   "0x1bd43",
+   "0x1becf",
+   "0x1d1c9",
+   "0x1d2bf",
+   "0x1d38e"
+  ],
+  "rival_ignore_clear_ai_sites_drawing": [
+   "0x141b0",
+   "0x14c3a",
+   "0x14c7d",
+   "0x14cc7",
+   "0x14d7d",
+   "0x14e9f",
+   "0x15114",
+   "0x15381"
+  ],
+  "no_fixup_to": {
+   "0x11cac": [],
+   "0x11eee": [],
+   "0x14818": [],
+   "0x4df4c": [],
+   "0x4e390": [],
+   "0x4e4f6": []
+  },
+  "dispatch_0x51b91_slots_with_code_fixup": 90,
+  "code_fixups_checked": 7536,
+  "code_fixups_raw_mismatch": 0,
+  "map_ptr_push_receivers": {
+   "0x111ba": 3,
+   "0x4df4c": 32,
+   "0x4e4f6": 5,
+   "0x4e390": 5,
+   "0x4e8a5": 1,
+   "0x3776e": 1
+  },
+  "enter_gate_bytes": "0fb65006|83fa02750ef640058075080fb6402685c0740b56e8c261000083c404eb1f6a016a07ff35ec3e0000e85741010083c40c56e8486f0000",
+  "info_cards_closure_size": 179,
+  "info_cards_closure_byte3_writers": []
+ }
+}

@@ -7150,6 +7150,37 @@
     ]
    }
   },
+  "ev_s136": {
+   "outputs": [
+    "move_range_highlight_scope_20261019.json"
+   ],
+   "inputs": {
+    ".wsl_build/ctr/v12/ch25/geo1_globals.bin": [
+     1536,
+     "5ed03caa8cfb0c1a795b7f490710db24b0cc83978cfcb9b3b3da609de9cac65a"
+    ],
+    ".wsl_build/ctr/v12/ch25/geo1_heap.bin": [
+     1310720,
+     "cc3833318f733a0295dbbe19cb1a8426dd756f5a3e5650a0e85b1f6939348e8a"
+    ],
+    ".wsl_build/lc131a_moverange/D/g.json": [
+     593,
+     "bd67d9db55f2df9e9f5895be9eb9faa343c16a836204f55bc2bccc0213153cb5"
+    ],
+    ".wsl_build/lc131a_moverange/D/remap_res.bin": [
+     4096,
+     "13b0f187666e6b174e0b36cd6d3ef0a59bca0ea033979231a2f12a43f9dd01ff"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_003.bin": [
+     5990,
+     "fddfdbd91b048081ea621b5a4be7d29fb24234a62e19e2b21837df52cbb02ccc"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

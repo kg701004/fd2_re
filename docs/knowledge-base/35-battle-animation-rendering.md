@@ -5396,3 +5396,18 @@ cycles 由 WSL 包裝腳本只換 harness 的 `cycles=5000`(執行中的 dosbox-
 - 灰階版 `0x4e1a6` 在這些幀上只有一處全中(續一百二十二 `s11_ref` 那一幀的索爾,sprite 386),那張沒有模式 1:灰階版的模式 1 仍只有靜態證據。
   第 1 章戰場的圖塊組 FDSHAP_002 沒有模式 1,地形繪製的模式 1 在畫面上沒有驗到。
 - 證據:`evidence/fdicon_mode1_vga_frames_20261019.json`,產生器 `evidence/generators/ev_s135.py`(變異測試 `mut_s135.py`,24 個全部抓到)。
+
+**移動範圍明暗在其他章節與敵方單位(2026-10-19 續一百三十六,FD2.EXE 反組譯、DOSBox-X 記憶體傾印)**。
+- 換色表:`[0x53a6d]` 在 EXE 裡有 13 處引用(由 fixup 逐一解碼),只有 1 處寫入:main(`0x25bf4`)開頭 `0x111ba("FDOTHER.DAT", 舊值, 3)` 之後的 `0x25cc6`。
+  main 只由 C 執行期的 `0x460dc` 呼叫一次,兩層都沒有跳回這一段的邊(FD2.EXE 反組譯)。第 1 章(續一百三十一)與第 25 章(地圖 24,續七十三)的傾印裡
+  `[0x53a6d]` 都是 0x1fd6c4,指到的內容與 FDOTHER_003 逐 byte 相同(第 1 章比前 4096 bytes,涵蓋 lv 0 .. 10 的換色表;第 25 章比整份 5990 bytes)(DOSBox-X 記憶體傾印)。
+  `[0x51a93]` 只有 `draw_terrain_layer` 裡兩處讀,EXE 初值 -1(經指標寫入仍沒有查)。所以換色表與換色條件都跟章節無關。
+- 敵方單位:寫 byte3 的三個入口 `flood_fill_reach_grid`(0x4e390)、`grid_path_search`(0x4e4f6)、`collect_targets_in_range`(0x14818)共 27 個呼叫點。
+  從每個呼叫點返回處沿函式內的控制流走到清除 `0x4df4c` 為止,看途中的呼叫(遞移)能不能走到 `draw_terrain_layer`:
+  AI 端 7 個函式的 14 個呼叫點都走不到;玩家端 13 個裡 7 個走得到,其中選自己單位的 0x1894d 就是續一百三十一在實機上看到明暗的那一條。
+  不理會清除時,AI 端 14 個裡有 8 個走得到,所以擋住的是清除。`redraw` 與 `draw_terrain_layer` 沒有任何 fixup 指到(沒有被取位址,不會經函式指標或中斷呼叫)。
+  玩家按 Enter 時 `+6 == 2` 才進 0x18890,其他陣營走 `unit_info_cards`(0x17aed),它的遞移呼叫裡沒有任何 byte3 寫入入口(FD2.EXE 反組譯)。
+- 所以敵方與 NPC 的移動範圍不會以明暗顯示;其他章節的明暗與第 1 章用同一張表、同一個條件(靜態分析,加上兩章的實機換色表)。其他章節的畫面上沒有量明暗。
+- 範圍:redraw 裡的 `draw_move_range_overlay`(0x122dc)依 `[0x51a83]` 的模式在游標周圍寫 byte3 = 0(模式 6 是道具 79 的亮帶,續一百二十三),不是泛洪,不在上面 27 點內。
+  泛洪本身與成本列已在續六十四(AI,`0x14368` 傾印 6 次)、續六十七(0x18890,地圖 24,3 次)逐格重算過,這一輪沒有重做。
+- 證據:`evidence/move_range_highlight_scope_20261019.json`,產生器 `evidence/generators/ev_s136.py`(變異測試 `mut_s136.py`,29 個全部抓到)。
