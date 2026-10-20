@@ -1,0 +1,604 @@
+{
+ "note": "FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。(A) 靜態分析 + DOSBox-X 呼叫紀錄(續一百三十一);(B)(D) 靜態分析;(C) 資產解析;(E) DOSBox-X 截圖(續六十五那一輪,原版)。lc131a 的「新遊戲」由 ESP 與呼叫者推得,標題畫面上是哪一個按鍵選的沒有紀錄。",
+ "A_lc131a_castle_is_new_game_opening": {
+  "result_check_table_0x51b19": {
+   "slot0": "0x205b4",
+   "slot1": "0x206c5"
+  },
+  "check_default": [
+   "0x205be: push 8",
+   "0x205c3: call 0x3702f",
+   "0x205c8: push ebx",
+   "0x205c9: mov dword ptr [0x3ecc], 2",
+   "0x205d3: xor edx, edx",
+   "0x205d5: jmp 0x2067e",
+   "0x2067d: inc edx",
+   "0x2067e: cmp edx, dword ptr [0x3beb]",
+   "0x20684: jge 0x206ae",
+   "0x20686: mov eax, edx",
+   "0x20688: shl eax, 2",
+   "0x2068b: add eax, edx",
+   "0x2068d: shl eax, 4",
+   "0x20690: mov ebx, dword ptr [0x3a45]",
+   "0x20696: add eax, ebx",
+   "0x20698: movzx ebx, byte ptr [eax + 6]",
+   "0x2069c: test ebx, ebx",
+   "0x2069e: jne 0x2067d",
+   "0x206a0: test byte ptr [eax + 5], 1",
+   "0x206a4: jne 0x2067d",
+   "0x206a6: mov dword ptr [0x3ecc], ebx",
+   "0x206ac: jmp 0x2067d",
+   "0x206ae: mov eax, dword ptr [0x3a45]",
+   "0x206b3: test byte ptr [eax + 5], 1",
+   "0x206b7: je 0x206c3",
+   "0x206b9: mov dword ptr [0x3ecc], 1",
+   "0x206c3: pop ebx",
+   "0x206c4: ret"
+  ],
+  "check_1": [
+   "0x206c5: push 8",
+   "0x206ca: call 0x3702f",
+   "0x206cf: push ebx",
+   "0x206d0: call 0x205be",
+   "0x206d5: mov edx, 5",
+   "0x206da: jmp 0x206dd",
+   "0x206dc: inc edx",
+   "0x206dd: cmp edx, 0xb",
+   "0x206e0: jge 0x206fb",
+   "0x206e2: mov eax, edx",
+   "0x206e4: shl eax, 2",
+   "0x206e7: lea ebx, [edx + eax]",
+   "0x206ea: shl ebx, 4",
+   "0x206ed: mov eax, dword ptr [0x3a45]",
+   "0x206f2: test byte ptr [ebx + eax + 5], 1",
+   "0x206f7: je 0x20705",
+   "0x206f9: jmp 0x206dc",
+   "0x206fb: mov dword ptr [0x3ecc], 1",
+   "0x20705: pop ebx",
+   "0x20706: ret"
+  ],
+  "main_code1_to_title": [
+   "0x25db1: push 0",
+   "0x25db3: push 0x12",
+   "0x25db5: call 0x25977",
+   "0x25dba: add esp, 8",
+   "0x25dbd: call 0x25ebb",
+   "0x25dc2: mov edx, eax",
+   "0x25dc4: mov edi, eax",
+   "0x25dc6: test eax, eax",
+   "0x25dc8: jne 0x25e88",
+   "0x25dce: call 0x117e7",
+   "0x25dd3: mov esi, eax",
+   "0x25dd5: cmp dword ptr [0x3ecc], 1",
+   "0x25ddc: jne 0x25e02",
+   "0x25dde: mov byte ptr [0x1aac], 0",
+   "0x25de5: call 0x22e5c",
+   "0x25dea: mov byte ptr [0x1aac], 1",
+   "0x25df1: mov dword ptr [0x3ecc], 0",
+   "0x25dfb: mov esi, 1",
+   "0x25e00: jmp 0x25e74",
+   "0x25e74: test esi, esi",
+   "0x25e76: je 0x25dce",
+   "0x25e7c: cmp esi, -1",
+   "0x25e7f: jne 0x25e8f",
+   "0x25e81: mov edi, 1",
+   "0x25e86: jmp 0x25e8f",
+   "0x25e88: cmp eax, -1",
+   "0x25e8b: jne 0x25e8f",
+   "0x25e8d: xor edi, eax",
+   "0x25e8f: test edi, edi",
+   "0x25e91: je 0x25db1"
+  ],
+  "calllogs": {
+   "lc131a": {
+    "records": 19627,
+    "beam_rounds": 8,
+    "death_frames": 33,
+    "death_returns": [
+     "0x1dcd9",
+     "0x1dd86"
+    ],
+    "death_before_beam": 0,
+    "death_after_last_beam": 15,
+    "records_after_death": 457
+   },
+   "lc131b": {
+    "records": 1265,
+    "beam_rounds": 8,
+    "death_frames": 33,
+    "death_returns": [
+     "0x1dcd9",
+     "0x1dd86"
+    ],
+    "death_before_beam": 0,
+    "death_after_last_beam": 16,
+    "records_after_death": 5
+   },
+   "lc131d": {
+    "records": 1389,
+    "beam_rounds": 8,
+    "death_frames": 33,
+    "death_returns": [
+     "0x1dcd9",
+     "0x1dd86"
+    ],
+    "death_before_beam": 0,
+    "death_after_last_beam": 16,
+    "records_after_death": 5
+   }
+  },
+  "calllog_files": [
+   ".wsl_build/lc131_runB_calllogs/lc131a.txt",
+   ".wsl_build/lc131_runB_calllogs/lc131b.txt",
+   ".wsl_build/lc131_runB_calllogs/lc131d.txt"
+  ],
+  "lc131a_after_death": {
+   "bios_tick_gap": 216,
+   "ctor_frames": 3,
+   "walk_frames": 210,
+   "esp_ctor_log_start": "0x1f1610",
+   "esp_ctor_after_death": "0x1f160c",
+   "esp_walk_in_battle": "0x1f1538",
+   "esp_walk_after_death": "0x1f15fc"
+  },
+  "step_0x13185_direct_callers": [
+   "0x13488",
+   "0x3231b"
+  ],
+  "story_entries_reaching_0x13185": [
+   "open[0]"
+  ],
+  "ctor_call_depths": {
+   "open[0]": [
+    8
+   ],
+   "open[1]": [
+    4
+   ],
+   "open[2]": [
+    4
+   ],
+   "post[1]": [
+    8
+   ]
+  },
+  "title_depths": {
+   "0x25f10": 12,
+   "0x260f5": 12
+  },
+  "main_depths": {
+   "0x25dbd": 12,
+   "0x25e23": 12,
+   "0x25e3a": 12
+  },
+  "esp_prediction_relative_to_load_open1": {
+   "load_open1": 0,
+   "new_open0": -4,
+   "victory_post1": 12,
+   "victory_open2": 16
+  },
+  "esp_observed_relative": -4,
+  "units_D": {
+   "npc_5_10_camp": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "enemies": 10
+  }
+ },
+ "B_gate_0x51a93_never_written": {
+  "fixup_classes_0x51a00_0x51aab": {
+   "addr_of": 91,
+   "direct_write": 163,
+   "direct_read": 66,
+   "indexed_read": 12
+  },
+  "gate_refs": [
+   [
+    "0x51a93",
+    "0x12106",
+    "cmp dword ptr [0x1a93], -1"
+   ],
+   [
+    "0x51a93",
+    "0x1215a",
+    "mov eax, dword ptr [0x1a93]"
+   ]
+  ],
+  "addr_of_strings": {
+   "0x51a43": "FDTXT.DAT",
+   "0x51a4d": "FDOTHER.DAT",
+   "0x51a59": "FDFIELD.DAT",
+   "0x51a65": "FDSHAP.DAT",
+   "0x51a70": "DATO.DAT",
+   "0x51a79": "FDMUS.DAT"
+  },
+  "addr_of_receivers": {
+   "0x111ba": 91
+  },
+  "load_res_arg1_uses": [
+   "0x111dd: push dword ptr [esp + 0x14]",
+   "0x111ef: push dword ptr [esp + 0x10]",
+   "0x11262: push dword ptr [esp + 0x14]"
+  ],
+  "load_res_arg1_passed_to": [
+   "fopen",
+   "printf",
+   "printf"
+  ],
+  "lower_addr_of": [
+   "0x51944",
+   "0x5195e",
+   "0x519bc"
+  ],
+  "control_0x53ecc_direct_writes": 32,
+  "live_D_E_F": [
+   -1,
+   -1,
+   -1
+  ]
+ },
+ "C_cmd_slots_1_2_5_7_have_casters": {
+  "spell_mask_counts_0_9": {
+   "0": {
+    "enemy": 22,
+    "ally": 0,
+    "own": 0,
+    "maps": [
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ]
+   },
+   "1": {
+    "enemy": 24,
+    "ally": 1,
+    "own": 0,
+    "maps": [
+     8,
+     9,
+     10,
+     11,
+     14,
+     15
+    ]
+   },
+   "2": {
+    "enemy": 35,
+    "ally": 0,
+    "own": 1,
+    "maps": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     23
+    ]
+   },
+   "3": {
+    "enemy": 4,
+    "ally": 0,
+    "own": 0,
+    "maps": [
+     24,
+     28,
+     29
+    ]
+   },
+   "4": {
+    "enemy": 14,
+    "ally": 1,
+    "own": 0,
+    "maps": [
+     4,
+     5,
+     6,
+     7,
+     8,
+     10
+    ]
+   },
+   "5": {
+    "enemy": 46,
+    "ally": 1,
+    "own": 0,
+    "maps": [
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     17
+    ]
+   },
+   "6": {
+    "enemy": 62,
+    "ally": 0,
+    "own": 1,
+    "maps": [
+     19,
+     20,
+     21,
+     23,
+     24,
+     25
+    ]
+   },
+   "7": {
+    "enemy": 14,
+    "ally": 0,
+    "own": 0,
+    "maps": [
+     21,
+     23,
+     25,
+     28,
+     29
+    ]
+   },
+   "8": {
+    "enemy": 0,
+    "ally": 1,
+    "own": 0,
+    "maps": [
+     17
+    ]
+   },
+   "9": {
+    "enemy": 10,
+    "ally": 0,
+    "own": 0,
+    "maps": [
+     24,
+     25,
+     28
+    ]
+   }
+  },
+  "maps_parsed": 33
+ },
+ "D_copyprot_byte_patches": {
+  "patch_bytes": {
+   "0x118aa": "803d443a000000eb07e8fe260200ebf0",
+   "0x34233": "39d8ebe9c644243401ebe2"
+  },
+  "copyprot_callers": [
+   "0x118ac"
+  ],
+  "reachable_insns_with_0x33faf": 71313,
+  "cmp_test_then_jcc": 4780,
+  "cmp_test_then_jmp": 10,
+  "rows": [
+   {
+    "jmp": "0x11769",
+    "bytes": "eb9e",
+    "target_insn": "je",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x118aa",
+    "bytes": "eb07",
+    "target_insn": "call",
+    "flags": "dead",
+    "fallthrough": "orphan"
+   },
+   {
+    "jmp": "0x1e2ed",
+    "bytes": "eb03",
+    "target_insn": "je",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x34233",
+    "bytes": "ebe9",
+    "target_insn": "inc",
+    "flags": "dead",
+    "fallthrough": "orphan"
+   },
+   {
+    "jmp": "0x371e7",
+    "bytes": "ebd6",
+    "target_insn": "jne",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x3e1fe",
+    "bytes": "eb89",
+    "target_insn": "add",
+    "flags": "dead",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x3e65e",
+    "bytes": "ebf7",
+    "target_insn": "je",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x3e763",
+    "bytes": "ebf4",
+    "target_insn": "je",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x47068",
+    "bytes": "eb06",
+    "target_insn": "jne",
+    "flags": "read",
+    "fallthrough": "referenced"
+   },
+   {
+    "jmp": "0x4c185",
+    "bytes": "eb02",
+    "target_insn": "je",
+    "flags": "read",
+    "fallthrough": "referenced"
+   }
+  ],
+  "dead_flags_and_orphan": [
+   "0x118aa",
+   "0x34233"
+  ],
+  "counterfactual_restored": {
+   "reachable_insns": 71317,
+   "cmp_test_then_jcc": 4782,
+   "orphans": 0
+  }
+ },
+ "E_map25_frame_without_tile38": {
+  "screenshot": ".wsl_build/ctr/terr/ch26/s1.png",
+  "uniform_2x2": {
+   "192,201": 1.0,
+   "192,200": 0.4049375,
+   "193,201": 0.39871875
+  },
+  "scroll": [
+   9,
+   39
+  ],
+  "cells_consistent": 55,
+  "runner_up": 26,
+  "tile38_cells": [
+   [
+    17,
+    10
+   ],
+   [
+    29,
+    10
+   ],
+   [
+    10,
+    16
+   ],
+   [
+    6,
+    22
+   ],
+   [
+    13,
+    25
+   ],
+   [
+    30,
+    27
+   ],
+   [
+    9,
+    34
+   ]
+  ],
+  "tile38_visible": [],
+  "note": "地圖 25 視窗 13 × 8 格;這一幀看不到圖塊 38,長度 2 的模式 1 仍沒有畫面證據。"
+ },
+ "E2_terrain_mode1_on_screen": {
+  "map25_reference_exe": {
+   "file": ".wsl_build/ctr/terr/ch26/shots/campexit_009_dialogue04.png",
+   "map": 25,
+   "scroll": [
+    9,
+    0
+   ],
+   "cells_consistent": 45,
+   "runner_up": 19,
+   "indices": 39,
+   "conflicts": 0,
+   "reverse_conflicts": 0,
+   "runs": 4,
+   "k_hist": {
+    "1": 4
+   },
+   "orders": {
+    "skip_then_value": [
+     4,
+     0
+    ],
+    "value_then_skip": [
+     0,
+     4
+    ],
+    "value_both": [
+     0,
+     4
+    ]
+   },
+   "long_runs": []
+  },
+  "map29_supporting": {
+   "file": ".wsl_build/round_ch30wf/shots/campexit_014_dialogue07.png",
+   "map": 29,
+   "scroll": [
+    16,
+    7
+   ],
+   "cells_consistent": 89,
+   "runner_up": 34,
+   "indices": 43,
+   "conflicts": 0,
+   "reverse_conflicts": 0,
+   "runs": 16,
+   "k_hist": {
+    "1": 15,
+    "2": 1
+   },
+   "orders": {
+    "skip_then_value": [
+     16,
+     0
+    ],
+    "value_then_skip": [
+     0,
+     16
+    ],
+    "value_both": [
+     0,
+     16
+    ]
+   },
+   "long_runs": [
+    {
+     "cell": [
+      23,
+      10
+     ],
+     "tile": 167,
+     "pos": 461,
+     "k": 2,
+     "value": 245,
+     "write_ok": true,
+     "skip_is_value": false
+    }
+   ]
+  },
+  "map29_exe_note": "2026-08-30 那一輪的 FD2.EXE md5 沒有紀錄;doc58 記載同期的 ~/fd2-run/FD2.EXE 與參考版只差檔案位移 502624 起 252 bytes(成長表)",
+  "patch_region_object": "0x60000",
+  "code_object_file_range": [
+   221204,
+   479252
+  ],
+  "blit_fn_file_offsets": {
+   "0x4e016": 475178,
+   "0x4e0a2": 475318,
+   "0x4e1a6": 475578,
+   "0x4e22a": 475710
+  }
+ }
+}
