@@ -52,7 +52,7 @@ DOS/4GW entry 0x3c964 ──► Watcom CRT ──► main 0x25bf4
 |---|---|---|---|
 | `[0x53c03]` | **目前章節(核心 game-state)** | 新遊戲=0(0x25ed6)、讀檔=存檔值(0x10147/0x26067)、戰後+1(0x25855/0x22f2c)、cutscene 暫借(0x32326) | 章節跳表 0x51d71/0x51de9、BGM 表 0x51e63、戰場公式 0x10b9e、完整章節 loader 0x1088d |
 | `[0x53c57]` | 選單目前選擇 index(各選單共用,進選單即歸 0) | 0x16f83/0x172ba/0x2600c | `cmp [0x53c57],0/1/2/3` 串接分派 |
-| `[0x53ecc]` | 章節事件 handler↔戰役迴圈的 raw pending 碼；0=無 pending，1／2 的玩家可見名稱依外層路徑另證 | 章節事件 handler(0x51b19→0x205xx,28 處設 1/2,見 doc 25/26);戰役迴圈清 0 | 1→固定 `0x22e5c` 資源 #79 呈現；2→章節索引戰後表與 `0x2cad7` gate。完整控制流見 doc 24 §6 |
+| `[0x53ecc]` | 章節事件 handler↔戰役迴圈的 raw pending 碼；0=無 pending，1／2 的玩家可見名稱依外層路徑另證(續一百三十八:1 → 資源 #79 是 GAME OVER 畫面,DOSBox-X 截圖與 FDOTHER #79 兩個影格逐像素相符,doc35 §18) | 章節事件 handler(0x51b19→0x205xx,28 處設 1/2,見 doc 25/26);戰役迴圈清 0 | 1→固定 `0x22e5c` 資源 #79 呈現；2→章節索引戰後表與 `0x2cad7` gate。完整控制流見 doc 24 §6 |
 
 ---
 

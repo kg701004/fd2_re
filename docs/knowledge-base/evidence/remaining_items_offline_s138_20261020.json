@@ -1,0 +1,621 @@
+{
+ "note": "FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e(參考版)。(A)(C) DOSBox-X 截圖 + 靜態分析;(B) DOSBox-X 截圖 + 資產解析;(D) 對話紀錄摘錄 + git 歷史。",
+ "A_title_key_after_game_over": {
+  "title_seq_flush_sites": [
+   "0x1fa57",
+   "0x1fc9c",
+   "0x1fd7c"
+  ],
+  "kbd_flush": [
+   "0x4e381: push esi",
+   "0x4e382: mov esi, 0x41a",
+   "0x4e387: mov ax, word ptr [esi]",
+   "0x4e38a: mov word ptr [esi + 2], ax",
+   "0x4e38e: pop esi",
+   "0x4e38f: ret"
+  ],
+  "opening_skip_check": "0x1fc59 kbd_buffer_has_key",
+  "menu_loop": [
+   "0x1fe2c: cmp dword ptr [esp + 0x40], 0",
+   "0x1fe31: jne 0x1fef0",
+   "0x1fe37: push dword ptr [esp + 0x50]",
+   "0x1fe3b: push ebp",
+   "0x1fe3c: push dword ptr [esp + 0x50]",
+   "0x1fe40: call 0x1ff79",
+   "0x1fe45: add esp, 0xc",
+   "0x1fe48: mov byte ptr [0x3a8e], 0x10",
+   "0x1fe4f: push 0x3a8d",
+   "0x1fe54: push 0x3a8d",
+   "0x1fe59: push 0x16",
+   "0x1fe5b: call 0x370f0",
+   "0x1fe60: add esp, 0xc",
+   "0x1fe63: movzx eax, byte ptr [0x3a8e]",
+   "0x1fe6a: mov ebx, dword ptr [esp + 0x50]",
+   "0x1fe6e: dec ebx",
+   "0x1fe6f: cmp eax, 0x48",
+   "0x1fe72: jne 0x1fe8f",
+   "0x1fe74: push 1",
+   "0x1fe76: push 2",
+   "0x1fe78: push dword ptr [esp + 0x5c]",
+   "0x1fe7c: call 0x25a96",
+   "0x1fe81: add esp, 0xc",
+   "0x1fe84: test ebp, ebp",
+   "0x1fe86: jne 0x1fe8c",
+   "0x1fe88: mov ebp, ebx",
+   "0x1fe8a: jmp 0x1fe2c",
+   "0x1fe8c: dec ebp",
+   "0x1fe8d: jmp 0x1fe2c",
+   "0x1fe8f: cmp eax, 0x50",
+   "0x1fe92: jne 0x1feb2",
+   "0x1fe94: push 1",
+   "0x1fe96: push 2",
+   "0x1fe98: push dword ptr [esp + 0x5c]",
+   "0x1fe9c: call 0x25a96",
+   "0x1fea1: add esp, 0xc",
+   "0x1fea4: cmp ebp, ebx",
+   "0x1fea6: jne 0x1feac",
+   "0x1fea8: xor ebp, ebx",
+   "0x1feaa: jmp 0x1fe2c",
+   "0x1feac: inc ebp",
+   "0x1fead: jmp 0x1fe2c",
+   "0x1feb2: movzx ebx, byte ptr [0x3a8d]",
+   "0x1feb9: cmp ebx, 0xd",
+   "0x1febc: je 0x1fed3",
+   "0x1febe: cmp ebx, 0x20",
+   "0x1fec1: je 0x1fed3",
+   "0x1fec3: cmp eax, 0xe0",
+   "0x1fec8: je 0x1fed3",
+   "0x1feca: cmp eax, 0x52",
+   "0x1fecd: jne 0x1fe2c",
+   "0x1fed3: push 1",
+   "0x1fed5: push 1",
+   "0x1fed7: push dword ptr [esp + 0x5c]",
+   "0x1fedb: call 0x25a96",
+   "0x1fee0: add esp, 0xc",
+   "0x1fee3: mov dword ptr [esp + 0x40], 1",
+   "0x1feeb: jmp 0x1fe2c"
+  ],
+  "accept": {
+   "ascii": [
+    "0xd",
+    "0x20"
+   ],
+   "scan": [
+    "0xe0",
+    "0x52"
+   ]
+  },
+  "initial_selection": "0x1f8b5 xor ebp, ebp",
+  "confirm_blink_fade": [
+   "0x1fef0: xor esi, esi",
+   "0x1fef2: jmp 0x1ff2c",
+   "0x1fef4: push dword ptr [esp + 0x50]",
+   "0x1fef8: push -1",
+   "0x1fefa: push dword ptr [esp + 0x50]",
+   "0x1fefe: call 0x1ff79",
+   "0x1ff03: add esp, 0xc",
+   "0x1ff06: push 0x50",
+   "0x1ff08: call 0x3790a",
+   "0x1ff0d: add esp, 4",
+   "0x1ff10: push dword ptr [esp + 0x50]",
+   "0x1ff14: push ebp",
+   "0x1ff15: push dword ptr [esp + 0x50]",
+   "0x1ff19: call 0x1ff79",
+   "0x1ff1e: add esp, 0xc",
+   "0x1ff21: push 0x50",
+   "0x1ff23: call 0x3790a",
+   "0x1ff28: add esp, 4",
+   "0x1ff2b: inc esi",
+   "0x1ff2c: cmp esi, 4",
+   "0x1ff2f: jl 0x1fef4",
+   "0x1ff31: call 0x1f882"
+  ],
+  "confirm_to_fade_end_ms": 768,
+  "dispatch": [
+   "0x25ec8: call 0x1f894",
+   "0x25ecd: test eax, eax",
+   "0x25ecf: jne 0x25f3f",
+   "0x25ed1: call 0x1f882",
+   "0x25ed6: mov dword ptr [0x3c03], 0",
+   "0x25ee0: push 0",
+   "0x25ee2: push dword ptr [0x3a65]",
+   "0x25ee8: push 0x1a4d",
+   "0x25eed: call 0x111ba",
+   "0x25ef2: add esp, 0xc",
+   "0x25ef5: mov dword ptr [0x3a65], eax",
+   "0x25efa: mov dword ptr [0x3bfb], 0",
+   "0x25f04: mov byte ptr [0x1aac], 0",
+   "0x25f0b: mov eax, dword ptr [0x3c03]",
+   "0x25f10: call dword ptr [eax*4 + 0x1d71]"
+  ],
+  "set_chapter32_sites": [
+   "0x32326"
+  ],
+  "result1_resource79": [
+   "0x22e82: push 0x4f",
+   "0x22e84: push 0",
+   "0x22e86: push 0x1a4d",
+   "0x22e8b: call 0x111ba",
+   "0x22e90: mov ebx, eax",
+   "0x22e92: add esp, 0xc",
+   "0x22e95: push 0xfa00",
+   "0x22e9a: push 0",
+   "0x22e9c: push 0xa0000",
+   "0x22ea1: call 0x37910",
+   "0x22ea6: add esp, 0xc",
+   "0x22ea9: push -1",
+   "0x22eab: push 0x140",
+   "0x22eb0: push 0xa0000",
+   "0x22eb5: push 0",
+   "0x22eb7: push ebx",
+   "0x22eb8: call 0x2eb9f",
+   "0x22ebd: add esp, 0x14",
+   "0x22ec0: call 0x1f525",
+   "0x22ec5: push 9",
+   "0x22ec7: call 0x17aa9",
+   "0x22ecc: add esp, 4",
+   "0x22ecf: push -1",
+   "0x22ed1: push 0x140",
+   "0x22ed6: push 0xa0000",
+   "0x22edb: push 1",
+   "0x22edd: push ebx",
+   "0x22ede: call 0x2eb9f",
+   "0x22ee3: add esp, 0x14",
+   "0x22ee6: push 0x24",
+   "0x22ee8: call 0x17aa9",
+   "0x22eed: add esp, 4",
+   "0x22ef0: push ebx"
+  ],
+  "fdother79_frames": [
+   [
+    69,
+    61,
+    181,
+    75
+   ],
+   [
+    130,
+    141,
+    55,
+    8
+   ]
+  ],
+  "game_over_fit_per_shot": {
+   "8": [
+    [
+     0,
+     1,
+     63
+    ],
+    [
+     0,
+     1,
+     9
+    ]
+   ],
+   "9": [
+    [
+     0,
+     62,
+     63
+    ],
+    [
+     0,
+     9,
+     9
+    ]
+   ],
+   "10": [
+    [
+     0,
+     62,
+     63
+    ],
+    [
+     0,
+     9,
+     9
+    ]
+   ]
+  },
+  "game_over_shots": [
+   9,
+   10
+  ],
+  "game_over_shift_control": {
+   "1,0": [
+    [
+     279,
+     62,
+     63
+    ],
+    [
+     32,
+     10,
+     9
+    ]
+   ],
+   "0,1": [
+    [
+     297,
+     62,
+     63
+    ],
+    [
+     35,
+     9,
+     9
+    ]
+   ],
+   "-1,0": [
+    [
+     282,
+     62,
+     63
+    ],
+    [
+     29,
+     8,
+     9
+    ]
+   ]
+  },
+  "uniform_2x2_below_1": {
+   "2": 0.9996,
+   "15": 0.9998,
+   "18": 0.9933
+  },
+  "menu_static_shots": [
+   17
+  ],
+  "menu_fading_shots": [
+   18
+  ],
+  "fade_brightness_ratio_18": 0.537,
+  "rows_not_palette_only_18": [
+   135,
+   159
+  ],
+  "button_rows_fail_if_load_highlighted": [
+   330,
+   331,
+   332,
+   333,
+   334,
+   335,
+   336,
+   337,
+   338,
+   339
+  ],
+  "black_shots": [
+   8,
+   16,
+   19
+  ],
+  "boot_menu_down_vs_start_diff": {
+   "pixels": 344,
+   "bbox_xyxy": [
+    129,
+    164,
+    190,
+    179
+   ]
+  },
+  "driver": {
+   "blob": "3ffc3dbae14bc9be58704ce84ee1b1e7f0316dea",
+   "loop": "            send_keys(name, \"Return\")\n            time.sleep(0.6)\n            shot = screenshot(name, shots_dir / f\"findempty_clear_{clear_tap:03d}.png\")\n",
+   "max_taps": 20
+  },
+  "dialogue": {
+   "post_end_turn.png": {
+    "windows": [
+     [
+      "FDTXT_033.bin",
+      0,
+      50
+     ]
+    ],
+    "candidates_per_position": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "shift_x1_first_glyph": 0
+   },
+   "after_end3.png": {
+    "windows": [
+     [
+      "FDTXT_033.bin",
+      0,
+      50
+     ]
+    ],
+    "candidates_per_position": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "shift_x1_first_glyph": 0
+   }
+  },
+  "dialogue_glyphs": [
+   "0x46",
+   "0x52",
+   "0x45e",
+   "0x133",
+   "0x246",
+   "0x231"
+  ],
+  "dialogue_xy": [
+   111,
+   119
+  ],
+  "shots": ".wsl_build/lc131a_endturn",
+  "conclusion": "LOG CONFIRMED(DOSBox-X 截圖)+ STATIC ANALYSIS:勝負碼 1 的畫面是 GAME OVER(FDOTHER #79),之後標題選單停在 START,確認後進新遊戲開場。確認的鍵是 find_empty_adjacent_tile 清對話迴圈的 Return;是第 18 次(推論:第 17 張是靜止選單、第 18 張在淡出,若第 17 次就確認,第 18 張時淡出早已結束)。戰鬥中留在緩衝的鍵在選單前被 kbd_flush 清掉。"
+ },
+ "B_move_range_remap_ch27_on_screen": {
+  "map": 26,
+  "chapter_dir": "ch27",
+  "scroll": [
+   9,
+   49
+  ],
+  "ref": "11_after_select2.png",
+  "ref_cells_consistent": 77,
+  "ref_runner_up": 31,
+  "ref_color_map_indices": 45,
+  "shots": {
+   "10_after_select.png": {
+    "level": 0,
+    "levels_with_zero_mismatch": [
+     0
+    ],
+    "region_cells": 61,
+    "identical_cells": 14,
+    "fit": [
+     26101,
+     0
+    ],
+    "runner_up_mismatch": 14201
+   },
+   "08_cycle_settled.png": {
+    "level": 3,
+    "levels_with_zero_mismatch": [
+     3
+    ],
+    "region_cells": 61,
+    "identical_cells": 14,
+    "fit": [
+     26530,
+     0
+    ],
+    "runner_up_mismatch": 2430
+   },
+   "atk1_01_after_select.png": {
+    "level": 4,
+    "levels_with_zero_mismatch": [
+     4
+    ],
+    "region_cells": 58,
+    "identical_cells": 14,
+    "fit": [
+     26027,
+     0
+    ],
+    "runner_up_mismatch": 6053
+   },
+   "09_captain0_teleported.png": {
+    "level": 5,
+    "levels_with_zero_mismatch": [
+     5
+    ],
+    "region_cells": 58,
+    "identical_cells": 14,
+    "fit": [
+     24454,
+     0
+    ],
+    "runner_up_mismatch": 7626
+   },
+   "hudcheck_allyact_selected.png": {
+    "level": 9,
+    "levels_with_zero_mismatch": [
+     9
+    ],
+    "region_cells": 46,
+    "identical_cells": 19,
+    "fit": [
+     23882,
+     0
+    ],
+    "runner_up_mismatch": 5804
+   },
+   "allyact_after_move_confirm.png": {
+    "level": 8,
+    "levels_with_zero_mismatch": [
+     8
+    ],
+    "region_cells": 46,
+    "identical_cells": 19,
+    "fit": [
+     23848,
+     0
+    ],
+    "runner_up_mismatch": 5838
+   },
+   "12_after_right.png": {
+    "level": 2,
+    "levels_with_zero_mismatch": [
+     2
+    ],
+    "region_cells": 60,
+    "identical_cells": 14,
+    "fit": [
+     24622,
+     0
+    ],
+    "runner_up_mismatch": 3693
+   }
+  },
+  "control_shift_x1_min_mismatch": 6780,
+  "remap_levels_tri_0x51a97": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   9,
+   8,
+   7,
+   6,
+   5,
+   4,
+   3,
+   2,
+   1
+  ],
+  "shots_dir": ".wsl_build/ch27sky_probe/shots",
+  "exe_note": "2026-08-29 這一輪的 EXE 見 (D):參考版 + 成長表 252 bytes(資料物件),繪製程式碼與 FDOTHER.DAT 相同"
+ },
+ "C_grey_units_on_screen": {
+  "shots": {
+   ".wsl_build/mvcheck/mv17.png": {
+    "map": 0,
+    "scroll": [
+     0,
+     13
+    ],
+    "cells_consistent": 69,
+    "runner_up": 20,
+    "grey_hits": [
+     [
+      7,
+      14,
+      1,
+      454
+     ]
+    ],
+    "mode1_runs_in_hit_sprites": [
+     0
+    ]
+   },
+   ".wsl_build/chapter_sweep/ch02/shots/allyact_after_wait_confirm.png": {
+    "map": 1,
+    "scroll": [
+     9,
+     12
+    ],
+    "cells_consistent": 85,
+    "runner_up": 13,
+    "grey_hits": [
+     [
+      20,
+      13,
+      385,
+      455
+     ]
+    ],
+    "mode1_runs_in_hit_sprites": [
+     0
+    ]
+   },
+   ".wsl_build/round_ch23retest_cli/ch23/shots/allyact_after_wait_confirm.png": {
+    "map": 22,
+    "scroll": [
+     14,
+     29
+    ],
+    "cells_consistent": 78,
+    "runner_up": 21,
+    "grey_hits": [
+     [
+      19,
+      34,
+      385,
+      455
+     ]
+    ],
+    "mode1_runs_in_hit_sprites": [
+     0
+    ]
+   }
+  },
+  "color_count_control": {
+   ".wsl_build/mvcheck/mv17.png": {
+    "raw_indices": 29,
+    "grey_indices": 7,
+    "screen_colors": 7
+   },
+   ".wsl_build/chapter_sweep/ch02/shots/allyact_after_wait_confirm.png": {
+    "raw_indices": 37,
+    "grey_indices": 8,
+    "screen_colors": 8
+   }
+  },
+  "keys_whose_pose0_sprites_have_mode1": [
+   6,
+   8,
+   14,
+   16,
+   17,
+   18,
+   26,
+   27,
+   28,
+   30,
+   35,
+   38,
+   46,
+   49,
+   53,
+   54,
+   56,
+   64,
+   70,
+   73,
+   79,
+   83,
+   84,
+   85,
+   90,
+   91,
+   92,
+   98,
+   107,
+   110,
+   113,
+   118,
+   123,
+   124,
+   134
+  ],
+  "note": "找到的灰階圖示是第 0 號鍵(圖示 1)與索爾(第 32 號鍵,圖示 385)的姿勢 0,這兩組姿勢 0 都沒有模式 1;灰階版的模式 1 次序仍只有靜態證據(續一百三十四釘住的 0x4e1e1 位元組)。"
+ },
+ "D_exe_of_0829_0830_rounds": {
+  "exe_md5_then": "72e36e47f1f7d77dc102839262956480",
+  "diff_bytes": 252,
+  "diff_file_offsets_1based": [
+   502624,
+   503139
+  ],
+  "diff_object": "0x60000",
+  "mtime_shown_on_0902": "Aug 19 11:07",
+  "restored_utc": "2026-09-02T15:56:57.160Z",
+  "harness_blob": "aa950cd0f2384659bd77160d67cbaa767a623be3",
+  "transcript_rows": ".wsl_build/s138_exe_state/fd2run_exe_checks.json",
+  "conclusion": "INFERRED(對話紀錄 + git 歷史):08-19 到 09-02 之間 ~/fd2-run/FD2.EXE 沒有寫入(09-02 顯示的 mtime 仍是 08-19),md5 72e36e47…;harness 當時固定整個複製 ~/fd2-run,驅動腳本沒有改來源。所以 08-29 ch27sky 與 08-30 地圖 29 那張的 EXE 是參考版 + 資料物件裡 252 bytes 的成長表修改,程式碼物件相同。"
+ }
+}

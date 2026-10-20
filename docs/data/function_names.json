@@ -26106,7 +26106,7 @@
   {
    "addr": "0x1f894",
    "name": "title_seq",
-   "summary": "開機動畫、標題畫面與主選單:以 ani_player / title_anim_or_still / show_fdother_static_screen 播開場,title_menu_draw_buttons 畫選單,讀鍵選擇;讀取存檔時以 fopen / fread、save_checksum_sum / save_xor_crypt 檢查,回傳選擇(FD2.EXE 反組譯)。title_menu_dispatch 呼叫(doc12 / doc23 的 boot 鏈 main 0x25bf4 -> 0x25ebb -> 0x1f894)。",
+   "summary": "開機動畫、標題畫面與主選單:以 ani_player / title_anim_or_still / show_fdother_static_screen 播開場,title_menu_draw_buttons 畫選單,讀鍵選擇;讀取存檔時以 fopen / fread、save_checksum_sum / save_xor_crypt 檢查,回傳選擇(FD2.EXE 反組譯)。title_menu_dispatch 呼叫(doc12 / doc23 的 boot 鏈 main 0x25bf4 -> 0x25ebb -> 0x1f894)。 續一百三十八(反組譯 + DOSBox-X 截圖):選單之前三次 kbd_flush(0x1fa57 / 0x1fc9c / 0x1fd7c),選單以 int386(0x16)、AH = 0x10 阻塞讀鍵、沒有逾時,初值第 0 項 START,Enter / Space / 掃描碼 0xe0 / 0x52 確認,確認後閃爍 4 次再淡出,回傳選擇。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
@@ -26757,7 +26757,7 @@
   {
    "addr": "0x22e5c",
    "name": "show_result_resource_79",
-   "summary": "戰役迴圈在 pending 碼 [0x53ecc] = 1 時的固定呈現:以 load_res 載入資源 #79,bgm 換曲,blit_anim_frame 逐幀播放並淡入淡出(FD2.EXE 反組譯)。game_main 呼叫(doc23:1 -> 資源 #79,2 -> 章節戰後表)。 續一百二十三(DOSBox-X,doc35 §18):敵方用道具 79 把 #0 索爾打到 HP 0(+5 = 1)、ai_item_action 返回之後,本函式入口停下,返回位址 0x25dea、[0x53ecc] = 1;接著 title_menu_dispatch 入口停下(返回位址 0x25dc2),視窗進標題序列。同一場的前一回合索爾沒有陣亡,戰鬥照常進到我方第 2 回合。",
+   "summary": "戰役迴圈在 pending 碼 [0x53ecc] = 1 時的固定呈現:以 load_res 載入資源 #79,bgm 換曲,blit_anim_frame 逐幀播放並淡入淡出(FD2.EXE 反組譯)。game_main 呼叫(doc23:1 -> 資源 #79,2 -> 章節戰後表)。 續一百二十三(DOSBox-X,doc35 §18):敵方用道具 79 把 #0 索爾打到 HP 0(+5 = 1)、ai_item_action 返回之後,本函式入口停下,返回位址 0x25dea、[0x53ecc] = 1;接著 title_menu_dispatch 入口停下(返回位址 0x25dc2),視窗進標題序列。同一場的前一回合索爾沒有陣亡,戰鬥照常進到我方第 2 回合。 續一百三十八(DOSBox-X 截圖 + 資產解析):資源 #79 是 GAME OVER 畫面,FDOTHER #79 的兩個影格(181 × 75 在 (69, 61)、55 × 8 在 (130, 141))與截圖逐像素相符。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [

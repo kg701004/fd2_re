@@ -7636,6 +7636,349 @@
     ]
    }
   },
+  "ev_s138": {
+   "outputs": [
+    "remaining_items_offline_s138_20261020.json"
+   ],
+   "inputs": {
+    ".wsl_build/ch27sky_probe/shots/08_cycle_settled.png": [
+     18877,
+     "185e1f3dbe5d465f51c43a0d239fa0a90bb898e3a3d6efd9aab31ca9c031db24"
+    ],
+    ".wsl_build/ch27sky_probe/shots/09_captain0_teleported.png": [
+     19640,
+     "4754780e409fab7c76ba7c08180c68fae18ef42cfa04f5d9685dd707a151f1ad"
+    ],
+    ".wsl_build/ch27sky_probe/shots/10_after_select.png": [
+     18784,
+     "ecaad12f45e60e4ce02b3f8b88bc3497cdde6e122b299944f8cf3cd2c99bd76b"
+    ],
+    ".wsl_build/ch27sky_probe/shots/11_after_select2.png": [
+     17994,
+     "24e8f47bc1f36e7a3bec72df494ff758eb28b3e9d9cc5d50873ec709e413eca3"
+    ],
+    ".wsl_build/ch27sky_probe/shots/12_after_right.png": [
+     19073,
+     "34a9d3a237486a8ae032ae0075f3b84b9bb1f2465f80abbc6603af15541accb2"
+    ],
+    ".wsl_build/ch27sky_probe/shots/allyact_after_move_confirm.png": [
+     19442,
+     "5553d9ce5f85ed1241f7f16c692575dc2e93f56485c1fb9e19aa01a8931ecbd0"
+    ],
+    ".wsl_build/ch27sky_probe/shots/atk1_01_after_select.png": [
+     18903,
+     "56a81b71ff9cc66eb404a730446a11e97875e73562699b5508728c7c39b051f6"
+    ],
+    ".wsl_build/ch27sky_probe/shots/hudcheck_allyact_selected.png": [
+     19338,
+     "b234bc19e7fae1ecdd7d0f803e3e6eea3cf4c960b7e9955473c2e0cdeccdc099"
+    ],
+    ".wsl_build/chapter_sweep/ch02/shots/allyact_after_wait_confirm.png": [
+     29897,
+     "300a62da7a67906a3a7e6cfa346a5d1f4a393580f352c64efa8ae38db03deeaf"
+    ],
+    ".wsl_build/lc131a_endturn/_poll.png": [
+     22561,
+     "94208586de9f8ae7715a9d0aac0501f8fcd737b443ee428d72b6e26eff097148"
+    ],
+    ".wsl_build/lc131a_endturn/after_end3.png": [
+     7930,
+     "19b1931f199adb75d8e471849b3066b1c2770623bf0f492f4097de577a136b2e"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_001.png": [
+     4445,
+     "bbacdf7c113bd549bb9790383cdd8af41266073b288b22cdc12c95d4b94bd937"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_002.png": [
+     17102,
+     "f8d372370d216e43962a05497cd1341ba06508ebf94ae92072d01219c1083bb6"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_003.png": [
+     25061,
+     "821ed80e6890d31de29df3ebde2c6581e38bea072b04a79c863e64534ddd0bbb"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_004.png": [
+     24461,
+     "6a6b8f95c8927c79e88ab3776bcc1b0300d2d2055c313aa9c437784b84a4ed12"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_005.png": [
+     24595,
+     "2b7d7529a41de6b987da74ef76b9d21337669820d5852cc65466eae0cce238dd"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_006.png": [
+     24589,
+     "8f7e45ead2d29c76a7aa7bb284d4d4ed71c8e8521758906ad04d7385f51f9339"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_007.png": [
+     24739,
+     "db432ad58dd9451239e64db8821dbbebbea4abaa55dbb0f0dc3932f904ca3d85"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_008.png": [
+     1434,
+     "ce6454b43a4247c46754ce96d2203450a9b502b59bd7a17f03d2b463a30ab8ae"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_009.png": [
+     6762,
+     "dc758843b08cf5537a08f06bc078026cb78e4e9c5ee6bff64e8e5b84e371fb61"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_010.png": [
+     6762,
+     "dc758843b08cf5537a08f06bc078026cb78e4e9c5ee6bff64e8e5b84e371fb61"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_011.png": [
+     1452,
+     "1c2c802db6bf0abf7363d20f4856bbf008097565c4ead9f36efac1c97d4569dc"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_012.png": [
+     6302,
+     "935cc960c32bd94dd936cba586701ba2101ad6bccde0d7c8336eb4b2dfa28302"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_013.png": [
+     6302,
+     "935cc960c32bd94dd936cba586701ba2101ad6bccde0d7c8336eb4b2dfa28302"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_014.png": [
+     4525,
+     "205a3c8b58ce0832c1d3453c8881a8127f44deb78f9bc8941026015dd63413d8"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_015.png": [
+     3845,
+     "0a6d6c3092917a541d28ff972f5417ac6f317f73dcf532aac7b12f30817243f0"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_016.png": [
+     1434,
+     "ce6454b43a4247c46754ce96d2203450a9b502b59bd7a17f03d2b463a30ab8ae"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_017.png": [
+     22561,
+     "94208586de9f8ae7715a9d0aac0501f8fcd737b443ee428d72b6e26eff097148"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_018.png": [
+     21314,
+     "4285ca3be981926aa4f74be225c75ea93a4c6ce3b08a691214b3d55b4b6fa09b"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_019.png": [
+     1434,
+     "ce6454b43a4247c46754ce96d2203450a9b502b59bd7a17f03d2b463a30ab8ae"
+    ],
+    ".wsl_build/lc131a_endturn/findempty_clear_020.png": [
+     5553,
+     "e2e6e0dc77dc2669f3a3666d9bd8f6811668d1da41d9821ce2a97582e64f62a7"
+    ],
+    ".wsl_build/lc131a_endturn/post_end_turn.png": [
+     7930,
+     "19b1931f199adb75d8e471849b3066b1c2770623bf0f492f4097de577a136b2e"
+    ],
+    ".wsl_build/lc131a_endturn/title_menu.png": [
+     22584,
+     "3ff241b23377f9426d2e50f156cce1c505f76615ddc017770905e1eca7899eba"
+    ],
+    ".wsl_build/mvcheck/mv17.png": [
+     32840,
+     "a7627764475e1e0d78b6d7592dab1aada278a201a8413820558d677dfb9ff697"
+    ],
+    ".wsl_build/round_ch23retest_cli/ch23/shots/allyact_after_wait_confirm.png": [
+     24109,
+     "8fcb029534f2d8e4b4ee1abc7b4ff98a01bd54cb1a243ed3fe2317b86c56eaf2"
+    ],
+    ".wsl_build/s138_exe_state/fd2run_exe_checks.json": [
+     2547,
+     "489f21dda0cfc7950ab287eca6a43cddcea8740f324920ab83a53aea3c1e4f34"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_000.bin": [
+     2308,
+     "9ac50ac06e721e9a7ab1cbdd5dcf8b0f64a5e9b7c742097d82afed22c75deea2"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_003.bin": [
+     2272,
+     "68ed5d9dc78b621a3f0a21eb09c13242ca9ac231bb2eb8e697b986cd1bce5a93"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_066.bin": [
+     6564,
+     "895d5737ef5cff40904d7a9c7c7b00d3e93e4976ca025544f002e17613b73420"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_078.bin": [
+     7072,
+     "b84ed9cf17b13339b79f38f8ea6f8ff3727f694288ffb6e74ed2ecee1b6a2db4"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_003.bin": [
+     5990,
+     "fddfdbd91b048081ea621b5a4be7d29fb24234a62e19e2b21837df52cbb02ccc"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_004.bin": [
+     58368,
+     "3d9493f204254c58600f2b08beb47e372d2aa950d686a97f7ed73aa1f709c871"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_079.bin": [
+     6801,
+     "34bb99917cdfd6b268674d7c1cf201cc3749cf3a58c574161dc5d37a36781373"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_000.bin": [
+     147740,
+     "36054eed120a335b4d6d9fb3ee3a58f98115a364b18e5d904aaac2147b880f30"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_002.bin": [
+     87915,
+     "2ed0c673f8ca21f28394d26706154516bb189f2deb44a5711ac6702775f69b98"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_044.bin": [
+     157448,
+     "2652545a61512199ec83956fd9b910a5fb4132adfee0eaffbe7ec2e03160995e"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_052.bin": [
+     90464,
+     "7a90946da3c9709366c482eb9a83fb502b58683e07fd842b48809f55be8bb4bd"
+    ],
+    "extracted/raw/FDTXT/FDTXT_000.bin": [
+     7636,
+     "7014ada401b9f493ca8773bb68ed90d8dafd583fb1230494001f0a5d48b64ebe"
+    ],
+    "extracted/raw/FDTXT/FDTXT_001.bin": [
+     4360,
+     "057c67c9c3860832da7dbc10434a2b91c419d1a596d12e177190ced58d80d984"
+    ],
+    "extracted/raw/FDTXT/FDTXT_002.bin": [
+     3498,
+     "922a58438c15996fa04d27f2fcb48cc7803cb523b5b3bdecfb6bfe5bce780088"
+    ],
+    "extracted/raw/FDTXT/FDTXT_003.bin": [
+     2458,
+     "fcc713f90843aecd410464ee8ea1c5710259e5dd317a57f008b47f8a3089899c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_004.bin": [
+     864,
+     "e983e547cc4c65ffcdf9c3e29a313f7540dd80daa2f68fd44fcd73f6b2fb64d7"
+    ],
+    "extracted/raw/FDTXT/FDTXT_005.bin": [
+     3106,
+     "fe6c29216563b8ac47b484804bac7cfbc7b3c9c7bcd8a44b7f9efd3f3bd033b0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_006.bin": [
+     3208,
+     "65c3b435d22315dfc114735c089094172aa6e4250ec2ae62380fb5a8a1a644c9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_007.bin": [
+     2022,
+     "da217a473a637bc3a2b286476d34b4288f7c93accd2355fe9f51661278422971"
+    ],
+    "extracted/raw/FDTXT/FDTXT_008.bin": [
+     1896,
+     "24e392c3e8dd697a5650b15ac99512de690444c3af92f5a7251c9be25267ae5d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_009.bin": [
+     2412,
+     "503d6e6ed48ada118a56cd2c7ec1d50d0ea15eda619cd9f8ce946716c9a4e256"
+    ],
+    "extracted/raw/FDTXT/FDTXT_010.bin": [
+     4494,
+     "b276204f255760ae4e2a4e195d2c3882332de8b24aafd160e05c9e8a9c65c376"
+    ],
+    "extracted/raw/FDTXT/FDTXT_011.bin": [
+     2448,
+     "bab2f3531d2b00e6f452ce87e5c7b9a3c9584798eb0065448bc75b68368d74f9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_012.bin": [
+     1550,
+     "bdc85a888f1cf44080cbeba65a1a18dff89783edbb27efb805da28f0d76cc1be"
+    ],
+    "extracted/raw/FDTXT/FDTXT_013.bin": [
+     2360,
+     "3423dbe32308691ea449eb57b79cd5cc48c252b0f22e996b02b9d8b72f937724"
+    ],
+    "extracted/raw/FDTXT/FDTXT_014.bin": [
+     1866,
+     "c592d13d828e3fa318d9f6108cf1b844e944b10d2012b49cc2e99a53b0ab3022"
+    ],
+    "extracted/raw/FDTXT/FDTXT_015.bin": [
+     4774,
+     "b4263a1940befb84d2abdd108f15319baf484499d1aab9fd4b4fb6bab332e53d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_016.bin": [
+     3258,
+     "4f0c05492290ec10a5ab6e70a3fad1d6e4e304f3de6561142908584a5268a66c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_017.bin": [
+     4434,
+     "c5b5b79040415085df55ca85f42065c73de30d38b17b7afd6653d9897d456c23"
+    ],
+    "extracted/raw/FDTXT/FDTXT_018.bin": [
+     4094,
+     "9f949d365c8459a912281ba64476aac4377db87f7091c57ddfffcb433cdc4e92"
+    ],
+    "extracted/raw/FDTXT/FDTXT_019.bin": [
+     1910,
+     "c5fdbe9345bb444bc156cd60282b6bb88f28bbe214660fc9cf8adf4527c42a6d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_020.bin": [
+     3836,
+     "d91efccabfdea4c79e07a590c713fffaa8f8bcdf9e7fd9a0e0cb1cfd28cdd6fb"
+    ],
+    "extracted/raw/FDTXT/FDTXT_021.bin": [
+     4660,
+     "6c099c2b4adb727bb026820b83ca9121810a914b16f99fea549a92df623fe2b8"
+    ],
+    "extracted/raw/FDTXT/FDTXT_022.bin": [
+     2742,
+     "10714540d6f7d207b6bbfcb25f3459819339d7b4153b12c65dc492e15941107a"
+    ],
+    "extracted/raw/FDTXT/FDTXT_023.bin": [
+     7168,
+     "c3ffb67922647a21a31d6164d5b68aa7bc011b4d9e3e57cbe7052eb3b9e55add"
+    ],
+    "extracted/raw/FDTXT/FDTXT_024.bin": [
+     1722,
+     "516876a704aa3179b377522f3a9e250f7dcc3efb0e5c5e86eed91d38c767f4d9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_025.bin": [
+     3350,
+     "82f6ef402619fd0299a136a1023aa92d9dc8cf93cc706132f8025c06a692b8b2"
+    ],
+    "extracted/raw/FDTXT/FDTXT_026.bin": [
+     5004,
+     "6a8a5c5e61227ccf58aa35a1731e2d2ce831f7f307c8e77dead639c5bc971a55"
+    ],
+    "extracted/raw/FDTXT/FDTXT_027.bin": [
+     5064,
+     "dc8d9472a7e10ee6536c0432b91707c487cc50ced748433ed397f58d6ace5790"
+    ],
+    "extracted/raw/FDTXT/FDTXT_028.bin": [
+     1628,
+     "18b4d4fb982cbfd7fa714fbae4b8109218d8ee7ce37b2b9fd67f9da5fb54cdf0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_029.bin": [
+     4792,
+     "6a89e3bdd5410d7ff5a6660221be27e2f49997f6475b0df952cd28f62230b430"
+    ],
+    "extracted/raw/FDTXT/FDTXT_030.bin": [
+     5762,
+     "dcbd0ae731b4a9283edd3d069d1580585cbf774a11c1e4fa623c976d871fbebc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_031.bin": [
+     6756,
+     "9473d6b21fbb7d3402d81f20fdc9455c3081b454522ab131e34d6995e2e9e4bc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_032.bin": [
+     2204,
+     "bd250484a25938d1ed3161cdc153a056ad5d66c64bcce2b0f9ad87c219f0b098"
+    ],
+    "extracted/raw/FDTXT/FDTXT_033.bin": [
+     3020,
+     "1e9ac41631b72e276331c438675ad2a27538a1af524016951b88b5aa44f60885"
+    ],
+    "extracted/raw/FDTXT/FDTXT_034.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
