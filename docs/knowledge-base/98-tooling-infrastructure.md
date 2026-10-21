@@ -10452,3 +10452,38 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
 - `decode_figani.parse_anim` 讀空檔(`FIGANI_408.bin`)IndexError。
 - `sweep_literals` 未對 `ev_s141` 跑。
 - 金鎖之後(esi 24 → 0、浮空城、停留 1000ms、紅閃光)要拍,需另行核准一次 DOSBox-X 連拍。
+
+## 2026-10-21 續一百四十三:`decode_figani.parse_anim` 讀空檔 / 截斷位移表不再崩潰,幀容器登錄進 `verify_truncation_robustness`
+
+使用者要求修續一百四十至續一百四十二都「只記錄、未修改」的那一件。STATIC ANALYSIS(只讀 extracted/raw/FIGANI,未跑遊戲)。
+
+**一、`tools/decode_figani.py` 的 `parse_anim`**。
+- 原因兩個:空檔(`FIGANI_408.bin` 長 0)在 `d[0]` 丟 IndexError;位移表被截在檔尾時 `unpack_from` 丟 struct.error。
+  拿真實 FIGANI 前 40 份(extracted/raw/FIGANI)、每份前 600 byte 的所有前綴去打,舊版例外 1089 次(IndexError 40、struct.error 1049)。
+- 修法:空檔回空串列;位移逐筆讀、讀到檔尾(struct.error)就停,讀不到位移的幀當作不存在。降級、不崩 —— 呼叫端
+  (`extract_all.py`、`decode_sprite` selftest)是批次迴圈。
+  第一版寫成 `nf = min(d[0], (len(d) - 8) // 4)`,窮舉突變 8→9、4→5 逃掉:幀在位移表之後且至少 13 byte,上限少算幾筆
+  在格式正確的檔上看不出差別,是等價突變。改成讓 `unpack_from` 自己判斷,不另算上限,這兩個常數就不存在了。
+- 行為不變的部分:HEAD 版與修改版在 408 份非空 FIGANI 上逐檔輸出相同(2118 幀);FIGANI_408 現在回 0 幀,`info` 印「0 幀」。
+- selftest 新增 (6):(5) 兩份合成檔的 1127 個前綴全部不能丟例外;正控制是截在最後一幀標頭剛好結束處(85 byte),
+  前兩幀仍要收、倒數第二幀的結尾仍取下一筆位移 —— 守衛若把截斷檔一律回空,這題會抓到。
+  手動突變 5 / 5 殺死(拿掉空檔守衛、回到不設防的位移表、少讀最後一筆位移、截斷檔一律回空、末幀結尾改用檔長),都是 SELFTEST FAILED、沒有 Traceback。
+
+**二、`tools/verify_truncation_robustness.py`**。
+- 這張表原本只登錄 `decode_figani.decode_rle`(幀本文 RLE),沒有登錄幀容器 `parse_anim`,所以空檔崩潰一直沒被看到。新增第 14 列。
+- `parse_anim` 修好後不丟任何例外,「完整取樣不能出錯」這道前提對它恆真 —— 拿 64 個 0 當取樣也會判 OK。登錄表加可選的第 7 欄:
+  完整取樣回傳值必須滿足的前提(這一列是 `bool`,至少解出一幀),不符判 DEGENERATE。
+- selftest 新增 (3d),三個一組:64 個 0 無前提 → OK(證明不是別的條件判對)、有前提 → DEGENERATE、真 FIGANI → OK。
+- 配對控制:把 `decode_figani.py` 暫時換回 HEAD 版,新列判 CRASH(724 次呼叫,IndexError 1、struct.error 30),rc = 1;換回修改版 14 列全部 OK(`verify_truncation_robustness.py` 正常執行 rc = 0)。
+- 登錄表 `docs/data/equivalent_mutants.json`:這支工具 23 筆上下文雜湊因 `DECODERS` 與 `probe` 改動而失效,
+  `--revalidate-registry --tool verify_truncation_robustness.py` 探針重驗 OK 24 / FAIL 0,只更新雜湊(diff 只有 23 行 scope_hash);`--check-registry` 108 筆 0 過期。
+- 窮舉突變(`verify_selftest_discrimination.py --exhaustive --confirm-timeouts --tool decode_figani.py --tool verify_truncation_robustness.py`)
+  第一輪未歸零 3 個:上面 `parse_anim` 的 8→9、4→5,以及 DEGENERATE 明細 `str(res)[:60]` 的截字長度(只影響印出)。
+  前兩個改寫法消掉;明細改成印前提函式名稱、不截字。`probe` 又改了一次,重驗 OK 24 / FAIL 0(更新 12 筆雜湊)後重跑:
+  `decode_figani` 33 / 33、`verify_truncation_robustness` 7 / 31 + 已登錄等價 24,歸零(未登錄的可達逃逸 0、登錄錯誤 0、過期 0)。
+
+仍留(只記錄、未修改):
+- `decode_ani.parse_header` / `iter_frames` 對短於檔頭的輸入丟 struct.error(ANI 前 40 份、每份前 600 byte 的前綴 1540 次),也沒登錄在 `verify_truncation_robustness`;
+  它是否該宣告為合法拒絕(像 `NotAContainer`)要另外決定。
+- `sweep_literals` 未對 `ev_s141` 跑。
+- 金鎖之後(esi 24 → 0、浮空城、停留 1000ms、紅閃光)要拍,需另行核准一次 DOSBox-X 連拍。

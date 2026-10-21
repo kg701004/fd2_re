@@ -180,13 +180,40 @@ def selftest():
     if not ok5:
         fails.append(f"幀容器解錯:{ {k: [(w, h, len(b)) for w, h, b in v] for k, v in got5.items()} }")
 
+    print("\n(6) 容器截斷:每一個前綴都不能崩,讀得到的幀照收")
+    # 續一百四十三:FIGANI_408.bin 長 0,以前 d[0] 丟 IndexError;位移表被截在檔尾時 unpack_from
+    # 丟 struct.error(真實檔前 600 byte 的前綴裡 1089 次)。窮舉 (5) 兩份合成檔的所有前綴。
+    # 正控制:截在最後一幀標頭剛好結束處,前兩幀(倒數第二幀的結尾取下一筆位移)仍要收;
+    # 守衛若把整份截斷檔一律回空,這題會抓到。
+    crash6: dict[str, int] = {}
+    got6 = {}
+    for blob in (syn, syn_b):
+        for c in range(len(blob) + 1):
+            try:
+                got6[(len(blob), c)] = parse_anim(blob[:c])
+            except Exception as exc:                          # noqa: BLE001
+                crash6[type(exc).__name__] = crash6.get(type(exc).__name__, 0) + 1
+    cut = offs5[3] + 13
+    want6 = {(len(syn), 0): [], (len(syn), 1): [], (len(syn), 8 + 4 * 2 + 1): [],
+             (len(syn), cut): [(1, 1024, syn[offs5[2] + 13:offs5[3]]), (2, 1, b"")],
+             (len(syn_b), len(syn_b) - 1): []}
+    wrong6 = {k: [(w, h, len(b)) for w, h, b in got6.get(k, [])] for k, v in want6.items()
+              if got6.get(k) != v}
+    ok6 = not crash6 and not wrong6
+    print(f"    {'PASS' if ok6 else 'FAIL'}: {len(syn) + len(syn_b) + 2} 個前綴,例外 {crash6 or '無'};"
+          f"截在 {cut} -> {[(w, h, len(b)) for w, h, b in got6.get((len(syn), cut), [])]}"
+          f"(應 [(1, 1024, {offs5[3] - offs5[2] - 13}), (2, 1, 0)])"
+          + ("" if not wrong6 else f",不符 {wrong6}"))
+    if not ok6:
+        fails.append(f"容器截斷不安全或丟了讀得到的幀:例外 {crash6},不符 {wrong6}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(4 模式手算 + 截斷回歸 + 跨工具同族對照 + "
-          "不變量與非恆真控制 + 容器幀數 u8)。")
+          "不變量與非恆真控制 + 容器幀數 u8 + 容器截斷)。")
     return 0
 
 
@@ -195,8 +222,20 @@ def parse_anim(d):
     # 續一百四十:幀數是 +0 的 u8,+1 是旗標。以前當 u16 讀,旗標 = 1 的 15 份會多讀 256 筆
     # 「位移」;現有檔案裡那些值剛好全部超過檔長被濾掉、最後一幀的結尾也剛好被切片截回檔長,
     # 所以輸出沒變 —— 是運氣,不是正確(selftest (5) 用一份會被讀歪的合成檔釘住)。
-    nf = d[0]
-    offs = [struct.unpack_from("<I", d, 8 + 4 * i)[0] for i in range(nf)]
+    # 續一百四十三:空檔(FIGANI_408.bin 長 0)在 d[0] 丟 IndexError,位移表被截斷時
+    # unpack_from 丟 struct.error。呼叫端是幾百個子資源的批次迴圈,所以降級不崩:
+    # 逐筆讀位移,讀到檔尾就停,讀不到的幀當作不存在(selftest (6) 窮舉前綴釘住)。
+    # 不另算「放得下幾筆」的上限:幀在位移表之後且至少 13 byte,上限少算幾筆在格式正確的檔上
+    # 看不出差別(續一百四十三窮舉突變 8→9、4→5 都逃掉),所以讓 unpack_from 自己判斷。
+    if not d:
+        return []
+    offs = []
+    for i in range(d[0]):
+        try:
+            offs.append(struct.unpack_from("<I", d, 8 + 4 * i)[0])
+        except struct.error:
+            break
+    nf = len(offs)
     frames = []
     for fi in range(nf):
         o = offs[fi]

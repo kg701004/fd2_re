@@ -91,7 +91,7 @@ def _dat(name: str) -> bytes:
     return p.read_bytes() if p.is_file() else b""
 
 
-# (模組, 函式, 說明, 取樣資料, 由 body 組出呼叫引數, 合法例外)
+# (模組, 函式, 說明, 取樣資料, 由 body 組出呼叫引數, 合法例外[, 完整取樣回傳值的前提])
 # 「合法例外」是這支解碼器**宣告**它會丟的:容器 parser 本來就該拒絕非容器。
 # 其餘任何例外都是發現 —— 特別是 IndexError / struct.error 這種「讀過頭」的。
 DECODERS = [
@@ -132,6 +132,12 @@ DECODERS = [
      lambda: _sample("FDSHAP"), lambda b: ((b,), {}), ("ValueError",)),
     ("decode_dato", "frames_bytes", "DATO 幀 offset 表",
      lambda: _sample("DATO"), lambda b: ((b,), {}), ("ValueError",)),
+    # 續一百四十三:FIGANI 的**幀容器**。上面 `decode_figani.decode_rle` 那一列只測幀本文的 RLE,
+    # 容器 parser 是另一個函式,沒登錄 —— 於是空檔 FIGANI_408.bin 的 IndexError 一直沒被這張表看到。
+    # 它修好後不丟任何例外,「完整取樣不能出錯」這道前提對它恆真,所以多給第 7 欄:完整取樣的
+    # 回傳值必須滿足的前提(這裡是「解出至少一幀」),否則判 DEGENERATE。
+    ("decode_figani", "parse_anim", "FIGANI 幀容器(u8 幀數 + u32 位移表)",
+     lambda: _sample("FIGANI"), lambda b: ((b,), {}), (), bool),
 ]
 
 
@@ -143,7 +149,7 @@ def _call(mod, fn, body, mk):
 
 
 def probe(entry, steps: int, seed: int = 0) -> dict:
-    mod, fn, desc, get, mk, allowed = entry
+    mod, fn, desc, get, mk, allowed, *premise = entry
     full = get()
     if not full:
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "SKIP",
@@ -161,12 +167,17 @@ def probe(entry, steps: int, seed: int = 0) -> dict:
     # 對立假說會預測同樣的觀測值,所以那樣的檢查是裝飾。DEGENERATE 是獨立的判定,
     # 不併進 OK,也不併進 CRASH。
     try:
-        _call(mod, fn, full, mk)
+        res = _call(mod, fn, full, mk)
     except Exception as exc:                                  # noqa: BLE001
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "DEGENERATE",
                 "detail": (f"完整取樣({len(full)} bytes)自己就被拒:"
                            f"{type(exc).__name__}: {str(exc)[:60]} —— "
                            f"截斷掃描只會反覆測到格式閘門")}
+    # 不丟例外的 parser(壞輸入回空)要靠第 7 欄判斷完整取樣是不是真的解出東西。
+    if premise and not premise[0](res):
+        return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "DEGENERATE",
+                "detail": (f"完整取樣({len(full)} bytes)的回傳值不符前提 {premise[0].__name__}"
+                           f" —— 截斷掃描只會反覆測到空結果")}
 
     body = full[:TRUNC_LIMIT]
     rng = random.Random(seed * 7919 + len(body))
@@ -309,6 +320,20 @@ def selftest() -> int:
     if not ok3c:
         fails.append("退化取樣在舊判準下就會被抓到,(3b) 因此是平凡的")
 
+    print("\n(3d) 第 7 欄前提:不丟例外的 parser 拿到非容器取樣,要判 DEGENERATE")
+    # 續一百四十三:parse_anim 對 64 個 0 回空串列、不丟例外;沒有第 7 欄就會被判 OK。
+    # 三個一組:無前提 -> OK(證明這題不是被別的條件判對)、有前提 -> DEGENERATE、真取樣 -> OK。
+    zeros = (lambda: b"\x00" * 64)
+    r_blind = probe(("decode_figani", "parse_anim", "", zeros, lambda b: ((b,), {}), ()), 12)
+    r_prem = probe(("decode_figani", "parse_anim", "", zeros, lambda b: ((b,), {}), (), bool), 12)
+    r_fig = probe(("decode_figani", "parse_anim", "", lambda: _sample("FIGANI"),
+                   lambda b: ((b,), {}), (), bool), 12)
+    ok3d = (r_blind["verdict"], r_prem["verdict"], r_fig["verdict"]) == ("OK", "DEGENERATE", "OK")
+    print(f"    {'PASS' if ok3d else 'FAIL'}: 無前提 -> {r_blind['verdict']}(應 OK);"
+          f"有前提 -> {r_prem['verdict']}(應 DEGENERATE);真 FIGANI -> {r_fig['verdict']}(應 OK)")
+    if not ok3d:
+        fails.append(f"第 7 欄前提沒有鑑別力:{r_blind['verdict']}/{r_prem['verdict']}/{r_fig['verdict']}")
+
     print("\n(4) 非空控制:登錄表必須真的跑到資料,不能整排 SKIP")
     rows = [probe(e, 12) for e in DECODERS]
     skipped = [r["tool"] for r in rows if r["verdict"] == "SKIP"]
@@ -347,7 +372,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(故障注入 + 配對控制 + 例外清單的鑑別力 + "
-          "取樣退化的成對案例與非平凡性控制 + 非空控制 + 跨工具交叉驗證)。")
+          "取樣退化的成對案例與非平凡性控制 + 第 7 欄前提 + 非空控制 + 跨工具交叉驗證)。")
     return 0
 
 
