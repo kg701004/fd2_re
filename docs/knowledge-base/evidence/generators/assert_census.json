@@ -1,0 +1,257 @@
+{
+ "_note": "每個證據產生器的 assert 個數(asserts,AST 靜態)與重算時執行到的個數(executed)。由 assert_census.py --update 產生;asserts / executed 變少要在提交訊息說明原因。",
+ "generators": {
+  "ev_ai_action_choice": {
+   "asserts": 8,
+   "executed": 8,
+   "not_executed_lines": []
+  },
+  "ev_ai_heal_score": {
+   "asserts": 11,
+   "executed": 11,
+   "not_executed_lines": []
+  },
+  "ev_ai_item_action_item79_flow": {
+   "asserts": 16,
+   "executed": 16,
+   "not_executed_lines": []
+  },
+  "ev_ai_item_score": {
+   "asserts": 7,
+   "executed": 7,
+   "not_executed_lines": []
+  },
+  "ev_ai_move_nearest": {
+   "asserts": 3,
+   "executed": 3,
+   "not_executed_lines": []
+  },
+  "ev_ai_physical_candidate": {
+   "asserts": 6,
+   "executed": 6,
+   "not_executed_lines": []
+  },
+  "ev_ai_physical_untested_branches": {
+   "asserts": 8,
+   "executed": 8,
+   "not_executed_lines": []
+  },
+  "ev_ai_spell_path": {
+   "asserts": 15,
+   "executed": 15,
+   "not_executed_lines": []
+  },
+  "ev_ai_spell_score": {
+   "asserts": 14,
+   "executed": 14,
+   "not_executed_lines": []
+  },
+  "ev_attack_exp": {
+   "asserts": 6,
+   "executed": 6,
+   "not_executed_lines": []
+  },
+  "ev_attack_path_selection": {
+   "asserts": 26,
+   "executed": 26,
+   "not_executed_lines": []
+  },
+  "ev_cmd_table_0_9_coverage_lut_cycles": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_collect_targets_in_range": {
+   "asserts": 1,
+   "executed": 1,
+   "not_executed_lines": []
+  },
+  "ev_dispatch_index_bounds_table_split": {
+   "asserts": 11,
+   "executed": 11,
+   "not_executed_lines": []
+  },
+  "ev_heal_spell_targets": {
+   "asserts": 20,
+   "executed": 20,
+   "not_executed_lines": []
+  },
+  "ev_item79_aim_exp_reward_lines": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_level_up": {
+   "asserts": 29,
+   "executed": 29,
+   "not_executed_lines": []
+  },
+  "ev_lut_ch22_post_cycles2500_chapter_tables": {
+   "asserts": 14,
+   "executed": 14,
+   "not_executed_lines": []
+  },
+  "ev_lut_circle_ramp_at_unit": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_lut_circle_ramp_frame_time_ch22_post": {
+   "asserts": 11,
+   "executed": 11,
+   "not_executed_lines": []
+  },
+  "ev_move_landing_select": {
+   "asserts": 10,
+   "executed": 10,
+   "not_executed_lines": []
+  },
+  "ev_real_kill_corpse": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_rest_and_item79_branch": {
+   "asserts": 9,
+   "executed": 9,
+   "not_executed_lines": []
+  },
+  "ev_rest_recover": {
+   "asserts": 11,
+   "executed": 11,
+   "not_executed_lines": []
+  },
+  "ev_s130": {
+   "asserts": 18,
+   "executed": 18,
+   "not_executed_lines": []
+  },
+  "ev_s131": {
+   "asserts": 24,
+   "executed": 24,
+   "not_executed_lines": []
+  },
+  "ev_s132": {
+   "asserts": 30,
+   "executed": 30,
+   "not_executed_lines": []
+  },
+  "ev_s133": {
+   "asserts": 28,
+   "executed": 28,
+   "not_executed_lines": []
+  },
+  "ev_s134": {
+   "asserts": 27,
+   "executed": 27,
+   "not_executed_lines": []
+  },
+  "ev_s135": {
+   "asserts": 34,
+   "executed": 34,
+   "not_executed_lines": []
+  },
+  "ev_s136": {
+   "asserts": 44,
+   "executed": 44,
+   "not_executed_lines": []
+  },
+  "ev_s137": {
+   "asserts": 89,
+   "executed": 88,
+   "not_executed_lines": [
+    368
+   ]
+  },
+  "ev_s138": {
+   "asserts": 70,
+   "executed": 70,
+   "not_executed_lines": []
+  },
+  "ev_s139": {
+   "asserts": 23,
+   "executed": 23,
+   "not_executed_lines": []
+  },
+  "ev_s65": {
+   "asserts": 16,
+   "executed": 16,
+   "not_executed_lines": []
+  },
+  "ev_s65b": {
+   "asserts": 8,
+   "executed": 8,
+   "not_executed_lines": []
+  },
+  "ev_s66": {
+   "asserts": 30,
+   "executed": 30,
+   "not_executed_lines": []
+  },
+  "ev_s67": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_s68": {
+   "asserts": 10,
+   "executed": 10,
+   "not_executed_lines": []
+  },
+  "ev_s69": {
+   "asserts": 10,
+   "executed": 10,
+   "not_executed_lines": []
+  },
+  "ev_s70": {
+   "asserts": 14,
+   "executed": 14,
+   "not_executed_lines": []
+  },
+  "ev_s71": {
+   "asserts": 11,
+   "executed": 11,
+   "not_executed_lines": []
+  },
+  "ev_s72": {
+   "asserts": 27,
+   "executed": 27,
+   "not_executed_lines": []
+  },
+  "ev_s73": {
+   "asserts": 64,
+   "executed": 64,
+   "not_executed_lines": []
+  },
+  "ev_s74": {
+   "asserts": 74,
+   "executed": 74,
+   "not_executed_lines": []
+  },
+  "ev_s75": {
+   "asserts": 68,
+   "executed": 68,
+   "not_executed_lines": []
+  },
+  "ev_s76": {
+   "asserts": 69,
+   "executed": 69,
+   "not_executed_lines": []
+  },
+  "ev_spell9_path": {
+   "asserts": 12,
+   "executed": 12,
+   "not_executed_lines": []
+  },
+  "ev_terrain_modifier": {
+   "asserts": 10,
+   "executed": 10,
+   "not_executed_lines": []
+  },
+  "ev_terrain_types_3_5": {
+   "asserts": 14,
+   "executed": 14,
+   "not_executed_lines": []
+  }
+ }
+}

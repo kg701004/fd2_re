@@ -72,6 +72,8 @@
 |---|---|
 | 看某個位址是哪個函式、名稱、證據、本體反組譯 | `python tools/function_inventory.py --card 0x位址` |
 | 看覆蓋率 | `python tools/function_inventory.py --coverage` |
+| 找 doc98 裡某件事在哪一節 | [`98-index.md`](98-index.md)(`python tools/doc98_index.py --check`;新增一節後 `--write`) |
+| 看證據產生器的 assert 個數有沒有比基準少 | `python docs/knowledge-base/evidence/generators/assert_census.py`(`--executed` 另查沒執行到的) |
 | 決定下一輪原版實機擷取跑哪個場景 | `python tools/plan_trace_coverage.py`(續九十八:戰場指令環 +369、城鎮教會 / 商店 / 出擊選人、從開機就錄 +231 —— 這幾項續一百已擷取;敵方 AI 施法續一百零二、法術 handler 續一百零四、AIL 除錯續一百零五已擷取;收益是上界;靜態走不到的呼叫點不算前線) |
 | 有新的原版軌跡時更新實機執行位址 | 新軌跡放進 `.wsl_build/` 後 `python tools/verify_dead_functions_vs_traces.py --export docs/data/live_exec_addresses.json .wsl_build`(需要 capstone;內容驗不過的軌跡自動略過;已登錄 `verify_generated_artifacts`),再調高 `function_inventory.py` 的 `LIVE_ENTRY_FLOOR` |
 | 從開機就錄的擷取、依場景看第一次執行的函式與名稱抽驗 | `FD2_HARNESS_BREAK_START=1` 啟動 `dosbox_harness.sh`(要 DOS 環境變數時加 `FD2_HARNESS_DOS_SET="NAME=VALUE …"`,續一百零五);分段檔放 `.wsl_build/live_s100_segments/` 後 `python tools/trace_scene_names.py --export docs/data/live_scene_entries.json .wsl_build/live_s100_segments`,再 `python tools/trace_scene_names.py`(續一百) |

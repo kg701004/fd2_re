@@ -147,6 +147,7 @@ FDTXT = "extracted/raw/FDTXT"
 #          "live"     -- a running DOSBox-X instance (skipped here)
 INVOKE: dict[str, tuple[list[str], str]] = {
     "worklist_status.py":        (["--selftest"], "offline"),
+    "doc98_index.py":            (["--selftest"], "offline"),
     "encode_text.py":            (["selftest", FDTXT], "offline"),
     "decode_story_text.py":      (["--selftest", FDTXT], "offline"),
     "audit_evidence_provenance.py": (["--selftest"], "offline"),

@@ -242,6 +242,10 @@
   已登記於 `docs/data/known_address_errata.json`，或以 `--mark-correction` 宣告被訂正
   的不是位址本身。（2026-09-11：知識庫約九成的位址訂正只以散文存在、從未登記；
   這道閘門不處理存量，只讓存量停止增長。）
+- 新增或修改證據產生器（`docs/knowledge-base/evidence/generators/ev_*.py`）時，提交前執行
+  `python docs/knowledge-base/evidence/generators/assert_census.py`：assert 個數與基準不同就 exit 1；刻意增刪 assert 時以
+  `--update --executed` 重寫基準並在提交訊息說明。新增 `98-tooling-infrastructure.md` 的一節時執行
+  `python tools/doc98_index.py --write` 後 `--check`。
 - 修改 `tools/*.py` 時，提交前執行 `python tools/verify_selftest_discrimination.py --precommit`：先驗`docs/data/equivalent_mutants.json` 沒有過期條目，再對相對於 HEAD 改動的工具**與 import 它們的工具**逐一窮舉（逾時抓到的會用完整上限重跑確認）；有未登錄的逃逸、登錄錯誤或過期時 exit 1，補題或更新登錄後重跑。通常幾分鐘；全量窮舉只在一批工具改動後當檢查點跑（突變逾時依各工具基準縮放，約 1 小時）。
 - 提交後只推送至 `fork remaster-local`（`git push fork remaster-local`），再驗證本機 HEAD 與
   `fork/remaster-local` 相同。**不得推送至 `origin`**（wicanr2 的上游倉庫）：這是使用者的常設

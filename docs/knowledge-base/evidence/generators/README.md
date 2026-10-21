@@ -133,6 +133,10 @@ python rebuild_excerpts.py     # 從 WSL 裡的完整記錄重切摘錄,與清�
 python rebuild_excerpts.py --from-backup <備份夾>   # WSL 裡的記錄不在時:從壓縮備份還原、驗 sha256 後重切
 python rebuild_excerpts.py --selftest --from-backup <備份夾>   # 反向對照;WSL 沒有 v21 記錄又沒給備份夾時回報 BLOCKED(rc 2)
 python sweep_literals.py [ev_s65b ...]   # 每個數字常數 +1 重算:找出寫進證據卻沒有判準擋得住的手寫值
+python assert_census.py                 # 每個產生器的 assert 個數與 assert_census.json 比:變少 / 沒更新基準都 exit 1(秒級,提交前跑)
+python assert_census.py --executed      # 重算產生器,記下沒執行到的 assert;執行到的個數變少就 exit 1
+python assert_census.py --update [--executed]   # 刻意增刪 assert 後重寫基準(提交訊息說明原因)
+python assert_census.py --selftest
 python sweep_literals.py --selftest
 ```
 

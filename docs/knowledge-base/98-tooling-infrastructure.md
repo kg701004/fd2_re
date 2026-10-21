@@ -2,6 +2,8 @@
 
 > 跟遊戲本體知識無關,記錄「怎麼更快做 RE 研究」本身的工具鏈,避免每個 session 重新發明。
 
+> **依主題找節:[`98-index.md`](98-index.md)**(每一節的行號;由 `python tools/doc98_index.py --write` 產生,`--check` 檢查;新增一節後重跑 `--write`)。
+
 > **2026-09-02:`remake/` 已整個移除(使用者明確指示)。** 本檔裡任何以驅動 remake 實際
 > 執行為目的的工具章節(例如「remake 側 xdotool 合成鍵盤輸入可靠性」、
 > `tools/dosbox_diff_harness.*`、`tools/fd2_live_input_helper.*` 相關段落)描述的工具
@@ -10300,7 +10302,36 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
   改成兩種解法走同一段計數、同時斷言正確解法全部吃完,放錯欄才抓得到。
 
 仍留:
-- 第二項(產生器 assert 數量閘門)與第三項(doc98 主題索引)工具已寫好、自我測試與故障注入通過,但還沒放進倉庫與跑完閘門。
-  做索引時發現本檔沒有「續九十五」的標題(SESSION-HANDOFF-2026-10-07 記有續九十五的 `function_inventory.py` 資料突變)。
+- 第二項(產生器 assert 數量閘門)與第三項(doc98 主題索引)見下一節「續一百三十九(續)」。
 - 只記錄、未修改:`tools/decode_figani.py` 的 `parse_anim` 把幀數當 u16 讀,遇到那 15 份旗標 1 的檔案會多讀位移表;
   `tools/decode_sprite.py` 的 `mode01` 預設 `"literal"` 與上面 4 種資源都不符,文件字串說 FIGANI「渲染未對齊」也與本輪(0 個跨列、全部編回)不符。
+
+## 2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
+
+續一百三十九三項建議的後兩項。
+
+**產生器 assert 數量閘門(`docs/knowledge-base/evidence/generators/assert_census.py`)**。證據 JSON 逐 byte 相同(`run_all.py`)
+不代表判準還在:刪掉一個 assert,輸出不變,run_all 仍是 IDENTICAL,變異測試也只驗還留著的那些。
+- 靜態(預設,秒級):以 AST 數 `inputs_manifest.json` 列的每個產生器的 assert 個數,與 `assert_census.json` 的基準比;變少(SHRANK)、
+  變多但基準沒更新(GREW)、基準沒有(NEW)、清單沒有了(GONE)、一個都沒有(ZERO)都 exit 1。基準只用 `--update` 改,提交時 diff 會顯示。
+- 動態(`--executed`):在暫存目錄重算產生器,每個 assert 前插一個計數呼叫(AST 改寫,行號不變),記下沒執行到的 assert;
+  與基準的執行到個數比,變少就 exit 1。輸入與清單不符的產生器記 NOT TESTED。
+- 基準:50 個產生器、1120 個 assert,重算時執行到 1119 個。唯一沒執行到的是 `ev_s137.py` 第 368 行:它在「push 之後、call 之前
+  不能再有 push」的 while 迴圈裡,而 6 個取位址處的 push 下一個指令都直接是 call,迴圈一次都沒進去 —— 守衛本身沒錯,但在現有資料上
+  什麼都沒檢查(記在基準的 `not_executed_lines`)。
+- `--selftest`:靜態 6 種判定、巢狀(函式 / 迴圈 / else / try / except / finally)計數、執行到 / 沒執行到(死分支、沒呼叫的函式、沒觸發的
+  except)、assert 失敗時之前執行到的仍記下且 exit 非 0、改寫後 ev_s65b 的輸出逐 byte 不變且 assert 全部執行到、刪一個 assert 輸出照樣
+  相同但計數抓得到。5 個故障注入(不插計數、SHRANK 門檻錯一、只數最上層、結束時沒寫出、GONE 漏報)都讓 selftest 失敗。
+
+**doc98 主題索引(`tools/doc98_index.py` → [`98-index.md`](98-index.md))**。本檔超過一萬行、180 多節;索引把每一節依主題
+(問題導向,同 `00-index.md`)列出行號,讀的人用行號跳過去讀那一節。索引由標題規則產生,不手寫:`--check` 抓孤兒節(沒有落在任何主題)、
+沒命中的規則、與已提交的索引不同,任何一項都 exit 1 —— 新增一節時要嘛標題帶到既有主題的關鍵字,要嘛在 `TOPICS` 補規則,然後 `--write`。
+程式碼區塊裡的 `## ` 不算標題;「續 N~M」算成一段範圍。
+- 19 個主題;`--selftest` 的真實 doc98 段在補規則前抓到 6 個孤兒節。
+- 索引列出「續 N」缺號:續九十五沒有標題(SESSION-HANDOFF-2026-10-07 記有續九十五的 `function_inventory.py` 資料突變,本檔沒有那一節)。
+- 登錄進 `verify_selftest_discrimination.py` 的 `INVOKE`;`--tool doc98_index.py --exhaustive` 第一次逃掉 5 個(一個等價突變、
+  「百」前面省略數字、同主題多規則的去重、「最近 10 節」的個數),改寫與補題後 30 / 30。
+
+仍留:
+- 續九十五的內容只在 SESSION-HANDOFF 有摘要,本檔沒有補寫。
+- `tools/decode_figani.py` 的 u16 幀數、`tools/decode_sprite.py` 的 `mode01` 預設與文件字串(見續一百三十九)。
