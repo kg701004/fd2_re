@@ -10691,6 +10691,14 @@
      9558,
      "fcd8300d748d3fb0fe4d25ab29a26b0f69b5ffad3b6c83bae237908ca239ad30"
     ],
+    "extracted/raw/ANI/ANI_000.bin": [
+     1002800,
+     "ec8b7f281a6b9ee4a8bd965954ad4862ba740162b6aec75df6a6265196f8de71"
+    ],
+    "extracted/raw/ANI/ANI_001.bin": [
+     635952,
+     "5c8cea8e0e0c18a92d4f623f35753409da0fd38f4eedea54a35639b868ebe90e"
+    ],
     "extracted/raw/FDOTHER/FDOTHER_069.bin": [
      10482,
      "71a83baf8d5ed2993925cf3a80100622e4c39f5fcd4116418a0104afaee1b24d"
@@ -10710,6 +10718,18 @@
     "extracted/raw/FDOTHER/FDOTHER_073.bin": [
      10930,
      "b7df7f62ab89486c2b710ed70a37f225fb423ed5d19e6808434a6ca9a343b00e"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_101.bin": [
+     768,
+     "572dd943e828d234c69b4faeb90eb97f6ff92dd271d2a06d276b8369a531e250"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_102.bin": [
+     768,
+     "99592bba4e708d848f24cf7db7579d1e54b729de32327232a5137ced2a41b0d7"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },

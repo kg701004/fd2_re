@@ -7,7 +7,10 @@
 
 | 產生器 | 證據檔 | 變異測試 |
 |---|---|---|
-| `ev_s141.py` | `demonface_live_vs_fdother_scroll_s141_20261021.json` | `mut_s141.py`(14) |
+| `ev_s141.py` | `demonface_live_vs_fdother_scroll_s141_20261021.json` | `mut_s141.py`(25) |
+
+續一百四十二更正並加強 `ev_s141.py`(黑幕後是 ANI #0 金鎖插播;絕對調色盤判準;觸發常數讀原版 FD2.EXE),證據檔同名重算。
+連拍腳本在 [`drivers_s141/`](drivers_s141/README.md)。
 
 ## 續一百三十九(2026-10-21)
 
@@ -225,8 +228,8 @@ python sweep_literals.py --selftest
 ## 限制
 
 - `IDENTICAL` 證明可重現,不證明正確;正確性由產生器裡的 `assert` 與變異測試負責。
-- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261021b.tar.xz`
-  含清單上全部 2731 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
+- 原始紀錄只有倉庫外同一顆硬碟上的本機備份(`fd2_re_evidence_raw_backup/`,最新一份 `evidence_inputs_all_20261021c.tar.xz`
+  含清單上全部 2733 個非遊戲檔,遊戲檔在 `*_20261005b`),沒有第二份;硬碟損壞時產生器全部變成 `MISSING_INPUT`。
 - 終端輸出的原始來源是 Claude Code 對話紀錄(本機 `~/.claude/projects/` 下約 1.7 GB 的 jsonl),可能被 Claude Code 依保留期限清除。
   同一備份夾的 `transcript_records_20261006.jsonl.xz`(旁有 `.sha256`)保留 86 個 id 的 291 行原始紀錄:
   59 份終端輸出,加上切出摘錄的 27 個指令(`rebuild_excerpts.py` 的切法出處);只能證明匯出與紀錄一致,

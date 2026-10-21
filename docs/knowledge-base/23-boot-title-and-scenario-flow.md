@@ -246,6 +246,8 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 
 > 續一百四十一重做(doc98):原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)在 DOSBox-X 重拍開場 93 張(`.wsl_build/s141_demonface/`,本機),把 FDOTHER_069–073 的 dither 解疊成 320×735 捲動緩衝,以「同一幀裡一個調色盤索引只顯示一個顏色」逐像素比對:捲動段 76 張裡 60 張完全一致、14 張是差一列的撕裂、2 張解釋不了;literal 解、平移 1 px、logo 幀都到不了 0.9(`evidence/demonface_live_vs_fdother_scroll_s141_20261021.json`)。**⑨ = #0x45 / #0x46 捲動頂端的結論成立**,依據改為這份逐像素一致率。與下文不一致的兩點(只記錄):這次實拍捲到 esi = 26 就切黑、黑幕約 0.26 秒後進 logo,沒有看到「捲到 0 再停 1000ms」;惡魔臉背景是黑的、黑幕裡沒有紅閃光(取樣約 0.04 秒一張)。下文的 frame_184 是 §2.4 那一輪 docker dosbox 0.74-3 的擷取,不是 DOSBox-X,上面續一百四十更正的說法一併更正;那一輪用哪一版 FD2.EXE 沒有紀錄。
 
+> 續一百四十二更正(doc98):上一則「與下文不一致的兩點」撤回。title_seq 捲動迴圈在 esi == 0x19 呼叫 0x1f81e,先清黑、再播 ANI #0(金鎖)(doc39 §10.5 已有記錄);實拍「dy = 26 之後切黑、約 0.26 秒後進 logo」就是這個插播,黑幕後那段逐像素等於 ANI_000 第 14–21 幀,不是 logo。連拍在金鎖播到一半時結束,esi 24 → 0、esi == 10 的浮空城插播、esi == 0 的停留 1000ms 與 §2.4⑤ 的紅閃光都不在拍攝範圍內:下文的推導沒有被推翻,也沒有被這次實拍證實(NOT TESTED)。另以絕對調色盤逐像素驗證:捲動段整張等於 #0x65 或 #0x66 的顏色,#0x66 只出現在 0x5204e 表命中值 110 / 87 / 64 之後 11 步內(捲動中的閃光);上一則 2 張解釋不了的實拍是另一方向 / 多段的撕裂,76 張現在都解釋得了(`evidence/demonface_live_vs_fdother_scroll_s141_20261021.json` 重算)。
+
 結果(`extracted/title_re/fdother_static/fdother069_070_demonface_pal101.png`,本機)與
 `frame_184.png` 並排(`extracted/title_re/fdother_static/demonface_compare_frame184_vs_re.png`,
 本機)——**紅色發光雙眼位置、上方一道白/淺色弧形光帶、左下角放射狀爪痕、下巴淺膚色斑塊,四個

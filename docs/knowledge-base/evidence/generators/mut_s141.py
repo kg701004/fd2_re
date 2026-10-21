@@ -11,22 +11,36 @@ MUTANTS = [
     ("模式 1 先寫值再寫透明", "out += bytes([0, body[i]]) * n", "out += bytes([body[i], 0]) * n"),
     ("literal 對照沒有改成 literal", "if m == 1 and mode1_literal:", "if m == 1 and False:"),
     ("緩衝只疊四幀", "for n in range(69, 74)]", "for n in range(69, 73)]"),
+    ("調色盤 6 → 8 bit 少了低兩位", "a = (a << 2) | (a >> 4)", "a = a << 2"),
     # 實拍取樣
     ("遊戲區左緣錯 2 px(= 1 個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 194, 201 "),
     # 判準本身
     ("比對器瞎了(每組取總和而非最大)", "return int(np.maximum.reduceat(c, starts).sum())", "return int(np.add.reduceat(c, starts).sum())"),
     ("乾淨門檻 0.5", "CLEAN = 0.999 ", "CLEAN = 0.5 "),
-    ("撕裂拼接下半段沒有差一列", "buf[dy1 - 1 + cut:dy1 - 1 + WIN]", "buf[dy1 + cut:dy1 + WIN]"),
     ("乾淨幀比例要求 95%", "assert len(clean) >= 0.75 * len(pre)", "assert len(clean) >= 0.95 * len(pre)"),
+    ("撕裂自由度只看 dy", "    for c in (dy - 1, dy, dy + 1):\n        if 0 <= c", "    for c in (dy,):\n        if 0 <= c"),
+    ("撕裂自由度只看 dy + 1 一側", "    for c in (dy - 1, dy, dy + 1):\n        if 0 <= c", "    for c in (dy, dy + 1):\n        if 0 <= c"),
+    ("換盤那一列的索引順序反過來", "if ok.all() and new and old and max(new) < min(old):", "if ok.all() and new and old and max(new) > min(old):"),
+    ("換盤幀的位置判準對調", 'if s["top"] == FLASH_K else TABLE[:-1]', 'if s["top"] != FLASH_K else TABLE[:-1]'),
     ("捲動方向預期往下", "assert all(x >= y for x, y in zip(dys, dys[1:])), dys", "assert all(x <= y for x, y in zip(dys, dys[1:])), dys"),
-    ("預期捲到 dy = 0", "assert pre[-1] in clean and last_dy > 0,", "assert pre[-1] in clean and last_dy == 0,"),
-    ("預期不是原版 EXE", 'assert META["exe_md5"] == "33464c81e6a364fd0660141139aa8e6e"', 'assert META["exe_md5"] == "b97caf2239a27a896069d03549d96e1e"'),
+    ("預期不是原版 EXE", 'MD5 = "33464c81e6a364fd0660141139aa8e6e"', 'MD5 = "b97caf2239a27a896069d03549d96e1e"'),
+    # 由 EXE 讀出的觸發常數
+    ("ANI 觸發的 esi 差 3", "T_ANI = code(0x1fadd, 3)[2]", "T_ANI = code(0x1fadd, 3)[2] + 3"),
+    ("ANI 索引讀錯(#2)", "ANI_INDEX = code(0x1fae6, 2)[1]", "ANI_INDEX = code(0x1fae6, 2)[1] + 2"),
+    ("閃光步數少 3", "FLASH_STEPS = code(0x1fc08, 5)[4]", "FLASH_STEPS = code(0x1fc08, 5)[4] - 3"),
+    ("閃光與基本調色盤對調", "PAL_FLASH, PAL_BASE = code(0x1fbd9, 2)[1], code(0x1fc0f, 2)[1]",
+     "PAL_BASE, PAL_FLASH = code(0x1fbd9, 2)[1], code(0x1fc0f, 2)[1]"),
+    ("閃光區間兩端也當成「一定是閃光」", 'assert not any(strictly_flash(r["dither"]["dy"]) for r in base)', 'assert not any(in_flash(r["dither"]["dy"]) for r in base)'),
+    ("預期看到的命中值只算上界", "if h - FLASH_STEPS <= hi and h >= lo)", "if h - FLASH_STEPS <= hi and h >= hi)"),
     # 對照本身
-    ("虛無沒有平移", "na, nb, _ = scores(BD, col, dy, dx=1)", "na, nb, _ = scores(BD, col, dy, dx=0)"),
-    ("literal 的撕裂拼接其實用 dither 緩衝", 'r["literal_tear"] = tear(BL, col_of[r["shot"]], r["literal"]["dy"])',
-     'r["literal_tear"] = tear(BD, col_of[r["shot"]], r["dither"]["dy"])'),
+    ("虛無沒有平移", "BS = shifted(BD, 1)", "BS = shifted(BD, 0)"),
     ("黑幕分段:把非黑幀也算進黑幕", 'while g1 + 1 < len(rows) and rows[g1 + 1]["nonblack"] == 0:',
      'while g1 + 1 < len(rows) and rows[g1 + 1]["nonblack"] >= 0:'),
+    ("ANI 對照用 ANI #0 自己", 'F1 = ani_colours("ANI_001.bin")', 'F1 = ani_colours("ANI_000.bin")'),
+    # ANI 段
+    ("ANI 幀序預期遞減", "assert all(x <= y for x, y in zip(seq_k, seq_k[1:]))", "assert all(x >= y for x, y in zip(seq_k, seq_k[1:]))"),
+    ("ANI 單幀完全相等要求 90%", 'assert sum(bool(r["ani"]["exact"]) for r in solid) >= 0.6 * len(solid)',
+     'assert sum(bool(r["ani"]["exact"]) for r in solid) >= 0.9 * len(solid)'),
 ]
 
 if __name__ == "__main__":
