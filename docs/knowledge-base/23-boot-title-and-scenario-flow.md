@@ -91,6 +91,9 @@ DOS/4GW entry 0x3c964 ──► Watcom CRT ──► main 0x25bf4
 
 ### 2.3 FLAME DRAGON 標題如何「打上去」[驗]
 
+> 續一百四十六註(doc98):下一行的 `0x286bd` 是舊位址(已登勘誤);本版是 `0x1fc7b call 0x2df01`,而且實拍是往純紅的漸變、
+> 不是抹除(見 §2.4⑤ 續一百四十五更正)。
+
 捲到立繪頂端後,經 BG.DAT 抹除轉場(0x286bd,esi=0x28→0),載入**主選單畫面 = FDOTHER 資源 #7**(巢狀 LLLLLL 容器,8 子資源):
 - **sub0(320×200)= 標題主畫面**:解出可見大大的 **「2」** + 華麗龍紋 **FLAME DRAGON** logo + 卷軸副標 **「LEGEND OF GOLDEN CASTLE」**(炎龍騎士團2 黃金城傳說)。本機 `extracted/title_re/sub7/s00_spr.png`。
 - **sub1–6 = 3 個選單項 ×2 態**(61×7 / 62×8,「未選 / 反白選中」),如第一項 "START"。

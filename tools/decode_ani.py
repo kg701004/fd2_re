@@ -24,9 +24,9 @@
 
 反組譯位址(FD2.EXE linear):
     0x020421  播放器主函式(開 ANI.DAT → 讀資源 → 逐幀迴圈 → blit → 可按鍵跳過)
-    0x036c9e  **VM 指令派發器**:逐位元組讀 opcode(0-9),查表 0x5276a(10 個函式指標),
+    0x036ff4  **VM 指令派發器**(舊版 0x036c9e,本版高 0x356):逐位元組讀 opcode(0-9),查表 0x5276a(10 個函式指標),
               呼叫對應 handler,重複 cmdCount 次。
-    0x036c7d  VM 狀態初始化:設定畫面寬度([0x52760])、framebuffer 指標([0x52762]
+    0x036fd3  VM 狀態初始化(舊版 0x036c7d):設定畫面寬度([0x52760])、framebuffer 指標([0x52762]
               = **恆為 0xA0000,即 VGA mode13h 顯示記憶體本身!**)、palette 暫存區
               指標([0x52766],malloc 768 bytes)。
     0x5276a   opcode 跳表(10 entries,第 11 項起是別的資料,故 opcode 只有 0-9)。

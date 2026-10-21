@@ -313,6 +313,9 @@ doc39 §6 已獨立列出)提供,不需要 ANI_002 補位。
 > - 實拍順序與上表一致:dy 25 → 11(dy 22–13 用 #0x66,表值 22 之後 11 步)、esi == 10 浮空城、dy 10 → 0、
 >   dy 0 停留 1.13 秒、紅閃光、ANI #1(logo)、整張白、淡到標題 FDOTHER #7 sub0 + #8。
 
+> 續一百四十六補(doc98):第二段(esi 0 → 0x28)在本版是 `0x1fd64 call 0x2df01(0, 0xff, esi, 0x38, 0x3c, 0x3f)`、delay 8 ms,
+> 也不是 `0x286bd`;`0x286bd`、`0x36c9e`、`0x36c7d` 已登 `known_address_errata.json`。
+
 ### 10.6 對照 remake `title.go` 現行 `cutSeq` 猜測 —— 需要的修正
 
 `remake/cmd/fd2/title.go` 現行:

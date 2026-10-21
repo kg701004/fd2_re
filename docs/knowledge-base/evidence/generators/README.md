@@ -15,9 +15,10 @@
 
 | 產生器 | 證據檔 | 變異測試 |
 |---|---|---|
-| `ev_s141.py` | `demonface_live_vs_fdother_scroll_s141_20261021.json` | `mut_s141.py`(25) |
+| `ev_s141.py` | `demonface_live_vs_fdother_scroll_s141_20261021.json` | `mut_s141.py`(41) |
 
 續一百四十二更正並加強 `ev_s141.py`(黑幕後是 ANI #0 金鎖插播;絕對調色盤判準;觸發常數讀原版 FD2.EXE),證據檔同名重算。
+續一百四十六為 sweep 逃過的常數補判準:實拍改以主機列解析度比對(水平兩點斷言相同)、FDOTHER 解碼與 `tools/decode_sprite.py` 對照。
 連拍腳本在 [`drivers_s141/`](drivers_s141/README.md)。
 
 ## 續一百三十九(2026-10-21)
@@ -232,6 +233,8 @@ python sweep_literals.py --selftest
 現在產生器以 sitecustomize 包住 `sys.excepthook`,在 stderr 補一行 `__SWEEP_FINAL_EXC__ <型別>`,判定看最後一個標記
 (只裝在產生器本身,它再開的子行程不受影響)。另修了對照失敗那一筆的欄位錯位(印出時崩潰)。移植的 7 個產生器與分析模組都掃過,
 逃過項的處理見 doc98 續一百三十五。
+
+略過的關鍵字參數(`SKIP_KEYWORDS`):`indent`,以及 `ndigits`(續一百四十六)—— 只有寫成 `round(x, ndigits=N)` 才略過,位置參數 `round(x, N)` 照樣變異。
 
 ## 限制
 

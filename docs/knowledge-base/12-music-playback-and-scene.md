@@ -123,6 +123,10 @@ play_bgm(track, loop_count):
 `0x25b45`(main 前段 init),**均無第二次 `play_bgm` 呼叫**——曲號在整條「開機→標題可互動」
 路徑上只被設定這一次,不會被後續覆蓋。[驗]
 
+> 續一百四十六補(doc98):上面的 `0x286bd` 是舊位址(已登 `known_address_errata.json`);本版(md5 33464c81…)
+> title_seq 的兩段轉場都是 `call 0x2df01`(`0x1fc7b`、`0x1fd64`)。`0x2df01`(到 `0x2dfc7` ret)只呼叫 `0x3702f`、`0x37ae5`,
+> 同樣沒有 `play_bgm`(`0x25977`)呼叫,上面的結論不變。STATIC ANALYSIS。
+
 ### 修正:「main = 0x10000」舊假設(呼應 doc23 §0,本輪獨立 Ghidra 複核)[驗]
 
 > 對應 `91-worklist.md` 第 464 行待辦。舊假設「`main = 0x10000`」**從未寫進本文件**(逐版 git

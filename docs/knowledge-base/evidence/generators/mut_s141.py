@@ -20,7 +20,8 @@ MUTANTS = [
     ("乾淨幀比例要求 95%", "assert len(clean) >= 0.75 * len(pre)", "assert len(clean) >= 0.95 * len(pre)"),
     ("撕裂自由度只看 dy", "    for c in (dy - 1, dy, dy + 1):\n        if 0 <= c", "    for c in (dy,):\n        if 0 <= c"),
     ("撕裂自由度只看 dy + 1 一側", "    for c in (dy - 1, dy, dy + 1):\n        if 0 <= c", "    for c in (dy, dy + 1):\n        if 0 <= c"),
-    ("換盤那一列的索引順序反過來", "if ok.all() and new and old and max(new) < min(old):", "if ok.all() and new and old and max(new) > min(old):"),
+    ("換盤那一列的索引順序反過來", "max(new) < min(old) and prev <= set(new)", "max(new) > min(old) and prev <= set(new)"),
+    ("換盤區往下已換的反而變少(續一百四十六)", "max(new) < min(old) and prev <= set(new)", "max(new) < min(old) and prev >= set(new)"),
     ("換盤幀的位置判準對調", 'if s["top"] == FLASH_K else TABLE[:-1]', 'if s["top"] != FLASH_K else TABLE[:-1]'),
     ("捲動方向預期往下", "assert all(x >= y for x, y in zip(dys, dys[1:])), dys", "assert all(x <= y for x, y in zip(dys, dys[1:])), dys"),
     ("預期不是原版 EXE", 'MD5 = "33464c81e6a364fd0660141139aa8e6e"', 'MD5 = "b97caf2239a27a896069d03549d96e1e"'),
@@ -41,6 +42,22 @@ MUTANTS = [
     ("ANI 幀序預期遞減", "assert all(x <= y for x, y in zip(seq_k, seq_k[1:]))", "assert all(x >= y for x, y in zip(seq_k, seq_k[1:]))"),
     ("ANI 單幀完全相等要求 90%", 'assert sum(bool(r["ani"]["exact"]) for r in solid) >= 0.6 * len(solid)',
      'assert sum(bool(r["ani"]["exact"]) for r in solid) >= 0.9 * len(solid)'),
+    # 續一百四十六:sweep_literals 逃過的常數補上的判準
+    ("遊戲區左緣錯 1 px(半個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 193, 201 "),
+    ("遊戲區上緣錯 1 px(半個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 192, 202 "),
+    ("對照上限放到 1.5", "CTRL_MAX = 0.99 ", "CTRL_MAX = 1.5 "),
+    ("literal 對照把模式 1 當透明", "            m = 2\n", "            m = 3\n"),
+    ("虛無平移 2 px", "BS = shifted(BD, 1)", "BS = shifted(BD, 2)"),
+    ("撕裂自由度不看緩衝第 0 列", "if 0 <= c and c + WIN <= len(buf):", "if 1 <= c and c + WIN <= len(buf):"),
+    ("撕裂自由度把黑像素也算進去", "    m = col != 0\n    return float(ok[m].mean())", "    m = col == col\n    return float(ok[m].mean())"),
+    ("區段壓縮從第 1 列開始", "    out, s = [], 0\n", "    out, s = [], 1\n"),
+    ("撕裂方向上下對調", 'return "top_newer" if srcs[0] < srcs[1] else "bottom_newer"', 'return "top_newer" if srcs[0] > srcs[1] else "bottom_newer"'),
+    ("撕裂方向去重看錯一格", "if k == 0 or c != cs[k - 1]]", "if k == 0 or c != cs[k - 2]]"),
+    ("ANI 相鄰幀報成隔一幀", '"pair": [k, k + 1]', '"pair": [k, k + 2]'),
+    ("上下兩列不同只看上列", "(host[0::2] != host[1::2])", "(host[0::2] != host[0::2])"),
+    ("黑幕分段多吃一張", "pre, gap, post = rows[:g0], rows[g0:g1 + 1], rows[g1 + 1:]", "pre, gap, post = rows[:g0], rows[g0:g1 + 2], rows[g1 + 1:]"),
+    ("撕裂方向計數從 1 起算", 'tear_dir = {"top_newer": 0,', 'tear_dir = {"top_newer": 1,'),
+    ("捲動起點 esi 讀錯一格", 'ESI_START = struct.unpack_from("<I", code(0x1fa85, 5), 1)[0]', 'ESI_START = struct.unpack_from("<H", code(0x1fa85, 5), 2)[0]'),
 ]
 
 if __name__ == "__main__":

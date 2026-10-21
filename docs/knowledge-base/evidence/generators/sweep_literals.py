@@ -45,7 +45,9 @@ from _evpaths import EVIDENCE, GEN_DIR, MANIFEST, MISSING_INPUT_RC
 
 TIMEOUT_S = 180
 # 只影響輸出排版、不是資料的常數(改了必然 ESCAPED,沒有判讀價值)
-SKIP_KEYWORDS = {"indent"}
+# ndigits:報告精度(續一百四十六)。只有寫成 round(x, ndigits=N) 才略過 —— 位置參數 round(x, N) 照樣變異,
+# 產生器作者要明寫關鍵字才算宣告「這只是輸出位數」;改位數幾乎必然 ESCAPED,一樣沒有判讀價值。
+SKIP_KEYWORDS = {"indent", "ndigits"}
 
 # 變異版最後拋出的例外型別由子行程自己報:sitecustomize 包住 sys.excepthook,印完 traceback 後在 stderr 補一行標記。
 # 只看 stderr 最後一行時,`assert x, 多行字串` 的訊息最後一行不是 "AssertionError..." 而被誤判成 CRASH(續一百三十五)。
@@ -340,6 +342,10 @@ def selftest() -> int:
         fails.append(f"位置錯誤:{apply(src, sites[0])!r}")
     if find_sites("json.dump(o, f, indent=1)\n"):
         fails.append("indent 應略過")
+    if find_sites("y = round(x, ndigits=4)\n"):
+        fails.append("ndigits 應略過")
+    if [s.new for s in find_sites("y = round(x, 4)\n")] != ["5"]:
+        fails.append("round 的位置參數仍要變異(只有明寫 ndigits= 才略過)")
     if not find_sites("assert x == 3\n")[0].in_assert:
         fails.append("assert 內的常數應標 in_assert")
     rsrc = 'x = {"a": 5, "b": [1, -2]}\ny = u[0x40]\nz = f(r, 7)\nw = a + 3\nf({"k": 9})\nif q == 4: pass\n'

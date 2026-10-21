@@ -140,7 +140,7 @@
           "50-cutscene-script-system-design.md": 2,
           "56-fd2-remake-sdd.md": 3,
           "91-worklist.md": 6,
-          "98-tooling-infrastructure.md": 2,
+          "98-tooling-infrastructure.md": 3,
           "SESSION-HANDOFF-2026-07-06.md": 6
         }
       }
@@ -1149,6 +1149,7 @@
           "56-fd2-remake-sdd.md": 4,
           "58-remake-live-verification-log.md": 3,
           "91-worklist.md": 7,
+          "98-tooling-infrastructure.md": 1,
           "SESSION-HANDOFF-2026-07-06.md": 8
         }
       }
@@ -4590,6 +4591,91 @@
         "baseline": {
           "03-exe-and-data-structures.md": 2,
           "32-item-combat-stats-re.md": 3
+        }
+      }
+    },
+    {
+      "wrong_address": "0x36c9e",
+      "correct_address": "0x36ff4",
+      "wrong_semantic_claimed": "ANI / AFM VM 指令派發器(doc39 §4.1、tools/decode_ani.py docstring)",
+      "discovered_date": "2026-10-21",
+      "discovery_method": "續一百四十五讀 play_afm(0x0204da 起)時發現。本版(md5 33464c81…)`0x020533 call 0x36ff4`(cmdCount, script);`0x036ff4` 起 `0x037008 lodsb`、`0x037012 call [op*4+0x5276a]`;初始化 `0x02048a call 0x36fd3`。disasm_le calls 36ff4 / 36fd3 各只有這一個呼叫端。",
+      "root_cause": "舊版 EXE 位址:本區段新版高 0x356。--stale-edition 沒有命中有兩個原因(續一百四十六量到):相鄰錨點 0x36cd7 / 0x36fcc 的位移是 0x358,工具套 0x358 得到 0x36ff6;就算套對 0x356,0x36ff4 只有 1 個直接呼叫端、沒有序頭訊號,不算強入口。",
+      "affected_docs": [
+        "docs/knowledge-base/39-ani-afm-format.md",
+        "docs/knowledge-base/91-worklist.md",
+        "tools/decode_ani.py"
+      ],
+      "correction_doc": "docs/knowledge-base/39-ani-afm-format.md",
+      "correction_section": "§4.1 表前註(續一百四十五)",
+      "still_pending": "知識庫原文保留;decode_ani.py docstring 改成新版位址並註明舊版值。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x36c9e"
+        ],
+        "note": "續一百四十六登錄;同行寫出 0x36ff4 或勘誤標記者豁免。",
+        "baseline": {
+          "39-ani-afm-format.md": 3,
+          "91-worklist.md": 1,
+          "98-tooling-infrastructure.md": 2
+        }
+      }
+    },
+    {
+      "wrong_address": "0x36c7d",
+      "correct_address": "0x36fd3",
+      "wrong_semantic_claimed": "ANI / AFM VM 狀態初始化(唯一呼叫端 0x02048a)",
+      "discovered_date": "2026-10-21",
+      "discovery_method": "同 0x36c9e。本版(md5 33464c81…)`0x020533 call 0x36ff4`(cmdCount, script);`0x036ff4` 起 `0x037008 lodsb`、`0x037012 call [op*4+0x5276a]`;初始化 `0x02048a call 0x36fd3`。disasm_le calls 36ff4 / 36fd3 各只有這一個呼叫端。",
+      "root_cause": "舊版 EXE 位址,位移 0x356;--stale-edition 沒有命中的原因同 0x36c9e(工具套 0x358 得 0x36fd5;0x36fd3 只有 1 個呼叫端)。",
+      "affected_docs": [
+        "docs/knowledge-base/39-ani-afm-format.md",
+        "docs/knowledge-base/35-battle-animation-rendering.md",
+        "tools/decode_ani.py"
+      ],
+      "correction_doc": "docs/knowledge-base/39-ani-afm-format.md",
+      "correction_section": "§4.1 表前註(續一百四十五)",
+      "still_pending": "知識庫原文保留;decode_ani.py docstring 改成新版位址並註明舊版值。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x36c7d"
+        ],
+        "note": "續一百四十六登錄;同行寫出 0x36fd3 或勘誤標記者豁免。",
+        "baseline": {
+          "35-battle-animation-rendering.md": 1,
+          "39-ani-afm-format.md": 2,
+          "98-tooling-infrastructure.md": 1
+        }
+      }
+    },
+    {
+      "wrong_address": "0x286bd",
+      "correct_address": "0x2df01",
+      "wrong_semantic_claimed": "title_seq 捲動結束後的「BG.DAT 抹除轉場」(doc23 §2.3、doc39 §10.5、doc12)",
+      "discovered_date": "2026-10-21",
+      "discovery_method": "續一百四十五:本版 0x1fc66 esi = 0x28 → 0,每步 0x1fc7b call 0x2df01(0, 0xff, esi, 0x3f, 0, 0)、delay 8 ms;DOSBox-X 實拍是全部顏色往純紅 (0x3f, 0, 0) 的漸變(evidence/afterlock_live_title_transition_s145_20261021.json),不是抹除。0x286bd 在本版落在函式中間、沒有直接呼叫端(live_exec_addresses 有它,是執行過的內部指令)。",
+      "root_cause": "不是區段位移(0x2df01 − 0x286bd = 0x5844,附近也沒有位移錨點),來源不明;語意(抹除)也與實拍不符。--stale-edition 只找『加區段位移後是強入口』的位址,這類不會命中。",
+      "affected_docs": [
+        "docs/knowledge-base/12-music-playback-and-scene.md",
+        "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+        "docs/knowledge-base/39-ani-afm-format.md"
+      ],
+      "correction_doc": "docs/knowledge-base/39-ani-afm-format.md",
+      "correction_section": "§10.5 續一百四十五註",
+      "still_pending": "知識庫原文保留,doc23 §2.4⑤ 與 doc39 §10.5 已加更正註記。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x286bd"
+        ],
+        "note": "續一百四十六登錄;同行寫出 0x2df01 或勘誤標記者豁免。",
+        "baseline": {
+          "12-music-playback-and-scene.md": 1,
+          "23-boot-title-and-scenario-flow.md": 1,
+          "39-ani-afm-format.md": 3,
+          "98-tooling-infrastructure.md": 1
         }
       }
     }

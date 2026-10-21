@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 190 節、19 個主題。
+共 191 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 10195:2026-10-20 續一百三十七:仍留項的離線部分 —— lc131a 是新遊戲開場、`[0x51a93]` 恆為 -1、地形模式 1 上了畫面、防拷是位元組修補 〔來源:DOSBox-X、反組譯、FD2.EXE〕
 - 行 10241:2026-10-20 續一百三十八:lc131a 選新遊戲的是清對話迴圈的 Return(緩衝在選單前清掉)、勝負碼 1 是 GAME OVER、第 27 章的明暗上了畫面 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10291:2026-10-21 續一百三十九:四模式 RLE 解碼再編回去逐 byte 相同(FDICON / FDSHAP / FIGANI / FDOTHER 全部) 〔來源:FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
@@ -17,6 +16,7 @@
 - 行 10456:2026-10-21 續一百四十三:`decode_figani.parse_anim` 讀空檔 / 截斷位移表不再崩潰,幀容器登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X〕
 - 行 10491:2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X、ANI.DAT、FD2.EXE〕
 - 行 10540:2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`) 〔來源:DOSBox-X、反組譯、FDOTHER〕
+- 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -26,7 +26,7 @@
 - 行 3234:2026-09-07(續七)：小筆記——`ghidra_batch_probe.py`系列工具背景執行時的project鎖競爭 〔來源:ghidra〕
 - 行 5307:2026-09-18 續二十四:程式碼層分母的一小時量測 —— Ghidra 的 976 兩個方向都錯 〔來源:Ghidra、反編譯〕
 
-## 位址資料庫、位址勘誤與位址引用檢查(14 節)
+## 位址資料庫、位址勘誤與位址引用檢查(15 節)
 
 - 行 60:已驗證位址資料庫(`docs/data/verified_addresses.json` + `known_address_errata.json`) 〔來源:反組譯〕
 - 行 3819:2026-09-11 — `tools/verify_address_citations.py`:第十一軸,唯一在問「已經證實錯的結論,還有沒有人在拿它立論」 〔來源:disasm〕
@@ -42,6 +42,7 @@
 - 行 5456:2026-09-19 續三十:舊版位址全面掃描 —— `verify_address_claim_coverage.py --stale-edition` 〔來源:capstone〕
 - 行 5511:2026-09-28 續三十一:勘誤回收命名 32 筆,以及 `--coverage`「有名稱」欄算錯了 〔來源:反組譯〕
 - 行 8878:2026-10-12 續一百一十六:續一百一十五「仍留的」不是做不到 —— 篩選工具補三個缺口、加 `param_unread` 與參數名登錄、新增 `param_dossier.py`;改正 8 筆參數列 〔來源:DOSBox-X、反組譯〕
+- 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
 ## 函式清單(1356 個入口)、命名與名稱登錄表(52 節)
 
@@ -148,7 +149,7 @@
 - 行 8316:2026-10-08 續一百零八:呼叫紀錄擴大到城鎮 / 商店 / 戰鬥指令 / 法術 / 敵方 AI / 存讀檔,加規格檔與逐函式事實檔 —— 534 個入口實機反驗,改正 3 筆摘要 〔來源:dosbox-x、debugger、反組譯〕
 - 行 9832:2026-10-16 續一百三十:沒有斷點時光束炮相位迴圈畫出的階以呼叫紀錄量到(不必擷取畫面);新證據附產生器 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
-## 工具的自我驗證、突變測試與閘門(31 節)
+## 工具的自我驗證、突變測試與閘門(32 節)
 
 - 行 1789:2026-09-03 續六：**反向驗證**（使用者要求）—— 找到 1 個守衛漏洞、3 個崩潰路徑 〔來源:debugger〕
 - 行 1854:2026-09-03(續)全工具多重驗證(`tools/verify_all_tools.py`) 〔來源:capstone、反組譯、青衫攻略〕
@@ -181,6 +182,7 @@
 - 行 8755:2026-10-12 續一百一十四:續一百一十三的殘留 —— 突變存活 22 個歸零、param_flow 判不出的 34 個逐一分類並直接讀反組譯、實機補錄 cl9 / cl11 / cl12;改正 4 筆摘要 〔來源:dosbox-x、斷點、反組譯〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 - 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
+- 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
 ## 證據來源判準(排除 remake 證據)(2 節)
 
@@ -252,7 +254,7 @@
 - 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(25 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(26 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -279,6 +281,7 @@
 - 行 10456:2026-10-21 續一百四十三:`decode_figani.parse_anim` 讀空檔 / 截斷位移表不再崩潰,幀容器登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X〕
 - 行 10491:2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X、ANI.DAT、FD2.EXE〕
 - 行 10540:2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`) 〔來源:DOSBox-X、反組譯、FDOTHER〕
+- 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
 ## dispatch 跳表與指令表(4 節)
 
