@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 188 節、19 個主題。
+共 189 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10149:2026-10-19 續一百三十六:移動範圍明暗跟章節無關,敵方單位的範圍不會畫出來(靜態分析 + 兩章的實機換色表) 〔來源:DOSBox-X、FDOTHER_003、FD2.EXE〕
 - 行 10195:2026-10-20 續一百三十七:仍留項的離線部分 —— lc131a 是新遊戲開場、`[0x51a93]` 恆為 -1、地形模式 1 上了畫面、防拷是位元組修補 〔來源:DOSBox-X、反組譯、FD2.EXE〕
 - 行 10241:2026-10-20 續一百三十八:lc131a 選新遊戲的是清對話迴圈的 Return(緩衝在選單前清掉)、勝負碼 1 是 GAME OVER、第 27 章的明暗上了畫面 〔來源:DOSBox-X、反組譯、FDOTHER〕
@@ -17,6 +16,7 @@
 - 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
 - 行 10422:2026-10-21 續一百四十二:更正續一百四十一「與 doc23 不一致的兩點」(黑幕後是 ANI #0 金鎖插播,不是 logo),`ev_s141` 改用絕對調色盤判準並讀 EXE 觸發常數 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10456:2026-10-21 續一百四十三:`decode_figani.parse_anim` 讀空檔 / 截斷位移表不再崩潰,幀容器登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X〕
+- 行 10491:2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X、ANI.DAT、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -252,7 +252,7 @@
 - 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(23 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(24 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -277,6 +277,7 @@
 - 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
 - 行 10422:2026-10-21 續一百四十二:更正續一百四十一「與 doc23 不一致的兩點」(黑幕後是 ANI #0 金鎖插播,不是 logo),`ev_s141` 改用絕對調色盤判準並讀 EXE 觸發常數 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10456:2026-10-21 續一百四十三:`decode_figani.parse_anim` 讀空檔 / 截斷位移表不再崩潰,幀容器登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X〕
+- 行 10491:2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X、ANI.DAT、FD2.EXE〕
 
 ## dispatch 跳表與指令表(4 節)
 

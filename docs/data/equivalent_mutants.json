@@ -49,7 +49,7 @@
    "key": "<module>|lambda: _sample(\"FDOTHER\"), lambda b: ((b, 576), {}), ()),|int 576->577#0",
    "reason": "decode_lmi 的 fixture 參數;突變後該工具正常執行的輸出與基準逐位元組相同,行為不變。",
    "evidence": "98 文件 2026-09-11 續三「verify_truncation_robustness.py 可達 0/6 —— 全部是等價突變」表(decode_lmi 576->577)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -72,7 +72,7 @@
    "key": "<module>|lambda: _sample(\"FIGANI\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#0",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -80,7 +80,7 @@
    "key": "<module>|lambda: _sample(\"FIGANI\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#1",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -88,7 +88,7 @@
    "key": "<module>|lambda: _sample(\"FIGANI\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#2",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -96,7 +96,7 @@
    "key": "<module>|lambda: _sample(\"FIGANI\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#3",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -104,7 +104,7 @@
    "key": "<module>|lambda: _sample(\"FDSHAP\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#0",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -112,7 +112,7 @@
    "key": "<module>|lambda: _sample(\"FDSHAP\"), lambda b: ((b, 24, 24), {}), ()),|int 24->25#1",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -120,7 +120,7 @@
    "key": "<module>|lambda: _sample(\"BG\"), lambda b: ((b, 576), {}), ()),|int 576->577#0",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -128,7 +128,7 @@
    "key": "<module>|lambda: _sample(\"DATO\"), lambda b: ((b, 576), {}), ()),|int 576->577#0",
    "reason": "探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -136,7 +136,7 @@
    "key": "<module>|lambda: _sample(\"ANI\"), lambda b: ((b, 0, bytearray(576), 0, 576), {}), ()),|int 0->1#0",
    "reason": "decode_ani 取樣的來源起點(src pos);從第 1 個 byte 起解同樣走同一組分支。探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",
@@ -144,7 +144,7 @@
    "key": "<module>|lambda: _sample(\"ANI\"), lambda b: ((b, 0, bytearray(576), 0, 576), {}), ()),|int 576->577#0",
    "reason": "decode_ani 目的緩衝區的大小;比 total 大 1 不影響任何寫入。探針的呼叫參數,不是正確性主張:截斷前綴是窮舉的,任何合理尺寸/起點都走同一組 RLE 分支;要緊的是『不崩潰』而不是『用哪個尺寸』。同一行的 dpos/total 不是 tuning(改了會讓呼叫本身越界),由 selftest (4b) 釘住。",
    "evidence": "98 文件 2026-09-12 續九:逐一突變後跑正常執行,整份 stdout + rc 與基準逐位元組相同(FULL_SAME)",
-   "scope_hash": "427eb33a51db"
+   "scope_hash": "a7a113170374"
   },
   {
    "tool": "verify_truncation_robustness.py",

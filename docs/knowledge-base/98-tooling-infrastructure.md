@@ -10487,3 +10487,52 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
   它是否該宣告為合法拒絕(像 `NotAContainer`)要另外決定。
 - `sweep_literals` 未對 `ev_s141` 跑。
 - 金鎖之後(esi 24 → 0、浮空城、停留 1000ms、紅閃光)要拍,需另行核准一次 DOSBox-X 連拍。
+
+## 2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness`
+
+使用者要求修續一百四十三留下的那一件,並多重交叉驗證「這不是 ANI 檔」的拒絕是正常拒絕(判準依據 FD2.EXE `0x0204da`)。STATIC ANALYSIS
+(只讀 extracted/raw、ANI.DAT 與 FD2.EXE md5 33464c81…,未跑遊戲)。
+
+**一、修改前的量測**。ANI 10 份(9 份資源 + 長度 0 的 `ANI_009.bin`)、每份前 600 byte 的每個前綴,
+`parse_header` 後 `list(iter_frames(...))`:5410 次呼叫全部丟 struct.error —— 長度 < 0xAD 的 1558 次在 `parse_header`,
+其餘 3852 次在 `iter_frames` 讀幀記錄。(續一百四十三記的「1540」這輪沒有重現;以這輪的量測為準。)
+
+**二、拒絕判準的交叉驗證(五個彼此獨立的來源)**。
+1. 原版播放器 `play_afm`(0x020421):`0x0204da` fread **0xAD** bytes,`0x0204ea` 讀 `[esi+0xa5]` 當幀數,之後逐幀
+   fread 8 byte 記錄與 compSize byte 的 script。**沒有任何比對橫幅的程式**。
+2. EXE 全檔沒有 "AFM"、"Animation File"、"Lo Yuan" 字串 —— 要比對橫幅,字串必須在 EXE 裡。"ANI.DAT" 兩處命中:
+   檔案位移 0x751db(linear 0x501c7)只被 `0x020498` 參照;0x774ac 是 "FIGANI.DAT" 的子字串。播放器是唯一的讀取端。
+3. 容器目錄:`unpack_dat.parse_directory(ANI.DAT)` 第 10 項 = (2437547, 0),長度 0 的終止符(doc39 §1)——
+   `ANI_009.bin` 本來就不是資源,被拒是對的。
+4. 9 份真實資源全部接受,逐份 `8 + compSize` 總和 == 檔長 − 0xAD;9 份的橫幅與 0x50 的 0x1A 完全相同,但遊戲不看。
+5. 全部 1005 份 extracted/raw 資源整檔餵 `frames_bytes`:除 NotANI 外沒有任何例外。
+
+所以判準與遊戲一致:**長度 < 0xAD 才拒絕**(沒有任何欄位可讀)。**不同結論**:這是必要條件、不是充分條件 ——
+1005 份裡被拒 187 份(ANI_009 + 186 份非 ANI),非 ANI 資源被接受 809 份(其中 769 份還解出幀)。「接受」不等於
+「是 ANI」;遊戲本身也從不辨識檔案種類,只按索引打開 ANI.DAT。不加橫幅檢查:那會拒絕遊戲照樣播放的檔。
+
+**三、`tools/decode_ani.py`**。
+- `HEADER_BYTES = 0xAD`、`class NotANI(Exception)`;`parse_header` 長度不足丟 NotANI。
+- `iter_frames` 讀不到 8-byte 記錄就停(降級、不崩,同續一百四十三);記錄讀得到而 script 被截短的那一幀照舊交出截短的 script。
+  沒有另算「最多幾幀」的上限(續一百四十三:那種算式會留下等價突變)。
+- 新增 `frames_bytes(data)`:登錄表只收呼叫即執行的函式,`iter_frames` 是 generator。
+- CLI `info` / `frames` 遇到 NotANI 印「不是 ANI 檔(…)」、rc = 1,不再 Traceback。
+- 行為不變:9 份真實資源 HEAD 版與修改版的檔頭與全部幀記錄逐份相等。
+- selftest (7):合成檔(各欄位值互不相同)199 個前綴「丟 NotANI 若且唯若長度 < 0xAD」雙向成立、其他例外一律不准;
+  正控制:7 個截點的幀數與內容(截在第二筆記錄剛讀完處要交出 2 幀、第二幀 script 為空);檔頭欄位;
+  橫幅與 0x1A 換成垃圾仍解出 2 幀(把判準釘在遊戲的判準,擋下日後「順手」加的 magic 檢查)。
+  被測函式丟出的例外在 (7) 裡一律轉成 FAIL:第一版沒包,三個手動突變讓 selftest 以例外崩掉而不是 SELFTEST FAILED。
+- 窮舉突變第一輪 24 / 26:`parse_header` 的橫幅切片 `data[0:0x50]` 0→1(少 "A")、0x50→0x51(把 0x1A 帶進來)逃掉 ——
+  不是等價突變,是 selftest 沒比橫幅;補上後 26 / 26。手動突變 8 / 8 殺死(拿掉檔頭守衛、`<` 改 `<=`、守衛改 0xAB、
+  拿掉幀記錄守衛、截斷檔一律回空、加上橫幅 magic 檢查、`frames_bytes` 忽略幀數、NotANI 改丟 ValueError),都是 SELFTEST FAILED、沒有 Traceback。
+
+**四、`tools/verify_truncation_robustness.py`**:新增 `decode_ani.frames_bytes` 一列(共 15),宣告 NotANI、第 7 欄前提 `bool`。
+- 配對控制(不動 repo,把變體 exec 進 `sys.modules`):原版 OK(724 次);拿掉檔頭守衛 CRASH(struct.error 294);
+  拿掉幀記錄守衛 CRASH(428);兩道都拿掉 CRASH(724)。
+- 這一列的位元翻轉段取樣長度是 600 // 4 = 150 < 0xAD,只會打到 NotANI;幀記錄表的截斷由逐一前綴(0xAD..600)涵蓋。
+- `docs/data/equivalent_mutants.json`:DECODERS 改動使 11 筆上下文雜湊失效,`--revalidate-registry` 探針重驗 OK 24 / FAIL 0,只更新雜湊。
+
+仍留(只記錄、未修改):
+- 原版幀數是**有號**的:`0x0204ff` `movsx` + `0x020506` `jge`,幀數 ≥ 0x8000 時一幀都不播;`parse_header` 讀無號。真實資源最多 96 幀,沒有影響。
+- `run_vm` 對被截短的 script 仍丟 IndexError(`cmd_frames` 有接;`ev_s141` 只讀完整檔),`run_vm` 本身沒有登錄在 `verify_truncation_robustness`。
+- `sweep_literals` 未對 `ev_s141` 跑;金鎖之後的 DOSBox-X 連拍需另行核准。

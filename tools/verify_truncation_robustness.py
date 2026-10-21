@@ -138,6 +138,14 @@ DECODERS = [
     # 回傳值必須滿足的前提(這裡是「解出至少一幀」),否則判 DEGENERATE。
     ("decode_figani", "parse_anim", "FIGANI 幀容器(u8 幀數 + u32 位移表)",
      lambda: _sample("FIGANI"), lambda b: ((b,), {}), (), bool),
+    # 續一百四十四:ANI 的**檔頭 + 幀記錄表**。上面 `decode_ani.rle_2mode` 那一列只測幀本文的 RLE。
+    # `parse_header` / `iter_frames` 不吃單一 bytes 或是 generator(只呼叫不迭代 = 什麼都沒跑),
+    # 所以登錄的是把兩者串起來的 `frames_bytes`。NotANI 是宣告的拒絕:長度 < 0xAD,
+    # 與原版 play_afm 0x0204da fread 的長度相同;拒絕的邊界由 decode_ani --selftest (7a) 雙向釘住。
+    # 位元翻轉段的取樣長度是 600 // 4 = 150 < 0xAD,對這一列只會打到 NotANI;
+    # 幀記錄表的截斷由逐一前綴(0xAD..600)涵蓋。
+    ("decode_ani", "frames_bytes", "ANI(AFM)0xAD 檔頭 + 幀記錄表",
+     lambda: _sample("ANI"), lambda b: ((b,), {}), ("NotANI",), bool),
 ]
 
 

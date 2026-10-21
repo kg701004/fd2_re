@@ -58,6 +58,17 @@ import struct
 W, H = 320, 200
 FRAME_BYTES = W * H  # 64000
 
+# 續一百四十四:原版播放器 play_afm(0x020421)開檔後只做一件事判斷檔頭 ——
+# `0x0204da` fread **0xAD** bytes,接著 `0x0204ea` 讀 [buf+0xA5] 當幀數。
+# 它**不比對橫幅**:EXE 全檔沒有 "AFM" / "Animation File" / "Lo Yuan" 字串,
+# 唯一的 "ANI.DAT" 字串(0x501c7)也只有 0x020498 這一處參照。所以「不是 ANI 檔」
+# 的判準跟遊戲一樣只看長度:連 0xAD 檔頭都放不下的資料沒有任何欄位可讀。
+HEADER_BYTES = 0xAD
+
+
+class NotANI(Exception):
+    """資料短於 0xAD 檔頭(遊戲 fread 的長度),不是 ANI 檔。"""
+
 
 def rle_2mode(data, pos, dst, dst_off, count):
     """opcode 2 / 6 共用的 2-mode RLE:高2bit==0b11 → run,否則單一 literal。"""
@@ -176,13 +187,85 @@ def selftest():
     if not ok6:
         fails.append(f"長度 1 的 run 之後就停了:{bytes(d6).hex()} / {pos6}")
 
+    print("\n(7) 續一百四十四:檔頭 / 幀記錄截斷 —— 短於 0xAD 丟 NotANI,其餘降級不崩")
+    # 合成檔:每個欄位取不同的值(幀數 2、寬 320、高 200、兩段未知 byte、兩幀的四個欄位
+    # 互不相同),否則讀錯位置的突變會因為兩個欄位剛好同值而逃掉(續一百四十)。
+    hdr7 = bytearray(HEADER_BYTES)
+    hdr7[0:0x50] = b"AFM - Animation File Manager Version 1.00".ljust(0x50, b" ")
+    hdr7[0x50] = 0x1A
+    hdr7[0x51:0xA1] = b".Empty Title.".ljust(0x50, b" ")
+    hdr7[0xA2:0xA5] = b"\x11\x22\x33"
+    struct.pack_into('<HHH', hdr7, 0xA5, 2, 320, 200)
+    hdr7[0xAB:0xAD] = b"\x44\x55"
+    s0, s1 = bytes(range(0x61, 0x66)), bytes(range(0x71, 0x75))
+    syn7 = (bytes(hdr7) + struct.pack('<HHHH', 5, 3, 7, 9) + s0
+            + struct.pack('<HHHH', 4, 1, 0x0B, 0x0D) + s1)
+    fr0, fr1 = (0, 5, 3, 7, 9, s0), (1, 4, 1, 0x0B, 0x0D, s1)
+    # (7a) 判準本身:每個前綴「丟 NotANI」若且唯若「長度 < 0xAD」(遊戲 fread 0xAD),
+    #      其他例外一律不准。兩個方向都要成立:守衛太鬆會在 0xAC 放行,太嚴會在 0xAD 拒絕。
+    bad7 = []
+    for c in range(len(syn7) + 1):
+        try:
+            frames_bytes(syn7[:c])
+            rejected = False
+        except NotANI:
+            rejected = True
+        except Exception as exc:                              # noqa: BLE001
+            bad7.append((c, type(exc).__name__))
+            continue
+        if rejected != (c < HEADER_BYTES):
+            bad7.append((c, "NotANI" if rejected else "放行"))
+    ok7a = not bad7
+    print(f"    {'PASS' if ok7a else 'FAIL'}: {len(syn7) + 1} 個前綴,NotANI 恰好落在長度 0..0xAC"
+          + ("" if ok7a else f",異常 {bad7[:4]}"))
+    if not ok7a:
+        fails.append(f"截斷前綴的拒絕 / 例外不符判準:{bad7[:4]}")
+    # (7b) 正控制:截斷檔仍要交出讀得到的幀(守衛若把截斷檔一律回空,這題會抓到)。
+    want7 = ((HEADER_BYTES, []),
+             (HEADER_BYTES + 7, []),
+             (HEADER_BYTES + 8, [fr0[:5] + (b"",)]),
+             (HEADER_BYTES + 13, [fr0]),
+             (HEADER_BYTES + 20, [fr0]),
+             (HEADER_BYTES + 21, [fr0, fr1[:5] + (b"",)]),
+             (len(syn7), [fr0, fr1]))
+    def _try7(fn, blob):
+        # 被測函式丟出的例外要變成 FAIL 而不是讓整個 selftest 崩掉(Traceback 不是判定)。
+        try:
+            return fn(blob)
+        except Exception as exc:                              # noqa: BLE001
+            return f"{type(exc).__name__}: {exc}"
+
+    for c, want in want7:
+        got = _try7(frames_bytes, syn7[:c])
+        ok = got == want
+        print(f"    {'PASS' if ok else 'FAIL'}: 截在 0x{c:X} -> "
+              f"{len(got) if isinstance(got, list) else got} 幀(應 {len(want)})")
+        if not ok:
+            fails.append(f"截在 0x{c:X}:{got} != {want}")
+    # 橫幅也要比:窮舉突變 `data[0:0x50]` 的 0->1(少了 "A")、0x50->0x51(把 0x1A 帶進來)原本都逃掉。
+    h7 = _try7(parse_header, syn7)
+    want7h = ("AFM - Animation File Manager Version 1.00", 2, 320, 200, ".Empty Title.")
+    got7h = ((h7['banner'], h7['frame_count'], h7['width'], h7['height'], h7['title'])
+             if isinstance(h7, dict) else h7)
+    ok7h = got7h == want7h
+    print(f"    {'PASS' if ok7h else 'FAIL'}: 檔頭欄位 {got7h}")
+    if not ok7h:
+        fails.append(f"檔頭欄位讀錯:{got7h}")
+    # (7c) 判準不含橫幅:遊戲不比對橫幅(EXE 沒有 "AFM" 字串),橫幅換成垃圾也必須照常解。
+    #      日後若有人「順手」加 magic 檢查,會拒絕遊戲照樣播放的檔,這題擋下。
+    alt7 = b"X" * 0x50 + b"\x00" + syn7[0x51:]
+    ok7c = _try7(frames_bytes, alt7) == [fr0, fr1]
+    print(f"    {'PASS' if ok7c else 'FAIL'}: 橫幅與 0x1A 換成垃圾仍解出 2 幀")
+    if not ok7c:
+        fails.append("橫幅換掉就不解了 —— 判準比遊戲嚴")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(手算 + 截斷回歸 + 0 長度 run 回歸 + "
-          "隨機輸入不變量 + 非恆真控制)。")
+          "隨機輸入不變量 + 非恆真控制 + 檔頭 / 幀記錄截斷)。")
     return 0
 
 
@@ -248,6 +331,10 @@ def run_vm(script, cmd_count, palette, framebuf):
 
 
 def parse_header(data):
+    # 續一百四十四:原本沒有長度檢查,短於檔頭的輸入(含 ANI.DAT 第 10 項、長度 0 的
+    # 終止符 ANI_009.bin)丟原始 struct.error,呼叫端分不出「不是 ANI 檔」與「工具有 bug」。
+    if len(data) < HEADER_BYTES:
+        raise NotANI(f"只有 {len(data)} bytes,放不下 0x{HEADER_BYTES:X} 檔頭")
     banner = data[0:0x50].decode('ascii', 'replace')
     title = data[0x51:0xA1].decode('ascii', 'replace').strip()
     frame_count = struct.unpack_from('<H', data, 0xA5)[0]
@@ -264,13 +351,39 @@ def parse_header(data):
 
 def iter_frames(data, frame_count, start=0xAD):
     """逐幀 yield (compSize, cmdCount, scriptBytes)。"""
+    # 續一百四十四:幀記錄被截在檔尾時原本丟 struct.error。改成讀不到 8-byte 記錄就停
+    # (降級、不崩,同 decode_figani.parse_anim);記錄讀得到而 script 被截短的那一幀照舊交出
+    # 截短的 script,由 run_vm 的呼叫端處理。不另算「最多幾幀」的上限 —— 那種算式在格式正確的
+    # 檔上看不出差別,窮舉突變會留下等價突變(續一百四十三)。
     pos = start
     for i in range(frame_count):
-        comp_size, cmd_count, r0, r1 = struct.unpack_from('<HHHH', data, pos)
+        try:
+            comp_size, cmd_count, r0, r1 = struct.unpack_from('<HHHH', data, pos)
+        except struct.error:
+            return
         pos += 8
         script = data[pos:pos + comp_size]
         pos += comp_size
         yield i, comp_size, cmd_count, r0, r1, script
+
+
+def frames_bytes(data: bytes) -> list[tuple]:
+    """解檔頭並把幀記錄全部讀出來(bytes 進、串列出)。
+
+    `verify_truncation_robustness` 的登錄表只收吃 bytes、呼叫即執行的函式;
+    `iter_frames` 是 generator,只呼叫不迭代等於什麼都沒跑。
+
+    Args:
+        data: 一份 ANI 資源(AFM 檔)的完整內容。
+
+    Returns:
+        `iter_frames` 逐幀交出的 tuple 組成的串列;幀記錄被截斷時只含讀得到的幀。
+
+    Raises:
+        NotANI: 資料短於 0xAD 檔頭。
+    """
+    hdr = parse_header(data)
+    return list(iter_frames(data, hdr['frame_count']))
 
 
 def cmd_info(path):
@@ -324,12 +437,16 @@ def main(argv):
     if len(argv) < 3:
         print(__doc__)
         return 1
-    if argv[1] == 'info':
-        cmd_info(argv[2])
-    elif argv[1] == 'frames':
-        cmd_frames(argv[2], argv[3])
-    else:
-        print(__doc__)
+    try:
+        if argv[1] == 'info':
+            cmd_info(argv[2])
+        elif argv[1] == 'frames':
+            cmd_frames(argv[2], argv[3])
+        else:
+            print(__doc__)
+            return 1
+    except NotANI as e:
+        print(f"{argv[2]}: 不是 ANI 檔({e})")
         return 1
     return 0
 
