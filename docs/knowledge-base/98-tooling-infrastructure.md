@@ -7891,6 +7891,17 @@ case 只來自本輪可達的 jmp)後:**strong 1293 -> 1304、weak 63 -> 52、ca
 - **證據**:指令文字由登錄腳本從位元組反組譯取得(支援 `call:目標` = 本體裡第一個 call 該目標的指令),避免手打;`--check-names` 抓到兩處 —— fseek 的一條證據位址
   落在指令中間(改用 0x37978),以及 `command_handler_46` 需要跳表格位的 fixup 證據(補 0x51d01 第 46 格 = 0x51db9;第 46 / 47 / 48 格共用這個 `push 0x28 ; jmp 0x33470` 樁)。
 
+## 2026-10-07 續九十五:`function_inventory --selftest` 看守「全部入口都有名稱」(FD2.EXE 反組譯;續一百四十補記)
+
+> 續一百四十補寫:當時的提交 `de6121fb` 只改了 `tools/function_inventory.py`,本檔沒有寫這一節(SESSION-HANDOFF-2026-10-07 有摘要)。
+> 下面的內容取自那次提交與本輪重跑,不是當時的紀錄。
+
+**結論**:續九十四把全部 1356 個入口都登錄了名稱之後,`--selftest` 的真實 FD2.EXE 段加了一項回歸看守「全部 1356 個入口都有名稱(登錄表 / Watcom / AIL)」,
+並配一個反向控制:不含 `function_names.json` 時有上百個入口沒有名稱 —— 證明前一項不是空轉。
+- 資料突變:刪掉 0x33674(`command_handler_46`)的登錄,selftest 以 FAIL 指出 `0x33674`,不是 Traceback(當時 1 / 1)。
+- 續一百四十重跑(倉庫不動,名稱表複本放暫存區、只把模組的 `FUNCTION_NAMES_JSON` 指過去):未刪的對照 PASS;刪掉後 exit 1,
+  FAIL 兩項 ——「全部 1356 個入口都有名稱」列出 `['0x33674']`,以及「已提交的結構性命名產物與現算(含登錄表)逐位元組相同」;沒有 Traceback。
+
 ## 2026-10-07 續九十六:用既有的原版實機執行軌跡反驗「死函式」判定 —— 唯一的命中是 0x46915 共用的樁表
 
 **結論**:WSL 裡過去各輪 `tools/dosbox_exec_trace.sh` 留下的 251 份去重 CS:EIP 軌跡中,234 份來自原版 FD2.EXE(md5 `33464c81…`,與靜態分析同一個檔),
@@ -10335,3 +10346,38 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
 仍留:
 - 續九十五的內容只在 SESSION-HANDOFF 有摘要,本檔沒有補寫。
 - `tools/decode_figani.py` 的 u16 幀數、`tools/decode_sprite.py` 的 `mode01` 預設與文件字串(見續一百三十九)。
+
+## 2026-10-21 續一百四十:續一百三十九留下的三件 —— FIGANI 幀數改 u8、`decode_sprite` 模式 1 預設改 dither、補寫續九十五
+
+使用者要求把剩下的問題依建議逐項處理。三件都是續一百三十九「仍留」的項目(原版 extracted/raw 的 FIGANI / FDOTHER 資產解析,STATIC ANALYSIS)。
+
+**一、`tools/decode_figani.py` 的 `parse_anim`:幀數改讀 +0 的 u8**。
+- 以前當 u16 讀。實測 FIGANI 409 份 / FDOTHER 104 份,舊讀法與 `ev_s139.frame_container` 的結果**全部相同**(FIGANI 旗標 0 的 249 份、旗標 1 的 15 份,
+  FDOTHER 28 份):旗標 1 的檔案多讀的 256 筆「位移」裡,每份最多只有 1 筆不超過檔長,而那幾筆落點的寬高都過不了 1 ~ 1024 的篩選;
+  最後一幀的結尾讀成超過檔長的值,切片又剛好截回檔長。所以 `extract_all.py` 過去的輸出不受影響 —— 是運氣,不是正確。
+- selftest 新增 (5):甲是 4 幀、旗標 1 的合成容器(幀數 ≠ 旗標,讀錯 byte 分得出來;補到 1100 bytes 讓 260 筆位移讀得到,不靠例外分辨;
+  寬高壓在 1 / 1024 / 1025 的邊界;收的兩幀放最後),乙是只有標頭、剛好碰到檔尾的單幀。第一版只有 1 幀、幀數與旗標都是 1,
+  `--tool decode_figani.py --exhaustive` 逃掉 8 個;改成上面的形狀後 33 / 33。把 u16 讀法放回去,(5) 以 FAIL 抓到(最後一幀本文 0 bytes,應 1015)。
+
+**二、`tools/decode_sprite.py`:`mode01` 預設由 `"literal"` 改成 `"dither"`,文件字串更正**。
+- 依據是續一百三十九:四種資源的模式 1 都只帶 1 個值 byte、佔 2 × count 寬;當 literal 解,含模式 1 的串流沒有一個剛好吃完。
+  文件字串原本說 FIGANI 是「另一參數化變體、渲染未對齊」,已改掉;`"literal"` 只留給對照。
+- **影響過去的一個結論**:doc23 §2.4⑦ 用這支 CLI(當時預設 literal)解 `FDOTHER_069.bin` / `070.bin` 的本文(320 × 147)比對開場分鏡⑨。
+  兩份各含模式 1 28 / 12 個(069 全部 count = 1;070 有 11 個 count = 1、1 個 count = 2),literal 解每遇到一個就讀錯長度、後面整段錯位:
+  與 dither 解相比 17187 / 47040、13478 / 47040 個像素不同;
+  dither 解剛好吃完所有 bytes 且剛好寫滿 47040。當時的比對圖與 DOSBox-X 擷取的 `frame_184.png` 都不在倉庫裡,本輪**沒有重做比對**(NOT TESTED);
+  doc23 該處已加註。doc39 §10.9 的 Ghidra 控制流複驗不依賴這張圖,不受影響。TAI.DAT 的 `TAI_004`(91 號工作清單的台座)沒有模式 1,不受影響;
+  TAI 另有 14 份含模式 1(`TAI_017`、`024`、`029` ~ `037`、`043`、`044`、`055`)。
+- selftest:模式 1 的手算案例改成「預設 = dither」與「literal 對照」兩題;(4) 的鑑別力題只排除「模式 1 用 dither 解」的案例
+  (第一次改寫把沒寫 `mode01` 的案例全排除了,(4) 以「0 個案例」FAIL,修正後 2 個)。新增 (7):`FDOTHER_069` / `070` 的本文以獨立的
+  位元組帳確認 `FDOTHER_069` / `070` 用 dither 解剛好吃完並寫滿、literal 寫不滿,且預設輸出 = dither ≠ literal。把預設改回 literal,(1) 與 (7) 都 FAIL。
+  `--tool decode_sprite.py --exhaustive` 18 / 18。
+- `decode_figani` 的跨工具對照仍明寫 `mode01="dither"`;`verify_truncation_robustness` 用預設呼叫,兩種解法的截斷守衛相同。
+
+**三、補寫續九十五**:插在續九十四與續九十六之間(見該節)。內容取自提交 `de6121fb`,並以名稱表複本重跑資料突變(倉庫不動):
+刪掉 0x33674 後 selftest exit 1、FAIL 指出 `0x33674`,對照 PASS。`98-index.md` 已重寫,「續 N」不再缺號。
+
+仍留(只記錄、未修改):
+- `decode_sprite.py` selftest (5)「真實資料」拿 `FIGANI_000.bin` 從第 0 個 byte 當 24 × 24 的 sprite 本文解,那是幀容器不是本文,
+  這題只驗長度與非透明數,證明不了解碼正確((7) 才是真實資料的鑑別題)。
+- doc23 §2.4⑦ 的分鏡⑨比對要用 dither 解重做,需要 `frame_184.png`(原版 DOSBox-X 擷取)。

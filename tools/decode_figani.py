@@ -6,7 +6,8 @@
 
 == 容器(FIGANI.DAT)==
 LLLLLL 容器(見 unpack_dat.py)→ 每個資源 = 一段動畫。
-動畫:u16 frameCount @0、u32[frameCount] 幀 offset @+8(frameCount = (offsets[0]-8)/4)。
+動畫:u8 frameCount @0、u8 旗標 @+1(0 / 1)、u32[frameCount] 幀 offset @+8(frameCount = (offsets[0]-8)/4)。
+旗標 = 1 的有 15 份(續一百三十九),所以 +0 不能當 u16 讀。
 
 == 每幀 ==
 13-byte 標頭:
@@ -78,9 +79,9 @@ def decode_rle(body, w, h, trans=0):
 def selftest():
     """手算 4 模式 + 截斷回歸 + 與 decode_sprite 的跨工具對照。
 
-    這支與 `decode_sprite.decode_rle_sprite` 是同一族文法的兩個參數化:模式 1 在
-    這裡固定是 dither,在那裡預設是 literal。所以第 (3) 題用
-    `mode01="dither"` 去對照兩個**獨立實作**,其餘三個模式必須逐位元組一致。
+    這支與 `decode_sprite.decode_rle_sprite` 是同一族文法的兩個實作:模式 1 在
+    這裡固定是 dither,在那裡可用 `mode01` 切換(續一百四十起預設也是 dither)。第 (3) 題
+    明寫 `mode01="dither"` 去對照兩個**獨立實作**,四個模式必須逐位元組一致。
     """
     import os as _os
     import sys as _sys
@@ -154,19 +155,47 @@ def selftest():
     if not ok4:
         fails.append("長度不變量或非恆真控制失敗")
 
+    print("\n(5) 容器:幀數是 +0 的 u8,+1 的旗標不算進幀數")
+    # 甲:4 幀、旗標 1(幀數 4 ≠ 旗標 1,所以讀錯 byte 分得出來)。當 u16 讀是 260 幀,第 5 筆「位移」
+    # 讀到第 0 幀標頭的 boundW(= 40),最後一幀的結尾被截在 40 → 本文變空。資料補到 1100 bytes,
+    # 讓 260 筆位移表讀得到(不靠例外分辨)。4 幀的寬高壓在邊界上:1 / 1024 收、1025 不收;
+    # 收的兩幀放最後,倒數第二幀的結尾(= 下一筆位移,不是檔長)才驗得到。
+    def frame(w, h, body, bound=0):
+        return struct.pack("<HHHHBHH", bound, 0, 0, 2, 0, w, h) + body
+    spec = [(1025, 1, b"\x00\xBB\x00"), (1024, 1025, b"\x00\xCC\x00\xCC"), (1, 1024, b"\x01\xAA"), (2, 1, b"\x01\xDD")]
+    blobs = [frame(w, h, b, 40 if k == 0 else 0) for k, (w, h, b) in enumerate(spec)]
+    offs5 = [8 + 4 * len(spec)]
+    for b in blobs[:-1]:
+        offs5.append(offs5[-1] + len(b))
+    syn = (bytes([len(spec), 1]) + bytes(6) + b"".join(struct.pack("<I", o) for o in offs5)
+           + b"".join(blobs)).ljust(1100, b"\x00")
+    want5 = [(1, 1024, syn[offs5[2] + 13:offs5[3]]), (2, 1, syn[offs5[3] + 13:])]
+    # 乙:最後一幀只有 13-byte 標頭、剛好碰到檔尾 → 收,本文空
+    syn_b = bytes([1, 0]) + bytes(6) + struct.pack("<I", 12) + frame(3, 1, b"")
+    got5 = {"甲": parse_anim(syn), "乙": parse_anim(syn_b)}
+    ok5 = got5 == {"甲": want5, "乙": [(3, 1, b"")]}
+    print(f"    {'PASS' if ok5 else 'FAIL'}: "
+          + "、".join(f"{k} {[(w, h, len(b)) for w, h, b in v]}" for k, v in got5.items())
+          + f"(甲應 {[(w, h, len(b)) for w, h, b in want5]},乙應 [(3, 1, 0)])")
+    if not ok5:
+        fails.append(f"幀容器解錯:{ {k: [(w, h, len(b)) for w, h, b in v] for k, v in got5.items()} }")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(4 模式手算 + 截斷回歸 + 跨工具同族對照 + "
-          "不變量與非恆真控制)。")
+          "不變量與非恆真控制 + 容器幀數 u8)。")
     return 0
 
 
 def parse_anim(d):
     """回傳 [(realW, realH, body_bytes), ...]。"""
-    nf = struct.unpack_from("<H", d, 0)[0]
+    # 續一百四十:幀數是 +0 的 u8,+1 是旗標。以前當 u16 讀,旗標 = 1 的 15 份會多讀 256 筆
+    # 「位移」;現有檔案裡那些值剛好全部超過檔長被濾掉、最後一幀的結尾也剛好被切片截回檔長,
+    # 所以輸出沒變 —— 是運氣,不是正確(selftest (5) 用一份會被讀歪的合成檔釘住)。
+    nf = d[0]
     offs = [struct.unpack_from("<I", d, 8 + 4 * i)[0] for i in range(nf)]
     frames = []
     for fi in range(nf):

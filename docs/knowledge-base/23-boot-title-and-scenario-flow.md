@@ -242,6 +242,8 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 再疊圖取 y0–200,palette=FDOTHER_101.bin(0x65)
 ```
 
+> 續一百四十更正(doc98):當時 `decode_sprite.py` 的 `mode01` 預設是 `"literal"`,而這兩份本文含模式 1 28 / 12 個;literal 解每遇到一個就讀錯長度、後面整段錯位(與正確的 dither 解相比 17187 / 47040、13478 / 47040 個像素不同)。下面的比對圖是用錯位的解法做的;預設已改成 dither,但比對本身**沒有重做**(原版 DOSBox-X 擷取的 `frame_184.png` 不在倉庫),四個構圖特徵吻合的結論待重做確認。doc39 §10.9 的 Ghidra 控制流複驗不依賴這張圖。
+
 結果(`extracted/title_re/fdother_static/fdother069_070_demonface_pal101.png`,本機)與
 `frame_184.png` 並排(`extracted/title_re/fdother_static/demonface_compare_frame184_vs_re.png`,
 本機)——**紅色發光雙眼位置、上方一道白/淺色弧形光帶、左下角放射狀爪痕、下巴淺膚色斑塊,四個

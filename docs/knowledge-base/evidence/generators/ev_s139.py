@@ -6,7 +6,7 @@
     —— 原編碼器是逐列編的。
 (B) 一個逐列編碼器加上 6 條規則,把上面每一個串流逐 byte 編回原樣(0 個不同)。每條規則單獨改掉,都會有串流編不回去,
     所以 6 條都是資料逼出來的,不是多餘的。
-(C) 對照:模式 1 若照 decode_sprite.py 的預設當成 literal(讀 count 個像素),含模式 1 的串流沒有一個能剛好吃完;
+(C) 對照:模式 1 若照 decode_sprite.py 當時(續一百四十改成 dither 以前)的預設當成 literal(讀 count 個像素),含模式 1 的串流沒有一個能剛好吃完;
     用錯一欄的寬度解碼,跨列的控制位元組就出現 —— 「0 個跨列」只在真正的寬度成立。
 容器:FDICON 的位移表有 count + 1 筆(最後一筆 = 檔長);FDSHAP 只有 count 筆;FIGANI / FDOTHER 的幀數是第 0 個 byte,
 第 1 個 byte 是 0 或 1(FIGANI 有 15 份是 1),位移表從 +8 起。
@@ -32,7 +32,7 @@ CAP = 64      # 控制位元組低 6 bit + 1
 def walk(body: bytes, w: int, total: int, mode1_literal: bool = False) -> tuple[list[int], int, int, int, int]:
     """線性解碼。回傳 (像素, 吃掉的 bytes, 最後位置, 跨列的控制位元組數, 模式 1 個數);T = 沒寫入。
 
-    mode1_literal=True 是對照:把模式 1 當成 literal(decode_sprite.py 的預設 mode01="literal")。
+    mode1_literal=True 是對照:把模式 1 當成 literal(decode_sprite.py 續一百四十以前的預設 mode01="literal")。
     """
     out = [T] * total
     i = pos = cross = m1 = 0

@@ -11,10 +11,11 @@
 
 像素可經 remap 表轉換(原版 [ebp+eax]);本工具預設 identity。
 
-⚠ 狀態:此文法對應 EXE 內 **24×24** 解碼器。FIGANI 戰鬥動畫(任意寬)使用
-同家族的**另一參數化變體**(模式/位元配置略不同),套用本文法可精確消耗位元組但
-渲染未對齊 → 待反組譯 0x4E000–0x4F800 對應變體後修正。詳見
-docs/knowledge-base/06-animation-format.md。
+狀態(續一百四十更正):FDICON / FDSHAP / FIGANI / FDOTHER 四種資源都是同一個文法,
+模式 1 = 讀 1 個值 byte、佔 2×count 寬(續一百三十九:四種資源全部解碼再編回逐 byte 相同、
+0 個跨列;模式 1 當 literal 解,含模式 1 的串流沒有一個剛好吃完)。所以 `mode01` 預設是
+"dither";"literal" 只留給對照用。舊文件字串說的「FIGANI 渲染未對齊、另一變體」不成立。
+FIGANI 的容器與逐幀解碼見 decode_figani.py,格式見 docs/knowledge-base/06-animation-format.md。
 
 用法:
     python3 decode_sprite.py <frame.bin> <w> <h> <palette.bin> <out.png>
@@ -35,8 +36,13 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 
-def decode_rle_sprite(body, width, height, trans=0, mode01="literal"):
-    """4 模式 sprite RLE → 像素 bytes(transparent=trans)。"""
+def decode_rle_sprite(body, width, height, trans=0, mode01="dither"):
+    """4 模式 sprite RLE → 像素 bytes(transparent=trans)。
+
+    mode01:模式 1 的解法。"dither"(預設)= 讀 1 個值、輸出 [trans, 值]×count;
+    "literal" = 當成模式 2 讀 count 個像素,只當對照(續一百三十九證明它與真實資料不符)。
+    續一百四十以前預設是 "literal",用 CLI 解含模式 1 的資源,每遇到一個模式 1 就讀錯長度、後面整段錯位。
+    """
     out = bytearray()
     total = width * height
     i = 0
@@ -60,7 +66,7 @@ def decode_rle_sprite(body, width, height, trans=0, mode01="literal"):
                 out += bytes([trans, v]) * cnt
         elif mode == 3:                    # 透明 skip
             out += bytes([trans]) * cnt
-        else:                              # literal(模式 2,以及預設參數化的模式 1)
+        else:                              # literal(模式 2,以及 mode01="literal" 對照下的模式 1)
             out += body[i:i + cnt]; i += cnt
     return bytes(out[:total]).ljust(total, bytes([trans]))
 
@@ -80,10 +86,11 @@ def selftest():
         ("10 literal    c=0x82 -> cnt 3", b"\x82\x01\x02\x03", 3, 1, {}, b"\x01\x02\x03"),
         ("11 透明 skip  c=0xC4 -> cnt 5", b"\xC4", 5, 1, {"trans": 7},
          b"\x07" * 5),
-        # 01 的兩種參數化都要釘住:預設是 literal,dither 變體會輸出 2×cnt
-        ("01 預設 literal c=0x42 -> cnt 3", b"\x42\x11\x22\x33", 3, 1, {}, b"\x11\x22\x33"),
-        ("01 dither     c=0x41 -> cnt 2, 2×寬", b"\x41\x55", 4, 1,
-         {"trans": 0, "mode01": "dither"}, b"\x00\x55\x00\x55"),
+        # 01 的兩種參數化都要釘住:預設是 dither(輸出 2×cnt),literal 只是對照
+        ("01 literal 對照 c=0x42 -> cnt 3", b"\x42\x11\x22\x33", 3, 1,
+         {"mode01": "literal"}, b"\x11\x22\x33"),
+        ("01 預設 dither c=0x41 -> cnt 2, 2×寬", b"\x41\x55", 4, 1,
+         {"trans": 0}, b"\x00\x55\x00\x55"),
         # 上面 5 個案例的控制位元組 bit5 都是 0,所以 `c>>6` 與 `c>>5` 會落在
         # 同一個分支 —— 第 (4) 題的負對照因此驗不出東西(它自己抓到了)。
         # 這兩個把 bit5 設起來,才真的把「模式取高 2 bit」釘住。
@@ -139,7 +146,8 @@ def selftest():
                 out += body[i:i + cnt]; i += cnt
         return bytes(out[:width * height]).ljust(width * height, bytes([trans]))
     diffs = sum(1 for label, body, w, h, kw, want in cases
-                if kw.get("mode01") != "dither"
+                # wrong() 把模式 1 當 literal,所以只排除「模式 1 用 dither 解」的案例
+                if (body[0] >> 6 != 1 or kw.get("mode01", "dither") == "literal")
                 and wrong(body, w, h, kw.get("trans", 0)) != want)
     ok4 = diffs >= 2
     print(f"    {'PASS' if ok4 else 'FAIL'}: 錯誤實作在 {diffs} 個案例上與預期不符"
@@ -177,13 +185,50 @@ def selftest():
     if not ok6:
         fails.append(f"run 長度/游標/透明模式不對:{[k for k, v in b6.items() if not v]}")
 
+    print("\n(7) 預設 mode01 對真實資料:FDOTHER_069 / 070 本文(各含模式 1)320×147")
+    # 續一百四十:預設以前是 "literal"。這兩份是 doc23 §2.4⑦ 用 CLI 解過的資源,含模式 1
+    # 28 / 12 個。用獨立的位元組帳(不經 decode_rle_sprite)確認:dither 解法剛好吃完所有 bytes
+    # 且剛好寫滿 w×h,literal 解法寫不滿;再要求預設輸出 = dither 輸出 ≠ literal 輸出。
+    def span(body, total, lit):
+        i = pos = m1 = 0
+        while pos < total and i < len(body):
+            c = body[i]; i += 1
+            m, k = c >> 6, (c & 0x3F) + 1
+            m1 += m == 1
+            if m == 1 and lit:
+                m = 2
+            i += 1 if m in (0, 1) else k if m == 2 else 0
+            pos += 2 * k if m == 1 else k
+        return i, pos, m1
+    fd = os.path.join(root, "extracted", "raw", "FDOTHER")
+    got7 = {}
+    for fn in ("FDOTHER_069.bin", "FDOTHER_070.bin"):
+        p = os.path.join(fd, fn)
+        if not os.path.isfile(p):
+            continue
+        body = open(p, "rb").read()[4:]
+        w, h = 0x140, 0x93
+        used_d, pos_d, m1 = span(body, w * h, False)
+        _, pos_l, _ = span(body, w * h, True)
+        dflt = decode_rle_sprite(body, w, h)
+        got7[fn] = (m1, used_d == len(body) and pos_d == w * h, pos_l != w * h,
+                    dflt == decode_rle_sprite(body, w, h, mode01="dither")
+                    and dflt != decode_rle_sprite(body, w, h, mode01="literal"))
+    if got7:
+        ok7 = got7 == {"FDOTHER_069.bin": (28, True, True, True), "FDOTHER_070.bin": (12, True, True, True)}
+        print(f"    {'PASS' if ok7 else 'FAIL'}: (模式 1 個數, dither 剛好吃完寫滿, literal 寫不滿, 預設 = dither ≠ literal) {got7}")
+        if not ok7:
+            fails.append(f"預設 mode01 與真實資料不符:{got7}")
+    else:
+        print("    SKIP: 找不到 extracted/raw/FDOTHER/FDOTHER_069.bin / 070.bin")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(4 模式手算 + 長度不變量 + 截斷行為 + "
-          "模式判定的故障注入 + 真實資料)。")
+          "模式判定的故障注入 + 真實資料 + 預設 mode01 對真實資料)。")
     return 0
 
 
