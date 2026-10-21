@@ -244,6 +244,8 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 
 > 續一百四十更正(doc98):當時 `decode_sprite.py` 的 `mode01` 預設是 `"literal"`,而這兩份本文含模式 1 28 / 12 個;literal 解每遇到一個就讀錯長度、後面整段錯位(與正確的 dither 解相比 17187 / 47040、13478 / 47040 個像素不同)。下面的比對圖是用錯位的解法做的;預設已改成 dither,但比對本身**沒有重做**(原版 DOSBox-X 擷取的 `frame_184.png` 不在倉庫),四個構圖特徵吻合的結論待重做確認。doc39 §10.9 的 Ghidra 控制流複驗不依賴這張圖。
 
+> 續一百四十一重做(doc98):原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)在 DOSBox-X 重拍開場 93 張(`.wsl_build/s141_demonface/`,本機),把 FDOTHER_069–073 的 dither 解疊成 320×735 捲動緩衝,以「同一幀裡一個調色盤索引只顯示一個顏色」逐像素比對:捲動段 76 張裡 60 張完全一致、14 張是差一列的撕裂、2 張解釋不了;literal 解、平移 1 px、logo 幀都到不了 0.9(`evidence/demonface_live_vs_fdother_scroll_s141_20261021.json`)。**⑨ = #0x45 / #0x46 捲動頂端的結論成立**,依據改為這份逐像素一致率。與下文不一致的兩點(只記錄):這次實拍捲到 esi = 26 就切黑、黑幕約 0.26 秒後進 logo,沒有看到「捲到 0 再停 1000ms」;惡魔臉背景是黑的、黑幕裡沒有紅閃光(取樣約 0.04 秒一張)。下文的 frame_184 是 §2.4 那一輪 docker dosbox 0.74-3 的擷取,不是 DOSBox-X,上面續一百四十更正的說法一併更正;那一輪用哪一版 FD2.EXE 沒有紀錄。
+
 結果(`extracted/title_re/fdother_static/fdother069_070_demonface_pal101.png`,本機)與
 `frame_184.png` 並排(`extracted/title_re/fdother_static/demonface_compare_frame184_vs_re.png`,
 本機)——**紅色發光雙眼位置、上方一道白/淺色弧形光帶、左下角放射狀爪痕、下巴淺膚色斑塊,四個

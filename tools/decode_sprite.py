@@ -155,24 +155,46 @@ def selftest():
     if not ok4:
         fails.append("手算案例對「模式取幾個 bit」沒有鑑別力")
 
-    print("\n(5) 真實資料:解一個真的 sprite 子資源,長度與消耗都要合理")
+    # 獨立的位元組帳(不經 decode_rle_sprite),(5)、(7) 共用:回傳 (吃掉的 bytes, 寫到的像素, 模式 1 個數)。
+    def span(body, total, lit):
+        i = pos = m1 = 0
+        while pos < total and i < len(body):
+            c = body[i]; i += 1
+            m, k = c >> 6, (c & 0x3F) + 1
+            m1 += m == 1
+            if m == 1 and lit:
+                m = 2
+            i += 1 if m in (0, 1) else k if m == 2 else 0
+            pos += 2 * k if m == 1 else k
+        return i, pos, m1
+
+    print("\n(5) 真實資料:FIGANI_000 的 4 幀本文(四種模式都有),位元組帳與另一份實作都要對上")
+    # 續一百四十一:舊版把整個 FIGANI 容器從 byte 0 當 24×24 本文解,只驗「576 px、有非透明」——
+    # 任何不崩的解碼器都過得了。改成用 decode_figani.parse_anim 取出真正的幀本文(實寬實高),
+    # 要求:(a) 獨立位元組帳下 dither 剛好吃完、剛好寫滿 w×h;(b) 與 decode_figani.decode_rle
+    # (同一文法的另一份實作)逐 byte 相同;(c) 含模式 1 的幀,literal 對照解出來必須不同。
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    d = os.path.join(root, "extracted", "raw", "FIGANI")
-    real = None
-    if os.path.isdir(d):
-        for fn in sorted(os.listdir(d))[:1]:
-            real = os.path.join(d, fn)
-    if real:
-        body = open(real, "rb").read()
-        px = decode_rle_sprite(body, 24, 24)
-        nz = sum(1 for b in px if b)
-        ok5 = len(px) == 576 and nz > 0
-        print(f"    {'PASS' if ok5 else 'FAIL'}: {os.path.basename(real)} -> "
-              f"{len(px)} px,非透明 {nz}")
+    p5 = os.path.join(root, "extracted", "raw", "FIGANI", "FIGANI_000.bin")
+    if os.path.isfile(p5):
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from decode_figani import parse_anim, decode_rle
+        frames5 = parse_anim(open(p5, "rb").read())
+        rows5 = []
+        m1_total = 0
+        for w, h, body in frames5:
+            used, pos, m1 = span(body, w * h, False)
+            m1_total += m1
+            px = decode_rle_sprite(body, w, h)
+            rows5.append((used == len(body) and pos == w * h,
+                          px == decode_rle(body, w, h),
+                          m1 == 0 or px != decode_rle_sprite(body, w, h, mode01="literal")))
+        ok5 = len(frames5) == 4 and m1_total == 264 and rows5 == [(True, True, True)] * 4
+        print(f"    {'PASS' if ok5 else 'FAIL'}: {len(frames5)} 幀,模式 1 共 {m1_total} 個,"
+              f"(剛好吃完寫滿, = decode_figani, literal 不同) {rows5}")
         if not ok5:
-            fails.append(f"真實 sprite 解出 {len(px)} px / 非透明 {nz}")
+            fails.append(f"FIGANI_000 幀本文解碼不符:{len(frames5)} 幀 / 模式 1 {m1_total} / {rows5}")
     else:
-        print("    SKIP: 找不到 extracted/raw/FIGANI")
+        print("    SKIP: 找不到 extracted/raw/FIGANI/FIGANI_000.bin")
 
     print("\n(6) run 長度 = 低 6 位 + 1、連續 run 的游標、透明 skip 模式")
     # 2026-09-11 窮舉突變測試:`(c & 0x3F) + 1`、色彩 run 取值後的 `i += 1`、`mode == 3`
@@ -189,18 +211,7 @@ def selftest():
     # 續一百四十:預設以前是 "literal"。這兩份是 doc23 §2.4⑦ 用 CLI 解過的資源,含模式 1
     # 28 / 12 個。用獨立的位元組帳(不經 decode_rle_sprite)確認:dither 解法剛好吃完所有 bytes
     # 且剛好寫滿 w×h,literal 解法寫不滿;再要求預設輸出 = dither 輸出 ≠ literal 輸出。
-    def span(body, total, lit):
-        i = pos = m1 = 0
-        while pos < total and i < len(body):
-            c = body[i]; i += 1
-            m, k = c >> 6, (c & 0x3F) + 1
-            m1 += m == 1
-            if m == 1 and lit:
-                m = 2
-            i += 1 if m in (0, 1) else k if m == 2 else 0
-            pos += 2 * k if m == 1 else k
-        return i, pos, m1
-    fd = os.path.join(root, "extracted", "raw", "FDOTHER")
+    fd =os.path.join(root, "extracted", "raw", "FDOTHER")
     got7 = {}
     for fn in ("FDOTHER_069.bin", "FDOTHER_070.bin"):
         p = os.path.join(fd, fn)

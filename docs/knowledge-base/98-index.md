@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 185 節、19 個主題。
+共 186 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 9924:2026-10-17 續一百三十二:第二輪的「沒錄到」是查詢寫錯 —— 三份紀錄都有,階與續一百二十三第二輪相同;(10, 20) 是 HUD 圖示 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9966:2026-10-17 續一百三十三:HUD 單位圖示框逐像素 = FDICON 圖示 + HP 數字格;lc131a 第 6 圈畫 6 是第 4、5 圈 redraw 沒跨 tick 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10012:2026-10-17 續一百三十四:四模式 RLE 的模式 1 是先跳過再寫(地圖上敵方單位的圖示);續一百二十二 ~ 一百二十九的 8 份證據補上產生器 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
@@ -17,6 +16,7 @@
 - 行 10291:2026-10-21 續一百三十九:四模式 RLE 解碼再編回去逐 byte 相同(FDICON / FDSHAP / FIGANI / FDOTHER 全部) 〔來源:FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 - 行 10350:2026-10-21 續一百四十:續一百三十九留下的三件 —— FIGANI 幀數改 u8、`decode_sprite` 模式 1 預設改 dither、補寫續九十五 〔來源:DOSBox-X、Ghidra、FDOTHER〕
+- 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -148,7 +148,7 @@
 - 行 8316:2026-10-08 續一百零八:呼叫紀錄擴大到城鎮 / 商店 / 戰鬥指令 / 法術 / 敵方 AI / 存讀檔,加規格檔與逐函式事實檔 —— 534 個入口實機反驗,改正 3 筆摘要 〔來源:dosbox-x、debugger、反組譯〕
 - 行 9832:2026-10-16 續一百三十:沒有斷點時光束炮相位迴圈畫出的階以呼叫紀錄量到(不必擷取畫面);新證據附產生器 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
-## 工具的自我驗證、突變測試與閘門(30 節)
+## 工具的自我驗證、突變測試與閘門(31 節)
 
 - 行 1789:2026-09-03 續六：**反向驗證**（使用者要求）—— 找到 1 個守衛漏洞、3 個崩潰路徑 〔來源:debugger〕
 - 行 1854:2026-09-03(續)全工具多重驗證(`tools/verify_all_tools.py`) 〔來源:capstone、反組譯、青衫攻略〕
@@ -180,6 +180,7 @@
 - 行 8088:2026-10-07 續一百零一:`--coverage` 列出的兩個疑點 —— 舊版戰後 gate 的現行對應已解並釘進 selftest;`0x3702f` 的 `__STK` 是既定沿用 〔來源:capstone、反組譯、FD2.EXE〕
 - 行 8755:2026-10-12 續一百一十四:續一百一十三的殘留 —— 突變存活 22 個歸零、param_flow 判不出的 34 個逐一分類並直接讀反組譯、實機補錄 cl9 / cl11 / cl12;改正 4 筆摘要 〔來源:dosbox-x、斷點、反組譯〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
+- 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
 
 ## 證據來源判準(排除 remake 證據)(2 節)
 
@@ -251,7 +252,7 @@
 - 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(20 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(21 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -273,6 +274,7 @@
 - 行 10291:2026-10-21 續一百三十九:四模式 RLE 解碼再編回去逐 byte 相同(FDICON / FDSHAP / FIGANI / FDOTHER 全部) 〔來源:FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 - 行 10350:2026-10-21 續一百四十:續一百三十九留下的三件 —— FIGANI 幀數改 u8、`decode_sprite` 模式 1 預設改 dither、補寫續九十五 〔來源:DOSBox-X、Ghidra、FDOTHER〕
+- 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
 
 ## dispatch 跳表與指令表(4 節)
 

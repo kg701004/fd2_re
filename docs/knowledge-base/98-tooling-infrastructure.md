@@ -10381,3 +10381,40 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
 - `decode_sprite.py` selftest (5)「真實資料」拿 `FIGANI_000.bin` 從第 0 個 byte 當 24 × 24 的 sprite 本文解,那是幀容器不是本文,
   這題只驗長度與非透明數,證明不了解碼正確((7) 才是真實資料的鑑別題)。
 - doc23 §2.4⑦ 的分鏡⑨比對要用 dither 解重做,需要 `frame_184.png`(原版 DOSBox-X 擷取)。
+
+## 2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文
+
+續一百四十「仍留」的兩件,使用者核准後處理(第一件含一小段 DOSBox-X 連拍)。
+
+**一、doc23 §2.4⑦ 分鏡⑨比對重做**(原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,DOSBox-X `core=normal`、`cycles=5000`,不送按鍵)。
+- 時間點:先在 DOSBox-X 視窗出現後 31–35.7 秒、35.5–39.9 秒各拍一段找位置(只用來定位),第三段 39.5–43.6 秒拍到 FDOTHER 捲動立繪捲向頂端、切黑、進 logo。
+  第三段 93 張是證據輸入,放在 `.wsl_build/s141_demonface/`(不進 git;`meta.json` 記 t0 與 FD2.EXE md5;本機備份 `evidence_inputs_all_20261021b.tar.xz`,2731 檔逐檔相符)。
+- 判準:同一幀裡一個調色盤索引只顯示一個顏色。FDOTHER_069–073 五幀(標頭 320 × 147)用 dither 解、疊成 320 × 735 的捲動緩衝,
+  每張 DOSBox-X 實拍搜尋起始列 dy(= 捲動迴圈 esi),只看非黑像素算「RE 索引 → 實拍顏色」一致率 B 與反方向 A。
+  這個判準不受當下調色盤明暗影響,取代 doc23 原本「四個構圖特徵」的肉眼比對。
+- 結果(`evidence/demonface_live_vs_fdother_scroll_s141_20261021.json`,`ev_s141.py`;`mut_s141.py` 14 / 14):
+  DOSBox-X 捲動段 76 張裡 60 張單一 dy 下 B = 1、A ≥ 0.98;14 張是差一列的撕裂(上半 dy、下半 dy − 1 拼接後 B ≥ 0.99);
+  2 張(`shot_041.61`、`shot_042.98`)兩種都解釋不了,照實列出。
+- 對照(給同樣的搜尋自由度):FDOTHER literal 解(含撕裂拼接)最高 0.65、dither 平移 1 px 0.80、黑幕後的 logo 幀 0.81,都到不了 0.9。
+  dither 解五幀都剛好吃完並寫滿;literal 解在含模式 1 的 FDOTHER_069 / 070 / 072 吃不完。
+- 結論:分鏡⑨的惡魔臉確實是 FDOTHER #0x45 / #0x46 所在的捲動緩衝頂端;doc23 §2.4⑦ 的結論成立,依據換成這份逐像素一致率。
+- 與 doc23 不一致的兩點(只記錄,原因未查):
+  - DOSBox-X 實拍裡捲動在 dy = 26 就切黑(43.35 → 43.39 秒),黑幕 6 張(約 0.26 秒)後進 logo,沒有看到 §2.4⑦ 推導的「esi 捲到 0、再停 1000ms」。
+    以約 23.6 列 / 秒,剩下 26 列加停留要約 2.1 秒,黑幕只有 0.26 秒,所以也不像是「黑著捲完」。
+  - 黑幕裡沒有紅閃光,惡魔臉背景是黑的。doc23 的 frame_184「整片鮮紅」是 §2.4 那一輪 docker `dq3-dosbox`(dosbox 0.74-3)的擷取,
+    那一輪用哪一版 FD2.EXE 沒有紀錄。DOSBox-X 取樣約 0.04 秒一張,更短的閃光排除不了。
+- 更正續一百四十:`frame_184.png` 不是「原版 DOSBox-X 擷取」,是上述 docker dosbox 0.74 的擷取(doc23 加註處一併更正)。
+
+**二、`tools/decode_sprite.py` selftest (5) 改寫**。
+- 舊題把 `FIGANI_000.bin` 整個容器從第 0 個 byte 當 24 × 24 本文解,只驗 576 px 與非透明數。
+  改成用 `decode_figani.parse_anim` 取出 FIGANI_000 的 4 幀本文(實寬實高),每幀要求:(a) 獨立位元組帳下 dither 剛好吃完、寫滿;
+  (b) 與 `decode_figani.decode_rle` 逐 byte 相同;(c) 含模式 1 的幀,literal 對照解出來不同。另釘 FIGANI_000 有 4 幀、模式 1 共 264 個。
+- 配對對照:對 `decode_rle_sprite` 注入 6 種錯誤(dither 順序顛倒、literal 多跳 1、透明少 1、色彩 run 多 1、預設改回 literal、count 只取低 5 位),
+  舊題抓到 0 / 6、新題 6 / 6;未注入的對照兩題都 PASS。FIGANI 408 份非空檔的每一幀用 dither 解都剛好吃完寫滿。
+- (7) 的 `span()` 位元組帳移到 (5) 前面共用。窮舉:decode_sprite、decode_figani(現在被 (5) import)、decode_fdicon、extract_all、
+  verify_truncation_robustness 全部歸零。
+
+仍留(只記錄、未修改):
+- `decode_figani.parse_anim` 讀空檔會 IndexError(`FIGANI_408.bin` 是 0 byte);續一百四十以前的 u16 讀法同樣會 struct.error,不是本輪造成。
+- 上面 doc23 不一致的兩點(DOSBox-X 實拍沒有捲到 esi = 0、沒有紅閃光)的原因。
+- `shot_041.61`、`shot_042.98` 兩張 DOSBox-X 實拍為什麼對不上(上半段 B = 1,下半段 0.70 / 0.80)。
