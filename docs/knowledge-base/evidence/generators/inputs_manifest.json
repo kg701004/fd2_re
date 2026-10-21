@@ -7979,6 +7979,2337 @@
     ]
    }
   },
+  "ev_s139": {
+   "outputs": [
+    "rle4_roundtrip_s139_20261020.json"
+   ],
+   "inputs": {
+    "extracted/raw/FDOTHER/FDOTHER_000.bin": [
+     768,
+     "b89f66fd8cec0b38e9e8697cc72ee63095f0a61b14edcee10d6ea908fff429ae"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_001.bin": [
+     2235,
+     "0ba9a169a41cadf32020b26e216ded6d8dfaebd4b22f65b2addda8b9679e34ff"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_002.bin": [
+     37680,
+     "97cadfcb4e2632c931b940401e9dc5cb505e176676881a9d186de027d5ae24e0"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_003.bin": [
+     5990,
+     "fddfdbd91b048081ea621b5a4be7d29fb24234a62e19e2b21837df52cbb02ccc"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_004.bin": [
+     58368,
+     "3d9493f204254c58600f2b08beb47e372d2aa950d686a97f7ed73aa1f709c871"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_005.bin": [
+     44181,
+     "561eb8ca579b13a6f2bc1f36436ad3af7d8d0bf77eab25a4ab6411142a7eb118"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_006.bin": [
+     33415,
+     "47cc4f7136b553879f960e9902d223c9f7e4462d726fb7ea3124bf51c912f71c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_007.bin": [
+     23377,
+     "06120a4605e054f2ff1e08f882661b9b345b39978aabf5126ec137e1207815b3"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_008.bin": [
+     768,
+     "435ff992367240d0f195f62983288741548fa9c9a6d0293ebd8735b69ad40b51"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_009.bin": [
+     3999,
+     "0eeaeb88320287e0c60c530c9d3a2592fea54378ebe5d5ac6a321e4fb1de7f0b"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_010.bin": [
+     274,
+     "50b2667b86ab59512c9e4282f4e90a899ab454fffca77144e4a2ded33a10f43c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_011.bin": [
+     53587,
+     "2da740eff75ac3a15b378509281e7d610838dc412426d17ee6fcd220e478a038"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_012.bin": [
+     51759,
+     "e9b4972e5da525577d9428a6a97f9fdcda44a9e30f115891779752022cd4e255"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_013.bin": [
+     53210,
+     "c73fc9be62ded2ae2b74862fb9c43dcb0533570bd6a725d6a566843a85e6db4d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_014.bin": [
+     51157,
+     "0249104999fcb533c848f831860997da8c2d6baeb1971d171066bff7ce23c60c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_015.bin": [
+     64004,
+     "49facaa1526718153ebf3163d8f3215e9c9a7f010f1e36a536769a3a7ce3e3ee"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_016.bin": [
+     1950,
+     "fced46effbd2a7c0deffa0a820143d9658ee6c5f5cd8a2103e92fbf0c5245add"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_017.bin": [
+     34664,
+     "10b3e4ca5c8e43f76fdbeb3adfa7b493eec4e8ca1f8b44b03d15092d811e979f"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_018.bin": [
+     9466,
+     "1e566a098b16d19445931e31ec87451c231f091da6a0f02c2f18f62120898694"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_019.bin": [
+     15998,
+     "1b591fb7cee4e017de1b79862a2cca37a2af728d45d5ef78cbf31304ae4ce9e2"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_020.bin": [
+     9565,
+     "c962892e4f87f60962a014a01f9d7720af9fe54ebd781c2c06b13260b3a03bcc"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_021.bin": [
+     18376,
+     "494dffe794e0fbcfe63b3f138ac2312399499f3da5f0be9b8dc25ed99887907e"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_022.bin": [
+     8866,
+     "44a5372aeb24db4a50aec85643b2768530600679bce9d1cb883d601c696f2722"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_023.bin": [
+     9904,
+     "63cce8512e8596ecb3e4910fe6b180890617a7ebc13026f44f5c232624779447"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_024.bin": [
+     15344,
+     "aa0b997de515236cadc5e2cc81db422bb5d14f6b9eb82a8d744dba876400cfb4"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_025.bin": [
+     16882,
+     "98f19c479f14cb174e51634501feda67d82decac8b929d39802ceed47fd7d15d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_026.bin": [
+     121579,
+     "197162f7975b631c742132a27bbac25c6d5ff54b1ad74c9311ee09ed4d4713fb"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_027.bin": [
+     168844,
+     "50eb8dee1784878d2ed6ca05c9076d4d89085a26920969f5615b0e529f36055a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_028.bin": [
+     38751,
+     "e26224db0645bc67dd9f7b6ac6d3fcba226fc64c8b38b7e4a7f982ec1da56907"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_029.bin": [
+     48030,
+     "db545f229715c619f1a4d32260191a607a9b0a43c2cebfa5cdfb2f37e5f1b927"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_030.bin": [
+     38238,
+     "f8185121cdbb55c1a0b452efbeca7395f622272900cfd6ce19eddf41a711b2e9"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_031.bin": [
+     31771,
+     "5f871c2348d76bf35cb52b0f04029dfdb765471ad1d6543479e7dfd3b3e19504"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_032.bin": [
+     12485,
+     "e6da6dcb8b90125c542cf0f160efdd4362d1bc6be8294e21125c31024853697b"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_033.bin": [
+     14113,
+     "90d65d5a7e6fc9ceb2f38d0904290e057e7ba6e7c6074214dac5b8e2a7d7dc5a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_034.bin": [
+     102345,
+     "53f120fa4b1fab74c6b3998ec3ef8a9a2363461980ad38a7ffef2400e79b0c4d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_035.bin": [
+     1936,
+     "67df58a5b892d6dcf337c2dbb938b60df6af14c811daff43ac0c38661fda4101"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_036.bin": [
+     31008,
+     "1c327e054172921c680d196e6df65e5eb44ef568d176959fda23083950903390"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_037.bin": [
+     9181,
+     "7b383e33b53aa89b7bcf24a8a694213b556d0a68247616337edaa20288788288"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_038.bin": [
+     11079,
+     "76b30b77a2939175fa2a057032130f1d3db89367bf427731127e0f583c4ce8e4"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_039.bin": [
+     48466,
+     "0411135067a69452ae0033d6e7441af817d15b0e74e8fe6c58ca7ec1959ae07c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_040.bin": [
+     1796,
+     "7c95905791e3814057e14f64faa09335004b7872924521fb5eb3b4b1d1035d5d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_041.bin": [
+     30868,
+     "2b6ab9d34638c0e1977026d3e83fcc3f173c87692b8461b18890b3ecf2bb113d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_042.bin": [
+     59412,
+     "4bef756aaf78b95cf97949785c71b4c3e04822a497741f468e6863d61da38d2d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_043.bin": [
+     57305,
+     "088a3f9268466b2ce82cb1a0165f38ebe85e2eedce6b8a17e77cfdaa43fe6e54"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_044.bin": [
+     227904,
+     "455338136fa971c2b61ebc5548a03ecadb77847811db467654682daba14e712e"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_045.bin": [
+     2073,
+     "d7a0e73d7dec5403441c33cd84392a7683de329f7b0914a1bf23c47ccc56513a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_046.bin": [
+     16482,
+     "062805a3cec083755576d89c2c23e6645d12205a9fedba2ae150243cb910d181"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_047.bin": [
+     17927,
+     "549e4283417d562ea946f37e1b25559bb6ed59e47d81015b2db9bb46cd39745a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_048.bin": [
+     24183,
+     "603859cadb3cb3c62a8efc07cbfcb7cc7798e31e9d2d5df0b995587acc821612"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_049.bin": [
+     27871,
+     "c245a6db4307f9cdae32b988ed4a4381d8648d03e1657381396a8ed846de5181"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_050.bin": [
+     31429,
+     "9609573396087f38ea0460247d819dbb665e5a1773a1d16c053de0d72bc07470"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_051.bin": [
+     28106,
+     "29851564dcbed6b16d252573d3126c7a14627cde36243cd332d671c255d069e7"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_052.bin": [
+     26164,
+     "6c8db6a9a55e7fbb337f30f7a7c8815f0ddc2c32aaa5121a8dff54b6bf5d7b86"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_053.bin": [
+     19394,
+     "4a52c21e2d831ed7e13f4f228b8d60d8d83841024133524fe4a6f0d52d74d79e"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_054.bin": [
+     263655,
+     "1e6cb912150102df4404a741846305033fe32f55db7d3a694ccb7fcc63496a46"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_055.bin": [
+     64004,
+     "a1999b7547bc4eabfb79049ae7cd7d08b12fd4402132e9e6e67b1fb56c981e65"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_056.bin": [
+     13609,
+     "de3501cee33e5d2b8c45a54dff1b85a47d204a02e4a154e93955153064f27206"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_057.bin": [
+     768,
+     "ff438c057f167b962e27ff36de592769bbad9d84d2a1469baf4fb17c3bb079e4"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_058.bin": [
+     45921,
+     "3ac5401a659b0098ad1c3e9e4333a67c689c7e87159107787a7f4cf07bf09124"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_059.bin": [
+     3278,
+     "3bebe7a61c9f1cf431b0dce057e44d7c1781cc8e655a4888a5f935a236a627c7"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_060.bin": [
+     2849,
+     "2aba369e25d5ef6f7cdf070938c4609a7212d949b1ab40da480d0b6133f673dc"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_061.bin": [
+     54727,
+     "32ed99ac819eb284050ba4326bfdf47d49629b9ebf35f14052ae417f24cbdf64"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_062.bin": [
+     43434,
+     "0644a223ca6f57c44dc4d7994d896f7a1463d03d64c1fc47c5103fafc2a14193"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_063.bin": [
+     60972,
+     "4a2e16f865c7afdf2cbebbd58a3080b4a687c81e9836f3d14b1cd7b4bb4db7cc"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_064.bin": [
+     18791,
+     "2c88f904ba9581fab56acddeb5f699636a93308290291a0f76539f840935ba22"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_065.bin": [
+     118996,
+     "5a38dc1edddc9bddfa126210ce9c91b4bc14b6795b8c1099310a5e70ce993f32"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_066.bin": [
+     18460,
+     "6a6d85d1766ac8a2e84521ff03b2dec7cc430593990e058acb92b4821efd6de3"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_067.bin": [
+     20245,
+     "ffab5cbbd369a7b955c768ec7720e253381f74e78a0db6f90e60244bba6a7fd1"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_068.bin": [
+     97950,
+     "cd9f63f3279c209f27262f7b3afdbdc767893c0dbbe7c0898b90bf6a7b400a92"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_069.bin": [
+     10482,
+     "71a83baf8d5ed2993925cf3a80100622e4c39f5fcd4116418a0104afaee1b24d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_070.bin": [
+     11095,
+     "19a3ca352707fa34a47ac4cf389ca0da641324fb6a7431f28322e5e685947523"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_071.bin": [
+     7308,
+     "941b33754407bbc677e1c28a3b19fcc8ae80290d22c5397d523048fcf613c41a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_072.bin": [
+     10915,
+     "adea1c296f77d1a0a7a6a13c04a940032aac09aae8994469cf59216ac11fa8b6"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_073.bin": [
+     10930,
+     "b7df7f62ab89486c2b710ed70a37f225fb423ed5d19e6808434a6ca9a343b00e"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_074.bin": [
+     6585,
+     "fa2e695f2a25430802d03154ff6bfdd3372aa3e89c912a67dc6da70cb5cd42e5"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_075.bin": [
+     37776,
+     "4942034d9d1c5ce13e758cc657b8c9fd06b609b8ca91ebefa35b37c0b288d16c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_076.bin": [
+     768,
+     "79d17da02ec2e5b0b14d2ebc9dd156d9ab69d7fc99df5008847dfa33fe72139d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_077.bin": [
+     52031,
+     "4276bfc6bf4b9f7ae0815f4f15a8f74aff33c5c29d4a2b5d2a5a6ec30540ce13"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_078.bin": [
+     6492,
+     "d284e38d6f19c90c87992de612b7c61fac5d959b7782954eda65f97fbf7d7899"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_079.bin": [
+     6801,
+     "34bb99917cdfd6b268674d7c1cf201cc3749cf3a58c574161dc5d37a36781373"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_080.bin": [
+     116165,
+     "263077899aa23992ca93d3d2e9c643bc440f9d865706a4722d4d1c39986e85cf"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_081.bin": [
+     18710,
+     "ca8954fa1cb0b1ef0468789d65b937eef7012f693f4eca28a639777db90db2d5"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_082.bin": [
+     20003,
+     "719044335477e7541ad97c40403d5281f62140c8e6633ca0b3efa4d931b84902"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_083.bin": [
+     33848,
+     "86e1abcfc8fc79f5e574313dd3a0d4371547b478d48683b3a0a17c7676176791"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_084.bin": [
+     24389,
+     "174b6ff284d36f335357ea89177c760cbef97c3a6c66feadc1cd68c0ee575e89"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_085.bin": [
+     13959,
+     "fcbbe69a80887ca9da7896080741c0c5ee693958d05fb31d28f366c309b7fa17"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_086.bin": [
+     11670,
+     "1f6c6bc4c8359055debef78e6a03b107a61b51592ea0f95d2dd5a54663e829f0"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_087.bin": [
+     20143,
+     "af8a8cbf8c7052860cd3eea2eb54c5e7b5f9d662c51f47328bcf86d9b39efc3f"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_088.bin": [
+     14953,
+     "a4e00033ed5e76f0f1915c828bcb6aea6d61d8d22ff6271aac96c687ffe6a9d3"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_089.bin": [
+     15308,
+     "eec251a64fee1c2d1afdbce351df11c47a7a3c3418f0418b064eb9b45fd12459"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_090.bin": [
+     26591,
+     "fbd67d8ad42ee8a7769d2899203abd71a2f18050a68a086feecb3499af3fe5ee"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_091.bin": [
+     33581,
+     "4dfde70e3adba522e26b9d6eab4959471cce19f3dc8b5686cd476d4c23023f7a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_092.bin": [
+     20247,
+     "fd1a30dd946f44b14efd50e0d86cb368f54996bfc48e591a7ca24cdf499ff268"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_093.bin": [
+     20247,
+     "fd1a30dd946f44b14efd50e0d86cb368f54996bfc48e591a7ca24cdf499ff268"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_094.bin": [
+     33581,
+     "4dfde70e3adba522e26b9d6eab4959471cce19f3dc8b5686cd476d4c23023f7a"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_095.bin": [
+     10458,
+     "055eeb6cf1dd3e132b9797494993c440b430928dadac47a853d39d30b9e8dd4f"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_096.bin": [
+     24156,
+     "a70f5ded1ff98a533d58a13cd7e0fcfe6224239682bc2c4f05739425c04123a6"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_097.bin": [
+     39358,
+     "681f0fc1a1167203e99a3b9eb01d062dfb1f8ea92163ae00d30b45845b1c4f56"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_098.bin": [
+     3273,
+     "30fb2d656be37c0d0fe083f65a23e2ac0632f528ee35920f56af62bf3630c40d"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_099.bin": [
+     768,
+     "8831faca253352cbd1dc4a15c092a4ed445b21de084b3d33c58850c439c89609"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_100.bin": [
+     15746,
+     "abf990a360de25221a3f4611e6f8a2967690c92945b4c5fb2e82b441c7f69b9c"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_101.bin": [
+     768,
+     "572dd943e828d234c69b4faeb90eb97f6ff92dd271d2a06d276b8369a531e250"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_102.bin": [
+     768,
+     "99592bba4e708d848f24cf7db7579d1e54b729de32327232a5137ced2a41b0d7"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_103.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_000.bin": [
+     147740,
+     "36054eed120a335b4d6d9fb3ee3a58f98115a364b18e5d904aaac2147b880f30"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_001.bin": [
+     1200,
+     "2401a8cabb1728c0fb5f9e7a0e40352fa8716ac2b4d30750ff44351ec9c9d092"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_002.bin": [
+     87915,
+     "2ed0c673f8ca21f28394d26706154516bb189f2deb44a5711ac6702775f69b98"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_003.bin": [
+     1200,
+     "4e2f58c83beb9bad05be7697f1a90520e387c1f037964145d4b8b27ccccc7bb1"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_004.bin": [
+     141101,
+     "3183baf8f8a20dad4caeded3084ddfe1e2b3aee5fc82e9f34aaa6d443a4130b5"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_005.bin": [
+     1200,
+     "092bbb4277fffcb2bcfa12b69b84b09a5d401536fd82193b9dc06615cd4924e6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_006.bin": [
+     91907,
+     "0fe62abbca1cebabfa7e88e9b9a574dfbe5bbacea43cd6b6730b4b57491b79ca"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_007.bin": [
+     1200,
+     "0985b57d2b77a69ddabdeb7acadb72295fdfdae1864d2937f086a3fa6157d05b"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_008.bin": [
+     129770,
+     "99b81c5622986b809d22be176bddff048cfd8dd8ccbcaa4e1eca45a787cfc3ac"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_009.bin": [
+     1200,
+     "2e7ea1f8e56210811f9ee8078b717b88aa3241aa926fff10fab61efe4f900759"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_010.bin": [
+     143139,
+     "c376b999b32c97822129c793ed6f1e144e0a292c41488f91dfdba9821b14bfce"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_011.bin": [
+     1200,
+     "bc8ef50db5006cb5e4592bc71f732f8d3940a506e26bd2e9dcc4c43bb09474b3"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_012.bin": [
+     98477,
+     "07203ec18bfb82338e17db884c0bc6991d14d9aee77fcebff8ac398fc0a21193"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_013.bin": [
+     1200,
+     "e8b046916e8c011705b72ad25a698c3e3ea8cfeafa3f93c00b8ae4397bac15fe"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_014.bin": [
+     185476,
+     "a8f86e173cacba2e8a28194c419f33e8057703b5b4237fba1487959d2ed86085"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_015.bin": [
+     1600,
+     "b9ff9e897d6a96d80954df2c937c8f079923a44f5dddc87b514f25a35bfaa567"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_016.bin": [
+     71939,
+     "13a494113fdfacd614235c796f4f35a60912a74d41ea9abde45421fc484b6757"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_017.bin": [
+     1200,
+     "6c04ecfed32f1025fd2a0ac6f7e394984b55a9399c8f9633aac098dc057785e6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_018.bin": [
+     55005,
+     "d02c8e208dc5c7cac4aa9fecd7eff8c6867a8134a0f83f003408e1d80607dd21"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_019.bin": [
+     1200,
+     "ada88caa2661aa0d762842018a10e09d65fc357f897b1a37ec04425ed658733b"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_020.bin": [
+     96401,
+     "3857996cf3aff7913900b72b56a1fd317fabb99b525ca8befaef78847d4e8d0b"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_021.bin": [
+     1200,
+     "175a463a3e94e9376d2f67da500d24edf07d12ae8b65486f07fdddbbb70055b6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_022.bin": [
+     153236,
+     "01fa2a01f29d8f9b9559db0847ce1963f8c67abd302cfd111de05f7126d5a2e3"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_023.bin": [
+     1200,
+     "be06c463d5f1166329c731c7cebdcf2f66fd966a17c08b61bfc22d17f1a699a6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_024.bin": [
+     122859,
+     "ce04683f21ac82186a93668ee0f7575eb6e6002f717ac37beaaa5c85d803051b"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_025.bin": [
+     1304,
+     "7dbac97eccf6b15cb69262a5aedb11652686c6c39683539b28fb76cc9b929dcf"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_026.bin": [
+     141384,
+     "c17b56938626a4d72f5dd1f4ba3aa86346dd9cbb83408e41c2b94d47924874ca"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_027.bin": [
+     1200,
+     "256f859a2e98bc04922a5436dc26f8c40632e0b9aa8e5a35847fa40c83474418"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_028.bin": [
+     145208,
+     "612aef8160a4550daf6325fb1ecd227b6644b55efd68c4d22c7dfb5147e331fc"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_029.bin": [
+     1400,
+     "1f5a7ba5c3f185d34195b7aaf09485a19029165fa87696bdf333b42a01d8b324"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_030.bin": [
+     90098,
+     "449e776c47ba224aadc40b0a1f0389cbe8502a2bc3e9aa7c4fda76c18779a24a"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_031.bin": [
+     1200,
+     "3ff45657456a064ef2bb7350711e4760045069f4e813c0c624ea671acb4509fd"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_032.bin": [
+     116523,
+     "d1187a94d3bec0429909c5d7917cf69070ed69c5744030533e9c4de121017dd0"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_033.bin": [
+     1200,
+     "3e098fa8aa0787b3d8f065e4846e9a0fb46d271a5f31aed594cf15daad24d555"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_034.bin": [
+     169394,
+     "3042540521334b56d6cbb121f098c2ff0a294f0f4fdcc7354be951cf30217f7a"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_035.bin": [
+     1320,
+     "3103920319055ac94008fd8d6961e86aba80331ae3bb9c760d27ba8c5c9790c3"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_036.bin": [
+     65038,
+     "acf1c9ead66a860371bbed9a9f4b54fca274440d0969415e3322596632de8536"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_037.bin": [
+     800,
+     "9d242b1024b2d16dfabb7151cb5b4e652444c12bc0863f040195d289c2be7aa6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_038.bin": [
+     89298,
+     "88afa54fc28b35aedf240b4583ce9063c63a7fb28f8d7c137814135acee194f5"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_039.bin": [
+     800,
+     "3c87cd81f9e880ab962d25ea8fb99f3f49e1b08ef30d727aa2538041dac5b677"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_040.bin": [
+     137945,
+     "581d1238204aea122ec816322a6e49b1400cb3e82c2fa2fdd603892ea7f6d1cf"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_041.bin": [
+     1200,
+     "0c221587ba2793f163b0d5d942d7d55bd8f478c49949497e5d686eb7aef3f69f"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_042.bin": [
+     115437,
+     "20e440a1c0f4237cd3efc4d5b075ba23ab02586e8e3b28fe7f622c7b6f728b34"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_043.bin": [
+     1200,
+     "579da9e17743e41c8400353eca66128561279fdee661a7a1ea7b480c318fe5ae"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_044.bin": [
+     157448,
+     "2652545a61512199ec83956fd9b910a5fb4132adfee0eaffbe7ec2e03160995e"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_045.bin": [
+     1560,
+     "1919c26b0417d2149e5cd87e3a502a32f93ba1d4b364884eb9826d5fcb243f30"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_046.bin": [
+     44035,
+     "1056eb8b1f7a530f8ecf84847295ecd2f8b682d85a75eaaad4557f374cb5bcf0"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_047.bin": [
+     400,
+     "b1aa7836772bde116c6f02446109e65fa58f6508387fbfb50b2fe508b8602581"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_048.bin": [
+     66549,
+     "6e18bdd8802133798fd786b14bcbdf3456a84ef13cdec4c0fad2d218fc451d13"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_049.bin": [
+     720,
+     "847b580cc32a44b02e7567d8e4faf251a33048a6fd27e4b97359b6a2ecf3d429"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_050.bin": [
+     43564,
+     "e6ceef38741b5d34951a2c2e89a3a7ce21ef64c97431cd23f788d282829e68ef"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_051.bin": [
+     400,
+     "786002c205b156aaf5c618afa5098997be184568ff95a47492d712b6a2e2d1a3"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_052.bin": [
+     90464,
+     "7a90946da3c9709366c482eb9a83fb502b58683e07fd842b48809f55be8bb4bd"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_053.bin": [
+     1200,
+     "c10bc222785f0933ec9230da495b5c011c0446c039cd7a0230194855a980d1d9"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_054.bin": [
+     79293,
+     "c12ffb10861db595eaa04e74f1cde73ba9de0482b7575718dbd72b57828ef685"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_055.bin": [
+     1200,
+     "db90ce2b6204dc351d9c2f7787457ab960d742873197d2d97f13bad1afef81f0"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_056.bin": [
+     114092,
+     "4c510b3832c10443d386c7b764530d26be1d1198545e3a47cf238033f6a78bbf"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_057.bin": [
+     1560,
+     "14541b903f214b938584de38066398d850954246d8c17e3602c6025770051639"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_058.bin": [
+     70475,
+     "3e69acb30eed79c72009f1964e8f3718b2f3834b455aae89f3190280e0e81abf"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_059.bin": [
+     1200,
+     "7155bd3712435330b25c47f5dde29290a3b45be2d65e23d00b74830448ad2b8a"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_060.bin": [
+     96401,
+     "3857996cf3aff7913900b72b56a1fd317fabb99b525ca8befaef78847d4e8d0b"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_061.bin": [
+     800,
+     "67042dfda5683aead81b6055d19c4dba238341f9dd82f49c0e7cc0c19c5f10d1"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_062.bin": [
+     97032,
+     "f9286cd44cbc1e79e0caaed05f4b2eb34a19416999526f9fcaad1091f4d3be1f"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_063.bin": [
+     800,
+     "67042dfda5683aead81b6055d19c4dba238341f9dd82f49c0e7cc0c19c5f10d1"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_064.bin": [
+     65413,
+     "0acbb9f8734978c8e7d45a5448571655e4b7ab87b7f1296c1ac6f75ff69dcc98"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_065.bin": [
+     1200,
+     "655a3ef0465a9f30fddf25f4dde0c19a05c6f9069b83961800c1944165955273"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_066.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "extracted/raw/FIGANI/FIGANI_000.bin": [
+     21020,
+     "f02d66bdcc2a01ccbf647173525675126a056a72cea605fa59a8342f4023c965"
+    ],
+    "extracted/raw/FIGANI/FIGANI_001.bin": [
+     58430,
+     "aee5662647e37d9f3e513f4e9dc0b2d4fba2b286cb775b193307c027d837d330"
+    ],
+    "extracted/raw/FIGANI/FIGANI_002.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_003.bin": [
+     17060,
+     "9108b4bfea626cc40dc8b98fd5f9f581055d77633566e632e0dd78c235b080a7"
+    ],
+    "extracted/raw/FIGANI/FIGANI_004.bin": [
+     29126,
+     "17ed700b538eaed787665d111ce8f32d8bf584cb0cdfa34c62e8e984a8155286"
+    ],
+    "extracted/raw/FIGANI/FIGANI_005.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_006.bin": [
+     23719,
+     "6ad1d4a3392044f402986c17d7f6644da6a771c0c4e07f46233682630949574c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_007.bin": [
+     53675,
+     "ceaa6857d39154b85ffb41f87325889af300029c5f4073af6e65cd3dd381765d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_008.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_009.bin": [
+     22980,
+     "a8d976facc5e03c43ce5d8bff22da143b770ade72377e258b0d691632ecbae4b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_010.bin": [
+     29297,
+     "434df7a69b2a23a0f82587ed0a3529dfb724b743caa60d010227d82026f47204"
+    ],
+    "extracted/raw/FIGANI/FIGANI_011.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_012.bin": [
+     23423,
+     "5686f4919d28f3da8f6ba43d7639001600786c7618086aa85b34ca324fb196ba"
+    ],
+    "extracted/raw/FIGANI/FIGANI_013.bin": [
+     93731,
+     "211aeae0930a98bf305a50dea527b8383ddbfeac95e5b5bfdd579c707d3547ca"
+    ],
+    "extracted/raw/FIGANI/FIGANI_014.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_015.bin": [
+     22651,
+     "7e640c9def62c84fbd5f9dfe8e8a385592c14883258d2f8a36bab8a17a294c26"
+    ],
+    "extracted/raw/FIGANI/FIGANI_016.bin": [
+     108994,
+     "aed790769995e1194e06ffa894e104c120f09664a6446f15eaa4a1814d6eb91d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_017.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_018.bin": [
+     28660,
+     "082075b3c7ca562b31983ca51adabf69f144ee3049bfc0f7c565a98a6978b15f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_019.bin": [
+     89782,
+     "456cf34e7130d54e76e3f907a113785b5c445c46c60d6ddaea50a2a343ab1ee3"
+    ],
+    "extracted/raw/FIGANI/FIGANI_020.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_021.bin": [
+     53550,
+     "de05df1a4bb9d79cdd12fbe77d7c015048ccfb04bb3a1a70ec87f737873584c1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_022.bin": [
+     232340,
+     "ee5787e8817de73abe4e8bac34067d6deb13c35573a3bbe03db9bb55b52db71e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_023.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_024.bin": [
+     5342,
+     "af4cdd44329e8d0d8be3f2a70e49a9d7ec3fd8121a4aa8d0ca0bb3a32e324cdb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_025.bin": [
+     58742,
+     "308017e80380bc6ec2587ad73f7234ade16fa07a048bef23acc3d5f3775781c6"
+    ],
+    "extracted/raw/FIGANI/FIGANI_026.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_027.bin": [
+     21797,
+     "4bbab8032e8ea8397051d2e1dde33d84ee6c3b9f39ff6f4acbc81a1c5b7eef7a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_028.bin": [
+     70021,
+     "8d457b5130dc6a4e854b08cbe0f4b3f39e9b980ff833b433c2eed06d5f769986"
+    ],
+    "extracted/raw/FIGANI/FIGANI_029.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_030.bin": [
+     20760,
+     "1ffa1c7442ef14ade270ec22412f4524931121f60fd8a32b9c47714dd60d5183"
+    ],
+    "extracted/raw/FIGANI/FIGANI_031.bin": [
+     65421,
+     "fa25c5cd6bb69e3ed4a27a7bc42f2d276370c06426957a35ce04bd158216110a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_032.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_033.bin": [
+     17841,
+     "9f98ddf7723476078b0bbadafce1e04dd43438860c18af7faa69ad61ec124873"
+    ],
+    "extracted/raw/FIGANI/FIGANI_034.bin": [
+     54243,
+     "db21d5a8b6f965dab9770eca2dd2b3a1c3a1547de056464ff30651b96199a945"
+    ],
+    "extracted/raw/FIGANI/FIGANI_035.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_036.bin": [
+     15135,
+     "8074dd65e0be7687aef7f8380aff2dfb1897af4cf8d04d264ece4a3b77a83d77"
+    ],
+    "extracted/raw/FIGANI/FIGANI_037.bin": [
+     61843,
+     "867d8d397ff2c2f23e78d524a01d3030109343d0627f1e7779f0d2c830f10c28"
+    ],
+    "extracted/raw/FIGANI/FIGANI_038.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_039.bin": [
+     6679,
+     "1caeca89bcc2e498f42e19b74370f3e79dcb137d254133530f4242db32992e58"
+    ],
+    "extracted/raw/FIGANI/FIGANI_040.bin": [
+     98745,
+     "9c4ebaeaa26865349f65e5324651f2d93367d7caf1fecd6afd7d8d5587d4a32c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_041.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_042.bin": [
+     19555,
+     "86e315e1b61c1c2ce27a24b61e2cfd6773b8127928f7b5a7fdbb7aac713ba490"
+    ],
+    "extracted/raw/FIGANI/FIGANI_043.bin": [
+     50459,
+     "ac449a53f4099d682e4bf728eca812c9dbce42e910e1554c5a9c8d7870921b20"
+    ],
+    "extracted/raw/FIGANI/FIGANI_044.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_045.bin": [
+     13805,
+     "5fd6bad5796b8cf1267f2f4ab82c1aee100ae721e5482cc358cf6e8cbc2fc4eb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_046.bin": [
+     53422,
+     "d4b537295432bb39f3a84aa1699a4a19d5f65550d548122bbe73befd05d90440"
+    ],
+    "extracted/raw/FIGANI/FIGANI_047.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_048.bin": [
+     48478,
+     "8685928969ef6a0780d78dfe79a56a949337d1822b40d40030c63e8b8d0dd9bc"
+    ],
+    "extracted/raw/FIGANI/FIGANI_049.bin": [
+     123172,
+     "f765d4469a619f054012e43bd30cacfeb80302c0ad363516662d28c978f725c8"
+    ],
+    "extracted/raw/FIGANI/FIGANI_050.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_051.bin": [
+     32279,
+     "cab55e65ef045f5b4e455a196b641e3ae24280603027fb99cd066f6efb34a321"
+    ],
+    "extracted/raw/FIGANI/FIGANI_052.bin": [
+     84788,
+     "902a9854c5ee222155ff87a866c439a16d8ee3c6fd15319dd833a0282b578b40"
+    ],
+    "extracted/raw/FIGANI/FIGANI_053.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_054.bin": [
+     31781,
+     "d99baa71b28a33917176fb1ede9c6aeff49395b9ef5f985db8970531fcb11410"
+    ],
+    "extracted/raw/FIGANI/FIGANI_055.bin": [
+     106781,
+     "a09bd0603d90218958a750db11b49d8c4c60028ecb1d0705d2fc3c6bdf4ce639"
+    ],
+    "extracted/raw/FIGANI/FIGANI_056.bin": [
+     88559,
+     "55991e22857ac2b0f2f64c3e38e3045fb77ad335610283d9ff7537fc947da8b3"
+    ],
+    "extracted/raw/FIGANI/FIGANI_057.bin": [
+     8142,
+     "91540c1a2625fef575858d2c89d2af7d426720a2b992bfc04f0d6b8d19c99e8e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_058.bin": [
+     51704,
+     "ac87c1feaabc015281e9c1f550a74048113cb16335afbc6784fb9fdbb0c19adf"
+    ],
+    "extracted/raw/FIGANI/FIGANI_059.bin": [
+     145073,
+     "2cdc1fd76f850989c880a0f5321947916252f9b35aec871e0656708a52110d70"
+    ],
+    "extracted/raw/FIGANI/FIGANI_060.bin": [
+     50796,
+     "a0f0d2e92610554756699c8e24d99cbda31a4902b1ceafc30f24334be6546b0e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_061.bin": [
+     158730,
+     "3fd2eb02fd7fcfa76850f8bdc823e20d1609c05a0224591e9905019b18b1cdc4"
+    ],
+    "extracted/raw/FIGANI/FIGANI_062.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_063.bin": [
+     30123,
+     "3a59ff3c4430d70b1ffc13cd77f8bf290658e87dc4ea93b1583af462ac0b836e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_064.bin": [
+     51796,
+     "8f00f617985b2a8e3c1c4c61fcc28aedf5c1d19e52a914625eb22f83fa4b7350"
+    ],
+    "extracted/raw/FIGANI/FIGANI_065.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_066.bin": [
+     5595,
+     "479086438694ea35fc0c1195468742a41491279e773ae9943f634854e13dcb43"
+    ],
+    "extracted/raw/FIGANI/FIGANI_067.bin": [
+     126879,
+     "fbd5b7a2ec9ebb739de095e421d6b6d15e37a4a4a84becff97fb3f7d05e4844e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_068.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_069.bin": [
+     26675,
+     "5251ad39b07b7aa1e87934f16c9873994f398dbcda3b413455a8a4d7a317dd0e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_070.bin": [
+     112004,
+     "37cf0d2b50f7b2d62976e33319239da49e4e0eef45659bad89797e7c6bec66f5"
+    ],
+    "extracted/raw/FIGANI/FIGANI_071.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_072.bin": [
+     7376,
+     "2cfc9a69f819f1272738aaddf0f85b92d2ea61117d686deee34eda33752ae36a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_073.bin": [
+     40330,
+     "4bafe9514b1daeecb53fef26ea6b7f8892b7c9610aa4959b2ec5d9999136b606"
+    ],
+    "extracted/raw/FIGANI/FIGANI_074.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_075.bin": [
+     20362,
+     "b89f26c0c3261240087e8dc549a00b0aab30fcfcc345df239f1717658b3c3d39"
+    ],
+    "extracted/raw/FIGANI/FIGANI_076.bin": [
+     59723,
+     "10f7fc8987cf355d8d91187ef13d173941306bcad0646d1d5a159bf37c629d26"
+    ],
+    "extracted/raw/FIGANI/FIGANI_077.bin": [
+     37128,
+     "973f233a2642906ed405f216f4c4b4d91651c8db3cde258ce3959329c8d22796"
+    ],
+    "extracted/raw/FIGANI/FIGANI_078.bin": [
+     48150,
+     "3c4719ea288c4992e5dfd534bd9f137a1bad4d833834fa2f108272ff5fbe9c27"
+    ],
+    "extracted/raw/FIGANI/FIGANI_079.bin": [
+     93516,
+     "7819619842f34702c5efa2fd7fbd0d127cc660a0d1395cc652797251c666e6bd"
+    ],
+    "extracted/raw/FIGANI/FIGANI_080.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_081.bin": [
+     40086,
+     "d76625bb44b9ba9a1f42d3b99aa4259f0c0b45966112cc2ea8de74e11bc44c02"
+    ],
+    "extracted/raw/FIGANI/FIGANI_082.bin": [
+     86212,
+     "d01fc6b9f831b41df2e1e3773f4599242e9270adc1e801ba0592523300113bc1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_083.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_084.bin": [
+     27188,
+     "41238a7b93b96844e563ede01880c6dda55ab305d3d3ab9855b91136d5c5c8c1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_085.bin": [
+     84614,
+     "1213eaa2f9c7d9044b40efc16e952f7c82c324dc89f9f304b76096895ca60741"
+    ],
+    "extracted/raw/FIGANI/FIGANI_086.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_087.bin": [
+     17584,
+     "810ed1eb4398b2f061218b1b34f585dd431d73d07cd4b355707cb25c909a4b3c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_088.bin": [
+     48505,
+     "d15fdf9322740648cff6ca20644bef42498c7ca0c633486361dd32963a61eed1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_089.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_090.bin": [
+     26528,
+     "8c6e80f7b84180c89369599397891f2bc461b7c75558b20ea3c9d3e2adeb016f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_091.bin": [
+     67775,
+     "0391bdbbe171ca226e8c435ab83ee3b77a5b0de58629f4221c2b42eeaa60dbff"
+    ],
+    "extracted/raw/FIGANI/FIGANI_092.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_093.bin": [
+     22904,
+     "189e5db7c33524bb0733fcd2b8cee82811ca8b1e873e85b741108725215263ab"
+    ],
+    "extracted/raw/FIGANI/FIGANI_094.bin": [
+     64099,
+     "0d042823277b0ce1b9ba4d3169e2fccdaca5b81e19b1afb18373063dd16e6a4c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_095.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_096.bin": [
+     22759,
+     "5f4eb826adcddd4a431a0903f3bab9bfe49220290b1e89e18715082152dbc1cd"
+    ],
+    "extracted/raw/FIGANI/FIGANI_097.bin": [
+     77839,
+     "c3209b79474d397251e27ab9ccde9dfd868f3c37cefbb97b9fc98d7766a377e9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_098.bin": [
+     71891,
+     "0b8d19d3b1ced9db792fdd46b2e817f858959437fa96297904aabb7f12b0a183"
+    ],
+    "extracted/raw/FIGANI/FIGANI_099.bin": [
+     28860,
+     "242c0f2da81619a1c4208b57f21a823be826055acd105201be1590f0fb9c8af9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_100.bin": [
+     45130,
+     "f080421160cc9491e028d65955c1c7bd501c6e5f5cbf0893bf4b82313964e703"
+    ],
+    "extracted/raw/FIGANI/FIGANI_101.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_102.bin": [
+     23073,
+     "50e271d9eda993e8297247b8f32b58e5055b59f1a5bef4de23eaab39ecbc0be4"
+    ],
+    "extracted/raw/FIGANI/FIGANI_103.bin": [
+     66768,
+     "ad2225e71732427f392375d61e8bf67a1ae90d316d6af55d8f4ce372b2a8c78d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_104.bin": [
+     80447,
+     "5a6c6d4eaa6193a3482ef4ff4a75bfa4d319dd415832485da903366c81b93d1c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_105.bin": [
+     52392,
+     "8f41a7a3fc47d343c642de2977d6b80deb29b5050fbad2c436b3de5c7ea8d84a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_106.bin": [
+     77613,
+     "76b2fb9a27ce51224ac4d4eb793baf97bfeb964ecf1eac50ac45b9ae314325eb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_107.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_108.bin": [
+     56384,
+     "8a8378d991320a9ccdbc421ff4498add1789ecb04148e329a2e86dc39594d45f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_109.bin": [
+     190995,
+     "ed5cae350badd0858eed8ade1cae67f2ecc205e36cd370ff527e866df917b4d2"
+    ],
+    "extracted/raw/FIGANI/FIGANI_110.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_111.bin": [
+     52121,
+     "abd4dc79afa4701e09db728807270e5fc53f8c35f6b4ea1e4c0bec5b535a7229"
+    ],
+    "extracted/raw/FIGANI/FIGANI_112.bin": [
+     199076,
+     "2989995c6cf9a0b05792696b389f45c7acb70ddfb400b94732eaf0571aac2ca1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_113.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_114.bin": [
+     59313,
+     "54eed381da22935b6f747795c93e6f8479649fb1f7673c220feabaf229bfeef1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_115.bin": [
+     205560,
+     "d8a81a27c386c545c01bf6dbbfaa1a3783f7fe3dfccd18bc61e0c41052463c2f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_116.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_117.bin": [
+     53550,
+     "de05df1a4bb9d79cdd12fbe77d7c015048ccfb04bb3a1a70ec87f737873584c1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_118.bin": [
+     232347,
+     "9e1a5b1b56c5fdcc41cc7692bced19fd32f76f6539252f66fa5078fd39bf9843"
+    ],
+    "extracted/raw/FIGANI/FIGANI_119.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_120.bin": [
+     20382,
+     "fa426d53e60f9890ecacc304540b10b8c82f197459206e28d7e57a77f0e719d5"
+    ],
+    "extracted/raw/FIGANI/FIGANI_121.bin": [
+     56259,
+     "8f1d5f4f77b1e712f92a92fe1a23aa6960331384ca9670cab2e998e40e112a2f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_122.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_123.bin": [
+     22709,
+     "23ca62b1cd18431bf02a9bdd1f451093121e53a516546ac114466e849a6387ec"
+    ],
+    "extracted/raw/FIGANI/FIGANI_124.bin": [
+     93310,
+     "8d7f438ca32dcbbec645570f0ec93bde1fc445300d89028342234864a5ba79c4"
+    ],
+    "extracted/raw/FIGANI/FIGANI_125.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_126.bin": [
+     21368,
+     "0d92447668439158aed8ed81f45d1cc15089147550c14e49d6a66f6cb6c04411"
+    ],
+    "extracted/raw/FIGANI/FIGANI_127.bin": [
+     71354,
+     "a08661d8d2a95adcd5bffdad8895f6f9fbcd6ce38e12498082992c6d0984c13e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_128.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_129.bin": [
+     22901,
+     "bf3eeb8d19b853c495e52c0568f9fe3e8995f6a77cc9cc1adabb8f937484fd23"
+    ],
+    "extracted/raw/FIGANI/FIGANI_130.bin": [
+     59969,
+     "bb7ea02cd4f6de6f91d5bc6003f5affbc80dbb98e18aef0dd745ac499a354f3f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_131.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_132.bin": [
+     17656,
+     "38595ce035b0b0556fc4de0a578839b05eb400ba0545dba1fe70d8c363187b5a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_133.bin": [
+     55788,
+     "19cc7d3aef45ec09a57d063eb35ea9c0d5460a0f58c11b0609bb6a31d2fefe68"
+    ],
+    "extracted/raw/FIGANI/FIGANI_134.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_135.bin": [
+     34024,
+     "2260f4570f4b3b7ae1f0d8547620242b59b5f5d4d1841dc4d6a836b7f4890181"
+    ],
+    "extracted/raw/FIGANI/FIGANI_136.bin": [
+     168186,
+     "a7ce18e7abbe12984595afc2c7882c162a8ce7055d6c918381c9205cec24177b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_137.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_138.bin": [
+     21522,
+     "9c9060aec77620b7cb1a63347cd4c5d68313726fc078fba32835ff02e75b4c16"
+    ],
+    "extracted/raw/FIGANI/FIGANI_139.bin": [
+     66731,
+     "7066f1c457884a91c68a1e68c163dcc511fbe67ab3b30ebe17afc7a176a3cab6"
+    ],
+    "extracted/raw/FIGANI/FIGANI_140.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_141.bin": [
+     21375,
+     "b2c8f1501434cdadf80c5fcb7f95a24374d1421874364d004a8ba2b7ac8ca9fc"
+    ],
+    "extracted/raw/FIGANI/FIGANI_142.bin": [
+     45834,
+     "3c60df20242b51a61ef0dec2f7195fab98f0c21a9564f8e346a6627a05e6f957"
+    ],
+    "extracted/raw/FIGANI/FIGANI_143.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_144.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_145.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_146.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_147.bin": [
+     46448,
+     "2932c433a6720a55d06bab83dc868b6862fd576849211839e4fc0b43cd74c28f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_148.bin": [
+     112894,
+     "755b77833484cbde9572df95b32b20c4af5f3ddace82d9a5960819a52d63f275"
+    ],
+    "extracted/raw/FIGANI/FIGANI_149.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_150.bin": [
+     33056,
+     "379210794eaa6a5bc42ef33c0d054ac5d22dfd5edaad470dcf8531ff4c24af8e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_151.bin": [
+     122344,
+     "4fbf3675e9cf638e9008aed09e4cbe2f05eba8fb21fbe897bf3360d8a6ed63a7"
+    ],
+    "extracted/raw/FIGANI/FIGANI_152.bin": [
+     33663,
+     "407e65a4a946f3faaf219ef93c16adb369e373f9b9080a25d72f9a22e3994269"
+    ],
+    "extracted/raw/FIGANI/FIGANI_153.bin": [
+     25700,
+     "2c299139fc2f6f82d4bc85ab8146bb1b50978070d2cd810b8f502f9c61a7d0dd"
+    ],
+    "extracted/raw/FIGANI/FIGANI_154.bin": [
+     38155,
+     "d8c61c24fd75dc02b02635cc543bd32d66c17d39f8031b28348e4cbc9e707467"
+    ],
+    "extracted/raw/FIGANI/FIGANI_155.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_156.bin": [
+     22467,
+     "2d20d162abe3b57bad895863fdc5c5c65522931f2285299d0c461317244633fb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_157.bin": [
+     111960,
+     "426943ea8cd980a664336621943dd9f70107661bc742a02d12bf4e10627cd4bd"
+    ],
+    "extracted/raw/FIGANI/FIGANI_158.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_159.bin": [
+     52648,
+     "f3eb91804b4150e8a49d6b582f3ea228c3f4b02754ff33e3375fda1454c7af94"
+    ],
+    "extracted/raw/FIGANI/FIGANI_160.bin": [
+     78683,
+     "ea266d9d0ffa14a80800e3ad41dc1e5c3523c1aa0457aa8db9392552917b896d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_161.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_162.bin": [
+     48885,
+     "0576db4d2b3c5997b0393dd5d4cdb2597c69d6eaf4fd3041391c6eca68840faf"
+    ],
+    "extracted/raw/FIGANI/FIGANI_163.bin": [
+     133114,
+     "5dcf24b0342052d5021ebd40b7d0a88d33db06f53d7b5d3540b645c294c0170e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_164.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_165.bin": [
+     49717,
+     "c68d0d402b4c85843e0a53e7101e3e1b38a76042b0a8f49de70098efd24221e1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_166.bin": [
+     173031,
+     "d927a33930a59641fc63738ef294265192d9970b381508c6559f9319619e8978"
+    ],
+    "extracted/raw/FIGANI/FIGANI_167.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_168.bin": [
+     52489,
+     "3dc6b61ac2971f43a254a6af64aceff04904cdcabe9ca27daa49794e01af5e4e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_169.bin": [
+     160021,
+     "5b15d033321ed0cc90f43e5f8a638a3e1afb12416e2fcf8cfb05cb618e89c1af"
+    ],
+    "extracted/raw/FIGANI/FIGANI_170.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_171.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_172.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_173.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_174.bin": [
+     20382,
+     "fa426d53e60f9890ecacc304540b10b8c82f197459206e28d7e57a77f0e719d5"
+    ],
+    "extracted/raw/FIGANI/FIGANI_175.bin": [
+     56259,
+     "8f1d5f4f77b1e712f92a92fe1a23aa6960331384ca9670cab2e998e40e112a2f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_176.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_177.bin": [
+     22709,
+     "23ca62b1cd18431bf02a9bdd1f451093121e53a516546ac114466e849a6387ec"
+    ],
+    "extracted/raw/FIGANI/FIGANI_178.bin": [
+     93310,
+     "8d7f438ca32dcbbec645570f0ec93bde1fc445300d89028342234864a5ba79c4"
+    ],
+    "extracted/raw/FIGANI/FIGANI_179.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_180.bin": [
+     21368,
+     "0d92447668439158aed8ed81f45d1cc15089147550c14e49d6a66f6cb6c04411"
+    ],
+    "extracted/raw/FIGANI/FIGANI_181.bin": [
+     71354,
+     "a08661d8d2a95adcd5bffdad8895f6f9fbcd6ce38e12498082992c6d0984c13e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_182.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_183.bin": [
+     22901,
+     "bf3eeb8d19b853c495e52c0568f9fe3e8995f6a77cc9cc1adabb8f937484fd23"
+    ],
+    "extracted/raw/FIGANI/FIGANI_184.bin": [
+     59969,
+     "bb7ea02cd4f6de6f91d5bc6003f5affbc80dbb98e18aef0dd745ac499a354f3f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_185.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_186.bin": [
+     17656,
+     "38595ce035b0b0556fc4de0a578839b05eb400ba0545dba1fe70d8c363187b5a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_187.bin": [
+     55788,
+     "19cc7d3aef45ec09a57d063eb35ea9c0d5460a0f58c11b0609bb6a31d2fefe68"
+    ],
+    "extracted/raw/FIGANI/FIGANI_188.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_189.bin": [
+     34024,
+     "2260f4570f4b3b7ae1f0d8547620242b59b5f5d4d1841dc4d6a836b7f4890181"
+    ],
+    "extracted/raw/FIGANI/FIGANI_190.bin": [
+     168186,
+     "a7ce18e7abbe12984595afc2c7882c162a8ce7055d6c918381c9205cec24177b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_191.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_192.bin": [
+     21522,
+     "9c9060aec77620b7cb1a63347cd4c5d68313726fc078fba32835ff02e75b4c16"
+    ],
+    "extracted/raw/FIGANI/FIGANI_193.bin": [
+     66731,
+     "7066f1c457884a91c68a1e68c163dcc511fbe67ab3b30ebe17afc7a176a3cab6"
+    ],
+    "extracted/raw/FIGANI/FIGANI_194.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_195.bin": [
+     17945,
+     "a78a0ca5819e2dce2bc0d645099f6c49e7b64b1b04a1901f63b626899e6db33d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_196.bin": [
+     50483,
+     "d46e7ae4ee5b7cd515414e3c012868bc9541f128c6a509ca9157ac07dcc537a8"
+    ],
+    "extracted/raw/FIGANI/FIGANI_197.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_198.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_199.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_200.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_201.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_202.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_203.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_204.bin": [
+     23002,
+     "13a46ec58daf8eb9d61ba497974a2f1b121dc1b1f16e35cb897142da562246f9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_205.bin": [
+     31631,
+     "a8589d319cefa41ab3693983a08a26963210a665b0838b2bff5b24c040c1f28b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_206.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_207.bin": [
+     22962,
+     "3ed548b5a21833af8faf5768f8f537829224cfd99f6dde0d3edac783e9625721"
+    ],
+    "extracted/raw/FIGANI/FIGANI_208.bin": [
+     55992,
+     "fcb08e961a14b9495d48b1f792e7bc9f98738d37d51ccfe8e24a368c4f54f818"
+    ],
+    "extracted/raw/FIGANI/FIGANI_209.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_210.bin": [
+     20116,
+     "379a018400d62522f2d551678b5c3f2b4991ce8d2ab539d63f364e46d9a766ed"
+    ],
+    "extracted/raw/FIGANI/FIGANI_211.bin": [
+     33984,
+     "9e9c7a11449c27897da3a7075f3a2ed8a76a26fb51b76dc044784d3437442ae9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_212.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_213.bin": [
+     13805,
+     "5df703f40f630d4f1457f0870d5eb78672c708690d88aefa7bbe87d562cdfce9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_214.bin": [
+     53408,
+     "be65445cbc7a7a3d454b151a5cd31df3a949f50befcfaba4c236a88d1b7f3fad"
+    ],
+    "extracted/raw/FIGANI/FIGANI_215.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_216.bin": [
+     7241,
+     "332995f132c7da143a09869ca2118ec721798eceb1572e6487cbe248a154cd1b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_217.bin": [
+     86945,
+     "fcd4a23786f9b057b10e87ad34ff3d4c87147eae3b0b6d118d12359f8489b170"
+    ],
+    "extracted/raw/FIGANI/FIGANI_218.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_219.bin": [
+     34017,
+     "329ba2a4b68e4bcae3b6ed225c63e60eba81b29362d04966aa41c10ddd2c7805"
+    ],
+    "extracted/raw/FIGANI/FIGANI_220.bin": [
+     90519,
+     "700c8ba4b08b321336916d37e06c9ddd8bfa8f6bcbf189d9513a9ca1ae436f9a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_221.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_222.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_223.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_224.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_225.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_226.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_227.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_228.bin": [
+     18244,
+     "080ac667fbca303accc936a308eb30d94a404369abf8be2160fd4ade66a13496"
+    ],
+    "extracted/raw/FIGANI/FIGANI_229.bin": [
+     40647,
+     "ed2703d9cb1e5da401be23d5df55200bbced113fb5685d3c73f07df04a51a32f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_230.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_231.bin": [
+     5547,
+     "23dc93144515faa2d2e17a4e7c6a2007422d5cabc0f8ade6e88abe39cc9618dc"
+    ],
+    "extracted/raw/FIGANI/FIGANI_232.bin": [
+     57655,
+     "4da98ea608f7b06b99993095b4a1b098d77a52f6fd0065d016c21663231bdf2b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_233.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_234.bin": [
+     9183,
+     "e3f31a63d0dc4da2031e8f35bf48171fb089a48472ff788b3b28f13d91dac6b1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_235.bin": [
+     67851,
+     "bbae348b42500af31dff8f465854962b1ffac4f4708861d1923fd7d164716b19"
+    ],
+    "extracted/raw/FIGANI/FIGANI_236.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_237.bin": [
+     19968,
+     "976a0a503cd9b1ee51dea4f04af275b09734709ae0269159565525ce945d2242"
+    ],
+    "extracted/raw/FIGANI/FIGANI_238.bin": [
+     34183,
+     "974c723750f575a51ffedc445f3a9c4118040df178d1de7f3213b7a13fc54a1c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_239.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_240.bin": [
+     9225,
+     "5c3d4ad34c64142fb1ec98f99f0a98f36551791287a2a0abc491f6d975b0e1ea"
+    ],
+    "extracted/raw/FIGANI/FIGANI_241.bin": [
+     87374,
+     "d9e16ac7471d850eed0cb7452515a154b1efbd2a3a5f11a7a969fad1f1626c88"
+    ],
+    "extracted/raw/FIGANI/FIGANI_242.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_243.bin": [
+     9295,
+     "ec6455cd5676eeb12c7763ce45383b16da9f4c5d8c1bc4485e1455539d595ef7"
+    ],
+    "extracted/raw/FIGANI/FIGANI_244.bin": [
+     87756,
+     "d20e2bfc9efc9b4bd5ab0dc3e29c0caf7a429247523ff174661fa024635c50ed"
+    ],
+    "extracted/raw/FIGANI/FIGANI_245.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_246.bin": [
+     7698,
+     "e0d45ccca7dcdcb1b7ee536eb30ae39032b3b1ab9250016a0058806216f02527"
+    ],
+    "extracted/raw/FIGANI/FIGANI_247.bin": [
+     64487,
+     "b91d2373eb4dbf545cf50bea5a630d01ae3139954cb08ce3b1e07eb2176bc077"
+    ],
+    "extracted/raw/FIGANI/FIGANI_248.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_249.bin": [
+     8429,
+     "2868f356c6b5c3c806c39f6b0689c49d17f03329f2df3df3377b60bb36b76a9c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_250.bin": [
+     77681,
+     "e43fc4db3e4e727bcccdf6cf7347c0a2c903ad2cac35349829f5b03822ea2772"
+    ],
+    "extracted/raw/FIGANI/FIGANI_251.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_252.bin": [
+     7532,
+     "ffa075098a04984e9d45e56349b3b821d22774a34be21b45a008febda70c70c2"
+    ],
+    "extracted/raw/FIGANI/FIGANI_253.bin": [
+     73731,
+     "2f566abf0dca33a012773fc912b4f12301b760e137f6da438fb92fd60204874e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_254.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_255.bin": [
+     8691,
+     "626196cdd293d09903b9cc79863cb27b1e6278db29f5213a4ca2a7112aac786b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_256.bin": [
+     79521,
+     "21421a0c4e0fb085ce1636badbc292745268eb08d203bfe3be3927ba06a7de60"
+    ],
+    "extracted/raw/FIGANI/FIGANI_257.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_258.bin": [
+     53744,
+     "dc25cf7a7b28160f339b3f0e6f505c4b5e8d0d0fed662e656a7baef88c334c39"
+    ],
+    "extracted/raw/FIGANI/FIGANI_259.bin": [
+     225565,
+     "f905ae86218d7df7e749483f18f40a4d848363434e033d987844444f7f68ebff"
+    ],
+    "extracted/raw/FIGANI/FIGANI_260.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_261.bin": [
+     32953,
+     "b715caa640b5ea17f5a8094933f2ada6543dd0878425937cc39691c90e53fbc9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_262.bin": [
+     74324,
+     "4b1d9c38c5dd343bce07888c4043f88f4476006990cbda55eb755f8f100f35af"
+    ],
+    "extracted/raw/FIGANI/FIGANI_263.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_264.bin": [
+     5839,
+     "6b63e5fd5fa87307cbb72ad5d4df85e9d54e8747157171528d61431448231b79"
+    ],
+    "extracted/raw/FIGANI/FIGANI_265.bin": [
+     80989,
+     "668acec994d75f5e8463d6cdd77eb7d95d56cc170467be90bb96234b2feb40a3"
+    ],
+    "extracted/raw/FIGANI/FIGANI_266.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_267.bin": [
+     5864,
+     "207f0f418a49af85db71478b425e3593bb0aa8d463eae06946fd87634df87338"
+    ],
+    "extracted/raw/FIGANI/FIGANI_268.bin": [
+     76829,
+     "188cb7e3025a98e2b05281e065908f6e4b538cdba4765a5463824454be658736"
+    ],
+    "extracted/raw/FIGANI/FIGANI_269.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_270.bin": [
+     5090,
+     "a4cbb1fa4d03598cf091c152e058351abb3f4546fc9445e295f7c17031a7f54f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_271.bin": [
+     63725,
+     "a759a6b8306060f3064426a0597fbf70edf0c8c9efe9a2b7cd1b0ec3a73dc5b8"
+    ],
+    "extracted/raw/FIGANI/FIGANI_272.bin": [
+     59369,
+     "ad6713f0dc83dc9ca3c0feff8604444683ec1dd22586f0724d6c2972b7d6a03d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_273.bin": [
+     5090,
+     "5f2168d4525e7e5916580c544af0ef8210450d8b00bf1e98669955629b5d8a05"
+    ],
+    "extracted/raw/FIGANI/FIGANI_274.bin": [
+     70515,
+     "4e1cc61ed3f7b0ac60f4760c5a7ccf1a4d863f63af5ca2762011a80467158ce1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_275.bin": [
+     66259,
+     "fe448a9d18c59bdbd234d609b5bc51e9fdad7ef5ef59c05977fef3f7522649e8"
+    ],
+    "extracted/raw/FIGANI/FIGANI_276.bin": [
+     5203,
+     "31f3e1be060ab896067b8394ee7f807d4ea31915d9089346211982fe25ec928a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_277.bin": [
+     72061,
+     "addc1d21209b6680617c2a932f3a98ab47d4875fced7a0d88bc4ef71b57edb82"
+    ],
+    "extracted/raw/FIGANI/FIGANI_278.bin": [
+     67716,
+     "d56323d180ca8bbf94d05bcd7b2fc561f83684eabf96cfc0fda784ce11d827eb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_279.bin": [
+     7071,
+     "d7b3912ee012bcd2749a11d37bb0377e967ef5b3487f224dadcadc80d99b2c02"
+    ],
+    "extracted/raw/FIGANI/FIGANI_280.bin": [
+     32657,
+     "bddafc683f7fbb9bf0ab7cde947beb60bbf7d266a7614b8908c33e9ceb16f10f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_281.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_282.bin": [
+     7060,
+     "17aa4986e8c9cf6c42b1278a070ade5190e1bbc5a8a51b702d6d0e7275875b3d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_283.bin": [
+     26271,
+     "7e410aec142ddd395ecaa0a9b10db25ecd0197ca58cdf12021a8c8c78157842f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_284.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_285.bin": [
+     7111,
+     "7839035866c9b2786f8fdd0bbbea5616e231c33837d563d2a9321ab8b7e1e5ec"
+    ],
+    "extracted/raw/FIGANI/FIGANI_286.bin": [
+     32789,
+     "6956078a44eae1ad5c21d75ef421824dae1f3c4c533f91cc77a6f3a63964d8e1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_287.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_288.bin": [
+     18191,
+     "ca624474e6ff70bad48c438fe10c34027b8ef542d06f0a273b2fe74770dd28f8"
+    ],
+    "extracted/raw/FIGANI/FIGANI_289.bin": [
+     38272,
+     "826586585084aeb97c89548003ea72a869a1a1a7d2bda5e94fa570609ff6efd1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_290.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_291.bin": [
+     18148,
+     "9fd2e7731897554da5fa4f6ebef2cd6fe15ee905baf91b33910e689b177f9fb0"
+    ],
+    "extracted/raw/FIGANI/FIGANI_292.bin": [
+     38170,
+     "82bbd69967d3249d2cd14968f61e30bf0030f43b1a5be62ffcf83f5e31c93a5d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_293.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_294.bin": [
+     4001,
+     "0154d63ed5062fb9060444d32d04fe566990a290e602611598d043c156a01352"
+    ],
+    "extracted/raw/FIGANI/FIGANI_295.bin": [
+     46184,
+     "b483a5a4a9840addb7eb8bae1645a128cdf84714aedfb898716ceb125e5af630"
+    ],
+    "extracted/raw/FIGANI/FIGANI_296.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_297.bin": [
+     4043,
+     "be0cefe4cdd638720cd46228b35aecd66e2e752f6916175d97fa834334f48d77"
+    ],
+    "extracted/raw/FIGANI/FIGANI_298.bin": [
+     37776,
+     "5cd382e6766e735a177701bfe87ed38f96775807d8a84a885efacb91e1a14e72"
+    ],
+    "extracted/raw/FIGANI/FIGANI_299.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_300.bin": [
+     17168,
+     "89033034212536a1397162befeedf25d1e068d6ca0ed346b1c813c6b84191bd9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_301.bin": [
+     43186,
+     "79cab3f99fe21df1606fa1f7b2f1dcd4a9b17d59308729e0c4a21987e45ff606"
+    ],
+    "extracted/raw/FIGANI/FIGANI_302.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_303.bin": [
+     17113,
+     "1ba75cd1cfd5248e805f694fd4c38489cedb91e217206be3b1ef3fba220fd8c5"
+    ],
+    "extracted/raw/FIGANI/FIGANI_304.bin": [
+     77020,
+     "454f8c834dadd9fbb923e3e510fb9f8ba2a642413ad2746951b27065c9cac346"
+    ],
+    "extracted/raw/FIGANI/FIGANI_305.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_306.bin": [
+     14288,
+     "b1cca3eb8cefdc6d368b4e8fc062637555f5b5e12c6c5942d26a2c08e274d572"
+    ],
+    "extracted/raw/FIGANI/FIGANI_307.bin": [
+     39161,
+     "92d75044e78b689ef1218295792e6fdddf085883395e4e78b72bc7ba3a347c83"
+    ],
+    "extracted/raw/FIGANI/FIGANI_308.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_309.bin": [
+     14288,
+     "ee69e20a32430287e6d0b00cd5bc8fe9807319382f1982a3b8ab13130ba6ab9a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_310.bin": [
+     38189,
+     "e2add685e315de7350bd024109a204e54486b7c0cd73072a58ab84987a5277b7"
+    ],
+    "extracted/raw/FIGANI/FIGANI_311.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_312.bin": [
+     48298,
+     "14ce6cada0e796f41bccad0b230316c92c9859ede8d2264ed0264d1ecf792229"
+    ],
+    "extracted/raw/FIGANI/FIGANI_313.bin": [
+     186569,
+     "3c033eaa174090d5c3b71226156aaee41b9a3d450f1f1e49961336ede9a217dc"
+    ],
+    "extracted/raw/FIGANI/FIGANI_314.bin": [
+     89672,
+     "bfdab43dd34fb98f337be09145423a03ac9fa48c1110ed4231f7ddec6146ac97"
+    ],
+    "extracted/raw/FIGANI/FIGANI_315.bin": [
+     48298,
+     "69a0758c22d58095a09f98af6e98f1dff26d5ca0a17fdf47f0505a807850449a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_316.bin": [
+     180169,
+     "3e570117062ee4a0ec36889cb6914a4a1dcf94f101d4e2e1ff89e766ebebe840"
+    ],
+    "extracted/raw/FIGANI/FIGANI_317.bin": [
+     89668,
+     "381fd80b040a9c06683e97a0ad6c364bed2e787bedfc4e1b5b61f007bcfb192f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_318.bin": [
+     39977,
+     "e61d1eecb081664da956232b4463aec54211b1412f2327d178558ac79f9db3b4"
+    ],
+    "extracted/raw/FIGANI/FIGANI_319.bin": [
+     114924,
+     "33b7abf661788768824fa107f981ea8c37d6d563bf00e435878dfc25c3282cb6"
+    ],
+    "extracted/raw/FIGANI/FIGANI_320.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_321.bin": [
+     35315,
+     "53aa5b13d4172da9feeae43c19388e511b24145f7522bbdac511730e52be332f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_322.bin": [
+     90048,
+     "8fa4c259bb0fc465d65dcd77cb547b00e5dd0621210db66f27a02c5772b2ef4d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_323.bin": [
+     88449,
+     "6c5e043675895fc847b58131d05efff7f21ac78105c9f7cc4226f3ec1ca3700d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_324.bin": [
+     41514,
+     "e7715d22f00df671f3d55a23a795c7d6a22e6d1afb80e388ce9086e5e8b67658"
+    ],
+    "extracted/raw/FIGANI/FIGANI_325.bin": [
+     120340,
+     "1370c5d716408f12c9f8f731d4e6bb85961c2a65f6031ea1076e59d09f38e9d6"
+    ],
+    "extracted/raw/FIGANI/FIGANI_326.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_327.bin": [
+     41514,
+     "60b1862b6c2058de09234b6993b50cb83a4576144c4f83d8887d6d2b20312d2a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_328.bin": [
+     120340,
+     "10aa62e8cfcb5422ffb5599758dd282f1a3a14e39d9b9e251cc42f5979009f8b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_329.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_330.bin": [
+     36758,
+     "74991ff398d64f7035e2be991a68b31c360d23f88cac20477971c2c6acd90c15"
+    ],
+    "extracted/raw/FIGANI/FIGANI_331.bin": [
+     109716,
+     "4201c00b625883dff13a5540d1b1c7ae41ca6adf2c60b9e864745db82bdccb9b"
+    ],
+    "extracted/raw/FIGANI/FIGANI_332.bin": [
+     72495,
+     "d0a56261a7f27933a9af7d2ca87b1c67f412d92d8e732ff268212b6897be366d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_333.bin": [
+     27856,
+     "290252e6affc1e1fedd57ff7fde7d40ec63abe673f08eb5618928440cd65624f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_334.bin": [
+     73934,
+     "518c531f9b41bf6cae3e77c3ed4ee4508bac7484df34c232e0b1b010d1f04590"
+    ],
+    "extracted/raw/FIGANI/FIGANI_335.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_336.bin": [
+     7050,
+     "f1d7b9c5358d69a6eb8595b15a3d33a0e829bb8c2b836d3fda68ca50e9c9dbfd"
+    ],
+    "extracted/raw/FIGANI/FIGANI_337.bin": [
+     160974,
+     "b9357b92d7cfa4f02a4209492d0f79ffa730f467375958591c4a1e1c2acf7e9e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_338.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_339.bin": [
+     10019,
+     "1ff821d49a4f2d78353001f742e583aa438eebca8bb1f156e441daa85174a602"
+    ],
+    "extracted/raw/FIGANI/FIGANI_340.bin": [
+     159855,
+     "d047a4958c2b1cafd80eb07eb84847797adfd208eb2788b17c0e8c88203c1de9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_341.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_342.bin": [
+     5500,
+     "0c4d043ab149fe05dd2e05f29225feb2dc8a0b680590267ac00b99936705b333"
+    ],
+    "extracted/raw/FIGANI/FIGANI_343.bin": [
+     170273,
+     "67599fd6f004359edcf28441168d839e183f2ccbf5d4cbdad2237c7ec656673f"
+    ],
+    "extracted/raw/FIGANI/FIGANI_344.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_345.bin": [
+     8864,
+     "04bb00034a16645ffb55a8c8b5253f091a516dd6054dada39176677dc55b4941"
+    ],
+    "extracted/raw/FIGANI/FIGANI_346.bin": [
+     75305,
+     "683ed6acbc1a0539f9972a6fa55acf71d2419d5da6f0f8a8d269812b1ae273ac"
+    ],
+    "extracted/raw/FIGANI/FIGANI_347.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_348.bin": [
+     7541,
+     "89b7cd764dc6814c20151c82b1e549d57681ac23d59dfee594c2e6181d1076b9"
+    ],
+    "extracted/raw/FIGANI/FIGANI_349.bin": [
+     70164,
+     "7720125dd2238224ab3b7ff4b50e2e4001f8beb2fae3310d468871cf5e57a04c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_350.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_351.bin": [
+     7581,
+     "985cef95a6abd3db6393aa0ddf7e40ca713d7e227b59041fd18143802cd77900"
+    ],
+    "extracted/raw/FIGANI/FIGANI_352.bin": [
+     115496,
+     "c27d0ce19079b57f4b6bee47e7ae55c38ddf5c34cf7fca88fbc97d457fe8a670"
+    ],
+    "extracted/raw/FIGANI/FIGANI_353.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_354.bin": [
+     7986,
+     "982fdf564760d5022c8988c0b29528772878163d49e04e25e9096a93e479e357"
+    ],
+    "extracted/raw/FIGANI/FIGANI_355.bin": [
+     66684,
+     "6e429f7348bc363d5cbd42a18136ac2186f85eeda87f110f7d8551443eddce19"
+    ],
+    "extracted/raw/FIGANI/FIGANI_356.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_357.bin": [
+     5600,
+     "e13d5bedb0ff3504d60176a959e210e8540d91451e7cd1f830eb1ef2e04dc500"
+    ],
+    "extracted/raw/FIGANI/FIGANI_358.bin": [
+     220212,
+     "34eb44f6a202b40bf91a5b3c18c1525ee2ac9676f913573115d0d8e5db393766"
+    ],
+    "extracted/raw/FIGANI/FIGANI_359.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_360.bin": [
+     7174,
+     "7ed5990e69dcb4a0da1a26c5e78e5ac42eb83e0069268e5a3205a61b339a6e4a"
+    ],
+    "extracted/raw/FIGANI/FIGANI_361.bin": [
+     84201,
+     "7aaefdbd96e3b187e012bae7ae17fd750fda2f08db2791b39c4bd396bb61303c"
+    ],
+    "extracted/raw/FIGANI/FIGANI_362.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_363.bin": [
+     1025,
+     "e001c21919478ed9b785842f6b1e8a869603f90c9a5b4ef29519bd11735623d1"
+    ],
+    "extracted/raw/FIGANI/FIGANI_364.bin": [
+     2942,
+     "7db0650efb47fae64d208d084d1ec6d2cd2f78f3f1664ed03ec6e7c3aafb4345"
+    ],
+    "extracted/raw/FIGANI/FIGANI_365.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_366.bin": [
+     10856,
+     "d37fb8cd709846c215e0cb88b03850bff1b377bbf3a4142a6be98defae80fb14"
+    ],
+    "extracted/raw/FIGANI/FIGANI_367.bin": [
+     59566,
+     "6a64e2ac65a45b6175479a7fd1e3137eb25faf81d9217ea629c4b5a854627dfc"
+    ],
+    "extracted/raw/FIGANI/FIGANI_368.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_369.bin": [
+     38724,
+     "2710628cb2ff4085789a7af8409abfdfb1f034740fb837621873f7c128f61424"
+    ],
+    "extracted/raw/FIGANI/FIGANI_370.bin": [
+     123154,
+     "bdb55de7f8adbf13c4d1b7d13bf1b649722aefd3c0f3a1e4b1c7a97b637aa5ed"
+    ],
+    "extracted/raw/FIGANI/FIGANI_371.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_372.bin": [
+     32813,
+     "ee9ea8d70e470291681c5bef59fae5b6723397aac45439f04e1eddc884543461"
+    ],
+    "extracted/raw/FIGANI/FIGANI_373.bin": [
+     168531,
+     "18ee3df57776a93bfe837e843e99f5ec55acf7f2847c9286d93abfc8d0b3a099"
+    ],
+    "extracted/raw/FIGANI/FIGANI_374.bin": [
+     64751,
+     "284bc03078636781a36fdb8b9f00b576656fa29dfb42f0a0bbfde03f68cd81f7"
+    ],
+    "extracted/raw/FIGANI/FIGANI_375.bin": [
+     34207,
+     "df20c19fb6e6867ac2856d0c5f1e5da6960022e61645e190cf19a670e549f798"
+    ],
+    "extracted/raw/FIGANI/FIGANI_376.bin": [
+     152626,
+     "235ad8d49d139201b35e4532e5e690694c37d2cb5559c433f06bb25badf7e624"
+    ],
+    "extracted/raw/FIGANI/FIGANI_377.bin": [
+     35726,
+     "cc365ab8b3dda600a86832f49d06acaa0ddd0d8570ae6c040a9bf46bc00a519d"
+    ],
+    "extracted/raw/FIGANI/FIGANI_378.bin": [
+     26036,
+     "2664cdc353cfb404969ea9c0db51d7e06f51f99c5dbc86821b4063a2dfcad96e"
+    ],
+    "extracted/raw/FIGANI/FIGANI_379.bin": [
+     247131,
+     "ba43a106669355bf16c3084216cad8f7df715c892e5ef05a40e6f72393a069b0"
+    ],
+    "extracted/raw/FIGANI/FIGANI_380.bin": [
+     163120,
+     "05021892e5b8bdd4dcdb0b93cf537f5afdddeb5f4e05362e636ebbaedc86b159"
+    ],
+    "extracted/raw/FIGANI/FIGANI_381.bin": [
+     48297,
+     "b89fb32048b61236b08bf5705bc471b018f4a9f1b3b161f3676f7024e1822b31"
+    ],
+    "extracted/raw/FIGANI/FIGANI_382.bin": [
+     185640,
+     "667ca16bc2521e91bad98eaaa31f83352b81bcc64a69bab600539ad92af3bd13"
+    ],
+    "extracted/raw/FIGANI/FIGANI_383.bin": [
+     89644,
+     "907fde7a1d12017dcfc95c441f1edbd3a65be3c0acd163c91c92a0765a65f604"
+    ],
+    "extracted/raw/FIGANI/FIGANI_384.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_385.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_386.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_387.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_388.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_389.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_390.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_391.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_392.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_393.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_394.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_395.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_396.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_397.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_398.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_399.bin": [
+     16410,
+     "b47b207f39182ae9bd185271c7e7eb85b9c4a16bdc815faa71530dfc9b4fc5b5"
+    ],
+    "extracted/raw/FIGANI/FIGANI_400.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_401.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_402.bin": [
+     17590,
+     "c3324bd063f7d587a82f94a95a7e6f45b3936848732a0102311144e51e22ec37"
+    ],
+    "extracted/raw/FIGANI/FIGANI_403.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_404.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_405.bin": [
+     36349,
+     "0736e13425ccae8bb72c3bb3545a042d47c1c90689065b56bf55d6135f3af7cb"
+    ],
+    "extracted/raw/FIGANI/FIGANI_406.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_407.bin": [
+     3,
+     "6b25930e91686cee8bb5d4dae8dbed14f63c690c1c97ecb98552d8842e2d9395"
+    ],
+    "extracted/raw/FIGANI/FIGANI_408.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

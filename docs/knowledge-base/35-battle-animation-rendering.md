@@ -5397,6 +5397,13 @@ cycles 由 WSL 包裝腳本只換 harness 的 `cycles=5000`(執行中的 dosbox-
   第 1 章戰場的圖塊組 FDSHAP_002 沒有模式 1,地形繪製的模式 1 在畫面上沒有驗到。(續一百三十七:地圖 25 / 29 的截圖上驗到,見下。)
 - 證據:`evidence/fdicon_mode1_vga_frames_20261019.json`,產生器 `evidence/generators/ev_s135.py`(變異測試 `mut_s135.py`,24 個全部抓到)。
 
+**四模式 RLE 解碼後再編回去逐 byte 相同(2026-10-21 續一百三十九,資產解析)**。
+- FDICON.B24 1680 個、FDSHAP 圖塊庫 8064 塊(32 份不重複)、FIGANI 2118 幀、FDOTHER 701 幀:線性解碼都剛好吃完、填滿 w×h,沒有控制位元組跨列;
+  逐列編碼器加 6 條規則全部逐 byte 編回(規則見 doc98 續一百三十九),每條規則單獨改掉都有串流編不回去。
+- 模式 1 只帶 1 個值 byte:當成 literal 解,含模式 1 的 2694 個串流沒有一個剛好吃完。次序(先跳過再寫)不由這個檢查決定,仍以上面兩段為準。
+- 容器:FDICON 的位移表是 count + 1 筆(最後一筆 = 檔長,doc31);FIGANI / FDOTHER 的幀數是 +0 的 u8,+1 是 0 / 1 旗標(doc06)。
+- 證據:`evidence/rle4_roundtrip_s139_20261020.json`,產生器 `evidence/generators/ev_s139.py`(變異測試 `mut_s139.py`,27 個全部抓到)。
+
 **移動範圍明暗在其他章節與敵方單位(2026-10-19 續一百三十六,FD2.EXE 反組譯、DOSBox-X 記憶體傾印)**。
 - 換色表:`[0x53a6d]` 在 EXE 裡有 13 處引用(由 fixup 逐一解碼),只有 1 處寫入:main(`0x25bf4`)開頭 `0x111ba("FDOTHER.DAT", 舊值, 3)` 之後的 `0x25cc6`。
   main 只由 C 執行期的 `0x460dc` 呼叫一次,兩層都沒有跳回這一段的邊(FD2.EXE 反組譯)。第 1 章(續一百三十一)與第 25 章(地圖 24,續七十三)的傾印裡

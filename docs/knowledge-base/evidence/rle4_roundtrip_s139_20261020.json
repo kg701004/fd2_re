@@ -1,0 +1,238 @@
+{
+ "note": "FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e 的資產:FDICON.B24(原版遊戲目錄)與 extracted/raw 的 FDSHAP / FIGANI / FDOTHER。STATIC ANALYSIS(資產解析):解碼後用逐列編碼器編回,逐 byte 比對。",
+ "A_streams": {
+  "containers": {
+   "FDICON": {
+    "file": "org_game/炎龍騎士團/FLAME2/FDICON.B24",
+    "offset_entries": "count + 1(最後一筆 = 檔長)",
+    "first_offset": 6730
+   },
+   "FDSHAP": {
+    "files": "FDSHAP_000 ~ FDSHAP_064 偶數號 33 份",
+    "duplicate_files": {
+     "FDSHAP_060.bin": "FDSHAP_020.bin"
+    },
+    "offset_entries": "count(第一筆 = 6 + 4 × count)"
+   },
+   "FIGANI": {
+    "files": 409,
+    "frame_containers_by_flag_byte": {
+     "0": 249,
+     "1": 15
+    },
+    "not_frame_container": {
+     "3_bytes_00000a": 144,
+     "empty": 1
+    }
+   },
+   "FDOTHER": {
+    "files": 104,
+    "frame_containers_by_flag_byte": {
+     "0": 28
+    },
+    "not_frame_container": {
+     "empty": 1,
+     "other_format": 75
+    }
+   }
+  },
+  "per_corpus": {
+   "FDICON": {
+    "items": 1680,
+    "unique_streams": 1332,
+    "exact_consume": 1680,
+    "cross_row_ops": 0,
+    "mode1_ops": 818,
+    "items_with_mode1": 450,
+    "pixels": 967680
+   },
+   "FDSHAP": {
+    "items": 8064,
+    "unique_streams": 2985,
+    "exact_consume": 8064,
+    "cross_row_ops": 0,
+    "mode1_ops": 330,
+    "items_with_mode1": 107,
+    "pixels": 4644864
+   },
+   "FIGANI": {
+    "items": 2118,
+    "unique_streams": 1752,
+    "exact_consume": 2118,
+    "cross_row_ops": 0,
+    "mode1_ops": 89948,
+    "items_with_mode1": 1882,
+    "pixels": 47928212
+   },
+   "FDOTHER": {
+    "items": 701,
+    "unique_streams": 476,
+    "exact_consume": 701,
+    "cross_row_ops": 0,
+    "mode1_ops": 3064,
+    "items_with_mode1": 255,
+    "pixels": 6138370
+   }
+  },
+  "finding": "每個串流線性解碼都剛好吃完、剛好填滿 w×h,沒有一個控制位元組跨過列尾。"
+ },
+ "B_encoder": {
+  "rules": {
+   "R1_run_min_3": "同色連續 3 個以上用模式 0,1 ~ 2 個併入 literal",
+   "R2_pair_as_run": "flush 時整段 literal 剛好是兩個同色像素 → 模式 0(n = 2)",
+   "R3_mode1": "單一透明像素後接單像素 literal → 模式 1(n = 1)",
+   "R4_not_at_row_end": "那個像素是列尾最後一個像素時不用模式 1",
+   "R5a_after_mode1_same": "緊接在模式 1 之後、同一個值 → 併進前一個模式 1(n 加 1)",
+   "R5b_after_mode1_full": "前一個模式 1 已滿 64 → 開新的模式 1",
+   "R5c_after_mode1_diff": "緊接在模式 1 之後、不同值 → 不用模式 1(透明與像素各自輸出)",
+   "R6_run_leftover": "同色 run 長過 64:先輸出 64 的整段,剩下 3 個以上仍是模式 0,不到 3 個併入下一段 literal"
+  },
+  "policy": {
+   "run_min": 3,
+   "pair_as_run": true,
+   "mode1": true,
+   "mode1_at_row_end": false,
+   "after_mode1_same": "merge",
+   "after_mode1_full": "new",
+   "after_mode1_diff": "no",
+   "run_leftover_to_literal": true
+  },
+  "misses_full_policy": {
+   "FDICON": 0,
+   "FDSHAP": 0,
+   "FIGANI": 0,
+   "FDOTHER": 0
+  },
+  "misses_with_one_rule_changed": {
+   "R1_run_min_2": {
+    "FDICON": 1455,
+    "FDSHAP": 6634,
+    "FIGANI": 2077,
+    "FDOTHER": 654
+   },
+   "R1_run_min_4": {
+    "FDICON": 1455,
+    "FDSHAP": 6465,
+    "FIGANI": 2077,
+    "FDOTHER": 578
+   },
+   "R2_off": {
+    "FDICON": 1014,
+    "FDSHAP": 2272,
+    "FIGANI": 2049,
+    "FDOTHER": 490
+   },
+   "R3_off": {
+    "FDICON": 450,
+    "FDSHAP": 107,
+    "FIGANI": 1882,
+    "FDOTHER": 255
+   },
+   "R4_allow_at_row_end": {
+    "FDICON": 32,
+    "FDSHAP": 1,
+    "FIGANI": 603,
+    "FDOTHER": 71
+   },
+   "R5a_same_as_new": {
+    "FDICON": 0,
+    "FDSHAP": 5,
+    "FIGANI": 1639,
+    "FDOTHER": 29
+   },
+   "R5a_same_as_no": {
+    "FDICON": 0,
+    "FDSHAP": 5,
+    "FIGANI": 1639,
+    "FDOTHER": 29
+   },
+   "R5b_full_as_no": {
+    "FDICON": 0,
+    "FDSHAP": 0,
+    "FIGANI": 70,
+    "FDOTHER": 0
+   },
+   "R5c_diff_as_new": {
+    "FDICON": 0,
+    "FDSHAP": 31,
+    "FIGANI": 677,
+    "FDOTHER": 37
+   },
+   "R6_leftover_as_run": {
+    "FDICON": 0,
+    "FDSHAP": 0,
+    "FIGANI": 137,
+    "FDOTHER": 18
+   }
+  },
+  "finding": "6 條規則(R5 分三個子規則)的逐列編碼器把 4 種資源的全部串流逐 byte 編回原樣;任一條規則改掉都會有串流編不回去。列寬不超過 64 的 FDICON / FDSHAP 碰不到 64 上限,R5b 與 R6 只由 FIGANI / FDOTHER 驗到。"
+ },
+ "C_controls": {
+  "mode1_payload_[items,exact_correct,exact_as_literal]": {
+   "FDICON": {
+    "with_mode1": [
+     450,
+     450,
+     0
+    ],
+    "without_mode1": [
+     1230,
+     1230,
+     1230
+    ]
+   },
+   "FDSHAP": {
+    "with_mode1": [
+     107,
+     107,
+     0
+    ],
+    "without_mode1": [
+     7957,
+     7957,
+     7957
+    ]
+   },
+   "FIGANI": {
+    "with_mode1": [
+     1882,
+     1882,
+     0
+    ],
+    "without_mode1": [
+     236,
+     236,
+     236
+    ]
+   },
+   "FDOTHER": {
+    "with_mode1": [
+     255,
+     255,
+     0
+    ],
+    "without_mode1": [
+     446,
+     446,
+     446
+    ]
+   }
+  },
+  "streams_with_cross_row_ops_at_wrong_width": {
+   "-1": {
+    "FDICON": 1680,
+    "FDSHAP": 8062,
+    "FIGANI": 2118,
+    "FDOTHER": 683
+   },
+   "1": {
+    "FDICON": 1680,
+    "FDSHAP": 8062,
+    "FIGANI": 2118,
+    "FDOTHER": 683
+   }
+  },
+  "finding": "模式 1 只帶 1 個值 byte:當成 literal 解,含模式 1 的串流沒有一個能剛好吃完(不含的全部不受影響)。寬度錯一欄,每個語料都出現跨列的控制位元組。"
+ },
+ "conclusion": "STATIC ANALYSIS:四模式 RLE 的文法(含模式 1 的 1-byte 負載)與原編碼器的選擇規則都已完整 —— FDICON 1680、FDSHAP 8064、FIGANI 2118 幀、FDOTHER 701 幀全部逐 byte 重現。模式 1 的「先跳過再寫」次序不由本檢查決定(只看 bytes 分不出來),仍以續一百三十四 / 一百三十五的 EXE 與 VGA 證據為準。"
+}

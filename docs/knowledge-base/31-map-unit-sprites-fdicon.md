@@ -17,6 +17,7 @@
 +2  u16 tileH   = 0x18 (24)
 +4  u16 count   = 0x0690 (1680)
 +6  u32[count]  offset 表(相對檔頭)
+            實際有 count + 1 筆:最後一筆 = 檔長,第一個圖示從 6 + 4 × 1681 = 6730 起(續一百三十九,資產解析;FDSHAP 只有 count 筆)
 各 tile:sprite 4-mode RLE(高 2 bit=模式:色run/dither/literal/透明;低 6 bit=count−1)
         透明 = index 0
 ```

@@ -34,6 +34,8 @@ AFM - Animation File Manager Version 1.00 Copyright (C) 1993 Lo Yuan Tsung 09/29
 +6   uint16 LE  ?
 +8   uint32[frameCount] LE  各幀資料 offset(相對資源起點)
           frameCount = (offsets[0] - 8) / 4   ← 自洽驗證
+  更正(續一百三十九,資產解析):+0 是 u8 幀數,+1 是 u8 旗標(0 / 1)。264 份幀容器裡 15 份旗標 = 1,
+  當 uint16 讀會得到 0x113 之類的值;幀數以 +0 的 u8 = (offsets[0] - 8) / 4 為準。
 ```
 
 每幀 **13-byte 標頭** + RLE 像素(第 3 輪反組譯 + 視覺驗證,**已完整破解**):
