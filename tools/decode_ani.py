@@ -10,7 +10,8 @@
     +0x51  0x50 bytes  標題欄位(space-padded ASCII,未設定時內容為 ".Empty Title. ")
     +0xA1  1 byte       0x00 (標題結尾 null)
     +0xA2  3 bytes      未知(版本/旗標相關,未逐位解出)
-    +0xA5  uint16 LE     **frameCount**(反組譯證實:0x020421 讀 [buf+0xA5] 當幀數迴圈上界)
+    +0xA5  int16 LE      **frameCount**(反組譯證實:0x020421 讀 [buf+0xA5] 當幀數迴圈上界;
+                         **有號**,`0x0204ff` movsx + `0x020506` jge,≥ 0x8000 一幀都不播)
     +0xA7  uint16 LE     螢幕寬度(樣本恆為 320)      [推,本解碼器固定用 320,未讀此欄位]
     +0xA9  uint16 LE     螢幕高度(樣本恆為 200)      [推,本解碼器固定用 200,未讀此欄位]
     +0xAB  2 bytes       未知
@@ -57,6 +58,7 @@ import struct
 
 W, H = 320, 200
 FRAME_BYTES = W * H  # 64000
+PALETTE_BYTES = 768  # 256 色 × RGB
 
 # 續一百四十四:原版播放器 play_afm(0x020421)開檔後只做一件事判斷檔頭 ——
 # `0x0204da` fread **0xAD** bytes,接著 `0x0204ea` 讀 [buf+0xA5] 當幀數。
@@ -68,6 +70,26 @@ HEADER_BYTES = 0xAD
 
 class NotANI(Exception):
     """資料短於 0xAD 檔頭(遊戲 fread 的長度),不是 ANI 檔。"""
+
+
+class TruncatedScript(ValueError):
+    """幀 script 在 cmdCount 個指令執行完之前就用完了(資源被截短)。
+
+    原版 play_afm 是先 fread compSize bytes 進固定緩衝區再交給 VM;檔案被截短時 fread
+    讀不滿,VM 會接著執行緩衝區裡上一幀殘留的 bytes —— 沒有可以重現的「正確」畫面,
+    所以這裡明確拒絕,而不是像 rle_2mode 那樣寫到哪算哪。繼承 ValueError,
+    `cmd_frames` 原有的 `except (IndexError, ValueError)` 照樣接得到。
+    """
+
+
+class BadOpcode(ValueError):
+    """opcode 不在 0-9。原版 `0x037012` 直接 `call [op*4 + 0x5276a]`,不檢查範圍。"""
+
+
+def _need(script: bytes, pos: int, n: int) -> None:
+    """script 從 pos 起還要讀 n bytes;不夠就丟 TruncatedScript。"""
+    if pos + n > len(script):
+        raise TruncatedScript(f"script 只有 {len(script)} bytes,@{pos} 還要讀 {n} bytes")
 
 
 def rle_2mode(data, pos, dst, dst_off, count):
@@ -259,58 +281,197 @@ def selftest():
     if not ok7c:
         fails.append("橫幅換掉就不解了 —— 判準比遊戲嚴")
 
+    print("\n(8) 續一百四十五:run_vm 逐 opcode —— 完整 script 的效果、截短的丟 TruncatedScript")
+    # 每個 opcode 一段最小 script(cmdCount = 1)。初始緩衝區每格的值都不同,寫錯位置看得出來;
+    # op 3 / 7 / 8 / 9 都放 2 筆以上,第二筆的守衛才測得到;7 / 8 / 9 各有一筆貼在或越過畫面尾端。
+    pal0 = bytes(i % 256 for i in range(768))
+    fb0 = bytes(i % 251 for i in range(FRAME_BYTES))
+    lit_pal = bytes((i * 7 + 3) % 256 for i in range(768))
+    lit_fb = bytes((i * 13 + 5) % 256 for i in range(FRAME_BYTES))
+
+    def _with(base, patches):
+        b = bytearray(base)
+        for off, val in patches:
+            b[off:off + len(val)] = val
+        return bytes(b)
+
+    E = FRAME_BYTES
+    ops8 = (  # (opcode, script, 預期 palette, 預期 framebuf)
+        (0, b"\x00\x11", b"\x11" * 768, fb0),
+        (1, b"\x01" + lit_pal, lit_pal, fb0),
+        (2, b"\x02" + b"\xFF\x21" * 12 + b"\xCC\x22", b"\x21" * 756 + b"\x22" * 12, fb0),
+        (3, b"\x03\x02\x01\x01ABC\xFF\x01DEF", _with(pal0, ((3, b"ABC"), (765, b"DEF"))), fb0),
+        # 越過 palette 尾端:只寫 765..767,照樣跳過 6 bytes;palette 不准變長。
+        (3, b"\x03\x01\xFF\x02GHIJKL", _with(pal0, ((765, b"GHI"),)), fb0),
+        (4, b"\x04\x33", pal0, b"\x33" * E),
+        (5, b"\x05" + lit_fb, pal0, lit_fb),
+        (6, b"\x06" + b"\xFF\x44" * 1015 + b"\xF7\x45", pal0, b"\x44" * 63945 + b"\x45" * 55),
+        (7, b"\x07" + struct.pack('<HHBHBHB', 3, 0, 0x76, E - 1, 0x77, E, 0x79),
+         pal0, _with(fb0, ((0, b"\x76"), (E - 1, b"\x77")))),
+        (8, b"\x08" + struct.pack('<HHBBHBB', 2, 100, 5, 0x88, E - 2, 5, 0x89),
+         pal0, _with(fb0, ((100, b"\x88" * 5), (E - 2, b"\x89\x89")))),
+        (9, b"\x09" + struct.pack('<HHB', 2, 200, 3) + b"\x91\x92\x93"
+         + struct.pack('<HB', E - 1, 2) + b"\x94\x95",
+         pal0, _with(fb0, ((200, b"\x91\x92\x93"), (E - 1, b"\x94")))),
+        # 剛好放滿的 0 筆 / 0 長度:守衛要的長度多 1 就會把合法的 script 判成截短(窮舉突變第一輪
+        # op 3 / 7 / 8 / 9 的筆數守衛、op 3 / 9 的每筆守衛 2->3、3->4 都逃掉 —— 沒有一段 script 在那裡結束)。
+        (3, b"\x03\x00", pal0, fb0),
+        (3, b"\x03\x01\x05\x00", pal0, fb0),
+        (7, b"\x07" + struct.pack('<H', 0), pal0, fb0),
+        (8, b"\x08" + struct.pack('<H', 0), pal0, fb0),
+        (9, b"\x09" + struct.pack('<H', 0), pal0, fb0),
+        (9, b"\x09" + struct.pack('<HHB', 1, 7, 0), pal0, fb0),
+    )
+
+    def _run8(script, cmd, pal, fb):
+        # 同 _try7:被測函式的例外轉成字串判定,不讓 selftest 以 Traceback 收場。
+        try:
+            return run_vm(script, cmd, pal, fb)
+        except Exception as exc:                              # noqa: BLE001
+            return type(exc).__name__
+
+    bad8 = []
+    for op, sc, want_pal, want_fb in ops8:
+        pal, fb = bytearray(pal0), bytearray(fb0)
+        got = _run8(sc, 1, pal, fb)
+        if got != len(sc) or bytes(pal) != want_pal or bytes(fb) != want_fb:
+            bad8.append((op, "完整", got, len(sc)))
+        # 截短:長度 0 連 opcode 都讀不到,一律 TruncatedScript;op 2 / 6 的 RLE 照 rle_2mode 的
+        # 約定降級(停在資料尾、不丟例外),其餘 opcode 每個前綴都要丟 TruncatedScript。
+        # 緩衝區長度一律不准變。op 5 / 6 每次要動 6 萬多格,只取頭尾截點。
+        cuts = (range(len(sc)) if op not in (5, 6)
+                else (0, 1, 2, 3, len(sc) - 2, len(sc) - 1))
+        for c in cuts:
+            pal, fb = bytearray(pal0), bytearray(fb0)
+            got = _run8(sc[:c], 1, pal, fb)
+            want = "TruncatedScript" if (c == 0 or op not in (2, 6)) else c
+            if got != want or len(pal) != 768 or len(fb) != FRAME_BYTES:
+                bad8.append((op, c, got, len(pal), len(fb)))
+                break
+    # 串起來:10 段接成一支(cmdCount = 10),pos 要跨指令正確累加,結果等於逐段執行。
+    chain = b"".join(sc for _op, sc, _p, _f in ops8)
+    pal_a, fb_a = bytearray(pal0), bytearray(fb0)
+    got_c = _run8(chain, len(ops8), pal_a, fb_a)
+    pal_b, fb_b = bytearray(pal0), bytearray(fb0)
+    for _op, sc, _p, _f in ops8:
+        _run8(sc, 1, pal_b, fb_b)
+    # 長度也要看:逐段執行用的是同一個 run_vm,op 1 讀 769 bytes 之類的錯兩邊一起錯、彼此相等;
+    # 只有串接時後面還有資料,多讀的那 1 byte 才會讓 palette 變長(窮舉突變第一輪 768->769 逃掉)。
+    if (got_c != len(chain) or pal_a != pal_b or fb_a != fb_b
+            or len(pal_a) != 768 or len(fb_a) != FRAME_BYTES):
+        bad8.append(("串接", got_c, len(chain)))
+    if _run8(chain[:-1], len(ops8), bytearray(pal0), bytearray(fb0)) != "TruncatedScript":
+        bad8.append(("串接少 1 byte", "沒有 TruncatedScript"))
+    # opcode 10 起沒有 handler;cmdCount 0 連 opcode 都不讀(原版 0x036ffa 先判 0 就跳過)。
+    for op in (10, 0xFF):
+        got = _run8(bytes([op, 0, 0]), 1, bytearray(768), bytearray(FRAME_BYTES))
+        if got != "BadOpcode":
+            bad8.append((op, "未知 opcode", got))
+    if _run8(b"", 0, bytearray(768), bytearray(FRAME_BYTES)) != 0:
+        bad8.append(("cmdCount 0", "不是回 0"))
+    if not (issubclass(TruncatedScript, ValueError) and issubclass(BadOpcode, ValueError)):
+        bad8.append("新例外不是 ValueError 子類,cmd_frames 的 except 接不到")
+    ok8 = not bad8
+    print(f"    {'PASS' if ok8 else 'FAIL'}: {len(ops8)} 段 script(10 個 opcode)的完整效果 + 截短前綴"
+          " + 串接 + 未知 opcode"
+          + ("" if ok8 else f",異常 {bad8[:4]}"))
+    if not ok8:
+        fails.append(f"run_vm 不符:{bad8[:4]}")
+
+    print("\n(9) 續一百四十五:幀數是有號 16-bit(0x0204ff movsx + 0x020506 jge)")
+    # 0x7FFF 仍是正數:讀到幀記錄用完為止(2 幀);0x8000 / 0xFFFF 是負數:原版一幀都不播。
+    bad9 = []
+    for raw, want_fc, want_fr in ((0x7FFF, 0x7FFF, [fr0, fr1]), (0x8000, -0x8000, []),
+                                  (0xFFFF, -1, [])):
+        blob9 = bytearray(syn7)
+        struct.pack_into('<H', blob9, 0xA5, raw)
+        h9 = _try7(parse_header, bytes(blob9))
+        fc9 = h9['frame_count'] if isinstance(h9, dict) else h9
+        fr9 = _try7(frames_bytes, bytes(blob9))
+        if (fc9, fr9) != (want_fc, want_fr):
+            bad9.append((hex(raw), fc9, fr9 if isinstance(fr9, str) else len(fr9)))
+    ok9 = not bad9
+    print(f"    {'PASS' if ok9 else 'FAIL'}: 0x7FFF -> 2 幀;0x8000 / 0xFFFF -> 負數、0 幀"
+          + ("" if ok9 else f",異常 {bad9}"))
+    if not ok9:
+        fails.append(f"幀數的正負號與原版不符:{bad9}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(手算 + 截斷回歸 + 0 長度 run 回歸 + "
-          "隨機輸入不變量 + 非恆真控制 + 檔頭 / 幀記錄截斷)。")
+          "隨機輸入不變量 + 非恆真控制 + 檔頭 / 幀記錄截斷 + VM 逐 opcode 截短 + 有號幀數)。")
     return 0
 
 
 def run_vm(script, cmd_count, palette, framebuf):
     """執行 cmd_count 個 AFM VM 指令,原地修改 palette(768B bytearray)與
-    framebuf(64000B bytearray)。回傳消耗的 script 位元組數(除錯用)。"""
+    framebuf(64000B bytearray)。回傳消耗的 script 位元組數(除錯用)。
+
+    script 不夠讀時丟 TruncatedScript、opcode 不在 0-9 時丟 BadOpcode;兩者都在改動
+    緩衝區之前丟出,palette / framebuf 的長度永遠不變。op 2 / 6 的 RLE 例外:
+    照 rle_2mode 的約定寫到哪算哪(續一百四十五)。
+    """
+    # 續一百四十五:原本每個讀取都沒有邊界。截短的 script 會 IndexError(`script[pos]`)、
+    # struct.error(op 7/8/9 的 unpack_from,不是 ValueError,`cmd_frames` 接不到),
+    # 更糟的是 op 1 / 3 / 5 / 9 的切片指派拿到較短的切片會**靜默改變 bytearray 長度**
+    # (9 份資源各幀前 120 個前綴裡有 36 次 framebuf 變短而沒有任何例外)。
     pos = 0
     for _ in range(cmd_count):
+        _need(script, pos, 1)
         op = script[pos]; pos += 1
         if op == 0:  # palette fill
+            _need(script, pos, 1)
             v = script[pos]; pos += 1
-            for i in range(768):
+            for i in range(PALETTE_BYTES):
                 palette[i] = v
         elif op == 1:  # palette literal load
-            palette[0:768] = script[pos:pos + 768]
-            pos += 768
+            _need(script, pos, PALETTE_BYTES)
+            palette[0:PALETTE_BYTES] = script[pos:pos + PALETTE_BYTES]
+            pos += PALETTE_BYTES
         elif op == 2:  # palette RLE
-            pos = rle_2mode(script, pos, palette, 0, 768)
+            pos = rle_2mode(script, pos, palette, 0, PALETTE_BYTES)
         elif op == 3:  # palette 局部貼補
+            _need(script, pos, 1)
             n = script[pos]; pos += 1
             for _ in range(n):
+                _need(script, pos, 2)
                 idx = script[pos]; pos += 1
                 cnt = script[pos]; pos += 1
                 off, length = idx * 3, cnt * 3
-                palette[off:off + length] = script[pos:pos + length]
+                _need(script, pos, length)
+                # 續一百四十五:idx * 3 + cnt * 3 可以超過 768(損壞資料;原版是寫過 malloc(768) 的尾端)。
+                # 照 op 8 / 9 截在 FRAME_BYTES 的做法截在 PALETTE_BYTES,否則切片指派會把 palette 撐長。
+                end = min(off + length, PALETTE_BYTES)
+                palette[off:end] = script[pos:pos + (end - off)]
                 pos += length
         elif op == 4:  # framebuffer fill
+            _need(script, pos, 1)
             v = script[pos]; pos += 1
             for i in range(FRAME_BYTES):
                 framebuf[i] = v
         elif op == 5:  # framebuffer literal load
+            _need(script, pos, FRAME_BYTES)
             framebuf[0:FRAME_BYTES] = script[pos:pos + FRAME_BYTES]
             pos += FRAME_BYTES
         elif op == 6:  # framebuffer RLE(主力全螢幕解碼)
             pos = rle_2mode(script, pos, framebuf, 0, FRAME_BYTES)
         elif op == 7:  # 單點繪製 ×N
+            _need(script, pos, 2)
             n = struct.unpack_from('<H', script, pos)[0]; pos += 2
             for _ in range(n):
+                _need(script, pos, 3)
                 off = struct.unpack_from('<H', script, pos)[0]; pos += 2
                 val = script[pos]; pos += 1
                 if 0 <= off < FRAME_BYTES:
                     framebuf[off] = val
         elif op == 8:  # 區段填色 ×N
+            _need(script, pos, 2)
             n = struct.unpack_from('<H', script, pos)[0]; pos += 2
             for _ in range(n):
+                _need(script, pos, 4)
                 off = struct.unpack_from('<H', script, pos)[0]; pos += 2
                 length = script[pos]; pos += 1
                 val = script[pos]; pos += 1
@@ -318,15 +479,19 @@ def run_vm(script, cmd_count, palette, framebuf):
                 for i in range(off, end):
                     framebuf[i] = val
         elif op == 9:  # 區段貼圖 ×N
+            _need(script, pos, 2)
             n = struct.unpack_from('<H', script, pos)[0]; pos += 2
             for _ in range(n):
+                _need(script, pos, 3)
                 off = struct.unpack_from('<H', script, pos)[0]; pos += 2
                 length = script[pos]; pos += 1
+                # 貼圖被畫面尾端截掉時照樣跳過 length bytes,所以要的是 length 而不是 end - off。
+                _need(script, pos, length)
                 end = min(off + length, FRAME_BYTES)
                 framebuf[off:end] = script[pos:pos + (end - off)]
                 pos += length
         else:
-            raise ValueError(f"未知 opcode {op} @ script pos {pos - 1}")
+            raise BadOpcode(f"未知 opcode {op} @ script pos {pos - 1}")
     return pos
 
 
@@ -337,7 +502,9 @@ def parse_header(data):
         raise NotANI(f"只有 {len(data)} bytes,放不下 0x{HEADER_BYTES:X} 檔頭")
     banner = data[0:0x50].decode('ascii', 'replace')
     title = data[0x51:0xA1].decode('ascii', 'replace').strip()
-    frame_count = struct.unpack_from('<H', data, 0xA5)[0]
+    # 續一百四十五:幀數是**有號** 16-bit —— 原版 `0x0204ff` `movsx eax, word [esp+0x10]`、
+    # `0x020506` `jge` 有號比較,≥ 0x8000 的值是負數、一幀都不播;range(負數) 同樣是空的。
+    frame_count = struct.unpack_from('<h', data, 0xA5)[0]
     width = struct.unpack_from('<H', data, 0xA7)[0]
     height = struct.unpack_from('<H', data, 0xA9)[0]
     return {

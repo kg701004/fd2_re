@@ -48,7 +48,7 @@
 +0x51  0x50 bytes  標題欄位(space-padded ASCII;未設定時內容固定為 ".Empty Title." )
 +0xA1  1 byte      0x00(標題結尾 null)
 +0xA2  3 bytes     未知(版本/旗標?未逐位解出)
-+0xA5  uint16 LE   frameCount(反組譯證實:0x020421 讀 [buf+0xA5] 當幀迴圈上界)
++0xA5  int16 LE    frameCount(反組譯證實:0x020421 讀 [buf+0xA5] 當幀迴圈上界;**有號**,見下方)
 +0xA7  uint16 LE   螢幕寬度(9 個樣本恆為 320)
 +0xA9  uint16 LE   螢幕高度(9 個樣本恆為 200)
 +0xAB  2 bytes     未知
@@ -58,6 +58,14 @@
 **驗證方式**:對 resource #0(96 幀)逐筆累加 `8 + compSize` 剛好等於
 `資源總長 - 0xAD`(1,002,800 − 173 = 1,002,627,實測完全吻合),對其餘 8 個資源同樣核算通過——
 證明此標頭 + 幀記錄框架的位元組切分**完全正確**,不是巧合。
+
+**播放器怎麼讀這個標頭**(續一百四十四 / 一百四十五,STATIC ANALYSIS,FD2.EXE md5 33464c81…):
+- `0x0204da` fread **0xAD** bytes,`0x0204ea` 讀 `[esi+0xa5]` 當幀數 —— **不比對橫幅**。EXE 全檔沒有
+  "AFM" / "Animation File" / "Lo Yuan" 字串;唯一的 "ANI.DAT" 字串(linear 0x501c7)只有 `0x020498` 參照。
+  所以「不是 ANI 檔」對遊戲而言只有「連 0xAD 都放不下」這一種;`tools/decode_ani.py` 同此判準(`NotANI`)。
+  這是必要條件、不是充分條件:extracted/raw 1005 份資源裡有 809 份非 ANI 也放得下標頭。
+- 幀數是**有號** 16-bit:`0x0204ff` `movsx eax, word [esp+0x10]`、`0x020506` `jge` 有號比較。
+  ≥ 0x8000 的值是負數,一幀都不播。9 個資源最多 96 幀,沒有影響;`decode_ani.parse_header` 同樣讀成有號。
 
 ---
 
@@ -70,6 +78,14 @@
 +6 uint16 LE  (保留,同上)
 +8 ... compSize bytes 的 script(bytecode,見 §4 VM)
 ```
+
+播放器逐幀 fread 8-byte 記錄(`0x020512`)與 compSize bytes 的 script(`0x020524`),再呼叫 VM
+`0x036ff4(cmdCount, script)`(`0x020533`)。VM 迴圈 `0x037008` `lodsb` 取 opcode、`0x037012` 直接
+`call [op*4 + 0x5276a]`:**不檢查 opcode 範圍,也不檢查 script 長度**(cmdCount 為 0 時 `0x036ffa` 直接跳過)。
+資源被截短時 fread 讀不滿,VM 會接著執行緩衝區裡上一幀殘留的 bytes,沒有可重現的畫面;
+`decode_ani.run_vm` 因此在 script 不夠讀時丟 `TruncatedScript`、opcode ≥ 10 丟 `BadOpcode`(續一百四十五)。
+註:§4.1 表中的 `0x36c9e`(派發器)/ `0x36c7d`(初始化)與本版 EXE 不符 —— 本版 `0x02048a` 呼叫的初始化是
+`0x036fd3`,派發器是 `0x036ff4`(兩者都差 0x356);§4.1 未改,見 doc98 續一百四十五。
 
 少數幀 `compSize=0, cmdCount=0`(如 resource #0 的 frame 1–9):**合法的「空幀」**——
 不執行任何繪圖指令,畫面沿用上一幀內容原樣顯示,純粹用來拉長該畫面的停留時間(逐幀播放但無變化)。
@@ -288,6 +304,14 @@ esi==0     → 額外 +1000ms 停留(push 0x3e8;call 0x375b2)
 章節 26/29 專用)。這與 doc39 §6 依 dosbox 視覺比對排出的順序(3,4,5,6,〔2〕,7,8,0,1)幾乎一致,
 **只差 index=2 這一項要拿掉**;dosbox 實拍中「明月」畫面(item⑤)其實已由 ANI_007(騎馬夜行,
 doc39 §6 已獨立列出)提供,不需要 ANI_002 補位。
+
+> 續一百四十五(doc98,本版 EXE md5 33464c81…,DOSBox-X 實拍 `evidence/afterlock_live_title_transition_s145_20261021.json`):
+> - `esi==0x19` 的 wrapper `0x1f81e` 在 `play_afm` 回來、`0x1f87f add esp,0xc` 之後**沒有 ret**,直接落進 `0x1f882`(淡出):
+>   實拍金鎖播到第 94 幀(共 96)後末幀淡出 10 張,捲動再從 dy 25(觸發列)淡入恢復。
+> - `esi==0` 停留之後的「第一段擦除轉場」在本版是 `0x1fc66` esi = 0x28 → 0、每步 `0x2df01(0, 0xff, esi, 0x3f, 0, 0)` + delay 8 ms
+>   —— 實拍是全部顏色往純紅 (0x3f, 0, 0) 的漸變(紅閃光),不是抹除;上面的 `0x286bd` 在本版落在函式中間、沒有呼叫端。
+> - 實拍順序與上表一致:dy 25 → 11(dy 22–13 用 #0x66,表值 22 之後 11 步)、esi == 10 浮空城、dy 10 → 0、
+>   dy 0 停留 1.13 秒、紅閃光、ANI #1(logo)、整張白、淡到標題 FDOTHER #7 sub0 + #8。
 
 ### 10.6 對照 remake `title.go` 現行 `cutSeq` 猜測 —— 需要的修正
 

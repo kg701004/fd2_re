@@ -32,6 +32,12 @@ short".
 Registered decoders declare which exceptions are legitimate (a container parser
 is *supposed* to reject a non-container). Anything else is a finding.
 
+Not raising is not the same as not breaking. A decoder that writes into a
+caller's buffer can silently change its length (a short slice assigned to a
+`bytearray` slice shrinks it). A row may therefore name a post-condition that
+must hold after every call; a call that violates it is counted like an
+undeclared exception (`PostconditionFailed`).
+
 Usage
 -----
     python tools/verify_truncation_robustness.py
@@ -42,6 +48,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import functools
 import importlib
 import os
 import random
@@ -91,7 +98,52 @@ def _dat(name: str) -> bytes:
     return p.read_bytes() if p.is_file() else b""
 
 
-# (模組, 函式, 說明, 取樣資料, 由 body 組出呼叫引數, 合法例外[, 完整取樣回傳值的前提])
+@functools.lru_cache(maxsize=None)
+def _ani_vm_sample() -> tuple[bytes, int]:
+    """`decode_ani.run_vm` 列的取樣:全部 ANI 資源裡不超過 TRUNC_LIMIT 的最長一段幀 script。
+
+    整段都在 TRUNC_LIMIT 內,逐一前綴才涵蓋到這段 script 的每一個截點。run_vm 還要
+    那一幀的 cmdCount,不能只靠 `_sample` 回傳的 bytes,所以兩者一起回傳。
+
+    Returns:
+        (script, cmdCount);找不到 ANI 資料時為 (b"", 0),該列判 SKIP。
+    """
+    import decode_ani
+    best = (b"", 0)
+    d = RAW / "ANI"
+    if not d.is_dir():
+        return best
+    for p in sorted(d.glob("ANI_*.bin")):
+        data = p.read_bytes()
+        if len(data) < decode_ani.HEADER_BYTES:
+            continue
+        hdr = decode_ani.parse_header(data)
+        for _i, _cs, cmd, _r0, _r1, script in decode_ani.iter_frames(data, hdr["frame_count"]):
+            if len(best[0]) < len(script) <= TRUNC_LIMIT:
+                best = (bytes(script), cmd)
+    return best
+
+
+def _consumes_whole_script(pos: int) -> bool:
+    """`decode_ani.run_vm` 列的前提:完整取樣要剛好把整段 script 執行完。
+
+    9 份 ANI 資源 289 幀全都如此(續一百四十五量測)。只看「沒丟例外」不夠:
+    cmdCount 讀錯或取樣錯位時 run_vm 也可能安靜地只跑一部分。
+    """
+    return pos == len(_ani_vm_sample()[0])
+
+
+def _vm_buffers_keep_length(args: tuple, _res: object) -> bool:
+    """`decode_ani.run_vm` 列的後置條件:原地修改的 palette / framebuf 長度不變。
+
+    bytearray 的切片指派拿到較短的切片會靜默縮短緩衝區、不丟任何例外 —— 只看例外的
+    截斷掃描看不到(續一百四十五配對控制:只拿掉 op 9 的資料守衛,沒有這一欄時判 OK)。
+    """
+    return len(args[2]) == 768 and len(args[3]) == 64000
+
+
+# (模組, 函式, 說明, 取樣資料, 由 body 組出呼叫引數, 合法例外[, 完整取樣回傳值的前提
+#  [, 每次呼叫後的後置條件 post(args, 回傳值) -> bool]])。不需要前提而要後置條件時第 7 欄填 None。
 # 「合法例外」是這支解碼器**宣告**它會丟的:容器 parser 本來就該拒絕非容器。
 # 其餘任何例外都是發現 —— 特別是 IndexError / struct.error 這種「讀過頭」的。
 DECODERS = [
@@ -146,18 +198,37 @@ DECODERS = [
     # 幀記錄表的截斷由逐一前綴(0xAD..600)涵蓋。
     ("decode_ani", "frames_bytes", "ANI(AFM)0xAD 檔頭 + 幀記錄表",
      lambda: _sample("ANI"), lambda b: ((b,), {}), ("NotANI",), bool),
+    # 續一百四十五:ANI 幀 script 的 VM。上面兩列一列測 RLE、一列測檔頭與幀記錄表,
+    # VM 本身(op 0-9 的運算元讀取)沒登錄 —— 截短的 script 會 IndexError / struct.error,
+    # 還會靜默改變緩衝區長度。TruncatedScript / BadOpcode 是宣告的拒絕(都繼承 ValueError,
+    # 但這裡按型別名稱比對,一般的 ValueError 仍算發現)。第 7 欄:完整取樣要剛好執行完整段 script;
+    # 第 8 欄:每次呼叫後兩個緩衝區的長度不變。
+    ("decode_ani", "run_vm", "ANI(AFM)幀 script 的 10-opcode VM",
+     lambda: _ani_vm_sample()[0],
+     lambda b: ((b, _ani_vm_sample()[1], bytearray(768), bytearray(64000)), {}),
+     ("TruncatedScript", "BadOpcode"), _consumes_whole_script, _vm_buffers_keep_length),
 ]
 
 
-def _call(mod, fn, body, mk):
+class PostconditionFailed(Exception):
+    """第 8 欄的後置條件不成立:沒丟例外,但把結果或呼叫端的緩衝區弄壞了。"""
+
+
+def _call(mod, fn, body, mk, post=None):
     m = importlib.import_module(mod)
     f = getattr(m, fn)
     args, kw = mk(body)
-    return f(*args, **kw)
+    res = f(*args, **kw)
+    # 續一百四十五:後置條件不成立時丟 PostconditionFailed,走與非預期例外相同的計數路徑。
+    if post is not None and not post(args, res):
+        raise PostconditionFailed(post.__name__)
+    return res
 
 
 def probe(entry, steps: int, seed: int = 0) -> dict:
-    mod, fn, desc, get, mk, allowed, *premise = entry
+    mod, fn, desc, get, mk, allowed, *extra = entry
+    premise = extra[0] if extra else None
+    post = extra[1] if len(extra) > 1 else None
     full = get()
     if not full:
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "SKIP",
@@ -175,16 +246,16 @@ def probe(entry, steps: int, seed: int = 0) -> dict:
     # 對立假說會預測同樣的觀測值,所以那樣的檢查是裝飾。DEGENERATE 是獨立的判定,
     # 不併進 OK,也不併進 CRASH。
     try:
-        res = _call(mod, fn, full, mk)
+        res = _call(mod, fn, full, mk, post)
     except Exception as exc:                                  # noqa: BLE001
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "DEGENERATE",
                 "detail": (f"完整取樣({len(full)} bytes)自己就被拒:"
                            f"{type(exc).__name__}: {str(exc)[:60]} —— "
                            f"截斷掃描只會反覆測到格式閘門")}
     # 不丟例外的 parser(壞輸入回空)要靠第 7 欄判斷完整取樣是不是真的解出東西。
-    if premise and not premise[0](res):
+    if premise is not None and not premise(res):
         return {"tool": f"{mod}.{fn}", "desc": desc, "verdict": "DEGENERATE",
-                "detail": (f"完整取樣({len(full)} bytes)的回傳值不符前提 {premise[0].__name__}"
+                "detail": (f"完整取樣({len(full)} bytes)的回傳值不符前提 {premise.__name__}"
                            f" —— 截斷掃描只會反覆測到空結果")}
 
     body = full[:TRUNC_LIMIT]
@@ -196,7 +267,7 @@ def probe(entry, steps: int, seed: int = 0) -> dict:
         nonlocal n_tested
         n_tested += 1
         try:
-            _call(mod, fn, blob, mk)
+            _call(mod, fn, blob, mk, post)
         except Exception as exc:                              # noqa: BLE001
             name = type(exc).__name__
             if name not in allowed:
@@ -342,6 +413,38 @@ def selftest() -> int:
     if not ok3d:
         fails.append(f"第 7 欄前提沒有鑑別力:{r_blind['verdict']}/{r_prem['verdict']}/{r_fig['verdict']}")
 
+    print("\n(3e) 第 8 欄後置條件:沒丟例外卻把緩衝區弄短,要判 CRASH")
+    # 續一百四十五:run_vm 拿掉 op 9 資料守衛後,截短的 script 只會讓 framebuf 變短、不丟例外。
+    # 三個一組:縮短版無後置條件 -> OK(證明這題不是被別的條件判對)、有 -> CRASH、守衛版有 -> OK。
+    import types as _types
+    zz = _types.ModuleType("zz_post_probe")
+    exec("def shrink(body, buf):\n"
+         "    buf[0:8] = body[:8]\n"
+         "    return len(body)\n"
+         "def keep(body, buf):\n"
+         "    if len(body) >= 8:\n"
+         "        buf[0:8] = body[:8]\n"
+         "    return len(body)\n", zz.__dict__)
+
+    def _buf_is_8(args, _res):
+        return len(args[1]) == 8
+
+    s3e = (lambda: bytes(range(64)))
+    mk3e = (lambda b: ((b, bytearray(8)), {}))
+    sys.modules["zz_post_probe"] = zz
+    try:
+        r_np = probe(("zz_post_probe", "shrink", "", s3e, mk3e, (), None), 12)
+        r_p = probe(("zz_post_probe", "shrink", "", s3e, mk3e, (), None, _buf_is_8), 12)
+        r_k = probe(("zz_post_probe", "keep", "", s3e, mk3e, (), None, _buf_is_8), 12)
+    finally:
+        sys.modules.pop("zz_post_probe", None)
+    ok3e = ((r_np["verdict"], r_p["verdict"], r_k["verdict"]) == ("OK", "CRASH", "OK")
+            and "PostconditionFailed" in r_p["detail"])
+    print(f"    {'PASS' if ok3e else 'FAIL'}: 無後置條件 -> {r_np['verdict']}(應 OK);"
+          f"有 -> {r_p['verdict']}(應 CRASH,{r_p['detail']});守衛版 -> {r_k['verdict']}(應 OK)")
+    if not ok3e:
+        fails.append(f"第 8 欄後置條件沒有鑑別力:{r_np['verdict']}/{r_p['verdict']}/{r_k['verdict']}")
+
     print("\n(4) 非空控制:登錄表必須真的跑到資料,不能整排 SKIP")
     rows = [probe(e, 12) for e in DECODERS]
     skipped = [r["tool"] for r in rows if r["verdict"] == "SKIP"]
@@ -380,7 +483,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(故障注入 + 配對控制 + 例外清單的鑑別力 + "
-          "取樣退化的成對案例與非平凡性控制 + 第 7 欄前提 + 非空控制 + 跨工具交叉驗證)。")
+          "取樣退化的成對案例與非平凡性控制 + 第 7 欄前提 + 第 8 欄後置條件 + 非空控制 + 跨工具交叉驗證)。")
     return 0
 
 

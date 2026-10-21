@@ -10536,3 +10536,107 @@ generators 加 `ev_s135.py`、`mut_s135.py` 與 `drivers_s100_s133/`(40 個驅�
 - 原版幀數是**有號**的:`0x0204ff` `movsx` + `0x020506` `jge`,幀數 ≥ 0x8000 時一幀都不播;`parse_header` 讀無號。真實資源最多 96 幀,沒有影響。
 - `run_vm` 對被截短的 script 仍丟 IndexError(`cmd_frames` 有接;`ev_s141` 只讀完整檔),`run_vm` 本身沒有登錄在 `verify_truncation_robustness`。
 - `sweep_literals` 未對 `ev_s141` 跑;金鎖之後的 DOSBox-X 連拍需另行核准。
+
+## 2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`)
+
+使用者要求逐項處理續一百四十四的仍留,並核准一次 DOSBox-X 連拍(金鎖之後)。一~四是 STATIC ANALYSIS
+(只讀 extracted/raw、FD2.EXE md5 33464c81…);七是 LOG CONFIRMED(原版 FD2.EXE 實拍,不送按鍵)。
+
+**一、幀數改成有號**。重新反組譯 `play_afm`:`0x0204ea` `mov ax, word [esi+0xa5]`、`0x0204f1` 存進 `[esp+0x10]`,
+迴圈 `0x0204ff` `movsx eax, word [esp+0x10]`、`0x020504` `cmp esi, eax`、`0x020506` `jge` —— 有號比較,≥ 0x8000 一幀都不播。
+`parse_header` 改讀 `'<h'`;`range(負數)` 是空的,`iter_frames` / `frames_bytes` / `ev_s141` 不用改就跟原版一樣不播。
+9 份真實資源最多 96 幀,`frame_count` 與全部幀記錄 HEAD 與修改版逐份相同。介面上只有 ≥ 0x8000 的值變成負數(沒有真實資源)。
+selftest (9):0x7FFF → 2 幀(讀到記錄用完)、0x8000 → −32768 / 0 幀、0xFFFF → −1 / 0 幀。
+
+**二、`run_vm` 截短的 script**。修改前量測:9 份資源 289 幀、每幀前 120 個前綴(28145 次):IndexError 8711、struct.error 12853、
+正常返回 6581;其中 1434 次**緩衝區長度被改掉**(op 1 / 3 / 5 / 9 的切片指派拿到較短的切片)—— 36 次是正常返回、沒有任何例外,
+framebuf 就變短了。struct.error 不是 ValueError,`cmd_frames` 的 `except (IndexError, ValueError)` 接不到。
+- 原版:`0x020512` fread 8-byte 記錄、`0x020524` fread compSize bytes、`0x020533` 呼叫 VM `0x036ff4(cmdCount, script)`;
+  `0x036ffa` cmdCount 為 0 就跳過,`0x037008` `lodsb` 取 opcode、`0x037012` 直接 `call [op*4 + 0x5276a]` ——
+  **不檢查 opcode 範圍,也不檢查 script 長度**。檔案截短時 fread 讀不滿,VM 執行緩衝區裡上一幀殘留的 bytes。
+- **不同結論**:遊戲不拒絕截短的 script,解碼器拒絕。殘留 bytes 沒有可重現的「正確」畫面,寫到哪算哪會把錯的畫面當成結果交出去
+  (`cmd_frames` 會存成 PNG),所以明確拒絕。op 2 / 6 的 RLE 例外:照 `rle_2mode` 原本的約定降級,不改。
+- `decode_ani.py`:`TruncatedScript(ValueError)`、`BadOpcode(ValueError)`(原本未知 opcode 丟一般 ValueError);`_need` 在每次讀取前檢查;
+  op 9 要的是 `length` 而不是 `end - off`(貼圖被畫面尾端截掉時照樣跳過 length bytes);768 改用具名常數 `PALETTE_BYTES`(見四)。
+- op 3 的 `idx * 3 + cnt * 3` 可以超過 768(損壞資料才會;原版是寫過 malloc(768) 的尾端):原本切片指派把 palette 撐長
+  (直接測 `03 01 FF 02` + 6 bytes → 長度 771)。照 op 8 / 9 截在 FRAME_BYTES 的做法截在 PALETTE_BYTES、照樣跳過整段。
+  這是加了第 8 欄後置條件才看見的同一類缺陷;登錄列的取樣在 6 個種子 × 3000 次位元翻轉都沒打到它(有無截斷都 OK),所以由 selftest 直接測。
+- 修改後同一組 28145 次:TruncatedScript 21600、正常返回 6545、緩衝區長度改變 **0**(多出的 36 次 TruncatedScript 就是原本靜默變短的那 36 次)。
+  289 幀 HEAD 與修改版逐幀的回傳位置、palette / framebuf sha1 全部相同。
+- selftest (8):10 個 opcode 共 17 段最小 script,完整執行的效果逐 byte 比對(初始緩衝區每格值不同;op 3 / 7 / 8 / 9 至少 2 筆,
+  各有一筆貼在或越過緩衝區尾端;0 筆 / 0 長度剛好放滿的 6 段);每個前綴要 TruncatedScript(op 2 / 6 長度 ≥ 1 要停在資料尾);
+  緩衝區長度一律不准變;17 段串接要等於逐段執行、少 1 byte 要 TruncatedScript;opcode 10 / 0xFF 要 BadOpcode;
+  cmdCount 0 回 0;兩個新例外要是 ValueError 子類。
+
+**三、`verify_truncation_robustness`**:新增 `decode_ani.run_vm` 一列(共 16)。
+- 取樣:全部 ANI 資源裡不超過 600 bytes 的最長幀 script(`ANI_006` 第 10 幀,574 bytes,op 7 / 8 / 9,cmdCount 3),整段在逐一前綴範圍內。
+  宣告 TruncatedScript / BadOpcode(按型別名稱比對,一般 ValueError 仍算發現);第 7 欄前提:完整取樣要剛好執行完整段 script。
+- **第 8 欄後置條件(新)**:配對控制發現「只拿掉 op 9 的資料守衛」這張表判 **OK** —— 截短的貼圖只讓 framebuf 變短、不丟例外,
+  而這張表只看例外。新增可選第 8 欄 `post(args, 回傳值)`,不成立丟 `PostconditionFailed`,與非預期例外同樣計數;
+  `run_vm` 列宣告「palette 768 / framebuf 64000 長度不變」。selftest (3e):會縮短緩衝區的合成函式無後置條件 → OK、有 → CRASH、守衛版 → OK。
+- 配對控制(不動 repo,變體 exec 進 `sys.modules`,698 次呼叫):修改版 OK;HEAD 版 CRASH(IndexError 314、struct.error 372、
+  ValueError 9、PostconditionFailed 1);拿掉全部守衛 CRASH;只拿掉 opcode 讀取守衛 CRASH(IndexError 3);只拿掉 op 9 資料守衛
+  CRASH(PostconditionFailed 1,第 8 欄之前是 OK);cmdCount 少 1:有前提 DEGENERATE、無前提 OK。
+- `docs/data/equivalent_mutants.json`:新增 1 筆(`_ani_vm_sample` 沒有 ANI 資料時的預設 cmdCount 0 → 1:那時該列判 SKIP,
+  有資料時第一段 script 就覆寫它);`--revalidate-registry --tool verify_truncation_robustness.py` OK 25 / FAIL 0,24 筆上下文雜湊更新。
+
+**四、突變**。窮舉四輪:
+1. decode_ani 87 / 94。6 個是「0 筆 / 0 長度剛好放滿」沒有案例(op 3 / 7 / 8 / 9 筆數守衛、op 3 / 9 每筆守衛多要 1 byte 都看不出來);
+   1 個是 op 1 讀 769 bytes —— 串接比對兩邊用同一個 run_vm,一起錯、彼此相等。補 6 段 script 與串接後的長度檢查。
+2. decode_ani 93 / 94。剩 `palette[0:768]` 的 768 → 769:切片上界超過長度會被夾住,是等價突變;但 decode_ani 沒有 NORMAL_RUN 探針,
+   登錄了也只會是 UNVERIFIABLE。改成同檔 `FRAME_BYTES` 的寫法 `PALETTE_BYTES = 768`,等價點消失。
+3. decode_ani 88 / 88;verify_truncation_robustness 23 / 48 + 已登錄等價 25。
+4. 加上 op 3 截斷後重跑:decode_ani 88 / 88、verify_truncation_robustness 23 / 48 + 已登錄等價 25,窮舉結論歸零。
+手動突變 20 / 20(幀數改回無號、負幀數取絕對值、`_need` 改 `>=` / 永不丟、各 opcode 守衛拿掉或少 1、op 9 守衛改用 `end - off`、
+op 3 不截在 palette 尾端 / 越界時只跳過寫入的部分、BadOpcode 改回 ValueError、TruncatedScript 不繼承 ValueError、截短一律安靜返回、
+op 7 越界判斷 `<` 改 `<=`、`PALETTE_BYTES` 改 769),都是 SELFTEST FAILED、沒有 Traceback。
+
+**五、`sweep_literals ev_s141`**(最終程式碼,16:15–17:39,單一產生器只用 1 個 worker):226 個常數,KILLED 76、CRASH 50、INERT 50、
+**ESCAPED 50**,未修(見仍留)。分三類:輸出用的四捨五入位數(`round(x, 4)` 13 個);只記錄、沒有斷言的診斷值(遊戲區原點 ±1 只改
+`uneven_2x2` 與撕裂方向計數、黑幕時間、`scroll_dy.first` / `rows_per_s`、`black_gap_t`、控制組 `best()` 的搜尋目標與 tie-break、
+literal 對照的 `m = 2`、`bands` 的區段字串);門檻常數放寬(`CTRL_MAX` 0.99 → 1.99、`MIN_PX` 1000 → 1001)。
+第一次啟動後中途停掉(要先修 decode_ani 的 op 3,sweep 會讀它),這是第二次、完整跑完的結果。
+
+**六、doc39**:§2 幀數改 int16 並補「播放器怎麼讀這個標頭」(0xAD fread、不比對橫幅、必要不充分、有號幀數 —— 續一百四十四只寫進 doc98);
+§3 補播放器逐幀讀取與 VM 不檢查範圍 / 長度;§10.5 末尾補本版的轉場呼叫與實拍結果(見七)。
+
+**七、金鎖之後的 DOSBox-X 實拍(`ev_s145.py` → `evidence/afterlock_live_title_transition_s145_20261021.json`)**。
+- 拍攝:使用者核准一次。harness `s145t`(`~/fd2-run-harness-s145t/FD2.EXE` md5 33464c81…),t0 = `STATUS=running`,
+  t0 + 43.5 秒起 `import -window root` 連拍 22 秒共 444 張,約 0.045 秒一張,不送按鍵;拍完 teardown(workdir 留著)。
+  時段事先依 doc39 §10.5 觸發表與續一百四十一的實拍算好。腳本存檔在 `evidence/generators/drivers_s145/`。
+  拍攝時 Windows 端有 `sweep_literals ev_s141` 在跑;同段捲動 23.7 列 / 秒,與續一百四十一無負載的 23.6 相同。
+- 判準:絕對判準同 ev_s141(6-bit 調色盤 `(v << 2) | (v >> 4)` 逐像素相等)。淡入淡出時調色盤在掃描途中被改寫,一張實拍會分成好幾段,
+  改用「每一列裡同一個索引只顯示一個顏色」、相容的相鄰列併成段(最多 40 段);單色畫面(全紅、全白、全黑)對任何索引圖都成立,
+  不拿來判讀,另以顏色本身判定。對照:同一張配其他候選索引圖,逐列一致最多 177 / 200 列,沒有一張全部一致。
+  一開始用「上下兩段」只解釋得了 8 張;純紅畫面曾被「索引一致」誤判成浮空城淡入(退化樣本),都已在產生器裡排除。
+- 結果(t 為相對 t0 秒數;24 段的順序全部斷言):
+  1. 金鎖(ANI #0)播到第 94 幀(共 96,44.48–49.27);**wrapper `0x1f81e` 在 `play_afm` 回來、`0x1f87f add esp,0xc` 之後沒有 ret,
+     直接落進 `0x1f882` 淡出** —— 實拍末幀淡出 10 張。捲動在 dy 25(觸發列)淡入恢復。
+  2. dy 22–13 用 #0x66(表值 22 之後 11 步),其餘 #0x65,與 ev_s141 同一判準。
+  3. esi == 10:`0x1f73f` 的第一個 call 是 `0x1f74a call 0x1f882`(**doc23 §2.4⑥ 步驟表漏了**)—— 實拍 dy 10 先淡出 11 張才黑;
+     浮空城 #75(調色盤 #76)淡入 11 張、整張相等 6 張、淡出 10 張、黑、dy 10 淡入復原。本版 blit 是 `0x4e98d`(doc23 寫 `0x4e63d`)。
+  4. dy 10 → 0,dy 0 停留 **1.13 秒**(EXE `0x1fc4c push 0x3e8`;dy 1 只一張)。比 1000 + 30 ms 多約 0.1 秒,INFERRED:轉場前幾步調色盤變化小到
+     整張仍等於 #0x65。
+  5. **紅閃光是漸變,不是硬切**:`0x1fc66` esi = 0x28 → 0、每步 `0x1fc7b call 0x2df01(0, 0xff, esi, 0x3f, 0, 0)` + delay 8 ms;
+     實拍 12 張、0.57 秒,R 平均只升、G / B 只降,之後整張 #ff0000 三張(= (0x3f << 2) | (0x3f >> 4))、黑、ANI #1(logo,第 10–47 幀)、
+     logo 末幀變亮、整張白、從白淡到標題,選單出現後到連拍結束不再變。doc23 §2.4⑤ 寫「一幀之內從有內容變全紅」不成立。
+  6. 標題 = FDOTHER #7 sub0 + 調色盤 #8,選單方框(rows 164–189、cols 129–189,747 px)以外逐像素相等。紅閃光開始到標題靜止 3.0 秒
+     (doc23 §2.4⑤ 寫約 1.4 秒;那一輪是 docker dosbox 0.74 的較粗擷取)。
+  7. 2 張解釋不了的單張過渡幀(50.75:閃光換回與捲動同時;55.53:紅轉黑的途中),不成段。
+- 位址差異(本版 EXE):doc39 §10.5 的「第一段擦除轉場 `0x286bd`」在本版落在函式中間、沒有呼叫端,實際呼叫的是 `0x2df01`。
+- 產生器:常數全部讀原版 EXE 位元組(觸發 esi、wrapper 落進淡出、浮空城圖 / 調色盤、每步 delay、停留、轉場步數 / delay / 目標色、
+  logo ANI、標題圖 / 調色盤、閃光表);輸入 459 筆(`build_manifest.py ev_s145`);assert_census 58 / 58(`--update --executed ev_s145`);
+  `mut_s145.py` 20 個變異:未變異對照與已提交檔案相同,20 / 20 以 AssertionError 殺死(第一次背景執行因暫停被中斷、exit 4,沒有結果,重跑)。
+- doc23 §2.4⑤ / ⑥、doc39 §10.5 加了續一百四十五的更正 / 補充(只增不改既有行)。
+- 原始紀錄本機備份 `fd2_re_evidence_raw_backup/evidence_inputs_all_20261021d.tar.xz`(清單上全部 3178 個非遊戲檔,解開後逐檔 sha256 相符)。
+
+**新發現(只記錄、未修改)**:doc39 §4.1、doc91、`decode_ani.py` 模組說明寫的 VM 派發器 `0x36c9e`、初始化 `0x36c7d` 與本版 EXE 不符 ——
+本版 `0x02048a` 呼叫的初始化是 `0x036fd3`(寫 `[0x52760]` / `[0x52762]` / `[0x52766]`),`0x020533` 呼叫的派發器是 `0x036ff4`,兩者都差 0x356;
+本版的 `0x36c9e` 是別的函式的尾端。`verify_address_claim_coverage --stale-edition` 沒有列出這兩個(未處理 0),也沒列出 `0x286bd` / `0x4e63d`。
+`0x020421`、`0x5276a` 在本版仍正確。
+
+仍留(只記錄、未修改):
+- `ev_s141` 的 sweep ESCAPED 50(見五);`ev_s145` 的 sweep 沒跑(NOT TESTED)。使用者原選「這輪全部做到 0」,之後要求暫停並先提交。
+- 上面的位址差異(doc39 §4.1 / §10.5、doc91、doc23 §2.4⑥、decode_ani 模組說明),以及 `--stale-edition` 為什麼沒抓到。
+- logo 末幀變白、白淡到標題對應的程式碼沒有逐條讀;0x2df01 的內插公式只驗了 R / G / B 平均的單調性。
+- 標題選單文字(FDOTHER #7 sub1–6)沒有逐像素比對;BGM / 音效不在範圍內。
