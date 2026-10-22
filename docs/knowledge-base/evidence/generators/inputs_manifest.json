@@ -10738,6 +10738,10 @@
     "afterlock_live_title_transition_s145_20261021.json"
    ],
    "inputs": {
+    ".wsl_build/s145_afterlock/FD2.SAV": [
+     22987,
+     "bfb39bac575b5c30a1613f8028c15fb1974afc7a6ac3d2fd6b912b914142d59e"
+    ],
     ".wsl_build/s145_afterlock/meta.json": [
      1078,
      "0bb45539923c0c1e7b4d0f333e7056b5efac2d64869a0e9216f1deda402da199"

@@ -8,7 +8,7 @@ from _mutrun import run_mutants
 
 MUTANTS = [
     # 解碼與取樣
-    ("調色盤 6 → 8 bit 少了低兩位", "a = (a << 2) | (a >> 4)", "a = a << 2"),
+    ("調色盤 6 → 8 bit 少了低兩位", "a = (a6 << 2) | (a6 >> 4)", "a = a6 << 2"),
     ("遊戲區左緣錯 2 px(= 1 個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 194, 201 "),
     ("預期不是原版 EXE", 'MD5 = "33464c81e6a364fd0660141139aa8e6e"', 'MD5 = "b97caf2239a27a896069d03549d96e1e"'),
     # 判準本身
@@ -45,6 +45,26 @@ MUTANTS = [
     ("淡入淡出候選沒有 dy", 'CANDS.update({f"dy{d}": BUF[d:d + 200] for d in range(MAX_DY + 1)})', "CANDS.update({})"),
     ("命中表多切掉一個值", "FLASH_HITS = TABLE[:-1] ", "FLASH_HITS = TABLE[:-2] "),
     ("連拍時間不必遞增 → 預期遞減", "assert all(a < b for a, b in zip(T, T[1:]))", "assert all(a > b for a, b in zip(T, T[1:]))"),
+    # 續一百四十八:0x2df01 逐索引重算、logo 末幀 → 白 → 標題、選單文字
+    ("0x2df01 改成向下取整", "q = n // div if floor else np.sign(n) * (np.abs(n) // div)", "q = n // div"),
+    ("0x2df01 除數多 1", 'FADE_DIV = struct.unpack("<I", code(0x2df18, 4))[0] ', 'FADE_DIV = struct.unpack("<I", code(0x2df18, 4))[0] + 1 '),
+    ("紅閃光的上一步方向反了", "RED_PREV = {t: t + 1 for t in range(TRANS_START)}",
+     "RED_PREV = {t: t - 1 for t in range(1, TRANS_START + 1)}"),
+    ("白 → 標題第一步沒有接在全白之後", "TITLE_PREV = {t: t - 1 for t in range(W_END + 1)}", "TITLE_PREV = {t: t - 1 for t in range(1, W_END + 1)}"),
+    ("寫到一半的 k 下界少 1", "kmin = int(np.flatnonzero(bad_old).max()) + 1", "kmin = int(np.flatnonzero(bad_old).max())"),
+    ("寫到一半的新舊狀態對調", "split_k(idx[y], host[y], states[k], states[prev[k]])", "split_k(idx[y], host[y], states[prev[k]], states[k])"),
+    ("白 → 標題的目標 R / B 對調", "W_B6, W_G6, W_R6 = code(0x1fd56, 6)[1::2]", "W_R6, W_G6, W_B6 = code(0x1fd56, 6)[1::2]"),
+    ("0x11df2 加的值不夠飽和", "WHITE_ADD, SAT6 = code(0x1fd2c, 2)[1], code(0x11e47, 1)[0]",
+     "WHITE_ADD, SAT6 = code(0x1fd2c, 2)[1] - 0x30, code(0x11e47, 1)[0]"),
+    ("logo 那張的新狀態不是全白", '{"ani1_last": ANI1_LAST, "white": TITLE_ST[-1]}', '{"ani1_last": ANI1_LAST, "white": TITLE_ST[0]}'),
+    ("floor 對照其實沒改除法", "red_states(True), RED_PREV", "red_states(False), RED_PREV"),
+    ("紅閃光步數預期遞增", 'assert all(min(a["single_steps"]) >= max(b["single_steps"])', 'assert all(min(a["single_steps"]) <= max(b["single_steps"])'),
+    ("選單選中 / 未選 sub 對調", '"unsel": struct.unpack("<I", _b[1:5])[0], "sel": struct.unpack("<I", _b[13:17])[0]',
+     '"unsel": struct.unpack("<I", _b[13:17])[0], "sel": struct.unpack("<I", _b[1:5])[0]'),
+    ("選單位置差一列", 'divmod(struct.unpack("<I", _b[28:32])[0] - 0xA0000, 320)', 'divmod(struct.unpack("<I", _b[28:32])[0] - 0xA0000 + 320, 320)'),
+    ("選單項數條件改成大於等於", 'if it["drawn_if_n_gt"] is None or n > it["drawn_if_n_gt"]]', 'if it["drawn_if_n_gt"] is None or n >= it["drawn_if_n_gt"]]'),
+    ("FD2.SAV 解密少了 rol 的回捲", "dx = ((dx << KEY_ROL) | (dx >> (16 - KEY_ROL))) & 0xFFFF", "dx = (dx << KEY_ROL) & 0xFFFF"),
+    ("第 3 項的條件反了", "MENU_N = N_SAV if _dec[SAV_N3_AT] == 0xFF else N_SAV3", "MENU_N = N_SAV3 if _dec[SAV_N3_AT] == 0xFF else N_SAV"),
 ]
 
 if __name__ == "__main__":

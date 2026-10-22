@@ -446,6 +446,12 @@
    "verdict": "other",
    "note": "doc98 續六十九:enemy_phase_dispatch(0x1d8ba)第 2 趟的事件分派指令 call [eax*4+0x51b91],DOSBox-X 斷點位址,不是入口主張(工具把 0x1d94d 當成所在函式起點)",
    "date": "2026-10-01"
+  },
+  {
+   "address": "0x24837",
+   "verdict": "other",
+   "note": "修補位元組的位址:函式 0x24754 內 0x24836 push imm8 的立即值(a6e341a8 版 0x0d → 0x12,doc11 版本核對的續一百四十八更正),不是入口主張",
+   "date": "2026-10-22"
   }
  ]
 }

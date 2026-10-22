@@ -16,7 +16,8 @@
         {"call_site": "0x01d43c", "in_function": "0x1cff0", "note": "id = bVar1 = local_20[DAT_00053c57],round11 已找到此 caller 位址,本輪確認其呼叫目標是 0x2ff01 而非誤記的 0x02a6bd"},
         {"call_site": "0x015400", "in_function": "0x015311", "note": "同上,round11 已找到此 caller 位址"}
       ],
-      "verification_method": "Ghidra headless -readOnly, project FD2Analysis3, ReferenceManager.getReferencesTo + DecompInterface.decompileFunction; 5 個既有高信心位址(play_sfx_a=0x25a96/play_sfx_b=0x25b45/[0x53eec]載入=0x25c63/通用容器載入器=0x111ba)decompile 結果與 doc36 第9/10輪逐項語意吻合,確認 FD2Analysis3 載入的 802705-byte/MD5 a6e341a8 build 與現行 509158-byte/MD5 33464c81 基準在 0x10000-0x40000 這段程式碼區位址與機器碼位元組完全相同"
+      "verification_method": "Ghidra headless -readOnly, project FD2Analysis3, ReferenceManager.getReferencesTo + DecompInterface.decompileFunction; 5 個既有高信心位址(play_sfx_a=0x25a96/play_sfx_b=0x25b45/[0x53eec]載入=0x25c63/通用容器載入器=0x111ba)decompile 結果與 doc36 第9/10輪逐項語意吻合,確認 FD2Analysis3 載入的 802705-byte/MD5 a6e341a8 build 與現行 509158-byte/MD5 33464c81 基準在 0x10000-0x40000 這段程式碼區位址與機器碼位元組完全相同",
+      "verification_method_correction_s148": "續一百四十八更正:上句「機器碼位元組完全相同」不對。a6e341a8(FD2_APK/FD2.EXE)與參考版 33464c81 只差兩個位元組,都在這段程式碼區內:線性 0x1e548(檔案位移 0x4455c,apply_stat_growth 的 je → jmp)與 0x24837(檔案位移 0x4a84b,第 22 章戰後處理器 push 0xd → push 0x12)。兩處都不在本檔 SFX 鏈的函式裡(0x25a96 / 0x25b45 / 0x25c63 / 0x111ba / 0x2ff01 等),以 a6e341a8 decompile 得到的 SFX 結論不受影響。"
     },
     "spell_branch": {"addr": "0x2cf30", "function": "FUN_0002cf30", "condition": "action_id==0x18 或 0x1c<=action_id<=0x1f"},
     "high_action_branch": {"addr": "0x2d80d", "function": "FUN_0002d80d", "condition": "action_id>=0x20", "note": "同樣的 id+0x21 → 兩段式 FDOTHER.DAT 載入模式,最終存進同一個 DAT_00054153;但這次的第二個 index 來源是這個函式自己的堆疊暫存區,不是 round12 找到的 0x526bc 全域表,來源未追出(round11 對舊位址0x027fc9的『非穩定宣告陣列』評語,套用在正確位址0x2d80d上依然成立)"},

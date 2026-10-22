@@ -21,6 +21,14 @@ title_seq 的觸發與參數直接讀原版 EXE 位元組(位址綁 md5):
     淡入淡出的候選圖改成全部 dy(原本只給時間上最近的兩個絕對捲動幀),對照拿到同樣的搜尋自由度;
     首末值改 min / max 並斷言時間嚴格遞增;捲動速率的區間改成「dy 0 停留之前」;轉場只輸出 EXE 的 esi 起點(步數只進斷言);
     目標色 G / B 也讀 EXE;rows_consistent / ani_match 開頭自我測試;純紅那張的 R / G / B 平均斷言 = 目標色。
+
+續一百四十八(續一百四十五 not_covered 的兩項,既有實拍重算):
+    0x2df01 逐索引重算:lo ≤ 索引 < hi 每個分量 = tgt + (src − tgt) × t / 0x28(idiv,向 0 截斷),src 是 [0x53a65] 的調色盤。
+    紅閃光與白 → 標題兩段的每一條主機列,不是整列等於某一步,就是 DAC 由索引 0 往上寫到一半(索引 < k 是這一步、≥ k 是上一步);
+    對照:同樣的搜尋改用向下取整。logo 末幀「變亮」那張是 0x11df2(0, 0xff, 0x40)(每個分量 + 0x40、超過 0x3f 截成 0x3f = 全白)
+    在掃描途中生效:上半是 ANI #1 末幀、下半已經全白;白幀最後一條主機列已是 0x2df01 esi == 0 寫到一半。
+    選單:0x1ff79(圖, 選中項, 項數) 依 EXE 的位置 / sub 號疊在標題上,項數由 FD2.SAV(解密後檢查碼)決定;整張逐像素相等,
+    其他 (選中項, 項數) 組合都不相等。FD2.SAV 是 harness 從 ~/fd2-run 複製的那份(續一百四十八歸檔到連拍目錄)。
 """
 from __future__ import annotations
 
@@ -38,6 +46,7 @@ from _evpaths import GAME, ROOT, TOOLS, out_path, rel, require_inputs  # noqa: E
 require_inputs(__file__)
 sys.path.insert(0, str(TOOLS))
 import decode_ani  # noqa: E402
+import decode_sprite  # noqa: E402
 import unpack_dat  # noqa: E402
 from disasm_le import object_bytes  # noqa: E402
 from le_xref import parse_le  # noqa: E402
@@ -83,16 +92,47 @@ def image(blob: bytes) -> np.ndarray:
     return decode(blob[4:], w, h)
 
 
+def pal_arr(pal6: bytes) -> np.ndarray:
+    """768 byte 的 6-bit 調色盤 → 256 × 3 的 6-bit 值。"""
+    assert len(pal6) == 768, len(pal6)
+    return np.frombuffer(bytes(pal6), dtype=np.uint8).reshape(256, 3).astype(np.int64)
+
+
+def rgb_arr(a6: np.ndarray) -> np.ndarray:
+    """256 × 3 的 6-bit 值 → 每個索引的 24-bit 顏色(DOSBox-X 的擴展)。"""
+    a = (a6 << 2) | (a6 >> 4)
+    return (a[:, 0] << 16) | (a[:, 1] << 8) | a[:, 2]
+
+
 def rgb(pal6: bytes) -> np.ndarray:
     """768 byte 的 6-bit 調色盤 → 每個索引的 24-bit 顏色(DOSBox-X 的擴展)。"""
-    assert len(pal6) == 768, len(pal6)
-    a = np.frombuffer(bytes(pal6), dtype=np.uint8).reshape(256, 3).astype(np.int64)
-    a = (a << 2) | (a >> 4)
-    return (a[:, 0] << 16) | (a[:, 1] << 8) | a[:, 2]
+    return rgb_arr(pal_arr(pal6))
 
 
 def expand(v6: int) -> int:
     return (v6 << 2) | (v6 >> 4)
+
+
+def fade6(src: np.ndarray, tgt: tuple[int, int, int], t: int, div: int, hi: int, floor: bool = False) -> np.ndarray:
+    """0x2df01 的一步:索引 < hi 每個分量 = tgt + (src − tgt) × t / div(idiv,向 0 截斷),其餘不動。
+
+    floor=True 改成向下取整,只給對照用。
+    """
+    tg = np.array(tgt, dtype=np.int64)
+    n = (src - tg) * t
+    q = n // div if floor else np.sign(n) * (np.abs(n) // div)
+    out = src.copy()
+    out[:hi] = (q + tg)[:hi]
+    return out
+
+
+def split_k(idx: np.ndarray, host: np.ndarray, new: np.ndarray, old: np.ndarray) -> tuple[int, int] | None:
+    """一條主機列 = DAC 由索引 0 往上寫到一半(索引 < k 已是 new、≥ k 仍是 old)時 k 的可行範圍;不成立回 None。"""
+    bad_new = np.bincount(idx[new[idx] != host], minlength=256) > 0
+    bad_old = np.bincount(idx[old[idx] != host], minlength=256) > 0
+    kmin = int(np.flatnonzero(bad_old).max()) + 1 if bad_old.any() else 0
+    kmax = int(np.flatnonzero(bad_new).min()) if bad_new.any() else 256
+    return (kmin, kmax) if kmin <= kmax else None
 
 
 def host_rows(path) -> np.ndarray:
@@ -176,6 +216,20 @@ def _selftest() -> None:
     assert ani_match(F, np.array([[2, 2]])) == {"exact": [1]}
     assert ani_match(F, np.array([[2, 3]])) == {"pair": [1, 2]}
     assert ani_match(F, np.array([[1, 3]])) is None
+    # 0x2df01 一步:(0 − 63) × 1 / 40 向 0 截斷 = −1 → 62;向下取整 = −2 → 61;索引 ≥ hi 不動
+    src = np.zeros((256, 3), np.int64)
+    assert fade6(src, (63, 0, 0), 1, 40, 255)[0].tolist() == [62, 0, 0]
+    assert fade6(src, (63, 0, 0), 1, 40, 255, floor=True)[0].tolist() == [61, 0, 0]
+    assert fade6(src, (63, 0, 0), 1, 40, 255)[255].tolist() == [0, 0, 0]
+    # DAC 寫到一半:索引 0、1、2 的新 / 舊顏色
+    new, old = np.full(256, -1, np.int64), np.full(256, -2, np.int64)
+    new[:3], old[:3] = (10, 11, 12), (20, 21, 22)
+    ix = np.array([0, 1, 2], np.uint8)
+    assert split_k(ix, np.array([10, 21, 22]), new, old) == (1, 1)
+    assert split_k(ix, np.array([10, 11, 22]), new, old) == (2, 2)
+    assert split_k(ix, np.array([20, 21, 22]), new, old) == (0, 0)
+    assert split_k(ix, np.array([10, 11, 12]), new, old) == (3, 256)          # 用到的索引都寫完了,k 的上界不受限
+    assert split_k(ix, np.array([10, 21, 12]), new, old) is None
 
 
 _selftest()
@@ -232,6 +286,58 @@ PAL_FLASH, PAL_BASE = code(0x1fbd9, 2)[1], code(0x1fc0f, 2)[1]
 FLASH_STEPS = code(0x1fc08, 5)[4]
 assert TABLE[-1] == 1000 and T_ANI not in TABLE and T_CASTLE not in TABLE
 FLASH_HITS = TABLE[:-1]                                              # 1000 是表尾標記,不是命中值
+# 0x2df01(lo, hi, t, R, G, B):imul 之後 sar edx, 31 + idiv(有號、向 0 截斷),除數 mov ebp, 0x28;cmp ebx, hi / jl(hi 不含)
+assert code(0x2df17, 1) == b"\xbd" and code(0x2df48, 3) == b"\x0f\xaf\xd7" and code(0x2df4d, 5) == b"\xc1\xfa\x1f\xf7\xfd"
+FADE_DIV = struct.unpack("<I", code(0x2df18, 4))[0]                    # = 0x28
+assert code(0x2dfb9, 4) == b"\x3b\x5c\x24\x18" and code(0x2dfbd, 2) == b"\x0f\x8c"
+RED_HI = struct.unpack("<I", code(0x1fc75, 4))[0]                      # 紅閃光 hi = 0xff(索引 255 不動)
+# 兩段轉場的 src 都是 [0x53a65]:捲動前 0x1fc0f 載入 #PAL_BASE,標題前 0x1fccf 載入 #TITLE_PAL(同一個指標)
+PALPTR = code(0x1fc13, 4)
+assert code(0x1fc11, 2) == b"\xff\x35" and code(0x1fc24, 5) == b"\xa3" + PALPTR
+assert code(0x1fcd1, 6) == b"\xff\x35" + PALPTR and code(0x1fce4, 5) == b"\xa3" + PALPTR
+# logo 之後:0x11df2(0, 0xff, 0x40) —— 每個分量 + 0x40,超過 0x3f 就 = 0x3f;cmp ebx, hi / jg(hi 含在內)
+assert code(0x1fd2c, 1) == b"\x6a" and code(0x1fd2e, 5) == b"\x68\xff\x00\x00\x00" and code(0x1fd33, 2) == b"\x6a\x00"
+assert call_target(0x1fd35) == 0x11df2 and code(0x11e1c, 4) == b"\x39\xfb\x0f\x8f"
+assert code(0x11e43, 5) == b"\x01\xf0\x83\xf8\x3f" and code(0x11e48, 3) == b"\x7e\x05\xb8" and code(0x11e4b, 4) == code(0x11e47, 1) + bytes(3)
+WHITE_ADD, SAT6 = code(0x1fd2c, 2)[1], code(0x11e47, 1)[0]              # 0x40;0x3f
+# 之後 blit 標題 sub0(0x1fd4a),esi 0 → 0x28(jle)每步 0x2df01(0, 0xff, esi, 0x38, 0x3c, 0x3f) + delay 8 ms:從淡藍白淡到標題調色盤
+assert call_target(0x1fd4a) == 0x16886 and code(0x1fd52, 4) == b"\x31\xf6\xeb\x21"
+assert code(0x1fd56, 6)[0::2] == b"\x6a\x6a\x6a" and code(0x1fd5c, 2) == b"\x56\x68" and code(0x1fd62, 2) == b"\x6a\x00"
+W_B6, W_G6, W_R6 = code(0x1fd56, 6)[1::2]                               # 先 push B
+W_HI = struct.unpack("<I", code(0x1fd5e, 4))[0]
+assert call_target(0x1fd64) == 0x2df01 and code(0x1fd6c, 1) == b"\x6a" and code(0x1fd76, 3) == b"\x46\x83\xfe" and code(0x1fd7a, 1) == b"\x7e"
+W_END, W_MS = code(0x1fd79, 1)[0], code(0x1fd6c, 2)[1]                 # esi 0 → 0x28;8 ms
+# 選單:0x1fe1b push n;push ebp(選中項);push 圖;call 0x1ff79。第 k 項:mov eax, 未選 sub;cmp [esp + 8], k;jne;mov eax, 選中 sub;
+# push eax;push 圖;push 0x140;push 0xa0000 + y × 320 + x。第 1、2 項先 cmp [esp + 0xc], k;jle(項數 > k 才畫)
+assert code(0x1fe1b, 9) == b"\xff\x74\x24\x50\x55\xff\x74\x24\x50" and call_target(0x1fe24) == 0x1ff79
+MENU = []
+for _m, _gate in ((0x1ff83, None), (0x1ffb2, 0x1ffab), (0x1ffe1, 0x1ffda)):
+    _b = code(_m, 32)
+    assert _b[0] == 0xB8 and _b[5:9] == b"\x83\x7c\x24\x08" and _b[10:13] == b"\x75\x05\xb8", hex(_m)
+    assert _b[17:28] == b"\x50\xff\x74\x24\x08\x68\x40\x01\x00\x00\x68", hex(_m)
+    _need = None
+    if _gate is not None:
+        _g = code(_gate, 6)
+        assert _g[:4] == b"\x83\x7c\x24\x0c" and _g[5] == 0x7E, hex(_gate)
+        _need = _g[4]
+    _y, _x = divmod(struct.unpack("<I", _b[28:32])[0] - 0xA0000, 320)
+    MENU.append({"k": _b[9], "unsel": struct.unpack("<I", _b[1:5])[0], "sel": struct.unpack("<I", _b[13:17])[0],
+                 "drawn_if_n_gt": _need, "y": _y, "x": _x})
+# 選中項 = ebp(0x1f8b5 xor ebp, ebp);項數初值 1(0x1f8a5),FD2.SAV 讀得到且解密後檢查碼相符 → 2,
+# 第 0x30c3 + 2 個位元組不是 0xff → 3
+assert code(0x1f8b5, 2) == b"\x31\xed" and code(0x1f8a5, 4) == b"\xc7\x44\x24\x50"
+SEL0, N0 = 0, struct.unpack("<I", code(0x1f8a9, 4))[0]
+assert code(0x1fdf4, 4) == code(0x1fe07, 4) == code(0x1f8a5, 4)
+N_SAV, N_SAV3 = struct.unpack("<I", code(0x1fdf8, 4))[0], struct.unpack("<I", code(0x1fe0b, 4))[0]
+assert code(0x1fd9d, 1) == b"\x68" and code(0x1fdd8, 2) == b"\x8d\xbe" and code(0x1fdec, 2) == b"\x3b\x86"
+assert code(0x1fdfc, 3) == b"\x0f\xb6\x47" and code(0x1fe00, 5) == b"\x3d\xff\x00\x00\x00" and code(0x1fe05, 1) == b"\x74"
+SAV_LEN, SAV_SUM_AT = struct.unpack("<I", code(0x1fd9e, 4))[0], struct.unpack("<I", code(0x1fdee, 4))[0]
+SAV_N3_AT = struct.unpack("<I", code(0x1fdda, 4))[0] + code(0x1fdff, 1)[0]
+assert call_target(0x1fdd0) == 0x4df28 and call_target(0x1fde4) == 0x4df09
+_dk = code(0x4df35, 16)                                                # mov dx, 0xa5;lodsb;add dx, 0x9014;rol dx, 3;xor al, dl
+assert _dk[:2] == b"\x66\xba" and _dk[4:8] == b"\xac\x66\x81\xc2" and _dk[10:13] == b"\x66\xc1\xc2" and _dk[14:16] == b"\x32\xc2"
+KEY0, KEY_ADD, KEY_ROL = struct.unpack("<H", _dk[2:4])[0], struct.unpack("<H", _dk[8:10])[0], _dk[13]
+assert code(0x4df16, 3) == b"\x83\xe9\x04" and SAV_SUM_AT == SAV_LEN - code(0x4df18, 1)[0]   # 加總前 len − 4 個位元組
 
 
 def in_flash(dy: int) -> bool:
@@ -257,6 +363,38 @@ A0, I0 = ani_frames(f"ANI_{ANI_INDEX:03d}.bin")
 A1, I1 = ani_frames(f"ANI_{LOGO_ANI:03d}.bin")
 RED = (expand(RED6) << 16) | (expand(G6) << 8) | expand(B6)
 WHITE = 0xFFFFFF
+P6_BASE = pal_arr((RAW / f"FDOTHER_{PAL_BASE:03d}.bin").read_bytes())
+P6_TITLE = pal_arr((RAW / f"FDOTHER_{TITLE_PAL:03d}.bin").read_bytes())
+_dir = unpack_dat.parse_directory(_t)
+MENU_SUB = {}
+for _s in sorted({v for it in MENU for v in (it["unsel"], it["sel"])}):
+    _o, _n = _dir[_s]
+    _w, _h = struct.unpack_from("<HH", _t, _o)
+    _a = decode_sprite.decode_rle_sprite(_t[_o + 4:_o + _n], _w, _h, trans=0)
+    assert _a == decode_sprite.decode_rle_sprite(_t[_o + 4:_o + _n], _w, _h, trans=1), _s   # 沒有透明像素:整塊蓋上
+    MENU_SUB[_s] = np.frombuffer(_a, dtype=np.uint8).reshape(_h, _w)
+    assert (MENU_SUB[_s] == decode(_t[_o + 4:_o + _n], _w, _h)).all(), _s
+
+
+def sav_decrypt(b: bytes) -> bytes:
+    """0x4df28:dx 從 KEY0 起,每個位元組 dx += KEY_ADD、rol dx, KEY_ROL,再 xor dx 的低位元組。"""
+    dx, out = KEY0, bytearray()
+    for c in b:
+        dx = (dx + KEY_ADD) & 0xFFFF
+        dx = ((dx << KEY_ROL) | (dx >> (16 - KEY_ROL))) & 0xFFFF
+        out.append(c ^ (dx & 0xFF))
+    return bytes(out)
+
+
+SAV = SHOTS.parent / "FD2.SAV"
+_sav = SAV.read_bytes()
+assert len(_sav) == SAV_LEN, len(_sav)
+_dec = sav_decrypt(_sav)
+SAV_OK = (sum(_dec[:SAV_SUM_AT]) & 0xFFFFFFFF) == struct.unpack_from("<I", _dec, SAV_SUM_AT)[0]
+assert (sum(_sav[:SAV_SUM_AT]) & 0xFFFFFFFF) != struct.unpack_from("<I", _sav, SAV_SUM_AT)[0]   # 對照:不解密就對不上
+MENU_N = N0
+if SAV_OK:
+    MENU_N = N_SAV if _dec[SAV_N3_AT] == 0xFF else N_SAV3
 
 META = json.loads((SHOTS.parent / "meta.json").read_text(encoding="utf-8"))
 assert META["exe_md5"] == MD5, META["exe_md5"]
@@ -385,8 +523,8 @@ ux = [i for i, r in enumerate(rows) if r["kind"] in ("?", "fade_ambiguous")]
 assert all(b - a > 1 for a, b in zip(ux, ux[1:])) and len(ux) <= 3, unexplained
 
 # 預期的順序(doc39 §10.5 觸發表 + 本版 EXE;位置固定,下面依位置取段)
-# 兩處過渡只有一張、分不出機制,只記狀態:金鎖前 dy 0x19 那一張(每列一致但只剩部分列有內容 —— 清黑途中或淡出),
-# 以及 logo 末幀變亮成白(對應的程式碼未逐條讀)。
+# 兩處過渡只有一張:金鎖前 dy 0x19 那一張(每列一致但只剩部分列有內容 —— 清黑途中或淡出,分不出機制,只記狀態),
+# 以及 logo 末幀「變亮」(續一百四十八:0x11df2 在掃描途中生效,見下面 9)。
 EXPECT = ["scroll", "fade:dy", "black", "ani0", "fade:ani0_last", "black", "fade:dy", "scroll", "fade:dy", "black",
           "fade:castle", "castle", "fade:castle", "black", "fade:dy", "scroll", "fade:dy", "red", "black",
           "ani1", "fade:ani1_last", "white", "fade:title", "title"]
@@ -488,22 +626,135 @@ assert fades and all(r["control_rows"] < 200 for r in fades)
 # 調色盤在掃描途中被改寫:至少有一張淡入淡出幀分成多段(只用整張一致判準會把這些幀全部判成解釋不了)
 assert max(r["bands"] for r in fades) > 1
 
+
+# 9. 續一百四十八:0x2df01 逐索引重算、logo 末幀 → 白 → 標題、選單文字
+def fade_rows(path, idx_img: np.ndarray, states: dict, prev: dict) -> list[tuple[str, list]]:
+    """每條主機列:整列等於某個 DAC 狀態(single),或從 prev[s] 寫到 s 的途中(split,列出可行的 s);都不是記 none。"""
+    host = host_rows(path)
+    idx = np.repeat(idx_img, 2, axis=0)
+    M = {k: (c[idx] == host).all(axis=1) for k, c in states.items()}
+    out = []
+    for y in range(len(host)):
+        single = [k for k in states if M[k][y]]
+        if single:
+            out.append(("single", single))
+            continue
+        sp = [k for k in states if prev.get(k) in states and split_k(idx[y], host[y], states[k], states[prev[k]]) is not None]
+        out.append(("split", sp) if sp else ("none", []))
+    return out
+
+
+def tally(rr: list[tuple[str, list]]) -> dict:
+    return {k: sum(1 for kk, _ in rr if kk == k) for k in ("single", "split", "none")}
+
+
+def red_states(floor: bool) -> dict:
+    return {t: rgb_arr(fade6(P6_BASE, (RED6, G6, B6), t, FADE_DIV, RED_HI, floor)) for t in range(TRANS_START + 1)}
+
+
+def title_states(floor: bool) -> dict:
+    st = {t: rgb_arr(fade6(P6_TITLE, (W_R6, W_G6, W_B6), t, FADE_DIV, W_HI, floor)) for t in range(W_END + 1)}
+    st[-1] = rgb_arr(np.minimum(P6_TITLE + WHITE_ADD, SAT6))            # -1 = 0x11df2 之後的全白
+    return st
+
+
+RED_ST, TITLE_ST = red_states(False), title_states(False)
+assert TRANS_START == FADE_DIV and (RED_ST[TRANS_START] == P_BASE).all()     # 第一步 t = 0x28 = 原色(不變)
+assert (RED_ST[0][:RED_HI] == RED).all() and W_END == FADE_DIV and (TITLE_ST[W_END] == P_TITLE).all()
+assert (TITLE_ST[-1] == WHITE).all()                                    # + 0x40 對每個 6-bit 值都飽和
+RED_PREV = {t: t + 1 for t in range(TRANS_START)}                        # esi 往下數:上一步是 t + 1
+TITLE_PREV = {t: t - 1 for t in range(W_END + 1)}                        # esi 往上數;t = 0 的上一個狀態是全白(-1)
+RED_IDX, TITLE_IDX = BUF[0:200], TITLE
+idx255 = {"red": bool((RED_IDX == 255).any()), "title": bool((TITLE_IDX == 255).any())}
+
+
+def fade_frames(rs: list, idx_img: np.ndarray, states: dict, prev: dict) -> list[dict]:
+    out = []
+    for r in rs:
+        rr = fade_rows(files[rows.index(r)], idx_img, states, prev)
+        steps = sorted({k for kk, ks in rr if kk == "single" for k in ks})
+        out.append({"t": r["t"], **tally(rr), "single_steps": steps})
+    return out
+
+
+red_rows = fade_frames(red_fade, RED_IDX, RED_ST, RED_PREV)
+title_rows = fade_frames(S["white"] + S["title_in"], TITLE_IDX, TITLE_ST, TITLE_PREV)
+for fr in (red_rows, title_rows):
+    assert all(f["none"] == 0 and f["single_steps"] for f in fr), fr
+assert all(min(a["single_steps"]) >= max(b["single_steps"]) for a, b in zip(red_rows, red_rows[1:])), red_rows
+assert all(max(a["single_steps"]) <= min(b["single_steps"]) for a, b in zip(title_rows, title_rows[1:])), title_rows
+assert title_rows[0]["single_steps"] == [-1] and title_rows[0]["split"] >= 1      # 白幀:底下已開始寫 esi == 0
+assert sum(f["split"] for f in red_rows) > 0 and sum(f["split"] for f in title_rows) > 0
+# 對照:同樣的搜尋(單一步 + 寫到一半)改用向下取整
+floor_red = sum(400 - tally(fade_rows(files[rows.index(r)], RED_IDX, red_states(True), RED_PREV))["none"] for r in red_fade)
+floor_title = sum(400 - tally(fade_rows(files[rows.index(r)], TITLE_IDX, title_states(True), TITLE_PREV))["none"]
+                  for r in S["title_in"])                               # 白幀的全白狀態跟除法無關,不算進對照
+assert floor_red < 200 * len(red_fade) and floor_title < 200 * len(S["title_in"]), (floor_red, floor_title)
+
+# logo 末幀「變亮」那張:每條主機列 = ANI #1 末幀,或從末幀寫成全白的途中 / 之後;一旦不是末幀,下面的列也不會回到末幀
+ANI1_LAST = np.full(256, -1, np.int64)
+ANI1_LAST[I1[-1].ravel()] = A1[-1].ravel()
+assert (ANI1_LAST[I1[-1]] == A1[-1]).all()
+assert len(S["ani1_out"]) == 1
+lw = fade_rows(files[rows.index(S["ani1_out"][0])], I1[-1], {"ani1_last": ANI1_LAST, "white": TITLE_ST[-1]}, {"white": "ani1_last"})
+lw_lab = [k if k != "single" else ("either" if len(ks) == 2 else ks[0]) for k, ks in lw]   # either:兩個狀態在這列同色
+assert "none" not in lw_lab and lw_lab[0] == "ani1_last" and lw_lab[-1] in ("split", "white"), lw_lab
+lw_cut = min(y for y, x in enumerate(lw_lab) if x in ("split", "white"))
+assert "ani1_last" not in lw_lab[lw_cut:], lw_lab
+lw_runs = [f"{g[0]}-{g[-1]}:{k}" for k, g in ((k, [y for y, _ in grp]) for k, grp in
+                                             itertools.groupby(enumerate(lw_lab), key=lambda u: u[1]))]
+
+# 選單:依 EXE 的位置 / sub 號疊在標題 sub0 上,整張逐像素相等;其他 (選中項, 項數) 組合都不相等
+
+
+def menu_items(sel: int, n: int) -> list[tuple[dict, np.ndarray]]:
+    """畫出來的項與各自的 sub(第 0 項一定畫;其餘要項數 > drawn_if_n_gt)。"""
+    return [(it, MENU_SUB[it["sel"] if sel == it["k"] else it["unsel"]]) for it in MENU
+            if it["drawn_if_n_gt"] is None or n > it["drawn_if_n_gt"]]
+
+
+def menu_img(sel: int, n: int) -> np.ndarray:
+    img = TITLE.copy()
+    for it, a in menu_items(sel, n):
+        img[it["y"]:it["y"] + a.shape[0], it["x"]:it["x"] + a.shape[1]] = a
+    return img
+
+
+MENU_FULL = P_TITLE[menu_img(SEL0, MENU_N)]
+assert all(bool((COLS[rows.index(r)] == MENU_FULL).all()) for r in title_still)
+menu_ctrl = {f"sel{s}_n{n}": int((P_TITLE[menu_img(s, n)] != COLS[-1]).sum())
+             for s in range(len(MENU)) for n in range(1, len(MENU) + 1) if (s, n) != (SEL0, MENU_N)}
+assert min(menu_ctrl.values()) > 0, menu_ctrl
+_drawn = menu_items(SEL0, MENU_N)
+MENU_BOX = (min(it["y"] for it, _a in _drawn), max(it["y"] + a.shape[0] - 1 for it, a in _drawn),
+            min(it["x"] for it, _a in _drawn), max(it["x"] + a.shape[1] - 1 for it, a in _drawn))
+assert MENU_BOX[0] <= MY0 and MY1 <= MENU_BOX[1] and MENU_BOX[2] <= MX0 and MX1 <= MENU_BOX[3], (MENU_BOX, MY0, MY1, MX0, MX1)
+
 ev = {
     "note": "續一百四十五證據:evidence/afterlock_live_title_transition_s145_20261021.json。",
     "inputs": {"shots": rel(SHOTS), "shots_n": len(files), "meta": META, "exe": rel(EXE), "exe_md5": MD5,
                "scroll_buffer": [rel(RAW / fn) for fn in SCROLL_FRAMES], "ani": [f"ANI_{ANI_INDEX:03d}.bin", f"ANI_{LOGO_ANI:03d}.bin"],
                "castle": [f"FDOTHER_{CASTLE_IMG:03d}.bin", f"FDOTHER_{CASTLE_PAL:03d}.bin"],
-               "title": [f"FDOTHER_{TITLE_IMG:03d}.bin sub0", f"FDOTHER_{TITLE_PAL:03d}.bin"]},
+               "title": [f"FDOTHER_{TITLE_IMG:03d}.bin sub0", f"FDOTHER_{TITLE_PAL:03d}.bin"],
+               "sav": rel(SAV), "sav_md5": hashlib.md5(_sav).hexdigest(),
+               "sav_note": "harness 啟動時從 ~/fd2-run 複製(mtime 在 t0 之前),續一百四十八歸檔到連拍目錄"},
     "exe_constants": {"ani_trigger_esi": T_ANI, "ani_index": ANI_INDEX, "ani_wrapper_falls_into_fade": f"{FADE_FN:#x}",
                       "castle_trigger_esi": T_CASTLE, "castle_img_pal": [CASTLE_IMG, CASTLE_PAL], "castle_fades_out_first": FADE_FIRST,
                       "scroll_step_ms": STEP_MS, "hold_ms": HOLD_MS, "transition_esi_start": TRANS_START, "transition_step_ms": TRANS_MS,
                       "transition_target_rgb6": [RED6, G6, B6], "logo_ani": LOGO_ANI, "title_img_pal": [TITLE_IMG, TITLE_PAL],
-                      "flash_table_0x5204e": TABLE, "flash_steps": FLASH_STEPS, "flash_base_pal": [PAL_FLASH, PAL_BASE]},
+                      "flash_table_0x5204e": TABLE, "flash_steps": FLASH_STEPS, "flash_base_pal": [PAL_FLASH, PAL_BASE],
+                      "fade_0x2df01": {"div": FADE_DIV, "division": "idiv(向 0 截斷)", "hi_exclusive": [RED_HI, W_HI]},
+                      "white_0x11df2_add": WHITE_ADD, "white_saturate": SAT6,
+                      "title_fade": {"target_rgb6": [W_R6, W_G6, W_B6], "esi": [0, W_END], "step_ms": W_MS},
+                      "menu_0x1ff79": MENU, "menu_init": {"sel": SEL0, "n": N0, "n_sav_ok": N_SAV, "n_sav_byte_not_ff": N_SAV3},
+                      "sav": {"len": SAV_LEN, "sum_at": SAV_SUM_AT, "n3_byte_at": SAV_N3_AT, "key": [KEY0, KEY_ADD, KEY_ROL]}},
     "criterion": {"absolute": "實拍顏色 = 6-bit 調色盤 (v<<2)|(v>>4) 逐像素相等",
                   "fade": "每一列同一索引只顯示一個顏色;相容的相鄰列併成段;單色畫面不拿來判讀",
                   "title": f"FDOTHER #{TITLE_IMG} sub0 + #{TITLE_PAL} 逐像素相等(選單方框 rows {MY0}–{MY1}, cols {MX0}–{MX1} 除外,{int(diff.sum())} px)",
                   "torn": "主機列解析度:每條主機列整列等於相鄰兩個 dy 之一,兩個都用得到;runs 只列只有一個 dy 成立的主機列",
-                  "fade_candidates": "浮空城、標題、兩支 ANI 末幀、捲動緩衝每一個 dy;control_rows = 其他候選裡逐列一致的最多列數"},
+                  "fade_candidates": "浮空城、標題、兩支 ANI 末幀、捲動緩衝每一個 dy;control_rows = 其他候選裡逐列一致的最多列數",
+                  "fade_formula": "主機列整列等於 0x2df01 某一步,或 DAC 由索引 0 往上寫到一半(索引 < k 這一步、≥ k 上一步);對照改向下取整",
+                  "menu": "標題 sub0 疊上 0x1ff79 的各項 sub(位置、sub 號讀 EXE;項數由 FD2.SAV 決定),整張逐像素相等"},
     "sample_interval_s": round(DT, ndigits=4),
     "segments": [{"label": s["label"], "t": s["t"], "n": s["n"]} for s in segs],
     "measurements": {
@@ -517,7 +768,13 @@ ev = {
         "red_start_to_title_still_s": round(t_title - t_red0, ndigits=3),
         "fade_shots": len(fades), "fade_bands_max": max(r["bands"] for r in fades),
         "fade_control_rows_max": max(r["control_rows"] for r in fades),
-        "unexplained_t": unexplained},
+        "unexplained_t": unexplained,
+        "red_fade_rows": red_rows, "white_title_fade_rows": title_rows,
+        "fade_formula_floor_control_rows": {"red": floor_red, "red_total": 400 * len(red_fade),
+                                            "title": floor_title, "title_total": 400 * len(S["title_in"])},
+        "index_255_used": idx255,
+        "logo_last_to_white_runs": lw_runs,
+        "menu": {"sav_checksum_ok": SAV_OK, "n": MENU_N, "sel": SEL0, "box": list(MENU_BOX), "control_diff_px": menu_ctrl}},
     "rows": rows,
     "conclusion": [
         f"金鎖播到第 {max(k0)} 幀(共 {len(A0)}),wrapper 0x1f81e 沒有 ret,播完直接落進 0x1f882 淡出;捲動在 dy {T_ANI}(觸發列)淡入恢復",
@@ -526,8 +783,14 @@ ev = {
         f"dy 0 停留 {hold:.2f} 秒(EXE {HOLD_MS} ms;dy 1 只 {one:.2f} 秒),捲動 {rate:.1f} 列 / 秒",
         f"紅閃光是 {len(red_fade)} 張、{red_span:.2f} 秒的漸變(0x2df01 esi 0x{TRANS_START:x} → 0 每步 {TRANS_MS} ms 往 (0x{RED6:x},0x{G6:x},0x{B6:x})),不是一幀硬切;之後整張 #{RED:06x}、黑、ANI #{LOGO_ANI}、整張白、淡到標題",
         f"紅閃光開始到標題靜止 {t_title - t_red0:.2f} 秒(doc23 §2.4⑤ 寫約 1.4 秒,那一輪是 docker dosbox 0.74 的較粗取樣)",
+        f"0x2df01 逐索引重算(idiv 向 0 截斷):紅閃光 {len(red_fade)} 張、白 → 標題 {len(title_rows)} 張的每一條主機列都是某一步或 DAC 寫到一半;"
+        f"向下取整的對照只解釋 {floor_red} / {400 * len(red_fade)}、{floor_title} / {400 * len(S['title_in'])} 列",
+        f"logo 末幀「變亮」是 0x11df2(0, 0xff, 0x{WHITE_ADD:x})(+ 0x{WHITE_ADD:x} 飽和成全白)在掃描途中生效:{', '.join(lw_runs)};"
+        f"之後 blit 標題,esi 0 → 0x{W_END:x} 從 (0x{W_R6:x},0x{W_G6:x},0x{W_B6:x}) 淡到標題調色盤",
+        f"選單 {MENU_N} 項、選中第 {SEL0} 項(FD2.SAV 檢查碼{'相符' if SAV_OK else '不符'}),整張逐像素相等;其他組合最少差 {min(menu_ctrl.values())} px",
     ],
-    "not_covered": ["標題選單方框內的文字(FDOTHER #7 sub1–6)沒有逐像素比對", "BGM / 音效", "0x2df01 的內插公式只以 R / G / B 平均的單調性驗證,未逐索引重算"],
+    "not_covered": ["BGM / 音效",
+                    "0x2df01 / 0x11df2 的索引上界(255 不含 / 含):兩張索引圖都沒用到索引 255,實拍判讀不了,只有 EXE 位元組"],
 }
 OUT.write_bytes((json.dumps(ev, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 print("ok", len(rows), len(segs), max(k0), round(hold, 3), len(red_fade), round(t_title - t_red0, 3), len(unexplained))

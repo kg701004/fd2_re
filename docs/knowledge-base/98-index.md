@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 192 節、19 個主題。
+共 193 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 10291:2026-10-21 續一百三十九:四模式 RLE 解碼再編回去逐 byte 相同(FDICON / FDSHAP / FIGANI / FDOTHER 全部) 〔來源:FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 - 行 10350:2026-10-21 續一百四十:續一百三十九留下的三件 —— FIGANI 幀數改 u8、`decode_sprite` 模式 1 預設改 dither、補寫續九十五 〔來源:DOSBox-X、Ghidra、FDOTHER〕
 - 行 10385:2026-10-21 續一百四十一:分鏡⑨惡魔臉以原版 FD2.EXE 的 DOSBox-X 實拍重做比對、`decode_sprite` selftest (5) 改用 FIGANI 真正的幀本文 〔來源:DOSBox-X、FDOTHER、FD2.EXE〕
@@ -17,6 +16,7 @@
 - 行 10540:2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 - 行 10676:2026-10-22 續一百四十七:續一百四十六之後的 sweep —— `ev_s141` ESCAPED 0;`ev_s145` 的 35 個逃過項改判準(撕裂改主機列、淡入淡出候選改全部 dy),ESCAPED 0
+- 行 10709:2026-10-22 續一百四十八:續一百四十五剩下的兩項(0x2df01 逐索引重算、logo → 白 → 標題、選單文字)與兩處版本差異的記錄更正 〔來源:org_game、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -254,7 +254,7 @@
 - 行 10084:2026-10-19 續一百三十五:長度大於 1 的模式 1 只在地形圖塊;移植產生器補跑手寫值掃描(修掃描工具兩個錯);續一百 ~ 一百三十三的驅動腳本存檔 〔來源:DOSBox-X、反組譯、FDICON〕
 - 行 10320:2026-10-21 續一百三十九(續):產生器 assert 數量閘門(`assert_census.py`)與 doc98 主題索引(`tools/doc98_index.py` → `98-index.md`)
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(27 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(28 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -283,6 +283,7 @@
 - 行 10540:2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 - 行 10676:2026-10-22 續一百四十七:續一百四十六之後的 sweep —— `ev_s141` ESCAPED 0;`ev_s145` 的 35 個逃過項改判準(撕裂改主機列、淡入淡出候選改全部 dy),ESCAPED 0
+- 行 10709:2026-10-22 續一百四十八:續一百四十五剩下的兩項(0x2df01 逐索引重算、logo → 白 → 標題、選單文字)與兩處版本差異的記錄更正 〔來源:org_game、FD2.EXE〕
 
 ## dispatch 跳表與指令表(4 節)
 

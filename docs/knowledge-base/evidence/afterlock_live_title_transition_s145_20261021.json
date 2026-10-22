@@ -38,7 +38,10 @@
   "title": [
    "FDOTHER_007.bin sub0",
    "FDOTHER_008.bin"
-  ]
+  ],
+  "sav": ".wsl_build/s145_afterlock/FD2.SAV",
+  "sav_md5": "e6d9a35756cddfc2519969b10f039181",
+  "sav_note": "harness 啟動時從 ~/fd2-run 複製(mtime 在 t0 之前),續一百四十八歸檔到連拍目錄"
  },
  "exe_constants": {
   "ani_trigger_esi": 25,
@@ -85,14 +88,80 @@
   "flash_base_pal": [
    102,
    101
-  ]
+  ],
+  "fade_0x2df01": {
+   "div": 40,
+   "division": "idiv(向 0 截斷)",
+   "hi_exclusive": [
+    255,
+    255
+   ]
+  },
+  "white_0x11df2_add": 64,
+  "white_saturate": 63,
+  "title_fade": {
+   "target_rgb6": [
+    56,
+    60,
+    63
+   ],
+   "esi": [
+    0,
+    40
+   ],
+   "step_ms": 8
+  },
+  "menu_0x1ff79": [
+   {
+    "k": 0,
+    "unsel": 1,
+    "sel": 2,
+    "drawn_if_n_gt": null,
+    "y": 164,
+    "x": 129
+   },
+   {
+    "k": 1,
+    "unsel": 3,
+    "sel": 4,
+    "drawn_if_n_gt": 1,
+    "y": 173,
+    "x": 129
+   },
+   {
+    "k": 2,
+    "unsel": 5,
+    "sel": 6,
+    "drawn_if_n_gt": 2,
+    "y": 182,
+    "x": 129
+   }
+  ],
+  "menu_init": {
+   "sel": 0,
+   "n": 1,
+   "n_sav_ok": 2,
+   "n_sav_byte_not_ff": 3
+  },
+  "sav": {
+   "len": 22987,
+   "sum_at": 22983,
+   "n3_byte_at": 12485,
+   "key": [
+    165,
+    36884,
+    3
+   ]
+  }
  },
  "criterion": {
   "absolute": "實拍顏色 = 6-bit 調色盤 (v<<2)|(v>>4) 逐像素相等",
   "fade": "每一列同一索引只顯示一個顏色;相容的相鄰列併成段;單色畫面不拿來判讀",
   "title": "FDOTHER #7 sub0 + #8 逐像素相等(選單方框 rows 164–189, cols 129–189 除外,747 px)",
   "torn": "主機列解析度:每條主機列整列等於相鄰兩個 dy 之一,兩個都用得到;runs 只列只有一個 dy 成立的主機列",
-  "fade_candidates": "浮空城、標題、兩支 ANI 末幀、捲動緩衝每一個 dy;control_rows = 其他候選裡逐列一致的最多列數"
+  "fade_candidates": "浮空城、標題、兩支 ANI 末幀、捲動緩衝每一個 dy;control_rows = 其他候選裡逐列一致的最多列數",
+  "fade_formula": "主機列整列等於 0x2df01 某一步,或 DAC 由索引 0 往上寫到一半(索引 < k 這一步、≥ k 上一步);對照改向下取整",
+  "menu": "標題 sub0 疊上 0x1ff79 的各項 sub(位置、sub 號讀 EXE;項數由 FD2.SAV 決定),整張逐像素相等"
  },
  "sample_interval_s": 0.05,
  "segments": [
@@ -388,7 +457,267 @@
   "unexplained_t": [
    50.75,
    55.53
-  ]
+  ],
+  "red_fade_rows": [
+   {
+    "t": 54.85,
+    "single": 252,
+    "split": 148,
+    "none": 0,
+    "single_steps": [
+     39,
+     40
+    ]
+   },
+   {
+    "t": 54.9,
+    "single": 331,
+    "split": 69,
+    "none": 0,
+    "single_steps": [
+     36
+    ]
+   },
+   {
+    "t": 54.95,
+    "single": 331,
+    "split": 69,
+    "none": 0,
+    "single_steps": [
+     32
+    ]
+   },
+   {
+    "t": 54.99,
+    "single": 258,
+    "split": 142,
+    "none": 0,
+    "single_steps": [
+     29
+    ]
+   },
+   {
+    "t": 55.04,
+    "single": 298,
+    "split": 102,
+    "none": 0,
+    "single_steps": [
+     26
+    ]
+   },
+   {
+    "t": 55.09,
+    "single": 238,
+    "split": 162,
+    "none": 0,
+    "single_steps": [
+     22,
+     23
+    ]
+   },
+   {
+    "t": 55.14,
+    "single": 252,
+    "split": 148,
+    "none": 0,
+    "single_steps": [
+     18,
+     19
+    ]
+   },
+   {
+    "t": 55.18,
+    "single": 288,
+    "split": 112,
+    "none": 0,
+    "single_steps": [
+     15,
+     16
+    ]
+   },
+   {
+    "t": 55.23,
+    "single": 248,
+    "split": 152,
+    "none": 0,
+    "single_steps": [
+     12,
+     13
+    ]
+   },
+   {
+    "t": 55.28,
+    "single": 332,
+    "split": 68,
+    "none": 0,
+    "single_steps": [
+     8
+    ]
+   },
+   {
+    "t": 55.32,
+    "single": 335,
+    "split": 65,
+    "none": 0,
+    "single_steps": [
+     5
+    ]
+   },
+   {
+    "t": 55.37,
+    "single": 265,
+    "split": 135,
+    "none": 0,
+    "single_steps": [
+     2
+    ]
+   }
+  ],
+  "white_title_fade_rows": [
+   {
+    "t": 57.15,
+    "single": 399,
+    "split": 1,
+    "none": 0,
+    "single_steps": [
+     -1
+    ]
+   },
+   {
+    "t": 57.19,
+    "single": 364,
+    "split": 36,
+    "none": 0,
+    "single_steps": [
+     2,
+     3
+    ]
+   },
+   {
+    "t": 57.24,
+    "single": 343,
+    "split": 57,
+    "none": 0,
+    "single_steps": [
+     4,
+     5
+    ]
+   },
+   {
+    "t": 57.29,
+    "single": 384,
+    "split": 16,
+    "none": 0,
+    "single_steps": [
+     9,
+     10
+    ]
+   },
+   {
+    "t": 57.34,
+    "single": 343,
+    "split": 57,
+    "none": 0,
+    "single_steps": [
+     12,
+     13
+    ]
+   },
+   {
+    "t": 57.4,
+    "single": 273,
+    "split": 127,
+    "none": 0,
+    "single_steps": [
+     16,
+     17
+    ]
+   },
+   {
+    "t": 57.46,
+    "single": 259,
+    "split": 141,
+    "none": 0,
+    "single_steps": [
+     20,
+     21
+    ]
+   },
+   {
+    "t": 57.52,
+    "single": 369,
+    "split": 31,
+    "none": 0,
+    "single_steps": [
+     23,
+     24
+    ]
+   },
+   {
+    "t": 57.58,
+    "single": 400,
+    "split": 0,
+    "none": 0,
+    "single_steps": [
+     28
+    ]
+   },
+   {
+    "t": 57.64,
+    "single": 381,
+    "split": 19,
+    "none": 0,
+    "single_steps": [
+     32,
+     33
+    ]
+   },
+   {
+    "t": 57.7,
+    "single": 349,
+    "split": 51,
+    "none": 0,
+    "single_steps": [
+     35,
+     36
+    ]
+   }
+  ],
+  "fade_formula_floor_control_rows": {
+   "red": 660,
+   "red_total": 4800,
+   "title": 14,
+   "title_total": 4000
+  },
+  "index_255_used": {
+   "red": false,
+   "title": false
+  },
+  "logo_last_to_white_runs": [
+   "0-324:ani1_last",
+   "325-399:white"
+  ],
+  "menu": {
+   "sav_checksum_ok": true,
+   "n": 3,
+   "sel": 0,
+   "box": [
+    164,
+    189,
+    129,
+    190
+   ],
+   "control_diff_px": {
+    "sel0_n1": 496,
+    "sel0_n2": 337,
+    "sel1_n1": 670,
+    "sel1_n2": 681,
+    "sel1_n3": 344,
+    "sel2_n1": 670,
+    "sel2_n2": 511,
+    "sel2_n3": 432
+   }
+  }
  },
  "rows": [
   {
@@ -4902,11 +5231,13 @@
   "esi == 10:dy 10 先淡出(0x1f73f 的第一個 call 就是 0x1f882,doc23 §2.4⑥ 步驟表漏了),再黑、浮空城 #75(調色盤 #76)淡入、整張相等 6 張、淡出、黑、dy 10 淡入",
   "dy 0 停留 1.13 秒(EXE 1000 ms;dy 1 只 0.00 秒),捲動 23.7 列 / 秒",
   "紅閃光是 12 張、0.57 秒的漸變(0x2df01 esi 0x28 → 0 每步 8 ms 往 (0x3f,0x0,0x0)),不是一幀硬切;之後整張 #ff0000、黑、ANI #1、整張白、淡到標題",
-  "紅閃光開始到標題靜止 3.00 秒(doc23 §2.4⑤ 寫約 1.4 秒,那一輪是 docker dosbox 0.74 的較粗取樣)"
+  "紅閃光開始到標題靜止 3.00 秒(doc23 §2.4⑤ 寫約 1.4 秒,那一輪是 docker dosbox 0.74 的較粗取樣)",
+  "0x2df01 逐索引重算(idiv 向 0 截斷):紅閃光 12 張、白 → 標題 11 張的每一條主機列都是某一步或 DAC 寫到一半;向下取整的對照只解釋 660 / 4800、14 / 4000 列",
+  "logo 末幀「變亮」是 0x11df2(0, 0xff, 0x40)(+ 0x40 飽和成全白)在掃描途中生效:0-324:ani1_last, 325-399:white;之後 blit 標題,esi 0 → 0x28 從 (0x38,0x3c,0x3f) 淡到標題調色盤",
+  "選單 3 項、選中第 0 項(FD2.SAV 檢查碼相符),整張逐像素相等;其他組合最少差 337 px"
  ],
  "not_covered": [
-  "標題選單方框內的文字(FDOTHER #7 sub1–6)沒有逐像素比對",
   "BGM / 音效",
-  "0x2df01 的內插公式只以 R / G / B 平均的單調性驗證,未逐索引重算"
+  "0x2df01 / 0x11df2 的索引上界(255 不含 / 含):兩張索引圖都沒用到索引 255,實拍判讀不了,只有 EXE 位元組"
  ]
 }
