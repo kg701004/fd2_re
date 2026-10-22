@@ -14,7 +14,7 @@ MUTANTS = [
     # 判準本身
     ("逐列判準退化成整張判準", "r = np.repeat(np.arange(200, dtype=np.int64), 320)", "r = np.zeros(64000, dtype=np.int64)"),
     ("單色畫面沒有排除(退化樣本)", "    if len(u) == 1:\n", "    if len(u) == 0:\n"),
-    ("撕裂自由度只看 dy", "        for d in (dy - 1, dy, dy + 1):", "        for d in (dy,):"),
+    ("撕裂改成隔一個 dy", "pairs = [(d, d + 1) for d in range(MAX_DY)]", "pairs = [(d, d + 2) for d in range(MAX_DY - 1)]"),
     ("選單方框容許整張 0.1%", "assert diff.sum() < 0.02 * diff.size", "assert diff.sum() < 0.001 * diff.size"),
     # 由 EXE 讀出的常數
     ("ANI 觸發的 esi 差 1", "T_ANI = code(0x1fadd, 3)[2] ", "T_ANI = code(0x1fadd, 3)[2] + 1 "),
@@ -33,6 +33,18 @@ MUTANTS = [
     ("紅閃光預期 R 下降", "assert all(a[0] < b[0] and a[1] > b[1]", "assert all(a[0] > b[0] and a[1] > b[1]"),
     ("logo 末幀預期變暗", 'assert lum(S["ani1_out"][-1]) > lum(S["ani1"][-1])', 'assert lum(S["ani1_out"][-1]) < lum(S["ani1"][-1])'),
     ("多段只算一段", "            n += 1\n            cur = dict(m)", "            n = 1\n            cur = dict(m)"),
+    # 續一百四十六:sweep_literals 逃過的常數補上的判準
+    ("遊戲區左緣錯 1 px(半個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 193, 201 "),
+    ("遊戲區上緣錯 1 px(半個遊戲像素)", "OX, OY = 192, 201 ", "OX, OY = 192, 202 "),
+    ("逐列判準的列號取錯位元", "bad_rows = np.unique(multi >> 8)", "bad_rows = np.unique(multi >> 9)"),
+    ("段的映射把列號混進索引", "maps[kk >> 8][kk & 255] = cc", "maps[kk >> 8][kk & 256] = cc"),
+    ("ANI 相鄰幀報成隔一幀", '"pair": [pairs[0], pairs[0] + 1]', '"pair": [pairs[0], pairs[0] + 2]'),
+    ("轉場目標 B 讀到 push 的操作碼", "B6, G6 = code(0x1fc6d, 4)[1], code(0x1fc6d, 4)[3]", "B6, G6 = code(0x1fc6d, 4)[0], code(0x1fc6d, 4)[3]"),
+    ("R 平均取錯位元", "return float(((col >> 16) & 255).mean())", "return float(((col >> 17) & 255).mean())"),
+    ("撕裂的 split_rows 對照看奇數列", "y % 2 == 0 and y + 1 in lab", "y % 2 == 1 and y + 1 in lab"),
+    ("淡入淡出候選沒有 dy", 'CANDS.update({f"dy{d}": BUF[d:d + 200] for d in range(MAX_DY + 1)})', "CANDS.update({})"),
+    ("命中表多切掉一個值", "FLASH_HITS = TABLE[:-1] ", "FLASH_HITS = TABLE[:-2] "),
+    ("連拍時間不必遞增 → 預期遞減", "assert all(a < b for a, b in zip(T, T[1:]))", "assert all(a > b for a, b in zip(T, T[1:]))"),
 ]
 
 if __name__ == "__main__":

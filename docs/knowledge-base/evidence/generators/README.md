@@ -7,9 +7,10 @@
 
 | 產生器 | 證據檔 | 變異測試 |
 |---|---|---|
-| `ev_s145.py` | `afterlock_live_title_transition_s145_20261021.json` | `mut_s145.py`(20) |
+| `ev_s145.py` | `afterlock_live_title_transition_s145_20261021.json` | `mut_s145.py`(31) |
 
 原版 FD2.EXE 開場「金鎖之後」到主選單靜止的 DOSBox-X 連拍 444 張(`.wsl_build/s145_afterlock/`);連拍腳本在 [`drivers_s145/`](drivers_s145/README.md)。
+續一百四十七為 sweep 逃過的常數補判準:撕裂幀改在主機列判讀(恰好一組相鄰 dy)、淡入淡出的候選圖改成捲動緩衝的每一個 dy。
 
 ## 續一百四十一(2026-10-21)
 
