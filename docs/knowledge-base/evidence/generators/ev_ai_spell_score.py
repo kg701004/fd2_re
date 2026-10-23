@@ -17,6 +17,7 @@ import _console  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
 import export_units  # noqa: E402
+from _exeops import operand  # noqa: E402
 UNIT_TABLES = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
 D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_spell_score_20260930.json")
@@ -114,13 +115,17 @@ for _run, _stem in CONSOLE.items():
         CON[(_e["tag"], _x["n"])] = _x["best"]
 
 
+# unit_uses_move_cost_row19(0x1f183)讀 +7 與 0x1c 比(下面的 gate_1f183);位移讀自 0x1f1a3 那條指令
+KEY7 = operand(0x1F1A3, "movzx edx, byte ptr [eax + ", "]")
+
+
 def units(name: str) -> list[dict]:
     b = (D / f"{name}.bin").read_bytes()
     out = []
     for i in range(len(b) // 80):
         r = b[i * 80:(i + 1) * 80]
         w = lambda o: struct.unpack_from("<H", r, o)[0]
-        out.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "p7": r[7], "p8": r[8], "race": r[0x1F],
+        out.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "p7": r[KEY7], "p8": r[8], "race": r[0x1F],
                     "cls": r[0x20], "level": r[0x21], "ex": r[0x3C], "hp": w(0x40), "mp": w(0x44),
                     # 已學法術位元欄 +0x1a..+0x1e(bit k = 法術 k,低位元在前)
                     "spells": [k for k in range(40) if r[0x1A + k // 8] >> (k % 8) & 1]})

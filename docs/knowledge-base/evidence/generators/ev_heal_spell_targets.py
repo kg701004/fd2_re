@@ -135,8 +135,23 @@ dumps = {t: (D / f"{t}.bin").read_bytes() for t in ("h0", "post_hA", "post_hB")}
 assert set(mp_caster.values()) == {caster}, (mp_caster, caster)
 crec = dumps["h0"][caster * 80:(caster + 1) * 80]
 post = {t: b[caster * 80 + 0x3C] for t, b in dumps.items()}
-# 累加式的每目標係數與第二因子 40 照 doc98 續四十七抄錄(#5 不計);這裡不另行推導
-FACTOR, ROW = {3: 40, 4: 36, 1: 32}, 40
+# heal_hp_apply 0x1c99c..0x1c9cf:目標 +7 < 0x4b 時 [0x53ec8] += 係數 × 40 × 實際增加的 HP / MaxHP;
+# 係數 = 目標等級(+0x21),職業(+0x20)在 (8, 0x19) 之間再加 0x1e;× 40 = (×4 + 1) × 8。位移與常數讀自 EXE,目標欄位讀自 h0
+from _exeops import operand  # noqa: E402
+H_LV = operand(0x1C99C, "movzx eax, byte ptr [esi + ", "]")
+H_CLS = operand(0x1C9A0, "movzx edx, byte ptr [esi + ", "]")
+H_LO, H_HI, H_ADD = operand(0x1C9A4, "cmp edx, "), operand(0x1C9A9, "cmp edx, "), operand(0x1C9AE, "add eax, ")
+H_KEY = operand(0x1C9B1, "movzx edx, byte ptr [esi + ", "]")
+H_KEY_END = operand(0x1C9B5, "cmp edx, ")
+# 跳躍方向:職業 <= 8 或 >= 0x19 跳過加成、+7 >= 0x4b 跳過累加;係數先複製再 ×4 + 自己、×8
+assert [insn(a).split()[0] for a in (0x1C9A7, 0x1C9AC, 0x1C9B8)] == ["jle", "jge", "jge"]
+assert insn(0x1C9BA) == "mov edx, eax" and insn(0x1C9BF) == "add edx, eax"
+ROW = ((1 << operand(0x1C9BC, "shl edx, ")) + 1) << operand(0x1C9C1, "shl edx, ")
+h0 = dumps["h0"]
+FACTOR = {t: h0[t * 80 + H_LV] + (H_ADD if H_LO < h0[t * 80 + H_CLS] < H_HI else 0)
+          for t in sorted({h["target"] for h in heals}) if h0[t * 80 + H_KEY] < H_KEY_END}
+# 第二種寫法:與續四十七抄錄的係數相同(#5 的 +7 = 0x86,不累加)
+assert (FACTOR, ROW) == ({3: 40, 4: 36, 1: 32}, 40), (FACTOR, ROW)
 
 
 def accumulated(rnd: str) -> int:

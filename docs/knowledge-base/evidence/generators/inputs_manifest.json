@@ -3711,6 +3711,10 @@
     ".wsl_build/ctr/pre_xE.bin": [
      1680,
      "899abd9b1867e323c492fe451fef7ef7087fb63c8f9fbe288f79139be03b05ee"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -4204,6 +4208,10 @@
     ".wsl_build/ctr/pre_LE.bin": [
      1680,
      "407ccb3f678b0803fee8bcbe2f8cd712c5acd7e3bdd3fb9fa43e8964924769b3"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -15578,6 +15586,10 @@
     ".wsl_build/ctr/t_tt.bin": [
      4096,
      "cdea23bd7fde4a7ecc7f9f955af57afb58fba92b9722eda48b5da098aaa59cec"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },

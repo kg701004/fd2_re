@@ -16,12 +16,15 @@ import sys  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 import export_units  # noqa: E402
 UNIT_TABLES = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
+from _exeops import operand  # noqa: E402
+# FDFIELD 單位的建構子在 0x10efc 把 raw unit key 寫進 +7(下面以這個 key 查 EXE 建構表);位移讀自那條指令
+RAW_KEY = operand(0x10EFC, "mov byte ptr [edx + ", "], al")
 
 
 def view(r: bytes) -> dict:
     """單位紀錄的欄位(終端輸出核對與證據輸出用同一份)。"""
     w = lambda o: struct.unpack_from("<H", r, o)[0]
-    return {"x": r[0], "y": r[1], "race": r[0x1F], "class": r[0x20], "plus7": r[7], "hp": w(0x40), "ap": w(0x48), "dp": w(0x4A)}
+    return {"x": r[0], "y": r[1], "race": r[0x1F], "class": r[0x20], "plus7": r[RAW_KEY], "hp": w(0x40), "ap": w(0x48), "dp": w(0x4A)}
 
 cells = (D / "t_map.bin").read_bytes()
 tt = (D / "t_tt.bin").read_bytes()

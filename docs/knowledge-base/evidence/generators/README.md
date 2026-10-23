@@ -3,6 +3,14 @@
 `docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
 
+## 續一百五十三(2026-10-24)
+
+沒有新的證據檔。新增 `_exeops.py`:`operand(位址, 前綴, 後綴)` 讀 FD2.EXE 那一條指令的運算元(文字不符就 AssertionError)。
+`ev_attack_exp`、`ev_level_up`、`ev_ai_spell_score`、`ev_terrain_modifier`、`ev_s66`、`ev_s67` 讀單位欄位(+5 / +7 / +8)的位移改由
+遊戲裡讀寫同一欄位的指令取;`ev_heal_spell_targets` 的累加係數改由 heal_hp_apply 的指令與目標傾印算;`ev_s136` 加第二種寫法;
+`ev_rest_and_item79_branch` 的 `KEEP` 改由紀錄算(道具使用者 + 被打到的單位)。sweep ESCAPED 16 → 2,證據逐 byte 不變;
+`ev_attack_exp` / `ev_level_up` / `ev_terrain_modifier` 的 inputs_manifest 多記 FD2.EXE。
+
 ## 續一百五十二(2026-10-24)
 
 沒有新的證據檔。`ev_s75` / `ev_s76` 的 `sweep_literals` 逃過項補判準(21 + 11 → 0):選擇器改由 LOGL 追蹤 / 受控注入的傾印鍵取,

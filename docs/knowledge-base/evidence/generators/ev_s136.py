@@ -266,6 +266,7 @@ assert all(OFFS[i + 1] - OFFS[i] == 0x100 for i in range(N_ENT - 1)) and OFFS[-1
 TRI = list(bytes(dl.object_bytes(_D, META, 0x51A97, 20)))
 assert TRI == [min(i, 20 - i) for i in range(20)], TRI
 LV_LAST_END = OFFS[max(TRI) + 1]                       # 最高階那一項的結尾 = 下一項的起點
+assert LV_LAST_END == OFFS[max(TRI)] + OFFS[1] - OFFS[0], hex(LV_LAST_END)  # 第二種寫法:最高階那一項的起點 + 一項的長度
 # 第 1 章只傾印 4096 bytes:涵蓋畫明暗用到的 lv 0 .. 10,但沒涵蓋全部 23 項(第 25 章比了整份)
 assert LV_LAST_END <= len(ch1_res) < OFFS[-1] + 0x100, (hex(LV_LAST_END), len(ch1_res))
 # 對照:只比到 4095 byte、或把第 25 章的指標錯開 4 byte,都必須不相等(比較本身能說不)

@@ -18,6 +18,7 @@ from sim_path import Grid, bfs_rival, flood1, search  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
 import fd2save as F  # noqa: E402
+from _exeops import operand  # noqa: E402
 
 D = ROOT / ".wsl_build/ctr/v4/ch25"
 OUT = out_path("path_search_hits_friendly_mode8_20261001.json")
@@ -173,6 +174,8 @@ for name, (old, new) in MUT.items():
     assert bad_rows == [w for w in search_rows if expect(w)] and bad == [f'{w["run"]}:mode{w["mode"]}' for w in bad_rows], (name, bad)
 
 sol_after_ff = (D / "sol.bin").read_bytes()
+# 索爾是隊員:JOIN 建構子 0x112a5 在 0x11337 寫 +5 = 0;位移讀自那條指令
+JOIN_F5 = operand(0x11337, "mov byte ptr [esi + ", "], 0")
 # a4:游標 = 0x1894d 的起點往右(第一個 Return 之前的 Right 次數),該格在 d0 傾印裡站著陣營 2 的隊員;
 # 被拒後再往右一格,才是 0x189f8 確認的目標
 a4_st, a4_keys = stops_of("a4"), [k["key"] for k in keys_of("a4")]
@@ -202,7 +205,7 @@ A = {
     "simulator_mutations": mutations,
     "target_loop_reject_occupied": {"run": "a4", "cursor_cell": cursor, "occupied_by": f"隊員 #{occ[0]}",
                                     "keys": keys_of("a4")},
-    "after_forced_0xff": {"sol_xy": sol_xy_ff, "sol_f5": sol_after_ff[5],
+    "after_forced_0xff": {"sol_xy": sol_xy_ff, "sol_f5": sol_after_ff[JOIN_F5],
                           "screen": "a4 之後回到地圖游標,沒有指令環"},
 }
 

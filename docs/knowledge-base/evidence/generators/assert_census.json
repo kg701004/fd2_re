@@ -72,8 +72,8 @@
    "not_executed_lines": []
   },
   "ev_heal_spell_targets": {
-   "asserts": 22,
-   "executed": 22,
+   "asserts": 25,
+   "executed": 25,
    "not_executed_lines": []
   },
   "ev_item79_aim_exp_reward_lines": {
@@ -82,8 +82,8 @@
    "not_executed_lines": []
   },
   "ev_level_up": {
-   "asserts": 29,
-   "executed": 29,
+   "asserts": 30,
+   "executed": 30,
    "not_executed_lines": []
   },
   "ev_lut_ch22_post_cycles2500_chapter_tables": {
@@ -112,8 +112,8 @@
    "not_executed_lines": []
   },
   "ev_rest_and_item79_branch": {
-   "asserts": 9,
-   "executed": 9,
+   "asserts": 10,
+   "executed": 10,
    "not_executed_lines": []
   },
   "ev_rest_recover": {
@@ -152,8 +152,8 @@
    "not_executed_lines": []
   },
   "ev_s136": {
-   "asserts": 44,
-   "executed": 44,
+   "asserts": 45,
+   "executed": 45,
    "not_executed_lines": []
   },
   "ev_s137": {

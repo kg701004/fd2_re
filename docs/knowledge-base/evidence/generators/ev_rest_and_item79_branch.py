@@ -24,7 +24,10 @@ D = ROOT / ".wsl_build" / "lc124_live"
 OUT = out_path("rest_and_item79_branch_20261014.json")
 EXE_MD5 = "33464c81e6a364fd0660141139aa8e6e"
 assert hashlib.md5((GAME / "FD2.EXE").read_bytes()).hexdigest() == EXE_MD5
-KEEP = (0, 3, 5, 10, 11)
+# 輸出只留三回合牽涉到的單位:道具使用者(user)與各回合 collect 的目標(由紀錄取,不手寫)
+_st = [s for tag in an124.RUNS for s in json.loads((D / f"{tag}.json").read_text(encoding="utf-8"))["stops"]]
+KEEP = {s["user"] for s in _st if "user" in s} | {t for s in _st if "targets" in s for t in bytes.fromhex(s["targets"])}
+assert KEEP == {0, 3, 5, 10, 11}, KEEP     # 第二種寫法:WHAT 寫的 #11 出手、#5 / #10、#0 / #3、#3 被打到
 WHAT = {
     "r1": "第 1 回合。arm 時索爾 HP 設 3、敵 #11 搬到 (19,14)、slot2 = 道具 79;索爾沒移動就休息。ai_item_action 入口把索爾 HP 改回 823。"
           "道具 79 打到 #5、#10(友軍 NPC),兩個都命中。",

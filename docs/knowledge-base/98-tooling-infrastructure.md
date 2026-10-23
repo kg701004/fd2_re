@@ -10998,3 +10998,60 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
 **仍留**:
 - 續一百五十一表中「剩下」各項與 `KEEP` 清單沒有獨立來源,照舊。
 - 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。
+
+## 2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元)
+
+起因:續一百五十二「仍留」依建議逐項處理(使用者要求)。續一百五十一 / 一百五十二把剩下的 55 個 ESCAPED 歸成「沒有獨立來源」,
+這次不看總結、逐筆重判:其中單位紀錄的欄位位移(隊員 / 索爾 +5、+7,攻方 +8)、治療經驗係數 32、`ev_s136` 的 `+ 1`、
+`ev_rest_and_item79_branch` 的 `KEEP` 其實都有第二個來源。做法同前:scratchpad 副本上改、`run_all.run_one(script=…)` 逐 byte 相同、
+`sweep(src=…)` 收斂後才套回倉庫(套回後與副本逐 byte 相同)。
+
+**新增 `generators/_exeops.py`**:`operand(位址, 前綴, 後綴)` 反組譯 FD2.EXE 那一條指令,文字必須正好是「前綴 + 數字 + 後綴」才回傳該數字,
+否則 AssertionError(位址錯開、暫存器不對、後綴不對三種都試過,都是 AssertionError)。產生器裡讀欄位的位移改由「遊戲裡讀寫同一個欄位的那條指令」取:
+
+| 產生器 | 原本手寫 | 改由哪條指令 |
+|---|---|---|
+| `ev_attack_exp` | 攻方 `a[8]` | `0x2fa79 movzx edx, byte ptr [ebp + 8]`(scene_attack_resolve:+8 == 0x1c 時除數加 0x1e;同一段 `[ebp + 0x20]` 是職業) |
+| `ev_level_up` | `portrait` 的 `r[7]` | `0x1e2c2 movzx edx, byte ptr [esi + 7]`,並斷言 `0x1e2c6 mov dword ptr [esp], edx`(之後 0x1e3f3 / 0x1e3f9 拿 [esp] 與 0x1e / 0x1f 比,決定等級上限 0x63) |
+| `ev_ai_spell_score` | `p7` 的 `r[7]` | `0x1f1a3 movzx edx, byte ptr [eax + 7]`(unit_uses_move_cost_row19,接著 `cmp edx, 0x1c`,即產生器的 `gate_1f183`) |
+| `ev_terrain_modifier` | `plus7` 的 `r[7]` | `0x10efc mov byte ptr [edx + 7], al`(FDFIELD 建構子寫 raw unit key;產生器以它查建構表) |
+| `ev_s66` | `f5` 的 `u[5]`、`key_0x7` 的 `u[7]` | `0x10eed mov byte ptr [edx + 5], 0`、`0x10efc`(同上) |
+| `ev_s67` | 索爾的 `sol_after_ff[5]` | `0x11337 mov byte ptr [esi + 5], 0`(JOIN 建構子 0x112a5) |
+
+其他三支:
+- `ev_heal_spell_targets`:累加係數 `{3: 40, 4: 36, 1: 32}` 與第二因子 40 原本照續四十七抄錄。改由 heal_hp_apply 0x1c99c..0x1c9cf 算:
+  係數 = 目標 `+0x21`(等級),`+0x20`(職業)在 (8, 0x19) 之間再加 0x1e(`jle` / `jge` 的方向也斷言);目標 `+7 >= 0x4b` 不累加(這就是 #5 不計的原因:+7 = 0x86);
+  第二因子 = `shl 2`、`add edx, eax`、`shl 3` = 40。目標欄位讀自施法前的傾印 h0;抄錄值留作第二種寫法核對(相同)。
+- `ev_s136`:`LV_LAST_END = OFFS[max(TRI) + 1]` 加第二種寫法 `OFFS[max(TRI)] + (OFFS[1] - OFFS[0])`(目錄每項等長已斷言)。
+- `ev_rest_and_item79_branch`:`KEEP` 改由紀錄算 = 道具使用者(`user`)∪ 三回合 collect 的目標;原本的 `(0, 3, 5, 10, 11)` 留作第二種寫法核對(相同)。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 |
+|---|---|---|
+| `ev_attack_exp` | 1 → 0 | 21 → 22 |
+| `ev_level_up` | 1 → 0 | 99 → 101 |
+| `ev_ai_spell_score` | 1 → 0 | 71 → 72 |
+| `ev_terrain_modifier` | 1 → 0 | 31 → 32 |
+| `ev_s66` | 2 → 0 | 93 → 95 |
+| `ev_s67` | 3 → 2 | 94 → 95 |
+| `ev_heal_spell_targets` | 1 → 0 | 61 → 82 |
+| `ev_s136` | 1 → 0 | 88 → 91 |
+| `ev_rest_and_item79_branch` | 5 → 0 | 40 → 45 |
+| 合計 9 個 | 16 → 2 | 598 → 635 |
+
+(「前」:前 7 個取續一百五十一的整份重掃,`ev_level_up` / `ev_s136` / `ev_rest_and_item79_branch` 這次先重掃。CRASH / INERT 除 `ev_heal_spell_targets` INERT 17 → 18 外不變。)
+整份 51 個產生器的 ESCAPED 由 55 → 41。
+
+**不同結論 / 更正**:
+- 續一百五十一表中「隊員 +7」「攻方 +8」「索爾 +5 / +7」標成「沒有獨立來源」是錯的:EXE 裡讀寫這些欄位的指令就是第二個來源。
+  原因是當時只找「同一個值的另一條算法」,沒有找「同一個位移的另一個寫法」;這幾個變異逃過,是因為傾印裡相鄰欄位的值剛好相同(例如 +7 = +8),值的斷言分不出來。
+- 續四十七的係數 32 也不是「只能抄錄」:heal_hp_apply 的指令與目標傾印就能算出(三個值都相同)。
+- `ev_rest_and_item79_branch` 的 `KEEP` 不是任意的顯示清單,是「出手者 + 被打到的單位」。`ev_item79_aim_exp_reward_lines` 的 `KEEP` 多了 #6、#15,
+  它們既不是目標也不是出手者,原始腳本(暫存的 `mk_evidence125.py`)沒寫選取理由,推不出來,照舊。
+- 證據逐 byte 不變。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);受影響的 mut 檔全過(mut_console_ai_score survivors 0、mut_console_level_terrain bad 0、mut_rest_and_item79_branch 16 / 16、mut_s136 29 / 29、mut_terrain_rules 4 / 4,原文都沒動);assert_census 9 個產生器 `--update --executed` 全部執行到(`ev_heal_spell_targets` 22 → 25、`ev_level_up` 29 → 30、`ev_rest_and_item79_branch` 9 → 10、`ev_s136` 44 → 45,其餘 5 個的新判準在 `_exeops.operand` 裡);inputs_manifest 只新增 3 筆 FD2.EXE,既有輸入不變
+
+**仍留**(41 個,逐項看過,都是呈現 / 分析上的選擇,沒有可推的來源):
+- `ev_lut_circle_ramp_at_unit` 23(排除框 / 面板幾何、亮度係數 30 / 59 / 11、含端點範圍、邊緣判定設計值、小數位數)、`ev_s73` 6(截圖裁切框、小數位數)、
+  `ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)、`ev_item79_aim_exp_reward_lines` 7(`KEEP`,見上)。
+- 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。

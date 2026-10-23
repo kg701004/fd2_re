@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
 import export_units  # noqa: E402
 import parse_field  # noqa: E402
+from _exeops import operand  # noqa: E402
 from _terrain import AP_PCT as T_AP, DP_PCT as T_DP, map_size, modifier, tdiv, terrain_type  # noqa: E402
 
 V = ROOT / ".wsl_build/ctr/v3"
@@ -62,11 +63,16 @@ def check_fdfield_unit(r: dict, m: dict) -> None:
     assert [r["race"], r["class"]] == nat["record"][:2] and r["mv"] == export_units.native_mv_for_raw_unit_key(unit_tables, r["key_0x7"]), (r, nat)
 
 
+# 建構子 0x10c50 寫 +5 = 0(0x10eed)、+7 = raw unit key(0x10efc);位移讀自那兩條指令
+F5 = operand(0x10EED, "mov byte ptr [edx + ", "], 0")
+RAW_KEY = operand(0x10EFC, "mov byte ptr [edx + ", "], al")
+
+
 def rec(path: Path, i: int) -> dict:
     u = raw(path, i)
     hp, mhp = struct.unpack_from("<2H", u, 0x40)
     ap, dp, hit, ev = struct.unpack_from("<4H", u, 0x48)
-    return {"xy": [u[0], u[1]], "f5": u[5], "side": u[6], "key_0x7": u[7], "race": u[0x1F], "class": u[0x20],
+    return {"xy": [u[0], u[1]], "f5": u[F5], "side": u[6], "key_0x7": u[RAW_KEY], "race": u[0x1F], "class": u[0x20],
             "mv": u[0x3B], "b34": u[0x34], "hp": hp, "maxhp": mhp, "ap": ap, "dp": dp, "hit": hit, "ev": ev}
 
 

@@ -10,6 +10,9 @@ require_inputs(__file__)
 import _console  # noqa: E402
 EVI = out_path("attack_exp_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
+from _exeops import operand  # noqa: E402
+# scene_attack_resolve 0x2fa6b..0x2fa82:攻方職業在 (8, 0x19) 之間、或攻方 +8 == 0x1c 時除數加 0x1e;+8 的位移讀自 0x2fa79 那條指令
+ATT_B8 = operand(0x2FA79, "movzx edx, byte ptr [ebp + ", "]")
 
 E_ROW = 21
 EXP_CAP = 99  # 一次最多加 99
@@ -32,7 +35,7 @@ for tag in ("xA", "xB", "xC", "xD", "xE"):
     post = (D / f"post_{tag}.bin").read_bytes()
     a, d0, a1, d1 = (b[i * 80:(i + 1) * 80] for b, i in ((pre, att[tag]), (pre, 11), (post, att[tag]), (post, 11)))
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
-    a_lv, a_cls, a_b8 = a[0x21], a[0x20], a[8]
+    a_lv, a_cls, a_b8 = a[0x21], a[0x20], a[ATT_B8]
     d_lv = d0[0x21]
     hp0, hp1, mhp = w(d0, 0x40), w(d1, 0x40), w(d0, 0x42)
     ex0, ex1 = a[0x3C], a1[0x3C]

@@ -10,6 +10,11 @@ require_inputs(__file__)
 import _console  # noqa: E402
 EVI = out_path("level_up_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
+from _exeops import insn, operand  # noqa: E402
+# 升級流程 0x1e2c2 / 0x1e2c6 把單位 +7 存進 [esp],0x1e3f3 / 0x1e3f9 拿它與 0x1e / 0x1f 比(是就以 0x63 當等級上限);
+# 位移讀自 0x1e2c2 那條指令
+PORTRAIT = operand(0x1E2C2, "movzx edx, byte ptr [esi + ", "]")
+assert insn(0x1E2C6) == "mov dword ptr [esp], edx"
 
 # 斷點讀值由當時驅動腳本的終端輸出(原始紀錄,見 _console.py)解析:pending = 0x2fab9(執行期 0x1cbab9)的 EAX;
 # gains = 0x1e55a(執行期 0x1ba55a)停點的 EBP,依屬性指標(unit+0x37/0x39/0x3e/0x42/0x46)排成 AP、DP、DX、MaxHP、MaxMP。
@@ -103,7 +108,7 @@ def fields(r: bytes) -> dict:
     w = lambda o: struct.unpack_from("<H", r, o)[0]
     return {"level": r[0x21], "ex": r[0x3C], "base_ap": w(0x37), "base_dp": w(0x39), "base_dx": w(0x3E), "hp": w(0x40),
             "max_hp": w(0x42), "mp": w(0x44), "max_mp": w(0x46), "ap": w(0x48), "dp": w(0x4A), "hit": w(0x4C), "ev": w(0x4E),
-            "portrait": r[7], "spell_bits": r[0x1A:0x1F].hex()}
+            "portrait": r[PORTRAIT], "spell_bits": r[0x1A:0x1F].hex()}
 
 
 cases = []
