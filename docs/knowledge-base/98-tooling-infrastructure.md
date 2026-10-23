@@ -10870,3 +10870,90 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
 - 10-06 那 32 個產生器的 550 個 ESCAPED(讀傾印的位移 / 算式 / 呼叫參數),與續一百二十二 ~ 一百二十九移植產生器的逐幀量值,
   只由 `run_all` 的逐 byte 比對擋住;要逐一補判準是另一輪的工作,這次沒有處理。
 - 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值:這段開場沒有可見後果,沒有做。
+
+## 2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41)
+
+起因:續一百五十「仍留」依建議逐項處理(使用者要求)。三項:sweep 跑不完的 2 個變異、10-06 那 32 個產生器的 550 個 ESCAPED、
+移植產生器的逐幀量值(`ev_lut_circle_ramp_at_unit` 90 個等)。
+
+**一、跑不完的變異**(續一百五十 TIMEOUT 600 秒仍跑不完的兩個):
+- `ev_s73` 第 303 行 `& ~1 → & ~2`:區塊位址不再 4-byte 對齊,讀到大小 0 後停在原地。兩段堆積走訪每一步加
+  `assert a % 4 == 0 and u32(a) & ~1`(這份傾印的 5 個區塊都對齊、大小 > 0)。
+- `ev_s139` 第 188 行 `+ 9 → + 10`:幀的 w / h 讀錯位移成 51201 × 65280,要解 33 億像素。幀容器的尺寸斷言改成
+  `0 < w <= 320 and 0 < h <= 200`(mode 13h 畫面;真實資料最大正好 320 × 200)。
+- 兩個變異單獨重跑都是 KILLED(0 秒);整份重掃 `ev_s73` TIMEOUT 1 → 0、`ev_s139` 1 → 0。
+
+**二、補判準**:每個產生器先在 scratchpad 的副本上改、重算逐 byte 比對、以 `sweep(src=…)` 重掃,收斂後才套回倉庫
+(套回後與副本逐 byte 相同,`run_all` IDENTICAL)。判準分五類,分開計數:
+1. **獨立來源**:同一個值由另一條路徑算出再比。用到的來源:
+   - EXE 指令的運算元:`ev_s68` 的擲骰 `% 100`(0x1e8c5 `mov ebx, 0x64`)、兩下門檻 3(0x1e8cf)、傷害 ×9 ÷10 ÷9(0x1ef78 / 0x1ef7d / 0x1ef91);
+     `ev_heal_spell_targets` 的除數(0x19029..0x19036:`[esi+0x21]`、`[esi+0x20]`、`cmp eax, 8`、`add ebx, 0x1e`)。
+   - `docs/data/exe_tables/`(`tools/dump_exe_tables.py` 以檔案位移另外抽):法術列 = `spell.json`、道具列 = `native_item_effect_rows.json`、
+     會心門檻 = `resist_crit.json`、建構表 = `native_unit_tables.json`(FDFIELD 單位的種族 / 職業 / MV / HP)。
+   - FDFIELD(`tools/parse_field.py`):map 24 的出場人數 + group 0 = 開場單位數(62)、寶箱 slot = 構成段的 slot、
+     map 28 group 1 = 事件 76 生成的頭目(位置、b0 / b1)、每章 handler 表 30 章 = 30 張戰場。
+   - 返回位址的前 5 bytes 是 `call rel32`(`ev_s66` 還核對目標)、列出的靜態指令位址都是 `function_inventory` 入口線性反組譯的指令起點(`ev_s74`)。
+   - 交叉:攻守雙方(場景段兩兩對調、地圖段攻方 = 該回合派發的單位)、相鄰判定、說明文字裡的數字(`ev_ai_item_score` 的 HP 變化)。
+2. **改用已斷言的變數**:輸出與斷言原本各自寫一份位移 / 索引,改成同一個變數(一個被改、斷言就擋)。
+3. **無常數改寫**:索引 0 / −1 改解包、`sum(1 for …)` 改 `sum(bool …)`、`ImageStat`、`itertools.groupby`、具名群組的正規式。
+4. **鍵名派生**:輸出鍵名本身寫了位移或範圍(如 `item_0x15_over_215_items`、`changed_units_excluding_+5_+0x26`),
+   改成由鍵名取值(鍵名是唯一寫法)。`_fields.py`(新增)核對「鍵名寫的位移 = 讀值的位移」。
+5. **剩下(沒有獨立來源,保留)**:見下表的「剩下」欄。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 | 剩下 |
+|---|---|---|---|
+| `ev_ai_action_choice` | 25 → 0 | 24 → 31 |  |
+| `ev_ai_heal_score` | 8 → 0 | 50 → 55 |  |
+| `ev_ai_item_action_item79_flow` | 35 → 1 | 135 → 145 | 小數位數(mean_rgb) |
+| `ev_ai_item_score` | 15 → 0 | 50 → 59 |  |
+| `ev_ai_move_nearest` | 14 → 0 | 23 → 16 |  |
+| `ev_ai_physical_candidate` | 15 → 0 | 15 → 15 |  |
+| `ev_ai_physical_untested_branches` | 27 → 0 | 8 → 25 |  |
+| `ev_ai_spell_path` | 10 → 0 | 64 → 46 |  |
+| `ev_ai_spell_score` | 8 → 1 | 60 → 71 | 隊員 +7(沒有獨立來源) |
+| `ev_attack_exp` | 15 → 1 | 22 → 21 | 攻方 +8(沒有獨立來源) |
+| `ev_attack_path_selection` | 4 → 0 | 100 → 100 |  |
+| `ev_collect_targets_in_range` | 3 → 0 | 8 → 11 |  |
+| `ev_dispatch_index_bounds_table_split` | 1 → 0 | 15 → 22 |  |
+| `ev_heal_spell_targets` | 7 → 1 | 56 → 61 | 續四十七抄錄的係數 32(10-06 已記) |
+| `ev_lut_circle_ramp_at_unit` | 90 → 23 | 41 → 67 | 排除框 / 面板幾何 8、亮度係數 5、含端點範圍 2、邊緣判定設計值 4、小數位數 4 |
+| `ev_move_landing_select` | 3 → 0 | 65 → 66 |  |
+| `ev_real_kill_corpse` | 9 → 0 | 52 → 50 |  |
+| `ev_rest_recover` | 13 → 0 | 38 → 37 |  |
+| `ev_s132` | 4 → 0 | 130 → 132 |  |
+| `ev_s139` | 0 → 0(TIMEOUT 1 → 0) | 208 → 209 |  |
+| `ev_s65` | 29 → 0 | 104 → 128 |  |
+| `ev_s65b` | 28 → 0 | 69 → 89 |  |
+| `ev_s66` | 26 → 2 | 90 → 93 | 索爾 +5 / +7 |
+| `ev_s67` | 69 → 3 | 56 → 94 | 截斷長度 2([:12]、[:8])、索爾 +5 |
+| `ev_s68` | 24 → 1 | 48 → 53 | 小數位數 |
+| `ev_s69` | 12 → 0 | 12 → 30 |  |
+| `ev_s70` | 39 → 0 | 55 → 88 |  |
+| `ev_s71` | 61 → 0 | 45 → 89 |  |
+| `ev_s72` | 6 → 0 | 34 → 40 |  |
+| `ev_s73` | 12 → 6(TIMEOUT 1 → 0) | 153 → 164 | 截圖裁切框 4(頭像位置)、小數位數 2 |
+| `ev_s74` | 31 → 1 | 101 → 147 | 截斷長度([:8]) |
+| `ev_spell9_path` | 5 → 0 | 42 → 36 |  |
+| `ev_terrain_modifier` | 11 → 1 | 34 → 31 | 索爾 +7 |
+| `ev_terrain_types_3_5` | 6 → 0 | 71 → 66 |  |
+| 合計 34 個 | 665 → 41(TIMEOUT 2 → 0) | 2078 → 2387 | |
+
+沒有改的:`ev_item79_aim_exp_reward_lines` 7、`ev_rest_and_item79_branch` 5(都是 `KEEP` 顯示清單)、`ev_level_up` 1(隊員 +7)、`ev_s136` 1(續一百三十六已記)、`ev_s75` 21 / `ev_s76` 11(NOT TESTED)。整份 51 個產生器的 ESCAPED 由 724 → 87(續一百五十補的 ev_s130 / ev_s131 13 個已是 0)。KILLED 有幾個變少,是改成解包 / 共用變數後常數本身變少,不是判準變弱。
+
+**不同結論 / 更正**:
+- 不用 `tools/fd2save.build_join_record` 當判準:它的公式移植自 remake 的 Go 實作,remake 不算證據;改用 0x112a5 的靜態寫入值(+5 = 0、+6 = 2、+7 = +8 = id)。
+- `ev_lut_circle_ramp_at_unit` 的 ai79 排除框原本 8 個,其中 (3, 2)、(2, 0)、(1, 1) 三格 10 幀裡框內都沒有換色,拿掉;
+  證據只有 `runs[2].excluded_rects` 由 8 項變 5 項(inside_px 等數值不變,三個框都在圓外)。其餘框改由格座標算出(24 × 36 的單位圖,上緣裁到視窗)。
+- `ev_s70` 原本假設「排除的 +5 / +0x26 每筆都變」不成立(DOSBox-X v7 / v8 的單位表傾印:+5 只在 v8 的 4 筆變);改成「排除後只剩座標會變、兩個欄位在兩次實測裡都變過」。
+
+**過程中的失誤**:
+1. `ev_s75` 那一段的回覆被安全分類器中斷,`ev_s75`(21)與同主題的 `ev_s76`(11)沒有處理(NOT TESTED)。
+2. 幾個補判準第一版引入了新的常數(`v[1:]`、假地形表的 `+ 1`、`_tt` 列寬),重掃時逃過,改成兩種寫法互相對照或資料推出。
+3. `ev_s66` 第一版 `arg0` 寫入順序與原本不同,證據逐 byte 不同(JSON 內容相同、鍵順序不同),改回順序。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);受影響的 13 個 mut 檔全過(3 個的原文跟著改寫,變異意圖不變:item79 17 / 17、mut_s74 8 / 8、console_spell_path 全中);assert_census 34 個產生器 `--update --executed`,新增的斷言全部執行到;inputs_manifest 只新增(FDFIELD 原始檔等,180 行),既有輸入不變;填完這行後重跑掃文件的閘門
+
+**仍留**:
+- `ev_s75`、`ev_s76`(NOT TESTED,見失誤 1)。
+- 表中「剩下」各項沒有獨立來源;顯示用的清單(`KEEP`)與截圖裁切框、小數位數、說明性的係數照舊。
+- 續一百三十四以來「要實機,不打算主動做」的項目不變。

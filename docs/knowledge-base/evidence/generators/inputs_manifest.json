@@ -3904,6 +3904,10 @@
     ".wsl_build/ctr/tB_units.bin": [
      1680,
      "23a6fd9028653867d50d2af2efe4ab184892a3bb48382eeca72ec5134f9e80cc"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -4026,6 +4030,10 @@
     ".wsl_build/ctr/post_hB.bin": [
      1680,
      "add897f13045cff7362c5dae487471ab1c51f9228032357fbabd9d95321cde72"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
     ]
    }
   },
@@ -13087,6 +13095,18 @@
     ".wsl_build/ctr/terr2/ch29/t4_turn.bin": [
      4,
      "fb5e512425fc9449316ec95969ebe71e2d576dbab833d61e2a5b9330fd70ee02"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_084.bin": [
+     7940,
+     "b1fe12eee7c8c6022988f1714f3aaa9b317c0574a9ade88fd38b9dc32ef52583"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_085.bin": [
+     2107,
+     "a01c382cc898063359afad816430f81629d4978feca2df93a7741f9aa13252fd"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_086.bin": [
+     578,
+     "61b7a3f5bbdcfae08e42e4d4ea8b0e1f6376b3128454067948e77fb855e28e05"
     ]
    }
   },
@@ -13266,6 +13286,18 @@
     ".wsl_build/ctr/v3/ch29/c3_post_units.bin": [
      6320,
      "ec90ca611d06cc418d908d6475211836828de326aa3faad6fed142db976fdef4"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_084.bin": [
+     7940,
+     "b1fe12eee7c8c6022988f1714f3aaa9b317c0574a9ade88fd38b9dc32ef52583"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_085.bin": [
+     2107,
+     "a01c382cc898063359afad816430f81629d4978feca2df93a7741f9aa13252fd"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_086.bin": [
+     578,
+     "61b7a3f5bbdcfae08e42e4d4ea8b0e1f6376b3128454067948e77fb855e28e05"
     ],
     "{GAME}/FD2.EXE": [
      509158,
@@ -13701,6 +13733,10 @@
      3649,
      "4cdce327d982a6395f2e04bf4bb86443ced098965932e326bce8127194d5b23e"
     ],
+    ".wsl_build/ctr/v5/ch25/r1_pre_units.bin": [
+     4960,
+     "4e0ee4c13703f74fe97e53285ac1769c04a0a98456cbe3ad9ba9d2870b2d31fb"
+    ],
     ".wsl_build/ctr/v5/ch25/r2.json": [
      4630,
      "e5cfc1e95983e14cdf45fd1943d113332d613d10b0f4cd50419c82cb49bec13d"
@@ -13712,6 +13748,18 @@
     ".wsl_build/ctr/v5/ch25/tt.bin": [
      4096,
      "3a8e220ff753bd1cb309863fd3b470445d3f2ed873bbffc1061f19e354429bc7"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_072.bin": [
+     5304,
+     "66819c24192d40027fd43ee22a649bdbccc5f7f3022420146e0b01685d9ab0c4"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_073.bin": [
+     1951,
+     "433bc1a2146c22598b42a53b1fbd901bce54bc4328147613128f69ad483b177b"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_074.bin": [
+     518,
+     "7c9e438f9e65e80ee507d02460f14d6e4d2b2be728ce98835407c95bcb2ef490"
     ],
     "{GAME}/FD2.EXE": [
      509158,
@@ -13747,6 +13795,18 @@
     ".wsl_build/ctr/v7/ch25/s1_pre_units.bin": [
      4960,
      "d085309c40873ed279d382a8d7b7af8565a4e8cb1c2d93326e976280544f4611"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_072.bin": [
+     5304,
+     "66819c24192d40027fd43ee22a649bdbccc5f7f3022420146e0b01685d9ab0c4"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_073.bin": [
+     1951,
+     "433bc1a2146c22598b42a53b1fbd901bce54bc4328147613128f69ad483b177b"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_074.bin": [
+     518,
+     "7c9e438f9e65e80ee507d02460f14d6e4d2b2be728ce98835407c95bcb2ef490"
     ]
    }
   },
@@ -14155,121 +14215,241 @@
      10930,
      "b7df7f62ab89486c2b710ed70a37f225fb423ed5d19e6808434a6ca9a343b00e"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_000.bin": [
+     147740,
+     "36054eed120a335b4d6d9fb3ee3a58f98115a364b18e5d904aaac2147b880f30"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_001.bin": [
      1200,
      "2401a8cabb1728c0fb5f9e7a0e40352fa8716ac2b4d30750ff44351ec9c9d092"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_002.bin": [
+     87915,
+     "2ed0c673f8ca21f28394d26706154516bb189f2deb44a5711ac6702775f69b98"
     ],
     "extracted/raw/FDSHAP/FDSHAP_003.bin": [
      1200,
      "4e2f58c83beb9bad05be7697f1a90520e387c1f037964145d4b8b27ccccc7bb1"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_004.bin": [
+     141101,
+     "3183baf8f8a20dad4caeded3084ddfe1e2b3aee5fc82e9f34aaa6d443a4130b5"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_005.bin": [
      1200,
      "092bbb4277fffcb2bcfa12b69b84b09a5d401536fd82193b9dc06615cd4924e6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_006.bin": [
+     91907,
+     "0fe62abbca1cebabfa7e88e9b9a574dfbe5bbacea43cd6b6730b4b57491b79ca"
     ],
     "extracted/raw/FDSHAP/FDSHAP_007.bin": [
      1200,
      "0985b57d2b77a69ddabdeb7acadb72295fdfdae1864d2937f086a3fa6157d05b"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_008.bin": [
+     129770,
+     "99b81c5622986b809d22be176bddff048cfd8dd8ccbcaa4e1eca45a787cfc3ac"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_009.bin": [
      1200,
      "2e7ea1f8e56210811f9ee8078b717b88aa3241aa926fff10fab61efe4f900759"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_010.bin": [
+     143139,
+     "c376b999b32c97822129c793ed6f1e144e0a292c41488f91dfdba9821b14bfce"
     ],
     "extracted/raw/FDSHAP/FDSHAP_011.bin": [
      1200,
      "bc8ef50db5006cb5e4592bc71f732f8d3940a506e26bd2e9dcc4c43bb09474b3"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_012.bin": [
+     98477,
+     "07203ec18bfb82338e17db884c0bc6991d14d9aee77fcebff8ac398fc0a21193"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_013.bin": [
      1200,
      "e8b046916e8c011705b72ad25a698c3e3ea8cfeafa3f93c00b8ae4397bac15fe"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_014.bin": [
+     185476,
+     "a8f86e173cacba2e8a28194c419f33e8057703b5b4237fba1487959d2ed86085"
     ],
     "extracted/raw/FDSHAP/FDSHAP_015.bin": [
      1600,
      "b9ff9e897d6a96d80954df2c937c8f079923a44f5dddc87b514f25a35bfaa567"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_016.bin": [
+     71939,
+     "13a494113fdfacd614235c796f4f35a60912a74d41ea9abde45421fc484b6757"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_017.bin": [
      1200,
      "6c04ecfed32f1025fd2a0ac6f7e394984b55a9399c8f9633aac098dc057785e6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_018.bin": [
+     55005,
+     "d02c8e208dc5c7cac4aa9fecd7eff8c6867a8134a0f83f003408e1d80607dd21"
     ],
     "extracted/raw/FDSHAP/FDSHAP_019.bin": [
      1200,
      "ada88caa2661aa0d762842018a10e09d65fc357f897b1a37ec04425ed658733b"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_020.bin": [
+     96401,
+     "3857996cf3aff7913900b72b56a1fd317fabb99b525ca8befaef78847d4e8d0b"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_021.bin": [
      1200,
      "175a463a3e94e9376d2f67da500d24edf07d12ae8b65486f07fdddbbb70055b6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_022.bin": [
+     153236,
+     "01fa2a01f29d8f9b9559db0847ce1963f8c67abd302cfd111de05f7126d5a2e3"
     ],
     "extracted/raw/FDSHAP/FDSHAP_023.bin": [
      1200,
      "be06c463d5f1166329c731c7cebdcf2f66fd966a17c08b61bfc22d17f1a699a6"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_024.bin": [
+     122859,
+     "ce04683f21ac82186a93668ee0f7575eb6e6002f717ac37beaaa5c85d803051b"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_025.bin": [
      1304,
      "7dbac97eccf6b15cb69262a5aedb11652686c6c39683539b28fb76cc9b929dcf"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_026.bin": [
+     141384,
+     "c17b56938626a4d72f5dd1f4ba3aa86346dd9cbb83408e41c2b94d47924874ca"
     ],
     "extracted/raw/FDSHAP/FDSHAP_027.bin": [
      1200,
      "256f859a2e98bc04922a5436dc26f8c40632e0b9aa8e5a35847fa40c83474418"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_028.bin": [
+     145208,
+     "612aef8160a4550daf6325fb1ecd227b6644b55efd68c4d22c7dfb5147e331fc"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_029.bin": [
      1400,
      "1f5a7ba5c3f185d34195b7aaf09485a19029165fa87696bdf333b42a01d8b324"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_030.bin": [
+     90098,
+     "449e776c47ba224aadc40b0a1f0389cbe8502a2bc3e9aa7c4fda76c18779a24a"
     ],
     "extracted/raw/FDSHAP/FDSHAP_031.bin": [
      1200,
      "3ff45657456a064ef2bb7350711e4760045069f4e813c0c624ea671acb4509fd"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_032.bin": [
+     116523,
+     "d1187a94d3bec0429909c5d7917cf69070ed69c5744030533e9c4de121017dd0"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_033.bin": [
      1200,
      "3e098fa8aa0787b3d8f065e4846e9a0fb46d271a5f31aed594cf15daad24d555"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_034.bin": [
+     169394,
+     "3042540521334b56d6cbb121f098c2ff0a294f0f4fdcc7354be951cf30217f7a"
     ],
     "extracted/raw/FDSHAP/FDSHAP_035.bin": [
      1320,
      "3103920319055ac94008fd8d6961e86aba80331ae3bb9c760d27ba8c5c9790c3"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_036.bin": [
+     65038,
+     "acf1c9ead66a860371bbed9a9f4b54fca274440d0969415e3322596632de8536"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_037.bin": [
      800,
      "9d242b1024b2d16dfabb7151cb5b4e652444c12bc0863f040195d289c2be7aa6"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_038.bin": [
+     89298,
+     "88afa54fc28b35aedf240b4583ce9063c63a7fb28f8d7c137814135acee194f5"
     ],
     "extracted/raw/FDSHAP/FDSHAP_039.bin": [
      800,
      "3c87cd81f9e880ab962d25ea8fb99f3f49e1b08ef30d727aa2538041dac5b677"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_040.bin": [
+     137945,
+     "581d1238204aea122ec816322a6e49b1400cb3e82c2fa2fdd603892ea7f6d1cf"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_041.bin": [
      1200,
      "0c221587ba2793f163b0d5d942d7d55bd8f478c49949497e5d686eb7aef3f69f"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_042.bin": [
+     115437,
+     "20e440a1c0f4237cd3efc4d5b075ba23ab02586e8e3b28fe7f622c7b6f728b34"
     ],
     "extracted/raw/FDSHAP/FDSHAP_043.bin": [
      1200,
      "579da9e17743e41c8400353eca66128561279fdee661a7a1ea7b480c318fe5ae"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_044.bin": [
+     157448,
+     "2652545a61512199ec83956fd9b910a5fb4132adfee0eaffbe7ec2e03160995e"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_045.bin": [
      1560,
      "1919c26b0417d2149e5cd87e3a502a32f93ba1d4b364884eb9826d5fcb243f30"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_046.bin": [
+     44035,
+     "1056eb8b1f7a530f8ecf84847295ecd2f8b682d85a75eaaad4557f374cb5bcf0"
     ],
     "extracted/raw/FDSHAP/FDSHAP_047.bin": [
      400,
      "b1aa7836772bde116c6f02446109e65fa58f6508387fbfb50b2fe508b8602581"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_048.bin": [
+     66549,
+     "6e18bdd8802133798fd786b14bcbdf3456a84ef13cdec4c0fad2d218fc451d13"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_049.bin": [
      720,
      "847b580cc32a44b02e7567d8e4faf251a33048a6fd27e4b97359b6a2ecf3d429"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_050.bin": [
+     43564,
+     "e6ceef38741b5d34951a2c2e89a3a7ce21ef64c97431cd23f788d282829e68ef"
     ],
     "extracted/raw/FDSHAP/FDSHAP_051.bin": [
      400,
      "786002c205b156aaf5c618afa5098997be184568ff95a47492d712b6a2e2d1a3"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_052.bin": [
+     90464,
+     "7a90946da3c9709366c482eb9a83fb502b58683e07fd842b48809f55be8bb4bd"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_053.bin": [
      1200,
      "c10bc222785f0933ec9230da495b5c011c0446c039cd7a0230194855a980d1d9"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_054.bin": [
+     79293,
+     "c12ffb10861db595eaa04e74f1cde73ba9de0482b7575718dbd72b57828ef685"
     ],
     "extracted/raw/FDSHAP/FDSHAP_055.bin": [
      1200,
      "db90ce2b6204dc351d9c2f7787457ab960d742873197d2d97f13bad1afef81f0"
     ],
+    "extracted/raw/FDSHAP/FDSHAP_056.bin": [
+     114092,
+     "4c510b3832c10443d386c7b764530d26be1d1198545e3a47cf238033f6a78bbf"
+    ],
     "extracted/raw/FDSHAP/FDSHAP_057.bin": [
      1560,
      "14541b903f214b938584de38066398d850954246d8c17e3602c6025770051639"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_058.bin": [
+     70475,
+     "3e69acb30eed79c72009f1964e8f3718b2f3834b455aae89f3190280e0e81abf"
     ],
     "extracted/raw/FDSHAP/FDSHAP_059.bin": [
      1200,

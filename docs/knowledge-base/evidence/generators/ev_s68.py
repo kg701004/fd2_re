@@ -17,10 +17,40 @@ sys.path.insert(0, str(S))
 import rng  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
+import export_units  # noqa: E402
+import parse_field  # noqa: E402
+from _terrain import map_size  # noqa: E402
 
 D = ROOT / ".wsl_build/ctr/v5/ch25"
 OUT = out_path("ai_seek_opponent_rand_trace_20261001.json")
 UB = 0x26EA0C
+REC = 80
+
+# 攻擊流程的常數直接讀 EXE 指令的運算元(map_attack_resolve 0x1e856 一帶)
+_exe = (GAME / "FD2.EXE").read_bytes()
+_meta = dl.parse_le(_exe)
+_code, _cbase = dl.load_code(_exe, _meta)
+_md = dl._capstone()
+
+
+def imm_at(addr: int, prefix: str) -> int:
+    """addr 那一條指令是「prefix + 立即值」,回傳立即值。"""
+    i = next(_md.disasm(_code[addr - _cbase:addr - _cbase + 16], addr, 1))
+    text = f"{i.mnemonic} {i.op_str}"
+    assert text.startswith(prefix), (hex(addr), text)
+    return int(text[len(prefix):], 0)
+
+
+PCT = imm_at(0x1E8C5, "mov ebx, ")            # 下數:rand() % 100
+assert imm_at(0x1EEEB, "mov ebx, ") == PCT     # 會心:rand() % 100
+ROLL2 = imm_at(0x1E8CF, "cmp edx, ")          # % 100 < 3 → 打 2 下
+DMG_MUL = (1 << imm_at(0x1EF78, "shl eax, ")) + 1  # shl 3 再加自己 = ×9
+DMG_DIV = imm_at(0x1EF7D, "mov ebx, ")        # ÷10
+K_DIV = imm_at(0x1EF91, "mov ebx, ")          # 亂數項範圍 = 基礎 ÷ 9
+
+
+def base_damage(ap: int, dp: int) -> int:
+    return max(0, (ap - dp) * DMG_MUL // DMG_DIV)
 
 # ---------------- A. 0x14121 ----------------
 subprocess.run([sys.executable, "-X", "utf8", str(S / "an_f.py"), "f3", "f3d", "f5"], check=True, cwd=S,
@@ -49,7 +79,7 @@ A = {
     "C_0x14b78_return": {"eip": f3c["eip"], "eax": f3c["eax"]},
     "C_final_xy": [u_after[53 * 80], u_after[53 * 80 + 1]],
     "C_turn1_unlogged_xy": [u_t1[53 * 80], u_t1[53 * 80 + 1]],
-    "grid_wh": list(struct.unpack_from("<HH", (D / "f3_4_pre.bin").read_bytes(), 0)),
+    "grid_wh": list(map_size((D / "f3_4_pre.bin").read_bytes())),
     "injection": [{"before": s["local"], "after": s["injected_local"]} for s in f5_inj],
 }
 for c in A["calls"]:
@@ -57,6 +87,8 @@ for c in A["calls"]:
         if it["eip"] == "0x141b5":
             assert it["grid_diff"] == 0 and it["sim_res"] == it["eax"], c
 assert A["C_final_xy"] == [172, 53] and A["C_turn1_unlogged_xy"] == [172, 53]
+_m24 = parse_field.parse_map(str(ROOT / "extracted/raw"), 24)
+assert A["grid_wh"] == [_m24["w"], _m24["h"]], A["grid_wh"]  # 傾印的地圖 = map 24
 
 # ---------------- B. rand 鏈 ----------------
 B = {}
@@ -67,7 +99,7 @@ for tag in ("r1", "r2"):
     for s in d["stops"]:
         if s["eip"] == "0x4ebfe":
             ok = s["val"] == rng.nxt(prev)
-            seq.append({"site": s["ret"], "val": s["val"], "mod100": s["val"] % 100, "chain": ok})
+            seq.append({"site": s["ret"], "val": s["val"], "mod100": s["val"] % PCT, "chain": ok})
             prev = s["val"]
         elif s["eip"] == "0x1e856":
             seq.append({"map_attack_sequence": s["args"][:2]})
@@ -86,11 +118,34 @@ m = lambda k, r: (lambda v: v % k == r)  # noqa: E731
 
 
 def hit(crit_thr: int, k: int, rem: int) -> list:
-    return [("hit", H), ("crit", lambda v: v % 100 >= crit_thr), ("dmg", m(k, rem))]
+    return [("hit", H), ("crit", lambda v: v % PCT >= crit_thr), ("dmg", m(k, rem))]
 
 
-# 正對照 r1:E(#19,職業 5,會心門檻 0x524a8[4] = 3)打索爾 1 下(基礎 90,k 10,餘 3),索爾(職業 9,門檻 5)反擊 1 下(餘 4)
-r1_model = [("e_roll", lambda v: v % 100 >= 3)] + hit(3, 10, 3) + [("s_roll", lambda v: v % 100 >= 3)] + hit(5, 10, 4)
+def one_hit_roll(v: int) -> bool:
+    return v % PCT >= ROLL2
+
+
+exe = (GAME / "FD2.EXE").read_bytes()
+meta = dl.parse_le(exe)
+CRIT = bytes(dl.object_bytes(exe, meta, 0x524A8, 30))
+# 會心門檻:與 tools/dump_exe_tables.py 另外抽的 resist_crit.json(職業 1..26)逐筆相同;之後一律以職業查
+CRIT_PCT = {c["cls"]: c["crit_pct"] for c in json.loads((ROOT / "docs/data/exe_tables/resist_crit.json").read_text(encoding="utf-8"))}
+assert all(CRIT[c - 1] == v for c, v in CRIT_PCT.items()), CRIT_PCT
+# 正對照 r1:由 r1 的單位傾印與停點算(E #19 打索爾 1 下、索爾反擊 1 下)
+_r1 = json.loads((D / "r1.json").read_text(encoding="utf-8"))
+(r1_e, r1_s), (r1_s2, r1_e2) = [s["args"][:2] for s in _r1["stops"] if s["eip"] == "0x1e856"]
+assert (r1_s2, r1_e2) == (r1_s, r1_e), (r1_e, r1_s)
+_u1 = (D / "r1_pre_units.bin").read_bytes()
+_rec1 = {i: _u1[i * REC:(i + 1) * REC] for i in (r1_e, r1_s)}
+_cls1 = {i: r[0x20] for i, r in _rec1.items()}
+# E 是 FDFIELD 單位:種族 / 職業 = EXE 建構表 raw key(+7)那列的前兩個 byte
+_ut = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
+_nat = export_units.native_constructor_for_raw_unit_key(_ut, _rec1[r1_e][7])
+assert [_rec1[r1_e][0x1F], _cls1[r1_e]] == _nat["record"][:2], (_rec1[r1_e][0x1F], _cls1[r1_e], _nat)
+_apdp1 = {i: struct.unpack_from("<2H", r, 0x48) for i, r in _rec1.items()}
+r1_rem_e, r1_rem_s = (s["edx"] for s in _r1["stops"] if s["eip"] == "0x1efce")
+r1_model = [("e_roll", one_hit_roll)] + hit(CRIT_PCT[_cls1[r1_e]], base_damage(_apdp1[r1_e][0], _apdp1[r1_s][1]) // K_DIV, r1_rem_e) + \
+    [("s_roll", one_hit_roll)] + hit(CRIT_PCT[_cls1[r1_s]], base_damage(_apdp1[r1_s][0], _apdp1[r1_e][1]) // K_DIV, r1_rem_s)
 c1 = rng.enumerate_states(r1_model)
 truth = int(B["r1"]["seed_at_enemy_phase_entry"], 16)
 C_control = {"model": "E 下數(>=3)、命中、會心(>=3)、傷害 %10 == 3;索爾下數(>=3)、命中、會心(>=5)、傷害 %10 == 4",
@@ -105,9 +160,6 @@ rems = [s["edx"] for s in hp]
 assert rems == [2, 1, 4] and [s["ebp"] for s in hp] == [47, 127, 130]
 # 會心門檻 0x524a8[職業 - 1] 與武器類型(道具列 +9)由 EXE 讀;雙方職業與武器由續六十六交手前的單位傾印讀
 # (火龍 #76、索爾 #0)。職業 26 讀到的 [25] = 0 落在門檻表尾端的 0 區,表的實際長度未確認(語意照舊)。
-exe = (GAME / "FD2.EXE").read_bytes()
-meta = dl.parse_le(exe)
-CRIT = bytes(dl.object_bytes(exe, meta, 0x524A8, 30))
 c0u = (ROOT / ".wsl_build/ctr/v3/ch29/c0_pre_units.bin").read_bytes()
 DRAGON, SOL = 76, 0
 cls = {u: c0u[u * 80 + 0x20] for u in (DRAGON, SOL)}
@@ -115,14 +167,19 @@ wpn = {u: c0u[u * 80 + 0xB] for u in (DRAGON, SOL)}
 wtype = {u: bytes(dl.object_bytes(exe, meta, 0x602AD + wpn[u] * 0x17, 0x17))[9] for u in (DRAGON, SOL)}
 assert (cls[DRAGON], cls[SOL], wpn[DRAGON], wpn[SOL]) == (26, 9, 103, 31), (cls, wpn)
 assert 3 not in wtype.values()  # 武器類型 3 才會多打一下;兩邊都不是
-thr = {u: CRIT[cls[u] - 1] for u in (DRAGON, SOL)}
-kd, ks = ev66["predicted"]["base_dragon_to_sol"] // 9, ev66["predicted"]["base_sol_to_dragon"] // 9
-dragon = [("d_roll", lambda v: v % 100 >= 3)] + hit(thr[DRAGON], kd, rems[0])
-modelA = dragon + [("s_roll", None)] + hit(thr[SOL], ks, rems[1]) + hit(thr[SOL], ks, rems[2])
+_irows = [bytes.fromhex(r["raw"]) for r in
+          json.loads((ROOT / "docs/data/exe_tables/native_item_effect_rows.json").read_text(encoding="utf-8"))]
+assert all(_irows[wpn[u]][9] == wtype[u] for u in wtype), wtype  # 與 dump_exe_tables 另外抽的道具列相同
+thr = {u: CRIT_PCT[cls[u]] for u in (DRAGON, SOL)}
+kd, ks = ev66["predicted"]["base_dragon_to_sol"] // K_DIV, ev66["predicted"]["base_sol_to_dragon"] // K_DIV
+rem_d, rem_s1, rem_s2 = rems
+dragon = [("d_roll", one_hit_roll)] + hit(thr[DRAGON], kd, rem_d)
+modelA = dragon + [("s_roll", None)] + hit(thr[SOL], ks, rem_s1) + hit(thr[SOL], ks, rem_s2)
 cA = rng.enumerate_states(modelA)
-two = [x for x in cA if x["vals"][4] % 100 < 3]
-modelB = dragon + [("a_roll", lambda v: v % 100 >= 3)] + hit(thr[SOL], ks, rems[1]) + \
-    [("b_roll", lambda v: v % 100 >= 3)] + hit(thr[SOL], ks, rems[2])
+ROLL_I = [n for n, _ in modelA].index("s_roll")  # 索爾下數亂數在呼叫順序裡的位置
+two = [x for x in cA if not one_hit_roll(x["vals"][ROLL_I])]
+modelB = dragon + [("a_roll", one_hit_roll)] + hit(thr[SOL], ks, rem_s1) + \
+    [("b_roll", one_hit_roll)] + hit(thr[SOL], ks, rem_s2)
 cB = rng.enumerate_states(modelB)
 C = {
     "inputs_from_s66": {"damage": [s["ebp"] for s in hp], "rem": rems, "k": [kd, ks, ks],
@@ -130,11 +187,11 @@ C = {
                         "weapon_types": {str(wpn[u]): wtype[u] for u in (DRAGON, SOL)}},
     "control_r1": C_control,
     "modelA_one_counter_two_hits": {"candidates": len(cA), "with_roll_lt3": len(two),
-                                    "roll_values": sorted({x["vals"][4] % 100 for x in two}),
-                                    "states": [{"s0": hex(x["s0"]), "roll_rand": x["vals"][4]} for x in two]},
+                                    "roll_values": sorted({x["vals"][ROLL_I] % PCT for x in two}),
+                                    "states": [{"s0": hex(x["s0"]), "roll_rand": x["vals"][ROLL_I]} for x in two]},
     "modelB_two_counters_one_hit_each": {"candidates": len(cB),
                                          "note": "傷害資料本身排除不了;排除靠反擊只有一個呼叫點(0x1560e)與續六十七的實測"},
-    "expected_random_count": round(65536 / (5 * 14 * 14), 1),
+    "expected_random_count": round(65536 / (kd * ks * ks), 1),
 }
 assert C["modelA_one_counter_two_hits"]["roll_values"] == [0]
 ev = {"note": "DOSBox-X;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 25 章戰場 = map 24,來源存檔 source_ch27.SAV 經 "

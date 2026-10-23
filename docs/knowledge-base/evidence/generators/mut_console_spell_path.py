@@ -30,7 +30,7 @@ MUTS = {
         ("C1/C2 施法後印出互換", f'"post_print": "{C1P}"', f'"post_print": "{C2P}"'),
         ("單位表基址偏 1 筆", "UNITS, REC = 0x26BDC8, 0x50", "UNITS, REC = 0x26BD78, 0x50"),
         # 改用 MP 上限的變異不具鑑別力(施法前 MP 都是滿的),改為法術位元欄錯位一格
-        ("C1 設定印出法術位元欄錯位", "b[0x1A:0x1F].hex(), b[0xA], b[0xB]]", "b[0x1B:0x20].hex(), b[0xA], b[0xB]]"),
+        ("C1 設定印出法術位元欄錯位", "bits(b), b[0xA], b[0xB]]", "b[0x1B:0x20].hex(), b[0xA], b[0xB]]"),
     ],
     "ev_spell9_path": [
         ("無變異(對照)", None, None),

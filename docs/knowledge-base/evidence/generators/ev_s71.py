@@ -42,16 +42,57 @@ def log_stops(path: Path) -> list[dict]:
             "pending_before", "pending_after", "esi"]
     out = []
     for line in path.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"\s*(\S+) (\{.*)", line)
+        m = re.match(r"\s*(?P<key>\S+) (?P<rec>\{.*)", line)
         if not m:
             continue
-        s, rec = m.group(2), {"key": m.group(1)}
+        s, rec = m["rec"], {"key": m["key"]}
         for k in keys:
             mm = re.search(r'"%s": ("[^"]*"|\[[^\]]*\]|-?\d+)' % re.escape(k), s)
             if mm:
                 rec[k] = json.loads(mm.group(1))
         out.append(rec)
     return out
+
+
+RUNTIME_FIELDS = ("turn_counter", "runtime_count", "chapter", "camera_x", "camera_y", "cursor_x", "cursor_y",
+                  "visible_cursor_x", "visible_cursor_y", "persistent_count")
+
+
+def runtime(plain: bytes) -> dict[str, int]:
+    """存檔明文 +0x30c3 起的執行期標頭(0x10010 讀檔時還原)。"""
+    return dict(zip(RUNTIME_FIELDS, plain[F.CURRENT_RUNTIME_OFFSET:F.CURRENT_RUNTIME_OFFSET + len(RUNTIME_FIELDS)]))
+
+
+def slot_meta(plain: bytes, slot: int = 0) -> tuple[int, int]:
+    """存檔槽名冊之後的中繼資料:(章節 byte, 名冊人數 byte)。"""
+    s, _ = F.slot_bounds(slot)
+    chapter, count, *_ = plain[s + F.ROSTER_SIZE:s + F.SLOT_SIZE]
+    return chapter, count
+
+
+def records(buf: bytes) -> list[bytes]:
+    """把一段名冊切成 0x50 的紀錄(長度必須是整數筆)。"""
+    assert len(buf) % F.UNIT_SIZE == 0, len(buf)
+    return [buf[i:i + F.UNIT_SIZE] for i in range(0, len(buf), F.UNIT_SIZE)]
+
+
+def char_ids(recs: list[bytes]) -> list[int]:
+    return [r[F.UNIT_CHARACTER_ID_OFFSET] for r in recs]
+
+
+def join_fields_match(rec: bytes, char_id: int) -> bool:
+    """rec 的 +5..+8 是 0x112a5 對新紀錄的固定寫入值:+5 = 0、+6 = 2、+7 = +8 = char_id(靜態反組譯)。"""
+    return list(rec[5:9]) == [0, 2, char_id, char_id]
+
+
+def text_entries(f: bytes) -> int:
+    """FDTXT 偏移表的項數:第一個字 = 表的 byte 數(第一條字串緊接在表後);每項的起點都在檔內且遞增。"""
+    first = struct.unpack_from("<H", f, 0)[0]
+    n = first // 2
+    assert 2 * n == first, first
+    starts = [struct.unpack_from("<h", f, 2 * k)[0] for k in range(n)]  # 0x15fb9:esi = 表首 + word[idx]
+    assert starts == sorted(starts) and starts[0] == first and starts[-1] < len(f), starts
+    return n
 
 
 def stops_json(path: Path) -> list[dict]:
@@ -68,14 +109,26 @@ assert ev["_meta"]["exe_md5"] == "33464c81e6a364fd0660141139aa8e6e"
 # ---------------- A ----------------
 f25 = (RAW / "FDTXT/FDTXT_025.bin").read_bytes()
 f01 = (RAW / "FDTXT/FDTXT_001.bin").read_bytes()
-font_n = len((RAW / "FDOTHER/FDOTHER_004.bin").read_bytes()) // 32
-dump = (A_ / "t1_txt_239494.bin").read_bytes()
+_font = (RAW / "FDOTHER/FDOTHER_004.bin").read_bytes()
+GLYPH = 16 * 16 // 8  # 16×16、每像素 1 bit(0x4ed7a:font + glyph*32)
+assert len(_font) % GLYPH == 0, len(_font)
+font_n = len(_font) // GLYPH
+_dump_p = A_ / "t1_txt_239494.bin"
+TXT_BASE = int(_dump_p.stem.rsplit("_", 1)[1], 16)  # 傾印檔名 = 執行期緩衝區位址
+dump = _dump_p.read_bytes()
 matches = [n for n in range(35) if (g := (RAW / f"FDTXT/FDTXT_{n:03d}.bin").read_bytes()) and dump[:len(g)] == g]
 assert matches == [25], matches
-s_dump11, s_dump3 = simulate(dump, 11, font_n), simulate(dump, 3, font_n)
-s_file11, s_ch1 = simulate(f25, 11, font_n), simulate(f01, 11, font_n)
+n01, n25 = text_entries(f01), text_entries(f25)
 la = log_stops(A_ / "t1.log")
-i0 = next(i for i, s in enumerate(la) if s.get("eip") == "0x15f84" and s.get("idx") == 11)
+# 事件 0 讀的那條 = 實機 0x15f84 停點裡索引超出 FDTXT_025 偏移表的一筆(只有一筆)
+_over = [i for i, s in enumerate(la) if s.get("eip") == "0x15f84" and s.get("idx", -1) >= n25]
+assert len(_over) == 1, _over
+i0, = _over
+IDX = la[i0]["idx"]
+assert IDX == 11 < n01, IDX  # 第 1 章的同一索引在表內,作對照
+s_dump11, s_dump3 = simulate(dump, IDX, font_n), simulate(dump, 3, font_n)
+s_file11, s_ch1 = simulate(f25, IDX, font_n), simulate(f01, IDX, font_n)
+assert s_file11["table_word_offset"] == 2 * IDX, s_file11["table_word_offset"]
 # 0x15f84(idx 11) 之後到第一個 end 之間的停點(dlg 模式斷了全部 10 個控制碼分支)
 seg = []
 for s in la[i0 + 1:]:
@@ -98,7 +151,7 @@ ev["A_garbled_dialog"] = {
         "glyph_draw": "非控制碼的字碼一律交給 0x4ed7a(draw_glyph16):font + glyph*32,沒有範圍檢查;bg 非 0 先把 16×16 填成 bg",
         "box_state": "[0x53c67] = 0(沒有開框碼)時字模從引數 3(0xa0000,螢幕左上角)開始畫,每字 +0x10",
         "control_codes": "-1 結束、-2 換行、-3 換頁、-4/-5 巢狀、-6 數字、-0x11/-0x12 以角色 id 開框、-0x13/-0x14 以單位索引開框;其餘都當字模"},
-    "files": {"FDTXT_001_entries": struct.unpack_from("<H", f01, 0)[0] // 2, "FDTXT_025_entries": struct.unpack_from("<H", f25, 0)[0] // 2,
+    "files": {"FDTXT_001_entries": n01, "FDTXT_025_entries": n25,
               "FDTXT_025_len": len(f25), "font_glyphs_FDOTHER_004": font_n},
     "ch1_control_idx11": {"start": s_ch1["start"], "events": s_ch1["events"], "text": "哈諾:『老爸!老爸!』(decode_story_text)"},
     "ch25_idx11_static": {"table_word_offset": s_file11["table_word_offset"], "start": s_file11["start"], "start_odd": s_file11["start_odd"],
@@ -125,28 +178,43 @@ assert [4, 4, [33, 1]] in copies and [4, 16, [33, 1]] in copies
 tb, ta = F.decode((A_ / "tav_before.SAV").read_bytes()), F.decode((A_ / "tav_after.SAV").read_bytes())
 town = (A_ / "roster_town.bin").read_bytes()
 o = F.SLOT_OFFSET
-slot_after = ta[o:o + 0xA00]
+slot_after = ta[o:o + F.ROSTER_SIZE]
+rt_a, rt_b = runtime(sa), runtime(sb)
+snap = records(sa[R:R + F.ROSTER_SIZE])
+snap_ids = char_ids(snap)[:rt_a["persistent_count"]]
+*_, snap_new = snap[:rt_a["persistent_count"]]
+(ch_b, cnt_b), (ch_a, cnt_a) = slot_meta(tb), slot_meta(ta)
+slot_ids = F.roster_character_ids(ta, 0, cnt_a)
+s_recs = records(slot_after)
+hano = [i for i, c in enumerate(char_ids(s_recs)[:cnt_a]) if c == 1]
+assert hano == [4, 16], hano
+s_r4, s_r16 = (s_recs[i] for i in hano)
+# 戰中事件 0 的 join(1):快照人數 = 戰前存檔人數 + 1,第 17 筆 = 新的哈諾(+7 = +8 = 1,0x112a5 的寫入值)
+assert rt_a["persistent_count"] == cnt_b + 1 and snap_ids[-1] == 1 and join_fields_match(snap_new, 1), (rt_a, cnt_b)
+# 戰後 0x24df2:JOIN(26) → 0x11506 → JOIN(29);0x11506 把戰場單位 #4(+7/+8 = 33/1)寫回兩筆哈諾
+assert slot_ids == snap_ids + [26, 29] and ch_a == ch_b + 1, (slot_ids, ch_b, ch_a)
+assert [list(s_r4[7:9]), list(s_r16[7:9])] == [c[2] for c in copies if c[1] in hano] == [[33, 1], [33, 1]], copies
 ev["B_duplicate_persists"] = {
     "battle_save_v9a": {
         "path": "系統選單第 0 項 → 子選單 0x19df7 第 1 項 → 文字 0x19a「要記錄戰況嗎?」→ YES",
         "static": "0x19ffd..0x1a0b0:0xa00 bytes 名冊 [0x53bf7] 拷到 buffer +0x8a3,[0x53bfb] 的低 byte 存到 +0x30c3+9",
         "changed_bytes": len(changed),
         "changed_outside_0..0x312b_and_checksum": sum(F.SLOT_OFFSET <= i < F.CHECKSUM_OFFSET for i in changed),
-        "snapshot_count_byte": sa[M + 9], "snapshot_roster_equals_memory": sa[R:R + 0xA00] == memr,
-        "snapshot_char_ids": [sa[R + i * 0x50 + 8] for i in range(sa[M + 9])],
-        "rec16_portrait_+7": sa[R + 16 * 0x50 + 7], "before_snapshot_count_chapter": [sb[M + 9], sb[M + 2]]},
+        "snapshot_count_byte": rt_a["persistent_count"], "snapshot_roster_equals_memory": b"".join(snap) == memr,
+        "snapshot_char_ids": snap_ids,
+        "rec16_portrait_+7": snap_new[7], "before_snapshot_count_chapter": [rt_b["persistent_count"], rt_b["chapter"]]},
     "writeback_v9a": {
         "static": "0x11506(sync_party):對每個戰場單位逐筆比對名冊 +8,相同就 memcpy 0x50(0x11572)後 jmp 0x1153b 繼續比下一筆,不跳出",
         "post_handler": "0x24df2(第 25 章戰後):JOIN(26) → 0x11506 → JOIN(29)",
         "copies_unit_roster_+7+8": copies},
     "tavern_save_v9a": {
         "path": "戰後進城鎮酒店 → 「還有事嗎?」第 1 個圖示(存檔)→ 第 1 槽",
-        "slot0_before": {"chapter": tb[o + 0xA00], "count": tb[o + 0xA01]},
-        "slot0_after": {"chapter": ta[o + 0xA00], "count": ta[o + 0xA01],
-                        "char_ids": [ta[o + i * 0x50 + 8] for i in range(ta[o + 0xA01])]},
+        "slot0_before": {"chapter": ch_b, "count": cnt_b},
+        "slot0_after": {"chapter": ch_a, "count": cnt_a,
+                        "char_ids": slot_ids},
         "slot_roster_equals_memory": slot_after[:len(town)] == town,
-        "rec4_equals_rec16": slot_after[4 * 0x50:5 * 0x50] == slot_after[16 * 0x50:17 * 0x50],
-        "rec16_hex": slot_after[16 * 0x50:17 * 0x50].hex()},
+        "rec4_equals_rec16": s_r4 == s_r16,
+        "rec16_hex": s_r16.hex()},
 }
 
 # ---------------- C ----------------
@@ -157,12 +225,14 @@ hang = json.loads((C_ / "hang.json").read_text(encoding="utf-8"))
 assert all(x["esi"] == 40 and x["cursor"] == [24, 14] and x["eip"] == "0x12d3b" for x in hang["xloop"])
 lb = log_stops(B_ / "t1.log")
 ctl = [s for s in lb if s.get("eip") in ("0x1636c", "0x165ac", "0x12cea", "0x165db")]
+open_off = cam[0]["esi"] - TXT_BASE
+assert struct.unpack_from("<h", dump, open_off)[0] in (-0x13, -0x14), open_off  # 0xFFED / 0xFFEC:以單位索引開框
 ev["C_offmap_speaker"] = {
     "static": {"0xFFEC/0xFFED": "運算元是單位索引,直接取 [0x53a45]+索引*0x50 的 +0/+1,旗標 0x70/2 → 0x165ac 一定呼叫 camera_step_to",
                "0xFFEF/0xFFEE": "運算元是角色 id,0x12c60 在戰場找到活著的才回索引(旗標 2/0x70 → 移鏡頭);找不到回 -1(旗標 0 → 不移鏡頭),"
                                 "此時 [0x53c1b] 是名冊裡最後一筆同 id 的紀錄,名冊也沒有就是 0(頭像讀 [0+7])",
                "clamp": "cursor_step_right / down 在 W−1 / H−1 不再加;left / up 在 0 不再減。座標是無號 byte,所以只有往右、往下越界會卡"},
-    "test_v9c": {"trigger": trig, "after_trigger": cam, "open_code_off_rel_0x239494": cam[0]["esi"] - 0x239494, "hang_samples": hang["samples"], "x_loop_stops": hang["xloop"],
+    "test_v9c": {"trigger": trig, "after_trigger": cam, "open_code_off_rel_0x239494": open_off, "hang_samples": hang["samples"], "x_loop_stops": hang["xloop"],
                  "return_points_0x165db_0x12dab_hit": False},
     "control_v9b_t1": {"stops": ctl,
                        "note": "游標跟著走出地圖的單位 C 已在 x = 171,往左走到 40 不會被夾住,camera_step_to 返回(0x165db 停點)"},
@@ -174,9 +244,13 @@ jn = next(s for s in f1 if s["eip"] == "0x112a5" and s.get("ret") == "0x34543")
 af = next(s for s in f1 if s["eip"] == "0x34543")
 tb_ = bytes.fromhex(jn["tail_before"])
 ta_ = bytes.fromhex(af["tail_after"])
-ch = [i - 0x50 for i in range(len(ta_)) if ta_[i] != tb_[i]]
+FIRST_KEY = "rec32_first16"  # 名冊之後的前 N bytes(N 取自鍵名)
+U = F.UNIT_SIZE  # tail_before / after 從名冊最後一筆(第 32 筆)開始
+HEAP_HDR = bytes.fromhex("05030000")
+ch = [i - U for i in range(len(ta_)) if ta_[i] != tb_[i]]
 pal = (B_ / "pal_before_full.bin").read_bytes()
-assert tb_[0x50:0x54] == ta_[0x50:0x54] == bytes.fromhex("05030000") and tb_[0x54:] == pal[4:4 + len(tb_) - 0x54]
+assert tb_[U:U + 4] == ta_[U:U + 4] == HEAP_HDR and tb_[U + 4:] == pal[4:4 + len(tb_) - U - 4]
+assert ch and min(ch) >= 0 and max(ch) < U and join_fields_match(ta_[U:2 * U], 1), ch  # 只改第 33 筆的範圍
 s33 = F.decode((B_ / "sav33_after.SAV").read_bytes())
 m33 = (B_ / "mem_roster33.bin").read_bytes()
 w1b = stops_json(B_ / "w1.json")
@@ -188,6 +262,15 @@ assert hdr_change["copy_that_wrote_it"] == [4, 32]
 t35 = F.decode((B_ / "tav35_after.SAV").read_bytes())
 m35 = (B_ / "roster35.bin").read_bytes()
 fresh = (D_ / "roster_fresh.bin").read_bytes()
+rt33 = runtime(s33)
+r35, r_fresh = records(m35), records(fresh)
+ids35 = char_ids(r35)
+ch35, cnt35 = slot_meta(t35)
+# 記錄戰況的人數 = join 後的實機人數(33);戰後兩次 JOIN(26、29)→ 35 筆,第 33..35 筆 = 1、26、29
+assert rt33["persistent_count"] == af["roster"]["count"] == 33 and cnt35 == len(r35) == 35, (rt33, cnt35, len(r35))
+assert ids35[F.ROSTER_UNITS:] == [1, 26, 29] and ch35 == ch_a, (ids35, ch35)
+# 全新實例讀檔:前 32 筆 = 存檔槽的 32 筆;名冊之後同樣是 0x305 區塊的標頭(新配置,與戰中相同的排列)
+assert char_ids(r_fresh)[:F.ROSTER_UNITS] == F.roster_character_ids(t35, 0) and fresh[F.ROSTER_SIZE:F.ROSTER_SIZE + 4] == HEAP_HDR
 ev["D_roster_full"] = {
     "static": {"alloc": "0x25d54 push 0xa00; call 0x3706e(malloc)→ [0x53bf7]:剛好 32 筆",
                "join": "0x112a5 不檢查容量;寫入 +5..+0x4f 的大部分欄位,不寫 +0..+4、+0x17、+0x19",
@@ -195,19 +278,21 @@ ev["D_roster_full"] = {
                "natural_max": "全 EXE 28 個 call 0x112a5、28 個不同角色(per_chapter_join_table.json)→ 正常流程最多 28 人;到 33 要 5 次以上重複的事件 0"},
     "join_overflow_v9b": {"filled": jn["filled"], "count_before": jn["count"], "count_forced": jn["count_forced"],
                           "count_after": af["roster"]["count"],
-                          "changed_offsets_rel_roster+0xa00": ch, "heap_header_after": ta_[0x50:0x54].hex(),
-                          "palette_bytes_changed": len([c for c in ch if c >= 4]), "rec32_hex": ta_[0x50:0xA0].hex()},
-    "battle_save_33": {"count_byte": s33[M + 9], "roster_0xa00_equals_memory": s33[R:R + 0xA00] == m33[:0xA00],
-                       "record32_saved": s33[R + 0xA00:R + 0xA50] == m33[0xA00:0xA50]},
+                          "changed_offsets_rel_roster+0xa00": ch, "heap_header_after": ta_[U:U + len(HEAP_HDR)].hex(),
+                          "palette_bytes_changed": len([c for c in ch if c >= len(HEAP_HDR)]), "rec32_hex": ta_[U:][:U].hex()},
+    "battle_save_33": {"count_byte": rt33["persistent_count"],
+                       "roster_0xa00_equals_memory": s33[R:R + F.ROSTER_SIZE] == m33[:F.ROSTER_SIZE],
+                       "record32_saved": s33[R + F.ROSTER_SIZE:R + F.ROSTER_SIZE + U] == m33[F.ROSTER_SIZE:F.ROSTER_SIZE + U]},
     "writeback_33": {"copies_unit_roster_hdr": cp, "header_overwritten_at": hdr_change,
                      "header_new_value_is_unit4_+0..+3": cp[k_hdr][2] == "102b0400",
                      "screen": "酒店畫面顏色錯亂(w1_after2.png):第 32..34 筆寫進調色盤快取,淡入時套用"},
-    "tavern_save_35": {"memory_count": len(m35) // 0x50, "memory_ids_32_34": [m35[i * 0x50 + 8] for i in (32, 33, 34)],
-                       "slot_count_byte": t35[o + 0xA01], "slot_chapter": t35[o + 0xA00],
-                       "slot_roster_equals_memory_first_0xa00": t35[o:o + 0xA00] == m35[:0xA00]},
-    "fresh_load_v9d": {"count": len(fresh) // 0x50, "ids_0_31": [fresh[i * 0x50 + 8] for i in range(32)],
+    "tavern_save_35": {"memory_count": len(r35), "memory_ids_32_34": ids35[F.ROSTER_UNITS:],
+                       "slot_count_byte": cnt35, "slot_chapter": ch35,
+                       "slot_roster_equals_memory_first_0xa00": t35[o:o + F.ROSTER_SIZE] == m35[:F.ROSTER_SIZE]},
+    "fresh_load_v9d": {"count": len(r_fresh), "ids_0_31": char_ids(r_fresh)[:F.ROSTER_UNITS],
                        "rec32_34_+7_+8": [[fresh[i * 0x50 + 7], fresh[i * 0x50 + 8]] for i in (32, 33, 34)],
-                       "rec32_first16": fresh[0xA00:0xA10].hex(), "header_after_roster": fresh[0xA00:0xA04].hex(),
+                       FIRST_KEY: fresh[F.ROSTER_SIZE:F.ROSTER_SIZE + int(FIRST_KEY.removeprefix("rec32_first"))].hex(),
+                       "header_after_roster": fresh[F.ROSTER_SIZE:F.ROSTER_SIZE + len(HEAP_HDR)].hex(),
                        "screen": "酒店隊員清單底部:圖示是雜訊,出現「約拿」(id 21)、「凱麗」(id 12)與一筆名稱亂碼(c3_bottom.png);讀檔與清單都沒有當掉"},
 }
 assert ev["D_roster_full"]["fresh_load_v9d"]["rec32_34_+7_+8"] == [[63, 60], [25, 21], [20, 12]]

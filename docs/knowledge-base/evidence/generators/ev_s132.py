@@ -108,8 +108,13 @@ def cut(recs: list[tuple[int, int, int, int]]) -> dict:
             cur, end_seen = None, True
     assert cur is None and len(loops) == 1, len(loops)
     gaps = lambda ts: [(b - a) & 0xFFFF for a, b in zip(ts, ts[1:])]    # noqa: E731
-    return {"loop": loops[0], "last0": pre_last[0], "gaps_before12": gaps(ticks_before[-13:]),
-            "gaps_after_first": gaps(ticks_after[:13])}
+    n_gap = int(GAP_KEY.removeprefix("gaps_before"))  # 取的間隔數 = 鍵名的數字(n 個間隔要 n + 1 個 tick)
+    before, after = gaps(ticks_before[-(n_gap + 1):]), gaps(ticks_after[:n_gap + 1])
+    assert len(before) == len(after) == n_gap, (len(before), len(after))
+    return {"loop": loops[0], "last0": pre_last[0], GAP_KEY: before, "gaps_after_first": after}
+
+
+GAP_KEY = "gaps_before12"
 
 
 def judge(loop: list[dict], last0: int | None, drawn: list[int]) -> dict[str, bool]:
@@ -159,7 +164,7 @@ for name, path in {"lc130a": LOG_A, **LOGS}.items():
     runs[name] = {"raw_sha256": sha(path), "E_records": len(recs), "drawn": drawn, "adv": [f["adv"] for f in loop],
                   "tick_at_draw": [f["ticks"][0] for f in loop], "tick_after": [f["tick_after"] for f in loop],
                   "last_adv_before_loop": c["last0"], "redraw_tick_crossings": crossings(loop),
-                  "normal_redraw_gaps_before_loop": c["gaps_before12"],
+                  "normal_redraw_gaps_before_loop": c[GAP_KEY],
                   "normal_redraw_gaps_after_loop": c["gaps_after_first"], "checks": j}
     if name != "lc130a":
         # 續一百三十一的等待條件:沒有補零的 EIP 永遠數到 0;補零後是 8
@@ -193,6 +198,7 @@ assert all(len(b) == 0x25680 for b in bufs.values())
 pos = {(units[i * 80], units[i * 80 + 1]) for i in range(len(units) // 80)}
 assert (9, 20) not in pos and (10, 20) not in pos, "(9, 20) / (10, 20) 有單位"
 icon = (HUD_X0 + HUD_DX, HUD_X0 + HUD_DX + CELL - 1, HUD_ROW + HUD_DY, HUD_ROW + HUD_DY + CELL - 1)   # x0, x1, y0, y1(視窗像素)
+icon_x0, icon_x1, icon_y0, icon_y1 = icon
 
 
 def px(b: bytes, x: int, y: int) -> int:
@@ -247,7 +253,7 @@ ev = {
     "runs": runs,
     "ticks_per_two_iterations": two,
     "query_bug_s131": query_bug,
-    "hud_icon_box_view_px": {"x": icon[:2], "y": icon[2:]},
+    "hud_icon_box_view_px": {"x": [icon_x0, icon_x1], "y": [icon_y0, icon_y1]},
     "hud_pairs": hud,
     "status": {
         "s131_blocked_retracted": "LOG CONFIRMED:續一百三十一的「四次都沒錄到 0x152a0」是查詢寫錯 —— 等待條件 grep `^E [0-9]* 1b12a0`,"

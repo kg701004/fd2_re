@@ -49,40 +49,52 @@ for _stem in CONSOLE:
 assert [s[0] for s in STOPS] == ["r1"] * 6 + ["r2"] * 6, STOPS
 
 
+REST_DIV = 5  # 回復量 = MaxHP / 5
+
+
 def rest(hp: int, mx: int, b25: int, b26: int):
     """0x13fd4 的靜態規則:HP != MaxHP 且 +0x25、+0x26 都為 0 時寫入 min(HP + MaxHP/5, MaxHP),否則回 0 不寫。"""
     if hp == mx or b25 or b26:
         return None
-    return min(hp + mx // 5, mx)
+    return min(hp + mx // REST_DIV, mx)
 
 
 rows = []
 for run, n, unit, kind, newhp in STOPS:
     r = (D / f"rg_u_{run}_{n}.bin").read_bytes()
     hp, mx = struct.unpack_from("<HH", r, 0x40)
+    b25, b26 = r[0x25], r[0x26]
     # 終端輸出與傾印必須一致(證明這段輸出與 rg_u_* 傾印是同一次執行、停點編號對得上):
     # 入口行的 +0x25 / +0x26 / HP / MaxHP;寫入行的 MaxHP(ESI)與 MaxHP/5(EAX)
-    assert CON_ENTRY[run, n] == (r[0x25], r[0x26], hp, mx), (run, n, CON_ENTRY[run, n])
-    assert kind != "write" or CON_WRITE[run, n] == (mx, mx // 5), (run, n, CON_WRITE.get((run, n)))
-    pred = rest(hp, mx, r[0x25], r[0x26])
+    assert CON_ENTRY[run, n] == (b25, b26, hp, mx), (run, n, CON_ENTRY[run, n])
+    assert kind != "write" or CON_WRITE[run, n] == (mx, mx // REST_DIV), (run, n, CON_WRITE.get((run, n)))
+    pred = rest(hp, mx, b25, b26)
     got = newhp if kind == "write" else None
-    assert pred == got, (run, unit, hp, mx, r[0x25], r[0x26], pred, got)
-    rows.append({"run": run, "stop": n, "unit": unit, "at_entry": {"hp": hp, "maxhp": mx, "b25": r[0x25], "b26": r[0x26]},
+    assert pred == got, (run, unit, hp, mx, b25, b26, pred, got)
+    rows.append({"run": run, "stop": n, "unit": unit, "at_entry": {"hp": hp, "maxhp": mx, "b25": b25, "b26": b26},
                  "predicted_new_hp": pred, "observed": kind, "observed_new_hp": got,
-                 "round_instead_of_floor_would_give": None if pred is None else min(hp + round(mx / 5), mx)})
+                 "round_instead_of_floor_would_give": None if pred is None else min(hp + round(mx / REST_DIV), mx)})
 
-# 前後傾印:狀態計數與其他觀察
+# 前後傾印:狀態計數與其他觀察。列出的單位 = 兩輪進過 0x13fd4 的單位
+REST_UNITS = sorted({x["unit"] for x in rows})
+records = lambda buf: [buf[i:i + 80] for i in range(0, len(buf), 80)]
+# 入口傾印(rg_u_*)的單位欄位與前傾印同一筆一致:HP / MaxHP / +0x25 / +0x26 由同一組位移讀
 obs = {}
 for run, pre, post in (("r1", "rg_pre", "rg_post1"), ("r2", "rg_pre2", "rg_post2")):
     a, b = (D / f"{pre}.bin").read_bytes(), (D / f"{post}.bin").read_bytes()
-    obs[run] = {str(i): {"xy": [[a[i * 80], a[i * 80 + 1]], [b[i * 80], b[i * 80 + 1]]], "b25": [a[i * 80 + 0x25], b[i * 80 + 0x25]],
-                         "b26": [a[i * 80 + 0x26], b[i * 80 + 0x26]],
-                         "hp": [struct.unpack_from("<H", a, i * 80 + 0x40)[0], struct.unpack_from("<H", b, i * 80 + 0x40)[0]]}
-                for i in (11, 13, 14, 15, 16, 17, 18)}
+    ra, rb = (records(x) for x in (a, b))
+    obs[run] = {str(i): {"xy": [list(ra[i][:2]), list(rb[i][:2])], "b25": [ra[i][0x25], rb[i][0x25]],
+                         "b26": [ra[i][0x26], rb[i][0x26]],
+                         "hp": [struct.unpack_from("<H", ra[i], 0x40)[0], struct.unpack_from("<H", rb[i], 0x40)[0]]}
+                for i in REST_UNITS}
 # 中毒:+0x25 在評分前 -1、HP -MaxHP/10;麻痺:+0x26 -1,仍非 0 時沒有進 0x13fd4
 assert obs["r1"]["16"]["b25"] == [1, 0] and obs["r2"]["16"]["b25"] == [3, 2]
 assert obs["r2"]["16"]["hp"] == [9, 7] and obs["r2"]["17"]["b26"] == [3, 2] and obs["r2"]["17"]["hp"] == [9, 9]
 assert not any(x["unit"] == 17 for x in rows if x["run"] == "r2")
+# 入口時的 HP 與該輪前傾印相同(評分前只有中毒會扣):沒中毒的單位逐筆相同
+assert all(x["at_entry"]["hp"] == obs[x["run"]][str(x["unit"])]["hp"][0] for x in rows if not obs[x["run"]][str(x["unit"])]["b25"][0]), rows
+# 座標:這兩輪只有 r1 的 #18 移動(說明);其餘列出的單位前後相同
+assert [(r, u) for r, o in obs.items() for u, v in o.items() if v["xy"][0] != v["xy"][1]] == [("r1", "18")], obs
 print("stops", len(rows), "ok")
 EVI.write_bytes((json.dumps({
     "note": "DOSBox-X 斷點停點(0x13fd4 入口、0x14012 回 0、0x1410a 寫入)與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。"

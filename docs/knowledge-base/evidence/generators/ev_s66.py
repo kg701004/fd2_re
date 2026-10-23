@@ -5,6 +5,7 @@ C. 瞬移(SM 改 +0/+1)後的單位確認移動,與沒瞬移的悠妮對照。
 預測值由 EXE 的地形修正表與傾印的單位數值獨立計算,再與斷點讀值比對。
 """
 import json
+import re
 import struct
 import sys
 from pathlib import Path
@@ -13,6 +14,9 @@ from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
 require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
+import export_units  # noqa: E402
+import parse_field  # noqa: E402
+from _terrain import AP_PCT as T_AP, DP_PCT as T_DP, map_size, modifier, tdiv, terrain_type  # noqa: E402
 
 V = ROOT / ".wsl_build/ctr/v3"
 OUT = out_path("ai_mode8_move_confirm_boss_20261001.json")
@@ -22,11 +26,24 @@ meta = dl.parse_le(exe)
 tab = dl.object_bytes(exe, meta, 0x51A12, 48)
 AP_PCT = list(struct.unpack("<6i", tab[:24]))
 DP_PCT = list(struct.unpack("<6i", tab[24:]))
+assert (AP_PCT, DP_PCT) == (T_AP, T_DP)  # 與 _terrain(續六十五由三個戰場的活記憶體讀到)相同
+code, cbase = dl.load_code(exe, meta)
+DELTA = 0x19C000  # 執行期位址 − Ghidra 位址
+_EVT = json.loads((ROOT / "docs/data/event_dispatch_table_58_89.json").read_text(encoding="utf-8"))["tables"]["event"]["count"]
+REC = 80
+unit_tables = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
+
+
+def returns_from_call(ret: int, target: int) -> bool:
+    """ret 的前 5 bytes 是 call rel32,且目標 = target(返回位址真的是呼叫 target 的那一處)。"""
+    o = ret - 5 - cbase
+    return code[o] == 0xE8 and (ret + struct.unpack_from("<i", code, o + 1)[0]) & 0xFFFFFFFF == target
 
 
 def cdiv(a: int, b: int) -> tuple[int, int]:
     """C 的有號整數除法(向零截斷),回傳 (商, 餘數)。"""
     q = abs(a) // abs(b) * (1 if (a >= 0) == (b >= 0) else -1)
+    assert q == tdiv(a, b), (a, b, q)
     return q, a - q * b
 
 
@@ -34,8 +51,19 @@ def mod(stat: int, t: int, tbl: list[int]) -> list[int]:
     return list(cdiv(stat * tbl[t], 100))
 
 
+def raw(path: Path, i: int) -> bytes:
+    return path.read_bytes()[i * REC:(i + 1) * REC]
+
+
+def check_fdfield_unit(r: dict, m: dict) -> None:
+    """r(rec 的輸出)是地圖 m 的某個 FDFIELD 單位:+6 / +7 = b0 / b1;種族 / 職業 / MV = EXE 建構表該 raw key 那列。"""
+    assert any((v["native_record_byte6"], v["raw_unit_key"]) == (r["side"], r["key_0x7"]) for v in m["units"]), r
+    nat = export_units.native_constructor_for_raw_unit_key(unit_tables, r["key_0x7"])
+    assert [r["race"], r["class"]] == nat["record"][:2] and r["mv"] == export_units.native_mv_for_raw_unit_key(unit_tables, r["key_0x7"]), (r, nat)
+
+
 def rec(path: Path, i: int) -> dict:
-    u = path.read_bytes()[i * 80:(i + 1) * 80]
+    u = raw(path, i)
     hp, mhp = struct.unpack_from("<2H", u, 0x40)
     ap, dp, hit, ev = struct.unpack_from("<4H", u, 0x48)
     return {"xy": [u[0], u[1]], "f5": u[5], "side": u[6], "key_0x7": u[7], "race": u[0x1F], "class": u[0x20],
@@ -46,27 +74,40 @@ def rec(path: Path, i: int) -> dict:
 C29 = V / "ch29"
 g = (C29 / "b2_grid.bin").read_bytes()
 tt = (C29 / "b2_tt.bin").read_bytes()
-W = g[0]
+W, _H = map_size(g)
+M28 = parse_field.parse_map(str(ROOT / "extracted/raw"), 28)
 
 
 def ter(x: int, y: int) -> int:
-    return tt[(struct.unpack_from("<H", g, 4 + 4 * (y * W + x))[0] & 0x3FF) * 4 + 1]
+    return terrain_type(g, tt, x, y)
+
+
+def key_off(key: str) -> int:
+    """鍵名裡的 0x.. 位移(鍵名與讀值用同一份)。"""
+    off, = re.findall(r"0x([0-9a-f]+)", key)
+    return int(off, 16)
 
 
 def ad5_ctl(tag: str) -> dict:
     a = (C29 / f"{tag}_ad5.bin").read_bytes()
     c = (C29 / f"{tag}_ctl.bin").read_bytes()
-    return {"ad5_0x11": a[0x11], "ad5_0x15": a[0x15],
-            "rows_turn_event_camp": [[c[3 + 3 * k], c[4 + 3 * k], c[5 + 3 * k]] for k in range(3)]}
+    live = [r for r in parse_field.native_turn_event_controls(c) if r["event_id"] != 0xFF]  # 0xff = 空列
+    assert all(r["event_id"] < _EVT for r in live), "事件 id 超出 0x51b91 表"
+    rows = [[r["turn"], r["event_id"], r["raw_camp"]] for r in live]
+    return {**{k: a[key_off(k)] for k in ("ad5_0x11", "ad5_0x15")}, "rows_turn_event_camp": rows}
 
 
 # 事件 76 放出 3 個頭目後把 +0x15 設成「單位數 - 3」:傾印的筆數與 +0x15 互相印證,頭目是最後 3 筆
 b2u = (C29 / "b2_units.bin").read_bytes()
-n_after = len(b2u) // 80
-assert len(b2u) % 80 == 0 and n_after == ad5_ctl("b2")["ad5_0x15"] + 3, (len(b2u), ad5_ctl("b2"))
+n_after = len(b2u) // REC
+G1 = [(v, p) for v, p in zip(M28["units"], M28["positions"]) if v["group"] == 1]  # spawn_group(1) 的 FDFIELD 單位
+assert len(b2u) % REC == 0 and n_after == ad5_ctl("b2")["ad5_0x15"] + len(G1), (len(b2u), ad5_ctl("b2"))
 spawned = []
-for i in range(n_after - 3, n_after):
+for i, (v, p) in zip(range(n_after - len(G1), n_after), G1, strict=True):
     r = rec(C29 / "b2_units.bin", i)
+    check_fdfield_unit(r, M28)
+    assert (r["xy"], r["key_0x7"]) == (list(p[:2]), v["raw_unit_key"]) and \
+        r["hp"] == export_units.native_record_word42_for_raw_unit_key(unit_tables, r["key_0x7"], v["lv"]), (r, v, p)
     r["terrain"] = ter(*r["xy"])
     spawned.append({"unit": i, **{k: r[k] for k in ("xy", "terrain", "key_0x7", "race", "class", "mv", "b34", "hp")}})
 assert [s["xy"] for s in spawned] == [[13, 12], [15, 12], [17, 12]] and all(s["terrain"] == 5 for s in spawned)
@@ -74,6 +115,9 @@ assert all(s["b34"] & 0xF == 2 for s in spawned)
 
 sol = rec(C29 / "c0_pre_units.bin", 0)
 drg = rec(C29 / "c0_pre_units.bin", 76)
+drg_raw = raw(C29 / "c0_pre_units.bin", 76)
+check_fdfield_unit(drg, M28)
+assert sol["side"] == 2, sol  # 隊員(0x112a5 寫 +6 = 2)
 t_sol, t_drg = ter(*sol["xy"]), ter(*drg["xy"])
 assert t_drg == 5 and sol["race"] == 5 and drg["race"] == 10
 
@@ -90,8 +134,9 @@ pred = {
 rivals = {}
 for name in ("terrain5_as_4", "terrain5_as_3"):
     t = int(name.rsplit("_", 1)[1])  # 對照假設:地形 5 其實照類型 4 / 3 修正
-    dpm = mod(drg["dp"], t, DP_PCT)[0]
-    apm = mod(drg["ap"], t, AP_PCT)[0]
+    dpm, _ = mod(drg["dp"], t, DP_PCT)
+    apm, _ = mod(drg["ap"], t, AP_PCT)
+    assert (dpm, apm) == (modifier(drg["dp"], DP_PCT, t, drg_raw), modifier(drg["ap"], AP_PCT, t, drg_raw)), (name, dpm, apm)
     rivals[name] = {"dragon_dp_mod": dpm, "dragon_ap_mod": apm,
                     "base_sol_to_dragon": base(sol["ap"], drg["dp"] + dpm), "base_dragon_to_sol": base(drg["ap"] + apm, sol["dp"])}
 
@@ -116,11 +161,13 @@ def rng(b: int) -> list[int]:
 
 hp_writes = [{"defender": s["esi_unit"], "new_hp": s["eax"], "ebp_damage": s["ebp"]} for s in mapst if s["eip"] == "0x1efce"]
 # EBP 是這一擊的傷害:新 HP + 傷害 = 前一個 HP,串起來推回場景攻擊後的 HP
-sol_before_map = hp_writes[0]["new_hp"] + hp_writes[0]["ebp_damage"]
-drg_before_map = hp_writes[1]["new_hp"] + hp_writes[1]["ebp_damage"]
-assert hp_writes[1]["new_hp"] - hp_writes[2]["ebp_damage"] == hp_writes[2]["new_hp"]
+w_sol, w_d1, w_d2 = hp_writes  # 火龍打索爾一次、索爾反擊兩次
+assert (w_sol["defender"], w_d1["defender"], w_d2["defender"]) == (0, 76, 76), hp_writes
+sol_before_map = w_sol["new_hp"] + w_sol["ebp_damage"]
+drg_before_map = w_d1["new_hp"] + w_d1["ebp_damage"]
+assert w_d1["new_hp"] - w_d2["ebp_damage"] == w_d2["new_hp"]
 derived = {"scene_damage_to_dragon": drg["hp"] - drg_before_map, "scene_counter_damage_to_sol": sol["hp"] - sol_before_map,
-           "map_damage_to_sol": hp_writes[0]["ebp_damage"], "map_counters_to_dragon": [h["ebp_damage"] for h in hp_writes[1:]]}
+           "map_damage_to_sol": w_sol["ebp_damage"], "map_counters_to_dragon": [h["ebp_damage"] for h in (w_d1, w_d2)]}
 lo, hi = rng(pred["base_sol_to_dragon"])
 assert lo <= derived["scene_damage_to_dragon"] <= hi and all(lo <= d <= hi for d in derived["map_counters_to_dragon"])
 lo2, hi2 = rng(pred["base_dragon_to_sol"])
@@ -149,6 +196,7 @@ A = {
 
 # ---------------- B. AI 模式 8 ----------------
 C19 = V / "ch19"
+U26 = 26  # 受測單位(下面 s26 的篩選用同一個)
 
 
 def m8(tag: str) -> dict:
@@ -158,35 +206,37 @@ def m8(tag: str) -> dict:
         n = int(line.split()[0])
         st = (C19 / f"{tag}_{n:03d}_{p['EIP']}.stack.bin").read_bytes()
         dw = struct.unpack("<16I", st)
-        eip = int(p["EIP"], 16) - 0x19C000
+        eip = int(p["EIP"], 16) - DELTA
         s = {"eip": hex(eip), "eax": int(p["EAX"], 16), "esi": int(p["ESI"], 16)}
         if eip == 0x13AEF:
             s["unit"] = s["esi"]
             s["mode"] = s["eax"]
-            s["caller_ret"] = hex(dw[7] - 0x19C000)
+            s["caller_ret"] = hex(dw[7] - DELTA)
         elif eip in (0x14EF0, 0x13512, 0x15055, 0x1548E, 0x15311):
-            s["caller_ret"] = hex(dw[0] - 0x19C000)
-            s["arg0"] = dw[1]
+            ret, arg0, *_ = dw  # 函式入口:[esp] = 返回位址、[esp+4] = 第一個引數
+            assert returns_from_call(ret - DELTA, eip), (tag, hex(eip), hex(ret))
+            s["caller_ret"] = hex(ret - DELTA)
+            s["arg0"] = arg0
         elif eip == 0x13E5A:
             s["unit"] = s["esi"]
         stops.append(s)
     pre = C19 / f"{tag}_pre_units.bin"
     postp = C19 / f"{tag}_post_units.bin"
-    u26 = rec(pre, 26)
+    u26 = rec(pre, U26)
     return {"b34": u26["b34"], "unit26_pre": {k: u26[k] for k in ("xy", "hp", "f5")},
             "spells_mp_cleared": tag in ("m8c", "m8d"),
-            "unit26_post_hp": rec(postp, 26)["hp"], "sol_hp": [rec(pre, 0)["hp"], rec(postp, 0)["hp"]],
+            "unit26_post_hp": rec(postp, U26)["hp"], "sol_hp": [rec(pre, 0)["hp"], rec(postp, 0)["hp"]],
             "stops": stops}
 
 
 runs = {t: m8(t) for t in ("m8a", "m8b", "m8c", "m8d")}
 for t in ("m8a", "m8c"):
-    s26 = [s for s in runs[t]["stops"] if s.get("unit") == 26 or s.get("arg0") == 26]
+    s26 = [s for s in runs[t]["stops"] if s.get("unit") == U26 or s.get("arg0") == U26]
     assert [s["eip"] for s in s26] == ["0x13aef", "0x13aef"] and all(s["mode"] == 8 for s in s26)
     assert [s["caller_ret"] for s in s26] == ["0x1d947", "0x1d9d7"]
     assert runs[t]["sol_hp"][0] == runs[t]["sol_hp"][1]
 for t, ex in (("m8b", None), ("m8d", "0x15055")):
-    s26 = [s for s in runs[t]["stops"] if s.get("unit") == 26 or s.get("arg0") == 26]
+    s26 = [s for s in runs[t]["stops"] if s.get("unit") == U26 or s.get("arg0") == U26]
     eips = [s["eip"] for s in s26]
     assert eips[0] == "0x13aef" and s26[0]["mode"] == 2 and "0x14ef0" in eips and "0x13e5a" in eips and "0x13512" in eips
     assert "0x13aef" not in eips[1:]

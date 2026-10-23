@@ -19,6 +19,8 @@ D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_item_score_20260930.json")
 _EXE = (GAME / "FD2.EXE").read_bytes()
 _META = dl.parse_le(_EXE)
+_ITEM_ROWS = [bytes.fromhex(r["raw"]) for r in
+              json.loads((ROOT / "docs/data/exe_tables/native_item_effect_rows.json").read_text(encoding="utf-8"))]
 
 
 def item_row(item: int) -> dict:
@@ -31,6 +33,7 @@ def item_row(item: int) -> dict:
         {"type": +0xd, "e": +0xe u16, "range": +0x10 距離, "sel11": +0x11 選擇子旗標, "area": +0x12 範圍, "row": 0x17 bytes 十六進位}。
     """
     r = bytes(dl.object_bytes(_EXE, _META, 0x602AD + item * 0x17, 0x17))
+    assert r == _ITEM_ROWS[item], item  # 與 tools/dump_exe_tables.py 另外抽的道具列相同
     return {"type": r[0xD], "e": struct.unpack_from("<H", r, 0xE)[0], "range": r[0x10], "sel11": r[0x11], "area": r[0x12],
             "row": r.hex(" ")}
 
@@ -71,12 +74,12 @@ def it_log(stem: str) -> tuple[dict, dict, list, dict, dict]:
             score[n] = eax[n]
             con_call[n] = (int(m[1]), int(m[2]), [int(x) for x in m[3].split(", ") if x], (int(m[4]), int(m[5])), int(m[6]))
             pending.append(n)
-        elif m := re.fullmatch(r"decide unit=(\d+) bit40=(\d+) P=(-?\d+) S=(-?\d+) I=(-?\d+) item_best=\((-?\d+),(-?\d+)\) "
+        elif m := re.fullmatch(r"decide unit=(?P<unit>\d+) bit40=(?P<bit>\d+) P=(-?\d+) S=(-?\d+) I=(-?\d+) item_best=\((-?\d+),(-?\d+)\) "
                                r"slot=(-?\d+) ptarget=(-?\d+) d=(-?\d+)", body):
-            actor |= {s: int(m[1]) for s in pending}
+            actor |= {s: int(m["unit"]) for s in pending}
             pending = []
             nxt = ev[k + 1][1] if k + 1 < len(ev) else ""
-            decide.append((n, int(m[1]), int(m[2]), EXEC[nxt[3:]] if nxt.startswith("-> ") else "none"))
+            decide.append((n, int(m["unit"]), int(m["bit"]), EXEC[nxt[3:]] if nxt.startswith("-> ") else "none"))
             con_decide[n] = tuple(int(m[j]) for j in range(3, 11))
         else:
             # 執行函式停點只能緊接在決策停點之後
@@ -87,12 +90,18 @@ def it_log(stem: str) -> tuple[dict, dict, list, dict, dict]:
 
 SCORE, ACTOR, DECIDE, CON_CALL, CON_DECIDE = it_log(CONSOLE)
 
+def unit_table(buf: bytes) -> list[dict]:
+    """單位表傾印(每筆 0x50)的欄位;評分重算(score)要與實機 EAX 相同,所以欄位位移由評分停點驗證。"""
+    out = []
+    for i in range(len(buf) // 80):
+        r = buf[i * 80:(i + 1) * 80]
+        w = lambda o: struct.unpack_from("<H", r, o)[0]
+        out.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "b34": r[0x34], "hp": w(0x40), "maxhp": w(0x42)})
+    return out
+
+
 pre = (D / "it_pre.bin").read_bytes()
-us = []
-for i in range(len(pre) // 80):
-    r = pre[i * 80:(i + 1) * 80]
-    w = lambda o: struct.unpack_from("<H", r, o)[0]
-    us.append({"i": i, "x": r[0], "y": r[1], "f5": r[5], "side": r[6], "b34": r[0x34], "hp": w(0x40), "maxhp": w(0x42)})
+us = unit_table(pre)
 
 
 def score(item: int, targets: list[int]) -> int:
@@ -171,8 +180,9 @@ for n, unit, bit, got in DECIDE:
     d = struct.unpack("<i", (D / f"it_d_i1_{n}.bin").read_bytes()[:4])[0]
     v = lambda o: struct.unpack_from("<i", g, o - 0x23)[0]
     p, s, i = v(0x4F), v(0x23), v(0x33)
+    best_xy_slot = [v(0x37), v(0x3B), v(0x3F)]  # [0x53c37] / [0x53c3b] / [0x53c3f]
     # 終端印出的 P/S/I、道具勝者 (x, y, slot)、ptarget、d 必須等於同一停點的 [0x53c23..] 與堆疊傾印
-    assert CON_DECIDE[n] == (p, s, i, v(0x37), v(0x3B), v(0x3F), v(0x4B), d), (n, CON_DECIDE[n])
+    assert CON_DECIDE[n] == (p, s, i, *best_xy_slot, v(0x4B), d), (n, CON_DECIDE[n])
     pred = decide(p, s, i, d, bit)
     if pred != got:
         mism.append((unit, "decide", pred, got))
@@ -182,20 +192,30 @@ for n, unit, bit, got in DECIDE:
         top = max(c["score_eax"] for c in best)
         first = next(c for c in best if c["score_eax"] == top)  # 嚴格大於才換 → 第一個最高分
         exp_best = [top, first["cast_point"][0], first["cast_point"][1], first["slot"]]
-        if exp_best != [i, v(0x37), v(0x3B), v(0x3F)]:
-            mism.append((unit, "best", exp_best, [i, v(0x37), v(0x3B), v(0x3F)]))
-    decisions.append({"stop": n, "unit": unit, "P": p, "S": s, "I": i, "item_best_xy_slot": [v(0x37), v(0x3B), v(0x3F)],
+        if exp_best != [i, *best_xy_slot]:
+            mism.append((unit, "best", exp_best, [i, *best_xy_slot]))
+    decisions.append({"stop": n, "unit": unit, "P": p, "S": s, "I": i, "item_best_xy_slot": best_xy_slot,
                       "d": d, "bit40": bit, "predicted": pred, "executor_observed": got, "item_best_predicted": exp_best})
 
 print("calls", len(calls), "decisions", len(decisions), "mismatches", mism)
 assert not mism
 post = (D / "it_post.bin").read_bytes()
-hp = lambda b, i: struct.unpack_from("<H", b, i * 80 + 0x40)[0]
-effects = {str(i): [hp(pre, i), hp(post, i)] for i in (2, 3, 4, 13, 14, 15, 16, 18)}
+us_post = unit_table(post)
+NOTE = ("DOSBox-X 斷點停點與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每個施法者的 0x1567e 被呼叫兩次(第一遍掃描與 ai_choose_action),"
+        "兩次候選與分數相同。HP 效果:#16 被道具 58 補滿(10 -> 28);#2、#3 被道具 38 打掉 98、93(base 108、96,亂數沒讀);#18 的物理被 #4 反擊致死。"
+        "觀察(未追):#13..#15 在敵方回合後各 +5 HP(評分當下仍是 9/14/15);敵人的道具沒有被消耗。")
+# 列出的單位 = 說明裡提到的單位(#a 或 #a..#b)
+HP_UNITS = sorted({k for m in re.finditer(r"#(\d+)(?:\.\.#(\d+))?", NOTE) for k in range(int(m[1]), int(m[2] or m[1]) + 1)})
+_named = {int(x) for x in re.findall(r"#(\d+)", NOTE)}
+_spans = [(int(lo), int(hi)) for lo, hi in re.findall(r"#(\d+)\.\.#(\d+)", NOTE)]
+assert set(HP_UNITS) == _named | {k for lo, hi in _spans for k in range(lo, hi + 1)}, HP_UNITS
+effects = {str(i): [us[i]["hp"], us_post[i]["hp"]] for i in HP_UNITS}
+# 說明裡的數字:#16 10 → 28(補滿);#2、#3 少 98、93;#18 致死;#13..#15 各 +5;#4(反擊者)不變
+assert effects["16"] == [10, us[16]["maxhp"]] == [10, 28], effects["16"]
+assert [effects[k][0] - effects[k][1] for k in ("2", "3")] == [98, 93] and effects["18"][1] == 0, effects
+assert all(effects[str(k)][1] - effects[str(k)][0] == 5 for k in (13, 14, 15)) and effects["4"][0] == effects["4"][1], effects
 EVI.write_bytes((json.dumps({
-    "note": "DOSBox-X 斷點停點與單位表傾印;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。每個施法者的 0x1567e 被呼叫兩次(第一遍掃描與 ai_choose_action),"
-            "兩次候選與分數相同。HP 效果:#16 被道具 58 補滿(10 -> 28);#2、#3 被道具 38 打掉 98、93(base 108、96,亂數沒讀);#18 的物理被 #4 反擊致死。"
-            "觀察(未追):#13..#15 在敵方回合後各 +5 HP(評分當下仍是 9/14/15);敵人的道具沒有被消耗。",
+    "note": NOTE,
     "items": ITEM, "calls": calls, "decisions": decisions, "hp_pre_post": effects,
 }, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 print("evidence ok")

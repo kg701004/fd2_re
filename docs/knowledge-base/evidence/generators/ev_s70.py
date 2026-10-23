@@ -16,6 +16,9 @@ require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
 import export_acting_resources as ea  # noqa: E402
 import parse_field as pf  # noqa: E402
+sys.path.insert(0, str(GEN_DIR))
+from _fields import check_offset_keys  # noqa: E402
+from sim_path import Grid  # noqa: E402
 
 EXE = GAME / "FD2.EXE"
 V7 = ROOT / ".wsl_build/ctr/v7/ch25"
@@ -24,6 +27,8 @@ RAW = ROOT / "extracted/raw"
 OUT = out_path("offmap_event0_roster_heap_20261002.json")
 W, H = 25, 53
 GN = 4 + 4 * W * H
+REC = 80  # 單位 / 名冊紀錄長度(0x50)
+SIDE = 6  # 紀錄 +6 = 陣營(0x112a5 對新隊員寫 2,見 B)
 
 # ---------------- A ----------------
 acts = ea.export_resources(EXE)
@@ -47,13 +52,21 @@ pred = {**predict(acts["7"]), **predict(acts["8"])}
 assert pred == {12: (0, 2), 13: (0, 1)}, pred
 
 
+DIFF_KEY = "changed_units_excluding_+5_+0x26"
+NOISY = {int(x, 0) for x in DIFF_KEY.split("excluding_")[1].replace("+", "").split("_")}
+noisy_seen: set[int] = set()
+
+
 def unit_diff(pre: bytes, post: bytes) -> list[dict]:
+    assert len(pre) == len(post) and len(pre) % REC == 0, (len(pre), len(post))
+    recs = [(pre[i:i + REC], post[i:i + REC]) for i in range(0, len(pre), REC)]
+    noisy_seen.update(k for a, b in recs for k in NOISY if a[k] != b[k])
     out = []
-    for i in range(len(pre) // 80):
-        a, b = pre[i * 80:(i + 1) * 80], post[i * 80:(i + 1) * 80]
-        d = [k for k in range(80) if a[k] != b[k] and k not in (0x26, 5)]
+    for i, (a, b) in enumerate(recs):
+        d = [k for k in range(REC) if a[k] != b[k] and k not in NOISY]
+        assert set(d) <= {0, 1}, (i, d)  # 排除鍵名列的兩個欄位後,只剩座標 +0 / +1 會變
         if d:
-            out.append({"unit": i, "side": b[6], "xy_before": [a[0], a[1]], "xy_after": [b[0], b[1]], "changed": d})
+            out.append({"unit": i, "side": b[SIDE], "xy_before": [a[0], a[1]], "xy_after": [b[0], b[1]], "changed": d})
     return out
 
 
@@ -65,8 +78,14 @@ for tag, pre, post in (("v7", V7 / "s1_pre_units.bin", V7 / "e2_after_units.bin"
     for s, (dx, dy) in pred.items():
         r = next(x for x in diff if x["unit"] == s)
         assert [r["xy_after"][0] - r["xy_before"][0], r["xy_after"][1] - r["xy_before"][1]] == [dx, dy], (tag, r)
-    runs[tag] = {"unit_count": [len(a) // 80, len(b) // 80], "changed_units_excluding_+5_+0x26": diff}
+    # ACT7 / ACT8 搬的是隊員(陣營 2)
+    assert all(next(x for x in diff if x["unit"] == s)["side"] == 2 for s in pred), (tag, diff)
+    runs[tag] = {"unit_count": [len(a) // REC, len(b) // REC], DIFF_KEY: diff}
+assert noisy_seen == NOISY, noisy_seen  # 排除的兩個欄位在這兩次實測裡都真的變過(+0x26 計時、+5 旗標)
 fd24 = pf.parse_map(str(RAW), 24)
+# map 24 的構成段 = 這個戰場(W × H 相同);開場單位 = 出場人數 + group 0 的單位(spawn_group 3 / 7 沒有單位)
+assert (fd24["w"], fd24["h"]) == (W, H), (fd24["w"], fd24["h"])
+assert all(r["unit_count"] == [fd24["own_deploy"] + sum(u["group"] == 0 for u in fd24["units"])] * 2 for r in runs.values()), runs
 A = {
     "handler_0x34531_calls": ["0x112a5(1) join", "0x10b4e(3) spawn_group", "0x135dd(5,8) pan", "0x11cac(1)", "0x3790a(100)",
                               "0x1366a(7) acting", "0x4e381()", "0x15f84([0x53a79], 0xb, ...) dialog", "[0x51a83]=0",
@@ -100,9 +119,12 @@ def rec(r: bytes) -> dict:
             "bytes_+0..+4_not_written_by_0x112a5": list(r[0:5])}
 
 
-hano = [i for i in range(len(r_end) // 80) if r_end[i * 80 + 8] == 1]
+hano = [i for i in range(len(r_end) // REC) if r_end[i * REC + 8] == 1]
 assert hano == [4, 16], hano
-assert list(r_end[16 * 80:17 * 80]) == after["new_record"]
+h_old, h_new = (r_end[i * REC:(i + 1) * REC] for i in hano)
+assert list(h_new) == after["new_record"]
+# 0x112a5:+5 = 0、+6 = 2、+7 = +8 = id
+assert list(h_new[5:9]) == [0, 2, 1, 1] and h_new[SIDE] == 2, list(h_new[:10])
 B = {
     "static": "0x112a5:位址 = [0x53bf7] + [0x53bfb]*0x50,寫 +5 = 0、+6 = 2、+7 = +8 = id …,呼叫 0x1145a,最後 inc [0x53bfb];"
               "本體沒有比對既有 +8,也沒有和容量比較。+0..+4、+0x17、+0x19 不寫(新記錄這幾個 byte 是殘值)。",
@@ -111,28 +133,34 @@ B = {
     "join_call": {"ret": join["ret"], "join_id": join["join_id"], "count_before": join["count"]},
     "roster_count_after_join": after["roster"]["count"],
     "char_ids_before": ev0["roster"]["char_ids_+8"], "char_ids_after": after["roster"]["char_ids_+8"],
-    "hano_records": {"index_4_existing": rec(r_end[4 * 80:5 * 80]), "index_16_appended": rec(r_end[16 * 80:17 * 80])},
+    "hano_records": {"index_4_existing": rec(h_old), "index_16_appended": rec(h_new)},
     "screenshot": ".wsl_build/ctr/v8/ch25/j1_dlg_a.png",
 }
 
-# ---------------- C ----------------
+# 鍵名標的位移(+xx、+xx..+yy、+xx_+yy)與讀取的位移分開寫,逐欄核對
+for k, r in zip(("index_4_existing", "index_16_appended"), (h_old, h_new)):
+    check_offset_keys(B["hano_records"][k], r, {"ap": "<h", "dp": "<h", "dx": "<h", "hp": "<H", "mp": "<H"})
 f73 = (RAW / "FDOTHER/FDOTHER_073.bin").read_bytes()
 pg = sorted(V7.glob("e2_*_past_grid.bin"), key=lambda p: p.stat().st_size)[-1].read_bytes()
-assert pg[12:] == f73[8660 + 12:8660 + len(pg)]
-assert pg[:12] != f73[8660:8672]
+F73 = 8660  # 地圖陣列之後的記憶體對應 FDOTHER_073 的起點
+HDR = max(i for i in range(len(pg)) if pg[i] != f73[F73 + i]) + 1
+assert HDR == 3 * 4 and pg[HDR:] == f73[F73 + HDR:F73 + len(pg)], HDR  # 三個 u32 的標頭
+n_eq = sum(x == y for x, y in zip(pg[HDR:], f73[F73 + HDR:]))
+f73_w, f73_h = struct.unpack_from("<HH", f73, 0)
+assert 0 < f73_w <= 320 and 0 < f73_h <= 200, (f73_w, f73_h)  # mode 13h 畫面內的圖
 e2rows = json.loads((V7 / "e2_lookup_rows.json").read_text(encoding="utf-8"))
 wr = []
 for r in e2rows:
     if r["wrote"]:
         off = 4 + 4 * (r["y"] * W + r["x"]) - GN
-        assert off >= 12 and r["cell"] == list(f73[8660 + off:8660 + off + 4])
-        wr.append({"x": r["x"], "y": r["y"], "past_grid_offset": off, "fdother73_offset": 8660 + off, "cell": r["cell"]})
+        assert off >= HDR and r["cell"] == list(f73[F73 + off:F73 + off + 4])
+        wr.append({"x": r["x"], "y": r["y"], "past_grid_offset": off, "fdother73_offset": F73 + off, "cell": r["cell"]})
 C = {
     "grid": "0x23a1b0(執行期),大小 4 + 4*25*53 = 5304",
     "past_grid_bytes_dumped": len(pg),
-    "header_12_bytes_u32": [hex(x) for x in struct.unpack("<3I", pg[:12])],
-    "rest_equals": "FDOTHER_073.bin[8672 : 8660 + dump 長度],%d/%d byte 相同" % (len(pg) - 12, len(pg) - 12),
-    "fdother73_header": {"w": struct.unpack_from("<H", f73, 0)[0], "h": struct.unpack_from("<H", f73, 2)[0], "size": len(f73)},
+    "header_12_bytes_u32": [hex(x) for x in struct.unpack("<3I", pg[:HDR])],
+    "rest_equals": "FDOTHER_073.bin[%d : %d + dump 長度],%d/%d byte 相同" % (F73 + HDR, F73, n_eq, len(pg) - HDR),
+    "fdother73_header": {"w": f73_w, "h": f73_h, "size": len(f73)},
     "event0_cells": wr,
     "interpretation": "INFERRED:12 byte 標頭的形狀(長度 0x990 + 兩個指標)像 Watcom 堆積的空閒區塊;其後是先前載入、已不再使用的 FDOTHER #73 內容。"
                       "地圖外格子會寫出哪個事件,取決於這塊殘留,不是地圖外行走本身的固定結果。",
@@ -155,28 +183,39 @@ byte3_live = sorted({r["cell"][3] for r in ing})
 assert byte3_live == [255]
 assert not any(r["pred_write"] for r in e1) and all(r["in_grid"] and r["slot"] == 0 for r in e1)
 walk1 = [r for r in e1 if r["ret"] == "0x1317a"]
+w1_first, *_, w1_last = walk1
+e2_first, *_ = e2rows
 D = {
     "e1_lookups": len(e1), "e1_rets": dict(Counter(r["ret"] for r in e1)),
-    "e1_unit53_walk_first_last": [[walk1[0]["x"], walk1[0]["y"]], [walk1[-1]["x"], walk1[-1]["y"]]],
-    "e1_in_grid": sum(r["in_grid"] for r in e1), "e1_nonzero_slot": sum(r["slot"] != 0 for r in e1),
+    "e1_unit53_walk_first_last": [[w1_first["x"], w1_first["y"]], [w1_last["x"], w1_last["y"]]],
+    "e1_in_grid": sum(r["in_grid"] for r in e1), "e1_nonzero_slot": sum(bool(r["slot"]) for r in e1),
     "e1_predicted_writes": sum(bool(r["pred_write"]) for r in e1),
-    "e2_first": [e2rows[0]["x"], e2rows[0]["y"]],
+    "e2_first": [e2_first["x"], e2_first["y"]],
     "in_grid_live_cells_e1_e2": len(ing),
     "bytes_0_2_equal_FDFIELD_072": len(ing),
     "byte3_live": byte3_live[0], "byte3_static": sorted({sc(r["x"], r["y"])[3] for r in ing}),
     "map24_static_cells_with_slot": [[x, y, sc(x, y)[2] & 0x1F] for y in range(H) for x in range(W) if sc(x, y)[2] & 0x1F],
 }
+# 構成段每格第二個 word 的低 5 bit = 寶箱 slot(parse_field):有 slot 的格子正好用到控制段列出的每一個寶箱
+assert sorted({s for *_, s in D["map24_static_cells_with_slot"]}) == sorted(c["slot"] for c in fd24["chests"]), fd24["chests"]
 
 # ---------------- E ----------------
+E_KEY = "terrain_type_at_0_0"
+OX, OY = map(int, E_KEY.split("_at_")[1].split("_"))  # 問的格子 = 鍵名的座標
 E_maps = []
-for m in range(30):
+_ch = json.loads((ROOT / "docs/data/per_chapter_handler_tables.json").read_text(encoding="utf-8"))
+N_MAPS = len(_ch["pre_town_handlers_0x51de9"])
+assert N_MAPS == len(_ch["post_town_handlers_0x51d71"]), N_MAPS
+for m in range(N_MAPS):
     i = pf.parse_map(str(RAW), m)
     ctl = (RAW / f"FDFIELD/FDFIELD_{3 * m + 1:03d}.bin").read_bytes()
     cm = (RAW / f"FDFIELD/FDFIELD_{3 * m:03d}.bin").read_bytes()
-    tt = (RAW / f"FDSHAP/FDSHAP_{2 * ctl[0] + 1:03d}.bin").read_bytes()
-    tile = struct.unpack_from("<H", cm, 4)[0] & 0x3FF
-    zero = [k for k, q in enumerate(i["positions"][:len(i["units"])]) if q[0] == 0 and q[1] == 0]
-    E_maps.append({"map": m, "terrain_type_at_0_0": tt[tile * 4 + 1],
+    lib = 2 * ctl[0]  # FDSHAP 偶數號 = 24×24 圖塊庫,下一號(奇數)= 它的地形控制表(續一百三十九)
+    tt = (RAW / f"FDSHAP/FDSHAP_{lib + 1:03d}.bin").read_bytes()
+    assert struct.unpack_from("<HH", (RAW / f"FDSHAP/FDSHAP_{lib:03d}.bin").read_bytes(), 0) == (24, 24) \
+        and struct.unpack_from("<HH", tt, 0) != (24, 24), (m, lib)
+    zero = [k for k, q in enumerate(i["positions"][:len(i["units"])]) if (q[0], q[1]) == (OX, OY)]
+    E_maps.append({"map": m, E_KEY: Grid(cm, tt, bytes(range(256))).enter_cost(OX, OY),
                    "units_placed_at_0_0": [{"unit": k, "group": i["units"][k]["group"], "camp": i["units"][k]["camp"]} for k in zero]})
 types = Counter(x["terrain_type_at_0_0"] for x in E_maps)
 z = [x for x in E_maps if x["units_placed_at_0_0"]]

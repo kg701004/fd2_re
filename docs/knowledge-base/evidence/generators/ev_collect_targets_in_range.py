@@ -8,6 +8,14 @@ require_inputs(__file__)
 D = ROOT / ".wsl_build" / "ctr"
 OUT = out_path("collect_targets_in_range_20260929.json")
 W, H, N = 27, 21, 21
+UNMARKED = 0xFF  # 格子記號的「沒到」值(collect 只收記號 != 0xff 的格;marks_rows 也以它印「..」)
+DELTA = 0x19C000
+import sys  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
+_CODE, _CBASE = dl.load_code(_EXE, _META)
 
 rounds = {}
 for tag in ("tA", "tB"):
@@ -23,17 +31,18 @@ for tag in ("tA", "tB"):
         r = units[i * 80:(i + 1) * 80]
         x, y, f5, side = r[0], r[1], r[5], r[6]
         m = mark(x, y)
-        inc = not (f5 & 1) and m != 0xFF and side == 0
+        inc = not (f5 & 1) and m != UNMARKED and side == 0
         rows.append({"unit": i, "x": x, "y": y, "side": side, "flags5": f5, "cell_mark": m,
                      "manhattan": abs(x - ox) + abs(y - oy), "predicted_in": inc})
         if inc:
             pred.append(i)
+    assert _CODE[ret - DELTA - 5 - _CBASE] == 0xE8, (tag, hex(ret))  # 返回位址前面是一條 call rel32
     rounds[tag] = {
-        "return_address_live": hex(ret), "return_address_static": hex(ret - 0x19C000),
+        "return_address_live": hex(ret), "return_address_static": hex(ret - DELTA),
         "origin": [ox, oy], "out_buf_live": hex(outp), "range": rng, "threshold": thr, "selector": sel,
         "returned_count": count, "out_buf": list(out[:count]), "predicted": pred,
         "match": list(out[:count]) == pred, "units": rows,
-        "marks_rows": [" ".join(".." if mark(x, y) == 0xFF else "%02x" % mark(x, y) for x in range(W)) for y in range(H)],
+        "marks_rows": [" ".join(".." if mark(x, y) == UNMARKED else "%02x" % mark(x, y) for x in range(W)) for y in range(H)],
     }
     assert rounds[tag]["match"]
 doc = {

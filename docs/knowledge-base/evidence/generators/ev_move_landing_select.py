@@ -68,6 +68,10 @@ assert t["chosen_rival_first"] == [24, 16]
 
 # R1 重播:#13 (1,1)->(1,7)
 r = [c for c in calls["r1"] if c["args"][2] == 13][0]
+# 0x14b78(目標 x, 目標 y, 單位, a2);兩個案例的施動者都是 #13(說明文字)
+r_tx, r_ty, r_actor, _ = r["args"]
+_, _, t_actor, _ = t["args"]
+assert r_actor == t_actor == 13, (r["args"], t["args"])
 assert r["dirs"] == [1, 0, 0, 0, 0, 0, 0, 3] and r["t_prime_live"] == [0, 4] and r["chosen_live"] == [0, 4]
 
 for c in calls["r1"] + calls["tie"]:
@@ -79,9 +83,9 @@ EVI.write_bytes((json.dumps({
             "(c) 曼哈頓距離 T' 最小、同距 abs(|dx|-|dy|) 嚴格較小才換、完全同分保留先出現者。r1 = 第 1 回合重播續六十 R1;tie = 第 2 回合平手場景"
             "(#13 在 (24,14),NPC #7 屍體與麻痺夥伴 #14 在 T = (24,18),麻痺夥伴 #15..#18 站四鄰)。",
     "calls": calls,
-    "tie_case": {"actor": t["args"][2], "t_prime": t["t_prime_at_select"], "fellow_cells_not_landable": fellow,
+    "tie_case": {"actor": t_actor, "t_prime": t["t_prime_at_select"], "fellow_cells_not_landable": fellow,
                  "chosen_live": t["chosen_live"], "rival_first_in_list": t["chosen_rival_first"], "rival_last_full_tie": last_full_tie},
-    "r1_replay": {"actor": r["args"][2], "from": r["actor_xy"], "target": r["args"][:2], "mv": r["mv"], "mode0": r["mode0"], "mode1_dirs": r["dirs"],
+    "r1_replay": {"actor": r_actor, "from": r["actor_xy"], "target": [r_tx, r_ty], "mv": r["mv"], "mode0": r["mode0"], "mode1_dirs": r["dirs"],
                   "t_prime": r["t_prime_live"], "chosen": r["chosen_live"]},
     "map_block_cells_of_side_checks": block_checks,
 }, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))

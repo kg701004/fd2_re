@@ -8,6 +8,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import re
 from pathlib import Path
 
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, require_inputs  # noqa: E402
@@ -62,34 +63,57 @@ assert all(not r["in_grid"] for r in writes) and {r["event_id"] for r in writes}
 disp = [s for s in e2 if s["eip"] in ("0x1d95c", "0x1d9ec", "0x1d890")]
 assert [(d["eip"], d["event_id"], d["handler"], d["unit"]) for d in disp] == [("0x1d9ec", 0, "0x34531", 53)]
 evtbl = next(s["event_tbl"] for s in e2 if "event_tbl" in s)
+REC = 80
+DIFF_KEY = "units_changed_excluding_0x26"
+NOISY = int(re.search(r"0x([0-9a-f]+)", DIFF_KEY)[1], 16)  # 排除的欄位 = 鍵名的位移(每格計時,幾乎每筆都變)
+sys.path.insert(0, str(ROOT / "tools"))
+import parse_field  # noqa: E402
+M24 = parse_field.parse_map(str(ROOT / "extracted/raw"), 24)
+N_OWN = M24["own_deploy"]
+assert len(pre) == len(post) and len(pre) % REC == 0, (len(pre), len(post))
+assert any(pre[i + NOISY] != post[i + NOISY] for i in range(0, len(pre), REC)), "排除的欄位沒有變過"
+xy = lambda r: [r[0], r[1]]  # +0 / +1 = 座標(前後兩份傾印用同一個讀法)
 diff = []
-for i in range(len(pre) // 80):
-    a, b = pre[i * 80:(i + 1) * 80], post[i * 80:(i + 1) * 80]
-    d = [k for k in range(80) if a[k] != b[k] and k != 0x26]
+for i in range(len(pre) // REC):
+    a, b = pre[i * REC:(i + 1) * REC], post[i * REC:(i + 1) * REC]
+    d = [k for k in range(REC) if a[k] != b[k] and k != NOISY]
     if d:
-        diff.append({"unit": i, "side": b[6], "xy_before": [a[0], a[1]], "xy_after": [b[0], b[1]],
+        diff.append({"unit": i, "side": b[6], "xy_before": xy(a), "xy_after": xy(b),
                      "changed_offsets": d})
+for x in diff:
+    # 只有座標變;座標兩軸各自「有沒有變」與 changed_offsets 一致;陣營 = 出場隊員 2 / FDFIELD 單位的 b0
+    assert set(x["changed_offsets"]) <= {0, 1}, x
+    assert [x["xy_before"][k] != x["xy_after"][k] for k in (0, 1)] == [k in x["changed_offsets"] for k in (0, 1)], x
+    u = x["unit"]
+    assert x["side"] == (2 if u < N_OWN else M24["units"][u - N_OWN]["native_record_byte6"]), x
 # 地圖寬高取自 e2 停點記下的 [0x53a51] 標頭(每個停點都相同)
 whs = {tuple(s["wh"]) for s in e2 if "wh" in s}
 assert len(whs) == 1, whs
 W, H = next(iter(whs))
+GRID_BYTES = 4 + 4 * W * H
+# 地圖格陣列 = 4 byte 標頭 + 每格 4 byte,長度與 map 24 的 FDFIELD 構成段相同;W × H 也相同
+assert GRID_BYTES == len((ROOT / "extracted/raw/FDFIELD/FDFIELD_072.bin").read_bytes()) and (W, H) == (M24["w"], M24["h"])
+first_off, *_ = off
 B = {
-    "map": {"W": W, "H": H, "grid_bytes": 4 + 4 * W * H},
+    "map": {"W": W, "H": H, "grid_bytes": GRID_BYTES},
     "rule": "0x1317a(逐步移動共用收尾 0x1314f)以游標 [0x53ab1]/[0x53ab5] 呼叫 field_event_lookup(x, y, 0);"
             "格子位址 grid + 4 + 4*(y*W + x) 不檢查邊界。寫入條件:地形表 [tile*4] & 0x60 == 0、slot = byte2 & 0x1f != 0、"
             "事件表 [0x53a55] + 0x33 + (slot-1)*2 的 (id, sel) 中 id != 0xff 且 sel == 參數。",
     "event_table_slots_1_32": [[evtbl[2 * i], evtbl[2 * i + 1]] for i in range(32)],
-    "lookups_logged": len(rows), "off_grid": len(off), "in_grid_x_ge_W": sum(1 for r in rows if r["in_grid"] and r["x"] >= W),
-    "first_off_grid": [off[0]["x"], off[0]["y"]],
+    "lookups_logged": len(rows), "off_grid": len(off), "in_grid_x_ge_W": sum(r["in_grid"] and r["x"] >= W for r in rows),
+    "first_off_grid": [first_off["x"], first_off["y"]],
     "writes": [{k: r[k] for k in ("x", "y", "sel", "cell", "tile", "slot", "tt_b0", "event_id")} for r in writes],
     "prediction_mismatches": len(mism),
     "dispatch": disp,
     "units_changed_excluding_0x26": diff,
-    "unit_count_before_after": [len(pre) // 80, len(post) // 80],
+    "unit_count_before_after": [len(pre) // REC, len(post) // REC],
     "terrain_table_dump_sha256": hashlib.sha256((D / "e2_tt4k.bin").read_bytes()).hexdigest(),
     "screenshot": ".wsl_build/ctr/v7/ch25/e2_now.png",
     "note": "e1(同一個敵方回合的前半段)因驅動腳本逾時被終止,停點紀錄沒寫出;e2 從同一次走路的 (39,25) 接續記錄到落地。",
 }
+
+# 開場單位 = 出場人數 + map 24 FDFIELD 的 group 0 單位(與續七十相同)
+assert B["unit_count_before_after"] == [N_OWN + sum(u["group"] == 0 for u in M24["units"])] * 2, B["unit_count_before_after"]
 
 # ---------------- C. 不終止 ----------------
 he = h1["hang_entry"]

@@ -11,7 +11,7 @@ import hashlib
 import json
 import math
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 from _evpaths import EVIDENCE, GAME, ROOT, out_path, require_inputs  # noqa: E402
 require_inputs(__file__)
@@ -28,6 +28,36 @@ WHAT = {"runA": "索爾 HP 823(滿)。敵 #11 在 (19,14),瞄準點 (19,13),目�
         "runB": "下一回合,索爾 HP 設成 3(敵方回合開始時讀到 167)。瞄準點 (20,14),目標 #0 索爾、#3"}
 
 
+DIGITS = 2  # 亮度取到小數兩位(EXPECT 的亮帶值是同一個位數)
+SCR_W, SCR_H = 320, 200  # mode 13h,傾印 = 線性 0xa0000 起 64000 bytes
+TILE = 24
+
+
+def map_area(tag: str, name: str) -> tuple[int, int, int, int]:
+    """非 0 像素的外框(含端點)。"""
+    raw = (D / f"{tag}_{name}.bin").read_bytes()
+    assert len(raw) == SCR_W * SCR_H, len(raw)
+    x0, y0, x1, y1 = Image.frombytes("P", (SCR_W, SCR_H), raw).getbbox()
+    return x0, y0, x1 - 1, y1 - 1
+
+
+MAP = map_area("runA", "ph1")
+assert all(map_area(t, n) == MAP for t in ("runA", "runB") for n in DUMPS), MAP
+_mx0, _my0, _mx1, _my1 = MAP
+assert (_mx1 - _mx0 + 1) % TILE == 0 and (_my1 - _my0 + 1) % TILE == 0, MAP
+
+
+def clip(rect: tuple[int, int, int, int]) -> list[int]:
+    """右下角夾在地圖區內(輸出用)。"""
+    x0, y0, x1, y1 = rect
+    return [x0, y0, min(x1, _mx1), min(y1, _my1)]
+
+
+def shift(rect: tuple[int, int, int, int], dx: int, dy: int) -> tuple[int, int, int, int]:
+    x0, y0, x1, y1 = rect
+    return x0 + dx, y0 + dy, x1 + dx, y1 + dy
+
+
 # ---------------- 亮帶分析(原 an123.py) ----------------
 def lum_table(tag: str) -> list[float]:
     """6 位元調色盤 R+G+B 的平均(滿刻度 63)。"""
@@ -38,8 +68,8 @@ def lum_table(tag: str) -> list[float]:
 def rect_mean(raw: bytes, lum: list[float], rect: tuple[int, int, int, int]) -> float:
     x0, y0, x1, y1 = rect
     tot = n = 0
-    for y in range(max(4, y0), min(195, y1) + 1):
-        row = raw[y * 320 + max(4, x0): y * 320 + min(315, x1) + 1]
+    for y in range(max(_my0, y0), min(_my1, y1) + 1):
+        row = raw[y * SCR_W + max(_mx0, x0): y * SCR_W + min(_mx1, x1) + 1]
         tot += sum(lum[v] for v in row)
         n += len(row)
     return tot / n if n else float("nan")
@@ -53,9 +83,9 @@ def band_rects(log: dict) -> tuple[tuple[int, int, int, int], tuple[int, int, in
     fx, fy, sx, sy = g["target_x"], g["target_y"], g["scroll_x"], g["scroll_y"]
     cx0, cx1 = sorted((ux, fx))
     cy0, cy1 = sorted((uy, fy))
-    band = ((cx0 - sx) * 24 + 4, (cy0 - sy) * 24 + 4, (cx1 - sx) * 24 + 27, (cy1 - sy) * 24 + 27)
+    band = ((cx0 - sx) * TILE + _mx0, (cy0 - sy) * TILE + _my0, (cx1 - sx + 1) * TILE + _mx0 - 1, (cy1 - sy + 1) * TILE + _my0 - 1)
     vertical = ux == fx
-    ctl = (band[0] - 24, band[1], band[2] - 24, band[3]) if vertical else (band[0], band[1] - 24, band[2], band[3] - 24)
+    ctl = shift(band, -TILE, 0) if vertical else shift(band, 0, -TILE)
     return band, ctl, vertical
 
 
@@ -65,20 +95,25 @@ def analyse(tag: str, wrong: bool = False) -> dict:
     lum = lum_table(tag)
     band, ctl, vertical = band_rects(log)
     if wrong:
-        dx, dy = (48, 0) if vertical else (0, 48)
-        if band[2] + dx > 315 or band[3] + dy > 195:
+        dx, dy = (2 * TILE, 0) if vertical else (0, 2 * TILE)
+        _, _, bx1, by1 = band
+        if bx1 + dx > _mx1 or by1 + dy > _my1:
             dx, dy = -dx, -dy
-        band = (band[0] + dx, band[1] + dy, band[2] + dx, band[3] + dy)
+        band = shift(band, dx, dy)
     phases = [s["phase"] for s in log["stops"] if s["at"] == "0x152ba"]
     forced = [s["ebx"] for s in log["stops"] if s["at"] == "0x152ba"]
     rows = []
     for k, name in enumerate(FRAMES):
         raw = (D / f"{tag}_{name}.bin").read_bytes()
         rows.append({"frame": name, "forced_phase_EBX": forced[k], "phase_read_at_stop": phases[k],
-                     "band": round(rect_mean(raw, lum, band), 2), "control": round(rect_mean(raw, lum, ctl), 2),
-                     "map_area": round(rect_mean(raw, lum, (4, 4, 315, 195)), 2)})
-    return {"tag": tag, "band_rect": [band[0], band[1], min(band[2], 315), min(band[3], 195)],
-            "control_rect": [ctl[0], ctl[1], min(ctl[2], 315), min(ctl[3], 195)], "rows": rows}
+                     "band": round(rect_mean(raw, lum, band), DIGITS), "control": round(rect_mean(raw, lum, ctl), DIGITS),
+                     "map_area": round(rect_mean(raw, lum, MAP), DIGITS)})
+    # 亮帶 = 使用者到延伸點的整格範圍;對照帶 = 同大小、往垂直方向錯開一格,完全不重疊
+    bx0, by0, bx1, by1 = band
+    cx0, cy0, cx1, cy1 = ctl
+    assert (bx0 - _mx0) % TILE == 0 and (by0 - _my0) % TILE == 0 and (bx1 + 1 - _mx0) % TILE == 0, band
+    assert (cx1 - cx0, cy1 - cy0) == (bx1 - bx0, by1 - by0) and abs(cx0 - bx0) + abs(cy0 - by0) == TILE, (band, ctl)
+    return {"tag": tag, "band_rect": clip(band), "control_rect": clip(ctl), "rows": rows}
 
 
 def verdict(res: dict) -> list[str]:
@@ -89,14 +124,15 @@ def verdict(res: dict) -> list[str]:
     if any(math.isnan(v) for v in b + c):
         return ["有區域在畫面外,算不出來"]
     bad = []
-    for i in range(len(rows) - 1):
-        same = rows[i]["phase_read_at_stop"] == rows[i + 1]["phase_read_at_stop"]
-        if same and abs(b[i] - b[i + 1]) >= 0.1:
-            bad.append(f"相位 {rows[i]['phase_read_at_stop']} 的兩站亮度差 {abs(b[i] - b[i + 1]):.2f}")
-        if not same and b[i + 1] - b[i] > 0.1:
-            bad.append(f"相位 {rows[i + 1]['phase_read_at_stop']} 比 {rows[i]['phase_read_at_stop']} 亮")
-    if b[0] - b[-1] < 4:
-        bad.append(f"亮帶頭尾只差 {b[0] - b[-1]:.2f}")
+    for (r0, r1), (b0, b1) in zip(zip(rows, rows[1:]), zip(b, b[1:])):
+        same = r0["phase_read_at_stop"] == r1["phase_read_at_stop"]
+        if same and abs(b0 - b1) >= 0.1:
+            bad.append(f"相位 {r0['phase_read_at_stop']} 的兩站亮度差 {abs(b0 - b1):.2f}")
+        if not same and b1 - b0 > 0.1:
+            bad.append(f"相位 {r1['phase_read_at_stop']} 比 {r0['phase_read_at_stop']} 亮")
+    b_first, *_, b_last = b
+    if b_first - b_last < 4:
+        bad.append(f"亮帶頭尾只差 {b_first - b_last:.2f}")
     if max(c) - min(c) > 1.5:
         bad.append(f"對照帶變動 {max(c) - min(c):.2f}")
     return bad
@@ -124,10 +160,10 @@ def window_means(tag: str) -> list[dict]:
     """調色盤迴圈停下時的視窗截圖(地圖區)平均 RGB。停下時視窗還是上一步的畫面,所以標的是「停在哪一步」。"""
     out = []
     for name in ("pal64", "pal48", "pal32", "pal16", "pal00", "151dd"):
-        px = window_crop(tag, name).tobytes()
-        n = len(px) // 3
-        out.append({"stopped_at": "迴圈結束(0x151dd)" if name == "151dd" else f"delta = {int(name[3:])}",
-                    "mean_rgb": [round(sum(px[c::3]) / n, 1) for c in range(3)]})
+        im = window_crop(tag, name)
+        n = im.width * im.height
+        out.append({"stopped_at": "迴圈結束(0x151dd)" if name == "151dd" else f"delta = {int(name.removeprefix('pal'))}",
+                    "mean_rgb": [round(s / n, 1) for s in ImageStat.Stat(im).sum]})
     return out
 
 
@@ -166,10 +202,11 @@ for tag in ("runA", "runB"):
     wbad = verdict(analyse(tag, wrong=True))
     rbad = verdict(reversed_phases(res))
     assert not bad and wbad and rbad, (tag, bad, wbad, rbad)
+    pal_first, *_, pal_last = log["pal"]
     out["runs"].append({
         "tag": tag, "what": WHAT[tag],
         "stops": [trim(s) for s in log["stops"]],
-        "palette_loop_EBX_at_0x151ce": {"count": len(log["pal"]), "first": log["pal"][0], "last": log["pal"][-1],
+        "palette_loop_EBX_at_0x151ce": {"count": len(log["pal"]), "first": pal_first, "last": pal_last,
                                         "strictly_descending_by_1": True},
         "palette_loop_window_screenshots": window_means(tag),
         "strip": {**res, "verdict": "PASS", "control_wrong_position": "FAIL", "control_reasons": wbad,

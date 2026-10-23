@@ -61,6 +61,9 @@ groups: dict[bytes, list[int]] = {}
 for i, e in enumerate(DM.ENTS):
     groups.setdefault(e, []).append(i)
 ev["_meta"]["dato_duplicates"] = [v for v in groups.values() if len(v) > 1]
+# 沒列進重複組的條目,內容在 DATO 裡只出現一次
+_dup_idx = {i for v in ev["_meta"]["dato_duplicates"] for i in v}
+assert all(DM.ENTS.count(e) == 1 for i, e in enumerate(DM.ENTS) if i not in _dup_idx), "有重複條目沒列出"
 
 
 def full_match(p: Path) -> list[int]:
@@ -219,7 +222,7 @@ ev["B_speaker_lookup_and_linear7"] = {
                         "after": "0x165ac(96, 202, 0) 返回後、第 3 條結束前,DOSBox-X 以 'E_Exit: JMP Illegal descriptor type 14' 結束"
                                  "(r1_crash_pane.txt);確切在哪一條指令沒有定位"},
     "v14_f0": {"patched": p14["patched"], "portrait_idx_ebp": eb["portrait_idx_ebp"], "entry_0xf0_offsets": [hex(x) for x in offf],
-               "size_53bff": oom["size_53bff"], "size_signed": oom["size_53bff"] - (1 << 32),
+               "size_53bff": oom["size_53bff"], "size_signed": struct.unpack("<i", struct.pack("<I", oom["size_53bff"]))[0],
                "screen": "r1_oom_060.png:圖形畫面左上印出『Out of Memory at Load DATO.DAT Number:240!!』,接著是 C:\\> 提示字元"},
     "conclusion": "名冊重複 id → 最後一筆;戰場上同 id 但已陣亡(+5 bit0)→ 用那筆戰場紀錄、不看名冊,回 -1、旗標 0;"
                   "兩邊都沒有 → 讀線性 7 / 0 / 1。線性 7 = 0x4b 就載入頭像 75(證明讀的是線性 7);"
@@ -229,7 +232,9 @@ ev["B_speaker_lookup_and_linear7"] = {
 p15 = J(V15 / "p1.json")
 assert p15["corrupt"] and p15["pre"]["pal"] == "0x1fd0c4" and p15["pre"]["pal_hdr_after_sm"] == "102b0400"
 st = p15["stops"]
-seq = [(s["eip"], s.get("ret"), s.get("res_idx")) for s in st[:9]]
+k_new = next(k for k, s in enumerate(st) if "new_pal" in s)  # 第一次配到新調色盤的停點(0x1f912)
+seq = [(s["eip"], s.get("ret"), s.get("res_idx")) for s in st[:k_new + 1]]
+assert seq[-1][0] == "0x1f912", seq
 assert seq[0] == ("0x111ba", "0x22e90", 79) and seq[2] == ("0x25ebb", "0x25dc2", None) and seq[3][0] == "0x1f894"
 assert st[2]["pal"] == "0x1fd0c4"
 first = st[5]
@@ -248,6 +253,7 @@ while i < len(st):
         i = j
     i += 1
 assert len(watched) == 6 and not watched[0]["real_free"] and all(w["real_free"] for w in watched[1:])
+assert all(w["path"][0] == "0x3d67f" for w in watched), watched  # 每次 free 都從 heap_free_block 的標頭檢查開始
 assert all(w["old"] == "0x207c30" and w["old_hdr"] == "05030000" for w in watched[1:])
 ng = next(s for s in st if s.get("ret") == "0x25ef2")
 assert ng["old"] == "0x207c30" and ng["res_idx"] == 0 and ng["key_i"] == 5
@@ -289,16 +295,19 @@ while p != head:
     assert p not in nodes and u32(p) & 1 == 0
     nodes.append(p)
     p = u32(p + 8)
-assert len(nodes) == desc[6] == 23
+numfree = desc[6]  # 堆積描述 +0x18:空閒區塊數
+assert len(nodes) == numfree == 23
 H = 0x1FD0C0
 before = sorted(x for x in nodes if x < H)
 assert before == [0x1F6C88, 0x1F6E38]
 a = 0x1F6E38
 while u32(a) != 0xFFFFFFFF:
+    assert a % 4 == 0 and u32(a) & ~1, hex(a)  # 區塊 4-byte 對齊、大小 > 0(否則走訪停在原地)
     a += u32(a) & ~1
 assert a == 0x1F6FF8
 chain, a = [], 0x1F7014
 while a <= H:
+    assert a % 4 == 0 and u32(a) & ~1, hex(a)  # 區塊 4-byte 對齊、大小 > 0(否則走訪停在原地)
     chain.append((a, u32(a)))
     a += u32(a) & ~1
 N = a
@@ -356,7 +365,7 @@ ev["D_free_forward_walk"] = {
               "第一個最低位 0 的區塊就當成空閒串列節點(0x3d72e),讀它的 +4 當前一節點並寫 [前一節點 + 8] = 被釋放的區塊。"
               "走訪只往後,所以只有位址在假標頭之前、而且中間沒有真正空閒區塊的區塊被釋放時才會走到它;"
               "名冊區塊緊接在它前面,但名冊從不被 free(續七十二),所以合併那一支走不到",
-    "v12_geometry_geo1": {"free_nodes": len(nodes), "numfree": desc[6], "free_nodes_before_H": [hex(x) for x in before],
+    "v12_geometry_geo1": {"free_nodes": len(nodes), "numfree": numfree, "free_nodes_before_H": [hex(x) for x in before],
                           "their_segment_end_marker": "0x1f6ff8(0xffffffff)",
                           "segment_chain_to_H": [(hex(x), hex(h)) for x, h in chain], "next_after_H": hex(N),
                           "owners_byte_scan_0x53a00_0x54000": own,

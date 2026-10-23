@@ -80,13 +80,29 @@ for n, unit, bit, got in LOG:
     print(unit, p, s, i, spell, d, bit, pred)
 
 pre, post = (D / "mix_pre.bin").read_bytes(), (D / "mix_post.bin").read_bytes()
-w = lambda b, i, o: struct.unpack_from("<H", b, i * 80 + o)[0]
-effects = {str(i): {"xy": [[pre[i * 80], pre[i * 80 + 1]], [post[i * 80], post[i * 80 + 1]]], "hp": [w(pre, i, 0x40), w(post, i, 0x40)],
-                    "mp": [w(pre, i, 0x44), w(post, i, 0x44)]} for i in (0, 1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18)}
+REC, HP, MP = 80, 0x40, 0x44  # 單位紀錄長度、HP、MP 欄位
+assert len(pre) == len(post) and len(pre) % REC == 0, (len(pre), len(post))
+w = lambda b, i, o: struct.unpack_from("<H", b, i * REC + o)[0]
+xy = lambda b, i: [b[i * REC], b[i * REC + 1]]
+# 列出的單位 = 傾印裡 +5 bit0 沒有設的(在場)單位
+present = [i for i in range(len(pre) // REC) if not pre[i * REC + 5] & 1]
+effects = {str(i): {"xy": [xy(pre, i), xy(post, i)], "hp": [w(pre, i, HP), w(post, i, HP)],
+                    "mp": [w(pre, i, MP), w(post, i, MP)]} for i in present}
 # 施法者 MP:法術 8 扣 24、法術 13 扣 3;選物理的不扣
 for u, cost in ((11, 24), (15, 24), (17, 3), (13, 0), (14, 0), (16, 0)):
-    assert w(pre, u, 0x44) - w(post, u, 0x44) == cost, u
-assert w(post, 18, 0x40) == 28 and w(post, 1, 0x40) < 300
+    assert w(pre, u, MP) - w(post, u, MP) == cost, u
+assert w(post, 18, HP) == 28 and w(post, 1, HP) < 300
+# 這一段有變動的單位(座標 / HP / MP 任一)都在列出的在場單位裡;不在場的單位整筆不變
+changed = {i for i in range(len(pre) // REC) if pre[i * REC:(i + 1) * REC] != post[i * REC:(i + 1) * REC]}
+assert changed and changed <= set(present), (sorted(changed), present)
+# 在場的敵人(+6 = 0)正好是這個敵方回合每個有決策停點的單位
+assert {i for i in present if pre[i * REC + 6] == 0} == {u for _, u, _, _ in LOG}, present
+# 座標:敵方回合裡隊員(+6 = 2)不動;選物理攻擊的單位行動後與物理目標相鄰
+assert all(e["xy"][0] == e["xy"][1] for i, e in effects.items() if pre[int(i) * REC + 6] == 2), effects
+for r in rows:
+    if r["executor_observed"] == "physical":
+        (ax, ay), (tx, ty) = effects[str(r["unit"])]["xy"][1], effects[str(r["physical_target_53c4b"])]["xy"][1]
+        assert abs(ax - tx) + abs(ay - ty) == 1, r
 EVI.write_bytes((json.dumps({
     "note": "DOSBox-X 斷點停點與記憶體讀值;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。0x14f62 停下時讀 [0x53c23..0x53c52]、[ESP](= 攻方 +0x48 - 物理目標 +0x4a)、"
             "EBP(= 攻方 +0x34 & 0x40)、ESI(單位);之後停在 0x1548e / 0x15311 / 0x15055 其中之一即為勝者。predicted 依 0x14f62..0x15050 的靜態規則。"

@@ -46,6 +46,11 @@ with contextlib.redirect_stdout(_st):
 lines = _st.getvalue().splitlines()
 assert _st_rc == 0 and any(x.startswith("(11)") for x in lines) and any(x.startswith("(12)") for x in lines), lines[-20:]
 i11 = next(i for i, x in enumerate(lines) if x.startswith("(11)"))
+st_block = lines[i11:i11 + 6]
+# 這一段 = (11)、(12) 兩項各「標題、PASS、空行」;下一行是別的項目或輸出結束
+assert [x[:4] for x in st_block[::3]] == ["(11)", "(12)"] and st_block[2::3] == ["", ""] \
+    and all(x.strip().startswith("PASS") for x in st_block[1::3]) \
+    and lines[i11 + len(st_block)].startswith(("(", "--selftest passed")), st_block
 tables = json.loads(git_blob(TABLES_BLOB, "docs/data/event_dispatch_table_58_89.json"))["tables"]
 out = {
     "date": "2026-10-15", "exe_md5": EXE_MD5,
@@ -64,7 +69,7 @@ out = {
     "analysis": {"script": "an128.py(暫存)", "items": res},
     "mutation_image": {"script": "mut_an128.py(暫存)", "stdout": m1.stdout.strip().splitlines()},
     "mutation_tool": {"script": "mut128.py(暫存)", "stdout": m2.stdout.strip().splitlines()},
-    "tool_selftest_11_12": lines[i11:i11 + 6],
+    "tool_selftest_11_12": st_block,
 }
 
 # 結論釘住:9 項預測符合、1 個對照判為不符合;index_bounds 的手寫數字與分析一致;突變全部符合預期

@@ -4,6 +4,7 @@
 """
 import collections
 import json
+import re
 import struct
 import sys
 
@@ -11,6 +12,7 @@ from _evpaths import GAME_S, ROOT_S, TOOLS, out_path, require_inputs  # noqa: E4
 require_inputs(__file__)
 sys.path.insert(0, str(TOOLS))
 import disasm_le  # noqa: E402
+import export_units  # noqa: E402
 import parse_field  # noqa: E402
 from _terrain import AP_PCT, DP_PCT, gated, tdiv, terrain_type  # noqa: E402
 
@@ -28,6 +30,22 @@ sel_rows = json.loads(json.dumps([sel_analyse(t) for t in SEL_TAGS], ensure_asci
 assert all(r["count_match"] and r["list_match"] and r["marks_match_recompute"] for r in sel_rows)
 spells = [ob(0x619FD + i * 7, 7) for i in range(36)]
 items = [ob(0x602AD + i * 0x17, 0x17) for i in range(215)]
+_rows = lambda n: [bytes.fromhex(r["raw"]) for r in json.load(open(f"{ROOT}/docs/data/exe_tables/{n}.json", encoding="utf-8"))]
+assert spells == _rows("spell") and items == _rows("native_item_effect_rows"), "EXE 表與 dump_exe_tables 不同"
+
+
+def key_hex(key: str) -> list[int]:
+    """鍵名裡的 0x.. 位移(鍵名與計算用同一份)。"""
+    vals = [int(h, 16) for h in re.findall(r"0x([0-9a-f]+)", key)]
+    assert re.findall(r"0x[0-9a-f]+", key) == [f"0x{v:x}" for v in vals], key
+    return vals
+
+
+K_SP, K_SP3, K_IT, K_IT_EQ, K_IT_D = ("spell_0x6_over_36_spells", "spells_with_0x6_3", "item_0x15_over_215_items",
+                                      "item_0x11_equals_0x15_for_all", "items_with_use_effect_0xd_by_selector")
+(SP_SEL,), (IT_SEL,), (IT_11, _IT_15), (IT_USE,) = key_hex(K_SP), key_hex(K_IT), key_hex(K_IT_EQ), key_hex(K_IT_D)
+assert key_hex(K_SP3) == [SP_SEL] and _IT_15 == IT_SEL
+assert [int(re.search(r"over_(\d+)_", k)[1]) for k in (K_SP, K_IT)] == [len(spells), len(items)]
 rival_diff = collections.Counter()
 for r in sel_rows:
     for k, v in r["rival_predictions"].items():
@@ -61,11 +79,11 @@ sel_out = {
              "i* 為道具指令;i4 之前把 #3 從 (23,15) 移到 (23,13)。"),
     "selector_rule_static": "0x14992..0x149d2:0 → +6 == 0、1 → +6 != 0、2 → +6 == 1、3 → +6 == 2,其他值四個比較都不成立、不收",
     "shipped_selector_values": {
-        "spell_0x6_over_36_spells": {str(k): v for k, v in sorted(collections.Counter(s[6] for s in spells).items())},
-        "spells_with_0x6_3": [i for i, s in enumerate(spells) if s[6] == 3],
-        "item_0x15_over_215_items": {str(k): v for k, v in sorted(collections.Counter(r[0x15] for r in items).items())},
-        "item_0x11_equals_0x15_for_all": all(r[0x11] == r[0x15] for r in items),
-        "items_with_use_effect_0xd_by_selector": {str(k): v for k, v in sorted(collections.Counter(r[0x15] for r in items if r[0xD]).items())},
+        K_SP: {str(k): v for k, v in sorted(collections.Counter(s[SP_SEL] for s in spells).items())},
+        K_SP3: [i for i, s in enumerate(spells) if s[SP_SEL] == int(K_SP3.rsplit("_", 1)[1])],
+        K_IT: {str(k): v for k, v in sorted(collections.Counter(r[IT_SEL] for r in items).items())},
+        K_IT_EQ: all(r[IT_11] == r[IT_SEL] for r in items),
+        K_IT_D: {str(k): v for k, v in sorted(collections.Counter(r[IT_SEL] for r in items if r[IT_USE]).items())},
         "conclusion": ("出貨資料沒有任何法術或道具帶 2;selector 3 只有法術 23(傳送術)與道具指令的兩個寫死呼叫;"
                        "帶 5 的 182 個道具 +0xd 都是 0(沒有使用效果),所以 selector 2 與 >= 4 只能由改值觸發。"),
     },
@@ -91,6 +109,7 @@ open(EV + "collect_targets_selector_20261001.json", "a", encoding="utf-8", newli
 
 # ---------- terrain on shipped maps ----------
 terrain = json.load(open(ROOT + "/docs/data/exe_tables/terrain.json", encoding="utf-8"))
+unit_tables = json.load(open(ROOT + "/docs/data/exe_tables/native_unit_tables.json", encoding="utf-8"))
 T = ROOT + "/.wsl_build/ctr/terr/"
 RUNS = [(19, "ch19", "d0"), (20, "ch20", "d0"), (25, "ch25", "d0"), (26, "ch26", "d1"), (29, "ch29", "d0")]
 # 受控攻擊的三個戰場各在 0x1eda12(執行期)讀一次 AP / DP 修正表(各 6 個 int32):三份相同、與 EXE 靜態表相同
@@ -110,6 +129,8 @@ def stops(path: str) -> list:
     return out
 
 
+K_UNITS, K_CELLS = "units_on_type_ge3_at_player_control", "static_start_cells_type_ge3"
+GE, = {int(re.search(r"type_ge(\d+)", k)[1]) for k in (K_UNITS, K_CELLS)}  # 地形類型下限 = 鍵名的值
 maps = []
 for chap, d, tag in RUNS:
     rd = lambda f: open(f"{T}{d}/{tag}_{f}.bin", "rb").read()
@@ -121,27 +142,39 @@ for chap, d, tag in RUNS:
     stat_t = [struct.unpack_from("<H", fb, 4 + 4 * i)[0] & 0x3FF for i in range(W * H)]
     mc = {e["idx"]: e["move_code"] for e in terrain["tilesets"][m]["entries"]}
     used = sorted(set(live_t))
-    ty = lambda x, y: tt[live_t[y * W + x] * 4 + 1]
+    ty = lambda x, y: terrain_type(grid, tt, x, y)
+    tile_type = {live_t[y * W + x]: ty(x, y) for y in range(H) for x in range(W)}
     info = parse_field.parse_map(ROOT + "/extracted/raw", m)
-    occ = {(units[i * 80], units[i * 80 + 1]): i for i in range(len(units) // 80) if not units[i * 80 + 5] & 1}
-    hi_static = sorted({(x, y) for x, y, p in info["positions"] if ty(x, y) >= 3})
+    REC = 80
+    recs = [units[i:i + REC] for i in range(0, len(units), REC)]
+    assert len(units) % REC == 0, len(units)
+    occ = {(r[0], r[1]): i for i, r in enumerate(recs) if not r[5] & 1}
+    hi_static = sorted({(x, y) for x, y, p in info["positions"] if ty(x, y) >= GE})
     pos_count = collections.Counter((x, y) for x, y, p in info["positions"])
     on_hi = []
     for (x, y), i in sorted(occ.items(), key=lambda k: k[1]):
-        if ty(x, y) >= 3:
-            r = units[i * 80:(i + 1) * 80]
+        if ty(x, y) >= GE:
+            r = recs[i]
             on_hi.append({"unit": i, "xy": [x, y], "type": ty(x, y), "side_0x6": r[6], "raw_key_0x7": r[7],
                           "race": r[0x1F], "class": r[0x20], "mv": r[0x3B]})
+            # +6 / +7 = 該地圖 FDFIELD 某單位的 b0 / b1;種族 / 職業 / MV = EXE 建構表(native_unit_tables)該 raw key 那列
+            u = on_hi[-1]
+            assert any((v["native_record_byte6"], v["raw_unit_key"]) == (u["side_0x6"], u["raw_key_0x7"]) for v in info["units"]), u
+            nat = export_units.native_constructor_for_raw_unit_key(unit_tables, u["raw_key_0x7"])
+            assert nat["branch"] == "high_class" and [u["race"], u["class"]] == nat["record"][:2] and \
+                u["mv"] == export_units.native_mv_for_raw_unit_key(unit_tables, u["raw_key_0x7"]), (u, nat)
     maps.append({
-        "save_chapter_shown": chap, "save_chapter_byte": chap - 1, "map": m, "W": W, "H": H,
+        "save_chapter_shown": chap, "save_chapter_byte": m, "map": m, "W": W, "H": H,
         "tiles_equal_FDFIELD": sum(a == b for a, b in zip(live_t, stat_t)), "cells": W * H,
-        "tiles_used": len(used), "live_type_byte_vs_terrain_json_differing": sum(tt[t * 4 + 1] != mc.get(t) for t in used),
-        "live_type_counts": {str(k): v for k, v in sorted(collections.Counter(tt[t * 4 + 1] for t in live_t).items())},
-        "units_live": len(units) // 80,
-        "units_on_type_ge3_at_player_control": on_hi,
-        "static_start_cells_type_ge3": [{"xy": list(c), "type": ty(*c), "entries": pos_count[c], "occupied_by": occ.get(c)}
+        "tiles_used": len(used), "live_type_byte_vs_terrain_json_differing": sum(tile_type[t] != mc.get(t) for t in used),
+        "live_type_counts": {str(k): v for k, v in sorted(collections.Counter(tile_type[t] for t in live_t).items())},
+        "units_live": len(recs),
+        K_UNITS: on_hi,
+        K_CELLS: [{"xy": list(c), "type": ty(*c), "entries": pos_count[c], "occupied_by": occ.get(c)}
                                         for c in hi_static],
     })
+# 活地形表的類型與 terrain.json 的 move_code 逐圖塊相同(兩條獨立抽取)
+assert all(mp["live_type_byte_vs_terrain_json_differing"] == 0 for mp in maps), maps
 # 章節 byte → 地圖編號的對應:活地圖的圖塊與該地圖的 FDFIELD 逐格相同
 assert all(mp["tiles_equal_FDFIELD"] == mp["cells"] for mp in maps), [(mp["map"], mp["tiles_equal_FDFIELD"], mp["cells"]) for mp in maps]
 

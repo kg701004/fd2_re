@@ -12,6 +12,7 @@ EVI = out_path("attack_exp_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
 
 E_ROW = 21
+EXP_CAP = 99  # 一次最多加 99
 # --- 證據:由傾印重算;斷點讀值由當時 exp_test.sh 的終端輸出(原始紀錄,見 _console.py)解析 ---
 CONSOLE = ["20260929T125754_toolu_01YX3jRW1dkndYN4W3PHquVA", "20260929T130008_toolu_01Ka26U6gc1BeJJrnX1Zzcj3",
            "20260929T130212_toolu_01NVVNwyZxgzzucD2m94uaf5"]
@@ -31,25 +32,33 @@ for tag in ("xA", "xB", "xC", "xD", "xE"):
     post = (D / f"post_{tag}.bin").read_bytes()
     a, d0, a1, d1 = (b[i * 80:(i + 1) * 80] for b, i in ((pre, att[tag]), (pre, 11), (post, att[tag]), (post, 11)))
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
-    lv = a[0x21] + (0x1E if (8 < a[0x20] < 0x19 or a[8] == 0x1C) else 0)
-    base = d0[0x21] * E_ROW // lv
-    dmg = w(d0, 0x40) - w(d1, 0x40)
-    killed = w(d1, 0x40) == 0
-    exp = base if killed else base * dmg // w(d0, 0x42)
-    gain = a1[0x3C] - a[0x3C]
+    a_lv, a_cls, a_b8 = a[0x21], a[0x20], a[8]
+    d_lv = d0[0x21]
+    hp0, hp1, mhp = w(d0, 0x40), w(d1, 0x40), w(d0, 0x42)
+    ex0, ex1 = a[0x3C], a1[0x3C]
+    f5_0, f5_1 = d0[5], d1[5]
+    bp_base, bp_exp = bp[tag]
+    lv = a_lv + (0x1E if (8 < a_cls < 0x19 or a_b8 == 0x1C) else 0)
+    base = d_lv * E_ROW // lv
+    dmg = hp0 - hp1
+    killed = hp1 == 0
+    exp = base if killed else base * dmg // mhp
+    gain = ex1 - ex0
     # 同一段終端輸出印出的攻擊後 EX 必須等於該案例的傾印(證明這段輸出與傾印是同一次執行)
-    assert post_ex_console[tag][att[tag]] == a1[0x3C], (tag, post_ex_console[tag])
+    assert post_ex_console[tag][att[tag]] == ex1, (tag, post_ex_console[tag])
+    # 守方 +5 bit0(不在場)攻擊前清除;攻擊後設定 ⇔ 被擊殺
+    assert not f5_0 & 1 and bool(f5_1 & 1) == killed, (tag, f5_0, f5_1)
     rec = {
-        "case": tag, "attacker": att[tag], "attacker_level": a[0x21], "attacker_class": a[0x20], "attacker_byte8": a[8],
-        "divisor": lv, "defender_level": d0[0x21], "defender_portrait": d0[7], "row_plus9": E_ROW,
-        "defender_hp_before": w(d0, 0x40), "defender_hp_after": w(d1, 0x40), "defender_max_hp": w(d0, 0x42),
-        "damage": dmg, "killed": killed, "predicted_base": base, "predicted_exp": exp, "predicted_gain": min(exp, 99),
-        "bp_0x2fa9f_eax": bp[tag][0], "bp_0x2fab9_eax": bp[tag][1], "attacker_ex_before": a[0x3C], "attacker_ex_after": a1[0x3C],
-        "defender_flags5_before": d0[5], "defender_flags5_after": d1[5],
-        "guide_formula_would_give": min(99, (d0[0x21] * E_ROW * d0[0x21] // lv) * (w(d0, 0x42) if killed else dmg) // w(d0, 0x42)),
+        "case": tag, "attacker": att[tag], "attacker_level": a_lv, "attacker_class": a_cls, "attacker_byte8": a_b8,
+        "divisor": lv, "defender_level": d_lv, "defender_portrait": d0[7], "row_plus9": E_ROW,
+        "defender_hp_before": hp0, "defender_hp_after": hp1, "defender_max_hp": mhp,
+        "damage": dmg, "killed": killed, "predicted_base": base, "predicted_exp": exp, "predicted_gain": min(exp, EXP_CAP),
+        "bp_0x2fa9f_eax": bp_base, "bp_0x2fab9_eax": bp_exp, "attacker_ex_before": ex0, "attacker_ex_after": ex1,
+        "defender_flags5_before": f5_0, "defender_flags5_after": f5_1,
+        "guide_formula_would_give": min(EXP_CAP, (d_lv * E_ROW * d_lv // lv) * (mhp if killed else dmg) // mhp),
     }
-    assert base == bp[tag][0] and gain == min(exp, 99), tag
-    assert (bp[tag][1] is None) == killed and (killed or bp[tag][1] == exp), tag
+    assert base == bp_base and gain == min(exp, EXP_CAP), tag
+    assert (bp_exp is None) == killed and (killed or bp_exp == exp), tag
     assert rec["guide_formula_would_give"] != rec["predicted_gain"] or tag == "xE", tag
     cases.append(rec)
 EVI.write_bytes((json.dumps({

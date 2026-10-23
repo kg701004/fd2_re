@@ -108,7 +108,7 @@ for tag, info in rounds.items():
         assert dmg < 18
         loss[d] = loss.get(d, 0) + dmg
         loss_no_terrain[d] = loss_no_terrain.get(d, 0) + max(0, (ap - dp) * 9 // 10)
-        rows_hit.append((a, d, ap, apm, dp, dpm))
+        rows_hit.append((a, d, ap, apm, dp, dpm, dmg))
     measured = {}
     for d in loss:
         measured[d] = w(pre, d, 0x40) - w(post, d, 0x40)
@@ -154,8 +154,8 @@ for tag, info in rounds.items():
         "flag_53af9": info["flag_53af9"],
         "breakpoint_stops": [{"function": f, "return_static": r, "arg1": x, "arg2": y} for f, r, x, y in info["stops"]],
         "hits": [{"attacker": a, "defender": d, "attacker_ap": ap, "attacker_terrain_mod": apm, "defender_dp": dp,
-                  "defender_terrain_mod": dpm, "predicted": max(0, (ap + (apm or 0) - dp - (dpm or 0)) * 9 // 10)}
-                 for (a, d, ap, apm, dp, dpm) in rows_hit],
+                  "defender_terrain_mod": dpm, "predicted": dmg}  # exchange 的預測(各輪合計 = 實測 HP 損失)
+                 for (a, d, ap, apm, dp, dpm, dmg) in rows_hit],
         "hp_loss_predicted": {str(k): v for k, v in loss.items()},
         "hp_loss_measured": {str(k): v for k, v in measured.items()},
     }

@@ -12,6 +12,16 @@ EVI = out_path("terrain_modifier_20260929.json")
 D = ROOT / ".wsl_build" / "ctr"
 # 地形規則與修正表寫在 _terrain.py(ev_attack_path_selection 共用);本產生器以斷點讀值逐案驗證
 from _terrain import AP_PCT as A, DP_PCT as B, exchange, gated, terrain_type  # noqa: E402
+import sys  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import export_units  # noqa: E402
+UNIT_TABLES = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
+
+
+def view(r: bytes) -> dict:
+    """單位紀錄的欄位(終端輸出核對與證據輸出用同一份)。"""
+    w = lambda o: struct.unpack_from("<H", r, o)[0]
+    return {"x": r[0], "y": r[1], "race": r[0x1F], "class": r[0x20], "plus7": r[7], "hp": w(0x40), "ap": w(0x48), "dp": w(0x4A)}
 
 cells = (D / "t_map.bin").read_bytes()
 tt = (D / "t_tt.bin").read_bytes()
@@ -54,21 +64,27 @@ for tag, (bap, bdp, bdmg) in bp.items():
     post = (D / f"post_{tag}.bin").read_bytes()
     a, d = pre[0:80], pre[11 * 80:12 * 80]
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
-    ap, dp = w(a, 0x48), w(d, 0x4A)
-    ta, td = ttype(a[0], a[1]), ttype(d[0], d[1])
+    va, vd = view(a), view(d)
+    ap, dp = va["ap"], vd["dp"]
+    ta, td = ttype(va["x"], va["y"]), ttype(vd["x"], vd["y"])
+    # 守方(盜賊)是 FDFIELD 單位:職業 = EXE 建構表 raw key(+7)那列的 byte 1(種族有幾個案例被實驗改過,不比)
+    nat = export_units.native_constructor_for_raw_unit_key(UNIT_TABLES, vd["plus7"])
+    assert vd["class"] == nat["record"][1], (tag, vd, nat)
     apm, dpm, dmg = exchange(ap, dp, a, d, lambda r: ttype(r[0], r[1]))
     assert dmg < 18  # 亂數項為 0
     hp_drop = w(d, 0x40) - w(post[11 * 80:12 * 80], 0x40)
     # 同一段終端輸出印出的雙方欄位必須等於該案例的傾印(證明這段輸出與傾印是同一次執行)
     for (ph, i), (x, y, race, cls, hp, ap_, dp_) in unit_console[tag].items():
-        r = (pre if ph == "pre" else post)[i * 80:(i + 1) * 80]
-        assert (x, y, race, cls, hp, ap_, dp_) == (r[0], r[1], r[0x1F], r[0x20], w(r, 0x40), w(r, 0x48), w(r, 0x4A)), (tag, ph, i)
+        v = view((pre if ph == "pre" else post)[i * 80:(i + 1) * 80])
+        assert (x, y, race, cls, hp, ap_, dp_) == tuple(v[k] for k in ("x", "y", "race", "class", "hp", "ap", "dp")), (tag, ph, i)
     assert sorted(unit_console[tag]) == [("post", 0), ("post", 11), ("pre", 0), ("pre", 11)], tag
     floor_ap = None if apm is None else (ap * A[ta]) // 100
     rec = {
         "case": tag,
-        "attacker": {"xy": [a[0], a[1]], "terrain_type": ta, "race": a[0x1F], "class": a[0x20], "plus7": a[7], "ap": ap, "gated": gated(a)},
-        "defender": {"xy": [d[0], d[1]], "terrain_type": td, "race": d[0x1F], "class": d[0x20], "plus7": d[7], "dp": dp, "gated": gated(d)},
+        "attacker": {"xy": [va["x"], va["y"]], "terrain_type": ta, "race": va["race"], "class": va["class"], "plus7": va["plus7"],
+                     "ap": ap, "gated": gated(a)},
+        "defender": {"xy": [vd["x"], vd["y"]], "terrain_type": td, "race": vd["race"], "class": vd["class"], "plus7": vd["plus7"],
+                     "dp": dp, "gated": gated(d)},
         "predicted": {"ap_mod": apm, "dp_mod": dpm, "damage": dmg},
         "breakpoints": {"ap_mod_0x2f8dc": bap, "dp_mod_0x2f921": bdp, "damage_0x2f9fc": bdmg},
         "defender_hp_drop": hp_drop,

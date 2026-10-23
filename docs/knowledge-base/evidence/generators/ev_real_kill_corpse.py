@@ -53,6 +53,7 @@ for stem in KC_CONSOLE:
             events.append((turn, "e9c", int(m[1]), m[2]))
         else:
             assert _OTHER.match(line), (stem, line)  # 不略過未預期的停點
+CORPSE = 7  # 被敵人 #11 打死的 NPC(屍體留在 (1,7))
 runs = {}
 # 兩個回合在 0x13e9c 入口的傾印,以及 #13 移動後的傾印;actor / observed 取自入口停點之後的 0x14b78 引數
 for tag, entry, post in (("turn1", "kc_u_t1r1_6", "kc_u_t1r1_10"), ("turn2", "kc_u_t2_17", "kc_u_t2_22")):
@@ -63,29 +64,32 @@ for tag, entry, post in (("turn1", "kc_u_t1r1_6", "kc_u_t1r1_10"), ("turn2", "kc
     assert any(e[3] == post for e in events[events.index(mv) + 1:] if e[0] == mv[0]), (tag, post)
     observed = mv[2][:2]
     us = units((D / f"{entry}.bin").read_bytes())
-    assert us[7]["f5"] & 1 and us[7]["hp"] == 0 and (us[7]["x"], us[7]["y"]) == (1, 7), (tag, us[7])
+    corpse = us[CORPSE]
+    assert corpse["f5"] & 1 and corpse["hp"] == 0 and (corpse["x"], corpse["y"]) == (1, 7), (tag, corpse)
     code = nearest(us, actor, set())
     # 對照規則:「真的陣亡時座標被清掉/移出地圖」→ 屍體不可能是最近的候選,等於把所有 HP 0 且 bit0 的單位剔除
     rival = nearest(us, actor, {u["i"] for u in us if u["f5"] & 1 and u["hp"] == 0})
-    assert (code[0], code[1]) == observed and (rival[0], rival[1]) != observed, (tag, code, rival)
+    cx, cy, cu, cd = code
+    rx, ry, ru, rd = rival
+    assert (cx, cy) == observed and (rx, ry) != observed and cu == CORPSE, (tag, code, rival)
     p = units((D / f"{post}.bin").read_bytes())
     # 兩份傾印之間只有 actor 移動
     assert [u["i"] for u in us if (u["x"], u["y"]) != (p[u["i"]]["x"], p[u["i"]]["y"])] == [actor], tag
     runs[tag] = {"actor": actor, "actor_xy": [us[actor]["x"], us[actor]["y"]], "observed_0x14b78_target": list(observed),
-                 "corpse_7": {"xy": [us[7]["x"], us[7]["y"]], "f5": us[7]["f5"], "hp": us[7]["hp"]},
-                 "predicted_corpse_kept": {"xy": [code[0], code[1]], "unit": code[2], "distance": code[3]},
-                 "rival_corpse_cleared": {"xy": [rival[0], rival[1]], "unit": rival[2], "distance": rival[3]},
+                 f"corpse_{CORPSE}": {"xy": [corpse["x"], corpse["y"]], "f5": corpse["f5"], "hp": corpse["hp"]},
+                 "predicted_corpse_kept": {"xy": [cx, cy], "unit": cu, "distance": cd},
+                 "rival_corpse_cleared": {"xy": [rx, ry], "unit": ru, "distance": rd},
                  "actor_moved_to": [p[actor]["x"], p[actor]["y"]]}
     print(tag, "code", code, "rival", rival, "moved", runs[tag]["actor_moved_to"])
 
 # 被真的打死的兩個單位(NPC #7 被敵人 #11 打死、敵人 #12 被索爾打死):整筆記錄與設定後相比只有這些位移改變
 last = (D / "kc_u_t2_22.bin").read_bytes()
 changed = {}
-for u in (7, 12):
+for u in (CORPSE, 12):
     a, b = pre[u * 80:u * 80 + 80], last[u * 80:u * 80 + 80]
     changed[str(u)] = [[hex(i), a[i], b[i]] for i in range(80) if a[i] != b[i]]
     assert not {0, 1} & {i for i in range(80) if a[i] != b[i]}, (u, changed[str(u)])
-assert [c[0] for c in changed["7"]] == ["0x5", "0x26", "0x40"], changed
+assert [c[0] for c in changed[str(CORPSE)]] == ["0x5", "0x26", "0x40"], changed
 print("changed", changed)
 
 # 死亡旗標寫入:證據表是摘要(不是全部寫入,見下方 death_writes);每一列必須是終端輸出裡實際停到的 (回合, 位址, 單位)
@@ -98,6 +102,9 @@ DEATH_FLAG_WRITES = [
 death_writes = [(e[0], e[2][0], e[2][1]) for e in events if e[1] == "death"]
 for row in DEATH_FLAG_WRITES:
     assert (row["turn"], row["at"], row["unit"]) in death_writes, row
+# 摘要列依實際停到的先後排列(是 death_writes 的子序列)
+_it = iter(death_writes)
+assert all((row["turn"], row["at"], row["unit"]) in _it for row in DEATH_FLAG_WRITES), (DEATH_FLAG_WRITES, death_writes)
 # 每個回合 0x1dd4c 的第一筆新死者:該回合第一份傾印已死(+5 bit0、HP 0),之前所有傾印都還活著
 DUMPS = [(0, "kc_pre"), (1, "kc_u_t1r1_6"), (1, "kc_u_t1r1_10"), (2, "kc_u_t2_17"), (2, "kc_u_t2_22")]
 dumps = {n: units((D / f"{n}.bin").read_bytes()) for _, n in DUMPS}

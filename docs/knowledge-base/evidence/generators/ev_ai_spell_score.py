@@ -16,6 +16,8 @@ require_inputs(__file__)
 import _console  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 import disasm_le as dl  # noqa: E402
+import export_units  # noqa: E402
+UNIT_TABLES = json.loads((ROOT / "docs/data/exe_tables/native_unit_tables.json").read_text(encoding="utf-8"))
 D = ROOT / ".wsl_build" / "ctr"
 EVI = out_path("ai_spell_score_20260930.json")
 _EXE = (GAME / "FD2.EXE").read_bytes()
@@ -32,6 +34,8 @@ def spell_row(sid: int) -> dict:
         {"value": +0 u16, "cast": +3 施放距離, "area": +4 範圍, "mp": +5, "sel": +6 選擇子, "row": 7 bytes 十六進位}。
     """
     r = bytes(dl.object_bytes(_EXE, _META, 0x619FD + sid * 7, 7))
+    # 與 tools/dump_exe_tables.py 另外抽的法術列相同
+    assert r == bytes.fromhex(json.loads((ROOT / "docs/data/exe_tables/spell.json").read_text(encoding="utf-8"))[sid]["raw"]), sid
     return {"value": struct.unpack_from("<H", r, 0)[0], "cast": r[3], "area": r[4], "mp": r[5], "sel": r[6], "row": r.hex(" ")}
 
 
@@ -192,10 +196,17 @@ for run, uname, calls, exit_stop, ftag in RUNS:
     assert CON[(ftag, exit_stop)] == bb, (run, exit_stop, CON[(ftag, exit_stop)])  # 終端印出的 best = 出口傾印
     if sel != bb:
         mismatches.append((run, "selection", bb, sel))
+    ts = {str(u["i"]): {"xy": [u["x"], u["y"]], "hp": u["hp"], "+8": u["p8"], "race": u["race"], "class": u["cls"], "+7": u["p7"]}
+          for u in us if u["side"] != 0 and not (u["f5"] & 1)}
+    # 列出的 = 在場的非敵方單位:評分停點的每個目標都在裡面,而且都沒有 +5 bit0
+    assert {str(t) for g in got_calls for t in g["targets"]} <= set(ts) and all(us[int(k)]["f5"] % 2 == 0 for k in ts), (run, sorted(ts))
+    # NPC(+6 = 1)是 FDFIELD 單位:+8 = +7 = raw key,職業 = EXE 建構表那列的 byte 1
+    for k, v in ts.items():
+        if us[int(k)]["side"] == 1:
+            nat = export_units.native_constructor_for_raw_unit_key(UNIT_TABLES, v["+7"])
+            assert v["+8"] == v["+7"] and v["class"] == nat["record"][1], (run, k, v, nat)
     result.append({"run": run, "units_dump": uname, "caster": {"xy": [cx, cy], "mp": mp},
-                   "targets_state": {str(u["i"]): {"xy": [u["x"], u["y"]], "hp": u["hp"], "+8": u["p8"], "race": u["race"],
-                                                   "class": u["cls"], "+7": u["p7"]}
-                                     for u in us if u["side"] != 0 and not (u["f5"] & 1)},
+                   "targets_state": ts,
                    "calls": got_calls, "best_53c23_27_2b_2f": list(bb), "best_predicted": list(sel)})
 
 # R6:AI 施法打 NPC(+7 = 0x85 >= 0x44,擊殺)→ [0x53ec8] 應為 high_class_row10_ptr(0x41)+9 (=1,靜態 0x61d8c) × 等級 3
@@ -211,9 +222,14 @@ for m in re.finditer(r"(?m)^iter (\d+): EIP=([0-9A-F]+) \[0x53ec8\]=(-?\d+)$", _
 assert sorted(r6_obs) == [0x1546A, 0x15474], r6_obs
 tgt = killed[0]
 row_r6 = bytes(dl.object_bytes(_EXE, _META, 0x61D83, 10))  # high_class_row10_ptr 指向的列;+9 = 靜態 0x61d8c
+# 這一列 = native_unit_tables.json(extract_native_unit_tables.py 另外抽的)high_class 表的某一列,且就是目標 raw key(+7)那列
+_hc = UNIT_TABLES["tables"]["high_class"]
+_k, _rem = divmod(0x61D83 - int(_hc["linear"], 16), _hc["record_size"])
+assert _rem == 0 and bytes.fromhex(_hc["records"][_k]["bytes_hex"]) == row_r6 and len(row_r6) == _hc["record_size"], _k
+assert export_units.native_constructor_for_raw_unit_key(UNIT_TABLES, pre[killed[0]]["p7"])["record"] == list(row_r6), _k
 r6 = {"target": tgt, "target_+7": pre[tgt]["p7"], "target_level": pre[tgt]["level"], "row_0x61d83": row_r6.hex(" "),
       "predicted_53ec8": row_r6[9] * pre[tgt]["level"], "observed_at_0x1546a": r6_obs[0x1546A], "observed_at_0x15474": r6_obs[0x15474],
-      "caster_ex_before": pre[CASTER]["ex"], "caster_ex_after": (D / "sc_post_r6.bin").read_bytes()[CASTER * 80 + 0x3C],
+      "caster_ex_before": pre[CASTER]["ex"], "caster_ex_after": post[CASTER]["ex"],
       "caster_mp": [pre[CASTER]["mp"], post[CASTER]["mp"]]}
 assert r6["caster_ex_after"] == 0 and r6["caster_mp"] == [79, 55]
 # 預測的經驗值累加器 = 0x1546a 停點實測的 [0x53ec8]

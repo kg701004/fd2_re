@@ -22,11 +22,24 @@ OUT = out_path("lut_circle_ramp_at_unit_20261013.json")
 W = 320
 VX0, VY0, VW, VH = 4, 4, 0x138, 0xC0  # copy_rect 貼到畫面的視窗
 VX1, VY1 = VX0 + VW - 1, VY0 + VH - 1
+# 視窗 = 基準畫面裡非 0 像素的外框(四周是 0 的框)
+for _t in ("s12", "s11", "ai79"):
+    _x0, _y0, _x1, _y1 = Image.frombytes("P", (W, 200), (D / f"{_t}_ref.bin").read_bytes()).getbbox()
+    assert (_x0, _y0, _x1 - 1, _y1 - 1) == (VX0, VY0, VX1, VY1), (_t, (_x0, _y0, _x1, _y1))
+TILE, SPRITE_UP = 24, 12  # 圖塊 24 像素;單位圖 24 × 36,比格子高 12 像素(往上凸)
+
+
+def unit_box(tx: int, ty: int) -> tuple[int, int, int, int]:
+    """視窗內第 (tx, ty) 格上的單位圖範圍(含端點),上緣被視窗裁掉。"""
+    x0, y0 = VX0 + TILE * tx, VY0 + TILE * ty
+    return x0, max(VY0, y0 - SPRITE_UP), x0 + TILE - 1, y0 + TILE - 1
+
+
 PANEL = [(4, 158, 74, 197)]
-U1 = [(268, 16, 291, 51), (172, 16, 195, 51), (148, 4, 171, 27), (244, 16, 267, 51), (52, 136, 75, 171), (28, 112, 51, 147),
-      (4, 136, 27, 171)]
-U2 = [(292, 136, 315, 171), (76, 40, 99, 75), (52, 4, 75, 27), (28, 16, 51, 51), (268, 136, 291, 171), (28, 160, 51, 195),
-      (76, 160, 99, 195), (52, 136, 75, 171)]
+# 有動畫的單位所在的格(畫面座標 = 格 − 捲動);排除框由格算出
+U1 = [unit_box(*t) for t in ((11, 1), (7, 1), (6, 0), (10, 1), (2, 6), (1, 5), (0, 6))]
+# 續一百五十一:原本另有 (3, 2)、(2, 0)、(1, 1) 三格,10 幀裡框內都沒有換色(沒作用),拿掉
+U2 = [unit_box(*t) for t in ((12, 6), (11, 6), (1, 7), (3, 7), (2, 6))]
 RUNS = [("s12", "玩家施放裂地術(法術 12,command_handler_12)", 276, 42, 30, 16, PANEL + U1),
         ("s11", "玩家施放地震術(法術 11,command_handler_11)", 276, 42, 15, 10, PANEL + U1),
         ("ai79", "敵 #11 在敵方回合使用道具 79(ai_item_action)", 276, 162, 80, -4, U2)]
@@ -41,6 +54,7 @@ def analyse(tag: str, cx: int, cy: int, r0: int, step: int, excl: list[tuple[int
     ref = (D / f"{tag}_ref.bin").read_bytes()
     pal = (D / f"{tag}_pal.bin").read_bytes()
     lum = [(pal[i * 3] * 30 + pal[i * 3 + 1] * 59 + pal[i * 3 + 2] * 11) / 100 for i in range(256)]
+    need = NEED.setdefault(tuple(excl), {k: 0 for k in range(len(excl))}) if (cx, cy, r0, step) == _TRUE.get(tag) else {}
     sx, sy = cx + VX0, cy + VY0
 
     def masked(x: int, y: int) -> bool:
@@ -55,25 +69,33 @@ def analyse(tag: str, cx: int, cy: int, r0: int, step: int, excl: list[tuple[int
         over: list[tuple[int, int]] = []
         for y in range(VY0, VY1 + 1):
             dy = y - sy
-            hw = int(math.sqrt(r * r - dy * dy) * 12 / 10) if abs(dy) <= r else -1
-            xs = [x for x in range(VX0, VX1 + 1) if f[y * W + x] != ref[y * W + x] and not masked(x, y)]
+            hw = int(math.sqrt(r * r - dy * dy) * 12 / 10) if abs(dy) <= r else None
+            diff_x = [x for x in range(VX0, VX1 + 1) if f[y * W + x] != ref[y * W + x]]
+            xs = [x for x in diff_x if not masked(x, y)]
+            for x in diff_x:
+                for k, (a, b_, c, d) in enumerate(excl):
+                    if k in need:
+                        need[k] += a <= x <= c and b_ <= y <= d
             for x in xs:
-                if hw < 0 or abs(x - sx) > hw:
+                if hw is None or abs(x - sx) > hw:
                     out_changed += 1
                     if len(over) < 4:
                         over.append((x, y))
                 else:
                     in_changed += 1
                     lum_d += lum[f[y * W + x]] - lum[ref[y * W + x]]
-            if hw < 0:
+            if hw is None:
                 continue
-            inside += sum(1 for x in range(max(VX0, sx - hw), min(VX1, sx + hw) + 1) if not masked(x, y))
+            inside += sum(not masked(x, y) for x in range(max(VX0, sx - hw), min(VX1, sx + hw) + 1))
             for edge, sign in ((sx - hw, 1), (sx + hw, -1)):
                 if not VX0 <= edge <= VX1 or hw < 3 or any(masked(edge + sign * k, y) for k in range(3)):
                     continue
                 edge_rows += 1
                 hit = [x for x in xs if 0 <= (x - edge) * sign <= 2]
                 edge_ok += bool(hit)
+        # 未排除的換色像素:圓內 + 圓外 = 另外數的總數
+        assert in_changed + out_changed == sum(f[y * W + x] != ref[y * W + x] and not masked(x, y)
+                                               for y in range(VY0, VY1 + 1) for x in range(VX0, VX1 + 1)), (tag, i)
         rows.append({"i": i, "r": r, "inside_px": inside, "changed_in": in_changed, "changed_out": out_changed,
                      "edge_rows": edge_rows, "edge_ok": edge_ok,
                      "mean_lum_delta": round(lum_d / in_changed, 2) if in_changed else None, "over": over})
@@ -89,8 +111,8 @@ def vertical_extent(tag: str, i: int, sx: int, excl: list[tuple[int, ...]]) -> t
     """圓心那一欄左右 3 像素內,被換色的最上 / 最下一列(被排除的不算)。"""
     ref = (D / f"{tag}_ref.bin").read_bytes()
     f = (D / f"{tag}_f{i:02d}.bin").read_bytes()
-    ys = [y for y in range(4, 196) for x in range(sx - 3, sx + 4)
-          if 4 <= x <= 315 and f[y * 320 + x] != ref[y * 320 + x] and not any(a <= x <= c and b <= y <= d for a, b, c, d in excl)]
+    ys = [y for y in range(VY0, VY1 + 1) for x in range(sx - 3, sx + 4)
+          if VX0 <= x <= VX1 and f[y * W + x] != ref[y * W + x] and not any(a <= x <= c and b <= y <= d for a, b, c, d in excl)]
     return (min(ys), max(ys)) if ys else (None, None)
 
 
@@ -110,6 +132,8 @@ def sheet(tag: str) -> Image.Image:
     return sh
 
 
+_TRUE = {tag: (cx, cy, r0, step) for tag, _w, cx, cy, r0, step, _e in RUNS}  # 實測參數(對照組不計排除框)
+NEED: dict = {}  # 排除框組 → 每個框在用它的各輪裡被換色的像素數
 out: dict = {"date": "2026-10-13", "exe_md5": EXE_MD5,
              "method": "DOSBox-X 除錯器斷點:0x2189a 入口讀堆疊;0x2198e(每幀 copy_rect 之後)讀 EBX / ESI 並傾印線性 0xa0000 起 64000 bytes;"
                        "調色盤取 [0x53a65] 指到的 768 bytes(6 位元);基準畫面是同一視角、沒有效果的一幀。",
@@ -126,13 +150,15 @@ for tag, what, cx, cy, r0, step, excl in RUNS:
     assert set(ctl.values()) == {"FAIL"}, ctl
     for r in rows:
         r.pop("over")
-        top, bot = vertical_extent(tag, r["i"], cx + 4, excl)
+        top, bot = vertical_extent(tag, r["i"], cx + VX0, excl)
         r["centre_col_top_y"], r["centre_col_bottom_y"] = top, bot
         r["frame_md5"] = hashlib.md5((D / f"{tag}_f{r['i']:02d}.bin").read_bytes()).hexdigest()
     assert [f["radius"] for f in log["frames"]] == [r0 + step * i for i in range(10)]
     out["runs"].append({"tag": tag, "what": what, "entry": log["entry"], "ai_item_action": log.get("ai_item_action"),
-                        "frames_radius_ESI": [f["radius"] for f in log["frames"]], "screen_centre": [cx + 4, cy + 4],
+                        "frames_radius_ESI": [f["radius"] for f in log["frames"]], "screen_centre": [cx + VX0, cy + VY0],
                         "excluded_rects": excl, "shape": rows, "controls": ctl})
+# 每個排除框都有用:用它的那幾輪裡,框內在某一幀有換色(單位動畫 / 面板)
+assert all(all(v.values()) for v in NEED.values()), NEED
 neg = json.loads((D / "ai.json").read_text(encoding="utf-8"))
 out["negative_run"] = {"what": "敵 #11 使用道具 38(道具列 +0x10 = 2):ai_item_action 有進,整個敵方回合 0x2189a 的斷點沒有停",
                        "ai_item_action": neg["ai_item_action"], "frames": len(neg["frames"])}
@@ -141,8 +167,9 @@ for tag, shots in SHOTS.items():
     for name in shots:
         im = Image.open(S / f"{name}.png").convert("RGB").crop((192, 201, 832, 601)).resize((320, 200), Image.NEAREST)
         sc = sorted((sum(ImageStat.Stat(ImageChops.difference(im, f)).mean) / 3, k) for k, f in fr.items())
-        out["window_screenshot_match"].append({"screenshot": name, "best": sc[0][1], "mean_abs_diff": round(sc[0][0], 3),
-                                               "second": sc[1][1], "second_diff": round(sc[1][0], 3)})
+        (d_best, k_best), (d_2nd, k_2nd), *_ = sc
+        out["window_screenshot_match"].append({"screenshot": name, "best": k_best, "mean_abs_diff": round(d_best, 3),
+                                               "second": k_2nd, "second_diff": round(d_2nd, 3)})
 # 判準:每張視窗截圖只對上一幀(最接近 < 0.5,次接近 > 1.0),而且依截圖時間順序對到的幀不倒退
 wm = out["window_screenshot_match"]
 assert all(w["mean_abs_diff"] < 0.5 < 1.0 < w["second_diff"] for w in wm), wm

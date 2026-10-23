@@ -7,11 +7,12 @@ import sys
 from _mutrun import run_mutants
 
 MUTANTS = [
-    ("頭尾亮度差門檻 10", "if b[0] - b[-1] < 4:", "if b[0] - b[-1] < 10:"),
-    ("同相位容許改 0", "if same and abs(b[i] - b[i + 1]) >= 0.1:", "if same and abs(b[i] - b[i + 1]) >= 0.0:"),
-    ("相位大的可以比較亮", "if not same and b[i + 1] - b[i] > 0.1:", "if not same and b[i + 1] - b[i] > 9.9:"),
+    ("頭尾亮度差門檻 10", "if b_first - b_last < 4:", "if b_first - b_last < 10:"),
+    ("同相位容許改 0", "if same and abs(b0 - b1) >= 0.1:", "if same and abs(b0 - b1) >= 0.0:"),
+    ("相位大的可以比較亮", "if not same and b1 - b0 > 0.1:", "if not same and b1 - b0 > 9.9:"),
     ("對照帶容許 0.01", "if max(c) - min(c) > 1.5:", "if max(c) - min(c) > 0.01:"),
-    ("亮帶多算一格", "(cx1 - sx) * 24 + 27, (cy1 - sy) * 24 + 27)", "(cx1 - sx) * 24 + 51, (cy1 - sy) * 24 + 51)"),
+    ("亮帶多算一格", "(cx1 - sx + 1) * TILE + _mx0 - 1, (cy1 - sy + 1) * TILE + _my0 - 1)",
+     "(cx1 - sx + 2) * TILE + _mx0 - 1, (cy1 - sy + 2) * TILE + _my0 - 1)"),
     ("亮度用滿 8 位元", "((pal[i * 3] & 63) + (pal[i * 3 + 1] & 63) + (pal[i * 3 + 2] & 63)) / 3",
      "((pal[i * 3] & 15) + (pal[i * 3 + 1] & 63) + (pal[i * 3 + 2] & 63)) / 3"),
     ("調色盤迴圈預期從 63 起", "assert log[\"pal\"] == list(range(64, -1, -1))", "assert log[\"pal\"] == list(range(63, -1, -1))"),

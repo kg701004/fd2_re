@@ -3,6 +3,7 @@
 輸入(.wsl_build/ctr):sc_units_<run>.bin、sc_call_<run>_<n>.bin、sc_best_<run>_<n>.bin、hl_pre/hl_post 傾印。EAX、停點序號、單位表檔名與 0x1598a 入口順序由當時 sc_log.sh 的終端輸出
 (原始紀錄,見 _console.py)解析,並逐停點核對終端印出的法術 / 目標 / 施放點 / best 與同一停點的傾印相同。
 """
+import itertools
 import json
 import re
 import struct
@@ -30,7 +31,12 @@ def spell_row(sid: int) -> dict:
         {"value": +0 u16, "cast": +3 施放距離, "area": +4 範圍, "mp": +5, "sel": +6 選擇子, "row": 7 bytes 十六進位}。
     """
     r = bytes(dl.object_bytes(_EXE, _META, 0x619FD + sid * 7, 7))
-    return {"value": struct.unpack_from("<H", r, 0)[0], "cast": r[3], "area": r[4], "mp": r[5], "sel": r[6], "row": r.hex(" ")}
+    # 與 tools/dump_exe_tables.py 另外抽的法術列相同
+    _js = json.loads((ROOT / "docs/data/exe_tables/spell.json").read_text(encoding="utf-8"))[sid]
+    assert r == bytes.fromhex(_js["raw"]), sid
+    _v = struct.unpack_from("<H", r, 0)[0]
+    assert _v == _js["dmg"], (sid, _v)  # +0 u16 與 dump_exe_tables 解出的數值欄相同
+    return {"value": _v, "cast": r[3], "area": r[4], "mp": r[5], "sel": r[6], "row": r.hex(" ")}
 
 
 SPELL_ID = 13  # 盜賊 #11 只會法術 13(下面以每次入口傾印的已學法術位元欄核對)
@@ -73,8 +79,8 @@ def sc_log(stem: str) -> list[dict]:
             assert len(e["targets"]) == int(m[2]), line
         elif m := re.fullmatch(r"exit 0x1598a unit=(\d+) best\(score,x,y,spell\)=\((-?\d+), (-?\d+), (-?\d+), (-?\d+)\)", body):
             e |= {"kind": "exit", "unit": int(m[1]), "best": tuple(int(m[k]) for k in range(2, 6))}
-        elif m := re.fullmatch(r"ai_spell_execute ret=(0x[0-9a-f]+) unit=(\d+) a2=(\d+)", body):
-            e |= {"kind": "execute", "unit": int(m[2])}
+        elif m := re.fullmatch(r"ai_spell_execute ret=(0x[0-9a-f]+) unit=(?P<unit>\d+) a2=(\d+)", body):
+            e |= {"kind": "execute", "unit": int(m["unit"])}
         else:
             raise AssertionError(f"{stem} 無法解析:{line}")
         ev.append(e)
@@ -102,7 +108,7 @@ def entry_order(ev: list[dict]) -> list[str]:
     相鄰、同種、且同為(或同非)施法者 #11 的事件併成一項,單位以 a..b 區間表示;
     整段沒有 ai_spell_execute 時在最後註明。
     """
-    groups: list[tuple[tuple[str, bool], list[int]]] = []
+    seq = []
     for e in ev:
         if e["kind"] == "entry":
             kind = {0x1D91F: "pass1", 0x14F1A: "pass2"}[e["ret"]]
@@ -110,11 +116,9 @@ def entry_order(ev: list[dict]) -> list[str]:
             kind = "ai_spell_execute"
         else:
             continue
-        key = (kind, e["unit"] == CASTER)
-        if groups and groups[-1][0] == key:
-            groups[-1][1].append(e["unit"])
-        else:
-            groups.append((key, [e["unit"]]))
+        seq.append(((kind, e["unit"] == CASTER), e["unit"]))
+    # 連續同類(同一趟、是不是施法者)併成一組
+    groups = [(key, [u for _, u in g]) for key, g in itertools.groupby(seq, key=lambda t: t[0])]
     out = []
     for (kind, _), us in groups:
         spans: list[list[int]] = []
@@ -124,6 +128,10 @@ def entry_order(ev: list[dict]) -> list[str]:
             else:
                 spans.append([u, u])
         out.append(kind + ":" + ",".join(f"{a}" if a == b else f"{a}..{b}" for a, b in spans))
+        # 「a..b」展開回去要等於原本的單位序列(連號才併),且相鄰兩段不連號(併到最長)
+        assert all(nlo > phi + 1 for (_, phi), (nlo, _) in zip(spans, spans[1:])), spans
+        assert [k for part in out[-1].split(":", 1)[1].split(",")
+                for lo, _, hi in [part.partition("..")] for k in range(int(lo), int(hi or lo) + 1)] == us, (out[-1], us)
     if not any(e["kind"] == "execute" for e in ev):
         out.append("(沒有 ai_spell_execute)")
     return out
@@ -213,9 +221,12 @@ for run, ftag, unames, eaxs, stopsets, exits in RUNS:
         assert CON[(ftag, ex)] == bb, (run, ex, CON[(ftag, ex)])  # 終端印出的 best = 出口傾印
         if sel != bb:
             mism.append((run, "selection", bb, sel))
+        best_score, *_ = bb
         runs_out.append({"run": run, "units_dump": uname, "caster": {"xy": [c["x"], c["y"]], "mp": c["mp"]}, "calls": calls,
-                         "best_53c23_27_2b_2f": list(bb), "casts_predicted": bb[0] >= 6})
+                         "best_53c23_27_2b_2f": list(bb), "casts_predicted": best_score >= 6})
 
+# 預測會不會施法 = 這一輪的停點裡有沒有 ai_spell_execute(門檻 6 與 ai_choose_action 的「三者都 < 6 不行動」相同)
+assert all(r["casts_predicted"] == any(x.startswith("ai_spell_execute:") for x in ORDER[r["run"]]) for r in runs_out), runs_out
 # 施法結果:H1 補 #13(8 -> 28)、H2 補 #14(13 -> 28),MP 各扣 3;H3 沒有施法
 heal = {}
 for run, t in (("h1", 13), ("h2", 14)):

@@ -26,7 +26,7 @@ NAME = {"handler 0x214ad": "command_handler_9 0x214ad", "spell_cast_scene(0x2ff0
 # 玩家指令選單(返回位址 0x1d480)呼叫 handler 0x214ad 的停點:原證據只記函式與返回位址,
 # 終端輸出同一行的 a1=1 a2=1 沒有收錄進證據(維持原格式)
 PLAYER_MENU_RET = "0x1d480"
-_ENTRY = re.compile(r"^stop \d+: (.+?) ret=(0x[0-9a-f]+) a1=(\d+) a2=(\d+)$")
+_ENTRY = re.compile(r"^stop \d+: (?P<name>.+?) ret=(?P<ret>0x[0-9a-f]+) a1=(?P<a1>\d+) a2=(?P<a2>\d+)$")
 _HIT = re.compile(r"^stop \d+: 0x1c7fe base=(\d+) hit_roll=(\d+)$")
 _DMG = re.compile(r"^stop \d+: 0x1c87f dmg_roll=(\d+)$")
 # 每回合:s9_setup.sh 那次("setup done <標籤> flag=N")、s9_log.sh 那次、印出傾印內容那次的終端輸出
@@ -55,9 +55,9 @@ def s9_stops(stem: str) -> list[list]:
         if not line.startswith("stop "):
             continue
         if m := _ENTRY.match(line):
-            s = [NAME[m[1]], f"ret {m[2]}"]
-            if not (m[1] == "handler 0x214ad" and m[2] == PLAYER_MENU_RET):
-                s += [int(m[3]), int(m[4])]
+            s = [NAME[m["name"]], f"ret {m['ret']}"]
+            if not (m["name"] == "handler 0x214ad" and m["ret"] == PLAYER_MENU_RET):
+                s += [int(m["a1"]), int(m["a2"])]
         elif m := _HIT.match(line):
             s = ["0x1c7fe", f"base {m[1]}", f"hit_roll {m[2]}"]
         elif m := _DMG.match(line):
@@ -114,14 +114,16 @@ for tag, r in rounds.items():
            "base_predicted": base, "hit_roll": r["hit_roll"], "hit": hit, "damage_predicted": dmg}
     if r["post"]:
         post = (D / f"{r['post']}.bin").read_bytes()
-        hp0, hp1 = w(pre, t, 0x40), w(post, t, 0x40)
+        HP, MP = 0x40, 0x44
+        hp0, hp1 = w(pre, t, HP), w(post, t, HP)
+        mp0, mp1 = w(pre, c, MP), w(post, c, MP)
         assert hp0 - hp1 == dmg, (tag, hp0, hp1, dmg)
-        assert w(pre, c, 0x44) - w(post, c, 0x44) == 30, tag
+        assert mp0 - mp1 == 30, tag
         # 交叉檢查(終端輸出 ↔ 傾印):當時印出的施法前後 悠妮 HP、盜賊 HP / MP 必須等於兩份傾印
         printed = {m[0]: [int(v) for v in m[1:]] for m in _PRINT.findall(_console.load(RUNS[tag]["dump_print"])[1])}
         for ph, b in ((r["pre"], pre), (r["post"], post)):
-            assert printed.get(ph) == [w(b, 1, 0x40), w(b, 11, 0x40), w(b, 11, 0x44)], (tag, ph, printed.get(ph))
-        rec.update({"target_hp": [hp0, hp1], "caster_mp": [w(pre, c, 0x44), w(post, c, 0x44)]})
+            assert printed.get(ph) == [w(b, 1, HP), w(b, 11, HP), w(b, 11, MP)], (tag, ph, printed.get(ph))
+        rec.update({"target_hp": [hp0, hp1], "caster_mp": [mp0, mp1]})
     if "note" in r:
         rec["note"] = r["note"]
     out[tag] = rec

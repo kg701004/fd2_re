@@ -10,6 +10,28 @@ import _console  # noqa: E402
 D = ROOT / ".wsl_build" / "ctr"
 OUT = out_path("heal_spell_targets_20260929.json")
 W, H, N = 27, 21, 21
+UNMARKED = 0xFF  # 格子記號的「沒到」值(collect 只收記號 != 0xff 的格)
+DELTA = 0x19C000
+import sys  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+import disasm_le as dl  # noqa: E402
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
+_CODE, _CBASE = dl.load_code(_EXE, _META)
+_MD = dl._capstone()
+
+
+def insn(addr: int) -> str:
+    i = next(_MD.disasm(_CODE[addr - _CBASE:addr - _CBASE + 16], addr, 1))
+    return f"{i.mnemonic} {i.op_str}"
+
+
+# player_action_ring 0x19029..0x19036:除數 = 施法者 +0x21(等級),+0x20(職業)> 8 時再加 0x1e —— 位移與常數讀自 EXE
+_div = [insn(a) for a in (0x19029, 0x1902D, 0x19031, 0x19036)]
+assert _div[0].startswith("movzx ebx, byte ptr [esi + ") and _div[1].startswith("movzx eax, byte ptr [esi + "), _div
+LV_OFF, CLS_OFF = (int(s.rsplit("+ ", 1)[1].rstrip("]"), 16) for s in _div[:2])
+CLS_GT = int(_div[2].removeprefix("cmp eax, "), 0)
+LV_ADD = int(_div[3].removeprefix("add ebx, "), 0)
 
 
 def side_ok(sel: int, side: int) -> bool:
@@ -29,16 +51,17 @@ for tag in ("hA1", "hA2", "hB0", "hB1", "hB2"):
         r = units[i * 80:(i + 1) * 80]
         x, y, f5, side = r[0], r[1], r[5], r[6]
         m = mark(x, y)
-        inc = not (f5 & 1) and m != 0xFF and side_ok(sel, side)
-        if m != 0xFF or inc:
+        inc = not (f5 & 1) and m != UNMARKED and side_ok(sel, side)
+        if m != UNMARKED or inc:
             rows.append({"unit": i, "x": x, "y": y, "side": side, "flags5": f5, "cell_mark": m, "predicted_in": inc})
         if inc:
             pred.append(i)
+    assert _CODE[ret - DELTA - 5 - _CBASE] == 0xE8, (tag, hex(ret))  # 返回位址前面是一條 call rel32
     rec = {
-        "return_address_static": hex(ret - 0x19C000), "origin": [ox, oy], "out_buf_live": hex(outp),
+        "return_address_static": hex(ret - DELTA), "origin": [ox, oy], "out_buf_live": hex(outp),
         "range": rng, "threshold": thr, "selector": sel, "returned_count": count, "predicted": pred,
         "units_on_marked_cells": rows,
-        "marked_cells": {f"{x},{y}": mark(x, y) for y in range(H) for x in range(W) if mark(x, y) != 0xFF},
+        "marked_cells": {f"{x},{y}": mark(x, y) for y in range(H) for x in range(W) if mark(x, y) != UNMARKED},
     }
     if outp:
         out = (D / f"{tag}_out.bin").read_bytes()
@@ -122,9 +145,9 @@ def accumulated(rnd: str) -> int:
 
 
 exp = {
-    "caster": caster, "caster_level": crec[0x21], "caster_class": crec[0x20],
-    # player_action_ring 0x19029..0x19045:除以施法者等級,職業 > 8 時再 +0x1e(doc98 續四十七的靜態讀法)
-    "divisor": crec[0x21] + (0x1E if crec[0x20] > 8 else 0),
+    "caster": caster, "caster_level": crec[LV_OFF], "caster_class": crec[CLS_OFF],
+    # player_action_ring 0x19029..0x19045:除以施法者等級,職業 > 8 時再 +0x1e(位移與常數讀自上面的 EXE 指令)
+    "divisor": crec[LV_OFF] + (LV_ADD if crec[CLS_OFF] > CLS_GT else 0),
     "ex_before": post["h0"], "ex_after_hA": post["post_hA"], "ex_after_hB": post["post_hB"],
     "hA_accumulated": accumulated("hA"), "hB_accumulated": accumulated("hB"),
 }

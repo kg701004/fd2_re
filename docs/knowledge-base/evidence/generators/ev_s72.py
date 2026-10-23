@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import struct
 import sys
 from collections import Counter
@@ -42,6 +43,9 @@ groups: dict[bytes, list[int]] = {}
 for i, e in enumerate(DM.ENTS):
     groups.setdefault(e, []).append(i)
 ev["_meta"]["dato_duplicates"] = [v for v in groups.values() if len(v) > 1]
+# 沒列進重複組的條目,內容在 DATO 裡只出現一次
+_dup_idx = {i for v in ev["_meta"]["dato_duplicates"] for i in v}
+assert all(DM.ENTS.count(e) == 1 for i, e in enumerate(DM.ENTS) if i not in _dup_idx), "有重複條目沒列出"
 assert len(DM.ENTS) == 136
 
 # ---------------- A / C:v10a ----------------
@@ -122,7 +126,11 @@ assert spk["lookup_ret"] == -1 and spk["c1b"] == "0x0"
 assert por["portrait_idx_ebp"] == ivt[7] == ld["res_idx"] == st5["portrait_idx"] == 0
 assert (box["x"], box["y"], box["flag"]) == (ivt[0], ivt[1], 0)
 assert dump_match(st5["buf_dump"]) == [0] and DM.match(( A_ / st5["buf_dump"]).read_bytes(), DM.ENTS) == [0]
-k1_3 = next(s for s in stops if s["eip"] == "0x15f84" and s.get("idx") == 3 and s["k"] == 1)
+K_KEY = "attempted_k1"
+K1 = int(K_KEY.removeprefix("attempted_k"))  # 對照用的那一輪(k 取自鍵名)
+k1_3 = next(s for s in stops if s["eip"] == "0x15f84" and s.get("idx") == 3 and s["k"] == K1)
+# 載入的是第 0 條整段:大小 [0x53bff] = DATO 第 0 條的長度
+assert st5["size_53bff"] == len(DM.ENTS[ld["res_idx"]]), (st5["size_53bff"], ld["res_idx"])
 ev["C_null_speaker"] = {
     "static": "0x16183 call 0x12c60(id) 回 -1 → 旗標 0;id ≠ 0x27 時 edi = [0x53c1b]、頭像 = byte [edi+7](0x161ad),"
               "開框座標 = byte [edi]、[edi+1](0x161ce / 0x161d3)",
@@ -132,17 +140,23 @@ ev["C_null_speaker"] = {
     "linear_0_8": i3["ivt_0_8"],
     "linear_0_8_meaning": "DOS 中斷向量表:int0 = F000:CA60、int1 = 0070:000E;byte 7 = int1 段址的高位 0x00(DOSBox-X 的值,實機 DOS 可能不同)",
     "portrait_idx": por["portrait_idx_ebp"], "loader": {"ret": ld["ret"], "res_idx": ld["res_idx"], "size_0x53bff": st5["size_53bff"],
-                                                         "len_DATO_000": len(DM.ENTS[0]),
+                                                         "len_DATO_000": len(DM.ENTS[ld["res_idx"]]),
                                                          "buf_dato_full_match": DM.match((A_ / st5["buf_dump"]).read_bytes(), DM.ENTS)},
     "box_anim": {"x": box["x"], "y": box["y"], "flag": box["flag"], "cursor": box["cursor"]},
     "screen": "a2_s007_pre_Return.png:頂端開框,頭像是 DATO_000(doc01:索爾),台詞照常顯示,鏡頭沒動,遊戲沒有當掉",
-    "roster_branch_control": {"attempted_k1": k1_3.get("patched"), "reason": "名冊 18 筆的 id 全都在戰場上,沒有只在名冊的角色;驅動照設計不改碼,第 3 條走原本的 0xFFED",
+    "roster_branch_control": {K_KEY: k1_3.get("patched"), "reason": "名冊 18 筆的 id 全都在戰場上,沒有只在名冊的角色;驅動照設計不改碼,第 3 條走原本的 0xFFED",
                               "not_done": "未另外改名冊紀錄 +8 重做;k=0/k=1 的第 3 條走 0xFFED(單位索引)分支、不經 0x12c60,不能當這一支的對照"},
     "conclusion": "說話者不在戰場也不在名冊時 [0x53c1b] = 0,頭像索引與開框座標從線性位址 7、0、1 讀;在 DOSBox-X 是 0 → 載入 DATO 第 0 條,不會當掉。"
                   "線性 7 的值若 ≥ 136,0x111ba 會把檔頭外的資料當偏移(靜態:DATO 第 0xF0 條的『大小』= -16974001),走到「Out of Memory at Load」(0x500fc)— 未實測。"}
 D = DM.DATO
-a_, c_ = struct.unpack_from("<ii", D, 6 + 4 * 0xF0)
-ev["C_null_speaker"]["static_idx_0xF0_size"] = c_ - a_
+off = lambda i: struct.unpack_from("<i", D, 6 + 4 * i)[0]  # 6 bytes 檔頭 + dword 偏移表
+# 同一個讀法切出的每一條 = dato_match 切出的條目
+assert all(D[off(i):off(i + 1)] == e for i, e in enumerate(DM.ENTS)), "偏移表讀法與 dato_match 不同"
+SZ_KEY = "static_idx_0xF0_size"
+_i = int(SZ_KEY.split("_")[2], 16)  # 第 0xF0 條(取自鍵名)
+ev["C_null_speaker"][SZ_KEY] = off(_i + 1) - off(_i)
+# 與結論文字寫的大小相同
+assert ev["C_null_speaker"][SZ_KEY] == int(re.search(r"『大小』= (-?\d+)", ev["C_null_speaker"]["conclusion"])[1])
 
 # ---------------- B:v10b ----------------
 runs = {}

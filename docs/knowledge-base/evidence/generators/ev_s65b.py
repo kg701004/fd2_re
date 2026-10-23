@@ -5,11 +5,17 @@ C. map 19 / map 18:map_attack_resolve 在地形 4 / 3 上的攻擊與反擊(含 
 """
 import json
 import os
+from pathlib import Path
+import re
 import struct
+import sys
 
-from _evpaths import ROOT_S, out_path, require_inputs  # noqa: E402
+from _evpaths import ROOT_S, TOOLS, out_path, require_inputs  # noqa: E402
 require_inputs(__file__)
 from _terrain import terrain_type  # noqa: E402
+sys.path.insert(0, str(TOOLS))
+import export_units  # noqa: E402
+import parse_field  # noqa: E402
 ROOT = ROOT_S
 T = ROOT + "/.wsl_build/ctr/terr2/"
 OUT = str(out_path("terrain_events_map_attack_20261001.json"))
@@ -24,27 +30,50 @@ def stops(path):
     return out
 
 
+_EVT = json.loads((Path(ROOT_S) / "docs/data/event_dispatch_table_58_89.json").read_text(encoding="utf-8"))["tables"]["event"]["count"]
+REC = 80
+POISON = "poison_0x25"
+unit_tables = json.load(open(ROOT_S + "/docs/data/exe_tables/native_unit_tables.json", encoding="utf-8"))
+
+
+def key_off(key: str) -> int:
+    """鍵名裡的 0x.. 位移(鍵名與讀值用同一份)。"""
+    off, = re.findall(r"0x([0-9a-f]+)", key)
+    return int(off, 16)
+
+
 def hp(path, i):
     u = open(path, "rb").read()
-    return {"hp": struct.unpack_from("<H", u, i * 80 + 0x40)[0], "xy": [u[i * 80], u[i * 80 + 1]],
-            "poison_0x25": u[i * 80 + 0x25]}
+    r = u[i * REC:(i + 1) * REC]
+    return {"hp": struct.unpack_from("<H", r, 0x40)[0], "xy": [r[0], r[1]], POISON: r[key_off(POISON)]}
 
 
 def exchange(d, tag, base, e, p, pred):
     st = stops(f"{T}{d}/{tag}_stops.txt")
-    idx = lambda h: (int(h, 16) - base) // 80
+
+    def idx(h: str) -> int:
+        """單位紀錄位址 → 索引(位址必須落在紀錄開頭)。"""
+        q, rem = divmod(int(h, 16) - base, REC)
+        assert rem == 0 and q >= 0, (h, hex(base))
+        return q
     mods = [{"site": "0x1edbf AP" if s["eip"] == "001BADBF" else "0x1ee04 DP", "attacker": idx(s["edi"]),
              "defender": idx(s["esi"]), "quotient": s["eax"], "remainder": s["edx"]}
             for s in st if s["eip"] in ("001BADBF", "001BAE04")]
     hpw = [{"defender": idx(s["esi"]), "new_hp": s["eax"]} for s in st if s["eip"] == "001BAFCE"]
     ex = [s for s in st if s["eip"] == "001B148E"]
-    r = {"ai_attack_execute_actor": ex[0]["esi"] and int(ex[0]["esi"], 16) if ex else None,
+    actor = int(ex[0]["esi"], 16) if ex else None  # ai_attack_execute 入口的 ESI = 出手單位的索引
+    assert actor in (None, e), (actor, e)
+    r = {"ai_attack_execute_actor": actor,
          "modifier_stops": mods, "hp_write_stops": hpw,
          "pre": {str(e): hp(f"{T}{d}/{tag}_pre_units.bin", e), str(p): hp(f"{T}{d}/{tag}_pre_units.bin", p)},
          "post": {str(e): hp(f"{T}{d}/{tag}_post_units.bin", e), str(p): hp(f"{T}{d}/{tag}_post_units.bin", p)},
          "predicted": pred}
     got = [(m["quotient"], m["remainder"]) for m in mods]
     r["modifiers_match"] = got == [tuple(x) for x in pred["mods"]]
+    # 修正停點:攻擊(AP、DP)由 e 打 p,反擊(AP、DP)由 p 打 e;兩方相鄰
+    assert [(m["attacker"], m["defender"]) for m in mods] == [(e, p), (e, p), (p, e), (p, e)], mods
+    (ex_, ey), (px_, py) = r["pre"][str(e)]["xy"], r["pre"][str(p)]["xy"]
+    assert abs(ex_ - px_) + abs(ey - py) == 1, (r["pre"], e, p)
     return r
 
 
@@ -60,19 +89,32 @@ assert a["modifiers_match"] and a["hp_change"] == {"17": 14, "57": 13}
 def state(tag):
     ad5 = open(f"{T}ch29/{tag}_ad5.bin", "rb").read()
     ctl = open(f"{T}ch29/{tag}_ctl.bin", "rb").read()
-    return {"turn": open(f"{T}ch29/{tag}_turn.bin", "rb").read()[0], "ad5_0x10": ad5[0x10], "ad5_0x11": ad5[0x11],
-            "ad5_0x15": ad5[0x15], "rows_turn_event_camp": [[ctl[3 + 3 * k], ctl[4 + 3 * k], ctl[5 + 3 * k]] for k in range(3)]}
+    turn, = open(f"{T}ch29/{tag}_turn.bin", "rb").read()[:1]
+    live = [c for c in parse_field.native_turn_event_controls(ctl) if c["event_id"] != 0xFF]  # 0xff = 空列
+    assert all(c["event_id"] < _EVT for c in live), "事件 id 超出 0x51b91 表"
+    rows = [[c["turn"], c["event_id"], c["raw_camp"]] for c in live]
+    return {"turn": turn, **{k: ad5[key_off(k)] for k in ("ad5_0x10", "ad5_0x11", "ad5_0x15")}, "rows_turn_event_camp": rows}
 
 chain = [{"when": w, **state(t)} for w, t in [
     ("開戰(未操作)", "s0"), ("悠妮在 (15,21) 休息、事件 75 對話結束後", "s3"), ("第 2 回合玩家回合", "t2s"),
     ("第 3 回合", "t3"), ("第 4 回合", "t4"), ("第 5 回合,事件 76 生成後", "sp")]]
+# 每一站的回合 = 敘述裡的回合數(有寫的)
+assert all(int(m[1]) == c["turn"] for c in chain if (m := re.search(r"第 (\d+) 回合", c["when"]))), chain
 u = open(f"{T}ch29/sp_units_all.bin", "rb").read()
-cnt = open(f"{T}ch29/sp_cnt.bin", "rb").read()[0]
+cnt, = open(f"{T}ch29/sp_cnt.bin", "rb").read()[:1]
+m28 = parse_field.parse_map(ROOT_S + "/extracted/raw", 28)
+g1 = [(v, p) for v, p in zip(m28["units"], m28["positions"]) if v["group"] == 1]  # map 28 的 group 1(spawn_group(1) 放的單位)
 spawned = []
-for i in range(cnt - 3, cnt):  # 生成的 3 個頭目是單位表的最後 3 筆(sp_cnt = 生成後的單位數)
-    r = u[i * 80:(i + 1) * 80]
+for i in range(cnt - len(g1), cnt):  # 生成的頭目是單位表的最後幾筆(sp_cnt = 生成後的單位數)
+    r = u[i * REC:(i + 1) * REC]
     spawned.append({"unit": i, "xy": [r[0], r[1]], "side_0x6": r[6], "raw_key_0x7": r[7], "race": r[0x1F], "class": r[0x20],
                     "mv": r[0x3B], "hp": struct.unpack_from("<H", r, 0x40)[0]})
+# 生成的頭目 = FDFIELD group 1 的單位(位置、b0 / b1 依序相同);種族 / 職業 / MV / HP = EXE 建構表該 raw key 那列
+for s, (v, p) in zip(spawned, g1, strict=True):
+    assert (s["xy"], s["raw_key_0x7"], s["side_0x6"]) == (list(p[:2]), v["raw_unit_key"], v["native_record_byte6"]), (s, v, p)
+    nat = export_units.native_constructor_for_raw_unit_key(unit_tables, s["raw_key_0x7"])
+    assert [s["race"], s["class"]] == nat["record"][:2] and s["mv"] == export_units.native_mv_for_raw_unit_key(unit_tables, s["raw_key_0x7"]) \
+        and s["hp"] == export_units.native_record_word42_for_raw_unit_key(unit_tables, s["raw_key_0x7"], v["lv"]), (s, nat)
 # 觸發格的事件 slot = 地圖格 byte2 低 5 位(1-based),控制段 +0x33 起每 slot 2 bytes (event_id, selector);
 # 生成格的地形類型由同一張地圖(map 28)的地圖格與地形表傾印算出
 G29 = ROOT + "/.wsl_build/ctr/terr/ch29/"
@@ -82,16 +124,19 @@ slot1 = grid29[4 + 4 * (TRIG[1] * struct.unpack_from("<H", grid29, 0)[0] + TRIG[
 ctl0 = open(f"{T}ch29/s0_ctl.bin", "rb").read()
 ev_id, ev_sel = ctl0[0x33 + 2 * (slot1 - 1)], ctl0[0x34 + 2 * (slot1 - 1)]
 assert (ev_id, ev_sel) == (75, 1), (slot1, ev_id, ev_sel)  # 事件 75、選擇子 1(玩家行動結束後呼叫)
+# 0-based slot 與 parse_field 由 FDFIELD 控制段解出的事件表相同
+slot0 = slot1 - 1
+assert {"slot": slot0, "event_id": ev_id, "selector": ev_sel} in m28["field_events"], m28["field_events"]
 spawn_types = {terrain_type(grid29, tt29, *s["xy"]) for s in spawned}
 assert len(spawn_types) == 1, spawn_types
 b = {"setup": "悠妮(+8 = 9)MV 改 45;除 #69..#72(麻痺 40)外的敵人 +5 bit0 並移到 (0,0);其餘不改",
      "trigger_cell": list(TRIG), "field_event_slot_1based": slot1,
-     "field_event": {"slot": slot1 - 1, "event_id": ev_id, "selector": ev_sel},
+     "field_event": {"slot": slot0, "event_id": ev_id, "selector": ev_sel},
      "dialogue_event75": "『就是這裡了!系統識別碼..』…『中樞撤銷最高級系統防護需要一些時間…』",
      "dialogue_event76_spawn": "『奇怪,終端竟然抗拒我的命令,有人對防衛系統動了手腳!』",
      "states": chain, "unit_count_after_spawn": cnt, "spawned_group1": spawned,
      "terrain_of_spawn_cells": next(iter(spawn_types))}
-assert [c["ad5_0x11"] for c in chain] == [0, 1, 2, 3, 4, 4] and chain[-1]["ad5_0x15"] == cnt - 3
+assert [c["ad5_0x11"] for c in chain] == [0, 1, 2, 3, 4, 4] and chain[-1]["ad5_0x15"] == cnt - len(g1)
 assert all(s["xy"] in ([13, 12], [15, 12], [17, 12]) for s in spawned)
 
 # C. map 19 / 18
@@ -99,7 +144,8 @@ c19 = exchange("ch20", "x4b", 0x26D820, 24, 12, {
     "mods": [[-6, -50], [-5, -75], [-6, -50], [-5, -50]],
     "note": "#24(地形 4、MV 0)攻 #12(地形 4、DP 115):AP 130 → -6、DP → -5;#12 反擊:AP 130 → -6、#24 DP 110 → -5;傷害 12 / 17"})
 assert [h["defender"] for h in c19["hp_write_stops"]] == [12, 24]  # 先寫 #12(P)、再寫 #24(E)
-c19["hp_write"] = {"P_new_hp": c19["hp_write_stops"][0]["new_hp"], "E_new_hp": c19["hp_write_stops"][1]["new_hp"]}
+_hp_p, _hp_e = c19["hp_write_stops"]
+c19["hp_write"] = {"P_new_hp": _hp_p["new_hp"], "E_new_hp": _hp_e["new_hp"]}
 c19["extra_poison"] = "攻方攻擊種類讓 #12 中毒(+0x25 = 3),下一個我方回合開始扣 MaxHP/10 = 99;第一次跑的 -111 = 12 + 99"
 assert c19["modifiers_match"] and [h["new_hp"] for h in c19["hp_write_stops"]] == [987, 982]
 c18 = exchange("ch19", "x3b", 0x26BFC0, 23, 5, {

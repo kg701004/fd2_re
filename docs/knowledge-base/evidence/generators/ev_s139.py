@@ -239,7 +239,8 @@ assert CONTAINER["FIGANI"]["files"] == 409 and CONTAINER["FIGANI"]["frame_contai
 assert CONTAINER["FIGANI"]["not_frame_container"] == {"3_bytes_00000a": 144, "empty": 1}, CONTAINER["FIGANI"]
 assert CONTAINER["FDOTHER"]["files"] == 104 and CONTAINER["FDOTHER"]["frame_containers_by_flag_byte"] == {0: 28}, CONTAINER
 assert CONTAINER["FDOTHER"]["not_frame_container"] == {"empty": 1, "other_format": 75}, CONTAINER["FDOTHER"]
-assert all(w > 0 and h > 0 for lst in CORPUS.values() for _, w, h, _ in lst)
+# 一幀不會大於 mode 13h 的畫面(320 × 200);讀錯 w / h 的位移會在這裡停,不會拿幾十億像素去解碼
+assert all(0 < w <= 320 and 0 < h <= 200 for lst in CORPUS.values() for _, w, h, _ in lst)
 
 # 解一次,留下每列像素與原串流每列的 bytes
 DEC: dict[str, list[tuple[list[tuple[int, ...]], list[bytes]]]] = {}

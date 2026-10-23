@@ -9,6 +9,7 @@ D. 標題 CONTINUE / LOAD(v19):在 0x25ecd 改壞當下調色盤標頭,兩條路
 """
 from __future__ import annotations
 
+import bisect
 import hashlib
 import json
 import re
@@ -51,6 +52,21 @@ def insn(addr: int) -> str:
     """反組譯單一指令(與 disasm_le.py dis 同一套 capstone),回 'mnemonic op_str'。"""
     i = next(md.disasm(code[addr - base:addr - base + 16], addr, 1))
     return f"{i.mnemonic} {i.op_str}".strip()
+
+
+_ENTRIES = sorted(int(e["addr"], 16) for e in
+                  json.loads((ROOT / "docs/data/function_inventory.json").read_text(encoding="utf-8"))["entries"])
+
+
+def off_boundary(addrs) -> list[str]:
+    """回傳不是指令起點的位址(空 = 全部都是)。"""
+    bad = []
+    for addr in addrs:
+        f = _ENTRIES[bisect.bisect_right(_ENTRIES, addr) - 1]
+        hit = next((i.address for i in md.disasm(code[f - base:addr - base + 16], f) if i.address >= addr), None)
+        if hit != addr:
+            bad.append(hex(addr))
+    return bad
 
 
 def has_stop(stops: list[dict], eip: str) -> bool:
@@ -101,6 +117,7 @@ assert not has_stop(r16["stops"], "0x4ec2a") and not has_stop(r16["stops"], "0x1
 e0 = dato[0x22A:]
 assert e0[0] == 0x10 and struct.unpack_from("<HH", e0, e0[0]) == (80, 80)  # 正常頭像(DATO 第 0 條):res[0] = 0x10 → 第 0 格 80×80
 static_a = {a: insn(a) for a in (0x161E3, 0x161E9, 0x161EC, 0x16200, 0x4EC16, 0x4EC1C, 0x4EC1F, 0x4EC24, 0x4EC25, 0x4EC2A)}
+assert not off_boundary(static_a), off_boundary(static_a)
 assert static_a[0x161E9] == "movzx eax, byte ptr [edi]" and static_a[0x161EC] == "add edi, eax"
 assert static_a[0x16200] == "call 0x4ebff" and static_a[0x4EC16] == "xor ecx, ecx" and static_a[0x4EC1C] == "mov cx, bp"
 assert static_a[0x4EC24].startswith("stosb") and static_a[0x4EC25] == "loop 0x4ec1f" and static_a[0x4EC2A] == "dec dx"
@@ -109,7 +126,10 @@ end = (V16 / "r1_end_pane.txt").read_text(encoding="utf-8")
 assert re.search(r"CS=F000\s+EIP=0000CA60", halt) and " Real" in halt and "C3FF:000035F7 63B94F4F" in halt
 assert "arpl" in halt and halt.count("Illegal Unhandled Interrupt Called 6") >= 10 and "E_Exit" not in halt + end
 assert end.count("Illegal Unhandled Interrupt Called 6") >= 10
-regs = {k: int(v, 16) for k, v in re.findall(r"(EDI|ESI|ECX)=([0-9A-F]{8})", halt)}
+_regs = re.findall(r"(EDI|ESI|ECX)=([0-9A-F]+)\b", halt)
+assert _regs and all(len(v) == 8 for _, v in _regs), _regs  # 32 位元暫存器 8 位十六進位
+regs = {k: int(v, 16) for k, v in _regs}
+assert all(f"{regs[k]:08X}" == v for k, v in _regs), _regs
 crash11 = (V11 / "r1_crash_pane.txt").read_text(encoding="utf-8")
 assert "E_Exit: JMP Illegal descriptor type 14" in crash11
 ev["A_linear7_0x89_runaway_blit"] = {
@@ -124,7 +144,7 @@ ev["A_linear7_0x89_runaway_blit"] = {
             "32 位元 loop 用 ECX:0 先減成 0xffffffff,所以第一列要寫 2^32 個 byte 才結束;每列結束 0x4ec2a 的斷點一次都沒停",
     "normal_control_static": "DATO 第 0 條 res[0] = 0x10 → src = res + 0x10 = 第 0 格,寬高 (80, 80);0x89 的假資源 res[0] = 0",
     "static_insns": {hex(k): v for k, v in static_a.items()},
-    "end_state_v16": {"stops_after_0x4ec16": len(after) - 1 - after.index(s16), "pane": "r1_halt_pane.txt / r1_end_pane.txt",
+    "end_state_v16": {"stops_after_0x4ec16": len(after) - len((box, blit, s0c, s0e, s16)), "pane": "r1_halt_pane.txt / r1_end_pane.txt",
                       "cpu": "實際模式(Real),CS:IP F000:CA60(= 中斷向量表第 0 項 60ca00f0 那個 BIOS 預設處理常式)",
                       "code_overview": "C3FF:35F7 63 B9 4F 4F = arpl [illegal],線性 0xc75e7(視訊 BIOS 區)",
                       "output": "ERROR CPU:Illegal Unhandled Interrupt Called 6 不斷重複(INT 6 = 無效指令),模擬器沒有結束",
@@ -167,11 +187,17 @@ assert kn["ail_seq_53ed0"]["path"] == ["0x3d72e", "0x3d737", "0x3d739"] and kn["
 assert 0x36A4 + 0x2004 == 0x56A8
 nodes_h = [s["n"] for s in s17 if s["eip"] == "0x3d72e" and s["node_is_H"]]
 assert nodes_h == [22, 34] and sum(1 for s in s17 if s["eip"] == "0x3d72e") == 17
+BLACK = (0, 0, 0)
+MAP_CROP = (200, 208, 824, 592)  # 截圖裡地圖區的範圍(畫面左上在 (192, 200),放大 2 倍)
+assert (MAP_CROP[2] - MAP_CROP[0], MAP_CROP[3] - MAP_CROP[1]) == (2 * (320 - 2 * 4), 2 * (200 - 2 * 4)), MAP_CROP
 dos = Image.open(V17 / "x1_11_-.png").convert("RGB")
 dark = sum(1 for p in dos.crop((200, 220, 824, 592)).getdata() if p == (0, 0, 0)) / (624 * 372)
 assert dark > 0.98
-static_b = {a: insn(a) for a in (0x364FB, 0x3650A, 0x36517, 0x3651D, 0x3DA0E, 0x3DA31, 0x4CFBB, 0x4CFC5, 0x4D020, 0x4D021, 0x3776E,
+AIL_FREE, FREE_WRAP = 0x364FB, 0x3776E  # 兩個函式入口(0x364fb(ptr, size)、free 包裝)
+assert {AIL_FREE, FREE_WRAP} <= set(_ENTRIES), "function_inventory 沒有這兩個入口"
+static_b = {a: insn(a) for a in (AIL_FREE, 0x3650A, 0x36517, 0x3651D, 0x3DA0E, 0x3DA31, 0x4CFBB, 0x4CFC5, 0x4D020, 0x4D021, FREE_WRAP,
                                   0x37774)}
+assert not off_boundary(static_b), off_boundary(static_b)
 # capstone 印的是位移欄位 0x275c;disasm_le 的 fixup 註記把它解成 obj2 的 0x5275c
 assert static_b[0x36517] == "call dword ptr [0x275c]" and static_b[0x3650A] == "call 0x36683"
 fx = D.build_fixups(exe, meta)
@@ -186,7 +212,7 @@ ev["B_exit_path_frees"] = {
     "frees_after_ail_shutdown": [{"n": s["n"], "ptr": s["ptr"], "hdr": s["hdr"], "ret_game": s["ret_game"],
                                   **({"known": s["known"]} if "known" in s else {})} for s in afterail],
     "known_blocks": kn,
-    "node_is_H_stops": {"n": nodes_h, "of_0x3d72e_stops": sum(1 for s in s17 if s["eip"] == "0x3d72e"), "note": "17 次 free 只有這兩次把 H 當節點,其餘選到的都是真正的空閒區塊"},
+    "node_is_H_stops": {"n": nodes_h, "of_0x3d72e_stops": sum(s["eip"] == "0x3d72e" for s in s17), "note": "17 次 free 只有這兩次把 H 當節點,其餘選到的都是真正的空閒區塊"},
     "ail_free_path": "0x3651d 是 0x364fb(ptr, size)裡 call [0x5275c] 的返回位址;0x364fb 先 0x36683(ptr, size)再經函式指標 [0x5275c] 呼叫 free 包裝 0x3776e",
     "library_free_call_sites": "0x3da31 / 0x4d021 都沒有停:0x3da31 是堆積擴充(0x3da0e 寫結尾標記後釋放新段的本體),"
                                "0x4d021 只在 0x4cfbb 第二次 malloc 失敗(0x4cfc5 je 0x4d020)時釋放剛配置的環境字串(靜態)",
@@ -235,12 +261,14 @@ for run in (b2, c2):
 
 
 def colors(p: Path) -> Counter:
-    return Counter(Image.open(p).convert("RGB").crop((200, 208, 824, 592)).getdata())
+    return Counter(Image.open(p).convert("RGB").crop(MAP_CROP).getdata())
 
 
 cb, cc = colors(V18 / "b2_02_Return.png"), colors(V18 / "c2_00_Return.png")
-assert cb.most_common(1)[0][0] == pred0 and cb[pred0] > 30000  # 黑色仍有(其他調色盤項目也是黑),第 0 色的大背景變成橘粉色
-assert cc.most_common(1)[0][0] == (0, 0, 0) and cc[pred0] == 0  # 對照幀在淡出中,整體偏暗;第 0 色黑、橘粉色 0 點
+(cb_top, _), = cb.most_common(1)
+(cc_top, _), = cc.most_common(1)
+assert cb_top == pred0 and cb[pred0] > 30000  # 黑色仍有(其他調色盤項目也是黑),第 0 色的大背景變成橘粉色
+assert cc_top == BLACK and cc[pred0] == 0  # 對照幀在淡出中,整體偏暗;第 0 色黑、橘粉色 0 點
 
 
 def px(name: str) -> tuple:
@@ -249,8 +277,9 @@ def px(name: str) -> tuple:
 
 border = {"b2_00_Return.png(改壞的緩衝上傳之前)": px("b2_00_Return.png"), "c1_00_Left.png(改壞的緩衝上傳之後)": px("c1_00_Left.png"),
           "c2_hit1.png(寫回 0000003f、上傳之前)": px("c2_hit1.png"), "c2_05_-.png(寫回後的緩衝上傳之後)": px("c2_05_-.png")}
-assert list(border.values()) == [(0, 0, 0), pred0, pred0, (0, 0, 0)]
+assert list(border.values()) == [BLACK, pred0, pred0, BLACK]
 static_c = {a: insn(a) for a in (0x3D72E, 0x3D733, 0x3D737, 0x3D74D, 0x3D750, 0x3D753, 0x3D756, 0x3D75B, 0x11D8D, 0x11D9A, 0x1F50B)}
+assert not off_boundary(static_c), off_boundary(static_c)
 assert static_c[0x3D756] == "mov dword ptr [edi + 8], esi" and static_c[0x3D75B] == "mov dword ptr [edi + 4], esi"
 assert static_c[0x1F50B] == "call 0x11d40" and static_c[0x11D9A] == "push 0x3c9"
 ev["C_fake_node_insert_executed"] = {
@@ -266,8 +295,8 @@ ev["C_fake_node_insert_executed"] = {
                        "call": "0x1f50b(返回 0x1f510),戰鬥場景開始時 darken 0、1、2 ...",
                        "corrupted_buffer_first8": b2["pre"]["pal8"], "control_buffer_first8": c2["pre"]["pal8"],
                        "predicted_color0": list(pred0), "predicted_rule": "DAC 只留低 6 位:0xb8→0x38、0xa6→0x26、0x1f;8 位顯示 = v<<2 | v>>4",
-                       "b2_02_Return.png": {"most_common": list(cb.most_common(1)[0][0]), "count": cb[pred0], "black": cb[(0, 0, 0)]},
-                       "c2_00_Return.png(對照)": {"most_common": list(cc.most_common(1)[0][0]), "count_black": cc[(0, 0, 0)], "count_pred0": cc[pred0]},
+                       "b2_02_Return.png": {"most_common": list(cb_top), "count": cb[pred0], "black": cb[BLACK]},
+                       "c2_00_Return.png(對照)": {"most_common": list(cc_top), "count_black": cc[BLACK], "count_pred0": cc[pred0]},
                        "map_border_pixel_194_400": {k: list(v) for k, v in border.items()},
                        "border_note": "地圖外框是 DAC 第 0 色:改壞的緩衝上傳後變橘粉色並一直留著;把緩衝寫回 0000003f 後,下一次上傳(c2 的戰鬥場景)才變回黑色"},
     "static_insns": {hex(k): v for k, v in static_c.items()},
@@ -314,6 +343,7 @@ c_end = Image.open(V19 / "c1_08_-.png").convert("RGB")
 l_end = Image.open(V19 / "n_04_-.png").convert("RGB")
 assert colors(V19 / "c1_08_-.png").most_common(1)[0][0] == (105, 73, 36)  # 戰場岩地,與 v18 b2 戰前畫面相同的主色
 static_d = {a: insn(a) for a in (0x25EC8, 0x25ECD, 0x25F74, 0x25F7C, 0x26130, 0x10136, 0x1013E)}
+assert not off_boundary(static_d), off_boundary(static_d)
 assert static_d[0x25ECD] == "test eax, eax" and static_d[0x25F74] == "call 0x111ba" and static_d[0x10136] == "call 0x111ba"
 ev["D_title_continue_load"] = {
     "carried_from_battle(v19 d1)": {"title_ret": "0x25dc2", "leak_free": "0x111ba 返回 0x1f90f(i = 76),0x3d67f 讀到 102b0400 → 0x111d5,沒有 0x3d685;新調色盤 0x207c30",

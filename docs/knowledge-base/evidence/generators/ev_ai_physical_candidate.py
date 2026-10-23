@@ -41,24 +41,32 @@ for k in ("rival_doc_skip_le2", "rival_terrain_like_attack", "rival_debe_actor",
 # tie 場景複查:由傾印取施動者、相鄰對手(+6 != 0、+5 bit0 清除、曼哈頓距離 1)與活著的 NPC(+6 == 1)
 tu = TIE_UNITS.read_bytes()
 tn = len(tu) // 80
+AP, DP = 0x48, 0x4A  # 單位紀錄的 AP / DP(pa_analyze 的重算用同兩欄,逐組分數與實機相同)
+pos = [tuple(rec(tu, i)[:2]) for i in range(tn)]  # +0 / +1 = 座標
+side = [rec(tu, i)[6] for i in range(tn)]
+alive = [not rec(tu, i)[5] & 1 for i in range(tn)]
 ta = rec(tu, TIE_ACTOR)
-assert ta[6] == 0 and not uses_row19(ta), "施動者須為敵方且 0x1f183 回 0(AP' = 原始 +0x48)"
-opp = [i for i in range(tn) if rec(tu, i)[6] != 0 and not rec(tu, i)[5] & 1
-       and abs(rec(tu, i)[0] - ta[0]) + abs(rec(tu, i)[1] - ta[1]) == 1]
-npcs = [i for i in range(tn) if rec(tu, i)[6] == 1 and not rec(tu, i)[5] & 1]
-occupied = {(rec(tu, i)[0], rec(tu, i)[1]) for i in range(tn) if rec(tu, i)[6] != 0 and not rec(tu, i)[5] & 1}
+assert side[TIE_ACTOR] == 0 and not uses_row19(ta), "施動者須為敵方且 0x1f183 回 0(AP' = 原始 +0x48)"
+tx, ty = pos[TIE_ACTOR]
+opp = [i for i in range(tn) if side[i] != 0 and alive[i] and abs(pos[i][0] - tx) + abs(pos[i][1] - ty) == 1]
+npcs = [i for i in range(tn) if side[i] == 1 and alive[i]]
+occupied = {pos[i] for i in range(tn) if side[i] != 0 and alive[i]}
+assert opp and npcs, (opp, npcs)
+# 「sol」= 傾印裡 +8 == 0 的隊員(+6 == 2)
+SOL, = [i for i in range(tn) if side[i] == 2 and rec(tu, i)[8] == 0]
+assert SOL in opp and SOL == 0, (SOL, opp)  # 索爾(名冊第 0 筆、+8 = 0)是相鄰對手之一(鍵名 sol_0)
 for i in npcs:  # 「四鄰全是對手格」:每個 NPC 的四鄰不是界外就是 +6 != 0 的活單位
-    x, y = rec(tu, i)[0], rec(tu, i)[1]
+    x, y = pos[i]
     assert all(not (0 <= nx < 27 and 0 <= ny < 21) or (nx, ny) in occupied
                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1))), (i, x, y)
 # 可達配對的原始分數(攻方 AP' - 目標 DP')全為負:目標不論站哪種地形(DP 取最不利的百分比)都成立;
 # 0x1debe 若成立會再加 攻方 DP' - 目標 AP',同樣為負,只會更小
-assert all(w(ta, 0x48) - adj(w(rec(tu, i), 0x4A), min(DP_PCT)) < 0 and w(ta, 0x4A) < w(rec(tu, i), 0x48) for i in opp), opp
+assert all(w(ta, AP) - adj(w(rec(tu, i), DP), min(DP_PCT)) < 0 and w(ta, DP) < w(rec(tu, i), AP) for i in opp), opp
 tie_check = {
-    f"actor_{TIE_ACTOR}": {"xy": [ta[0], ta[1]], "ap": w(ta, 0x48)},
-    "adjacent_opponents": {("sol_0" if i == 0 else f"unit_{i}"): {"xy": [rec(tu, i)[0], rec(tu, i)[1]], "dp": w(rec(tu, i), 0x4A)}
+    f"actor_{TIE_ACTOR}": {"xy": list(pos[TIE_ACTOR]), "ap": w(ta, AP)},
+    "adjacent_opponents": {(f"sol_{SOL}" if i == SOL else f"unit_{i}"): {"xy": list(pos[i]), "dp": w(rec(tu, i), DP)}
                            for i in opp},
-    "npcs_boxed_in": {**{f"unit_{i}": [rec(tu, i)[0], rec(tu, i)[1]] for i in npcs}, "blocked_by": "四鄰全是對手格(0x40 不可進入)"},
+    "npcs_boxed_in": {**{f"unit_{i}": list(pos[i]) for i in npcs}, "blocked_by": "四鄰全是對手格(0x40 不可進入)"},
 }
 
 out = {

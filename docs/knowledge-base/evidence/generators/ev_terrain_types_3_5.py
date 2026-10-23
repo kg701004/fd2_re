@@ -85,7 +85,10 @@ for tag, obs in bp.items():
     post = (D / f"post_{tag}.bin").read_bytes()
     a, d = pre[0:80], pre[11 * 80:12 * 80]
     w = lambda r, o: struct.unpack_from("<H", r, o)[0]
-    assert (a[0], a[1]) == (20, 14) and (d[0], d[1]) == (19, 14), tag
+    # 單位紀錄的欄位(終端輸出核對與證據輸出用同一份讀法)
+    view = lambda r: {"x": r[0], "y": r[1], "race": r[0x1F], "class": r[0x20], "hp": w(r, 0x40), "ap": w(r, 0x48), "dp": w(r, 0x4A)}
+    va, vd = view(a), view(d)
+    assert (va["x"], va["y"]) == (20, 14) and (vd["x"], vd["y"]) == (19, 14), tag
     ap, dp = w(a, 0x48), w(d, 0x4A)
     apm, dpm, dmg = exchange(ap, dp, a, d, lambda r: tt[tile(r[0], r[1]) * 4 + 1])
     assert dmg < 18, "亂數項必須為 0"
@@ -98,14 +101,14 @@ for tag, obs in bp.items():
     head_types, units = seg_info[tag]
     assert head_types is None or head_types == (ta, tb), (tag, head_types, ta, tb)
     for (ph, i), (x, y, race, cls, hp, ap_, dp_) in units.items():
-        r = (pre if ph == "pre" else post)[i * 80:(i + 1) * 80]
-        assert (x, y, race, cls, hp, ap_, dp_) == (r[0], r[1], r[0x1F], r[0x20], w(r, 0x40), w(r, 0x48), w(r, 0x4A)), (tag, ph, i)
+        v = view((pre if ph == "pre" else post)[i * 80:(i + 1) * 80])
+        assert (x, y, race, cls, hp, ap_, dp_) == tuple(v[k] for k in ("x", "y", "race", "class", "hp", "ap", "dp")), (tag, ph, i)
     floor_ap = None if apm is None else (ap * A[ta]) // 100
     floor_dp = None if dpm is None else (dp * B[tb]) // 100
     cases.append({
         "case": tag,
-        "attacker": {"xy": [a[0], a[1]], "tile": hex(TA), "terrain_type": ta, "race": a[0x1F], "ap": ap, "gated": gated(a)},
-        "defender": {"xy": [d[0], d[1]], "tile": hex(TB), "terrain_type": tb, "race": d[0x1F], "dp": dp, "gated": gated(d)},
+        "attacker": {"xy": [va["x"], va["y"]], "tile": hex(TA), "terrain_type": ta, "race": va["race"], "ap": ap, "gated": gated(a)},
+        "defender": {"xy": [vd["x"], vd["y"]], "tile": hex(TB), "terrain_type": tb, "race": vd["race"], "dp": dp, "gated": gated(d)},
         "predicted": {"ap_mod": apm, "dp_mod": dpm, "damage": dmg},
         "breakpoints": {"ap_mod_0x2f8dc_eax_edx": obs["ap"], "dp_mod_0x2f921_eax_edx": obs["dp"], "damage_0x2f9fc": obs["dmg"]},
         "defender_hp_drop": drop,

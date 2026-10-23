@@ -14,7 +14,7 @@ MUTANTS = [
     ("插入後 S 在空閒串列裡", '"0x1fa6b8": False, "0x1fd0c0": False', '"0x1fa6b8": True, "0x1fd0c0": False'),
     ("LOAD 的調色盤重載是 0x25f55 那次", '("l2", 1, "0x25f79", "0x25f7c", "0x22841c")', '("l2", 1, "0x25f5a", "0x25f7c", "0x22841c")'),
     ("CONTINUE / LOAD 真的釋放(有 0x3d685)", 'assert not has_stop(s, "0x3d685") and', 'assert has_stop(s, "0x3d685") and'),
-    ("外框在上傳前就已變色", "[(0, 0, 0), pred0, pred0, (0, 0, 0)]", "[pred0, pred0, pred0, (0, 0, 0)]"),
+    ("外框在上傳前就已變色", "[BLACK, pred0, pred0, BLACK]", "[pred0, pred0, pred0, BLACK]"),
 ]
 
 if __name__ == "__main__":

@@ -3,6 +3,14 @@
 `docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
 
+## 續一百五十一(2026-10-23)
+
+沒有新的證據檔。`sweep_literals` 逃過的常數逐一補判準:續一百五十跑不完的 2 個(`ev_s73` 堆積走訪逐步斷言對齊與大小、
+`ev_s139` 幀尺寸上限 320 × 200),與 10-06 那批、移植產生器共 34 個產生器(見 doc98 續一百五十一的表)。
+判準來源:EXE 指令運算元、`docs/data/exe_tables/`(dump_exe_tables 另外抽)、FDFIELD(parse_field)、`function_inventory`、
+攻守 / 相鄰 / 說明文字的交叉;另把輸出與斷言共用同一個變數、索引改解包、鍵名寫的位移由鍵名取值。
+`ev_lut_circle_ramp_at_unit` 的 ai79 拿掉 3 個框內沒有換色的排除框(證據只有 `excluded_rects` 8 → 5)。
+
 ## 續一百五十(2026-10-23)
 
 | 產生器 | 證據檔 | 變異測試 |
@@ -281,7 +289,8 @@ python sweep_literals.py --selftest
 ## 其他腳本
 
 - 共用模組:`_evpaths.py`(路徑、輸入檢查、`rel()`、`git_blob()`)、`_console.py`(終端輸出)、`_mutrun.py`(變異測試)、
-  `_terrain.py`(地形修正規則,`ev_terrain_modifier` 與 `ev_attack_path_selection` 共用)。
+  `_terrain.py`(地形修正規則,`ev_terrain_modifier` 與 `ev_attack_path_selection` 共用)、
+  `_fields.py`(鍵名寫的位移 = 讀值的位移,`ev_s70` 用)。
 - `tx_console.py`:終端輸出與對話紀錄的匯出、比對、抽出(見「終端輸出與摘錄」);取代當時在 scratchpad 的
   `tx_index.py` / `tx_export.py`。
 - 輔助模組(產生器會匯入或執行):`an_f.py`、`an_ev.py`、`live.py`、`rng.py`、`sim_path.py`、`sim_dialog.py`、

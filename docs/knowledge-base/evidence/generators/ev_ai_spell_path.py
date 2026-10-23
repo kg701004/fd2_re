@@ -19,7 +19,7 @@ DELTA = 0x19C000
 UNITS, REC = 0x26BDC8, 0x50  # 單位表 [0x53a45] 的位址與每筆記錄長度
 CASTER = 11  # 盜賊;下面核對每回合唯一一次 ai_spell_execute 的 arg1 就是它
 ENTRY = {0x15311: "ai_spell_execute", 0x2FF01: "0x2ff01", 0x1C75E: "spell_damage_resolve"}
-_ARGS = re.compile(r" ret=(0x[0-9a-f]+) \(static (0x[0-9a-f]+)\) arg1=(\d+) arg2=(\d+) ")
+_ARGS = re.compile(r" ret=(?P<ret>0x[0-9a-f]+) \(static (?P<static>0x[0-9a-f]+)\) arg1=(?P<a1>\d+) arg2=(?P<a2>\d+) ")
 # 每回合:設定(印出 / 讀回施法前狀態)、停點紀錄、施法後傾印(印出前後 HP / MP)三次終端輸出
 RUNS = {
     "C1": {"setup": "20260929T152625_toolu_01J8Cy4woDUWWixEu6YTuAoU", "log": "20260929T152801_toolu_01FAiVPthATfdDVBtKrCTRxG",
@@ -39,8 +39,8 @@ def bp_stops(stem: str) -> list[dict]:
         eip = s["EIP"] - DELTA
         if eip in ENTRY:
             m = _ARGS.search(line)
-            assert m and int(m[1], 16) - DELTA == int(m[2], 16), (stem, line)
-            out.append({"function": ENTRY[eip], "return_static": m[2], "arg1": int(m[3]), "arg2": int(m[4])})
+            assert m and int(m["ret"], 16) - DELTA == int(m["static"], 16), (stem, line)
+            out.append({"function": ENTRY[eip], "return_static": m["static"], "arg1": int(m["a1"]), "arg2": int(m["a2"])})
         elif eip == 0x1C7FE:
             out.append({"function": "0x1c7fe", "esi_base": s["ESI"], "edx_hit_roll": s["EDX"]})
         elif eip == 0x1C87F:
@@ -81,21 +81,25 @@ for tag, r in rounds.items():
     pre = (D / r["pre"]).read_bytes()
     post = (D / r["post"]).read_bytes()
     w = lambda b, i, o: struct.unpack_from("<H", b, i * 80 + o)[0]
+    HP, MP = 0x40, 0x44
+    xy = lambda b, i: [b[i * 80], b[i * 80 + 1]]
+    bits = lambda rec: rec[0x1A:0x1F].hex()  # 已學法術位元欄
     t = r["target"]
     dmg = r["base"] * 9 // 10 + r["damage_roll"] * r["base"] // 1000
-    hp0, hp1 = w(pre, t, 0x40), w(post, t, 0x40)
+    hp0, hp1 = w(pre, t, HP), w(post, t, HP)
     assert hp1 == max(0, hp0 - dmg), (tag, hp0, hp1, dmg)
-    assert w(pre, CASTER, 0x44) - w(post, CASTER, 0x44) == 24, tag
+    mp0, mp1 = w(pre, CASTER, MP), w(post, CASTER, MP)
+    assert mp0 - mp1 == 24, tag
     rec = (D / r["pre"]).read_bytes()[CASTER * 80:(CASTER + 1) * 80]
-    assert rec[0x1A:0x1F].hex() == "0001000000" and rec[0xA] == 0, tag
+    slot0 = rec[0xA]
+    assert bits(rec) == "0001000000" and slot0 == 0, tag
     # 交叉檢查(終端輸出 ↔ 傾印):施法後傾印那次印出的前後座標 / HP / MP 必須等於兩份傾印,且含施法者與目標
     pmeta, ptext = _console.load(RUNS[tag]["post_print"])
     assert f"--out $D/{r['post']}" in pmeta["cmd"] and r["pre"] in pmeta["cmd"], tag
     rows = {int(m[0]): [int(v) for v in m[1:]] for m in _ROW.findall(ptext)}
     assert {CASTER, t} <= set(rows), (tag, sorted(rows))
     for i, v in rows.items():
-        assert v == [pre[i * 80], pre[i * 80 + 1], post[i * 80], post[i * 80 + 1], w(pre, i, 0x40), w(post, i, 0x40),
-                     w(pre, i, 0x44), w(post, i, 0x44)], (tag, i, v)
+        assert v == [*xy(pre, i), *xy(post, i), w(pre, i, HP), w(post, i, HP), w(pre, i, MP), w(post, i, MP)], (tag, i, v)
     if tag == "C1":
         # C1 設定那次在傾印 c_pre1.bin 後立即印出 #0、#5、#6、#11 的記錄(含盜賊的法術位元與 slot0)
         pre_rows = _PRE.findall(_console.load(RUNS[tag]["setup"])[1])
@@ -103,12 +107,12 @@ for tag, r in rounds.items():
         for m in pre_rows:
             i, b = int(m[0]), pre[int(m[0]) * 80:int(m[0]) * 80 + 80]
             assert [int(m[1]), int(m[2]), int(m[3], 16), int(m[4]), int(m[5]), int(m[6]), m[7], int(m[8], 16), int(m[9])] == \
-                [b[0], b[1], b[5], w(pre, i, 0x40), w(pre, i, 0x44), w(pre, i, 0x46), b[0x1A:0x1F].hex(), b[0xA], b[0xB]], (tag, i)
+                [*xy(pre, i), b[5], w(pre, i, HP), w(pre, i, MP), w(pre, i, 0x46), bits(b), b[0xA], b[0xB]], (tag, i)
     out[tag] = {
         "flag_53af9": r["flag_53af9"], "breakpoint_stops": r["stops"],
-        "caster": {"unit": CASTER, "spell_bits": rec[0x1A:0x1F].hex(), "weapon_slot0_flag": rec[0xA],
-                   "mp_before": w(pre, CASTER, 0x44), "mp_after": w(post, CASTER, 0x44), "xy": [rec[0], rec[1]]},
-        "target": {"unit": t, "xy": [pre[t * 80], pre[t * 80 + 1]], "hp_before": hp0, "hp_after": hp1, "predicted_damage": dmg},
+        "caster": {"unit": CASTER, "spell_bits": bits(rec), "weapon_slot0_flag": slot0,
+                   "mp_before": mp0, "mp_after": mp1, "xy": xy(pre, CASTER)},
+        "target": {"unit": t, "xy": xy(pre, t), "hp_before": hp0, "hp_after": hp1, "predicted_damage": dmg},
     }
 EVI.write_bytes((json.dumps({
     "note": "DOSBox-X 斷點停點與施法前後的單位記錄;FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e。盜賊 #11 的已學法術位元欄設為只有法術 8(聖光彈)、"
