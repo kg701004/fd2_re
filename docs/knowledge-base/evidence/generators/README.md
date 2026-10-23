@@ -1,7 +1,17 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 53 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百五十(2026-10-23)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s150.py` | `palette_fade_index255_emulated_s150_20261023.json` | `mut_s150.py`(13) |
+
+模擬,沒有執行遊戲:`x86_pal_emu.py`(極小的 x86-32 直譯器,capstone 解碼)直接執行原版 FD2.EXE 的 0x2df01 / 0x11df2 / 0x11d40,
+記錄 `out 0x3c8 / 0x3c9`,對照 `ev_s145.py` 的 `fade6`(從原始碼抽出執行)。`mut_s150.py` 有 4 個變異改直譯器本身。
+同一輪 `ev_s130.py`(T 行週期、迴圈外推進規則、直方圖合計、對照不符項)與 `ev_s131.py`(對照不符項)補 sweep 逃過的 13 個。
 
 ## 續一百四十五(2026-10-21)
 
@@ -87,13 +97,13 @@
 
 | 產生器 | 證據檔 | 變異測試 |
 |---|---|---|
-| `ev_s131.py` | `move_range_remap_buffer_20261017.json` | `mut_s131.py`(18) |
+| `ev_s131.py` | `move_range_remap_buffer_20261017.json` | `mut_s131.py`(20) |
 
 ## 續一百三十(2026-10-16)
 
 | 產生器 | 證據檔 | 變異測試 |
 |---|---|---|
-| `ev_s130.py` | `phase_loop_no_breakpoint_calllog_20261016.json` | `mut_s130.py`(18) |
+| `ev_s130.py` | `phase_loop_no_breakpoint_calllog_20261016.json` | `mut_s130.py`(24) |
 
 ## 續六十五~七十七(2026-10-01~10-05)
 

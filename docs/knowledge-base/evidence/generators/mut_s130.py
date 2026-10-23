@@ -22,11 +22,19 @@ MUTANTS = [
     ("實測階最後一圈是 9", "assert drawn == [2, 2, 4, 4, 5, 7, 7, 8], drawn", "assert drawn == [2, 2, 4, 4, 5, 7, 7, 9], drawn"),
     ("推進在第 1、4、6 圈", 'assert [f["adv"] for f in loop] == [1, 0, 1, 0, 0, 1, 0, 0]',
      'assert [f["adv"] for f in loop] == [1, 0, 0, 1, 0, 1, 0, 0]'),
-    ("與續一百二十三第一輪不同", "assert runs123[0] == drawn, runs123", "assert runs123[0] != drawn, runs123"),
-    ("與續一百二十三第二輪相同", "assert runs123[1] != drawn, runs123", "assert runs123[1] == drawn, runs123"),
+    ("與續一百二十三第一輪不同", "assert run_a == drawn, run_a", "assert run_a != drawn, run_a"),
+    ("與續一百二十三第二輪相同", "assert run_b != drawn, run_b", "assert run_b == drawn, run_b"),
     ("迴圈外有不走 -1 分支的重畫", 'assert out_cnt["tick"] == out_cnt["draw"] > 0, out_cnt',
      'assert out_cnt["tick"] < out_cnt["draw"], out_cnt'),
     ("迴圈外的階只有 0..10", "assert sorted(draw_vals) == list(range(20))", "assert sorted(draw_vals) == list(range(11))"),
+    # 續一百五十
+    ("T 行週期是 2^25", "[(i + 1) << 26 for i", "[(i + 1) << 25 for i"),
+    ("上次推進取進迴圈後的第一次", "reversed(outside[:pre_n[0]])", "outside[pre_n[0]:]"),
+    ("迴圈外推進門檻 > 3", "((_t - _last > 2) or (_t < _last))", "((_t - _last > 3) or (_t < _last))"),
+    ("直方圖合計多一次", 'sum(draw_vals.values()) == out_cnt["draw"]', 'sum(draw_vals.values()) == out_cnt["draw"] + 1'),
+    ("對照 1 只有一項不符", '== ["推進 ⇔ 畫 k + 1", "至少一圈畫 k + 1"], ctl_k', '== ["推進 ⇔ 畫 k + 1"], ctl_k'),
+    ("對照 2 多一項不符", '== ["畫的階 ∈ {k, k + 1}", "推進 ⇔ 畫 k + 1"], ctl_shift',
+     '== ["畫的階 ∈ {k, k + 1}", "推進 ⇔ 畫 k + 1", "至少一圈畫 k + 1"], ctl_shift'),
 ]
 
 if __name__ == "__main__":

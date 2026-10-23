@@ -162,6 +162,11 @@ for a, b in combinations(TAGS, 2):
     assert all(n > 0 for n in wrong.values()), (a, b, wrong)
     pairs[f"{a}-{b}"] = {"compare": c, "checks": j, "control_shift": ctl_shift, "control_wrong_level_unexplained": wrong}
 
+# 對照 1 判為不符的是哪幾項逐一釘住(只要求「有一項不符」的話,相鄰的定義或錯開的格數改了也看不出來)
+_n = list(pairs["D-E"]["checks"])
+assert {k: {s: [n for n, ok in v.items() if not ok] for s, v in p["control_shift"].items()} for k, p in pairs.items()} == \
+    {"D-E": {s: [_n[1], _n[3]] for s in (-1, 1)}, "D-F": {s: _n[1:] for s in (-1, 1)}, "E-F": {s: _n[1:] for s in (-1, 1)}}
+
 # 實測值(量之前的預測:標記格全變、沒標記的格不變;沒有預測的是 (10, 20) 那一格,見 status)
 assert [pairs[k]["compare"]["levels"] for k in pairs] == [[8, 4], [8, 0], [4, 0]]
 assert pairs["D-E"]["compare"]["plain_changed"] == []

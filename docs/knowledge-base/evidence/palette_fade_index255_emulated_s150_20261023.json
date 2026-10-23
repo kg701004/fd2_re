@@ -1,0 +1,148 @@
+{
+ "date": "2026-10-23",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "exe": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+ "method": "模擬(SIMULATED):x86_pal_emu 直接執行 EXE 位元組(capstone 解碼),記錄 out 0x3c8 / 0x3c9;沒有執行遊戲。",
+ "bound_instructions": {
+  "0x2dfb9": {
+   "asm": "cmp ebx, [esp+0x18]",
+   "bytes": "3b 5c 24 18"
+  },
+  "0x2dfbd": {
+   "asm": "jl 0x2df21",
+   "bytes": "0f 8c"
+  },
+  "0x11e1c": {
+   "asm": "cmp ebx, edi",
+   "bytes": "39 fb"
+  },
+  "0x11e1e": {
+   "asm": "jg(共用收尾)",
+   "bytes": "0f 8f"
+  },
+  "0x11d6a": {
+   "asm": "cmp ebx, edi",
+   "bytes": "39 fb"
+  },
+  "0x11d6c": {
+   "asm": "jg(共用收尾)",
+   "bytes": "0f 8f"
+  },
+  "0x2df17": {
+   "asm": "mov ebp, 0x28",
+   "bytes": "bd 28 00 00 00"
+  }
+ },
+ "model": "ev_s145.py 的 fade6(原始碼抽出執行)",
+ "constants_from": "docs/knowledge-base/evidence/afterlock_live_title_transition_s145_20261021.json",
+ "inputs": {
+  "FDOTHER_008": "435ff992367240d0f195f62983288741548fa9c9a6d0293ebd8735b69ad40b51",
+  "FDOTHER_101": "572dd943e828d234c69b4faeb90eb97f6ff92dd271d2a06d276b8369a531e250"
+ },
+ "palettes": {
+  "synthetic": "隨機(seed 150)、0..0x3f 依序循環、全 0、全 0x3f",
+  "real": [
+   "FDOTHER_008",
+   "FDOTHER_101"
+  ],
+  "t": "0..40"
+ },
+ "checks": {
+  "A": {
+   "n": 492,
+   "mismatch": 0
+  },
+  "B": {
+   "n": 24,
+   "mismatch": 0
+  },
+  "C": {
+   "n": 24,
+   "mismatch": 0
+  }
+ },
+ "controls_note": "對照與故障注入只用兩份實際調色盤,每組出現第一筆不符就停,只輸出不符的種類",
+ "floor_control": {
+  "A": [
+   "value"
+  ],
+  "B": [],
+  "C": []
+ },
+ "injections": {
+  "0x2dfbd jl→jle": {
+   "A": [
+    "index_set"
+   ],
+   "B": [],
+   "C": []
+  },
+  "0x11e1e jg→jge": {
+   "A": [],
+   "B": [
+    "index_set"
+   ],
+   "C": []
+  },
+  "0x11d6c jg→jge": {
+   "A": [],
+   "B": [],
+   "C": [
+    "index_set"
+   ]
+  },
+  "除數 0x28→0x29": {
+   "A": [
+    "value"
+   ],
+   "B": [],
+   "C": []
+  }
+ },
+ "sequences": {
+  "red_flash": {
+   "calls": 42,
+   "dac255_values": [
+    [
+     63,
+     63,
+     63
+    ]
+   ]
+  },
+  "logo_white_title": {
+   "calls": 43,
+   "dac255_values": [
+    [
+     63,
+     63,
+     63
+    ]
+   ]
+  }
+ },
+ "palette_index255": {
+  "FDOTHER_101": [
+   63,
+   63,
+   63
+  ],
+  "FDOTHER_008": [
+   63,
+   63,
+   63
+  ]
+ },
+ "index_255_used_s145": {
+  "red": false,
+  "title": false
+ },
+ "conclusion": [
+  "0x2df01 寫索引 0..254、不寫 255(jl,hi 不含);0x11df2 與 0x11d40 寫 0..255(jg,hi 含在內):540 次呼叫全部與模型相同",
+  "fade6 的 hi = 255 把索引 255 設成調色盤值,實際是 DAC 保留前一個值;兩份調色盤的 255 本來就是白、兩段序列的 DAC[255] 始終是白,兩張索引圖也沒用到 255,所以這個差別在這段開場看不到",
+  "對照(向下取整)與 4 個故障注入都以預期的方式判為不符"
+ ],
+ "not_covered": [
+  "實機 DAC 讀值(這段開場沒有可見後果,沒有做)"
+ ]
+}

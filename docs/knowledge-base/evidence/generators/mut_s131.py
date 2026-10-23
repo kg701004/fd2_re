@@ -20,7 +20,7 @@ MUTANTS = [
     ("標記格只要一半變動", 'c["marked_changed"] == c["marked"]', 'c["marked_changed"] == c["marked"] // 2'),
     ("不貼單位的格不必不變", "c[\"plain\"] > 0 and not c[\"plain_changed_not_near8\"]",
      "c[\"plain\"] > 0 and not [r for r in c[\"plain_changed\"]]"),
-    ("錯位對照改成 0", "for s in (-1, 1)}", "for s in (0,)}"),
+    ("錯位對照改成 0", "shift=s)) for s in (-1, 1)}", "shift=s)) for s in (0,)}"),
     ("錯階對照包含真階", "for lv in range(11) if lv != c[\"levels\"][1]}", "for lv in range(11)}"),
     ("實測階對調", "== [[8, 4], [8, 0], [4, 0]]", "== [[8, 0], [8, 4], [4, 0]]"),
     ("D-E 預期有沒標記格變動", 'assert pairs["D-E"]["compare"]["plain_changed"] == []',
@@ -28,6 +28,9 @@ MUTANTS = [
     ("(10, 20) 預期 54 像素", "== [[10, 20, 53]]", "== [[10, 20, 54]]"),
     ("可見標記格預期 21", 'pairs[k]["compare"]["marked"] == 17', 'pairs[k]["compare"]["marked"] == 21'),
     ("三角表預期 0..10 不回頭", "list(range(11)) + list(range(9, 0, -1))", "list(range(20))"),
+    # 續一百五十
+    ("D-E 的對照 1 只有一項不符", '"D-E": {s: [_n[1], _n[3]] for s', '"D-E": {s: [_n[1]] for s'),
+    ("D-F 的對照 1 少一項不符", '"D-F": {s: _n[1:] for s', '"D-F": {s: _n[2:] for s'),
 ]
 
 if __name__ == "__main__":

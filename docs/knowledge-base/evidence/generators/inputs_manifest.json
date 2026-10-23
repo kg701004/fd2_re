@@ -12580,6 +12580,25 @@
     ]
    }
   },
+  "ev_s150": {
+   "outputs": [
+    "palette_fade_index255_emulated_s150_20261023.json"
+   ],
+   "inputs": {
+    "extracted/raw/FDOTHER/FDOTHER_008.bin": [
+     768,
+     "435ff992367240d0f195f62983288741548fa9c9a6d0293ebd8735b69ad40b51"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_101.bin": [
+     768,
+     "572dd943e828d234c69b4faeb90eb97f6ff92dd271d2a06d276b8369a531e250"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
