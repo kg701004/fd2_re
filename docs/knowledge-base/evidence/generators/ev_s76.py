@@ -29,6 +29,9 @@ IDT = 0x18A110          # 續七十五:IRQ0 的閘在 0x18a150 = 向量 8
 GDT = 0x170010          # 續七十五:平坦 code / data 在 +0x170 / +0x178
 GDT_DUMP = 0x170000     # r1_post0_gdt.bin 的起點
 MSG = "DOS/16M error: [0]  involuntary switch to real mode"
+INJ = C / "inj"
+DESC = struct.Struct("<HHBBBB")   # 段描述子(8 bytes)
+VEC_TIMER = 8           # 計時器 IRQ 的向量:下面以閘的入口 = 記錄裡出差實際進入的 0070:000042D1 核對
 
 
 def md5(p: Path) -> str:
@@ -56,12 +59,16 @@ def body(src: str, head: str) -> str:
 
 def lineno(src: str, needle: str) -> int:
     assert src.count(needle) == 1, needle
-    return src[: src.index(needle)].count("\n") + 1
+    n = src[: src.index(needle)].count("\n") + 1
+    assert needle in src.splitlines()[n - 1], needle      # 第二種寫法:第 n 行(1 起算)就是含 needle 的那一行
+    return n
 
 
 def desc(b: bytes) -> dict:
-    acc = b[5]
-    return {"raw": b.hex(), "access": f"0x{acc:02x}", "p": acc >> 7, "dpl": (acc >> 5) & 3, "type": f"0x{acc & 0x1F:02x}"}
+    _lo, _blo, _bmid, acc, _fl, _bhi = DESC.unpack(b)
+    p, dpl, typ = acc >> 7, (acc >> 5) & 3, acc & 0x1F
+    assert (p << 2 | dpl) << 5 | typ == acc, b.hex()     # 三個欄位拼回 access byte
+    return {"raw": b.hex(), "access": f"0x{acc:02x}", "p": p, "dpl": dpl, "type": f"0x{typ:02x}"}
 
 
 assert md5(EXE) == "33464c81e6a364fd0660141139aa8e6e"
@@ -121,9 +128,10 @@ cpu_jmp_other = [m.start() for m in re.finditer(r"CPU_JMP\(", cpu) if not cpu[m.
 assert len(cpu_jmp_other) == 1 and "CPU_JMP(false,0,0,0);" in cpu   # 開機時設定 CPU 核心那一次(實際模式)
 assert re.search(r"#define DESC_DATA_ED_RO_NA\s+0x14u", cpuh)
 assert re.search(r"uint32_t type\s+:5;", cpuh)
+bin_md5, _bin_path = T("binary_md5.txt").split()
 src_facts = {
     "tree": "~/fd2-dosbox-build/dosbox-x(build_timestamp.h GIT_COMMIT_HASH 6fb8c07;執行中二進位 md5 "
-            + T("binary_md5.txt").split()[0] + ",訊息字串都在二進位裡)",
+            + bin_md5 + ",訊息字串都在二進位裡)",
     "files_sha256": {n: sha(SRC / n) for n in ("cpu.cpp", "memory.cpp", "cmos.cpp", "debug_gui.cpp", "prefix_none.h",
                                                "prefix_66.h", "cpu.h")},
     "interrupt_gate_order": {
@@ -142,6 +150,19 @@ src_facts = {
                    "meaning": "只有保護模式(非 V86)的遠跳 JMP Ap / JMP Ep 會走到;印出的 14 是十六進位,"
                               "= DESC_DATA_ED_RO_NA(資料段、向下擴展、唯讀),CPU_JMP 的 switch 沒有資料段的 case"}}
 
+# v33:DOSBox-X 記錄檔(FD2_HARNESS_LOGFILE=1)逐字
+logx = (C / "v33/ch25/dosbox-x_log_excerpt.txt").read_text(encoding="utf-8").splitlines()
+L = {int(x.split(":", 1)[0]): x.split(":", 1)[1] for x in logx[1:]}
+seq = [L[k] for k in sorted(L) if k < 3330258][-3:]
+assert seq == ["CPU_Exception: Exception 13 already in progress, triggering double fault instead",
+               "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
+               "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db. "
+               "Only weirdos like Windows 3.1 use this... NOT WELL TESTED!"], seq
+(VEC_GP,) = {int(n) for n in re.findall(r"Exception (\d+) already in progress", "\n".join(seq))}
+# 描述子的選擇器 = 受控注入時傾印的那三個(0018 = jmp 0018:0334 的目標、0070 = 閘、0080 = 0070:42D9 遠跳的目標)
+inj_pre = J(INJ / "g1/inj.json")["pre"]
+SELS = [int(k, 16) for k in inj_pre]
+
 # ---------------- B. 五次取樣:閘、被蓋成的描述子、預測 vs 記錄 ----------------
 runs = {}
 for v in RUNS:
@@ -149,20 +170,21 @@ for v in RUNS:
     pre = (d / "r1_pre_ext1m.bin").read_bytes()
     post = (d / "r1_post0_gdt.bin").read_bytes()
     gates = {}
-    for n in (0x08, 0x0D):
+    for n in (VEC_TIMER, VEC_GP):
         g = pre[IDT - EXT + n * 8: IDT - EXT + n * 8 + 8]
         gates[f"0x{n:02x}"] = {"selector": f"{struct.unpack_from('<H', g, 2)[0]:04x}", "access": f"0x{g[5]:02x}"}
     assert all(x == {"selector": "0070", "access": "0x8e"} for x in gates.values()), (v, gates)
     D = {}
-    for sel in (0x18, 0x70, 0x80):
+    for sel in SELS:
         a = GDT + sel
-        D[f"{sel:04x}"] = {"pre": desc(pre[a - EXT: a - EXT + 8]), "post": desc(post[a - GDT_DUMP: a - GDT_DUMP + 8])}
+        D[f"{sel:04x}"] = {"pre": desc(pre[a - EXT: a - EXT + DESC.size]), "post": desc(post[a - GDT_DUMP: a - GDT_DUMP + DESC.size])}
     assert D["0070"]["pre"]["raw"] == "cf5730e0189b0000" and D["0018"]["pre"]["raw"] == "ffffc0c5009b0000"
+    assert {k: x["pre"]["raw"] for k, x in D.items()} == inj_pre, v      # 事前描述子與受控注入那一次相同
     esc = J(d / "escape.json")
     # CPL:迴圈裡 CS = 0170,RPL 0(DOSBox-X 把 CS 值設成 選擇器 | CPL)
     assert " 0170:" in esc["last_home"]["text"]
     # IDT 基址:向量 8 的閘 = 記錄裡計時器出差實際進入的 0070:000042D1(全部向量都是 0070 / 0x8e,只比選擇器分不出向量)
-    g8 = pre[IDT - EXT + 8 * 8: IDT - EXT + 8 * 8 + 8]
+    g8 = pre[IDT - EXT + VEC_TIMER * 8: IDT - EXT + VEC_TIMER * 8 + 8]
     entry8 = f"{struct.unpack_from('<H', g8, 2)[0]:04X}:{struct.unpack_from('<H', g8, 6)[0] << 16 | struct.unpack_from('<H', g8, 0)[0]:08X}"
     assert entry8 == esc["excursion_entries"][0][0], (v, entry8)
     # GDT_DUMP:前緣(blit 最後寫到的位址)之後,事後傾印與事前傾印逐 byte 相同 → 事後傾印的起點對齊
@@ -180,16 +202,9 @@ for v in RUNS:
     runs[v] = {"idt_gates_0x08_0x0d": gates, "descriptors": D, "cpl": cpl, "predicted_fault": predicted,
                "escape_line": esc["escape"]["line"], "escape": "0C5C:0B94 ESP 0x9F5 CR0 0x10"}
 
-# v33:DOSBox-X 記錄檔(FD2_HARNESS_LOGFILE=1)逐字
-logx = (C / "v33/ch25/dosbox-x_log_excerpt.txt").read_text(encoding="utf-8").splitlines()
-L = {int(x.split(":", 1)[0]): x.split(":", 1)[1] for x in logx[1:]}
-seq = [L[k] for k in sorted(L) if k < 3330258][-3:]
-assert seq == ["CPU_Exception: Exception 13 already in progress, triggering double fault instead",
-               "CPU_Exception: Double fault already in progress == Triple Fault. Resetting CPU.",
-               "CMOS Shutdown byte 0x09 says to do INT 15 block move reset 0823:09db. "
-               "Only weirdos like Windows 3.1 use this... NOT WELL TESTED!"], seq
 rom = [L[k] for k in sorted(L) if "Write" in L[k] and "to rom" in L[k]]
-assert rom and rom[-1].endswith("lin=fffff phys=fffff")
+*_, rom_last = rom
+assert rom_last.endswith("lin=fffff phys=fffff")
 assert logx[0].startswith("# total_lines 3330262") and "int6_lines 3247840" in logx[0]
 bda = (C / "v33/ch25/r1_post0_bda.bin").read_bytes()
 frame = (C / "v33/ch25/r1_post0_resetframe.bin").read_bytes()
@@ -198,8 +213,9 @@ assert frame == bytes(20) + bytes.fromhex("940b5c0c0002")       # ES DS POPA 全
 assert 0x9DB + frame_bytes == 0x9F5
 for v in RUNS[1:]:
     assert (C / v / "ch25/r1_post0_xms.bin").read_bytes()[:10] != bytes.fromhex("eb039090 90fe384300cb".replace(" ", ""))
+_, last_rom = rom_last.split(" ", 1)
 log_v33 = {"source": ".wsl_build/ctr/v33/ch25/dosbox-x_log_excerpt.txt(全檔 3,330,262 行,INT 6 迴圈 3,247,840 行)",
-           "sequence": seq, "last_rom_write": rom[-1].split(" ", 1)[1],
+           "sequence": seq, "last_rom_write": last_rom,
            "bda_40_67": "0823:09DB", "reset_frame": frame.hex(),
            "prediction_vs_log": "原始碼對 0xfd(DPL 3)預測 #GP(13),記錄檔是 Exception 13;v21(0x24,DPL 1)、v30 / v31(0x5c,DPL 2)"
                                 "同一條判斷也是 #GP,但那幾次沒開記錄檔(預測,未逐字讀到)"}
@@ -230,7 +246,7 @@ xms_loop = exe[SEG + 0x1DEC: SEG + 0x1E12]
 assert xms_loop.hex() == "bb10004b4b781e8b97dc0a0bd274f453b40dff1eec0ab40aff1eec0a5bc787dc0a0000ebdec3"
 writes = [ln for ln in tr if " 0C5C:" in ln and re.search(r"\sint\s+21\s", ln)]
 assert len(writes) >= 4 and all("EBX:00000002" in w and re.search(r"EAX:\w{4}40", w) for w in writes)
-post_reset = {"message": MSG, "printed_per_run": {v: 2 for v in RUNS},
+post_reset = {"message": MSG, "printed_per_run": {v: msgs[v].count(MSG) for v in RUNS},
               "printer": "INT 21h AH=40h,BX=2(stderr),DS=0823;DOSBox-X 再經 INT 10h 印到畫面(v21 r1_trace_end.png 看得到)",
               "string_in_exe": "FD2.EXE 內嵌的 DOS/4GW(DOS/16M 核心)錯誤表第一條",
               "segment_0C5C_file_offset": f"0x{SEG:x}(v21 重置後執行過的 {len(code)} 條指令,{len(code) - len(diff)} 條逐 byte 相同;"
@@ -255,6 +271,7 @@ for v in RUNS:
     e1, e2 = g["entry"]
     between = [x for x in g["jmp0018"] if e1 < x < e2]
     assert len(g["entry"]) == 2 and between == [e2 - 1] and g["jmp0018"][-1] == e2 - 1, (v, g)
+    assert len(g["entry"]) == msgs[v].count(MSG), v                 # 每進一次防護碼印一次訊息
     assert len([x for x in g["jmp0018"] if x < e1]) >= 40           # 平常就一直在用
     assert len(g["xms"]) == 1 and g["xms"][0] > e2, (v, g["xms"])          # 第二次進防護碼之後才做 XMS 清理
     d18 = runs[v]["descriptors"]["0018"]["post"]

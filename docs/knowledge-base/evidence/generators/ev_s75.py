@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import struct
 import sys
 from pathlib import Path
@@ -26,6 +27,8 @@ C = ROOT / ".wsl_build/ctr"
 V16, V19, V21, V22 = (C / f"{v}/ch25" for v in ("v16", "v19", "v21", "v22"))
 OUT = out_path("runaway_blit_triple_fault_continue_load_control_20261005.json")
 DELTA = 0x19C000
+GDT_DUMP = 0x170000     # r1_post0_gdt.bin 的起點(段 0 讀)
+DESC = struct.Struct("<HHBBBB")   # 段描述子:limit 0..15、base 0..23、access、flags | limit 16..19、base 24..31
 
 
 def md5(p: Path) -> str:
@@ -75,10 +78,10 @@ assert exc[0][:3] == ["1", "0170:001EAC16", "EDI:000A0728"]
 irq = [(int(x[0]), x[1], int(x[2][4:], 16)) for x in exc[1:]]
 assert len(irq) == 332 and all(c == "0070:000042D1" for _, c, _ in irq)
 gaps = [b[0] - a[0] for a, b in zip(irq, irq[1:])]
-last_irq = irq[-1]
-assert last_irq == (7039301, "0070:000042D1", 0x16FBAB)
+last_line, last_cs, last_edi = irq[-1]
+assert (last_line, last_cs, last_edi) == (7039301, "0070:000042D1", 0x16FBAB)
 # 逃逸發生在下一個計時器週期:與上一次出差的行距落在一般週期的範圍內
-assert min(gaps) <= 7060958 - last_irq[0] <= max(gaps), (min(gaps), max(gaps))
+assert min(gaps) <= 7060958 - last_line <= max(gaps), (min(gaps), max(gaps))
 
 # stosb:每次 EDI + 1,0xa0728 → 0x170657
 writes: dict[int, int] = {}
@@ -101,29 +104,65 @@ def P(lin: int, n: int) -> bytes:
     return pre[lin - 0x100000:lin - 0x100000 + n]
 
 
+ex = (V21 / "trace_excerpt.txt").read_text(encoding="utf-8").splitlines()
+ex_head, ex_firsts, *ex_body = ex
+assert ex_head.startswith("# lines 16777216 bytes 5402271701 sha256 10d20cbdae4634c4")
+assert ex_firsts == "# first_C3FF 7064626 first_INT6_handler 7094386"
+exl = {int(x.split("\t")[0]): x.split("\t", 1)[1] for x in ex_body}
+exp = {k: E.parse_line(t) for k, t in exl.items()}
+
+# 選擇器都由追蹤取:0070 = 計時器出差的入口、0080 = 0070 段裡唯一的遠跳目標、0170 / 0178 = 迴圈裡的 CS / DS
+irq_cs, _ = last_cs.split(":")
+far = {m.group(1) for p in exp.values() if p["cs"] == irq_cs and (m := re.match(r"jmp\s+([0-9A-F]{4}):", p["text"]))}
+(far_cs,) = far
+SEL_IRQ, SEL_FAR = int(irq_cs, 16), int(far_cs, 16)
+SEL_CODE, SEL_DATA = int(last_home["cs"], 16), last_home["regs"]["DS"]
+assert SEL_DATA == SEL_CODE + DESC.size == last_home["regs"]["SS"]      # 平坦 data 緊接在平坦 code 之後
+SELS = (SEL_IRQ, SEL_FAR, SEL_CODE, SEL_DATA)
+
+
 # GDT:平坦 code / data 描述子只出現一次,位在 +0x170 / +0x178 → base 0x170010
 flat = [i for i in range(len(pre) - 16) if pre[i:i + 8] in (bytes.fromhex("ffff0000009acf00"), bytes.fromhex("ffff0000009bcf00"))
         and pre[i + 8:i + 16] in (bytes.fromhex("ffff00000092cf00"), bytes.fromhex("ffff00000093cf00"))]
 assert [0x100000 + i for i in flat] == [0x170180]
 GDT = 0x170180 - 0x170
+assert GDT + SEL_CODE == 0x170180       # 搜到的平坦 code 正是迴圈 CS 0170 的描述子
 
 
 def desc(b: bytes) -> dict:
-    lo, blo, bmid, acc, fl, bhi = struct.unpack("<HHBBBB", b)
-    return {"hex": b.hex(), "base": hex(blo | bmid << 16 | bhi << 24), "limit": hex(lo | (fl & 15) << 16),
-            "access": hex(acc), "present": bool(acc & 0x80), "type5": hex(acc & 0x1F)}
+    lo, blo, bmid, acc, fl, bhi = DESC.unpack(b)
+    base, limit, type5 = blo | bmid << 16 | bhi << 24, lo | (fl & 15) << 16, acc & 0x1F
+    # 第二種寫法:base = byte 2..4 + byte 7、limit = byte 0..1 + byte 6 的低 4 位、type5 = access 的低 5 位
+    assert base == int.from_bytes(b[2:5] + b[7:], "little") and limit == int.from_bytes(b[:2] + bytes([b[6] % 16]), "little")
+    assert type5 == acc % 32, b.hex()
+    return {"hex": b.hex(), "base": hex(base), "limit": hex(limit),
+            "access": hex(acc), "present": bool(acc & 0x80), "type5": hex(type5)}
 
 
-gdt_pre = {hex(s): desc(P(GDT + s, 8)) for s in (0x70, 0x80, 0x170, 0x178)}
+def post_desc(g: bytes, sel: int) -> bytes:
+    """事後傾印(起點 GDT_DUMP)裡選擇器 sel 的描述子。"""
+    return g[GDT - GDT_DUMP + sel: GDT - GDT_DUMP + sel + DESC.size]
+
+
+gdt_pre = {hex(s): desc(P(GDT + s, DESC.size)) for s in SELS}
 assert gdt_pre["0x70"]["hex"] == "cf5730e0189b0000" and gdt_pre["0x70"]["present"]
-gdt_written = {hex(s): desc(bytes(writes[GDT + s + i] for i in range(8))) for s in (0x70, 0x80, 0x170, 0x178)}
+# base 的獨立對照:追蹤裡 0070 / 0080 段每條指令的位元組 = 事前傾印在 base + EIP 的位元組
+seen = set()
+for k, p in exp.items():
+    if k < esc["escape"]["line"] and p["cs"] in (irq_cs, far_cs):
+        _, code = p["text"].rsplit("  ", 1)
+        code = bytes.fromhex(code)
+        assert P(int(gdt_pre[hex(int(p["cs"], 16))]["base"], 16) + p["eip"], len(code)) == code, (k, p["text"])
+        seen.add(p["cs"])
+assert seen == {irq_cs, far_cs}, seen
+gdt_written = {hex(s): desc(bytes(writes[GDT + s + i] for i in range(DESC.size))) for s in SELS}
 assert gdt_written["0x70"]["hex"] == "2424242424242424" and not gdt_written["0x70"]["present"]
 assert gdt_written["0x80"]["hex"] == "5c5c5c5c5c5c5c5c" and not gdt_written["0x80"]["present"]
 
 # 事後(實際模式,段 0)讀回:與追蹤還原的寫入逐 byte 相同;前緣之後與事前相同
 post_gdt = (V21 / "r1_post0_gdt.bin").read_bytes()
-mism = [a for a in range(GDT, 0x170658) if post_gdt[a - 0x170000] != writes[a]]
-assert not mism and all(post_gdt[a - 0x170000] == P(a, 1)[0] for a in range(0x170658, 0x170700))
+mism = [a for a in range(GDT, 0x170658) if post_gdt[a - GDT_DUMP] != writes[a]]
+assert not mism and all(post_gdt[a - GDT_DUMP] == P(a, 1)[0] for a in range(0x170658, 0x170700))
 
 # IDT:0070:42d1 的閘在 0x18a150(整段 IDT 在寫入前緣之上,沒被寫到)
 gate = struct.unpack("<HHBBH", P(0x18A150, 8))
@@ -147,10 +186,6 @@ arpl_post = (V21 / "r1_post0_arpl.bin").read_bytes()[0x18:0x1C]
 assert arpl_post == bytes(writes[0xCD4B8 + i] for i in range(4)) == bytes.fromhex("63b94b4b")
 assert 0xC3FF0 + 0x94C8 == 0xCD4B8 and 0xC3FF0 + 0x10 == 0xC4000
 
-ex = (V21 / "trace_excerpt.txt").read_text(encoding="utf-8").splitlines()
-assert ex[0].startswith("# lines 16777216 bytes 5402271701 sha256 10d20cbdae4634c4")
-assert ex[1] == "# first_C3FF 7064626 first_INT6_handler 7094386"
-exl = {int(x.split("\t")[0]): x.split("\t", 1)[1] for x in ex[2:]}
 call_xms = E.parse_line(exl[7064625])
 assert call_xms["cs"] == "0C5C" and call_xms["eip"] == 0x1DFE and "call far word [0AEC]" in call_xms["text"]
 assert call_xms["regs"]["EAX"] & 0xFF00 == 0x0D00
@@ -170,7 +205,7 @@ ev: dict = {"_meta": {
     "chapter": "第 25 章戰場 = map 24(reach_battle.py + .wsl_build/FD2.SAV);v21 另套 v9_setup.py + v11_setup.py,t_v21 只跑設定 4(線性 7 = 0x89)",
     "raw_dirs": [rel(V21), rel(V22)] + [rel(C / f"{v}/ch25") for v in ("v30", "v31", "v32")],
     "drivers": "evidence/generators/:t_v21.py(由 mk_t_v21.py 從 t_v16.py 產生)、t_v19b.py(nocorrupt prearmed)、v21_exc.sh、v21_gdt.sh、v21_c4000.sh、v21_excerpt.sh;本檔由 ev_s75.py 重算",
-    "trace": {"file": "~/fd2-run-harness-v21/LOGCPU.TXT(WSL,不複製)", "header": ex[0][2:], "mode": "LOGL",
+    "trace": {"file": "~/fd2-run-harness-v21/LOGCPU.TXT(WSL,不複製)", "header": ex_head.removeprefix("# "), "mode": "LOGL",
               "count": "0x1000000", "armed_at": "0x4ec16(寬 0、高 43570 已讀進 BP / DX),BPDEL * 後 heavylog + arm"},
     "process": [
         "v21:t_v21 停在 0x4ec16 時先傾印事前狀態(IVT + BDA 0x0..0x500、0xc0000..0xc8000、0x100000..0x200000,選擇器 0170 = 保護模式平坦),"
@@ -188,8 +223,8 @@ ev: dict = {"_meta": {
 ev["A_triple_fault_chain_v21"] = {
     "blit_writes": {"stosb": len(writes), "from": hex(min(writes)), "to": hex(max(writes)), "step": "+1(每次 EDI 恰好加 1,沒有跳)"},
     "timer_irq_excursions": {"count": len(irq), "entry": "0070:000042D1(IDT 0x18a150 的閘,type 0x8e)",
-                             "period_lines": [min(gaps), max(gaps)], "last_ok": {"line": last_irq[0], "edi": hex(last_irq[2])},
-                             "escape_gap_lines": esc["escape"]["line"] - last_irq[0]},
+                             "period_lines": [min(gaps), max(gaps)], "last_ok": {"line": last_line, "edi": hex(last_edi)},
+                             "escape_gap_lines": esc["escape"]["line"] - last_line},
     "gdt": {"base": hex(GDT), "found_by": "事前傾印裡唯一一組平坦 code + data 描述子(+0x170 / +0x178)",
             "before": gdt_pre, "written_by_blit": gdt_written, "post_read_back_equals_trace": "0x170010..0x170657 共 1608 bytes 全同;0x170658 之後與事前相同"},
     "escape": {"last_in_loop": {"line": esc["last_home"]["line"], "at": "0x4ec6a dec ah", "cr0": hex(last_home["regs"]["CR0"]),
@@ -208,7 +243,7 @@ ev["A_triple_fault_chain_v21"] = {
     "after_reset": {"real_mode_code": "DOS/4GW 0C5C 段", "xms_call": "0C5C:1DFE call far word [0AEC](AH = 0Dh,XMS 解鎖 EMB)→ C3FF:0010 = 0xc4000",
                     "xms_entry_before": xms_pre.hex(" ") + "(jmp +3 / nop×3 / DOSBox-X callback 0x43 / retf)",
                     "xms_entry_written": xms_post.hex(" ") + "(blit 寫入值 = 事後讀回值;被當成 dec sp … 執行)",
-                    "first_C3FF_line": int(ex[1].split()[2]), "first_int6_line": int(ex[1].split()[4]),
+                    "first_C3FF_line": int(ex_firsts.split()[2]), "first_int6_line": int(ex_firsts.split()[4]),
                     "int6_insn": "C3FF:94C8 = 0xcd4b8 的 63 b9 4b 4b(arpl,實際模式無效指令),也是 blit 寫的",
                     "loop": "C3FF:94C8 → F000:CA60(BIOS 預設 INT 6 處理常式 callback)→ iret 各 3,227,611 次直到計數用完"},
     "conclusion": "0x89 的假頭像讓 blit 從 0xa0728 一路往上寫;途中先蓋掉 DOSBox-X 在 0xc4000 的 XMS 入口,再在 0x170010 蓋掉 DOS/4GW 的 GDT。"
@@ -247,13 +282,16 @@ for tag, choice, ret_load, writer in (("c1", 2, "0x1013b", "0x1013e"), ("l1", 1,
     assert s[0]["pal_hdr_before"] == s[0]["pal_hdr_after"] == "05030000"
     i = next(k for k, x in enumerate(s) if x["eip"] == "0x111ba" and x.get("armed"))
     assert s[i]["ret"] == ret_load and s[i]["old"] == s[0]["pal"] and s[i]["old_hdr"] == "05030000"
-    assert [x["eip"] for x in s[i + 1:i + 7]] == ["0x3d67f", "0x3d685", "0x3d693", "0x3d72e", "0x111d5", writer]
+    seg = s[i + 1:i + 7]
+    assert [x["eip"] for x in seg] == ["0x3d67f", "0x3d685", "0x3d693", "0x3d72e", "0x111d5", writer]
+    nodes = [x["node"] for x in seg if "node" in x]
+    assert [x["eip"] for x in seg if "node" in x] == ["0x3d693", "0x3d72e"]   # 兩個釋放點各一個節點
     assert s[i + 1]["is_watch"] and s[i + 2]["is_watch"] and s[i + 5]["watch_hdr_after"] == "00060000"
     assert s[i + 6]["new_pal"] == s[0]["pal"] and s[i + 6]["new_pal_hdr"] == "05030000"
     assert not run["state"]["emulator_gone"]
     rows[tag] = {"choice_eax": choice, "pal": s[0]["pal"], "hdr": "05030000(不改)",
                  "reload_free": {"ret": ret_load, "path": ["0x3d67f", "0x3d685", "0x3d693", "0x3d72e", "0x111d5"],
-                                 "freed_hdr_after": "00060000", "nodes": [s[i + 3]["node"], s[i + 4]["node"]]},
+                                 "freed_hdr_after": "00060000", "nodes": nodes},
                  "new_palette": {"writer": writer, "addr": s[i + 6]["new_pal"], "same_block_reused": True}}
 v19c, v19l = J(V19 / "c1.json"), J(V19 / "l2.json")
 assert v19c["stops"][0]["pal_hdr_after"] == v19l["stops"][0]["pal_hdr_after"] == "102b0400"
@@ -265,9 +303,20 @@ ev["D_continue_load_control_v22"] = {
     "conclusion": "標頭完好時,CONTINUE / LOAD 的第一次重載走 0x3d685 → 0x3d693 → 0x3d72e 真的釋放,新調色盤配回同一塊(0x1fd0c4);"
                   "改壞時在 0x3d67f 直接返回而洩漏、新調色盤配到別處。差別只在標頭。"}
 
+def hot_group(top: list) -> list[str]:
+    """after_escape_top(依次數遞減)裡最大相鄰比值落差之前的那一組 = INT 6 迴圈的指令。"""
+    cs = [c for _, c in top]
+    assert cs == sorted(cs, reverse=True)
+    ratios = [a / b for a, b in zip(cs, cs[1:])]
+    return [k for k, _ in top[:ratios.index(max(ratios)) + 1]]
+
+
+assert hot_group(esc["after_escape_top"]) == ["C3FF:000094C8", "F000:0000CA60", "F000:0000CA64"]
+d70 = desc(post_desc(post_gdt, SEL_IRQ))
+
 # ---------------- E. 取樣:v30 / v31(只跑 k = 4)、v32(照 v11 跑 k = 0..4) ----------------
-samples = {"v21": {"cfg": "4", "escape_line": esc["escape"]["line"], "frontier": max(writes), "gdt_0070_after": post_gdt[0x80:0x88].hex(),
-                   "gdt_0070_access": hex(post_gdt[0x85]), "gdt_0070_present": bool(post_gdt[0x85] & 0x80), "excursions": esc["excursions"]}}
+samples = {"v21": {"cfg": "4", "escape_line": esc["escape"]["line"], "frontier": max(writes), "gdt_0070_after": d70["hex"],
+                   "gdt_0070_access": d70["access"], "gdt_0070_present": d70["present"], "excursions": esc["excursions"]}}
 for v, cfg, line, front in (("v30", "4", 7024284, 0x170152), ("v31", "4", 7047177, 0x170231),
                             ("v32", "0,1,2,3,4", 7051374, 0x170843)):
     d = C / f"{v}/ch25"
@@ -282,14 +331,16 @@ for v, cfg, line, front in (("v30", "4", 7024284, 0x170152), ("v31", "4", 704717
     fr = struct.unpack("<13H", (d / "r1_post0_resetframe.bin").read_bytes())
     assert fr == (0,) * 10 + (0xB94, 0xC5C, 0x200)
     g = (d / "r1_post0_gdt.bin").read_bytes()
-    assert g[0x80:0x88] != bytes.fromhex(gdt_pre["0x70"]["hex"])  # 0070 已不是原本的描述子
+    g70 = desc(post_desc(g, SEL_IRQ))
+    assert g70["hex"] != gdt_pre["0x70"]["hex"]  # 0070 已不是原本的描述子
     pane = (d / "r1_trace_end_pane.txt").read_text(encoding="utf-8")
     assert "Illegal Unhandled Interrupt Called 6" in pane and "E_Exit" not in pane
-    top = dict((k, c) for k, c in e["after_escape_top"])
-    samples[v] = {"cfg": cfg, "escape_line": line, "frontier": hex(front), "gdt_0070_after": g[0x80:0x88].hex(),
-                  "gdt_0070_access": hex(g[0x85]), "gdt_0070_present": bool(g[0x85] & 0x80),
-                  "gdt_0170_after": g[0x180:0x188].hex(), "excursions": e["excursions"],
-                  "int6_loop_top": [k for k, _ in e["after_escape_top"][:3]],
+    loop = hot_group(e["after_escape_top"])
+    assert "F000:0000CA60" in loop and sum(k.startswith("C3FF:") for k in loop) == 1, (v, loop)
+    samples[v] = {"cfg": cfg, "escape_line": line, "frontier": hex(front), "gdt_0070_after": g70["hex"],
+                  "gdt_0070_access": g70["access"], "gdt_0070_present": g70["present"],
+                  "gdt_0170_after": post_desc(g, SEL_CODE).hex(), "excursions": e["excursions"],
+                  "int6_loop_top": loop,
                   "end_regs": [ln.strip() for ln in pane.splitlines() if "EAX=" in ln][:1]}
 samples["v21"]["frontier"] = hex(samples["v21"]["frontier"])
 v11_pane = (C / "v11/ch25/r1_crash_pane.txt").read_text(encoding="utf-8")

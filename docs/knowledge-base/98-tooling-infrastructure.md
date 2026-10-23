@@ -10957,3 +10957,44 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
 - `ev_s75`、`ev_s76`(NOT TESTED,見失誤 1)。
 - 表中「剩下」各項沒有獨立來源;顯示用的清單(`KEEP`)與截圖裁切框、小數位數、說明性的係數照舊。
 - 續一百三十四以來「要實機,不打算主動做」的項目不變。
+
+## 2026-10-24 續一百五十二:`ev_s75` / `ev_s76` 的 sweep ESCAPED 補判準(32 → 0)
+
+起因:續一百五十一「仍留」依建議逐項處理(使用者要求)。能離線做的只剩 `ev_s75`(21)與 `ev_s76`(11)兩支產生器的逃過項;
+其餘(表中「剩下」、`KEEP` 清單、要實機的項目)不變。做法同續一百五十一:先在 scratchpad 的副本上改、重算逐 byte 比對、
+`sweep(src=…)` 收斂後才套回倉庫(套回後與副本逐 byte 相同,`run_all` IDENTICAL)。
+
+**`ev_s75`(21 → 0)**:
+- 選擇器改由 DOSBox-X LOGL 追蹤取,不再寫死 `(0x70, 0x80, 0x170, 0x178)`:0070 = 計時器出差的入口(`exc_entries.txt`)、
+  0080 = 0070 段裡唯一的遠跳目標(追蹤摘錄 `0070:42D9 jmp 0080:0020`)、0170 / 0178 = 迴圈裡的 CS / DS(並斷言 DS = SS = CS + 8,
+  且搜到的平坦 code 正位在 GDT + 0170)。
+- 描述子 base 的獨立對照:追蹤摘錄裡 0070 / 0080 段每條指令的位元組,都等於事前傾印在「描述子 base + EIP」的位元組
+  (0070 base 0x18e030、0080 base 0x174820,兩段都核對到)。另以第二種寫法(byte 2..4 + byte 7、byte 0..1 + byte 6 低 4 位、
+  access % 32)核對 base / limit / type5,涵蓋被 blit 寫成 `24…` / `5c…` 的描述子。
+- 事後傾印的描述子改由 `post_desc(g, 選擇器)` 取(起點 `GDT_DUMP`、長度 `DESC.size`),取代 `[0x80:0x88]`、`[0x180:0x188]`、`[0x85]`。
+- `int6_loop_top`:原本取熱點前 3 個;改成「次數相鄰比值落差最大處之前的那一組」,v21 斷言這一組正是
+  C3FF:94C8 / F000:CA60 / F000:CA64,v30 ~ v32 斷言組內有 INT 6 處理常式 F000:CA60 與恰好一個 C3FF 位址。
+- 追蹤摘錄檔頭、最後一次出差、v22 釋放的兩個節點改解包 / 以欄位篩選(節點 = 有 `node` 的停點,並斷言它們是 0x3d693 / 0x3d72e)。
+
+**`ev_s76`(11 → 0)**:
+- 向量:計時器 8 改成共用常數 `VEC_TIMER`(同一個值算閘的入口並與出差入口 0070:000042D1 比);#GP 的 0x0D 由 v33
+  DOSBox-X 記錄檔的 `Exception 13 already in progress` 取(記錄檔讀取提前到 B 節之前,輸出順序不變)。
+- 選擇器 `(0x18, 0x70, 0x80)` 改由受控注入 g1 的 `inj.json` 傾印鍵取,並斷言五次取樣的事前描述子都與注入那一次相同。
+- `desc()` 以 `DESC.unpack` 取 access(長度不對就丟例外),p / dpl / type 拼回 access byte 核對。
+- `lineno()` 以第二種寫法核對(第 n 行就是含該字串的那一行);`binary_md5.txt` 解包;最後一筆 ROM 寫入改解包,斷言與輸出共用。
+- `printed_per_run` 由訊息檔的次數算,並斷言等於防護碼進入次數(`guard_reentry_lines.txt` 的 entry)。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 | CRASH / INERT 前 → 後 |
+|---|---|---|---|
+| `ev_s75` | 21 → 0 | 138 → 152 | 41 / 24 → 36 / 15 |
+| `ev_s76` | 11 → 0 | 72 → 76 | 33 / 26 → 31 / 25 |
+
+整份 51 個產生器的 ESCAPED 由續一百五十一的 87 → 55(剩下的都是續一百五十一表中「剩下」與 `KEEP` 顯示清單,沒有獨立來源)。
+
+**不同結論 / 更正**:無;兩份證據逐 byte 不變。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);`mut_s75` 10 / 10、`mut_s76` 19 / 19(原文都沒動);assert_census `ev_s75` 68 → 78、`ev_s76` 69 → 73,`--update --executed` 全部執行到;inputs_manifest 不變(沒有新輸入)
+
+**仍留**:
+- 續一百五十一表中「剩下」各項與 `KEEP` 清單沒有獨立來源,照舊。
+- 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。
