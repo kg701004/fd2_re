@@ -250,6 +250,13 @@ def call_target(lin: int) -> int:
     return lin + 5 + struct.unpack("<i", b[1:])[0]
 
 
+def imm(lin: int, op: bytes, fmt: str = "<I") -> int:
+    """讀 lin 起的一條指令:opcode 必須是 op,回傳緊接在後的立即值(讀錯位址就對不上 opcode,不會悄悄讀到相鄰位元組)。"""
+    b = code(lin, len(op) + struct.calcsize(fmt))
+    assert b[:len(op)] == op, (hex(lin), b.hex())
+    return struct.unpack(fmt, b[len(op):])[0]
+
+
 assert code(0x1fadd, 2) == b"\x83\xfe"
 T_ANI = code(0x1fadd, 3)[2]                                         # = 0x19
 assert code(0x1fae2, 6)[0::2] == b"\x6a\x6a\x6a" and call_target(0x1fae8) == 0x1f81e
@@ -290,7 +297,7 @@ FLASH_HITS = TABLE[:-1]                                              # 1000 是�
 assert code(0x2df17, 1) == b"\xbd" and code(0x2df48, 3) == b"\x0f\xaf\xd7" and code(0x2df4d, 5) == b"\xc1\xfa\x1f\xf7\xfd"
 FADE_DIV = struct.unpack("<I", code(0x2df18, 4))[0]                    # = 0x28
 assert code(0x2dfb9, 4) == b"\x3b\x5c\x24\x18" and code(0x2dfbd, 2) == b"\x0f\x8c"
-RED_HI = struct.unpack("<I", code(0x1fc75, 4))[0]                      # 紅閃光 hi = 0xff(索引 255 不動)
+RED_HI = imm(0x1fc74, b"\x68")                                         # 紅閃光 hi = 0xff(索引 255 不動)
 # 兩段轉場的 src 都是 [0x53a65]:捲動前 0x1fc0f 載入 #PAL_BASE,標題前 0x1fccf 載入 #TITLE_PAL(同一個指標)
 PALPTR = code(0x1fc13, 4)
 assert code(0x1fc11, 2) == b"\xff\x35" and code(0x1fc24, 5) == b"\xa3" + PALPTR
@@ -299,14 +306,15 @@ assert code(0x1fcd1, 6) == b"\xff\x35" + PALPTR and code(0x1fce4, 5) == b"\xa3" 
 assert code(0x1fd2c, 1) == b"\x6a" and code(0x1fd2e, 5) == b"\x68\xff\x00\x00\x00" and code(0x1fd33, 2) == b"\x6a\x00"
 assert call_target(0x1fd35) == 0x11df2 and code(0x11e1c, 4) == b"\x39\xfb\x0f\x8f"
 assert code(0x11e43, 5) == b"\x01\xf0\x83\xf8\x3f" and code(0x11e48, 3) == b"\x7e\x05\xb8" and code(0x11e4b, 4) == code(0x11e47, 1) + bytes(3)
-WHITE_ADD, SAT6 = code(0x1fd2c, 2)[1], code(0x11e47, 1)[0]              # 0x40;0x3f
+WHITE_ADD, SAT6 = imm(0x1fd2c, b"\x6a", "<B"), code(0x11e47, 1)[0]      # 0x40;0x3f
 # 之後 blit 標題 sub0(0x1fd4a),esi 0 → 0x28(jle)每步 0x2df01(0, 0xff, esi, 0x38, 0x3c, 0x3f) + delay 8 ms:從淡藍白淡到標題調色盤
 assert call_target(0x1fd4a) == 0x16886 and code(0x1fd52, 4) == b"\x31\xf6\xeb\x21"
 assert code(0x1fd56, 6)[0::2] == b"\x6a\x6a\x6a" and code(0x1fd5c, 2) == b"\x56\x68" and code(0x1fd62, 2) == b"\x6a\x00"
 W_B6, W_G6, W_R6 = code(0x1fd56, 6)[1::2]                               # 先 push B
-W_HI = struct.unpack("<I", code(0x1fd5e, 4))[0]
+W_HI = imm(0x1fd5d, b"\x68")
 assert call_target(0x1fd64) == 0x2df01 and code(0x1fd6c, 1) == b"\x6a" and code(0x1fd76, 3) == b"\x46\x83\xfe" and code(0x1fd7a, 1) == b"\x7e"
-W_END, W_MS = code(0x1fd79, 1)[0], code(0x1fd6c, 2)[1]                 # esi 0 → 0x28;8 ms
+W_END, W_MS = code(0x1fd79, 1)[0], imm(0x1fd6c, b"\x6a", "<B")         # esi 0 → 0x28;8 ms
+W_START = 0                                                            # 0x1fd52 xor esi, esi(上面斷言);title_states 從這一步起
 # 選單:0x1fe1b push n;push ebp(選中項);push 圖;call 0x1ff79。第 k 項:mov eax, 未選 sub;cmp [esp + 8], k;jne;mov eax, 選中 sub;
 # push eax;push 圖;push 0x140;push 0xa0000 + y × 320 + x。第 1、2 項先 cmp [esp + 0xc], k;jle(項數 > k 才畫)
 assert code(0x1fe1b, 9) == b"\xff\x74\x24\x50\x55\xff\x74\x24\x50" and call_target(0x1fe24) == 0x1ff79
@@ -326,13 +334,13 @@ for _m, _gate in ((0x1ff83, None), (0x1ffb2, 0x1ffab), (0x1ffe1, 0x1ffda)):
 # 選中項 = ebp(0x1f8b5 xor ebp, ebp);項數初值 1(0x1f8a5),FD2.SAV 讀得到且解密後檢查碼相符 → 2,
 # 第 0x30c3 + 2 個位元組不是 0xff → 3
 assert code(0x1f8b5, 2) == b"\x31\xed" and code(0x1f8a5, 4) == b"\xc7\x44\x24\x50"
-SEL0, N0 = 0, struct.unpack("<I", code(0x1f8a9, 4))[0]
+SEL0, N0 = 0, imm(0x1f8a5, b"\xc7\x44\x24\x50")
 assert code(0x1fdf4, 4) == code(0x1fe07, 4) == code(0x1f8a5, 4)
-N_SAV, N_SAV3 = struct.unpack("<I", code(0x1fdf8, 4))[0], struct.unpack("<I", code(0x1fe0b, 4))[0]
+N_SAV, N_SAV3 = imm(0x1fdf4, b"\xc7\x44\x24\x50"), imm(0x1fe07, b"\xc7\x44\x24\x50")
 assert code(0x1fd9d, 1) == b"\x68" and code(0x1fdd8, 2) == b"\x8d\xbe" and code(0x1fdec, 2) == b"\x3b\x86"
 assert code(0x1fdfc, 3) == b"\x0f\xb6\x47" and code(0x1fe00, 5) == b"\x3d\xff\x00\x00\x00" and code(0x1fe05, 1) == b"\x74"
 SAV_LEN, SAV_SUM_AT = struct.unpack("<I", code(0x1fd9e, 4))[0], struct.unpack("<I", code(0x1fdee, 4))[0]
-SAV_N3_AT = struct.unpack("<I", code(0x1fdda, 4))[0] + code(0x1fdff, 1)[0]
+SAV_N3_AT = imm(0x1fdd8, b"\x8d\xbe") + imm(0x1fdfc, b"\x0f\xb6\x47", "<B")
 assert call_target(0x1fdd0) == 0x4df28 and call_target(0x1fde4) == 0x4df09
 _dk = code(0x4df35, 16)                                                # mov dx, 0xa5;lodsb;add dx, 0x9014;rol dx, 3;xor al, dl
 assert _dk[:2] == b"\x66\xba" and _dk[4:8] == b"\xac\x66\x81\xc2" and _dk[10:13] == b"\x66\xc1\xc2" and _dk[14:16] == b"\x32\xc2"
@@ -645,7 +653,9 @@ def fade_rows(path, idx_img: np.ndarray, states: dict, prev: dict) -> list[tuple
 
 
 def tally(rr: list[tuple[str, list]]) -> dict:
-    return {k: sum(1 for kk, _ in rr if kk == k) for k in ("single", "split", "none")}
+    t = {k: sum(1 for kk, _ in rr if kk == k) for k in ("single", "split", "none")}
+    assert sum(t.values()) == len(rr), (t, len(rr))
+    return t
 
 
 def red_states(floor: bool) -> dict:
@@ -653,7 +663,7 @@ def red_states(floor: bool) -> dict:
 
 
 def title_states(floor: bool) -> dict:
-    st = {t: rgb_arr(fade6(P6_TITLE, (W_R6, W_G6, W_B6), t, FADE_DIV, W_HI, floor)) for t in range(W_END + 1)}
+    st = {t: rgb_arr(fade6(P6_TITLE, (W_R6, W_G6, W_B6), t, FADE_DIV, W_HI, floor)) for t in range(W_START, W_END + 1)}
     st[-1] = rgb_arr(np.minimum(P6_TITLE + WHITE_ADD, SAT6))            # -1 = 0x11df2 之後的全白
     return st
 
@@ -663,7 +673,7 @@ assert TRANS_START == FADE_DIV and (RED_ST[TRANS_START] == P_BASE).all()     # �
 assert (RED_ST[0][:RED_HI] == RED).all() and W_END == FADE_DIV and (TITLE_ST[W_END] == P_TITLE).all()
 assert (TITLE_ST[-1] == WHITE).all()                                    # + 0x40 對每個 6-bit 值都飽和
 RED_PREV = {t: t + 1 for t in range(TRANS_START)}                        # esi 往下數:上一步是 t + 1
-TITLE_PREV = {t: t - 1 for t in range(W_END + 1)}                        # esi 往上數;t = 0 的上一個狀態是全白(-1)
+TITLE_PREV = {t: t - 1 for t in range(W_START, W_END + 1)}                        # esi 往上數;t = 0 的上一個狀態是全白(-1)
 RED_IDX, TITLE_IDX = BUF[0:200], TITLE
 idx255 = {"red": bool((RED_IDX == 255).any()), "title": bool((TITLE_IDX == 255).any())}
 
@@ -686,9 +696,16 @@ assert all(max(a["single_steps"]) <= min(b["single_steps"]) for a, b in zip(titl
 assert title_rows[0]["single_steps"] == [-1] and title_rows[0]["split"] >= 1      # 白幀:底下已開始寫 esi == 0
 assert sum(f["split"] for f in red_rows) > 0 and sum(f["split"] for f in title_rows) > 0
 # 對照:同樣的搜尋(單一步 + 寫到一半)改用向下取整
-floor_red = sum(400 - tally(fade_rows(files[rows.index(r)], RED_IDX, red_states(True), RED_PREV))["none"] for r in red_fade)
-floor_title = sum(400 - tally(fade_rows(files[rows.index(r)], TITLE_IDX, title_states(True), TITLE_PREV))["none"]
-                  for r in S["title_in"])                               # 白幀的全白狀態跟除法無關,不算進對照
+
+
+def floor_control(rs: list, idx_img: np.ndarray, states: dict, prev: dict) -> tuple[int, int]:
+    """向下取整的對照:(解釋得了的主機列數, 主機列總數)。"""
+    rrs = [fade_rows(files[rows.index(r)], idx_img, states, prev) for r in rs]
+    return sum(len(rr) - tally(rr)["none"] for rr in rrs), sum(len(rr) for rr in rrs)
+
+
+floor_red, floor_red_n = floor_control(red_fade, RED_IDX, red_states(True), RED_PREV)
+floor_title, floor_title_n = floor_control(S["title_in"], TITLE_IDX, title_states(True), TITLE_PREV)  # 白幀的全白跟除法無關,不算進對照
 assert floor_red < 200 * len(red_fade) and floor_title < 200 * len(S["title_in"]), (floor_red, floor_title)
 
 # logo 末幀「變亮」那張:每條主機列 = ANI #1 末幀,或從末幀寫成全白的途中 / 之後;一旦不是末幀,下面的列也不會回到末幀
@@ -701,8 +718,11 @@ lw_lab = [k if k != "single" else ("either" if len(ks) == 2 else ks[0]) for k, k
 assert "none" not in lw_lab and lw_lab[0] == "ani1_last" and lw_lab[-1] in ("split", "white"), lw_lab
 lw_cut = min(y for y, x in enumerate(lw_lab) if x in ("split", "white"))
 assert "ani1_last" not in lw_lab[lw_cut:], lw_lab
-lw_runs = [f"{g[0]}-{g[-1]}:{k}" for k, g in ((k, [y for y, _ in grp]) for k, grp in
-                                             itertools.groupby(enumerate(lw_lab), key=lambda u: u[1]))]
+lw_spans = [(g[0], g[-1], k) for k, g in ((k, [y for y, _ in grp]) for k, grp in
+                                          itertools.groupby(enumerate(lw_lab), key=lambda u: u[1]))]
+assert lw_spans[0][0] == 0 and lw_spans[-1][1] == len(lw_lab) - 1, lw_spans      # 各段頭尾相接、蓋滿全部主機列
+assert all(a[1] + 1 == b[0] for a, b in zip(lw_spans, lw_spans[1:])), lw_spans
+lw_runs = [f"{a}-{b}:{k}" for a, b, k in lw_spans]
 
 # 選單:依 EXE 的位置 / sub 號疊在標題 sub0 上,整張逐像素相等;其他 (選中項, 項數) 組合都不相等
 
@@ -724,10 +744,15 @@ MENU_FULL = P_TITLE[menu_img(SEL0, MENU_N)]
 assert all(bool((COLS[rows.index(r)] == MENU_FULL).all()) for r in title_still)
 menu_ctrl = {f"sel{s}_n{n}": int((P_TITLE[menu_img(s, n)] != COLS[-1]).sum())
              for s in range(len(MENU)) for n in range(1, len(MENU) + 1) if (s, n) != (SEL0, MENU_N)}
-assert min(menu_ctrl.values()) > 0, menu_ctrl
+assert min(menu_ctrl.values()) > 0 and len(menu_ctrl) == len(MENU) ** 2 - 1, menu_ctrl   # 其他全部 (選中項, 項數) 組合
 _drawn = menu_items(SEL0, MENU_N)
 MENU_BOX = (min(it["y"] for it, _a in _drawn), max(it["y"] + a.shape[0] - 1 for it, a in _drawn),
             min(it["x"] for it, _a in _drawn), max(it["x"] + a.shape[1] - 1 for it, a in _drawn))
+_mask = np.zeros(TITLE.shape, bool)                                     # 對照算法:畫到的範圍塗成 True 再取外框
+for it, a in _drawn:
+    _mask[it["y"]:it["y"] + a.shape[0], it["x"]:it["x"] + a.shape[1]] = True
+_my, _mx = np.nonzero(_mask.any(axis=1))[0], np.nonzero(_mask.any(axis=0))[0]
+assert MENU_BOX == (_my.min(), _my.max(), _mx.min(), _mx.max()), (MENU_BOX, _my, _mx)
 assert MENU_BOX[0] <= MY0 and MY1 <= MENU_BOX[1] and MENU_BOX[2] <= MX0 and MX1 <= MENU_BOX[3], (MENU_BOX, MY0, MY1, MX0, MX1)
 
 ev = {
@@ -745,7 +770,7 @@ ev = {
                       "flash_table_0x5204e": TABLE, "flash_steps": FLASH_STEPS, "flash_base_pal": [PAL_FLASH, PAL_BASE],
                       "fade_0x2df01": {"div": FADE_DIV, "division": "idiv(向 0 截斷)", "hi_exclusive": [RED_HI, W_HI]},
                       "white_0x11df2_add": WHITE_ADD, "white_saturate": SAT6,
-                      "title_fade": {"target_rgb6": [W_R6, W_G6, W_B6], "esi": [0, W_END], "step_ms": W_MS},
+                      "title_fade": {"target_rgb6": [W_R6, W_G6, W_B6], "esi": [W_START, W_END], "step_ms": W_MS},
                       "menu_0x1ff79": MENU, "menu_init": {"sel": SEL0, "n": N0, "n_sav_ok": N_SAV, "n_sav_byte_not_ff": N_SAV3},
                       "sav": {"len": SAV_LEN, "sum_at": SAV_SUM_AT, "n3_byte_at": SAV_N3_AT, "key": [KEY0, KEY_ADD, KEY_ROL]}},
     "criterion": {"absolute": "實拍顏色 = 6-bit 調色盤 (v<<2)|(v>>4) 逐像素相等",
@@ -770,8 +795,8 @@ ev = {
         "fade_control_rows_max": max(r["control_rows"] for r in fades),
         "unexplained_t": unexplained,
         "red_fade_rows": red_rows, "white_title_fade_rows": title_rows,
-        "fade_formula_floor_control_rows": {"red": floor_red, "red_total": 400 * len(red_fade),
-                                            "title": floor_title, "title_total": 400 * len(S["title_in"])},
+        "fade_formula_floor_control_rows": {"red": floor_red, "red_total": floor_red_n,
+                                            "title": floor_title, "title_total": floor_title_n},
         "index_255_used": idx255,
         "logo_last_to_white_runs": lw_runs,
         "menu": {"sav_checksum_ok": SAV_OK, "n": MENU_N, "sel": SEL0, "box": list(MENU_BOX), "control_diff_px": menu_ctrl}},
@@ -784,9 +809,9 @@ ev = {
         f"紅閃光是 {len(red_fade)} 張、{red_span:.2f} 秒的漸變(0x2df01 esi 0x{TRANS_START:x} → 0 每步 {TRANS_MS} ms 往 (0x{RED6:x},0x{G6:x},0x{B6:x})),不是一幀硬切;之後整張 #{RED:06x}、黑、ANI #{LOGO_ANI}、整張白、淡到標題",
         f"紅閃光開始到標題靜止 {t_title - t_red0:.2f} 秒(doc23 §2.4⑤ 寫約 1.4 秒,那一輪是 docker dosbox 0.74 的較粗取樣)",
         f"0x2df01 逐索引重算(idiv 向 0 截斷):紅閃光 {len(red_fade)} 張、白 → 標題 {len(title_rows)} 張的每一條主機列都是某一步或 DAC 寫到一半;"
-        f"向下取整的對照只解釋 {floor_red} / {400 * len(red_fade)}、{floor_title} / {400 * len(S['title_in'])} 列",
+        f"向下取整的對照只解釋 {floor_red} / {floor_red_n}、{floor_title} / {floor_title_n} 列",
         f"logo 末幀「變亮」是 0x11df2(0, 0xff, 0x{WHITE_ADD:x})(+ 0x{WHITE_ADD:x} 飽和成全白)在掃描途中生效:{', '.join(lw_runs)};"
-        f"之後 blit 標題,esi 0 → 0x{W_END:x} 從 (0x{W_R6:x},0x{W_G6:x},0x{W_B6:x}) 淡到標題調色盤",
+        f"之後 blit 標題,esi {W_START} → 0x{W_END:x} 從 (0x{W_R6:x},0x{W_G6:x},0x{W_B6:x}) 淡到標題調色盤",
         f"選單 {MENU_N} 項、選中第 {SEL0} 項(FD2.SAV 檢查碼{'相符' if SAV_OK else '不符'}),整張逐像素相等;其他組合最少差 {min(menu_ctrl.values())} px",
     ],
     "not_covered": ["BGM / 音效",

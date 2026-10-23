@@ -19,6 +19,9 @@ ESCAPED 不一定是錯:可能是設定紀錄(例如測試時擺的座標)、純
 
 用法:
     python sweep_literals.py [ev_s65b ...] [--workers 4] [--out result.json]
+
+--workers 是同時跑的子行程上限(所有產生器共用一個名額);同一個產生器的變異也平行跑
+(續一百四十九之前只在產生器之間平行,只掃一個產生器時是序列)。
     python sweep_literals.py --module _terrain.py ev_terrain_modifier ev_attack_path_selection
     python sweep_literals.py --selftest
 """
@@ -27,6 +30,7 @@ from __future__ import annotations
 import argparse
 import ast
 import atexit
+import contextlib
 import json
 import os
 import re
@@ -68,6 +72,12 @@ _HOOK_SRC = (
 )
 _hook_lock = threading.Lock()
 _hook_dir: Path | None = None
+# 同時跑的子行程上限(main 依 --workers 設定,所有產生器共用);None = 不限(呼叫端自己控制執行緒數)。
+# _peak 記錄實際同時跑過的最大數,selftest 用來確認平行真的發生、且沒有超過名額。
+_slots: threading.BoundedSemaphore | None = None
+_active_lock = threading.Lock()
+_active = 0
+_peak = 0
 
 
 def hook_dir() -> Path:
@@ -268,14 +278,23 @@ def classify(rc: int | None, stderr: str, out_dir: Path, outputs: list[str]) -> 
 
 
 def _run(script: Path, out_dir: Path) -> tuple[int | None, str]:
+    global _active, _peak
     env = dict(os.environ, FD2_EVIDENCE_OUT_DIR=str(out_dir),
                PYTHONPATH=os.pathsep.join([str(hook_dir()), str(GEN_DIR)]), **{_HOOK_ENV: "1"})
     env.pop("FD2_EVIDENCE_MANIFEST_BUILD", None)
-    try:
-        r = subprocess.run([sys.executable, "-X", "utf8", "-W", "ignore", str(script)], cwd=GEN_DIR, env=env,
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT_S)
-    except subprocess.TimeoutExpired:
-        return None, ""
+    # 先拿到名額才開始計時:等名額的時間不算進 TIMEOUT_S
+    with _slots or contextlib.nullcontext():
+        with _active_lock:
+            _active += 1
+            _peak = max(_peak, _active)
+        try:
+            r = subprocess.run([sys.executable, "-X", "utf8", "-W", "ignore", str(script)], cwd=GEN_DIR, env=env,
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            return None, ""
+        finally:
+            with _active_lock:
+                _active -= 1
     return r.returncode, r.stderr
 
 
@@ -294,13 +313,14 @@ def run_variant(gen: str, outputs: list[str], td: Path, tag: str, gen_src: str,
     return classify(rc, err, out, outputs)
 
 
-def sweep(gen: str, module: str | None = None, src: str | None = None) -> list[Result]:
+def sweep(gen: str, module: str | None = None, src: str | None = None, workers: int = 1) -> list[Result]:
     """對一個產生器(或它匯入的一個模組)做全部常數的變異。
 
     Args:
         gen: 產生器名稱。
         module: 改這個匯入模組而不是產生器本身。
         src: 以這份原始碼取代產生器檔案(自我測試用;不可與 module 併用)。
+        workers: 同時跑幾個變異(各自寫在 td/m{i},互不共用;結果依常數順序)。對照先跑完才開始變異。
     """
     assert not (module and src)
     man = json.loads(MANIFEST.read_text(encoding="utf-8"))["generators"]
@@ -314,13 +334,18 @@ def sweep(gen: str, module: str | None = None, src: str | None = None) -> list[R
         v, det = run_variant(gen, outputs, td, "control", gen_src, module, tsrc if module else None)
         if v != "INERT":
             return [Result(gen, target, 0, "", "", False, "", "CONTROL_FAIL", detail=[v] + det)]
-        for i, s in enumerate(find_sites(tsrc)):
+
+        def one(i: int, s: Site) -> Result:
             m = apply(tsrc, s)
             if module:
                 v, det = run_variant(gen, outputs, td, f"m{i}", gen_src, module, m)
             else:
                 v, det = run_variant(gen, outputs, td, f"m{i}", m)
-            res.append(Result(gen, target, s.line, s.text, s.new, s.in_assert, s.context, v, detail=det, role=s.role))
+            return Result(gen, target, s.line, s.text, s.new, s.in_assert, s.context, v, detail=det, role=s.role)
+
+        sites = find_sites(tsrc)
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            res = list(ex.map(one, range(len(sites)), sites))
     return res
 
 
@@ -409,6 +434,18 @@ def selftest() -> int:
         bad = [r for r in rs if not (isinstance(r.detail, list) and r.role in ROLES)]
         if bad:
             fails.append(f"sweep({gen}) 結果欄位錯位:{bad[0]}")
+        # 5. 同一個產生器的變異平行跑(3 個執行緒、名額 2):判定與順序要和序列逐筆相同,
+        #    同時跑過的子行程最多恰好 2(> 1 才表示真的平行;≤ 2 表示名額有效)。detail 含暫存路徑,不比
+        global _slots, _peak
+        _slots, _peak = threading.BoundedSemaphore(2), 0
+        try:
+            rp = sweep(gen, src=gsrc.replace(SPAWN_COMPUTED, '"terrain_of_spawn_cells": 5}'), workers=3)
+        finally:
+            _slots, peak = None, _peak
+        key = [(r.line, r.text, r.new, r.verdict, r.role) for r in rs]
+        if [(r.line, r.text, r.new, r.verdict, r.role) for r in rp] != key or peak != 2:
+            fails.append(f"平行 sweep 與序列不同或名額不對:peak={peak},"
+                         f"{sum(a != b for a, b in zip(key, [(r.line, r.text, r.new, r.verdict, r.role) for r in rp]))} 筆不同")
         # 對照失敗那一筆也要能印(續一百三十五之前 detail 落在 role,main 印出時崩潰)
         cf = sweep(gen, src=gsrc + "\nraise SystemExit(5)\n")
         try:
@@ -439,8 +476,10 @@ def main(argv: list[str]) -> int:
     unknown = [g for g in gens if g not in man]
     if unknown:
         raise SystemExit(f"清單裡沒有:{unknown}")
+    global _slots
+    _slots = threading.BoundedSemaphore(a.workers)      # 所有產生器、所有變異共用的子行程名額
     with ThreadPoolExecutor(max_workers=a.workers) as ex:
-        per = list(ex.map(lambda g: sweep(g, a.module), gens))
+        per = list(ex.map(lambda g: sweep(g, a.module, workers=a.workers), gens))
     allres = [r for rs in per for r in rs]
     for g, rs in zip(gens, per):
         c = Counter(r.verdict for r in rs)
