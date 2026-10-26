@@ -11055,3 +11055,48 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
 - `ev_lut_circle_ramp_at_unit` 23(排除框 / 面板幾何、亮度係數 30 / 59 / 11、含端點範圍、邊緣判定設計值、小數位數)、`ev_s73` 6(截圖裁切框、小數位數)、
   `ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)、`ev_item79_aim_exp_reward_lines` 7(`KEEP`,見上)。
 - 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。
+
+## 2026-10-27 續一百五十四:lut 的單位排除框改用 draw_unit_sprite 的幾何(原本「24 × 36、往上 12」不對);item79_aim 的 KEEP 由紀錄算
+
+起因:續一百五十三「仍留」的 41 個 ESCAPED 依建議逐項重判(使用者要求)。照續一百五十三的做法,不只找「同一個值的另一條算法」,
+也找「同一個位置 / 清單在遊戲程式或紀錄裡的另一種寫法」。做法同前:scratchpad 副本上改、`run_all.run_one(script=…)` 比對、`sweep(src=…)` 收斂後套回倉庫(套回後與副本逐 byte 相同)。
+
+**`ev_lut_circle_ramp_at_unit` 的單位排除框(更正)**:
+- 原本寫「單位圖 24 × 36,比格子高 12 像素」,框是格子往上 12 列到格子底。FD2.EXE 的 `draw_unit_sprite`(0x127e0)目的位址加 `0x75d8`(0x12937),
+  視窗原點在 work buffer 的 `0x8088`(0x1dc85,present 的來源),兩者差 `0xab0` = 6 × 456(stride 456 讀自 0x1294b 與 0x1dc7a 的 `push 0x1c8`),即比格子上移 6 列;
+  圖由 `blit_tile24_rle`(0x4e22a)畫,`mov bl, 0x18` / `mov bh, 0x18` = 24 × 24(doc35 §18、doc25 §18.1 早有記載)。原本的框上下各多 6 列。
+- `TILE`、`SPRITE_UP` 與圖的高寬改由 `_exeops.operand` 讀這幾條指令(另斷言兩個 stride 相同、位移差整除 stride、圖寬 = 格寬)。
+  s12 / s11 兩組改後判準全部通過;ai79 那組 (1, 7) 格最下面 6 列(y 190..195)有換色而判為不符合:那是視窗下緣之外 (1, 8) 格的單位,上移 6 列後最上面 6 列進到視窗
+  (原本由 (1, 7) 往下多框的那一段蓋住),補上這一格。(3, 7)、(2, 6) 兩格的換色正好是格子 −6 .. +17 列,與 EXE 的幾何逐列相同。
+- 施法者的格改由同一次紀錄的 `unit_xy − scroll` 算(s12 / s11:(20, 14) − (9, 13) = (11, 1);ai79:(19, 14) − (8, 8) = (11, 6));其他單位沒有單位表,照舊由幀上的換色定,
+  「每個排除框都有用」的判準照舊(新增的 (1, 8) 也通過)。
+- 證據 `lut_circle_ramp_at_unit_20261013.json` 因此改變:`excluded_rects` 變小(ai79 多 1 個框),圓內像素與換色數變多(例:裂地術第 0 幀 1932 → 2346、
+  地震術第 0 幀 312 → 486),看得到的邊緣列變多;判準仍全部通過,12 個對照仍全部判為不符合,`mut_lut_circle_ramp_at_unit` 13 / 13。
+  裂地術第 0 幀圓心那一欄最上面被換色的是 y 17 = 圓心 46 − 29(原本被施法者的框蓋住,記成 52),所以這一幀上下緣都是 r − 1。
+  圓內平均亮度增加量:裂地術第 0 幀 12.1 → 12.2、地震術第 0 幀 11.0 → 11.5、道具 79 第 9 幀 3.0 → 3.1,doc35 同步改。
+- 同一支另三項只換寫法,輸出逐 byte 不變(只套這三項時 `run_one` IDENTICAL):亮度權重 30 / 59 / 11 加第二種寫法(BT.601 的 0.299 / 0.587 / 0.114 四捨五入到百分比),
+  除數改為權重和;視窗的列 / 欄改由 `range(VY0, VY0 + VH)` 一處定義;圓內像素數改用與「圓內換色」同一個條件(|x − 圓心| <= 半寬)。
+
+**`ev_item79_aim_exp_reward_lines` 的 `KEEP`**:改由紀錄算 = 出手者 #11 ∪ 各輪 `ai_item_target_score` 的目標(#5、#10、#0、#3)∪
+分析對照「直線也收敵方」多收的單位(b1 單位表以 `lc125_analyze` 的 `cast_cells` / `line_targets` 重算:往左那條線上的 #15,與出手者同陣營)。
+#6 不是以上任何一種:兩輪都不在任何一條瞄準線上,原始腳本沒寫選取理由,只照舊保留(兩處手寫互相核對,不是獨立來源)。證據逐 byte 不變。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 | CRASH 前 → 後 | INERT 前 → 後 |
+|---|---|---|---|---|
+| `ev_lut_circle_ramp_at_unit` | 23 → 13 | 67 → 81 | 15 → 10 | 29 → 24 |
+| `ev_item79_aim_exp_reward_lines` | 7 → 0 | 16 → 24 | 6 → 6 | 2 → 3 |
+
+(「前」是這次先重掃原檔。aim 多的 1 個 INERT 是 `ITEM_RANGE - 0x10` 的 0x10:步數 15 → 14 時 #15 仍在線上。)整份 51 個產生器的 ESCAPED 由 41 → 24。
+
+**不同結論 / 更正**:
+- 續一百五十一 / 一百五十三把 lut 的單位排除框歸為「排除框 / 面板幾何,沒有可推的來源」不成立:單位圖的位置與大小在 EXE 裡,而且原本的 24 × 36 是錯的
+  (只是框得比較寬、少驗了一些像素,判準沒有因此誤判)。續一百五十一那句「其餘框改由格座標算出(24 × 36 的單位圖,上緣裁到視窗)」照此更正。
+- 續一百五十三說 `ev_item79_aim_exp_reward_lines` 的 `KEEP` 多出的 #6、#15「推不出」:#15 推得出(對照組的目標),#6 仍推不出。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);`mut_lut_circle_ramp_at_unit` 13 / 13、`mut_item79_aim_exp_reward_lines` 11 / 11(原文都沒動);assert_census 2 個產生器 `--update --executed` 全部執行到(`ev_lut_circle_ramp_at_unit` 15 → 20、`ev_item79_aim_exp_reward_lines` 12 → 13);inputs_manifest 不變(兩支原本就讀 FD2.EXE 與同一批紀錄)
+
+**仍留**(24 個,逐項看過):
+- `ev_lut_circle_ramp_at_unit` 13:狀態面板框 4(實際換色在 x 5..73、y 161..194,框四周寬 1 .. 3 像素;面板的繪製位置沒有找,而由換色定框等於拿結果定判準,不做)、
+  沒有單位表的單位格 (12, 6) 的 y 1、邊緣判定設計值 5(邊緣容差 2 像素、邊緣往內 3 格不被排除、半寬 >= 3、方向 ±1)、小數位數 3。
+- `ev_s73` 6(截圖裁切框 4:結論 > 0.95 / < 0.5 對 ±1 像素不敏感;小數位數 2)、`ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)。
+- 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。

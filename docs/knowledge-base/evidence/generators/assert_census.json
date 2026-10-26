@@ -77,8 +77,8 @@
    "not_executed_lines": []
   },
   "ev_item79_aim_exp_reward_lines": {
-   "asserts": 12,
-   "executed": 12,
+   "asserts": 13,
+   "executed": 13,
    "not_executed_lines": []
   },
   "ev_level_up": {
@@ -92,8 +92,8 @@
    "not_executed_lines": []
   },
   "ev_lut_circle_ramp_at_unit": {
-   "asserts": 15,
-   "executed": 15,
+   "asserts": 20,
+   "executed": 20,
    "not_executed_lines": []
   },
   "ev_lut_circle_ramp_frame_time_ch22_post": {

@@ -22,7 +22,16 @@ D = ROOT / ".wsl_build" / "lc125_live"
 OUT = out_path("item79_aim_exp_reward_lines_20261014.json")
 EXE_MD5 = "33464c81e6a364fd0660141139aa8e6e"
 assert hashlib.md5((GAME / "FD2.EXE").read_bytes()).hexdigest() == EXE_MD5
-KEEP = (0, 3, 5, 6, 10, 11, 15)
+# 輸出只留:出手者、各輪的目標(ai_item_target_score 的 targets)、分析對照「直線也收敵方」多收的單位
+# (b1 單位表以 lc125_analyze 的同一組函式重算,即 #15);#6 不是以上任何一種,原始腳本沒寫選取理由,只照舊保留
+_st = [s for tag in ("a1", "a1b", "b1") for s in an125.load(tag)["stops"]]
+_sel = next(s for s in _st if s["at"] == "0x1567e" and isinstance(s.get("units"), list))
+_me = next(u for u in _sel["units"] if u["i"] == _sel["unit"])
+_w, _h = _sel["map_w"], _sel["map_h"]
+_ctl_e = {t for c in an125.cast_cells(_me["x"], _me["y"], _w, _h)
+          for t in an125.line_targets(_sel["units"], *c, _me["x"], _me["y"], an125.ITEM_RANGE - 0x10, _w, _h, enemies=True)}
+KEEP = {s["unit"] for s in _st if s["at"] in ("0x1567e", "0x15055")} | {t for s in _st for t in s.get("targets", [])} | _ctl_e | {6}
+assert KEEP == {0, 3, 5, 6, 10, 11, 15}, KEEP  # 第二種寫法:續一百二十五當時的清單
 WHAT = {
     "a1": "round A(第 1 回合)。arm:敵 #11 搬到 (19,14)、slot2 = 道具 79,#1..#4 設已行動,法術列 3 命中率 100;"
           "#11 第一次進 ai_item_candidate_select 時把 #5、#10 搬到 (19,13)、(19,6)(續一百二十三第一輪的位置)。"

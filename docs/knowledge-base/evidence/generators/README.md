@@ -3,6 +3,13 @@
 `docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
 
+## 續一百五十四(2026-10-27)
+
+`ev_lut_circle_ramp_at_unit` 的單位排除框改用 `draw_unit_sprite` 的幾何(24 × 24、比格子上移 6 列,由 `_exeops.operand` 讀 FD2.EXE),
+原本「24 × 36、往上 12」上下各多框 6 列;ai79 補上視窗下緣外 (1, 8) 的單位、施法者的格改由紀錄的 `unit_xy − scroll` 算。
+證據 `lut_circle_ramp_at_unit_20261013.json` 因此改變(排除框變小、圓內像素變多,判準與對照照舊通過)。
+`ev_item79_aim_exp_reward_lines` 的 `KEEP` 改由紀錄算(#6 照舊保留),證據逐 byte 不變。
+
 ## 續一百五十三(2026-10-24)
 
 沒有新的證據檔。新增 `_exeops.py`:`operand(位址, 前綴, 後綴)` 讀 FD2.EXE 那一條指令的運算元(文字不符就 AssertionError)。

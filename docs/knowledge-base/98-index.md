@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 198 節、19 個主題。
+共 199 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 10491:2026-10-21 續一百四十四:`decode_ani` 檔頭 / 幀記錄截斷不再崩潰,「不是 ANI 檔」以 NotANI 拒絕並登錄進 `verify_truncation_robustness` 〔來源:DOSBox-X、ANI.DAT、FD2.EXE〕
 - 行 10540:2026-10-21 續一百四十五:續一百四十四「仍留」逐項處理 —— `decode_ani` 幀數改有號、`run_vm` 截短丟 TruncatedScript 並登錄進 `verify_truncation_robustness`(新增第 8 欄後置條件)、`sweep_literals ev_s141`、金鎖之後的 DOSBox-X 實拍(`ev_s145`) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 - 行 10676:2026-10-22 續一百四十七:續一百四十六之後的 sweep —— `ev_s141` ESCAPED 0;`ev_s145` 的 35 個逃過項改判準(撕裂改主機列、淡入淡出候選改全部 dy),ESCAPED 0
@@ -17,6 +16,7 @@
 - 行 10874:2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 10961:2026-10-24 續一百五十二:`ev_s75` / `ev_s76` 的 sweep ESCAPED 補判準(32 → 0) 〔來源:DOSBox-X〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
+- 行 11059:2026-10-27 續一百五十四:lut 的單位排除框改用 draw_unit_sprite 的幾何(原本「24 × 36、往上 12」不對);item79_aim 的 KEEP 由紀錄算 〔來源:FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -258,7 +258,7 @@
 - 行 10874:2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(33 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(34 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -293,6 +293,7 @@
 - 行 10874:2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 10961:2026-10-24 續一百五十二:`ev_s75` / `ev_s76` 的 sweep ESCAPED 補判準(32 → 0) 〔來源:DOSBox-X〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
+- 行 11059:2026-10-27 續一百五十四:lut 的單位排除框改用 draw_unit_sprite 的幾何(原本「24 × 36、往上 12」不對);item79_aim 的 KEEP 由紀錄算 〔來源:FD2.EXE〕
 
 ## dispatch 跳表與指令表(4 節)
 
