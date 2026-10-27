@@ -12623,6 +12623,81 @@
     ]
    }
   },
+  "ev_s157": {
+   "outputs": [
+    "live_items_s157_20261027.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc157_live/cells_1257_calllog.txt": [
+     14856,
+     "e85c6eacf0b7ce12af9dce4a6c33363a3cccfa3be4ed458b2539558d2c4b77e4"
+    ],
+    ".wsl_build/lc157_live/dac255_1fc7b.json": [
+     10145,
+     "0275e79c8e921b8d537524c35d1efb0d856d6e2acb37227de04e552dbeb58b2c"
+    ],
+    ".wsl_build/lc157_live/grey1_meta.json": [
+     80,
+     "f45c427831126e781d679fd20519e5f599b96fd16c1b0b5ea0dfed754d0edd82"
+    ],
+    ".wsl_build/lc157_live/grey1_units.bin": [
+     1680,
+     "602b0c27cc7035dc0d7594fb1d640ca70e42eafa995282efbd3523765235dc15"
+    ],
+    ".wsl_build/lc157_live/grey1_vga.bin": [
+     64000,
+     "aa23ab4fa15f492f40a6a3bc3f0ff0454d48394f1c4acf831cecce6069bffaa2"
+    ],
+    ".wsl_build/lc157_live/grey2_meta.json": [
+     80,
+     "17116558d15475eae15074a62c7c8b069a8bac161e78c7d1765a46827c10bcee"
+    ],
+    ".wsl_build/lc157_live/grey2_units.bin": [
+     1680,
+     "ff59ef91f5fbc66ece087ce37a5fd09c0e8bde58b57ac9133054aceeb056cf89"
+    ],
+    ".wsl_build/lc157_live/grey2_vga.bin": [
+     64000,
+     "e0bcf20e1336479caecd54d708345a1e5770eb1e963c2740b546c8285b693323"
+    ],
+    ".wsl_build/lc157_live/lc157c_redraw_icount.txt": [
+     6922959,
+     "3722f09888f74e2b845eb91c4a84e2821d5e97e941b004ae2ea74e7f85295624"
+    ],
+    ".wsl_build/lc157_live/lc157d_redraw_icount.txt": [
+     3754459,
+     "79f203759d7d9cb93e2c560f195657c555b5ddfe93ba1b3802d2e1135cceb639"
+    ],
+    ".wsl_build/lc157_live/lc157e_armC.out": [
+     779,
+     "11a89f629675ccd4cddcca45df1a4271f5b310c12b7cd679a5975a1b0efdebe7"
+    ],
+    ".wsl_build/lc157_live/lc157e_check.out": [
+     420,
+     "46b4ef38e400cc32bbdf60e28225c7ec8819876855ad5c78a9fa9d5e6087a10a"
+    ],
+    ".wsl_build/lc157_live/lc157e_redraw_icount.txt": [
+     3013644,
+     "17872d7baff82dc5b7eb40b519970a28e9530dc790c479e322f20270d039d0a4"
+    ],
+    ".wsl_build/lc157_live/sprtab.bin": [
+     262144,
+     "8122e8e243bc1503f414e52489debf1ea3019f174738b52f625088c859fc12bb"
+    ],
+    ".wsl_build/lc157_live/units_after_neg.txt": [
+     1446,
+     "2e7e62cdb73d8637abd115e73ceea580438f7cda0beb884cb9401eade484073f"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

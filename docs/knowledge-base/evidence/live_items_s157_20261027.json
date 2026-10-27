@@ -1,0 +1,2052 @@
+{
+ "date": "2026-10-27",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-27 核准這 6 項實機;第 2 項第二輪擺法 lc157e 另經核准重跑",
+ "inputs_dir": ".wsl_build/lc157_live",
+ "drivers": "docs/knowledge-base/evidence/generators/drivers_s157",
+ "item1_grey_mode1": {
+  "method": "DOSBox-X 記憶體傾印(線性 0xa0000 起 64000 bytes、[0x53a65] 調色盤、單位表、[0x53a61] 單位圖快取 262144 bytes)+ FD2.EXE 反組譯",
+  "draw_unit_sprite": {
+   "frame": "[0x53a61] 表第 +2 × 12 + +3 × 3 + 時脈 項;時脈 = [0x53c0b](+4 == 0)或 [0x53c07],3 當 1,+0x26 != 0 時 0",
+   "position": "視窗原點 [4, 4] + 格 × 24,上移 6 列(0x75d8 − 0x8088 = -6 × 456)",
+   "grey": "+5 & 0x80 → 0x4e1a6,值 (v & 7) + 0x18;否則 0x4e22a",
+   "view_cells": [
+    13,
+    8
+   ]
+  },
+  "sprite_cache": {
+   "entries": 156,
+   "slots": 13,
+   "slot_fdicon_groups": [
+    [
+     32
+    ],
+    [
+     52
+    ],
+    [
+     36
+    ],
+    [
+     30
+    ],
+    [
+     33,
+     51
+    ],
+    [
+     134
+    ],
+    [
+     133
+    ],
+    [
+     96
+    ],
+    [
+     63
+    ],
+    [
+     12,
+     44,
+     62
+    ],
+    [
+     5
+    ],
+    [
+     11
+    ],
+    [
+     6
+    ]
+   ],
+   "raw_sha256": "8122e8e243bc1503f414e52489debf1ea3019f174738b52f625088c859fc12bb"
+  },
+  "dumps": {
+   "grey1": {
+    "setup": "lc157.py grey lc157 0:6:1 2:38:1 1:6:0(#0 +2 = 6 已行動、#2 +2 = 38 已行動、#1 +2 = 6 未行動)",
+    "scroll": [
+     10,
+     8
+    ],
+    "clock_0x53c0b": 3,
+    "units": {
+     "0": {
+      "xy": [
+       20,
+       14
+      ],
+      "cell": [
+       10,
+       6
+      ],
+      "slot": 6,
+      "f5": 128,
+      "hp": 478,
+      "frame": 73,
+      "fdicon": [
+       1597
+      ],
+      "drawn_by": "0x4e1a6",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        416,
+        416,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        416,
+        416,
+        0,
+        0
+       ],
+       "write_both": [
+        416,
+        416,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        138,
+        467
+       ],
+       "best_other_frame_same_slot": [
+        208,
+        414
+       ],
+       "grey_colour_swapped": [
+        0,
+        416
+       ]
+      }
+     },
+     "2": {
+      "xy": [
+       22,
+       13
+      ],
+      "cell": [
+       12,
+       5
+      ],
+      "slot": 38,
+      "f5": 128,
+      "hp": 424,
+      "result": "槽位 38 超出快取表(13 組),畫的是表外的資料,不判"
+     },
+     "11": {
+      "xy": [
+       21,
+       14
+      ],
+      "cell": [
+       11,
+       6
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "12": {
+      "xy": [
+       19,
+       14
+      ],
+      "cell": [
+       9,
+       6
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "13": {
+      "xy": [
+       21,
+       15
+      ],
+      "cell": [
+       11,
+       7
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        344,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        344,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        344,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 117,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        23,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        181,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      },
+      "mismatch_where": "全部在資訊框 x [246, 315)、列 [161, 195) 內([0x51a0c] = 0xf2)"
+     },
+     "14": {
+      "xy": [
+       19,
+       13
+      ],
+      "cell": [
+       9,
+       5
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "15": {
+      "xy": [
+       21,
+       13
+      ],
+      "cell": [
+       11,
+       5
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "16": {
+      "xy": [
+       19,
+       15
+      ],
+      "cell": [
+       9,
+       7
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "17": {
+      "xy": [
+       10,
+       8
+      ],
+      "cell": [
+       0,
+       0
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        361,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        361,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        361,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 100,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        58,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        112,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      },
+      "mismatch_where": "全部在視窗上緣(列 < 4)之外"
+     }
+    }
+   },
+   "grey2": {
+    "setup": "lc157.py grey lc157 0:12:1 2:5:1 12:12:0(#0 +2 = 12 已行動、#2 +2 = 5 已行動、#12 +2 = 12 未行動)",
+    "scroll": [
+     10,
+     8
+    ],
+    "clock_0x53c0b": 1,
+    "units": {
+     "0": {
+      "xy": [
+       20,
+       14
+      ],
+      "cell": [
+       10,
+       6
+      ],
+      "slot": 12,
+      "f5": 128,
+      "hp": 478,
+      "frame": 145,
+      "fdicon": [
+       73
+      ],
+      "drawn_by": "0x4e1a6",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        467,
+        467,
+        8,
+        8
+       ],
+       "write_then_skip": [
+        459,
+        467,
+        0,
+        8
+       ],
+       "write_both": [
+        467,
+        475,
+        8,
+        16
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        89,
+        374
+       ],
+       "best_other_frame_same_slot": [
+        137,
+        371
+       ],
+       "grey_colour_swapped": [
+        0,
+        467
+       ]
+      }
+     },
+     "2": {
+      "xy": [
+       22,
+       13
+      ],
+      "cell": [
+       12,
+       5
+      ],
+      "slot": 5,
+      "f5": 128,
+      "hp": 424,
+      "frame": 61,
+      "fdicon": [
+       1609
+      ],
+      "drawn_by": "0x4e1a6",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        437,
+        437,
+        1,
+        1
+       ],
+       "write_then_skip": [
+        436,
+        437,
+        0,
+        1
+       ],
+       "write_both": [
+        437,
+        438,
+        1,
+        2
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        97,
+        480
+       ],
+       "best_other_frame_same_slot": [
+        246,
+        437
+       ],
+       "grey_colour_swapped": [
+        0,
+        437
+       ]
+      }
+     },
+     "11": {
+      "xy": [
+       21,
+       14
+      ],
+      "cell": [
+       11,
+       6
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "12": {
+      "xy": [
+       19,
+       14
+      ],
+      "cell": [
+       9,
+       6
+      ],
+      "slot": 12,
+      "f5": 0,
+      "hp": 28,
+      "frame": 145,
+      "fdicon": [
+       73
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        467,
+        467,
+        8,
+        8
+       ],
+       "write_then_skip": [
+        459,
+        467,
+        0,
+        8
+       ],
+       "write_both": [
+        467,
+        475,
+        8,
+        16
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        55,
+        374
+       ],
+       "best_other_frame_same_slot": [
+        120,
+        371
+       ],
+       "grey_colour_swapped": [
+        0,
+        467
+       ]
+      }
+     },
+     "13": {
+      "xy": [
+       21,
+       15
+      ],
+      "cell": [
+       11,
+       7
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        344,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        344,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        344,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 117,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        23,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        181,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      },
+      "mismatch_where": "全部在資訊框 x [246, 315)、列 [161, 195) 內([0x51a0c] = 0xf2)"
+     },
+     "14": {
+      "xy": [
+       19,
+       13
+      ],
+      "cell": [
+       9,
+       5
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "15": {
+      "xy": [
+       21,
+       13
+      ],
+      "cell": [
+       11,
+       5
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "16": {
+      "xy": [
+       19,
+       15
+      ],
+      "cell": [
+       9,
+       7
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        461,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        461,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 0,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        61,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        212,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      }
+     },
+     "17": {
+      "xy": [
+       10,
+       8
+      ],
+      "cell": [
+       0,
+       0
+      ],
+      "slot": 7,
+      "f5": 0,
+      "hp": 28,
+      "frame": 85,
+      "fdicon": [
+       1153
+      ],
+      "drawn_by": "0x4e22a",
+      "hits_visible_mode1": {
+       "skip_then_write": [
+        361,
+        461,
+        0,
+        0
+       ],
+       "write_then_skip": [
+        361,
+        461,
+        0,
+        0
+       ],
+       "write_both": [
+        361,
+        461,
+        0,
+        0
+       ]
+      },
+      "mismatch_px": 100,
+      "controls": {
+       "plus2_as_fdicon_group": [
+        58,
+        443
+       ],
+       "best_other_frame_same_slot": [
+        112,
+        393
+       ],
+       "grey_colour_swapped": [
+        0,
+        461
+       ]
+      },
+      "mismatch_where": "全部在視窗上緣(列 < 4)之外"
+     }
+    }
+   }
+  },
+  "fully_matched_units": {
+   "grey1": [
+    0,
+    11,
+    12,
+    14,
+    15,
+    16
+   ],
+   "grey2": [
+    0,
+    2,
+    11,
+    12,
+    14,
+    15,
+    16
+   ]
+  },
+  "mode1_units_grey2": {
+   "0": {
+    "skip_then_write": [
+     467,
+     467,
+     8,
+     8
+    ],
+    "write_then_skip": [
+     459,
+     467,
+     0,
+     8
+    ],
+    "write_both": [
+     467,
+     475,
+     8,
+     16
+    ]
+   },
+   "2": {
+    "skip_then_write": [
+     437,
+     437,
+     1,
+     1
+    ],
+    "write_then_skip": [
+     436,
+     437,
+     0,
+     1
+    ],
+    "write_both": [
+     437,
+     438,
+     1,
+     2
+    ]
+   },
+   "12": {
+    "skip_then_write": [
+     467,
+     467,
+     8,
+     8
+    ],
+    "write_then_skip": [
+     459,
+     467,
+     0,
+     8
+    ],
+    "write_both": [
+     467,
+     475,
+     8,
+     16
+    ]
+   }
+  },
+  "conclusion": "灰階版 0x4e1a6 的模式 1 與彩色版相同:先跳過一格再寫,值 (v & 7) + 0x18;單位 +2 是 [0x53a61] 快取的槽位,不是 FDICON 組號"
+ },
+ "item3_cells_1_2_5_7": {
+  "method": "DOSBox-X 呼叫紀錄(修補版 dosbox-x,只列 14 個 EIP,途中沒有斷點)+ FD2.EXE 反組譯 + 法術表",
+  "raw_sha256": "e85c6eacf0b7ce12af9dce4a6c33363a3cccfa3be4ed458b2539558d2c4b77e4",
+  "header": "H fd2calllog 1 cs=0170 entries=14 cap=1000 dump=0 lo=001b13e7 hi=001bd47c",
+  "table_0x51d01_cast": {
+   "1": "0x2134b",
+   "2": "0x21364",
+   "3": "0x2137d",
+   "5": "0x21449",
+   "6": "0x21462",
+   "7": "0x2147b"
+  },
+  "setup": "lc157.py arm:敵 #11 .. #16 各只會一個法術(1、2、5、7、3、6)、MP 999、卸武器、搬到索爾旁;我方 HP 999;[0x53af9] 先設 1、結束回合,再設 0、結束回合",
+  "casts": [
+   {
+    "caster": 11,
+    "spells_known": [
+     1
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x2134b",
+     "0x2121a",
+     "0x21227"
+    ],
+    "af9": 1,
+    "spell": 1,
+    "cell_entry": "0x2134b",
+    "join": "0x2121a",
+    "body": "0x21227"
+   },
+   {
+    "caster": 12,
+    "spells_known": [
+     2
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x21364",
+     "0x2121a",
+     "0x21227"
+    ],
+    "af9": 1,
+    "spell": 2,
+    "cell_entry": "0x21364",
+    "join": "0x2121a",
+    "body": "0x21227"
+   },
+   {
+    "caster": 13,
+    "spells_known": [
+     5
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x21449",
+     "0x213aa",
+     "0x213b7"
+    ],
+    "af9": 1,
+    "spell": 5,
+    "cell_entry": "0x21449",
+    "join": "0x213aa",
+    "body": "0x213b7"
+   },
+   {
+    "caster": 14,
+    "spells_known": [
+     7
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x2147b",
+     "0x213aa",
+     "0x213b7"
+    ],
+    "af9": 1,
+    "spell": 7,
+    "cell_entry": "0x2147b",
+    "join": "0x213aa",
+    "body": "0x213b7"
+   },
+   {
+    "caster": 15,
+    "spells_known": [
+     3
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x2137d",
+     "0x2121a",
+     "0x21227"
+    ],
+    "af9": 1,
+    "spell": 3,
+    "cell_entry": "0x2137d",
+    "join": "0x2121a",
+    "body": "0x21227"
+   },
+   {
+    "caster": 16,
+    "spells_known": [
+     6
+    ],
+    "path": [
+     "0x153e7",
+     "0x1540a",
+     "0x1541f",
+     "0x21462",
+     "0x213aa",
+     "0x213b7"
+    ],
+    "af9": 1,
+    "spell": 6,
+    "cell_entry": "0x21462",
+    "join": "0x213aa",
+    "body": "0x213b7"
+   },
+   {
+    "caster": 11,
+    "spells_known": [
+     1
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 6
+   },
+   {
+    "caster": 12,
+    "spells_known": [
+     2
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 20
+   },
+   {
+    "caster": 13,
+    "spells_known": [
+     5
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 15
+   },
+   {
+    "caster": 14,
+    "spells_known": [
+     7
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 60
+   },
+   {
+    "caster": 15,
+    "spells_known": [
+     3
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 42
+   },
+   {
+    "caster": 16,
+    "spells_known": [
+     6
+    ],
+    "path": [
+     "0x153e7",
+     "0x153f2"
+    ],
+    "af9": 0,
+    "mp_spent": 30
+   }
+  ],
+  "conclusion": "[0x53af9] = 1 時法術 1、2、5、7 由 0x1541f 進第 1、2、5、7 格的跳板,再到 0x2121a / 0x213aa 與本體;= 0 時同樣施法(扣 MP = 法術表)但只走 0x153f2"
+ },
+ "item4_dac_index255": {
+  "method": "DOSBox-X 除錯器:斷點停在 0x1fc7b(call 0x2df01)與返回處,VGA DACPAL 讀硬體 DAC、讀 [0x53a65] 緩衝;緩衝索引 255 改成 (1, 2, 3)",
+  "raw_sha256": "0275e79c8e921b8d537524c35d1efb0d856d6e2acb37227de04e552dbeb58b2c",
+  "site": "0x1fc7b",
+  "t": 39,
+  "div": 40,
+  "hi_exclusive": 255,
+  "target_rgb6": [
+   63,
+   0,
+   0
+  ],
+  "buf_255_edit": [
+   1,
+   2,
+   3
+  ],
+  "dac255_before": [
+   63,
+   63,
+   63
+  ],
+  "dac255_after": [
+   63,
+   63,
+   63
+  ],
+  "dac255_if_written": [
+   3,
+   1,
+   2
+  ],
+  "dac255_if_written_without_edit": [
+   63,
+   61,
+   61
+  ],
+  "indices_0_254_equal_fade6": true,
+  "indices_changed_by_step": 254,
+  "control_floor_mismatch_indices": 233,
+  "why_t_39": "t = 除數(40)那一步 DAC 本來就等於緩衝,改了 255 也分不出寫沒寫;第一次量在那一步,改量第 39 步",
+  "conclusion": "0x2df01(0, 0xff, t, …) 實機上不寫 DAC 索引 255,0 .. 254 逐筆等於 fade6(續一百五十的模擬一致)"
+ },
+ "item2_redraw_time": {
+  "method": "DOSBox-X 呼叫紀錄(修補版 dosbox-x,FD2_CALLLOG_ICOUNT=1:每筆附遊戲選擇子指令數 i、全部指令數 n、PIC_FullIndex 模擬時間 t ms;FD2_CALLLOG_GATE = ai_item_action 0x15055,之前不寫 E;途中沒有斷點)+ FD2.EXE 反組譯",
+  "runs": {
+   "lc157c": {
+    "arrangement": "第一輪擺法(lc130 arm)",
+    "raw_sha256": "3722f09888f74e2b845eb91c4a84e2821d5e97e941b004ae2ea74e7f85295624",
+    "header": "H fd2calllog 1 cs=0170 entries=24 cap=100000000 dump=0 lo=001adcac hi=001eaee1 icount=1 gate=001b1055",
+    "drawn": [
+     2,
+     2,
+     4,
+     4,
+     5,
+     7,
+     7,
+     8
+    ],
+    "adv": [
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0
+    ],
+    "tick_at_draw": [
+     52160,
+     52162,
+     52163,
+     52164,
+     52165,
+     52166,
+     52167,
+     52168
+    ],
+    "tick_after": [
+     52162,
+     52163,
+     52164,
+     52165,
+     52166,
+     52167,
+     52168,
+     52169
+    ],
+    "redraw_tick_crossings": [
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "loop_ticks": 9,
+    "redraw_ms": [
+     52.567,
+     59.015,
+     50.989,
+     52.729,
+     50.989,
+     54.067,
+     50.452,
+     56.774
+    ],
+    "wait_ms": [
+     43.631,
+     1.104,
+     3.891,
+     2.389,
+     4.501,
+     0.321,
+     4.657,
+     3.114
+    ],
+    "redraw_game_insn": [
+     160857,
+     161447,
+     158762,
+     159303,
+     158724,
+     159815,
+     157956,
+     160400
+    ],
+    "child_ms_median": {
+     "r_1297d": 0.005,
+     "terrain": 44.646,
+     "overlay": 0.005,
+     "units": 1.502,
+     "hud": 0.006,
+     "rowcopy": 5.348
+    },
+    "child_insn_median": {
+     "r_1297d": 27.0,
+     "terrain": 141394.0,
+     "overlay": 26.0,
+     "units": 6578.0,
+     "hud": 32.0,
+     "rowcopy": 11293.5
+    },
+    "units_ms": [
+     1.516,
+     1.395,
+     1.516,
+     1.397,
+     1.506,
+     1.387,
+     1.614,
+     1.499
+    ],
+    "units_insn": [
+     6629,
+     6360,
+     6628,
+     6360,
+     6579,
+     6310,
+     7126,
+     6577
+    ],
+    "rowcopy_insn": [
+     10721,
+     10742,
+     10747,
+     11290,
+     11297,
+     11575,
+     11780,
+     13360
+    ],
+    "unit_sprite_calls": [
+     21
+    ],
+    "units_blitted": [
+     [
+      10
+     ]
+    ],
+    "redraw_ms_median": 52.648,
+    "redraw_insn_median": 159559.0,
+    "out_of_loop_redraw_ms": {
+     "count": 37,
+     "min_median_max": [
+      46.343,
+      53.311,
+      59.603
+     ]
+    },
+    "judge_ev_s132": {
+     "八圈 k = 1..8 依序": true,
+     "每圈收尾 ebx 仍是 k": true,
+     "每圈只畫一次地形、走 -1 分支一次": true,
+     "畫的階 ∈ {k, k + 1}": true,
+     "推進 ⇔ 畫 k + 1": true,
+     "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+    }
+   },
+   "lc157d": {
+    "arrangement": "第一輪擺法(lc131 armC 的記憶體寫入沒有落地:讀回的 mem dump 沒產生檔,驅動腳本當成成功)",
+    "raw_sha256": "79f203759d7d9cb93e2c560f195657c555b5ddfe93ba1b3802d2e1135cceb639",
+    "header": "H fd2calllog 1 cs=0170 entries=23 cap=100000000 dump=0 lo=001adcac hi=001eaee1 icount=1 gate=001b1055",
+    "drawn": [
+     2,
+     2,
+     4,
+     4,
+     5,
+     7,
+     7,
+     9
+    ],
+    "adv": [
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1
+    ],
+    "tick_at_draw": [
+     63944,
+     63946,
+     63947,
+     63948,
+     63949,
+     63950,
+     63951,
+     63953
+    ],
+    "tick_after": [
+     63946,
+     63947,
+     63948,
+     63949,
+     63950,
+     63951,
+     63953,
+     63954
+    ],
+    "redraw_tick_crossings": [
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0
+    ],
+    "loop_ticks": 10,
+    "redraw_ms": [
+     53.305,
+     52.189,
+     59.0,
+     50.985,
+     52.728,
+     50.764,
+     55.139,
+     50.817
+    ],
+    "wait_ms": [
+     33.435,
+     2.918,
+     1.01,
+     3.894,
+     2.39,
+     4.117,
+     54.97,
+     4.072
+    ],
+    "redraw_game_insn": [
+     159553,
+     159786,
+     161355,
+     158747,
+     159329,
+     158540,
+     161452,
+     158351
+    ],
+    "child_ms_median": {
+     "r_1297d": 0.006,
+     "terrain": 45.81,
+     "overlay": 0.005,
+     "units": 1.457,
+     "hud": 0.006,
+     "rowcopy": 5.348
+    },
+    "child_insn_median": {
+     "r_1297d": 27.5,
+     "terrain": 141814.0,
+     "overlay": 26.0,
+     "units": 6494.5,
+     "hud": 32.0,
+     "rowcopy": 11290.0
+    },
+    "units_ms": [
+     1.627,
+     1.389,
+     1.389,
+     1.864,
+     1.398,
+     1.516,
+     1.397,
+     1.622
+    ],
+    "units_insn": [
+     7183,
+     6321,
+     6321,
+     7425,
+     6361,
+     6628,
+     6360,
+     7164
+    ],
+    "rowcopy_insn": [
+     10718,
+     10721,
+     10723,
+     11279,
+     11301,
+     11333,
+     11548,
+     11579
+    ],
+    "unit_sprite_calls": [
+     21
+    ],
+    "units_blitted": [
+     [
+      10
+     ]
+    ],
+    "redraw_ms_median": 52.458,
+    "redraw_insn_median": 159441.0,
+    "out_of_loop_redraw_ms": {
+     "count": 35,
+     "min_median_max": [
+      46.344,
+      53.147,
+      59.598
+     ]
+    },
+    "judge_ev_s132": {
+     "八圈 k = 1..8 依序": true,
+     "每圈收尾 ebx 仍是 k": true,
+     "每圈只畫一次地形、走 -1 分支一次": true,
+     "畫的階 ∈ {k, k + 1}": true,
+     "推進 ⇔ 畫 k + 1": true,
+     "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+    }
+   },
+   "lc157e": {
+    "arrangement": "第二輪擺法(lc130 arm + armC:#5 → (8, 7)、#10 → (6, 9)、索爾 HP 167、MV 30;寫入後停兩次逐欄讀回 12 / 12 相符)",
+    "raw_sha256": "17872d7baff82dc5b7eb40b519970a28e9530dc790c479e322f20270d039d0a4",
+    "header": "H fd2calllog 1 cs=0170 entries=23 cap=100000000 dump=0 lo=001adcac hi=001eaee1 icount=1 gate=001b1055",
+    "drawn": [
+     1,
+     3,
+     3,
+     5,
+     5,
+     7,
+     7,
+     9
+    ],
+    "adv": [
+     0,
+     1,
+     0,
+     1,
+     0,
+     1,
+     0,
+     1
+    ],
+    "tick_at_draw": [
+     29901,
+     29903,
+     29904,
+     29906,
+     29907,
+     29909,
+     29911,
+     29913
+    ],
+    "tick_after": [
+     29903,
+     29904,
+     29906,
+     29907,
+     29909,
+     29911,
+     29913,
+     29915
+    ],
+    "redraw_tick_crossings": [
+     1,
+     0,
+     1,
+     0,
+     1,
+     1,
+     1,
+     1
+    ],
+    "loop_ticks": 14,
+    "redraw_ms": [
+     54.947,
+     54.276,
+     55.574,
+     54.501,
+     57.454,
+     62.932,
+     56.652,
+     58.843
+    ],
+    "wait_ms": [
+     39.931,
+     0.963,
+     54.186,
+     0.382,
+     52.653,
+     52.077,
+     53.587,
+     50.8
+    ],
+    "redraw_game_insn": [
+     173542,
+     172755,
+     173696,
+     172949,
+     175015,
+     175986,
+     173871,
+     175759
+    ],
+    "child_ms_median": {
+     "r_1297d": 0.006,
+     "terrain": 46.159,
+     "overlay": 0.005,
+     "units": 4.262,
+     "hud": 0.006,
+     "rowcopy": 5.354
+    },
+    "child_insn_median": {
+     "r_1297d": 27.5,
+     "terrain": 145933.0,
+     "overlay": 26.0,
+     "units": 16753.0,
+     "hud": 32.0,
+     "rowcopy": 11292.5
+    },
+    "units_ms": [
+     4.062,
+     4.119,
+     4.354,
+     4.115,
+     4.232,
+     4.293,
+     4.3,
+     6.912
+    ],
+    "units_insn": [
+     16086,
+     16290,
+     17137,
+     16292,
+     16562,
+     16957,
+     16944,
+     17701
+    ],
+    "rowcopy_insn": [
+     10732,
+     10753,
+     10755,
+     11282,
+     11303,
+     11327,
+     11521,
+     11591
+    ],
+    "unit_sprite_calls": [
+     21
+    ],
+    "units_blitted": [
+     [
+      0,
+      1,
+      2,
+      3,
+      4,
+      6,
+      11
+     ]
+    ],
+    "redraw_ms_median": 56.113,
+    "redraw_insn_median": 173783.5,
+    "out_of_loop_redraw_ms": {
+     "count": 23,
+     "min_median_max": [
+      51.256,
+      54.73,
+      61.007
+     ]
+    },
+    "judge_ev_s132": {
+     "八圈 k = 1..8 依序": true,
+     "每圈收尾 ebx 仍是 k": true,
+     "每圈只畫一次地形、走 -1 分支一次": true,
+     "畫的階 ∈ {k, k + 1}": true,
+     "推進 ⇔ 畫 k + 1": true,
+     "推進 ⇔ tick − 上次推進 > 2(含第 1 圈)": true
+    }
+   }
+  },
+  "lc157e_readback": {
+   "armC": {
+    "#11 xy": [
+     "130e",
+     "130e"
+    ],
+    "#11 slot2": [
+     "004f",
+     "004f"
+    ],
+    "#1 HP": [
+     "0e03",
+     "0e03"
+    ],
+    "#0 f5": [
+     "00",
+     "00"
+    ],
+    "#1 f5": [
+     "80",
+     "80"
+    ],
+    "#2 f5": [
+     "80",
+     "80"
+    ],
+    "#3 f5": [
+     "80",
+     "80"
+    ],
+    "#4 f5": [
+     "80",
+     "80"
+    ],
+    "#5 xy": [
+     "0807",
+     "0807"
+    ],
+    "#10 xy": [
+     "0609",
+     "0609"
+    ],
+    "#0 HP": [
+     "a700",
+     "a700"
+    ],
+    "#0 MV": [
+     "1e",
+     "1e"
+    ]
+   },
+   "check": {
+    "#11 xy": [
+     "130e",
+     "130e"
+    ],
+    "#11 slot2": [
+     "004f",
+     "004f"
+    ],
+    "#1 HP": [
+     "0e03",
+     "0e03"
+    ],
+    "#0 f5": [
+     "00",
+     "00"
+    ],
+    "#1 f5": [
+     "80",
+     "80"
+    ],
+    "#2 f5": [
+     "80",
+     "80"
+    ],
+    "#3 f5": [
+     "80",
+     "80"
+    ],
+    "#4 f5": [
+     "80",
+     "80"
+    ],
+    "#5 xy": [
+     "0807",
+     "0807"
+    ],
+    "#10 xy": [
+     "0609",
+     "0609"
+    ],
+    "#0 HP": [
+     "a700",
+     "a700"
+    ],
+    "#0 MV": [
+     "1e",
+     "1e"
+    ]
+   }
+  },
+  "predictions_file": "docs/knowledge-base/evidence/generators/drivers_s157/pred157_item2.txt",
+  "predictions_sha256": "408e22288fa47e8344f33e7587b62edf37eb2a24dba334560305d9337b5df917",
+  "predictions": {
+   "P1": true,
+   "P2": false,
+   "P3": true,
+   "P4": true,
+   "P5": true
+  },
+  "P2_mismatch_laps": {
+   "lc157c": [
+    3,
+    6
+   ],
+   "lc157d": [
+    3,
+    6,
+    7,
+    8
+   ],
+   "lc157e": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    7
+   ]
+  },
+  "P4_share": {
+   "lc157c": {
+    "top_child": "units",
+    "child_diff_ms": 2.76,
+    "redraw_diff_ms": 3.465,
+    "insn_diff": {
+     "redraw": 14224.5,
+     "units": 10175.0,
+     "terrain": 4539.0
+    }
+   },
+   "lc157d": {
+    "top_child": "units",
+    "child_diff_ms": 2.805,
+    "redraw_diff_ms": 3.655,
+    "insn_diff": {
+     "redraw": 14342.5,
+     "units": 10258.5,
+     "terrain": 4119.0
+    }
+   }
+  },
+  "terrain_ms": {
+   "lc157c": [
+    45.191,
+    52.35,
+    44.101,
+    46.076,
+    43.857,
+    47.302,
+    43.569,
+    43.938
+   ],
+   "lc157d": [
+    46.421,
+    45.545,
+    52.223,
+    43.749,
+    46.075,
+    43.623,
+    48.159,
+    43.819
+   ],
+   "lc157e": [
+    45.404,
+    44.652,
+    45.853,
+    45.01,
+    47.501,
+    53.271,
+    46.999,
+    46.464
+   ]
+  },
+  "redraw_over_nominal_tick_without_crossing": [
+   [
+    "lc157c",
+    2,
+    59.015
+   ],
+   [
+    "lc157c",
+    8,
+    56.774
+   ],
+   [
+    "lc157d",
+    3,
+    59.0
+   ]
+  ],
+  "consecutive_wait_return_gaps_1tick_ms": {
+   "lc157c": [
+    60.121,
+    54.882,
+    55.119,
+    55.492,
+    54.39,
+    55.111,
+    59.889
+   ],
+   "lc157d": [
+    55.109,
+    60.012,
+    54.881,
+    55.12,
+    54.883,
+    54.891
+   ],
+   "lc157e": [
+    55.241,
+    54.885
+   ]
+  },
+  "conclusion": "第二輪擺法 redraw 比較久(中位數 56.1 vs 52.6 / 52.5 ms),差距在單位層:第一輪 21 次 draw_unit_sprite 只有 #10 貼圖,第二輪 7 個單位貼圖;地形層的範圍重疊、送畫面的指令數相同。推進仍照 ev_s132 的規則(tick − 上次推進 > 2),不是「該圈跨 tick 就推進」(P2 不成立)。"
+ },
+ "not_here": {
+  "item5_new_game_return_18": "FAIL:三次都沒讓索爾倒下、沒走到 GAME OVER(沒有可用的紀錄)",
+  "item6_copy_protection_patch_author": "BLOCKED:磁碟上沒有未修改的版本可比,實機判定不了"
+ }
+}
