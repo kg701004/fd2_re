@@ -11100,3 +11100,48 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
   沒有單位表的單位格 (12, 6) 的 y 1、邊緣判定設計值 5(邊緣容差 2 像素、邊緣往內 3 格不被排除、半寬 >= 3、方向 ±1)、小數位數 3。
 - `ev_s73` 6(截圖裁切框 4:結論 > 0.95 / < 0.5 對 ±1 像素不敏感;小數位數 2)、`ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)。
 - 續一百三十四以來「要實機,不打算主動做」的項目不變;索引 255 的實機 DAC 讀值同續一百五十。
+
+## 2026-10-27 續一百五十五:lut 的資訊框改由 draw_map_hud 與 FDOTHER #5 定(69 × 34),單位格改由 FDICON 單位圖比對定;要實機的 6 項重看
+
+起因:續一百五十四「仍留」的 24 個 ESCAPED 與要實機的項目,依建議逐項處理(使用者要求)。照續一百五十三、一百五十四的做法,
+先找排除框在遊戲程式或資產裡的另一種寫法。做法同前:scratchpad 副本上改、`run_all.run_one(script=…)` 比對、`sweep(src=…)` 收斂後套回倉庫(套回後與副本逐 byte 相同);
+這次證據本來就會變,sweep 的比對基準改指副本重產的證據(只在 scratchpad 的驅動程式裡改 `sweep_literals.EVIDENCE`,倉庫沒動)。
+
+**`ev_lut_circle_ramp_at_unit` 的資訊框(原本手寫 (4, 158, 74, 197))**:
+- 基準畫面左下的框(索爾的頭像、A+05、D+00、HP 823)是 `draw_map_hud`(0x1acf3)畫的:`[0x53a81]`(FDOTHER #5)加 `[+0x20e]` 取資源,
+  0x20e = 6 + 4 × 130,即 LMI1 目錄第 130 格,檔頭寫 69 × 34;由 0x4e98d 貼在 dst + stride × 0x9d + `[0x51a0c]`(FD2.EXE 反組譯)。
+  `[0x51a0c]` 的位址取自 0x1ad6c 指令位移欄位的 fixup(與 0x1ad3c、0x1ad5a 兩處寫入相同),初值 1;游標在下方兩列且在左 3 欄時寫 0xf2、在右 3 欄時寫 1,之後留著(FD2.EXE 反組譯)。
+- 這次是哪一個位置由基準畫面定:框放在 x 1 時,資源的 2346 個像素有 1607 個與基準畫面相同,不同的 739 個都在 `draw_map_hud` 之後蓋上的圖示框(框內 (+6, +5) 起 24 × 24)
+  或 A / D 數字(x >= +0x2b、y >= +8)上;放在 0xf2 時 0 個相同(s12、s11 都是)(DOSBox-X 記憶體傾印)。所以框 = 畫面 (5, 161) .. (73, 194),
+  與實測換色範圍(x 5..73、y 161..194)相同;原本的框四周各多 1 .. 3 像素。四模式 RLE 解碼;改用 0xC0 codec 只有 391 個相同(DOSBox-X 記憶體傾印)。
+- 框內的位移 6、5(= edi × 4 + edi)、0x2b、8(shl 3)也由 `_exeops.operand` 讀。
+
+**`ev_lut_circle_ramp_at_unit` 的單位格(原本手寫,施法者以外沒有單位表)**:
+- 改成逐格比對:該格的單位圖位置(`draw_unit_sprite` 的幾何)上正好畫著某一張 FDICON 單位圖(可見像素全部相同、至少一個可見)。
+  三組 10 幀的結果都相同:s12 / s11 是 (0, 6)、(1, 5)、(2, 6)、(6, 0)、(7, 1)、(10, 1)、(11, 1),ai79 是 (1, 7)、(1, 8)、(2, 6)、(3, 7)、(11, 6)、(12, 6),
+  與原本手寫的格逐一相同;施法者(紀錄的 `unit_xy − scroll`)都在裡面;續一百五十一拿掉的 (3, 2)、(2, 0)、(1, 1) 比對不到單位圖(DOSBox-X 記憶體傾印)。
+  ai79 的 (12, 6) 是 sprite 385 / 386(索爾,第 32 組),與「#11 在索爾旁」一致。
+- 基準畫面不用:s12 的 (11, 1) 被游標框蓋住、(0, 6)、(2, 6) 被資訊框蓋住,比對不到。
+- 證據 `lut_circle_ramp_at_unit_20261013.json` 只有 `excluded_rects` 改變(資訊框縮成 69 × 34;單位框同一組、依格排序);逐幀的數字、對照、截圖比對全部不變。
+  `inputs_manifest.json` 這一支多登錄 FDICON.B24 與 FDOTHER.DAT(雜湊與 `ev_s133` 登錄的相同)。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 | CRASH 前 → 後 | INERT 前 → 後 |
+|---|---|---|---|---|
+| `ev_lut_circle_ramp_at_unit` | 13 → 8 | 81 → 88 | 10 → 38 | 24 → 36 |
+
+(常數由 128 個增為 170 個。新增的 INERT 都看過:FDICON 的模式 1 都是長度 1,解碼切片的起點 / 步長改了只少寫幾個像素,比對條件變少、結果不變;
+「第 0 幀當基準」與「第 1 .. 9 幀比對」改了不變,因為 10 幀本來就相同;其餘是 reshape(-1)、>= 0 改 >= 1 這類。)整份 51 個產生器的 ESCAPED 由 24 → 19。
+`mut_lut_circle_ramp_at_unit` 加 4 個變異(資訊框選另一個位置、A / D 數字區右移 8、單位格改看基準畫面、單位格接受全透明的圖),17 / 17 以 AssertionError 失敗。
+
+**要實機的 6 項(重看)**:續一百三十七、一百三十八已逐項找過離線做法並做完能做的部分,這次沒有找到新的離線來源:
+- 灰階版 `0x4e1a6` 的模式 1:四個 blit 函式的模式 1 迴圈本體同為 `inc edi; stosb`(FD2.EXE 反組譯),畫面上找到的灰階圖示都沒有模式 1;本機沒有 x86 模擬套件(只有 capstone),不另裝。
+- 第二輪擺法 redraw 的內部時間、第 1、2、5、7 格的入口、索引 255 的 DAC 讀值:只能從執行中取得,要實機,不打算主動做。
+- 選新遊戲是第 18 次 Return:依賴 delay 的校準(推論),要有逐鍵時間的實機紀錄。
+- 防拷兩處是誰改的:磁碟上的複本都已含那兩個 EB,沒有未修改的版本可比,實機也判定不了。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);`mut_lut_circle_ramp_at_unit` 17 / 17;assert_census `--update --executed`:`ev_lut_circle_ramp_at_unit` 20 → 29 個 assert,全部執行到;`build_manifest.py ev_lut_circle_ramp_at_unit` 57 筆輸入(多 FDICON.B24、FDOTHER.DAT)
+
+**仍留**(19 個 ESCAPED,逐項看過,都是呈現上的選擇):
+- `ev_lut_circle_ramp_at_unit` 8:邊緣判定設計值 5(邊緣方向 ±1 的兩個 1、往內 3 格不被排除、邊緣容差 0 .. 2 的兩端)、小數位數 3。
+- `ev_s73` 6(截圖裁切框 4、小數位數 2)、`ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)。
+- 要實機的 6 項同上。

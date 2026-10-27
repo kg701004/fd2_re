@@ -12,6 +12,7 @@ import json
 import math
 import struct
 
+import numpy as np
 from PIL import Image, ImageChops, ImageStat
 
 from _evpaths import EVIDENCE, GAME, ROOT, out_path, require_inputs  # noqa: E402
@@ -50,16 +51,113 @@ def unit_box(tx: int, ty: int) -> tuple[int, int, int, int]:
     return x0, max(VY0, y0), x0 + SPR_W - 1, min(VY1, y0 + SPR_H - 1)
 
 
-PANEL = [(4, 158, 74, 197)]
+import disasm_le as dl  # noqa: E402(_exeops 已把 tools/ 加進 sys.path)
+import unpack_dat  # noqa: E402
+
+
+def dec4(body: bytes, w: int, h: int) -> np.ndarray:
+    """四模式 RLE(模式 1 = 先跳過再寫,續一百三十四),回傳 h × w;-1 = 不寫。"""
+    out = np.full(w * h, -1, np.int16)
+    i = pos = 0
+    while pos < w * h and i < len(body):
+        c = body[i]
+        i += 1
+        m, n = c >> 6, (c & 63) + 1
+        if m == 0:
+            out[pos:pos + n] = body[i]
+            i += 1
+            pos += n
+        elif m == 1:
+            out[pos + 1:pos + 2 * n:2] = body[i]
+            i += 1
+            pos += 2 * n
+        elif m == 2:
+            out[pos:pos + n] = list(body[i:i + n])
+            i += n
+            pos += n
+        else:
+            pos += n
+    return out.reshape(h, w)
+
+
+# 左下的資訊框是 draw_map_hud(0x1acf3)畫的:FDOTHER #5(`[0x53a81]`)第 (0x20e − 6) / 4 格(LMI1 目錄 +6 起每格 4 bytes),
+# 由 0x4e98d 貼在視窗 (`[0x51a0c]`, 0x9d);接著在框內 (+6, +5) 貼 24 × 24 的單位圖示(blit_tile24_rle)、
+# 由 (+0x2b, +8) 起畫地形 A / D 數字。`[0x51a0c]` 的值只有初值與 0x1ad3c / 0x1ad5a 兩處寫入(游標在下方左 / 右時切換,
+# 之後留著),這一次是哪一個由基準畫面定:在那個位置上框的像素與資源相同(圖示與數字蓋過的除外),另一個位置一個都不同
+_EXE = (GAME / "FD2.EXE").read_bytes()
+_META = dl.parse_le(_EXE)
+_FX = dl.build_fixups(_EXE, _META)
+_XVAR = _FX[0x1AD6E]  # 0x1ad6c `add ebp, dword ptr [disp32]` 的位移欄位
+assert _FX[0x1AD3E] == _FX[0x1AD5C] == _XVAR, hex(_XVAR)
+PANEL_XS = sorted({struct.unpack("<i", bytes(dl.object_bytes(_EXE, _META, _XVAR, 4)))[0],
+                   operand(0x1AD3C, "mov dword ptr [0x1a0c], "), operand(0x1AD5A, "mov dword ptr [0x1a0c], ")})
+assert len(PANEL_XS) == 2, PANEL_XS
+PANEL_ROW = operand(0x1AD64, "imul eax, edi, ")
+_res, _rem = divmod(operand(0x1AD77, "add eax, dword ptr [eax + ", "]") - 6, 4)
+assert _rem == 0, _rem
+_fd = (GAME / "FDOTHER.DAT").read_bytes()
+_o, _n = unpack_dat.parse_directory(_fd)[5]
+_LMI = _fd[_o:_o + _n]
+assert _LMI[:4] == b"LMI1"
+_lo = [struct.unpack_from("<I", _LMI, 6 + 4 * i)[0] for i in range(struct.unpack_from("<H", _LMI, 4)[0])]
+PW, PH = struct.unpack_from("<HH", _LMI, _lo[_res])
+PANEL_PX = dec4(_LMI[_lo[_res] + 4:_lo[_res + 1]], PW, PH)
+ICON_X, ICON_Y = operand(0x1ADBF, "add esi, "), (1 << operand(0x1ADB8, "shl esi, ")) + 1  # edi × 4 + edi 列
+TERR_X, TERR_Y = operand(0x1ADE0, "add eax, "), 1 << operand(0x1ADDB, "shl eax, ")
+
+
+def panel_match(tag: str, px: int) -> tuple[int, list[tuple[int, int]]]:
+    """資訊框貼在視窗 (px, PANEL_ROW) 時:框內與基準畫面相同的像素數、不同的像素(框內座標)。"""
+    ref = np.frombuffer((D / f"{tag}_ref.bin").read_bytes(), np.uint8).reshape(-1, W)
+    x0, y0 = VX0 + px, VY0 + PANEL_ROW
+    known = PANEL_PX >= 0
+    same = known & (ref[y0:y0 + PH, x0:x0 + PW] == PANEL_PX)
+    return int(same.sum()), [(int(x), int(y)) for y, x in zip(*np.nonzero(known & ~same))]
+
+
+PANEL_AT = {}
+for _t in ("s12", "s11"):
+    _hit = [(px, *panel_match(_t, px)) for px in PANEL_XS]
+    (_px, _same, _bad), = [h for h in _hit if h[1]]  # 只有一個位置有相同的像素
+    assert all(ICON_X <= x < ICON_X + SPR_W and ICON_Y <= y < ICON_Y + SPR_H or x >= TERR_X and y >= TERR_Y
+               for x, y in _bad), (_t, _bad[:5])
+    PANEL_AT[_t] = _px
+assert PANEL_AT["s12"] == PANEL_AT["s11"], PANEL_AT
+PANEL = [(VX0 + PANEL_AT["s12"], VY0 + PANEL_ROW, VX0 + PANEL_AT["s12"] + PW - 1, min(VY1, VY0 + PANEL_ROW + PH - 1))]
 # 施法者所在的格 = 紀錄的 unit_xy − scroll(同一次記錄)
 _LOG = {t: json.loads((D / f"{t}.json").read_text(encoding="utf-8"))["entry"] for t in ("s12", "s11", "ai79")}
 CASTER = {t: tuple(u - s for u, s in zip(e["unit_xy"], e["scroll"])) for t, e in _LOG.items()}
 assert CASTER["s12"] == CASTER["s11"], CASTER
-# 有動畫的單位所在的格(畫面座標 = 格 − 捲動);排除框由格算出。施法者以外的格沒有單位表,由幀上的換色定
-U1 = [unit_box(*t) for t in (CASTER["s12"], (7, 1), (6, 0), (10, 1), (2, 6), (1, 5), (0, 6))]
-# 續一百五十一:原本另有 (3, 2)、(2, 0)、(1, 1) 三格,10 幀裡框內都沒有換色(沒作用),拿掉。
-# 續一百五十四:(1, 8) 在視窗下緣之外,單位圖上移 6 列後最上面 6 列進到視窗(原本由 (1, 7) 往下多框的一整格蓋住)
-U2 = [unit_box(*t) for t in ((12, 6), CASTER["ai79"], (1, 7), (3, 7), (2, 6), (1, 8))]
+# 單位所在的格:該格的單位圖位置上正好畫著某一張 FDICON 單位圖(可見像素全部相同、至少一個可見),10 幀相同;
+# 施法者的格(紀錄)要在裡面。基準畫面不用:游標框與資訊框蓋住了幾個單位。
+# (續一百五十五以前是手寫的格;續一百五十一拿掉的 (3, 2)、(2, 0)、(1, 1) 這裡也比對不到單位圖。)
+_fi = (GAME / "FDICON.B24").read_bytes()
+_tw, _th, _ns = struct.unpack_from("<HHH", _fi, 0)
+assert (_tw, _th) == (SPR_W, SPR_H), (_tw, _th)
+_fo = [struct.unpack_from("<I", _fi, 6 + 4 * i)[0] for i in range(_ns)] + [len(_fi)]
+ICONS = np.stack([dec4(_fi[_fo[k]:_fo[k + 1]], SPR_W, SPR_H) for k in range(_ns)])
+ICON_ON = ICONS >= 0
+
+
+def unit_cells(tag: str, i: int) -> list[tuple[int, int]]:
+    """第 i 幀上畫著 FDICON 單位圖的格(含視窗下緣外、圖的上緣進到視窗的那一列)。"""
+    f = np.frombuffer((D / f"{tag}_f{i:02d}.bin").read_bytes(), np.uint8).reshape(-1, W)
+    cells = []
+    for ty in range(-(-(VH + SPRITE_UP) // TILE)):  # 圖的第 0 列 <= 視窗最後一列的格
+        for tx in range(VW // TILE):
+            x0, y0, x1, y1 = unit_box(tx, ty)
+            top = VY0 + TILE * ty - SPRITE_UP
+            s, m = ICONS[:, y0 - top:y1 + 1 - top], ICON_ON[:, y0 - top:y1 + 1 - top]
+            if (((s == f[y0:y1 + 1, x0:x1 + 1]) | ~m).all(axis=(1, 2)) & m.any(axis=(1, 2))).any():
+                cells.append((tx, ty))
+    return cells
+
+
+CELLS = {t: unit_cells(t, 0) for t in _LOG}
+assert all(unit_cells(t, i) == CELLS[t] for t in CELLS for i in range(1, 10)), "單位格不是 10 幀都相同"
+assert CELLS["s12"] == CELLS["s11"] and all(CASTER[t] in CELLS[t] for t in CELLS), (CELLS, CASTER)
+U1 = [unit_box(*c) for c in CELLS["s12"]]
+U2 = [unit_box(*c) for c in CELLS["ai79"]]
 RUNS = [("s12", "玩家施放裂地術(法術 12,command_handler_12)", 276, 42, 30, 16, PANEL + U1),
         ("s11", "玩家施放地震術(法術 11,command_handler_11)", 276, 42, 15, 10, PANEL + U1),
         ("ai79", "敵 #11 在敵方回合使用道具 79(ai_item_action)", 276, 162, 80, -4, U2)]

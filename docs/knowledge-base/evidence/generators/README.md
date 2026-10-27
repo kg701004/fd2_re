@@ -3,6 +3,12 @@
 `docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
 
+## 續一百五十五(2026-10-27)
+
+`ev_lut_circle_ramp_at_unit` 的資訊框改由 `draw_map_hud`(0x1acf3)與 FDOTHER #5 第 130 格(69 × 34)定,x 位置在 `[0x51a0c]` 的兩個可能值裡
+由「資源像素與基準畫面相同」選;單位格改成逐格比對 FDICON 單位圖(10 幀相同、施法者在裡面),與原本手寫的格相同。
+證據只有 `excluded_rects` 改變;這一支多讀 FDICON.B24 與 FDOTHER.DAT(`inputs_manifest.json` 已登錄)。
+
 ## 續一百五十四(2026-10-27)
 
 `ev_lut_circle_ramp_at_unit` 的單位排除框改用 `draw_unit_sprite` 的幾何(24 × 24、比格子上移 6 列,由 `_exeops.operand` 讀 FD2.EXE),

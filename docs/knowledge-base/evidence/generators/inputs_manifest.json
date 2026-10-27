@@ -4478,6 +4478,14 @@
     "{GAME}/FD2.EXE": [
      509158,
      "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDICON.B24": [
+     624010,
+     "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    ],
+    "{GAME}/FDOTHER.DAT": [
+     3382481,
+     "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
     ]
    }
   },

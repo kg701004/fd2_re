@@ -22,6 +22,11 @@ MUTANTS = [
     ("第一張截圖預期第 0 幀", '== ["s12_f01", "s12_f04"', '== ["s12_f00", "s12_f04"'),
     ("負對照預期有幀", 'assert out["negative_run"]["frames"] == 0', 'assert out["negative_run"]["frames"] == 1'),
     ("記錄增量反號", '== ([cx, cy], r0, step), tag', '== ([cx, cy], r0, -step), tag'),
+    # 續一百五十五:資訊框由 draw_map_hud + FDOTHER #5 定、單位格由 FDICON 單位圖比對定
+    ("資訊框選另一個位置", "[h for h in _hit if h[1]]", "[h for h in _hit if not h[1]]"),
+    ("A / D 數字區右移 8", "or x >= TERR_X and y >= TERR_Y", "or x >= TERR_X + 8 and y >= TERR_Y"),
+    ("單位格改看基準畫面", 'np.frombuffer((D / f"{tag}_f{i:02d}.bin")', 'np.frombuffer((D / f"{tag}_ref.bin")'),
+    ("單位格接受全透明的圖", " & m.any(axis=(1, 2))).any():", ").any():"),
 ]
 
 if __name__ == "__main__":

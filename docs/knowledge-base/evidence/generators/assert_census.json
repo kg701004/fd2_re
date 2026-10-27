@@ -92,8 +92,8 @@
    "not_executed_lines": []
   },
   "ev_lut_circle_ramp_at_unit": {
-   "asserts": 20,
-   "executed": 20,
+   "asserts": 29,
+   "executed": 29,
    "not_executed_lines": []
   },
   "ev_lut_circle_ramp_frame_time_ch22_post": {
