@@ -11145,3 +11145,51 @@ KILLED 3971 / CRASH 1300 / INERT 1041 / ESCAPED 724 / TIMEOUT 3,CONTROL_FAIL 0�
 - `ev_lut_circle_ramp_at_unit` 8:邊緣判定設計值 5(邊緣方向 ±1 的兩個 1、往內 3 格不被排除、邊緣容差 0 .. 2 的兩端)、小數位數 3。
 - `ev_s73` 6(截圖裁切框 4、小數位數 2)、`ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)。
 - 要實機的 6 項同上。
+
+## 2026-10-27 續一百五十六:lut 的形狀判準改成逐像素精確預測(0x219ad + FDOTHER #3),邊緣容差拿掉;`[0x51a0c]` 不在任何傾印裡
+
+起因:續一百五十五「仍留」的兩項建議,依序處理(使用者要求)。做法同前:scratchpad 副本上改、`sweep(src=…)` 收斂(比對基準改指副本重產的證據)後套回倉庫,
+套回後重產的證據與副本逐 byte 相同。
+
+**`[0x51a0c]`(資訊框 x)從傾印讀**:BLOCKED。lc122 的傾印只有線性 0xa0000 起 64000 bytes(畫面)與 768 bytes 調色盤,沒有資料區;
+`.wsl_build` 裡 10 月 13 日的另外兩份呼叫紀錄(`cl13` / `cl14_CALLLOG.TXT`,12:45 / 12:52)比 lc122(18:33 起)早、是另一次執行,
+值是黏著的,換一次執行就不能代表。資訊框的位置仍由續一百五十五的資源像素比對決定(1607 vs 0),不受影響。
+
+**lut 的 5 個邊緣判定值**:來源找到了,就是換色函式本身,而且原本的判準本來就不必要。
+- `remap_circle_scanlines`(0x219ad)逐指令:列 y 在 [y_start, y_end) 且 cy − r < y < cy + r 才換(0x21a29 `jle`、0x21a35 `jge`);
+  hw = trunc(sqrt(r² − dy²) × scale / `[0x501f0]`);換的段起點 cx − hw、長度 hw + min(hw, 0x138 − cx)(0x219cc 起),
+  也就是 [max(0, cx − hw), min(cx + hw, 0x138)),**右端不含**;逐 byte `buf[x] = lut[buf[x]]`(0x4deec)。
+  呼叫端 0x21942 起 push scale 0xc、列範圍 [0, 0xc0);lut = `[0x53a6d]` 第 i 項,`[0x53a6d]` 唯一的寫入是 main 0x25cc6 載入 FDOTHER.DAT 第 3 項(ev_s136)(FD2.EXE 反組譯)。
+- 有了換色表就能逐像素預測:段內 = 第 i 張表[基準畫面]、段外 = 基準畫面。三組 30 幀,排除框外每一個像素都相同(DOSBox-X 記憶體傾印)。
+  原本的 `|x − 圓心| <= hw` 多含右端一格,「邊緣往內 0 .. 2 像素有換色」的容差蓋掉了這一格;
+  另一個需要容差的原因是後幾幀的換色表接近恆等,段內很多像素換了也不變色(裂地術第 9 幀 8744 個,`same_in`)。
+- 基準畫面與效果幀的底圖只在施法者那一格(游標格)另有不同:效果結束後的重畫(0x11cac)在地形層之後、單位層之前呼叫
+  `draw_move_range_overlay`(0x122dc)。法術兩組是模式 1,貼 FDOTHER #1(`[0x53a4d]`,main 0x25c92 載入)第 0 項,
+  位置是格子本身(0x126f7,只加視窗原點 0x8088,不像單位圖上移);單位框外 78 個可見像素與基準畫面相同。
+  道具 79 是模式 6,不貼圖,只把游標格 byte3 清 0(0x126d0),由 `draw_terrain_layer` 以三角表 0x51a97 的階選 `[0x53a6d]` 的表畫那一格(0x12164)。
+  單位框外 144 個像素都能寫成「效果幀 = 第 i 張表[T_8[R]]、基準畫面 = T_9[R]」(同一個 R);在 0 .. 10 階裡只有 (8, 9) 這一組成立,
+  不限階時還多 (21, 9)(DOSBox-X 記憶體傾印)。所以那一格另外排除,排除前先逐像素對過這兩種畫法。
+- 對照加兩個(右端含 cx + hw、換色表錯開一幀),三組 6 個都判為不符合;每個排除框在用它的那幾輪裡都有與預測不同的像素。
+- `ai79_entry.bin`(入口時的畫面)當底圖也不行:那一格是第三種階(48 個像素不同)。
+
+證據 `lut_circle_ramp_at_unit_20261013.json`:`shape` 的 `edge_rows` / `edge_ok` 換成 `same_in` / `mismatch`(全 0);
+`inside_px` 改成精確段內(每列少右端一格、少 dy = ±r 的中心點、少游標格);`changed_in` 只少游標格那幾列;`changed_out` 仍全 0;
+多 `cursor_cell`、`cursor_cell_cause`、`remap_model`。平均亮度變化:地震術第 0 幀 11.46 → 11.07、第 1 幀 11.05 → 10.98、道具 79 第 9 幀 3.06 → 3.0(其餘差 0.03 以內);
+地震術第 0、1 幀圓心欄的上下緣因排除游標格而改變。
+
+| 產生器 | ESCAPED 前 → 後 | KILLED 前 → 後 | CRASH 前 → 後 | INERT 前 → 後 |
+|---|---|---|---|---|
+| `ev_lut_circle_ramp_at_unit` | 8 → 3 | 88 → 110 | 38 → 59 | 36 → 64 |
+
+第一次 sweep 是 ESCAPED 5:多出排除框切片 `keep[b:d + 1, a:c + 1]` 的兩個 1(框放大一格,預測仍全對)。
+加了「遮罩 = 逐點列舉 `range(b, d + 1)` × `range(a, c + 1)`」的 assert 後 3 個。整份 51 個產生器的 ESCAPED 由 19 → 14。
+`mut_lut_circle_ramp_at_unit`:舊的「半寬係數 11 / 10」改成改 `SCALE`,「邊緣命中門檻」改成「換色段右端含 cx + hw」,
+新增 4 個(換色表取第 i + 1 項、s12 不排除游標格、游標格右移一格、byte3 換色表不限三角表的階),21 / 21 以 AssertionError 失敗。
+試過的「列含 cy ± r」是等價變異:dy = ±r 時 hw = 0、段是空的,畫面分不出來,沒有收進清單(doc35 那一句也照這個改寫)。
+
+**檢查**:28 道 PASS(git diff --check、provenance --diff / --gate、address citations / coverage、三個解碼器 selftest、truncation、selftest discrimination registry、function_inventory、docs_match_cli、generated_artifacts、findings、tool_hygiene、doc98_index、assert_census 與 --selftest、sweep_literals --selftest、run_all 53 / 53 IDENTICAL 與 --selftest);`mut_lut_circle_ramp_at_unit` 21 / 21;assert_census `--update --executed`:`ev_lut_circle_ramp_at_unit` 29 → 36 個 assert,全部執行到;`build_manifest.py ev_lut_circle_ramp_at_unit` 57 筆輸入(不變)。
+
+**仍留**(14 個 ESCAPED,都是呈現上的選擇):
+- `ev_lut_circle_ramp_at_unit` 3(小數位數:平均亮度 2 位、截圖比對 3 位兩處)。
+- `ev_s73` 6(截圖裁切框 4、小數位數 2)、`ev_s67` 2 / `ev_s74` 1(截斷長度)、`ev_s68` / `ev_ai_item_action_item79_flow` 各 1(小數位數)。
+- 要實機的 6 項同續一百五十五;`[0x51a0c]` 若要讀值,要新的實機傾印(含資料區),不打算主動做。

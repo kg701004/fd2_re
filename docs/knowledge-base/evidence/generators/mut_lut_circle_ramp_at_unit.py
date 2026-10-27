@@ -7,9 +7,9 @@ import sys
 from _mutrun import run_mutants
 
 MUTANTS = [
-    ("半寬係數 11 / 10", "hw = int(math.sqrt(r * r - dy * dy) * 12 / 10)", "hw = int(math.sqrt(r * r - dy * dy) * 11 / 10)"),
-    ("裂地術起始半徑 31", "276, 42, 30, 16, PANEL + U1)", "276, 42, 31, 16, PANEL + U1)"),
-    ("邊緣命中門檻 1.5", 'r["edge_ok"] < 0.9 * r["edge_rows"]', 'r["edge_ok"] < 1.5 * r["edge_rows"]'),
+    ("半寬係數 11", 'SCALE = operand(0x2194A, "push ")', 'SCALE = operand(0x2194A, "push ") - 1'),
+    ("裂地術起始半徑 31", "276, 42, 30, 16, PANEL + U1 +", "276, 42, 31, 16, PANEL + U1 +"),
+    ("換色段右端含 cx + hw", "VX0 + min(cx + hw + right, VW)", "VX0 + min(cx + hw + right + 1, VW)"),
     ("視窗左緣 5", "VX0, VY0, VW, VH = 4, 4, 0x138, 0xC0", "VX0, VY0, VW, VH = 5, 4, 0x138, 0xC0"),
     ("對照預期 PASS", 'assert set(ctl.values()) == {"FAIL"}, ctl', 'assert set(ctl.values()) == {"PASS"}, ctl'),
     ("拼接間距 325", "sh.paste(frame_rgb(tag, k), ((k % 5) * 324,", "sh.paste(frame_rgb(tag, k), ((k % 5) * 325,"),
@@ -25,8 +25,15 @@ MUTANTS = [
     # 續一百五十五:資訊框由 draw_map_hud + FDOTHER #5 定、單位格由 FDICON 單位圖比對定
     ("資訊框選另一個位置", "[h for h in _hit if h[1]]", "[h for h in _hit if not h[1]]"),
     ("A / D 數字區右移 8", "or x >= TERR_X and y >= TERR_Y", "or x >= TERR_X + 8 and y >= TERR_Y"),
-    ("單位格改看基準畫面", 'np.frombuffer((D / f"{tag}_f{i:02d}.bin")', 'np.frombuffer((D / f"{tag}_ref.bin")'),
+    ("單位格改看基準畫面", 'np.frombuffer((D / f"{tag}_f{i:02d}.bin").read_bytes(), np.uint8).reshape(-1, W)\n    cells',
+     'np.frombuffer((D / f"{tag}_ref.bin").read_bytes(), np.uint8).reshape(-1, W)\n    cells'),
     ("單位格接受全透明的圖", " & m.any(axis=(1, 2))).any():", ").any():"),
+    # 續一百五十六:逐像素預測(0x219ad + FDOTHER #3)、游標格
+    ("換色表取第 i + 1 項", "LUTS = [bank_lut(i) for i in range(10)]", "LUTS = [bank_lut(i + 1) for i in range(10)]"),
+    ("s12 不排除游標格", 'PANEL + U1 + CURSOR["s12"]),', "PANEL + U1),"),
+    ("游標格右移一格", "CURSOR = {t: [cell_box(*CASTER[t])] for t in _LOG}",
+     "CURSOR = {t: [cell_box(CASTER[t][0] + 1, CASTER[t][1])] for t in _LOG}"),
+    ("byte3 換色表不限三角表的階", "HI_STEPS = sorted(set(_TRI))", "HI_STEPS = list(range(23))"),
 ]
 
 if __name__ == "__main__":

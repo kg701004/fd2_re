@@ -3,6 +3,15 @@
 `docs/knowledge-base/evidence/` 的 54 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
 
+## 續一百五十六(2026-10-27)
+
+`ev_lut_circle_ramp_at_unit` 的形狀判準改成逐像素的精確預測:換色段照 `remap_circle_scanlines`(0x219ad)寫
+(列 cy − r < y < cy + r、段 [max(0, cx − hw), min(cx + hw, 0x138)),右端不含),換色表是 FDOTHER #3 第 i 項(`[0x53a6d]`);
+排除框外每個像素都要等於預測。原本的邊緣容差(±1 方向、往內 3 格、0 .. 2)整段拿掉。另排除施法者那一格(游標格):
+基準畫面的重畫在那裡貼了 FDOTHER #1 第 0 項(法術兩組)或以 byte3 換色畫成另一階(道具 79),逐像素檢查後才排除。
+對照加「右端含 cx + hw」「換色表錯開一幀」兩個。證據的 `shape` 改欄位(`edge_rows` / `edge_ok` → `same_in` / `mismatch`),
+多 `cursor_cell`、`cursor_cell_cause`、`remap_model`。
+
 ## 續一百五十五(2026-10-27)
 
 `ev_lut_circle_ramp_at_unit` 的資訊框改由 `draw_map_hud`(0x1acf3)與 FDOTHER #5 第 130 格(69 × 34)定,x 位置在 `[0x51a0c]` 的兩個可能值裡
