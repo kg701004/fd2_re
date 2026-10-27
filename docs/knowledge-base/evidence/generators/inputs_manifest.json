@@ -12698,6 +12698,177 @@
     ]
    }
   },
+  "ev_s158": {
+   "outputs": [
+    "followups_s158_20261027.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc157_live/lc157c_redraw_icount.txt": [
+     6922959,
+     "3722f09888f74e2b845eb91c4a84e2821d5e97e941b004ae2ea74e7f85295624"
+    ],
+    ".wsl_build/lc157_live/lc157d_redraw_icount.txt": [
+     3754459,
+     "79f203759d7d9cb93e2c560f195657c555b5ddfe93ba1b3802d2e1135cceb639"
+    ],
+    ".wsl_build/lc157_live/lc157e_armC.out": [
+     779,
+     "11a89f629675ccd4cddcca45df1a4271f5b310c12b7cd679a5975a1b0efdebe7"
+    ],
+    ".wsl_build/lc157_live/lc157e_redraw_icount.txt": [
+     3013644,
+     "17872d7baff82dc5b7eb40b519970a28e9530dc790c479e322f20270d039d0a4"
+    ],
+    ".wsl_build/lc157_live/lc157f/sol1.out": [
+     132,
+     "8d30cb68335cf2f5307d2dbc9e94abe96de674a62d57a3faf37dabf0402f1adf"
+    ],
+    ".wsl_build/lc157_live/lc157f/units_after_endturn.out": [
+     1054,
+     "e48193e828c8c7b2507b02de0b603e9ca81219eaed10dd109af657a9408cd030"
+    ],
+    ".wsl_build/lc157_live/lc157f_title_calllog.txt": [
+     893,
+     "30d13cab2387788d65f512477868cf1b8cb4658d44f7b13590de6156a415ee3a"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_000.bin": [
+     2308,
+     "9ac50ac06e721e9a7ab1cbdd5dcf8b0f64a5e9b7c742097d82afed22c75deea2"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_003.bin": [
+     2272,
+     "68ed5d9dc78b621a3f0a21eb09c13242ca9ac231bb2eb8e697b986cd1bce5a93"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_006.bin": [
+     1876,
+     "4ea3e1739ac4c7f482933802472a21ef67709ec494b30a5dc5c416d2b3b6bc0f"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_009.bin": [
+     1604,
+     "7278da49d120638dbda2c1c7325812c78640eaa8a104148054e9e35b17fa2523"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_012.bin": [
+     3592,
+     "cb3c5d4b4eafa37a6999dab5c148900a01b48adf80c8eaef28f59f3cf7aed6a0"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_015.bin": [
+     2084,
+     "159793e8c5290c2f4d593afbfe26933b8efa5b42b3b1e89655e409b48954e5ec"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_018.bin": [
+     3964,
+     "e905b25ae5fa780b87e318ae950551a25555766377583e8fabcd861de605e6d9"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_021.bin": [
+     5224,
+     "e307c6c0b5f4b8a3eee10f2740653c9c50d5f8e46077646b915d819ff437b4e0"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_024.bin": [
+     3604,
+     "161d601fd80068bf74038ebb1aafce787d0e1fbab9e9492c7c1924c839123a81"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_027.bin": [
+     5584,
+     "130fae002f08243fe064f77297176e02e8d5ccfbb64b2cb38e4f0e0f21c0bca6"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_030.bin": [
+     6304,
+     "17eefab0de27f111d7c083e16000f45b060e6f5dcfef87afdf70392b7c61eb03"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_033.bin": [
+     5604,
+     "2523149771bab70e7213e1aaf69929dd502608d48aa370e4e2d6c26c30505089"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_036.bin": [
+     4004,
+     "1ed1418fcc47deb7a3626ad07036b9e6d741c4a5889481873a8cd5a8d7e9c653"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_039.bin": [
+     6404,
+     "816a3e475f05e57201c1c8a1dcd719f7c05e78da32bc6b9fb27a3d7dd22b1b09"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_042.bin": [
+     10004,
+     "8830298dfea1191baf2f52aa2a721252994a84b79b4ec186979f8b36d703f959"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_045.bin": [
+     6404,
+     "954e801d62ef313020d07b64e66d5ecc6fba7198722bf5cafe5b4d021805b7ef"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_048.bin": [
+     8284,
+     "2356b447d08d1abec9cf67a7691496a76b8cdb62054e528edb4b6bc1a6c7e1d0"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_051.bin": [
+     5004,
+     "2663192eca21944c2ee8a3698b47479f69fcc6847124aa2590f7e6f81ddf41d6"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_054.bin": [
+     4004,
+     "cf8694c8198339deb69cd243e5c37d2e3d6944134f2fa68db0ebf26a50a24ce3"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_057.bin": [
+     6404,
+     "c19b6c9b617ca850952cfc25fddc9a0a784b3c8f02b26b5968b5fb26811d1d7d"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_060.bin": [
+     6564,
+     "da246117eb7c8f9724e69e5e87eb8be4e03c2278439b92cd5ab99f72bd7cee3d"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_063.bin": [
+     9004,
+     "9cc8e97a4e0e963d48529cb85bb8a43ab305914eba0110a1d970cc773f22ae82"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_066.bin": [
+     6564,
+     "895d5737ef5cff40904d7a9c7c7b00d3e93e4976ca025544f002e17613b73420"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_069.bin": [
+     6072,
+     "7f5ac77c56e468a50911373284084e376b574f57b3911a9d4eb870603dd21bf8"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_072.bin": [
+     5304,
+     "66819c24192d40027fd43ee22a649bdbccc5f7f3022420146e0b01685d9ab0c4"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_075.bin": [
+     5832,
+     "2e803280c4dda87c67223c10efafb70219a82570c7070da3dfed529eecc268ec"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_078.bin": [
+     7072,
+     "b84ed9cf17b13339b79f38f8ea6f8ff3727f694288ffb6e74ed2ecee1b6a2db4"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_081.bin": [
+     4996,
+     "e2448229375bd37bc63b4f618eb626bdc9f12a833564a34df65e611188c25595"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_084.bin": [
+     7940,
+     "b1fe12eee7c8c6022988f1714f3aaa9b317c0574a9ade88fd38b9dc32ef52583"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_087.bin": [
+     7204,
+     "c87802539597b11f1e03daacde287d6d61cd5bda88aa5f293f9a69865ca2cacd"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_090.bin": [
+     6304,
+     "fd44ebb3f269a45e16f84e3ea1ec3458aa672d7c85caa5ffc4dd9c628db168d3"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_093.bin": [
+     4004,
+     "bb94601c147f25a3aacc9e93470fd16bb27171b675310a86464fdfcd9cc94d1c"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_096.bin": [
+     3676,
+     "7ae5cefa05ff4cadc66a99097e4f060df4bb554d96aac42595c23f91426f0ef5"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

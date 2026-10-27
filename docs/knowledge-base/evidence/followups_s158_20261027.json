@@ -1,0 +1,344 @@
+{
+ "date": "2026-10-27",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "inputs_dir": ".wsl_build/lc157_live",
+ "fdfield_dir": "extracted/raw/FDFIELD",
+ "drivers": "docs/knowledge-base/evidence/generators/drivers_s158",
+ "approval": "(A) .. (C) 離線;(D) 使用者 2026-10-27「未確認的部分依建議逐項自動處理」後的第 5 項重跑一次,失敗即停",
+ "item2_units_camera": {
+  "method": "地形層 0x4e22a 的 (ebp 欄, s[4] 列, ebx 地形索引) 對 33 張 FDFIELD 構成資源逐格比對;單位貼圖 dest − (0, 0) 格 dest + 6 × 456 → 視窗格",
+  "maps_searched": 33,
+  "cells_matched_per_lap": [
+   96
+  ],
+  "remap_cells_per_lap": [
+   8
+  ],
+  "map_scroll": {
+   "lc157c": [
+    1,
+    12,
+    0
+   ],
+   "lc157d": [
+    1,
+    12,
+    0
+   ],
+   "lc157e": [
+    1,
+    14,
+    8
+   ]
+  },
+  "unit_positions_from_blits": {
+   "lc157c": {
+    "10": [
+     19,
+     6
+    ]
+   },
+   "lc157d": {
+    "10": [
+     19,
+     6
+    ]
+   },
+   "lc157e": {
+    "0": [
+     20,
+     14
+    ],
+    "1": [
+     23,
+     16
+    ],
+    "2": [
+     22,
+     13
+    ],
+    "3": [
+     23,
+     14
+    ],
+    "4": [
+     24,
+     15
+    ],
+    "6": [
+     19,
+     13
+    ],
+    "11": [
+     19,
+     14
+    ]
+   }
+  },
+  "armC_readback_xy": {
+   "11": [
+    19,
+    14
+   ],
+   "5": [
+    8,
+    7
+   ],
+   "10": [
+    6,
+    9
+   ]
+  },
+  "clip": {
+   "x": "[sx - 1, sx + 13]",
+   "y": "[sy - 1, sy + 9]"
+  },
+  "round2_units_inside_round1_clip": {
+   "0": false,
+   "1": false,
+   "2": false,
+   "3": false,
+   "4": false,
+   "6": false,
+   "11": false
+  },
+  "premise": "#1 .. #4 是已行動的我方(+5 = 0x80),敵方回合不動;lc130 arm 與 lc131 armC 都沒有寫它們的座標,所以兩輪位置相同。#6 在第一輪的位置沒有紀錄(敵方回合裡 #5 .. #10 先行動),只知道第一輪沒貼圖",
+  "conclusion": "兩輪的鏡頭不同:第一輪地圖 1 捲動 (12, 0)(#10 在 (19, 6),光束打 #10),第二輪 (14, 8)。第二輪貼圖的 7 個單位都在 (14, 8) 的裁切範圍內,那 7 個位置都在 (12, 0) 的範圍外。"
+ },
+ "item2_terrain_insn": {
+  "method": "地形層期間 104 次貼圖(0x4e22a 96 + 0x4e016 8)的 R.i − E.i;每個 (函式, 地形索引) 取三份紀錄的最小值當不含中斷的成本",
+  "keys": 89,
+  "blits": 2496,
+  "blits_within_min_plus_10": 2290,
+  "excess_over_10_min_max_count": [
+   264.0,
+   3999.0,
+   206
+  ],
+  "pred_per_lap": {
+   "lc157c": 131380.0,
+   "lc157d": 131380.0,
+   "lc157e": 135962.0
+  },
+  "pred_diff_e_minus_c": 4582.0,
+  "actual_blit_sum_median": {
+   "lc157c": 137933.0,
+   "lc157d": 138220.5,
+   "lc157e": 142280.5
+  },
+  "actual_diff_e_minus_c": 4347.5,
+  "actual_diff_d_minus_c": 287.5,
+  "residual_median": {
+   "lc157c": 6553.0,
+   "lc157d": 6840.5,
+   "lc157e": 6318.5
+  },
+  "residual_spread_max": 4252.0,
+  "terrain_insn_median": {
+   "lc157c": 141394.0,
+   "lc157d": 141814.0,
+   "lc157e": 145933.0
+  },
+  "terrain_minus_blits_median": {
+   "lc157c": 3458.0,
+   "lc157d": 3459.5,
+   "lc157e": 3461.0
+  },
+  "conclusion": "第二輪地形層多的指令數來自鏡頭裡的圖塊不同:依圖塊組合預測多 4582.0,實際中位數多 4347.5;同鏡頭的 lc157c / lc157d 預測相同;貼圖以外的地形層指令數兩輪相近。"
+ },
+ "bios_tick_interval": {
+  "method": "wait_ticks R 記錄(eax 低 16 位 = [0x46c]、t = PIC_FullIndex ms);每個 tick 值取第一次返回的時間;1 .. 20 ms 每 0.001 ms 求相位集中度",
+  "runs": {
+   "lc157c": {
+    "ticks": 69,
+    "best_period_ms": 5.0,
+    "best_resultant": 0.89,
+    "top6": [
+     [
+      0.89,
+      5.0
+     ],
+     [
+      0.829,
+      2.5
+     ],
+     [
+      0.716,
+      5.001
+     ],
+     [
+      0.693,
+      4.999
+     ],
+     [
+      0.685,
+      1.0
+     ],
+     [
+      0.668,
+      1.25
+     ]
+    ],
+    "one_tick_gaps": 51,
+    "one_tick_gap_periods": {
+     "10": 4,
+     "11": 26,
+     "12": 15,
+     "13": 6
+    },
+    "one_tick_gap_resid_ms": [
+     -2.021,
+     2.058
+    ],
+    "ticks_within_0_6ms_of_grid": 62,
+    "phase_offset_ms_min_max": [
+     -2.039,
+     0.909
+    ],
+    "mean_ms_per_tick": 56.437
+   },
+   "lc157d": {
+    "ticks": 67,
+    "best_period_ms": 5.0,
+    "best_resultant": 0.951,
+    "top6": [
+     [
+      0.951,
+      5.0
+     ],
+     [
+      0.867,
+      2.5
+     ],
+     [
+      0.8,
+      1.25
+     ],
+     [
+      0.782,
+      5.001
+     ],
+     [
+      0.753,
+      1.0
+     ],
+     [
+      0.72,
+      4.999
+     ]
+    ],
+    "one_tick_gaps": 48,
+    "one_tick_gap_periods": {
+     "10": 1,
+     "11": 29,
+     "12": 15,
+     "13": 3
+    },
+    "one_tick_gap_resid_ms": [
+     -1.032,
+     0.974
+    ],
+    "ticks_within_0_6ms_of_grid": 63,
+    "phase_offset_ms_min_max": [
+     -1.376,
+     0.911
+    ],
+    "mean_ms_per_tick": 56.365
+   },
+   "lc157e": {
+    "ticks": 65,
+    "best_period_ms": 5.0,
+    "best_resultant": 0.948,
+    "top6": [
+     [
+      0.948,
+      5.0
+     ],
+     [
+      0.922,
+      2.5
+     ],
+     [
+      0.845,
+      1.25
+     ],
+     [
+      0.785,
+      1.0
+     ],
+     [
+      0.754,
+      4.999
+     ],
+     [
+      0.751,
+      5.001
+     ]
+    ],
+    "one_tick_gaps": 40,
+    "one_tick_gap_periods": {
+     "11": 23,
+     "12": 14,
+     "13": 2,
+     "14": 1
+    },
+    "one_tick_gap_resid_ms": [
+     -1.44,
+     1.555
+    ],
+    "ticks_within_0_6ms_of_grid": 63,
+    "phase_offset_ms_min_max": [
+     -0.21,
+     1.792
+    ],
+    "mean_ms_per_tick": 56.214
+   }
+  },
+  "nominal_tick_ms": 54.925,
+  "bios_channel_us": 54925,
+  "divisor_for_5000us": 5966,
+  "pit_period_ms_for_5000us": 5.0001,
+  "static": "0x3ed29 把 int 8 指到 0x3ea8e、通道 0x3c 週期 54925 µs;0x3ec2d 取啟用通道的最小週期當基底,0x3ebe4 / 0x3ebb4 寫 PIT;0x3ead3 每次中斷各通道累加器加基底週期;0x3ea8e 在上一次 ISR 還沒結束時只送 EOI 就返回",
+  "not_determined": "基底 5 ms 是哪一個通道設的(執行期才登錄);掉的中斷是 0x3ea8e 的重入保護丟的,還是中斷關著時 IRQ 疊在一起,紀錄分不出來",
+  "conclusion": "BIOS tick 落在 5.000 ms 的格點上(PIT 被改成 200 Hz,BIOS tick 由軟體計時器每累積 54925 µs 鏈一次):正常間隔 11 格 = 55 ms,偶爾 10 格;12 .. 14 格與平均大於 54.925 ms 表示有計時器中斷沒算進去。八成五以上的 tick 離格點 0.6 ms 以內,少數偏到 2 ms。"
+ },
+ "item5_attempt4": {
+  "result": "FAIL",
+  "instance": "lc157f",
+  "calllog": ".wsl_build/lc157_live/lc157f_title_calllog.txt",
+  "gate_opened": false,
+  "e_records": 0,
+  "sol_hp_before_after": [
+   [
+    1,
+    999
+   ],
+   [
+    200,
+    999
+   ]
+  ],
+  "mp_spent_11_to_16": [
+   6,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "predictions_file": "docs/knowledge-base/evidence/generators/drivers_s158/pred157_item5.txt",
+  "predictions_sha256": "0f5a140bca143eb2f521238226414a4365d62f25d940f448bb69d966c9bd16b2",
+  "predictions": {
+   "P1": "NOT TESTED",
+   "P2": "NOT TESTED",
+   "P3": "NOT TESTED",
+   "P4": "NOT TESTED",
+   "P5": "NOT TESTED"
+  },
+  "note": "第 1 次(lc157b)也是 HP 1 → 200;第 4 項成功走到 GAME OVER 的 lc157 是第 3 回合以後。HP 200 從哪裡來沒有找到(全 EXE 線性反組譯裡沒有把 200 寫進 +0x40 的指令;第 1 章勝負 handler 0x206c5 不碰 HP)。"
+ },
+ "still_open": {
+  "item5_new_game_return_18": "FAIL 4 次;HP 200 的來源未查到;再跑要重新核准",
+  "item6_copy_protection_patch_author": "BLOCKED:沒有未修改的版本可比"
+ }
+}
