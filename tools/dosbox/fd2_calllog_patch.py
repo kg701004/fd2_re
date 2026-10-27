@@ -17,6 +17,11 @@
 
 再以 `FD2_HARNESS_DOSBOX_BIN=~/fd2-dosbox-calllog/dosbox-x/src/dosbox-x FD2_HARNESS_CALLLOG=<入口檔>`
 啟動 harness。記錄格式寫在插入的 C++ 註解裡。2026-10-08 續一百零七。
+
+2026-10-27 續一百五十七:加兩個選用變數(harness 的 FD2_HARNESS_CALLLOG_ICOUNT / FD2_HARNESS_CALLLOG_GATE)。
+FD2_CALLLOG_ICOUNT=1 在 E / R / A 行尾附指令數與模擬時間,用來量函式內部花了多久(BIOS tick 只有約 55 ms 的解析度);
+FD2_CALLLOG_GATE=<EIP> 在那個 EIP 第一次執行之前不寫 E,免得開機以來每一幀的重畫都進紀錄。兩個都不設時輸出與之前逐字相同。
+`verify_names_by_calllog.py` 的解析器只收沒有附加欄位的形式,附了指令數的紀錄不要取 `*_CALLLOG.TXT` 的檔名。
 """
 from __future__ import annotations
 
@@ -37,6 +42,11 @@ CODE = r'''/* ---- fd2_re: function call log (local patch, not upstream; tools/d
  *   on the same stack.  A seq entry eip esp: the frame was left by a higher esp at another EIP.
  * Every hit is counted; "T tag n" + "C eip count" (changed counts) are written every 2^26
  * game-selector instructions and at exit.  Output: FD2_CALLLOG_OUT (default CALLLOG.TXT).
+ * Optional (both unset = output identical to the version without them):
+ *   FD2_CALLLOG_ICOUNT=1 appends " i=<game-selector instructions> n=<all instructions> t=<PIC_FullIndex ms>"
+ *     to every E, R and A record and " icount=1" to H; the counts include the current instruction.
+ *   FD2_CALLLOG_GATE=<hex eip> writes no E record (and tracks no frame) until that EIP has executed in the
+ *     game selector; hits are still counted.  H gets " gate=<eip>".
  */
 namespace fd2calllog {
 struct Frame { uint32_t ret, esp, entry; uint16_t ss; unsigned long long seq; };
@@ -50,6 +60,13 @@ static std::vector<unsigned long long> logged;
 static std::vector<Frame> frames;
 static unsigned long long seq = 0, ginstr = 0, cap = 200;
 static uint32_t dumplen = 32;
+static bool icount = false, has_gate = false, gate_open = true;
+static uint32_t gate_eip = 0;
+static unsigned long long allinstr = 0;
+
+static void put_icount(void) {
+    if (icount) fprintf(out, " i=%llu n=%llu t=%.6f", ginstr, allinstr, (double)PIC_FullIndex());
+}
 
 static void dump_counts(const char *tag) {
     fprintf(out, "T %s %llu\n", tag, ginstr);
@@ -78,6 +95,10 @@ static void init(void) {
     if (cap_s && *cap_s) cap = strtoull(cap_s, NULL, 10);
     if (dl_s && *dl_s) dumplen = (uint32_t)strtoul(dl_s, NULL, 10);
     if (dumplen > 256) dumplen = 256;
+    const char *ic_s = getenv("FD2_CALLLOG_ICOUNT");
+    const char *gate_s = getenv("FD2_CALLLOG_GATE");
+    icount = ic_s && *ic_s && strcmp(ic_s, "0") != 0;
+    if (gate_s && *gate_s) { has_gate = true; gate_open = false; gate_eip = (uint32_t)strtoul(gate_s, NULL, 16); }
     std::vector<uint32_t> addrs;
     FILE *f = fopen(ef, "r");
     if (!f) E_Exit("FD2_CALLLOG: cannot open entries file %s", ef);
@@ -97,8 +118,11 @@ static void init(void) {
     out = fopen(of && *of ? of : "CALLLOG.TXT", "w");
     if (!out) E_Exit("FD2_CALLLOG: cannot open output file");
     setvbuf(out, NULL, _IOFBF, 1 << 20);
-    fprintf(out, "H fd2calllog 1 cs=%04x entries=%u cap=%llu dump=%u lo=%08x hi=%08x\n",
+    fprintf(out, "H fd2calllog 1 cs=%04x entries=%u cap=%llu dump=%u lo=%08x hi=%08x",
             (unsigned)game_cs, (unsigned)addrs.size(), cap, (unsigned)dumplen, (unsigned)lo, (unsigned)hi);
+    if (icount) fputs(" icount=1", out);
+    if (has_gate) fprintf(out, " gate=%08x", (unsigned)gate_eip);
+    fputc('\n', out);
     fflush(out);
     atexit(at_exit_flush);
     enabled = true;
@@ -115,24 +139,28 @@ static void hexdump(uint32_t lin, uint32_t n) {
 static void step(void) {
     if (GCC_UNLIKELY(!inited)) init();
     if (!enabled) return;
+    allinstr++;
     if (SegValue(cs) != game_cs) return;
     ginstr++;
     const uint32_t eip = reg_eip, esp = reg_esp;
     const uint16_t ssv = SegValue(ss);
+    if (!gate_open && eip == gate_eip) gate_open = true;
     while (!frames.empty()) {
         Frame &t = frames.back();
         if (t.ss != ssv || esp <= t.esp) break;
         if (eip == t.ret)
-            fprintf(out, "R %llu %08x %08x %08x %08x\n", t.seq, (unsigned)t.entry,
+            fprintf(out, "R %llu %08x %08x %08x %08x", t.seq, (unsigned)t.entry,
                     (unsigned)reg_eax, (unsigned)reg_edx, (unsigned)esp);
         else
-            fprintf(out, "A %llu %08x %08x %08x\n", t.seq, (unsigned)t.entry, (unsigned)eip, (unsigned)esp);
+            fprintf(out, "A %llu %08x %08x %08x", t.seq, (unsigned)t.entry, (unsigned)eip, (unsigned)esp);
+        put_icount();
+        fputc('\n', out);
         frames.pop_back();
     }
     if (eip >= lo && eip < hi && isentry[eip - lo]) {
         const size_t i = eip - lo;
         calls[i]++;
-        if (logged[i] < cap) {
+        if (gate_open && logged[i] < cap) {
             logged[i]++;
             seq++;
             const uint32_t ssb = (uint32_t)SegPhys(ss), dsb = (uint32_t)SegPhys(ds), csb = (uint32_t)SegPhys(cs);
@@ -152,6 +180,7 @@ static void step(void) {
                                         (uint32_t)reg_esi, (uint32_t)reg_edi, s[1], s[2], s[3], s[4] };
             fputs(" m=", out);
             for (int k = 0; k < 10; k++) { if (k) fputc(',', out); hexdump(dsb + ptrs[k], dumplen); }
+            put_icount();
             fputc('\n', out);
             if (!ret_bad) {
                 if (frames.size() >= 100000) { fprintf(out, "X frames-overflow %llu\n", seq); frames.clear(); }

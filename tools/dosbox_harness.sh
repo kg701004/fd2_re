@@ -344,6 +344,18 @@ cmd_launch() {
             [[ "$FD2_HARNESS_CALLLOG_DUMP" =~ ^[0-9]+$ ]] || die "FD2_HARNESS_CALLLOG_DUMP '$FD2_HARNESS_CALLLOG_DUMP' is not a number"
             calllog_env+="FD2_CALLLOG_DUMP=$FD2_HARNESS_CALLLOG_DUMP "
         fi
+        # 2026-10-27 續一百五十七: FD2_HARNESS_CALLLOG_ICOUNT=1 (instruction counts + emulated time on
+        # E/R/A records) and FD2_HARNESS_CALLLOG_GATE=<hex runtime EIP> (no E record before that EIP runs).
+        if [[ -n "${FD2_HARNESS_CALLLOG_ICOUNT:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_ICOUNT" =~ ^[01]$ ]] || die "FD2_HARNESS_CALLLOG_ICOUNT '$FD2_HARNESS_CALLLOG_ICOUNT' is not 0 or 1"
+            grep -aq FD2_CALLLOG_ICOUNT "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_ICOUNT; rebuild with tools/dosbox/fd2_calllog_patch.py"
+            calllog_env+="FD2_CALLLOG_ICOUNT=$FD2_HARNESS_CALLLOG_ICOUNT "
+        fi
+        if [[ -n "${FD2_HARNESS_CALLLOG_GATE:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_GATE" =~ ^[0-9a-fA-F]+$ ]] || die "FD2_HARNESS_CALLLOG_GATE '$FD2_HARNESS_CALLLOG_GATE' is not hex"
+            grep -aq FD2_CALLLOG_GATE "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_GATE; rebuild with tools/dosbox/fd2_calllog_patch.py"
+            calllog_env+="FD2_CALLLOG_GATE=$FD2_HARNESS_CALLLOG_GATE "
+        fi
         echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
     fi
 
