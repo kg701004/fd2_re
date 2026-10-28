@@ -1,0 +1,111 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s159.py",
+ "exe": {
+  "path": "org_game/炎龍騎士團/FLAME2/FD2.EXE",
+  "md5": "33464c81e6a364fd0660141139aa8e6e"
+ },
+ "pass_dat": {
+  "path": ".wsl_build/s159_copyprot/PASS.DAT (copy of GAME/FD2_APK/PASS.DAT)",
+  "bytes": 110,
+  "format": "MS-DOS COMP:Compare error at OFFSET / file1 / file2",
+  "records": [
+   {
+    "offset": "0x378be",
+    "linear": "0x118aa",
+    "file1": "eb",
+    "file2": "75"
+   },
+   {
+    "offset": "0x5a247",
+    "linear": "0x34233",
+    "file1": "eb",
+    "file2": "74"
+   }
+  ],
+  "file_offset_minus_linear": "0x26014",
+  "file1_is_reference_exe": true,
+  "only_these_two_bytes_differ": true
+ },
+ "original_reconstructed": {
+  "md5": "d5bdc354487a5431cbc2c9da67e296a8",
+  "sha256": "b785b86583d3e83554c7a376aff0aeede476237529685b4534b8c938695abe75",
+  "size": 509158,
+  "on_disk": false,
+  "semantics": {
+   "0x118aa": {
+    "patched": "jmp 0x118b3",
+    "original": "jne 0x118b3",
+    "context_original": [
+     "0x118a3 cmp byte ptr [0x3a44], 0",
+     "0x118aa jne 0x118b3",
+     "0x118ac call 0x33faf",
+     "0x118b1 jmp 0x118a3"
+    ]
+   },
+   "0x34233": {
+    "patched": "jmp 0x3421e",
+    "original": "je 0x3421e",
+    "context_original": [
+     "0x34231 cmp eax, ebx",
+     "0x34233 je 0x3421e",
+     "0x34235 mov byte ptr [esp + 0x34], 1",
+     "0x3423a jmp 0x3421e"
+    ]
+   }
+  }
+ },
+ "s137_counterfactual_opcodes": {
+  "0x118aa": "75",
+  "0x34233": "74"
+ },
+ "timeline_local": {
+  "data_files_first_last": [
+   "1995-06-06 09:27:28",
+   "1995-07-07 17:20:04"
+  ],
+  "FD2_USB/FD2.EXE": "1995-07-07 14:52:16",
+  "FD2_APK_only": {
+   "FD2_old.EXE": "1995-07-14 22:16:52",
+   "PASS.DAT": "1995-07-15 09:17:58",
+   "PLAY.BAT": "1995-07-15 09:19:26",
+   "SETUP.BAT": "1995-07-15 09:19:32"
+  },
+  "FD2_APK/FD2.EXE": "2004-10-23 01:49:48"
+ },
+ "common_1995_files_identical": 42,
+ "scan_c_drive_hits": 5,
+ "item5_run5": {
+  "run": "lc159a",
+  "verdict": "FAIL(設定步驟,未進入量測)",
+  "cursor_tile": {
+   "before": {
+    "grey": 84,
+    "green": 610,
+    "blue": 148
+   },
+   "after": {
+    "grey": 1232,
+    "green": 28,
+    "blue": 0
+   }
+  },
+  "sol_tile": {
+   "before": {
+    "grey": 16,
+    "green": 346,
+    "blue": 358
+   },
+   "after": {
+    "grey": 148,
+    "green": 1038,
+    "blue": 0
+   }
+  },
+  "scroll_consistency": 0.9325,
+  "scroll_controls": [
+   0.5289,
+   0.3685
+  ],
+  "predictions": "drivers_s159/pred159_item5.txt(P0 .. P5 NOT TESTED)"
+ }
+}

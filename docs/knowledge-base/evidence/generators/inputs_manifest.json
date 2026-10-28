@@ -12869,6 +12869,45 @@
     ]
    }
   },
+  "ev_s159": {
+   "outputs": [
+    "copyprot_patch_record_s159_20261028.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc159_live/lc159a/prompt/findempty_001_Up.png": [
+     29948,
+     "ce67a10919b8976601e89b1e0c5ff6b292802afda6aeb710d7874f5636225ea5"
+    ],
+    ".wsl_build/lc159_live/lc159a/prompt/now1.png": [
+     29897,
+     "300a62da7a67906a3a7e6cfa346a5d1f4a393580f352c64efa8ae38db03deeaf"
+    ],
+    ".wsl_build/s159_copyprot/PASS.DAT": [
+     110,
+     "64e60ee4ac4ecb3e74eea20971afa181451416778cdbeb119cb4f0294ca90102"
+    ],
+    ".wsl_build/s159_copyprot/PLAY.BAT": [
+     5,
+     "07dfb0d25cb479d24b863a3c025c280a9297d7519d7fcf9883abe64844734a92"
+    ],
+    ".wsl_build/s159_copyprot/SETUP.BAT": [
+     10,
+     "728b83297bfc28d12c5d8dfdaf547265aac71750fc5d788a1acaa5ded17e968a"
+    ],
+    ".wsl_build/s159_copyprot/dirs.json": [
+     20439,
+     "8c9750f63c2d93e90df37d3e2c0298cb3ea3f5b40a65a782c9eb8d2494c06bd1"
+    ],
+    ".wsl_build/s159_copyprot/scan_c_drive.txt": [
+     380,
+     "fe8d92ffc70de1a2e1c06a13e2d36761b86ac1ce80f0a22e22a8ea8fcdec1bbc"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
