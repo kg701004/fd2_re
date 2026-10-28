@@ -1,0 +1,416 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s160.py",
+ "approval": "使用者 2026-10-28「第五項 核准授權你重新實機重跑驗證」(第 6 次,lc159b)",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllog": {
+  "full_md5": "2dbf231b7f649cb8cd59d55407715f6b",
+  "full_lines": 58500104,
+  "header": "H fd2calllog 1 cs=0170 entries=14 cap=100000000 dump=0 lo=001ac620 hi=001ea382 icount=1 gate=001bee5c",
+  "filtered": ".wsl_build/lc159_live/lc159b_calllog_filtered.txt",
+  "filter": "filter: awk !($3==\"001ac620\" && ($1==\"E\" || $4==\"00000000\"))"
+ },
+ "predictions": {
+  "file": "docs/knowledge-base/evidence/generators/drivers_s159/pred159_item5.txt",
+  "sha256": "5a634b75e84118dadbad3ac9e81b898e59c056f375f0d23c87968e3526d092d1",
+  "verdict": {
+   "P0": "PASS",
+   "P1": "FAIL",
+   "P2": "PASS",
+   "P3": "PASS",
+   "P4": "PASS",
+   "P5": "PASS"
+  }
+ },
+ "setup_steps": {
+  "panel_blue": [
+   34.1,
+   127.0,
+   127.0,
+   34.1
+  ],
+  "map_saturation": [
+   83.6,
+   83.76,
+   60.89,
+   83.6
+  ],
+  "map_restored_after_escape": true,
+  "map_diff_frac_vs_031": {
+   "033_idle3s": 0.9789,
+   "034_esc": 0.0256
+  },
+  "prompt_blue": [
+   69.2,
+   137.3
+  ],
+  "sol_tile_diff": 52.32,
+  "rest_diff": 2.3,
+  "kill": {
+   "sol_plus5_before": 0,
+   "sol_plus5_after": 1,
+   "sol_hp": [
+    823,
+    823
+   ],
+   "bps": []
+  },
+  "note": "清對話第 32 次 Return 出現索爾的資訊框、3 秒後地圖褪色(推論:選了索爾、顯示移動範圍);Escape 回到選之前。第 5 次在這個狀態送 Up → Return,索爾移到上一格(推論)。"
+ },
+ "events_seq": {
+  "gameover": 1,
+  "title": 132,
+  "intro_exit": 397,
+  "menu_flush": 524,
+  "menu_key": 527,
+  "confirm": 528,
+  "blink": 529,
+  "fade": 538,
+  "cls": 603,
+  "newgame": 668
+ },
+ "events_sim_s_from_gameover": {
+  "gameover": 0.0,
+  "title": 3.459,
+  "intro_exit": 7.349,
+  "menu_flush": 9.016,
+  "menu_key": 9.288,
+  "confirm": 9.288,
+  "blink": 9.288,
+  "fade": 10.051,
+  "cls": 10.484,
+  "newgame": 10.934
+ },
+ "P0": {
+  "gate_opened": true,
+  "newgame_seq": 668,
+  "c03_after": 32
+ },
+ "P1": {
+  "calib_541b0": 9057,
+  "blink_ms": 762.9,
+  "fade_ms": 432.4,
+  "delay80_ms": [
+   95.6,
+   98.8,
+   95.9,
+   97.0,
+   92.5,
+   91.8,
+   90.5,
+   95.3
+  ],
+  "delay80_vs_nominal": [
+   1.131,
+   1.235
+  ],
+  "int21_rate_during_blink_per_s": 7658,
+  "fade_delay_ms": 139.2,
+  "fade_non_delay_ms": 293.2,
+  "checks": {
+   "calib_nonzero": true,
+   "blink_640_pm15": false,
+   "fade_le_300": false,
+   "sum_le_900": false
+  }
+ },
+ "P2": {
+  "menu_reads": 1,
+  "flush_seq": 525,
+  "read_seq": 526
+ },
+ "P3_P5": {
+  "slope": 0.99951,
+  "intercept_s": -0.632,
+  "max_abs_resid_s": 0.136,
+  "confirm_lag_s": -0.059,
+  "host_menu_flush_s": 9.653,
+  "host_confirm_read_s": 9.924,
+  "pairs": 33,
+  "confirm_send": "clear011",
+  "return_count_incl_yes": 12,
+  "pairs_detail": [
+   {
+    "send": "clear005",
+    "host_s": 4.084,
+    "sim_s": 3.458,
+    "kind": "rd",
+    "seq": 131,
+    "resid_s": 0.007
+   },
+   {
+    "send": "clear008",
+    "host_s": 6.915,
+    "sim_s": 6.25,
+    "kind": "hk",
+    "seq": 264,
+    "resid_s": -0.029
+   },
+   {
+    "send": "clear009",
+    "host_s": 7.848,
+    "sim_s": 7.349,
+    "kind": "hk",
+    "seq": 396,
+    "resid_s": 0.136
+   },
+   {
+    "send": "clear010",
+    "host_s": 8.935,
+    "sim_s": 8.354,
+    "kind": "hk",
+    "seq": 482,
+    "resid_s": 0.056
+   },
+   {
+    "send": "clear011",
+    "host_s": 9.983,
+    "sim_s": 9.288,
+    "kind": "rd",
+    "seq": 526,
+    "resid_s": -0.059
+   },
+   {
+    "send": "clear024",
+    "host_s": 22.37,
+    "sim_s": 21.717,
+    "kind": "hk",
+    "seq": 849,
+    "resid_s": -0.01
+   },
+   {
+    "send": "clear024",
+    "host_s": 22.37,
+    "sim_s": 21.717,
+    "kind": "rd",
+    "seq": 850,
+    "resid_s": -0.01
+   },
+   {
+    "send": "clear026",
+    "host_s": 24.274,
+    "sim_s": 23.633,
+    "kind": "hk",
+    "seq": 910,
+    "resid_s": 0.003
+   },
+   {
+    "send": "clear026",
+    "host_s": 24.274,
+    "sim_s": 23.65,
+    "kind": "rd",
+    "seq": 921,
+    "resid_s": 0.02
+   },
+   {
+    "send": "clear028",
+    "host_s": 26.189,
+    "sim_s": 25.504,
+    "kind": "hk",
+    "seq": 44553,
+    "resid_s": -0.041
+   },
+   {
+    "send": "clear028",
+    "host_s": 26.189,
+    "sim_s": 25.504,
+    "kind": "rd",
+    "seq": 44554,
+    "resid_s": -0.041
+   },
+   {
+    "send": "clear029",
+    "host_s": 27.148,
+    "sim_s": 26.46,
+    "kind": "hk",
+    "seq": 44605,
+    "resid_s": -0.043
+   },
+   {
+    "send": "clear029",
+    "host_s": 27.148,
+    "sim_s": 26.489,
+    "kind": "rd",
+    "seq": 44645,
+    "resid_s": -0.014
+   },
+   {
+    "send": "clear030",
+    "host_s": 28.115,
+    "sim_s": 27.423,
+    "kind": "hk",
+    "seq": 110597,
+    "resid_s": -0.047
+   },
+   {
+    "send": "clear030",
+    "host_s": 28.115,
+    "sim_s": 27.423,
+    "kind": "rd",
+    "seq": 110598,
+    "resid_s": -0.047
+   },
+   {
+    "send": "clear031",
+    "host_s": 29.069,
+    "sim_s": 28.398,
+    "kind": "hk",
+    "seq": 110645,
+    "resid_s": -0.025
+   },
+   {
+    "send": "clear031",
+    "host_s": 29.069,
+    "sim_s": 28.418,
+    "kind": "rd",
+    "seq": 110656,
+    "resid_s": -0.005
+   },
+   {
+    "send": "clear033",
+    "host_s": 30.998,
+    "sim_s": 30.313,
+    "kind": "hk",
+    "seq": 168711,
+    "resid_s": -0.038
+   },
+   {
+    "send": "clear033",
+    "host_s": 30.998,
+    "sim_s": 30.313,
+    "kind": "rd",
+    "seq": 168712,
+    "resid_s": -0.038
+   },
+   {
+    "send": "clear039",
+    "host_s": 36.718,
+    "sim_s": 36.088,
+    "kind": "hk",
+    "seq": 168764,
+    "resid_s": 0.02
+   },
+   {
+    "send": "clear039",
+    "host_s": 36.718,
+    "sim_s": 36.112,
+    "kind": "rd",
+    "seq": 168790,
+    "resid_s": 0.044
+   },
+   {
+    "send": "clear040",
+    "host_s": 37.67,
+    "sim_s": 37.024,
+    "kind": "hk",
+    "seq": 168807,
+    "resid_s": 0.004
+   },
+   {
+    "send": "clear040",
+    "host_s": 37.67,
+    "sim_s": 37.051,
+    "kind": "rd",
+    "seq": 168817,
+    "resid_s": 0.031
+   },
+   {
+    "send": "clear041",
+    "host_s": 38.628,
+    "sim_s": 37.983,
+    "kind": "hk",
+    "seq": 168865,
+    "resid_s": 0.006
+   },
+   {
+    "send": "clear041",
+    "host_s": 38.628,
+    "sim_s": 38.02,
+    "kind": "rd",
+    "seq": 168888,
+    "resid_s": 0.043
+   },
+   {
+    "send": "clear042",
+    "host_s": 39.605,
+    "sim_s": 38.964,
+    "kind": "hk",
+    "seq": 168932,
+    "resid_s": 0.01
+   },
+   {
+    "send": "clear042",
+    "host_s": 39.605,
+    "sim_s": 38.984,
+    "kind": "rd",
+    "seq": 168951,
+    "resid_s": 0.03
+   },
+   {
+    "send": "clear043",
+    "host_s": 40.567,
+    "sim_s": 39.934,
+    "kind": "hk",
+    "seq": 169000,
+    "resid_s": 0.018
+   },
+   {
+    "send": "clear043",
+    "host_s": 40.567,
+    "sim_s": 39.95,
+    "kind": "rd",
+    "seq": 169008,
+    "resid_s": 0.035
+   },
+   {
+    "send": "clear044",
+    "host_s": 41.517,
+    "sim_s": 40.843,
+    "kind": "hk",
+    "seq": 169051,
+    "resid_s": -0.021
+   },
+   {
+    "send": "clear044",
+    "host_s": 41.517,
+    "sim_s": 40.863,
+    "kind": "rd",
+    "seq": 169067,
+    "resid_s": -0.002
+   },
+   {
+    "send": "clear045",
+    "host_s": 42.467,
+    "sim_s": 41.806,
+    "kind": "hk",
+    "seq": 169116,
+    "resid_s": -0.009
+   },
+   {
+    "send": "clear045",
+    "host_s": 42.467,
+    "sim_s": 41.832,
+    "kind": "rd",
+    "seq": 169147,
+    "resid_s": 0.017
+   }
+  ]
+ },
+ "P4": {
+  "means": {
+   "9": 3.13,
+   "10": 66.37,
+   "11": 55.02,
+   "12": 3.13,
+   "13": 132.08
+  },
+  "corr_10_11": 0.9983,
+  "corr_10_13": 0.0506,
+  "last_still_menu_shot": 10,
+  "shot11_host_s": 10.777,
+  "fade_host_s": [
+   10.688,
+   11.121
+  ]
+ },
+ "conclusion": "選新遊戲的是標題選單 0x1fd7c 清掉鍵盤緩衝之後送到的第一個 Return(選單阻塞讀一個鍵,預設是 START);這一次是 YES 之後的第 12 次 Return(clear011)。次數取決於 GAME OVER 與送鍵的時間,lc131a 的「第 18 次」是同一個機制的一個例子,不是固定值。"
+}

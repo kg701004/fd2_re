@@ -1,7 +1,18 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 57 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 58 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百六十(2026-10-28)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s160.py` | `item5_title_return_s160_20261028.json` | `mut_s160.py`(33) |
+
+第 5 項第 6 次實機(lc159b,DOSBox-X,原版 FD2.EXE;原始紀錄 `.wsl_build/lc159_live/`):逐鍵截圖的設定步驟(清對話第 32 次 Return 選了索爾、Escape 還原、
+開到「結束這回合?」框)、呼叫紀錄的標題序列順序(`0x22e5c` .. `0x32326`)、選單 flush 到確認之間只讀一個鍵、閃爍 / 淡出與每次 delay 的模擬時間、
+主機與模擬時間的線性對齊(確認的讀鍵 `0x370f0` = `0x1fd7c` flush 之後第一次送鍵)、迴圈截圖的規則。預測 P0 .. P5 用 `drivers_s159/pred159_item5.txt` 的原文;
+驅動腳本在 [`drivers_s160/`](drivers_s160/README.md)。
 
 ## 續一百五十九(2026-10-28)
 

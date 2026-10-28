@@ -12908,6 +12908,85 @@
     ]
    }
   },
+  "ev_s160": {
+   "outputs": [
+    "item5_title_return_s160_20261028.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc159_live/lc159b/loop/findempty_clear_009.png": [
+     1434,
+     "ce6454b43a4247c46754ce96d2203450a9b502b59bd7a17f03d2b463a30ab8ae"
+    ],
+    ".wsl_build/lc159_live/lc159b/loop/findempty_clear_010.png": [
+     22561,
+     "94208586de9f8ae7715a9d0aac0501f8fcd737b443ee428d72b6e26eff097148"
+    ],
+    ".wsl_build/lc159_live/lc159b/loop/findempty_clear_011.png": [
+     39301,
+     "ec1d3bf740395ea8020bafec02c4b0f8393af7b6ddfc5fb81d5ea055ce97bdc9"
+    ],
+    ".wsl_build/lc159_live/lc159b/loop/findempty_clear_012.png": [
+     1434,
+     "ce6454b43a4247c46754ce96d2203450a9b502b59bd7a17f03d2b463a30ab8ae"
+    ],
+    ".wsl_build/lc159_live/lc159b/loop/findempty_clear_013.png": [
+     11975,
+     "b7e6fc024eb598402844cfbcaed7279cd29db07bf5c58af7fbc058d778d5d948"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/031_clear.png": [
+     29977,
+     "aecc22405f7332bb15f285fdf18d0de19f16f3a85d7adb7968da6512c6c4b00f"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/032_clear.png": [
+     29161,
+     "4efdd4687153911a3dacdc9db129d86e486604d05c5048a6bf81eafa06eade90"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/033_idle3s.png": [
+     27544,
+     "5af4380109040ba55c8f64acfb756265d9d276702c2a8861ab7c3e8a22b98a18"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/034_esc.png": [
+     30603,
+     "7fd831da692830f83ed2352706ef69845eb86102157fb9041d1c21223858f372"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/037_down.png": [
+     29505,
+     "80d1eb53614a11d4d1479475e6f26f44a7c72b535788d80fc89f5dbdfd2ac844"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/038_endsel.png": [
+     22611,
+     "862981746982f36728c92227d4bdb555d0035415c9e84b4bca5f7cef815879b4"
+    ],
+    ".wsl_build/lc159_live/lc159b/steps/039_afterkill.png": [
+     22375,
+     "ce6c3c7b09e7c4697f68bc1f64a5a688b7f4e3db34b8e1c15dec7f8b30f8821b"
+    ],
+    ".wsl_build/lc159_live/lc159b_calllog_filtered.txt": [
+     469022,
+     "00dcfb8bb06cdbb1c268af0fc6b01634d7024e11a121c5eb6c289495667ba7a9"
+    ],
+    ".wsl_build/lc159_live/lc159b_kill.json": [
+     108,
+     "3f563b6139f434cb8785518d9765c90637bc48c7aee3dbcd3b3eb7808d352bb7"
+    ],
+    ".wsl_build/lc159_live/lc159b_loop.json": [
+     13975,
+     "033bbf19b945676bfc0b7f1587163e18be59a504bad531a442eebe8c7b95ad13"
+    ],
+    ".wsl_build/lc159_live/lc159b_meta.txt": [
+     260,
+     "cd97e298eccf3aa5966befb11c2764a2284f5b8cffc08b0e0bbd51d13eb19952"
+    ],
+    ".wsl_build/lc159_live/lc159b_post.json": [
+     62,
+     "6ae43d8b87c68bb7641be90e4340a0a926a5fdd00a33de68257b5798de1c9bca"
+    ],
+    ".wsl_build/lc159_live/lc159b_steps.jsonl": [
+     7821,
+     "81ebb1203267db7b4e16db55ce68ffdea8ef005c75b781699bf8aee4979224f4"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

@@ -5463,3 +5463,10 @@ cycles 由 WSL 包裝腳本只換 harness 的 `cycles=5000`(執行中的 dosbox-
 - 選新遊戲是第 18 次 Return(上面續一百三十八那段的推論):第 4 次實機(lc157f)仍沒走到 GAME OVER —— 第 1 回合把索爾 HP 設 1,結束回合後變成 200,
   與第 1 次相同(FAIL,依規則停止;HP 200 的來源沒有找到)。
 - 證據:`evidence/followups_s158_20261027.json`,產生器 `evidence/generators/ev_s158.py`(變異測試 `mut_s158.py`,24 個全部抓到)。
+
+**選新遊戲是哪一次 Return(2026-10-28 續一百六十,DOSBox-X 呼叫紀錄與逐鍵截圖)**。
+- 第 6 次實機(lc159b)走到 GAME OVER:停在「結束這回合?」框把索爾 `+5` 的 bit0 設 1,YES 之後出現 GAME OVER(`0x22e5c`)。標題選單在 `0x1fd7c` 清掉鍵盤緩衝後
+  阻塞讀一個鍵(`0x370f0`),確認的就是之後送到的第一個 Return —— 這次是 YES 之後第 12 次(DOSBox-X 呼叫紀錄,模擬 / 主機時間比 0.99951)。
+- 上面續一百三十八那段的「第 18 次」是同一段程式碼(推論);那段用的「閃爍加淡出 768 ms」DOSBox-X 實測是 762.9 + 432.4 = 1195 ms(`0x3e01d` delay(80) 每次長 13 .. 24%,
+  淡出另有 293 ms 的調色盤工作),但「最後一張靜止選單的下一張 = 確認的送鍵」這條規則在 lc159b 成立(DOSBox-X 第 11 張截圖落在呼叫紀錄算出的淡出區間)。
+- 證據:`evidence/item5_title_return_s160_20261028.json`,產生器 `evidence/generators/ev_s160.py`(變異測試 `mut_s160.py`,33 個全部抓到)。
