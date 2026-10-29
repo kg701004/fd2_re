@@ -1,0 +1,196 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s165.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-29「剩下沒解的 請依照你的建議逐項進行處理」;離線分析,沒有實機",
+ "source_run": {
+  "calllog": ".wsl_build/lc163_live/lc163a_CALLLOG.TXT",
+  "calllog_md5": "3bebd4f463c821dfc137cd267c5c6112",
+  "records": 29822
+ },
+ "isr_path": {
+  "pre": 18,
+  "slots": 16,
+  "slot_idle": 5,
+  "slot_active": 10,
+  "overflow": 2,
+  "after_scan": 5,
+  "locked_end": 4,
+  "scan_skip": 5,
+  "call_seq": 7,
+  "same_slot_again": 9,
+  "active_channels": 3,
+  "first_callback_fit": {
+   "DIG 134": 1969,
+   "DIG 136": 197,
+   "MDI 131": 2955,
+   "MDI 133": 296
+  },
+  "same_slot_again_log": {
+   "9": 3
+  }
+ },
+ "reentry_3665": {
+  "t": 3665.216,
+  "late_ms": 1.95,
+  "outer_isr_t": 3658.263,
+  "previous_two_isr": [
+   {
+    "t": 3648.295,
+    "di_to_A": 125,
+    "A_at": "0x3eb9d",
+    "callbacks": 0
+   },
+   {
+    "t": 3653.296,
+    "di_to_A": 127,
+    "A_at": "0x3eb9d",
+    "callbacks": 0
+   }
+  ],
+  "catchup_callbacks": [
+   "MDI",
+   "MDI",
+   "DIG",
+   "DIG",
+   "DIG"
+  ],
+  "pending_from": {
+   "DIG": 3,
+   "MDI": 2
+  },
+  "di_reentry_to_next": 57,
+  "predicted": "4 + 43 + 1 + 9(同一格再叫 MDI)= 57"
+ },
+ "mdi_driver": {
+  "mdi_ini_driver": "SBPRO2.MDI",
+  "md5": "8879265bf3b414346f66c326389e32ae",
+  "int66_dispatcher": "0x132(標頭 +0x34)",
+  "dispatcher_cli": "0x143",
+  "dispatcher_iret": "0x1b1",
+  "function_table_500": [
+   "0x3ead",
+   "0x3eb4",
+   "0x3ed8",
+   "0x3f54",
+   "0x401c",
+   "0x404a",
+   "0x4096"
+  ],
+  "function_called_by_mdi_service": "0x502 → 0x3ed8",
+  "reachable_insns": 1315,
+  "reachable_kinds": {
+   "cli": [],
+   "sti": [],
+   "popf": [],
+   "pushf": [],
+   "iret": [],
+   "int": [],
+   "in": [
+    "0x2aea",
+    "0x2af6"
+   ],
+   "out": [
+    "0x2ae7",
+    "0x2af2"
+   ]
+  },
+  "game_driver_calls": {
+   "0x4229c": "0x42294",
+   "0x42354": "0x4234c",
+   "0x42e5c": "0x42e54",
+   "0x42f2d": "0x42f25",
+   "0x4396b": "0x43962"
+  },
+  "rm_call_flags_from": "0x3f14b pushf → [ebp-0x1a] = 呼叫結構 +0x20",
+  "post_nongame": {
+   "DIG": {
+    "69": 60,
+    "70": 2,
+    "601": 1
+   },
+   "MDI": {
+    "302": 14,
+    "375": 1
+   }
+  },
+  "pre_nongame": {
+   "MDI": [
+    12716,
+    18551
+   ],
+   "DIG": [
+    229
+   ]
+  },
+  "nongame_after_accept_beyond_dig": 233,
+  "uninterrupted_mdi_nongame_lt_2000": {
+   "distinct": 91,
+   "range": [
+    761,
+    1938
+   ]
+  }
+ },
+ "calibration": {
+  "delay_clean_nongame_range": [
+   8558,
+   8577
+  ],
+  "per_int21_range": [
+   475.44,
+   476.5
+  ],
+  "outlier": [
+   [
+    4003.7,
+    9105
+   ]
+  ],
+  "phase": {
+   "early": {
+    "t_ms": [
+     3745.1,
+     7794.8
+    ],
+    "n": 140,
+    "nongame_mean": 8568.87,
+    "nongame_range": [
+     8559,
+     8577
+    ],
+    "ms_median": 2.0643,
+    "insn_per_ms": 4207.4
+   },
+   "late": {
+    "t_ms": [
+     11520.5,
+     13309.6
+    ],
+    "n": 102,
+    "nongame_mean": 8563.49,
+    "nongame_range": [
+     8558,
+     8571
+    ],
+    "ms_median": 2.054,
+    "insn_per_ms": 4225.3
+   }
+  },
+  "calibration_per_int21": [
+   481.49,
+   484.51
+  ],
+  "calibration_above_delay_max": 4.99,
+  "tick_cost_needed_to_explain": [
+   2608,
+   4007
+  ],
+  "tick_sample_pre_ail": 689,
+  "insn_per_ms_calibration": 4232.4
+ },
+ "conclusion": {
+  "reentry_3665": "續一百六十四沒歸類的那一次也是 MDI 型:前兩次中斷(3648.295 / 3653.296 ms)走鎖住的路徑(125 / 127 條,= 鎖住、3 個啟用通道、溢位 1 / 2 次),回呼沒叫、待辦累積;3658.263 ms 那次補叫 MDI 2 次、DIG 3 次。重入落在第一次 MDI 的 int 31h 返回點,之後接第二次 MDI(9 條)而不是 DIG(14 條),所以是 4 + 43 + 1 + 9(同一格再叫 MDI)= 57。MDI 型因此共 15 次(= 續一百六十三「MDI 還沒返回」的 15)。",
+  "mdi_driver": "MDI 驅動是 SBPRO2.MDI(MDI.INI)。int 66h 分派器 0x132 一進來就 cli(0x143),MDI 服務唯一呼叫的功能 0x502(0x3ed8)可達 1315 條指令裡沒有 sti / popf / iret / int,也沒有間接轉移;分派器 0x1b1 的 iret 才把旗標還原成呼叫結構裡的值(遊戲 0x3f14b pushf,IF = 1)。紀錄上 MDI 型重入之後到下一筆的非遊戲指令 15 次裡 14 次是 302,DIG 型 63 次裡 62 次是 69 / 70,之前的非遊戲指令 12716 .. 18551 隨驅動工作量變:中斷是在驅動做完之後、int 31h 返回前的同一點收的(比 DIG 型多 233 條非遊戲指令)。所以擋住 IRQ 的是驅動整段關中斷;收的那一點正好在驅動 iret 還是稍後的 DOS/4GW 返回路徑,沒查(DOS/4GW 沒反組譯)。",
+  "calibration": "遊戲中沒遇到中斷的 delay(2) 每次非遊戲指令不是定值:8558 .. 8577(每次 int 21h 475.44 .. 476.5),片頭時段平均 8568.87、新遊戲開場 8563.49,每次時間 2.0643 / 2.054 ms。校準的 481.49 .. 484.51 比遊戲中最大值還多 4.99 條,不是同一段程式的正常起伏;若全算給 BIOS tick,每個 tick 要 2608 .. 4007 條(AIL 前唯一樣本 689 條)。原因仍沒找到。"
+ }
+}
