@@ -1,0 +1,177 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s164.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-29「還沒做的 請逐項自動進行處理」;離線分析,沒有實機",
+ "source_run": {
+  "calllog": ".wsl_build/lc163_live/lc163a_CALLLOG.TXT",
+  "calllog_md5": "3bebd4f463c821dfc137cd267c5c6112",
+  "records": 29822
+ },
+ "interrupt_off": {
+  "isr_eoi_sti_before_callbacks": "0x3eb11 .. 0x3eb15",
+  "dig_disable": "0x404ea call 0x382d6 → 0x3f0a8 pushfd; pop eax; cli",
+  "dig_restore_sites": [
+   "0x40502",
+   "0x40534",
+   "0x4066c"
+  ],
+  "restore_fn": "0x3f0ac(存下的 IF = 1 才 sti 0x3f0bc)",
+  "direct_call_sites": {
+   "dig": {
+    "cli": [
+     "0x3f0aa",
+     "0x3f0b9"
+    ],
+    "sti": [
+     "0x3f0bc"
+    ],
+    "pushfd": [
+     "0x3f0a8"
+    ],
+    "popfd": [
+     "0x3f0be"
+    ],
+    "int_0x31": [
+     "0x3d7b5",
+     "0x3d82e",
+     "0x3f1a2"
+    ]
+   },
+   "mdi": {
+    "cli": [],
+    "sti": [],
+    "pushfd": [],
+    "popfd": [],
+    "int_0x31": [
+     "0x3d7b5",
+     "0x3d82e",
+     "0x3f1a2"
+    ]
+   }
+  },
+  "mdi_driver_call": "0x4396b → 0x382e9 → 0x3f113:DPMI 0300h(0x3f190)模擬真實模式 int 66h(0x3f195),int 31h 在 0x3f1a2",
+  "normal_tail": {
+   "dig_R_to_isr_A": {
+    "0x3eb9d": 76,
+    "0x3eb69": 77
+   },
+   "mdi_R_to_dig_E": 14
+  },
+  "static_tail": {
+   "reentry_rest": 4,
+   "dig_after_sti_shadow": 12,
+   "mdi_after_int31_return": 43
+  },
+  "predicted_di": {
+   "dig_restore": {
+    "0x3eb9d": 93,
+    "0x3eb69": 94
+   },
+   "mdi_driver_return": 62
+  },
+  "reentry_classes": {
+   "dig_restore": 63,
+   "mdi_driver_return": 14,
+   "other": 1
+  },
+  "late_gt_0_3ms": {
+   "dig_restore": 61,
+   "mdi_driver_return": 9,
+   "other": 1
+  },
+  "dig_restore_chain": 7,
+  "dig_late_range_ms": [
+   -0.18,
+   4.5
+  ],
+  "mdi_late_ms": [
+   0.19,
+   0.2,
+   0.21,
+   0.22,
+   0.27,
+   0.34,
+   0.83,
+   0.83,
+   0.83,
+   0.85,
+   2.02,
+   2.19,
+   2.42,
+   2.42
+  ],
+  "other": [
+   {
+    "t": 3665.216,
+    "late_ms": 1.95,
+    "next": "E 0x43270",
+    "di": 57
+   }
+  ],
+  "mdi_long_spans_nongame_share": 0.819
+ },
+ "calibration": {
+  "loop_layout": {
+   "prefix": 7,
+   "wait_loop": 6,
+   "between": 2,
+   "count_loop": 5,
+   "suffix": 4
+  },
+  "delta_i": 69762,
+  "delta_n": 6409598,
+  "delta_t_ms": 1514.4162,
+  "int21_calls_range": [
+   13085,
+   13167
+  ],
+  "nongame_per_int21_calibration": [
+   481.49,
+   484.51
+  ],
+  "nongame_per_int21_delay": 475.94,
+  "delay_clean_count": 243,
+  "delay_fixed_game_insns": 21,
+  "insn_per_ms": {
+   "calibration": 4232.4,
+   "delay_clean": 4215.0
+  },
+  "insn_per_iter_ratio": [
+   1.0122,
+   1.0185
+  ],
+  "time_per_insn_ratio": 0.9959,
+  "bios_tick_samples_pre_ail": [
+   {
+    "fn": "0x370f0",
+    "t": 3311.7,
+    "extra_nongame": 689
+   }
+  ],
+  "bios_ticks_in_calibration": 27.57,
+  "tick_share_per_int21": [
+   1.47,
+   1.47
+  ],
+  "excess_per_int21_after_ticks": [
+   4.08,
+   7.1
+  ],
+  "s163_rate_ratio": 0.9898
+ },
+ "ail_debug_gate": {
+  "getenv_arg": "0x50313 \"AIL_DEBUG\"",
+  "getenv_call": "0x37d5c",
+  "no_debug_path": "0x37d6a → 0x37ed1",
+  "register": "0x37e76 push 0x27c30 → 0x3f236;0x37e8b 100 Hz;0x37e99 start",
+  "debug_flag": "[0x54174] = 1 at 0x37ea6",
+  "lc163_sets_env": false,
+  "calls_in_lc163a": 0,
+  "first_interval_after_ail_ms": 54.925
+ },
+ "conclusion": {
+  "interrupt_off": "DIG 服務 0x404c0 整段關中斷:進來就 cli(0x404ea → 0x3f0aa),到結尾 0x3f0ac 才 sti。DIG 還沒返回時的重入 63 次,61 次晚到超過 0.3 ms(範圍 -0.18 .. 4.5 ms),而且每一次重入到結尾的指令數都等於「在 sti 之後一條收中斷」的預測值(93 / 轉接 BIOS 時 94)。MDI 的 14 次重入都在 int 31h(DPMI 0300h、真實模式 int 66h 驅動)返回後的第一條收中斷(預測 62,逐筆相符);MDI 本身沒有 cli,中斷被擋到 DPMI 呼叫返回;是驅動自己關中斷還是 DOS/4GW 在真實模式期間不轉送,沒查。",
+  "calibration": "校準與 delay 每圈都是一次 int 21h AH=2Ch。校準期間每次 int 21h 的非遊戲指令 481.49 .. 484.51 條,遊戲中沒遇到中斷的 delay 是 475.94 條;每 ms 的指令數反而多 0.41%。BIOS tick 以 AIL 接管前唯一的樣本(689 條)、28 個 tick 估,每次約 1.47 條,扣掉後每次仍多 4.08 .. 7.1 條,原因沒找到。",
+  "ail_100hz": "0x37c30 是 AIL 除錯紀錄的碼錶回呼,AIL_startup 只在 getenv(\"AIL_DEBUG\") 非空時登錄(0x37d5c / 0x37d68);lc163 沒設 FD2_HARNESS_DOS_SET,所以這段 0 次。續一百六十三預測的「約 0.5 倍」沒考慮這個條件。"
+ }
+}

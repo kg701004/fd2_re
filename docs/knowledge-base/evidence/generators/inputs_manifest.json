@@ -13037,6 +13037,25 @@
     ]
    }
   },
+  "ev_s164": {
+   "outputs": [
+    "interrupt_off_sections_s164_20261029.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc163_live/lc163a_CALLLOG.TXT": [
+     5021889,
+     "622aa98c7bcc95bf10b9c20d5e2a4f93b24f6896d835dcbd7bbd040569bf26a9"
+    ],
+    ".wsl_build/lc163_live/lc163a_meta.txt": [
+     313,
+     "b4d47a2195dc5cb44398213f9eade2f46b9b745435d4d5503571a32bd9669fbf"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
