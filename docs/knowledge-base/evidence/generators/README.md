@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 64 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 65 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百六十八(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s168.py` | `battle_driver_gates_s168_20261030.json` | `mut_s168.py`(20) |
+
+戰場驅動送鍵閘門的實機驗證(DOSBox-X 呼叫紀錄 lc168a,驅動與預測在 [`drivers_s168/`](drivers_s168/README.md)):`tools/fd2_chapter_sweep.py` 的 `screen_shows_dialogue_panel` 在 827 張歷史截圖上的校準、lc167a 第 33 次 Return 的時刻重放、CALLLOG 寫入落後的換算,以及 `ensure_battle_hud(panel_gate)` / `send_end_turn_keys` 實機一次走完的預測 Q1 .. Q6。
 
 ## 續一百六十七(2026-10-29)
 

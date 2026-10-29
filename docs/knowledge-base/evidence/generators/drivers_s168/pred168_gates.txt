@@ -1,0 +1,20 @@
+續一百六十八 實機前預測(lc168a;原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;第 1 章戰場)
+驅動 lc168.py:ensure_battle_hud(panel_gate=True, control_probe=CALLLOG 出現新的 E 0x117e7)→ 閒置 30 秒
+→ send_end_turn_keys(ring_probe=CALLLOG 出現新的 E 0x16f55)→ 等 R 0x1d8ba → 閒置 25 秒。
+不進除錯器、不改記憶體;結束回合失敗就停,不做手動補救。
+
+Q1 ensure_battle_hud 回傳 ok=True,且至少 1 張不送鍵的等待幀
+   (第 1 章對話結束後到 HUD 出現之間有一段「看不到面板也看不到 HUD」)。
+   "fallback Return"(無字幕過場等滿 4 秒才補按)的次數只記錄,不判定:lc167a 有 7 張無字幕過場幀,
+   當時每張後面都按了 Return,不知道那些過場是否需要按鍵。
+Q2 ensure_battle_hud 送出的 Return 次數 ≤ 32(lc167a 是 33 次;至少少掉 clear31 之後那一次)。
+Q3 進入閒置前的狀態檢查:截圖 screen_shows_battle_hud=True、screen_shows_dialogue_panel=False;
+   CALLLOG 的 E 0x117e7 恰好 1 筆、E 0x16f55 為 0 筆。
+Q4 send_end_turn_keys 第一次就回傳 ok=True、stage="yes";ring_probe 在逾時(8 秒)前為 True。
+Q5 find_empty_adjacent_tile 第一次方向鍵之後的截圖,地圖帶 (360,215)-(824,520) 的平均 HSV 飽和度 ≥ 110
+   (lc167a 選中索爾後那張是 89.4,未選中的畫面 133.5 .. 161.4)——也就是這次沒有選中單位。
+   起始格若已是空格(沒有按方向鍵),Q5 記為 N/A。
+Q6 YES 之後 240 秒內 CALLLOG 出現 R 0x1d8ba(enemy_phase_dispatch 結束)。
+
+判讀:Q1..Q4、Q6 全 PASS = 兩個閘門在實機上一次走完。Q5 PASS 則支持「lc167a 的失敗來自第 33 次 Return
+選中索爾」這個推論(仍是 INFERRED:只能說拿掉那一次之後沒有再發生)。

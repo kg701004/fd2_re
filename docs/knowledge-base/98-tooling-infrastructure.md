@@ -11777,3 +11777,46 @@ sweep 的 `confirm_end_turn` 會反覆進除錯器讀 `[0x53ecc]`(模擬器停�
 - P 之前的 5 次未歸類重入(26 條進 DIG / 5 條再進 ISR)的機制。
 - `ensure_battle_hud` 在 HUD 框還沒畫出時會多按一次 Return(本節的第一次失敗);工具沒改。
 - 續一百六十五的仍留(MDI 收中斷的點、離群 2 次、校準多出的 int 21h 指令)不變。
+
+## 2026-10-30 續一百六十八:戰場驅動的兩道送鍵閘門 —— 只在面板上按 Return、結束回合每步確認;第 1 章實機一次走完(DOSBox-X 呼叫紀錄 lc168a)
+
+起因:續一百六十七的兩個驅動問題——`confirm_end_turn` 反覆進除錯器(模擬器停住),以及 `ensure_battle_hud` 在 HUD 框還沒畫出時多按一次 Return;
+使用者「依照你的建議執行」。實機 lc168a。證據 `evidence/battle_driver_gates_s168_20261030.json`,產生器 `ev_s168.py`(變異測試 `mut_s168.py` 20 個),
+inputs_manifest 登錄 874 筆(827 張校準截圖 + lc168a / lc167a 的紀錄與截圖);驅動與預測在 `evidence/generators/drivers_s168/`(預測 `pred168_gates.txt`
+實機前寫,md5 0449c05f…)。
+
+**工具(`tools/fd2_chapter_sweep.py`;預設行為不變,既有驅動不受影響)**:
+- `screen_shows_dialogue_panel`:上 / 下兩條帶(x 360..640)各自「出現最多的單一顏色」若是 HUD 藍,它佔該帶的比例 ≥ 0.5 就算面板。
+  對話框底色恰為 (40,69,138)、選單 / 狀態框為 (56,85,154);藍色地形是很多相近色混在一起,單一色佔比低。
+- `ensure_battle_hud(panel_gate=True, settle_s=4.0, control_probe=None)`:只在看得到面板時送 Return;看不到面板也看不到 HUD 時不送鍵、
+  每 0.8 秒重截,最多 4 秒;等滿仍兩者皆無時先問 `control_probe`(驅動給的是「CALLLOG 出現新的 E 0x117e7」),為真就結束,否則補按一次。
+- `send_end_turn_keys(ring_probe=None)`:`confirm_end_turn` 的按鍵、不進除錯器;找不到空格就停,開環後等 `ring_probe`(新的 E 0x16f55)才按 Down,
+  END 之後畫面上要有確認框面板才按 YES(確認框截圖:DOSBox-X lc167a / lc168a)。`calllog_count` 只 grep 紀錄檔。`confirm_end_turn` 原樣。
+- `--selftest` 新增 (7) 面板判準的翻轉點與雜色藍地形、(8) `ensure_battle_hud` 的送鍵決策(假截圖序列,含 lc167a 那段)、(9) `send_end_turn_keys`
+  的四種停點;對新程式另做 12 個變異全部擋下(`drivers_s168/mut_gates.py`)。
+
+**離線證據**(STATIC ANALYSIS,對已存的截圖與紀錄;`ev_s168` (B)(C)(D)):
+- 面板判準校準:827 張歷史 hudcheck 截圖中非 HUD 647 張,單一 HUD 藍佔比 ≤ 0.187 的 189 張、≥ 0.621 的 458 張,中間沒有樣本;
+  高群的最多色只有上面兩色。舊的 `screen_looks_like_dialogue` 只取 y=500 一列,lc167a 的 34 張清除截圖裡漏掉 11 張上方對話框。
+- lc167a 重放:輸入迴圈第一次 E 0x117e7 在 t=87411.2,介於 clear30(86134.7)與 clear31(87438.4)之間(以 P_a 讀到的尾端 t 換算截圖時刻;
+  尾端 t 只會落後,真實時刻只會更晚),所以第 33 次 Return 是進入輸入迴圈之後才送的(DOSBox-X 呼叫紀錄 lc167a)。
+  當時按在「看不到面板」畫面之後的 Return 有 8 次(7 張無字幕過場 + clear31)。
+- 範圍外(只記錄、未修改):ch20、ch29 各一張截圖 HUD 在畫面上,但框右是藍色地形,`screen_shows_battle_hud` 判 False,那兩輪連按到 clear55 / clear37。
+
+**實機**(DOSBox-X 呼叫紀錄,ICOUNT,入口與 lc167a 相同 26 個;不改記憶體、不下斷點、不進除錯器;紀錄 224299 行,md5 068485e3…):
+同 lc167a 進第 1 章戰場 → `ensure_battle_hud(panel_gate)` → 狀態檢查 → 閒置 30 秒 → `send_end_turn_keys` → 等 R 0x1d8ba → 閒置 25 秒 → teardown。
+- 清對話按 Return 25 次、不送鍵等待 10 張、沒有補按(lc167a 33 次;33 − 25 正好是上面那 8 次)。三段無字幕過場都沒按鍵就自己走到下一個對話框;
+  最後一張 clear24 與 lc167a 的 clear31 是同一個畫面(地圖、游標移動中、HUD 未畫出;截圖人工比對),這次沒有按,下一張等待幀(wait9)HUD 就出現了
+  (DOSBox-X 呼叫紀錄 lc168a)。
+- 閒置前:HUD 在、沒有面板、E 0x117e7 恰 1 筆、E 0x16f55 0 筆。往上找空格後地圖帶飽和度 150.9(lc167a 選中索爾後 89.4、未選中 133.5)。
+- 結束回合一次成功:Return 後 0.29 秒讀到 E 0x16f55,確認框面板在,YES 後 47.0 秒讀到 R 0x1d8ba;標記順序為輸入迴圈 → 指令環 → 推進 → 友軍 → 敵方 →
+  依序返回 → 輸入迴圈重新進入(E 0x16f55 → E 0x1a30b → E/R 0x1d80b → E/R 0x1d8ba → R 0x1a30b → R 0x16f55)。
+- 預測 Q1 .. Q6 全 PASS。「lc167a 的失敗來自第 33 次 Return 選中索爾」仍是 INFERRED:同一畫面拿掉那一次按鍵之後沒有再發生,但沒有直接讀到選取狀態。
+
+**CALLLOG 寫入落後**(`ev_s168` (D);DOSBox-X fd2calllog 原始碼 `debug.cpp`:緩衝 1 MiB、每 1024 筆 E 才 fflush):lc168a 玩家回合 532.6 筆 E / 秒,
+約每 1.92 秒寫盤一次(DOSBox-X 呼叫紀錄 lc168a)。驅動讀紀錄檔的判斷都要輪詢加逾時;續一百六十七閒置窗開頭只扣 1000 ms,不足以蓋過這個落後。
+
+**仍留**:
+- 續一百六十七的閒置窗起點可能早於真正的閒置開始最多約 1 秒(上面的寫入落後);P / P2 的比例要不要重算沒查。
+- `screen_shows_battle_hud` 在藍色地形上漏判(上面的 ch20 / ch29)。
+- 續一百六十七其餘仍留(敵方回合 MDI 型 3.4 倍、P 之前 5 次未歸類重入)不變。

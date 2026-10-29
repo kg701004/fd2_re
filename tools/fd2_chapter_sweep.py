@@ -266,6 +266,7 @@ import re
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -789,10 +790,100 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
     }
 
 
-def ensure_battle_hud(name: str, shots_dir: Path, log: list[str], tag: str, max_clears: int = 40) -> tuple[bool, int]:
+def calllog_count(name: str, kind: str, eip_live: int) -> int | None:
+    """instance 工作目錄 CALLLOG.TXT 裡 `kind`(E / R / A)記錄落在 `eip_live` 的筆數。
+
+    只讀檔,不進除錯器、不停模擬器。注意寫入端(DOSBox-X fd2calllog)每 1024 筆 E 才 fflush
+    一次(緩衝 1 MiB),續一百六十七的玩家回合約每 2 秒一次,所以結果可能落後約 2 秒;
+    呼叫端要用輪詢加逾時,不能只讀一次。
+
+    Args:
+        name: harness instance 名。
+        kind: "E"、"R" 或 "A"。
+        eip_live: 執行期位址(native + NATIVE_LIVE_DELTA)。
+
+    Returns:
+        筆數;讀不到檔或輸出不是整數時回傳 None(讀取失敗不是「0 筆」)。
+    """
+    r = wsl_run(f"grep -c -E '^{kind} [0-9]+ {eip_live:08x} ' {workdir_for(name)}/CALLLOG.TXT", timeout=60)
+    out = r.stdout.strip()
+    return int(out) if out.isdigit() else None
+
+
+def send_end_turn_keys(name: str, shots_dir: Path, log: list[str],
+                       ring_probe: Callable[[], bool] | None = None,
+                       probe_timeout_s: float = 8.0) -> dict:
+    """confirm_end_turn() 的按鍵序列,但不進除錯器,而且每一步先確認狀態才送下一個鍵。
+
+    續一百六十八(2026-10-29):量測計時的驅動不能用 confirm_end_turn()(它反覆進除錯器讀
+    [0x53ecc] / [0x53c03],模擬器會停住)。這裡只送鍵:
+      1. find_empty_adjacent_tile() 沒找到空格就停(不像 confirm_end_turn 那樣硬開)。
+      2. Return 開指令環;給了 `ring_probe` 時要等到它為 True(例如 CALLLOG 出現
+         field_command_ring 0x16f55 的新 E)才按 Down,逾時就停。
+      3. Down → Return(END),然後截圖;畫面上必須有面板(「要結束本回合的行動嗎?」確認框,
+         screen_shows_dialogue_panel)才按 YES,否則停。
+    續一百六十七 lc167a 第一次結束回合就是少了 2、3 兩道確認,按鍵全打在已選中的索爾身上。
+
+    Args:
+        name: harness instance 名。
+        shots_dir: 截圖目錄。
+        log: 訊息累積處。
+        ring_probe: 指令環已開的判斷;None 時只等固定 0.6 秒(舊行為)。
+        probe_timeout_s: 等 `ring_probe` 的上限秒數(要大於 CALLLOG 的 flush 落後)。
+
+    Returns:
+        {"ok": 是否已按 YES, "stage": 停在哪一步("empty_tile" / "ring" / "prompt" / "yes"),
+         "t_host": 各步驟的主機時間}。
+    """
+    t_host: dict[str, float] = {}
+    found, _ = find_empty_adjacent_tile(name, shots_dir, log)
+    if not found:
+        log.append("send_end_turn_keys: no confirmed empty adjacent tile -- stopping before opening the ring")
+        return {"ok": False, "stage": "empty_tile", "t_host": t_host}
+    t_host["ring"] = time.time()
+    send_keys(name, "Return")  # open the command ring
+    if ring_probe is None:
+        time.sleep(0.6)
+    else:
+        t0 = time.time()
+        while not ring_probe():
+            if time.time() - t0 > probe_timeout_s:
+                screenshot(name, shots_dir / "endturn_ring_timeout.png")
+                log.append(f"send_end_turn_keys: ring_probe still False after {probe_timeout_s:.1f}s -- "
+                           f"the command ring did not open; stopping (no Down sent)")
+                return {"ok": False, "stage": "ring", "t_host": t_host}
+            time.sleep(0.5)
+        t_host["ring_seen"] = time.time()
+    send_keys(name, "Down")
+    time.sleep(0.4)
+    send_keys(name, "Return")  # confirms END, opens the "end this turn?" Yes/No prompt
+    time.sleep(0.8)
+    prompt = screenshot(name, shots_dir / "endturn_prompt.png")
+    if not screen_shows_dialogue_panel(prompt):
+        log.append("send_end_turn_keys: no prompt panel after END -- stopping (YES not sent)")
+        return {"ok": False, "stage": "prompt", "t_host": t_host}
+    t_host["yes"] = time.time()
+    send_keys(name, "Return")  # confirms YES
+    log.append("send_end_turn_keys: empty tile -> Return(ring) -> [ring seen] -> Down -> Return(END) -> "
+               "[prompt panel] -> Return(YES)")
+    return {"ok": True, "stage": "yes", "t_host": t_host}
+
+
+def ensure_battle_hud(name: str, shots_dir: Path, log: list[str], tag: str, max_clears: int = 40,
+                      panel_gate: bool = False, settle_s: float = 4.0,
+                      control_probe: Callable[[], bool] | None = None) -> tuple[bool, int]:
     """Screenshot; if screen_shows_battle_hud() is False, send Return +
     screenshot repeatedly (up to max_clears) until it is True (or budget
     exhausted). Returns (ok, n_clears_used).
+
+    2026-10-29 續一百六十八:`panel_gate=True` 時只在 screen_shows_dialogue_panel() 為 True
+    才送 Return。看不到面板、也看不到 HUD 時不送鍵,每 0.8 秒重截一次、最多等 `settle_s` 秒:
+    HUD 出現就結束;面板出現就照常送 Return;等滿仍兩者皆無時,先問 `control_probe`
+    (例如 CALLLOG 已出現 battle_main_input_loop 的 E),為 True 就不送鍵直接結束(回傳 ok=True,
+    log 註明 HUD 沒認出);為 False 或沒給 probe 才送一次 Return(無字幕過場可能要按鍵才走)。
+    起因:續一百六十七 lc167a 的第 33 次 Return 是在遊戲已進入 battle_main_input_loop
+    (CALLLOG E 0x117e7 t=87411)、HUD 框還沒畫出的那張截圖(clear31)之後送出的。
+    預設 False,行為與舊版完全相同(既有章節掃描驅動不受影響)。
 
     2026-08-28 "ch11chest" round (doc25 §3.2.4): promoted here from a
     per-script local helper first written that round. This map (and
@@ -815,15 +906,49 @@ def ensure_battle_hud(name: str, shots_dir: Path, log: list[str], tag: str, max_
     if screen_shows_battle_hud(shot):
         return True, 0
     log.append(f"[{tag}] no battle HUD visible -- clearing dialogue")
-    for i in range(max_clears):
+    if not panel_gate:
+        for i in range(max_clears):
+            send_keys(name, "Return")
+            time.sleep(0.9)
+            shot_i = shots_dir / f"hudcheck_{tag}_clear{i}.png"
+            screenshot(name, shot_i)
+            if screen_shows_battle_hud(shot_i):
+                log.append(f"[{tag}] battle HUD recovered after {i + 1} clear-Return(s)")
+                return True, i + 1
+        log.append(f"[{tag}] battle HUD NOT recovered after {max_clears} clear-Returns")
+        return False, max_clears
+    # panel_gate:每次送鍵前,畫面上必須有面板(或已等滿 settle_s 且 probe 不認為已有控制權)
+    pressed, waits, last = 0, 0, shot
+    while pressed < max_clears:
+        if not screen_shows_dialogue_panel(last):
+            t0 = time.time()
+            while time.time() - t0 < settle_s:
+                time.sleep(0.8)
+                last = shots_dir / f"hudcheck_{tag}_wait{waits}.png"
+                waits += 1
+                screenshot(name, last)
+                if screen_shows_battle_hud(last):
+                    log.append(f"[{tag}] battle HUD recovered after {pressed} clear-Return(s), "
+                               f"{waits} no-key wait frame(s)")
+                    return True, pressed
+                if screen_shows_dialogue_panel(last):
+                    break
+            else:
+                if control_probe is not None and control_probe():
+                    log.append(f"[{tag}] no HUD/panel after {settle_s:.1f}s but control_probe says the player has "
+                               f"control -- stopping without another Return (HUD not recognized; "
+                               f"{pressed} clear-Return(s), {waits} wait frame(s))")
+                    return True, pressed
+                log.append(f"[{tag}] no HUD/panel after {settle_s:.1f}s -- fallback Return (cutscene beat?)")
         send_keys(name, "Return")
         time.sleep(0.9)
-        shot_i = shots_dir / f"hudcheck_{tag}_clear{i}.png"
-        screenshot(name, shot_i)
-        if screen_shows_battle_hud(shot_i):
-            log.append(f"[{tag}] battle HUD recovered after {i + 1} clear-Return(s)")
-            return True, i + 1
-    log.append(f"[{tag}] battle HUD NOT recovered after {max_clears} clear-Returns")
+        last = shots_dir / f"hudcheck_{tag}_clear{pressed}.png"
+        pressed += 1
+        screenshot(name, last)
+        if screen_shows_battle_hud(last):
+            log.append(f"[{tag}] battle HUD recovered after {pressed} clear-Return(s), {waits} no-key wait frame(s)")
+            return True, pressed
+    log.append(f"[{tag}] battle HUD NOT recovered after {max_clears} clear-Returns ({waits} wait frame(s))")
     return False, max_clears
 
 
@@ -1291,6 +1416,51 @@ def _find_hud_box_side(im) -> str | None:
     if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION_R, BATTLE_HUD_LEFT_STRIP_REGION_R):
         return "R"
     return None
+
+
+# 2026-10-29 續一百六十八:正面的「對話 / 選單面板在畫面上」判準,給 ensure_battle_hud 的
+# panel_gate 用。screen_looks_like_dialogue() 只取 y=500 一列,對話框在畫面上方時(第 1 章
+# 劇情)讀到的是地圖,lc167a 的 34 張清除截圖裡有 11 張對話畫面被判成「不是對話」(ev_s168 (C))。面板本身是**單一純色
+# 填滿**:實測對話框底色恰為 (40,69,138)、選單 / 狀態框為主題藍 (56,85,154);藍色地形(ch20
+# 洞窟水面、ch29 遺跡)雖然藍色比例高,卻是很多相近色混在一起,下帶最多的那一色只佔 0.148 / 0.228,
+# 而且不是 HUD 藍。
+# 所以判準是:上 / 下兩條帶各自「出現最多的那一色」若是 HUD 藍,它佔該帶的比例。
+# 校準(827 張歷史 hudcheck 截圖,drivers_s168/scan_frames.py):非 HUD 畫面 647 張中,
+# 這個比例 ≤ 0.187 的 189 張、≥ 0.621 的 458 張,中間沒有任何一張;≥ 0.621 的最多色全是上面兩色。
+# 第 1 章 clear26..30(對話框在上方)全判為面板,clear31(已有控制權、HUD 未畫出)判為非面板。
+# 帶的 x 範圍 360..640 避開左右兩側 HUD 框與對話框頭像。
+DIALOGUE_PANEL_BANDS = ((360, 215, 640, 370), (360, 430, 640, 585))  # 上帶、下帶 (left, top, right, bottom)
+DIALOGUE_PANEL_FLAT_MIN = 0.5
+
+
+def _flat_blue_fraction(im, region: tuple[int, int, int, int]) -> float:
+    """`region` 內出現最多的單一顏色若是 HUD 藍,回傳它佔的比例,否則 0.0。"""
+    counts: dict[tuple[int, int, int], int] = {}
+    for p in im.crop(region).getdata():
+        counts[p] = counts.get(p, 0) + 1
+    color, n = max(counts.items(), key=lambda kv: kv[1])
+    return n / sum(counts.values()) if _is_hud_blue(color) else 0.0
+
+
+def screen_shows_dialogue_panel(png_path: Path) -> bool:
+    """畫面上 / 下帶有一塊純色藍面板(對話框、確認框、選單)時為 True。
+
+    和 screen_looks_like_dialogue() 不同,這是**正面**證據:回傳 False 不代表「可以操作地圖」,
+    只代表「看不到面板」(可能是無字幕的過場、也可能是剛拿到控制權但 HUD 還沒畫出)。
+
+    Args:
+        png_path: harness 的 1024x768 截圖。
+
+    Returns:
+        任一帶的純色藍比例 ≥ DIALOGUE_PANEL_FLAT_MIN 時為 True;沒有 Pillow 時為 False
+        (fail closed:呼叫端會改走「等待、不送鍵」那條路)。
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    im = Image.open(png_path).convert("RGB")
+    return any(_flat_blue_fraction(im, r) >= DIALOGUE_PANEL_FLAT_MIN for r in DIALOGUE_PANEL_BANDS)
 
 
 # 2026-08-27 "endturngen" round: a SECOND, finer-grained HUD read, used to
@@ -3553,6 +3723,7 @@ def selftest() -> int:
         fails.append(f"名冊不隨章節變化:{sorted(sizes)}")
 
     fails += _selftest_screen_predicates()
+    fails += _selftest_live_gates()
 
     print("\n(6) 藍色比例恰好卡在兩個門檻;natural_join_order 從 ch00 起算、不含本章自己的戰後")
     # 2026-09-11 窮舉突變測試:兩個 `sum(1 for ...)` 改成 2(比例翻倍)、`range(0, chapter_n - 1)`
@@ -3602,8 +3773,9 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(索引慣例的兩個交叉核對 + 刻意範圍差異的後果 + "
-          "反向對照 + 時序去重 + 非平凡性 + 畫面判準的六個合成案例)。"
-          "送鍵/tmux/除錯器那一層仍未涵蓋(NO_EXEC),見 docstring。")
+          "反向對照 + 時序去重 + 非平凡性 + 畫面判準的六個合成案例 + "
+          "面板判準與 panel_gate / send_end_turn_keys 的送鍵決策)。"
+          "tmux/除錯器那一層仍未涵蓋(NO_EXEC),見 docstring。")
     return 0
 
 
@@ -3737,6 +3909,162 @@ def _selftest_screen_predicates() -> list[str]:
         if not ok6e:
             fails.append(f"_is_hud_blue 邊界不成立:{wrong}")
 
+    return fails
+
+
+# --------------------------------------------------------------------------
+# 續一百六十八:面板判準與「何時送鍵」的離線核心
+#
+# ensure_battle_hud(panel_gate=True) / send_end_turn_keys() 的決策只取決於
+# 「每張截圖的判讀結果」與「probe 的回答」,所以把 screenshot / send_keys /
+# 判準 / time 換成腳本化的假物件,就能離線檢查**送了哪些鍵**。重點案例是
+# 續一百六十七 lc167a 的序列:對話、對話、看不到面板也看不到 HUD(其實已有
+# 控制權)、HUD —— 舊路徑在第三張就送 Return,新路徑必須不送。
+# --------------------------------------------------------------------------
+
+def _selftest_live_gates() -> list[str]:
+    fails: list[str] = []
+    print("\n(7) 面板判準:純色藍面板 vs 藍色比例高的雜色地形(案例貼在門檻上)")
+    try:
+        from PIL import Image
+    except ImportError:
+        print("    SKIP: 此直譯器沒有 Pillow,面板判準無法離線判定")
+        return fails
+    import tempfile
+    panel = (40, 69, 138)                      # 實測對話框底色
+    bx0, by0, bx1, by1 = DIALOGUE_PANEL_BANDS[1]
+    n_band = (bx1 - bx0) * (by1 - by0)
+
+    def band_img(k_panel: int, band: int = 1, mix: bool = False):
+        """指定帶內前 k_panel 個像素塗面板色,其餘塗地形;mix=True 時其餘改成 8 種相近藍輪流。"""
+        from PIL import Image
+        im = Image.new("RGB", (1024, 768), (90, 140, 60))
+        x0, y0, x1, y1 = DIALOGUE_PANEL_BANDS[band]
+        i = 0
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                if i < k_panel:
+                    im.putpixel((x, y), panel)
+                elif mix:
+                    im.putpixel((x, y), (20 + (i % 8), 50 + (i % 8), 100 + 3 * (i % 8)))
+                i += 1
+        return im
+
+    k_at = int(DIALOGUE_PANEL_FLAT_MIN * n_band)           # 比例恰等於門檻 -> 算面板(>=)
+    premise7 = _is_hud_blue(panel) and k_at / n_band == DIALOGUE_PANEL_FLAT_MIN \
+        and all(_is_hud_blue((20 + j, 50 + j, 100 + 3 * j)) for j in range(8))
+    with tempfile.TemporaryDirectory() as td:
+        def p(im, nm):
+            q = Path(td) / nm
+            im.save(q)
+            return q
+        c7 = {
+            "前提(面板色與 8 種雜色都是 HUD 藍、k 恰在門檻)": premise7,
+            "下帶比例恰等於門檻 -> 面板": screen_shows_dialogue_panel(p(band_img(k_at), "a.png")),
+            "下帶少一個像素 -> 不是面板": not screen_shows_dialogue_panel(p(band_img(k_at - 1), "b.png")),
+            "上帶也算(對話框在上方,第 1 章)": screen_shows_dialogue_panel(p(band_img(n_band, band=0), "c.png")),
+            # 整帶都是 HUD 藍,但分成 8 種相近色:藍色比例 1.0,最多的單色只有 1/8
+            "雜色藍地形(ch20 洞窟水面那類)-> 不是面板":
+                not screen_shows_dialogue_panel(p(band_img(0, mix=True), "d.png")),
+            "最多色不是 HUD 藍 -> 0": _flat_blue_fraction(band_img(0), DIALOGUE_PANEL_BANDS[1]) == 0.0,
+        }
+    ok7 = all(c7.values())
+    print(f"    {'PASS' if ok7 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c7.items()))
+    if not ok7:
+        fails.append(f"面板判準不符:{[k for k, v in c7.items() if not v]}")
+
+    print("\n(8) ensure_battle_hud 的送鍵決策(假截圖序列,不碰 WSL)")
+    g = globals()
+
+    class _Clock:
+        def __init__(self) -> None:
+            self.now = 0.0
+
+        def time(self) -> float:
+            return self.now
+
+        def sleep(self, s: float) -> None:
+            self.now += s
+
+    def run_ensure(frames: list[str], **kw) -> tuple[tuple[bool, int], list[str]]:
+        """frames:每次截圖依序得到的畫面種類("panel" / "none" / "hud");用完後重複最後一個。"""
+        keys: list[str] = []
+        seq = list(frames)
+        kinds: dict[str, str] = {}
+        saved = {k: g[k] for k in ("screenshot", "send_keys", "screen_shows_battle_hud",
+                                    "screen_shows_dialogue_panel", "time")}
+
+        def fake_shot(_n: str, out: Path) -> Path:
+            kinds[str(out)] = seq.pop(0) if len(seq) > 1 else seq[0]
+            return out
+        try:
+            g["screenshot"] = fake_shot
+            g["send_keys"] = lambda _n, *k: keys.extend(k)
+            g["screen_shows_battle_hud"] = lambda q: kinds[str(q)] == "hud"
+            g["screen_shows_dialogue_panel"] = lambda q: kinds[str(q)] == "panel"
+            g["time"] = _Clock()
+            got = ensure_battle_hud("x", Path("selftest_shots"), [], "t", max_clears=10, **kw)
+        finally:
+            g.update(saved)
+        return got, keys
+
+    lc167 = ["panel", "panel", "none", "hud"]     # 首張 + 每次 Return 後各一張(clear30、clear31、clear32)
+    old = run_ensure(lc167)
+    new = run_ensure(lc167, panel_gate=True)
+    # 已有控制權、HUD 一直沒認出(ch20 / ch29 那類藍色地形讓 HUD 判準漏判)
+    probe_true = run_ensure(["panel", "none"], panel_gate=True, control_probe=lambda: True)
+    # 無字幕過場:看不到面板,也沒有控制權 -> 等滿 settle_s 才補一次 Return
+    beat = run_ensure(["none", "none", "none", "none", "none", "none", "none", "hud"],
+                      panel_gate=True, settle_s=4.0, control_probe=lambda: False)
+    # 等待中出現對話框 -> 立刻按(不能一直等到 HUD 自己出現;這段對話要按鍵才會走完)
+    beat_then_panel = run_ensure(["none", "panel", "hud"], panel_gate=True, control_probe=lambda: True)
+    c8 = {
+        "舊路徑:看不到面板也照按(lc167a 的第 33 次)": old == ((True, 3), ["Return"] * 3),
+        "panel_gate:只在面板上按,看不到面板就等": new == ((True, 2), ["Return"] * 2),
+        "probe 說已有控制權 -> 一次也不再按": probe_true == ((True, 1), ["Return"]),
+        "無字幕過場:等滿 4 秒(5 張等待幀)才補一次": beat == ((True, 1), ["Return"]),
+        "等待中出現對話框 -> 立刻按": beat_then_panel == ((True, 1), ["Return"]),
+    }
+    ok8 = all(c8.values())
+    print(f"    {'PASS' if ok8 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c8.items()))
+    if not ok8:
+        fails.append(f"ensure_battle_hud 送鍵決策不符:{[k for k, v in c8.items() if not v]} "
+                     f"old={old} new={new} probe={probe_true} beat={beat}")
+
+    print("\n(9) send_end_turn_keys:每一步確認後才送下一個鍵")
+
+    def run_end(ring: list[bool], prompt_kind: str, empty: bool = True) -> tuple[dict, list[str]]:
+        keys: list[str] = []
+        answers = list(ring)
+        saved = {k: g[k] for k in ("screenshot", "send_keys", "screen_shows_dialogue_panel",
+                                    "find_empty_adjacent_tile", "time")}
+        try:
+            g["screenshot"] = lambda _n, out: out
+            g["send_keys"] = lambda _n, *k: keys.extend(k)
+            g["screen_shows_dialogue_panel"] = lambda q: prompt_kind == "panel"
+            g["find_empty_adjacent_tile"] = lambda *_a: (empty, Path("x.png"))
+            g["time"] = _Clock()
+            res = send_end_turn_keys("x", Path("selftest_shots"), [],
+                                     ring_probe=lambda: answers.pop(0) if len(answers) > 1 else answers[0])
+        finally:
+            g.update(saved)
+        return res, keys
+
+    happy = run_end([False, False, True], "panel")
+    no_ring = run_end([False], "panel")
+    no_prompt = run_end([True], "none")
+    no_tile = run_end([True], "panel", empty=False)
+    c9 = {
+        "正常:Return、Down、Return、Return(YES)":
+            happy[0]["ok"] and happy[1] == ["Return", "Down", "Return", "Return"],
+        "指令環沒開(lc167a 那次)-> 不送 Down": no_ring[0]["stage"] == "ring" and no_ring[1] == ["Return"],
+        "沒有確認框 -> 不送 YES": no_prompt[0]["stage"] == "prompt" and no_prompt[1] == ["Return", "Down", "Return"],
+        "找不到空格 -> 一個鍵都不送": no_tile[0]["stage"] == "empty_tile" and no_tile[1] == [],
+    }
+    ok9 = all(c9.values())
+    print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c9.items()))
+    if not ok9:
+        fails.append(f"send_end_turn_keys 決策不符:{[k for k, v in c9.items() if not v]}")
     return fails
 
 
