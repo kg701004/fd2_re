@@ -1728,6 +1728,68 @@ def _selftest_pure(fails: list[str]) -> None:
     check("island_entries:local_body 不成立(跳進自己中間)就停,不往下一個位元組找;字串(implausible)也停",
           [island_entries({0x1000}, f.get, bytes(c), 0x1000, 0x1040, {0x1000, 0x1020}, {})
            for f, c in ((fake_o, code_o), (fake_s, code_s))], [(set(), 0), (set(), 0)])
+    # 2026-10-29 續一百六十一:依賴工具改動連帶的突變窮舉逃掉 12 個,都是只有合成資料碰得到的邊界
+    # (真 EXE 上突變前後的清單 / 結構命名 / check_names 逐位元組相同)。
+    code_p = bytearray(b"\x55" * 0x40)
+    code_p[0x00:0x04] = b" ab\x00"            # 空白(0x20)算可印字元
+    code_p[0x08:0x0c] = b"\x7fab\x00"         # DEL(0x7f)不算:可印字元 0 個,不是字串
+    code_p[0x10:0x21] = b"a" * 16 + b"\x00"   # 只看前 16 bytes:第 17 個 byte 的 NUL 看不到,不判字串
+    check("implausible:可印字元是 0x20..0x7e(空白算、DEL 不算);字串只看前 16 bytes",
+          [implausible(t, bytes(code_p), 0x1000, 0x1040, {}.get, lambda _x: False) for t in (0x1000, 0x1008, 0x1010)],
+          ["string", "bad_decode", "bad_decode"])
+    fake_j = {0x1000: (6, "jmp", "dword ptr [0x2000]"), 0x1006: (1, "inc", "eax"), 0x1007: (1, "ret", "")}
+    check("island_entries:fixup 來源只佔 4 bytes —— 緊接在 jmp [表] 的位移(fixup 0x1002..0x1005)之後的 0x1006 照收",
+          island_entries({0x1000}, fake_j.get, b"\x55" * 0x40, 0x1000, 0x1040, {0x1000, 0x1020}, {0x1002: 0x9000}),
+          ({0x1006}, 0))
+    fake_r = {0x1000: (10, "mov", "dword ptr [0x2000], 0x1050")}
+    code_r = bytearray(0x40)
+    code_r[0x06:0x0a] = (0x1050).to_bytes(4, "little")
+    check("pointer_refs:mov [槽], 立即值 —— 角色 imm、槽是目的地的方括號",
+          pointer_refs([0x1000], fake_r.get, {0x1006: 0x1050}, bytes(code_r), 0x1000, 0x1040),
+          [(0x1000, 0x1050, "imm", False, False, "[0x2000]")])
+
+    # discover_fnptr 的骨架(合成):換掉下游的 pointer_refs / pointer_evidence / fnptr_targets / implausible,
+    # 只看它自己算的 inside、zero_at 與輪數上限
+    class _CGd:
+        def build(self, seeds) -> None:
+            self.reached = {0x1000, 0x1004}
+
+    fake_g = {0x1000: (4, "mov", "eax, ebx"), 0x1004: (2, "ret", "")}
+    code_z = bytearray(0x40)
+    code_z[0x10] = 1
+    seen_d: dict = {}
+    n_cg: list[int] = []
+
+    def _pe(refs, fx, b, h, stops, zero_at, jo):
+        seen_d["zero"] = [zero_at(a) for a in (0x0ffc, 0x100c, 0x1010, 0x103c, 0x103d)]
+        return {}, set()
+
+    def _ft(ev, reject):
+        seen_d["inside"] = [reject(t) for t in (0x0fff, 0x1000, 0x1001, 0x1003, 0x1004, 0x1005, 0x1006)]
+        return set()
+
+    def _new_cg():
+        n_cg.append(1)
+        return _CGd()
+
+    saved_d = {k: globals()[k] for k in ("pointer_refs", "pointer_evidence", "fnptr_targets", "implausible")}
+    tr_d: dict = {}
+    err_d = None
+    try:
+        globals().update(pointer_refs=lambda *_a: [], pointer_evidence=_pe, fnptr_targets=_ft,
+                         implausible=lambda t, _c, _b, _h, _ia, inside: inside(t))
+        discover_fnptr(_CGd, {0x1000}, bytes(code_z), 0x1000, 0x1040, {}, fake_g.get, tr_d)
+        globals()["fnptr_targets"] = lambda ev, reject: {0x1000 + len(n_cg)}   # 每輪都不同:永不收斂
+        try:
+            discover_fnptr(_new_cg, {0x1000}, bytes(code_z), 0x1000, 0x1040, {}, fake_g.get)
+        except RuntimeError as e:
+            err_d = str(e)
+    finally:
+        globals().update(saved_d)
+    check("discover_fnptr:inside 是可達指令的嚴格內部(第一條指令也算、起點不算);zero_at 算到 hi 前 4 bytes;"
+          "第 1 輪就收斂記 1 輪;不收斂時剛好建 FNPTR_MAX_ROUNDS 次可達集合後報錯",
+          (seen_d.get("inside"), seen_d.get("zero"), tr_d.get("rounds"), len(n_cg), err_d is not None),
+          ([False, False, True, True, False, True, False], [False, True, False, True, False], 1, FNPTR_MAX_ROUNDS, True))
     inv5d = assemble({0x1000}, {}, set(), bytes(0x40), base, hi, {}, 0x1038, eip=0x1010, island={0x1020, 0x9000},
                      island_interior=3)
     got5d = {e["addr"]: (e["signals"], e["grade"]) for e in inv5d["entries"]}

@@ -288,7 +288,11 @@ def layer_handlers(raw: bytes, img: "LinearImage", groups: dict, delta: int,
 
     # 這兩個沒有跟著 handler 區段移動——實測得知,不是假設。
     SPAWN = {0x10b4e: "spawn_group", 0x32999: "spawn_group_with_intro"}
-    STAGING = 0x35822 + delta          # staging helper 與 handler 同區段,會移動
+    # staging helper 的新版位址(舊版 0x35822 + 版本差 0x356,doc25 2026-09-08)。呼叫目標是新版 EXE 裡實際
+    # 的位址,所以跟 SPAWN 一樣寫成新版值,與 groups 資料用哪一版座標無關。2026-10-28 續一百六十一前寫成
+    # `0x35822 + delta`:只在 groups 是舊版座標(delta = +0x356)時對;資料換成新版座標(delta = 0)後
+    # 10 筆 staging 都判成對不上,L3 一直 FAIL,陽性對照又只看 L1/L2,沒有題目看見。
+    STAGING = 0x35b78
 
     ok = tail = miss = 0
     notes: list[str] = []
@@ -420,6 +424,24 @@ def selftest() -> int:
     expect(base, "寶物物品表", "PASS", "同組態陽性對照")
     expect(base, "跳表存在性", "PASS", "同組態陽性對照")
     expect(base, "handler 位移一致性", "PASS", "同組態陽性對照")
+    expect(base, "spawn 逐筆驗證", "PASS", "同組態陽性對照(注入 6、7 要求 FAIL,基準本身必須先 PASS)")
+    # 陽性對照的完整輸出(實測值,2026-10-28 續一百六十一):只看各層 PASS/FAIL 時,算錯範圍、位移、
+    # 引數、計數的突變都看不到(窮舉逃掉 49 個)。資料或 EXE 有意改動時,重新實測後更新這裡。
+    want_base = [
+        ("L0", "linear image", "PASS", "objects: 0x10000..0x4f000, 0x50000..0x54000, 0x60000..0x634d2"),
+        ("L1", "寶物物品表", "PASS", "[29, 43, 51, 61, 71] 在新版 linear 0x5274e 唯一命中(舊版 0x5274e,位移 +0x0)"),
+        ("L1", "表尾檢查", "PASS", "表後一個 byte = 0(僅記錄,不作判定)"),
+        ("L2", "跳表存在性", "PASS", "0x51b19 起有 120 筆連續 fixup,涵蓋 0x51b91..0x51cf5"
+                                 "(舊版記載的 30 章表 + 90 筆 event 表 = 120,與此吻合)"),
+        ("L2", "handler 位移一致性", "PASS", "90/90 個 handler 位移完全相同 = +0x0——同一批函式、同順序、同大小,只是整體搬位置"),
+        ("L3", "spawn 逐筆驗證", "PASS", "44/45 筆完全吻合;另 1 筆是 tail-call(jmp 取代 call,語意相同,引數仍吻合)"
+                                    "——1995→1998 重建的編碼差異,不是資料差異"),
+        ("L3", "逐筆註記", "INCONCLUSIVE", "event 63 group 2 @0x35c3b:新版用 jmp(tail-call)取代 call,"
+                                       "前置引數 [2, 27, 15] 與記錄吻合——語意相同的編碼差異"),
+    ]
+    got_base = [(f.layer, f.name, f.status, f.detail) for f in base]
+    if got_base != want_base:
+        failures.append(f"陽性對照完整輸出與實測值不同:{[x for x in got_base if x not in want_base][:3]}")
 
     # --- 注入 1:寶物特徵改成新版不存在的值 → 必須 FAIL ---
     t = json.loads(json.dumps(treasure))
@@ -434,7 +456,8 @@ def selftest() -> int:
     # --- 注入 3:動一筆 handler 位址 → 位移不再一致 → 必須 FAIL ---
     g = json.loads(json.dumps(groups))
     g["5"]["handler"] = hex(int(g["5"]["handler"], 16) + 0x11)
-    expect(run(raw, g, treasure), "handler 位移一致性", "FAIL",
+    r3 = run(raw, g, treasure)
+    expect(r3, "handler 位移一致性", "FAIL",
            "位移不一致必須判失敗,否則這層等於沒檢查")
 
     # --- 注入 4:全部 handler 一起加同一個值 → 位移仍一致,必須仍 PASS ---
@@ -451,21 +474,118 @@ def selftest() -> int:
     saved = JUMP_TABLE
     try:
         JUMP_TABLE = 0x40000
-        expect(run(raw, groups, treasure), "跳表存在性", "FAIL", "錯的跳表位址必須判失敗")
+        r5 = run(raw, groups, treasure)
+        expect(r5, "跳表存在性", "FAIL", "錯的跳表位址必須判失敗")
     finally:
         JUMP_TABLE = saved
 
     # --- 注入 6:改一筆 spawn 的 group 引數 → L3 必須 FAIL ---
     g = json.loads(json.dumps(groups))
     g["0"]["spawns"][0]["group"] = 99
-    expect(run(raw, g, treasure), "spawn 逐筆驗證", "FAIL", "引數對不上必須判失敗")
+    r6 = run(raw, g, treasure)
+    expect(r6, "spawn 逐筆驗證", "FAIL", "引數對不上必須判失敗")
 
     # --- 注入 7:改一筆 spawn 的呼叫點位址 → L3 必須 FAIL ---
     g = json.loads(json.dumps(groups))
     g["0"]["spawns"][0]["source"] = hex(int(g["0"]["spawns"][0]["source"], 16) + 3)
-    expect(run(raw, g, treasure), "spawn 逐筆驗證", "FAIL", "錯的呼叫點必須判失敗")
+    r7 = run(raw, g, treasure)
+    expect(r7, "spawn 逐筆驗證", "FAIL", "錯的呼叫點必須判失敗")
 
-    total = 9
+    # --- 2026-10-28 續一百六十一:窮舉逃掉的另一批 —— 注入後的明細、只有合成資料碰得到的邊界 ---
+    checked: list[str] = []
+
+    def chk(ok: bool, what: str) -> None:
+        checked.append(what)
+        if not ok:
+            failures.append(what)
+
+    def rows(fs, layer=None, name=None):
+        return [(f.layer, f.name, f.status, f.detail) for f in fs
+                if (layer is None or f.layer == layer) and (name is None or f.name == name)]
+
+    tail63 = ("L3", "逐筆註記", "INCONCLUSIVE", "event 63 group 2 @0x35c3b:新版用 jmp(tail-call)取代 call,"
+              "前置引數 [2, 27, 15] 與記錄吻合——語意相同的編碼差異")
+    # 注入後的完整明細(實測值):位移分布的計數、FAIL 時列出的連續段、L3 的計數與註記
+    chk(rows(r3, "L2", "handler 位移一致性") == [("L2", "handler 位移一致性", "FAIL",
+        "位移不一致:{'0x0': 89, '-0x11': 1}——handler 區塊在新版不是完整搬移")], "注入 3 的位移分布明細")
+    chk(rows(r5, "L2", "跳表存在性") == [("L2", "跳表存在性", "FAIL",
+        "新版在 0x40000 沒有涵蓋 90 筆的連續 fixup run;"
+        "最長的幾段:[('0x49e04', 176), ('0x51b19', 120), ('0x627d8', 106)]")], "注入 5 列出的連續段")
+    chk(rows(r6, "L3") == [("L3", "spawn 逐筆驗證", "FAIL", "43 吻合 / 1 tail-call / 1 對不上(共 45 筆)"),
+                           ("L3", "逐筆註記", "INCONCLUSIVE",
+                            "event 0 group 99 @0x34548:call 0x10b4e,引數 [3],target_ok=True group_ok=False"),
+                           tail63], "注入 6 的 L3 明細")
+    chk(rows(r7, "L3") == [("L3", "spawn 逐筆驗證", "FAIL", "43 吻合 / 1 tail-call / 1 對不上(共 45 筆)"),
+                           ("L3", "逐筆註記", "INCONCLUSIVE", "event 0 group 3: 0x3454b 不在 handler 的指令流內"),
+                           tail63], "注入 7 的 L3 明細")
+
+    # 注入 8、9:拿掉唯一的 tail-call(event 63 第 2 筆)。沒有 tail 時全吻合走第一種 PASS 訊息;
+    # 再改一筆 group,沒有 tail 但有 1 筆對不上必須 FAIL(不能因為 tail == 0 就當成全吻合)
+    g = json.loads(json.dumps(groups))
+    g["63"]["spawns"] = [sp for sp in g["63"]["spawns"] if sp["source"] != "0x35c3b"]
+    chk(rows(run(raw, g, treasure), "L3") == [("L3", "spawn 逐筆驗證", "PASS",
+        "44/44 筆 spawn 的位址、呼叫目標與 group 引數全部吻合")], "注入 9:沒有 tail-call 時的全吻合訊息")
+    g["0"]["spawns"][0]["group"] = 99
+    chk(rows(run(raw, g, treasure), "L3", "spawn 逐筆驗證") == [("L3", "spawn 逐筆驗證", "FAIL",
+        "43 吻合 / 0 tail-call / 1 對不上(共 44 筆)")], "注入 8:沒有 tail-call、1 筆對不上必須 FAIL")
+    # 注入 10:全部 group 改成 99 -> 45 筆對不上,註記只列前 6 筆
+    g = json.loads(json.dumps(groups))
+    for k in g:
+        if k.isdigit():
+            for sp in g[k].get("spawns", []):
+                sp["group"] = 99
+    r10 = run(raw, g, treasure)
+    chk(st(r10, "spawn 逐筆驗證") == "FAIL" and len(rows(r10, "L3", "逐筆註記")) == 6, "注入 10:註記只列前 6 筆")
+    # 注入 11:staging 呼叫(三個引數)的 group 改錯 -> 註記要依 push 的反序列出 group, y, x
+    #(注入 6 只有一個引數,反序與否看不出來)
+    g = json.loads(json.dumps(groups))
+    g["63"]["spawns"][0]["group"] = 99
+    chk(rows(run(raw, g, treasure), "L3", "逐筆註記")[:1] == [("L3", "逐筆註記", "INCONCLUSIVE",
+        "event 63 group 99 @0x35c2d:call 0x35b78,引數 [1, 27, 3],target_ok=True group_ok=False")],
+        "注入 11:三個引數的註記順序")
+
+    # 合成影像:find_all 要找到重疊的命中;恰好 2 處命中不可下結論;表尾落在影像最後一個 byte 也要讀到
+    img = LinearImage([(0x100, 0x104, b"\0\0\0\0")])
+    chk(img.find_all(b"\0") == [0x100, 0x101, 0x102, 0x103], "find_all 逐 byte 往後找(重疊命中)")
+    rules = {"rules": [{"item_by_slot": [1, 2, 3, 4, 5], "item_table_address": "0x0"}]}
+    o: list[Finding] = []
+    layer_treasure(LinearImage([(0, 12, bytes([1, 2, 3, 4, 5, 9] * 2))]), rules, o)
+    chk([f.status for f in o] == ["INCONCLUSIVE"], "恰好 2 處命中必須 INCONCLUSIVE")
+    o = []
+    layer_treasure(LinearImage([(0, 6, bytes([1, 2, 3, 4, 5, 7]))]), rules, o)
+    chk([(f.name, f.status) for f in o] == [("寶物物品表", "PASS"), ("表尾檢查", "PASS")]
+        and o[1].detail.startswith("表後一個 byte = 7"), "表尾落在影像最後一個 byte")
+
+    # 合成 fixup map(換掉 _fixup_map):恰好 90 筆、起點就是跳表的連續段,不論在全部位址的最前面
+    # (由後面的位址收尾)或最後面都要認得;5 段都不涵蓋時,FAIL 訊息只列前 4 段
+    fx_saved = globals()["_fixup_map"]
+    try:
+        tbl = {JUMP_TABLE + 4 * i: int(groups[str(i)]["handler"], 16) for i in range(90)}
+        for extra, why in ((JUMP_TABLE + 0x1000, "段在最前面"), (JUMP_TABLE - 0x1000, "段在最後面")):
+            fx_syn = dict(tbl)
+            fx_syn[extra] = 0
+            globals()["_fixup_map"] = lambda _r, _m, fx_syn=fx_syn: fx_syn
+            o = []
+            chk(layer_jump_table(raw, groups, o) == 0 and [f.status for f in o] == ["PASS", "PASS"],
+                f"恰好 90 筆的跳表({why})")
+        five = {0x100000 + 0x1000 * k + 4 * i: 0 for k in range(5) for i in range(90)}
+        globals()["_fixup_map"] = lambda _r, _m: five
+        o = []
+        layer_jump_table(raw, groups, o)
+        chk(rows(o) == [("L2", "跳表存在性", "FAIL",
+                         f"新版在 {hex(JUMP_TABLE)} 沒有涵蓋 90 筆的連續 fixup run;"
+                         f"最長的幾段:{[(hex(0x100000 + 0x1000 * k), 90) for k in range(4)]}")],
+            "5 段都不涵蓋時只列前 4 段")
+    finally:
+        globals()["_fixup_map"] = fx_saved
+
+    # fixup map 回歸(實測值):7959 筆紀錄、跨頁重複的位址合併後 7948 筆;16-bit 目標的讀法錯了會整頁錯位
+    import hashlib
+    fx_real = _fixup_map(raw, parse_le(raw))
+    h = hashlib.sha1(repr(sorted(fx_real.items())).encode()).hexdigest()[:12]
+    chk(len(fx_real) == 7948 and h == "3bddfe84cc36", f"fixup map 回歸(應 7948 筆、3bddfe84cc36;得 {len(fx_real)}、{h})")
+
+    total = 12 + len(checked)   # 基準 4 + 完整輸出 1 + 注入 7(2026-10-28 前寫 9,少算)+ 上面這批
     print(f"檢查:{total - len(failures)}/{total} 通過")
     for f in failures:
         print("  FAIL  " + f)

@@ -28,7 +28,7 @@ fixup 表同樣**必須走完全部 object**(2026-09-11 修正)。`build_fixups`
 """
 import hashlib
 import os
-import sys, struct
+import sys
 
 # 2026-09-08:本檔的 docstring 含 cp950 編不出的字元(如 ↔),而無參數時會
 # `print(__doc__)` —— 在本機 cp950 主控台上那一行直接 UnicodeEncodeError,
@@ -37,7 +37,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
-from le_xref import parse_le
+from le_xref import file_to_linear, parse_fixups, parse_le
 
 # capstone 只有反組譯路徑需要,**匯入時不要求**。本檔的 `load_code`/`build_fixups`
 # 是純位元組/fixup 操作,已被 `derive_ail_entry_points.py` 這類不反組譯的工具重用;
@@ -86,6 +86,57 @@ def load_code(d, meta):
     return d[start:start + o['vsize']], o['base']
 
 
+def resync_sweep(md, code, base):
+    """線性掃描整段 code;capstone 遇到無法解碼的位元組時跳 1 byte 接著掃。
+
+    回傳 (指令清單, 續掃點 linear 清單)。
+
+    2026-10-28 修正(續一百六十一):`md.disasm()` 碰到第一個無法解碼的位元組就
+    **整個停下**,不報錯。FD2.EXE 的 obj1 程式碼到 0x4ef29,單次掃描卻停在
+    0x3cae4,後段約 75 KB(AIL 計時與音效驅動全在這裡)的呼叫端因此一律找不到,
+    `calls` 回的空結果與「確實沒有呼叫端」長得一模一樣。實測全段共 42 個續掃點。
+    """
+    insns, stops = [], []
+    off = 0
+    while off < len(code):
+        end = off
+        for insn in md.disasm(code[off:], base + off):
+            insns.append(insn)
+            end = insn.address + insn.size - base
+        if end >= len(code):
+            break
+        stops.append(base + end)
+        off = end + 1
+    return insns, stops
+
+
+def find_rel_callers(md, code, base, tgt):
+    """找 call/jmp 立即數目標 == tgt 的指令。
+
+    回傳 ([(linear, 助記符, 運算元, 對齊)], 續掃點)。`對齊` 為 False 表示線性掃描
+    在該處錯位、只有 E8/E9 rel32 位元組掃描命中:續掃後全段仍有 8 條這種邊
+    (例如 0x4d68c `ret` + 兩個 00 填充後的 `jmp 0x4dc3a`,掃描把 00 E9 讀成
+    `add cl, ch`)。位元組掃描在資料區可能誤中,所以另外標出,不混進對齊結果。
+    """
+    insns, stops = resync_sweep(md, code, base)
+    hits = []
+    for insn in insns:
+        if insn.mnemonic in ('call', 'jmp') and insn.op_str.startswith('0x'):
+            try:
+                if int(insn.op_str, 16) == tgt:
+                    hits.append((insn.address, insn.mnemonic, insn.op_str, True))
+            except ValueError:
+                pass
+    seen = {h[0] for h in hits}
+    for off in range(len(code) - 4):
+        if code[off] in (0xE8, 0xE9) and base + off not in seen:
+            rel = int.from_bytes(code[off + 1:off + 5], 'little', signed=True)
+            if base + off + 5 + rel == tgt:
+                hits.append((base + off, 'call' if code[off] == 0xE8 else 'jmp', hex(tgt), False))
+    hits.sort()
+    return hits, stops
+
+
 def object_bytes(d, meta, start, length):
     """LE-linear 位址範圍 -> raw bytes,**逐 object 換算**(不可套 obj1 的公式)。
 
@@ -125,6 +176,14 @@ def page_owner(meta, pg):
     return None, None
 
 
+def object_index(meta, lin):
+    """linear 位址落在第幾個 object(1-based);不在任何 object 內回 None。"""
+    for k, o in enumerate(meta['objs'], 1):
+        if o['base'] <= lin < o['base'] + o['vsize']:
+            return k
+    return None
+
+
 def total_pages(meta):
     return sum(o['pages'] for o in meta['objs'])
 
@@ -140,37 +199,20 @@ def build_fixups(d, meta, objects=None):
     間接跳表(`0x51b91`/`0x51d01`)全在 obj2,實測曾讓「這四個函式沒有呼叫端」
     這個結論差點成立。空結果與「確實沒有」在輸出上長得一模一樣。
     對照組見 selftest 第 (3) 題:`0x35854` 已知登記在 `0x51c79`,必須掃得到。
+
+    2026-10-28(續一百六十一):記錄解析改由 `le_xref.parse_fixups` 做。本檔原本另有一份手寫解析器,
+    16 位元物件編號(flag 0x40)的兩個分支一模一樣、外部目標(EXT_ORD / EXT_NAME)與清單型記錄都不處理;
+    le_xref 那份 2026-08-14 已對照 Open Watcom 的 wdfix.c 修正。改之前在 FD2.EXE 上逐筆比過:
+    objects = None / {1} / {2} / {3} / {1, 2} 分別 7948 / 7536 / 285 / 127 / 7821 筆,全部相同。
     """
-    page_size = meta['page_size']
-    fixpage = meta['fixpage']; fixrec = meta['fixrec']
-    npages = total_pages(meta)
     fx = {}
-    for pg in range(npages):
-        obj, page_lin = page_owner(meta, pg)
-        if obj is None:
+    for f, tgt in parse_fixups(d, meta).items():
+        lin = file_to_linear(meta, f)
+        if lin is None:
             continue
-        if objects is not None and meta['objs'].index(obj) + 1 not in objects:
+        if objects is not None and object_index(meta, lin) not in objects:
             continue
-        off0 = struct.unpack_from('<I', d, fixpage + pg * 4)[0]
-        off1 = struct.unpack_from('<I', d, fixpage + (pg + 1) * 4)[0]
-        p = fixrec + off0; end = fixrec + off1
-        while p < end:
-            src_type = d[p]; flags = d[p + 1]; p += 2
-            srcoff = struct.unpack_from('<h', d, p)[0]; p += 2
-            # target
-            if flags & 0x40:
-                objn = d[p]; p += 1
-            else:
-                objn = d[p]; p += 1
-            if flags & 0x10:
-                trgoff = struct.unpack_from('<I', d, p)[0]; p += 4
-            else:
-                trgoff = struct.unpack_from('<H', d, p)[0]; p += 2
-            base = meta['objs'][objn - 1]['base'] if 1 <= objn <= len(meta['objs']) else 0
-            tgt = base + trgoff
-            lin = page_lin + srcoff
-            if (src_type & 0x0f) in (7, 5, 0):  # 32-bit offset / 16-bit etc
-                fx[lin] = tgt
+        fx[lin] = tgt
     return fx
 
 
@@ -271,13 +313,96 @@ def selftest():
     if not ok7:
         fails.append("頁號→object 歸屬不正確")
 
+    print("\n(8) calls 必須掃完整個 obj1:已知呼叫端 0x3f3b9 → 0x3ec17 落在單次掃描停點之後")
+    # 前提先釘住:單次 md.disasm 確實停在這個呼叫端之前,否則本題就不鑑別。
+    # 0x3f3b9 是 AIL set_period(0x3f398)裡的 `call 0x3ec17`(取最小週期),位元組可逐一核對。
+    try:
+        md = _capstone()
+    except SystemExit:
+        md = None
+    if md is None:
+        print("    FAIL: 沒有 capstone,無法驗 calls")
+        fails.append("沒有 capstone")
+    else:
+        md.detail = False
+        code, base = load_code(d, meta)
+        single_end = base
+        for insn in md.disasm(code, base):
+            single_end = insn.address + insn.size
+        hits, stops = find_rel_callers(md, code, base, 0x3EC17)
+        raw = d[lin2file(meta, 0x3F3B9):lin2file(meta, 0x3F3B9) + 5]
+        sweep_insns = resync_sweep(md, code, base)[0]
+        ok8 = (single_end <= 0x3F3B9 and stops and stops[0] == single_end
+               and len(stops) == 42 and stops == sorted(set(stops))
+               and sweep_insns[0].address == base
+               and hits == [(0x3F3B9, 'call', '0x3ec17', True)]
+               and raw[0] == 0xE8
+               and 0x3F3B9 + 5 + int.from_bytes(raw[1:], 'little', signed=True) == 0x3EC17)
+        print(f"    {'PASS' if ok8 else 'FAIL'}: 單次掃描停在 {single_end:#x};續掃 {len(stops)} 處;"
+              f"命中 {[hex(h[0]) for h in hits]}(應含 0x3f3b9)")
+        if not ok8:
+            fails.append(f"calls 漏掉後段呼叫端:停在 {single_end:#x},命中 {hits}")
+
+        print("\n(8b) 線性掃描錯位處要靠位元組掃描補上,且標成未對齊")
+        # 0x4d68c 是 `ret`,後面兩個 00 填充;線性掃描把 00 E9 讀成 `add cl, ch`,
+        # 真正的 `jmp 0x4dc3a` 在 0x4d690。前提:掃描結果裡 0x4d690 不是指令起點。
+        starts = {i.address for i in resync_sweep(md, code, base)[0]}
+        hits_b, _ = find_rel_callers(md, code, base, 0x4DC3A)
+        # 另兩條錯位的邊:往前跳的 jmp(rel32 是負數)與 call(E8,不是 E9)
+        hits_j, _ = find_rel_callers(md, code, base, 0x4A104)
+        hits_c, _ = find_rel_callers(md, code, base, 0x365DA)
+        ok8b = (0x4D690 not in starts and code[0x4D68C - base] == 0xC3
+                and hits_b == [(0x4D690, 'jmp', '0x4dc3a', False)]
+                and (0x4AC65, 'jmp', '0x4a104', False) in hits_j and 0x4AC65 not in starts
+                and (0x40118, 'call', '0x365da', False) in hits_c and 0x40118 not in starts)
+        print(f"    {'PASS' if ok8b else 'FAIL'}: 0x4dc3a 的來源 {[(hex(h[0]), h[3]) for h in hits_b]};"
+              f"0x4a104 未對齊 {[hex(h[0]) for h in hits_j if not h[3]]}(共 {len(hits_j)} 處);"
+              f"0x365da 未對齊 {[hex(h[0]) for h in hits_c if not h[3]]}(共 {len(hits_c)} 處)")
+        if not ok8b:
+            fails.append(f"錯位處沒有補上或沒有標記:{hits_b} {hits_j} {hits_c}")
+
+        print("\n(8c) 合成碼:最後一個能放下 rel32 的位置也要掃到")
+        # `cmp al, 0xe8` 吃掉 E8,線性掃描看不到這個 call;E8 在 len - 5,是位元組掃描範圍的最後一格
+        syn = bytes([0x3C, 0xE8, 0x10, 0x00, 0x00, 0x00])
+        hits_s, _ = find_rel_callers(md, syn, 0x1000, 0x1000 + 1 + 5 + 0x10)
+        ok8c = hits_s == [(0x1001, 'call', hex(0x1016), False)]
+        print(f"    {'PASS' if ok8c else 'FAIL'}: {hits_s}")
+        if not ok8c:
+            fails.append(f"位元組掃描漏掉最後一格:{hits_s}")
+
+    print("\n(9) le_xref.find_callers 的掃描範圍必須由 LE 表頭推出,涵蓋新版 obj1 後段")
+    from le_xref import find_callers, code_file_range
+    lo, hi = code_file_range(meta)
+    tf, cf = lin2file(meta, 0x3EC17), lin2file(meta, 0x3F3B9)
+    got9 = find_callers(d, tf, meta)
+    # 前提:這個呼叫端在舊的寫死範圍(file 0x10000..0x4ec00)之外。
+    ok9 = (lo == lin2file(meta, meta['objs'][0]['base']) and hi - lo == meta['objs'][0]['vsize']
+           and cf >= 0x4EC00 and cf in got9)
+    print(f"    {'PASS' if ok9 else 'FAIL'}: 範圍 file {lo:#x}..{hi:#x};"
+          f"0x3ec17(file {tf:#x})的呼叫端 {[hex(c) for c in got9]}(應含 {cf:#x})")
+    if not ok9:
+        fails.append(f"le_xref.find_callers 範圍錯:{lo:#x}..{hi:#x},命中 {got9}")
+
+    print("\n(10) build_fixups 的物件過濾 = 全物件結果限定在該物件的 linear 範圍;object_index 的邊界")
+    per_obj = {k: build_fixups(d, meta, objects={k}) for k in (1, 2, 3)}
+    ok10 = (len(fx_all) == 7948 and all(per_obj.values())
+            and all(per_obj[k] == {a: t for a, t in fx_all.items()
+                                   if meta['objs'][k - 1]['base'] <= a < meta['objs'][k - 1]['base'] + meta['objs'][k - 1]['vsize']}
+                    for k in per_obj)
+            and [object_index(meta, a) for a in (0x10000, 0x4EF28, 0x4EF29, 0x50000, 0x60000, 0xFFFF)]
+            == [1, 1, None, 2, 3, None])
+    print(f"    {'PASS' if ok10 else 'FAIL'}: 全物件 {len(fx_all)} 筆;各物件 {[len(v) for v in per_obj.values()]}")
+    if not ok10:
+        fails.append("build_fixups 的物件過濾或 object_index 不正確")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(資料段錨點回歸 + 跨工具逐位址對照 + 越界拒絕 + "
-          "非恆真控制 + fixup 全物件涵蓋 + 已知真值配對負向控制 + 頁號歸屬)。")
+          "非恆真控制 + fixup 全物件涵蓋 + 已知真值配對負向控制 + 頁號歸屬 + "
+          "calls 全段涵蓋與錯位補掃 + le_xref 掃描範圍)。")
     return 0
 
 
@@ -336,13 +461,13 @@ def main(a):
 
     if cmd == 'calls':
         tgt = int(a[3], 16)
-        for insn in md.disasm(code, base):
-            if insn.mnemonic in ('call', 'jmp') and insn.op_str.startswith('0x'):
-                try:
-                    if int(insn.op_str, 16) == tgt:
-                        print(f'{insn.address:#08x}  {insn.mnemonic} {insn.op_str}')
-                except ValueError:
-                    pass
+        hits, stops = find_rel_callers(md, code, base, tgt)
+        for addr, mnem, op, aligned in hits:
+            print(f'{addr:#08x}  {mnem} {op}'
+                  + ('' if aligned else '  ; 只有位元組掃描命中(線性掃描在此錯位)'))
+        # 續掃點數印到 stderr:不改 stdout 格式,但讓「掃描曾中斷」不再是無聲的。
+        print(f"# calls:線性掃描遇到 {len(stops)} 處無法解碼的位元組,各跳 1 byte 後續掃"
+              f"(掃到 {base + len(code):#x})", file=sys.stderr)
         return 0
 
     if cmd == 'refs':

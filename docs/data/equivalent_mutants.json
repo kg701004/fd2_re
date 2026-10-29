@@ -815,14 +815,6 @@
    "scope_hash": "31dde868c4ad"
   },
   {
-   "tool": "verify_address_claim_coverage.py",
-   "kind": "equivalent",
-   "key": "gate|print(f\" 有位元組訊號 {len(covered):4d}({100 * len(covered) // max(1, total)}%)\")|int 1->2#0",
-   "reason": "max(1, total) 只為了 total=0 時不除以零;改成 max(2, total) 只在 total<2 時不同,而知識庫入口主張有上千筆(2026-09-19 為 1117),輸出逐位元組相同。",
-   "evidence": "閘門第一行印出的分母 total = len(claims);selftest (5) 要求 total > 100。",
-   "scope_hash": "1e48b77d24b2"
-  },
-  {
    "tool": "text_proximity.py",
    "kind": "tuning",
    "key": "address_spans|if addr[2:].lower() not in text.lower():|int 2->3#0",
@@ -836,6 +828,64 @@
    "reason": "找不到 ANI 資料時的預設 cmdCount:那時取樣是 b\"\"、該列判 SKIP,cmdCount 不會被用到;有資料時第一段長度 > 0 的 script 就覆寫它。正常執行的輸出與基準逐位元組相同,行為等價。",
    "evidence": "98 續一百四十五:窮舉突變 verify_truncation_robustness.py 23/48,唯一未登錄的可達逃逸(_ani_vm_sample 的 int 0->1)",
    "scope_hash": "66173d40ccbf"
+  },
+  {
+   "tool": "derive_native_argcounts.py",
+   "key": "callee_argc.walk|work = [(root, delta0, None, False)]|bool False->True#0",
+   "reason": "根節點的 via_jmp 只在「位址走出本體」時讀;根節點恆在本體內(start 在 [start, end),end 是下一個入口或 +0x4000;跳表補走的起點也在迴圈條件 a < end 內),第一條指令處理後就被設成 False,初值讀不到。",
+   "evidence": "續一百六十一 2026-10-28:真 EXE 857 個目標(541 入口 + 呼叫目標)突變前後 callee_argc 回傳值與 trace 逐筆相同;修補後的 25 題合成邊界也全過",
+   "scope_hash": "d031e169cc09"
+  },
+  {
+   "tool": "derive_native_argcounts.py",
+   "key": "callee_argc|a, prev_seen = start, True|bool True->False#0",
+   "reason": "prev_seen 的初值只在 start 不在 seen 時有作用;start 一定在 seen(walk 從 start 起走,第一條就記入),除非 start 解不出指令 —— 那時補走迴圈第一圈就 break。",
+   "evidence": "續一百六十一 2026-10-28:真 EXE 857 個目標突變前後回傳值與 trace 逐筆相同;修補後合成邊界全過",
+   "scope_hash": "d031e169cc09"
+  },
+  {
+   "tool": "callgraph_le.py",
+   "key": "CG._insn|for ins in self.md.disasm(self.code[off:off + 15], addr):|int 15->16#0",
+   "reason": "x86 指令最長 15 bytes,只取第一條指令時多給的第 16 個 byte 永遠不會被讀到。",
+   "evidence": "續一百六十一 2026-10-28:FD2.EXE 物件 1 全部 257833 個位址,capstone 5.0.7 以 15 與 16 bytes 解第一條指令,(長度, 助記符, 運算元) 逐位址相同",
+   "scope_hash": "843eae712f1f"
+  },
+  {
+   "tool": "verify_native_tables_new_edition.py",
+   "key": "_fixup_map|if fl & 0x10:|int 16->17#0",
+   "reason": "0x10 改 0x11 只在「flags bit0 為 1、bit4 為 0」的紀錄才判斷不同;FD2.EXE 沒有 bit0 為 1 的 fixup 紀錄(與 callgraph_le.fixup_map 的同一個突變相同)。",
+   "evidence": "續一百六十一 2026-10-28:FD2.EXE 7959 筆 fixup 紀錄 flags 只有 0x00(7067)與 0x10(892);突變後 selftest 的完整輸出釘子(未注入與注入 3/5/6/7)與 fixup map 回歸(7948 筆、雜湊 3bddfe84cc36)全部不變",
+   "scope_hash": "a8102f705448"
+  },
+  {
+   "tool": "verify_native_tables_new_edition.py",
+   "key": "_fixup_map|base = meta[\"objs\"][objn - 1][\"base\"] if 1 <= objn <= len(meta[\"objs\"]) else 0|int 0->1#0",
+   "reason": "else 分支只在目標物件編號超出 1..物件數時才走;FD2.EXE 全部 fixup 紀錄的物件編號都在 1..3。",
+   "evidence": "續一百六十一 2026-10-28:FD2.EXE 7959 筆 fixup 紀錄物件編號 1 / 2 / 3 = 893 / 6800 / 266,沒有其他值;突變後 fixup map 回歸與完整輸出釘子全部不變",
+   "scope_hash": "a8102f705448"
+  },
+  {
+   "tool": "verify_native_tables_new_edition.py",
+   "key": "layer_handlers|window = code[hoff:hoff + 0x400]|int 1024->1025#0",
+   "reason": "視窗多 1 byte 只會讓 handler 起點 +0x400 附近多解出一條指令;45 筆 spawn 的呼叫點離 handler 起點最遠 0x12f(event 61),前面的 push 也在這之前,用不到視窗尾端。",
+   "evidence": "續一百六十一 2026-10-28:event_id_groups.json 全部 spawn 的 source − handler 最大 0x12f;突變後 L3 的完整輸出(未注入與注入 6/7/8/9/11)全部不變",
+   "scope_hash": "25b4fbcd97ae"
+  },
+  {
+   "tool": "function_inventory.py",
+   "kind": "equivalent",
+   "key": "pointer_refs|if i >= len(srcs) or srcs[i] >= st + 15:|int 15->16#0",
+   "reason": "15 改 16 只多讓「第一個 fixup 來源恰好在 st + 15」的指令往下走;insn_at 一次最多解 15 bytes(x86 指令上限),size <= 15,內層迴圈第一筆就 `s >= st + size` 跳出,out 不變。",
+   "evidence": "續一百六十一 2026-10-29:突變後對 FD2.EXE 的 function_inventory 清單(390947 字元)、結構命名、check_names 三種產物逐位元組相同(scratchpad eqv_fi.py)",
+   "scope_hash": "fe0cf0ad7862"
+  },
+  {
+   "tool": "function_inventory.py",
+   "kind": "equivalent",
+   "key": "local_body|terms += 1|int 1->2#0",
+   "reason": "terms 只在 `if not terms` 當真假值用,每次加 1 或加 2 的真假完全相同。",
+   "evidence": "續一百六十一 2026-10-29:local_body 裡 terms 只有這一處讀取;突變後 FD2.EXE 三種產物逐位元組相同",
+   "scope_hash": "e44fce656070"
   }
  ]
 }

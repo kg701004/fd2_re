@@ -424,7 +424,11 @@ def callee_argc(cg, target: int, entries,
             a += i.size
     if leaf and not clean_ret:
         return None, "leaf without clean ret"
-    span = (max(seen) - start) if seen else 0
+    if not seen:
+        # 有序頭、但本體第一條就解不出來:不知道讀了幾個參數 —— None,不是 0
+        # (2026-10-28 續一百六十一:原本 span 補 0 後照回 top=0;真 EXE 沒有這種入口)
+        return None, "no body insn"
+    span = max(seen) - start
     return top, ("leaf" if leaf else "prologue") + (" ebp" if used_ebp else "") + f" span={span:#x}"
 
 
@@ -869,6 +873,24 @@ def _selftest_callee_cases() -> dict:
     g = _cg([_CI(0, "push", "eax"), _CI(0, "push", "eax"), _CI(0, "add", "esp, 8", 3),
              _CI(0, "movzx", "eax, byte ptr [esp + 0x7]", 5), _CI(0, "ret")])
     syn["add esp, <立即值> 照算且退回恰好該值"] = callee_argc(g, 0, [])[0] == 1
+    # (v)~(y) 2026-10-28 續一百六十一突變窮舉補的題(前四條在真 EXE 上都改得到輸出,原本沒有題目釘住)
+    # (v) leave 之後位移恰為 ebp 基底 - 4:(j) 在 ret 前沒有再讀堆疊,leave 沒算位移也剛好歸 0;
+    #     這裡 leave 之後讀 [esp+4] = 第 1 個參數(沒算會算成 0;真 EXE 有 80 個 leaf 因此變 None)
+    g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "sub", "esp, 0x8", 3),
+             _CI(0, "leave"), _CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret")], prologue=False)
+    syn["leave 後位移恰為 ebp 基底 - 4"] = callee_argc(g, 0, [])[0] == 1
+    # (w) 成對:描述字串有 mov ebp,esp 才標 ebp,沒有就不標
+    g = _cg([_CI(0, "push", "ebp"), _CI(0, "mov", "ebp, esp", 2), _CI(0, "mov", "eax, dword ptr [ebp + 0xc]", 3),
+             _CI(0, "pop", "ebp"), _CI(0, "ret")], prologue=False)
+    syn["ebp 框架標 ebp"] = callee_argc(g, 0, []) == (2, "leaf ebp span=0x7")
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "ret")])
+    syn["沒有 ebp 框架不標 ebp"] = callee_argc(g, 0, []) == (1, "prologue span=0x4")
+    # (x) 條件跳躍跳出本體不算乾淨出口(只有 `jmp imm` 算 tail):唯一的 ret 位移不是 0 -> None
+    g = _cg([_CI(0, "mov", "eax, dword ptr [esp + 0x4]", 4), _CI(0, "je", "0x9000", 2),
+             _CI(0, "push", "eax"), _CI(0, "ret")], prologue=False)
+    syn["leaf 條件跳出本體不算乾淨出口"] = callee_argc(g, 0, [])[0] is None
+    # (y) 有序頭但本體第一條就解不出來 -> None
+    syn["本體解不出來 -> None"] = callee_argc(_cg([]), 0, []) == (None, "no body insn")
     return syn
 
 

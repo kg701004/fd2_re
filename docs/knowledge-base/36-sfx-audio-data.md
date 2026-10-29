@@ -128,6 +128,7 @@ $ python3 tools/unpack_dat.py --list FDOTHER.DAT | grep '^    31'
 (`AIL_set_sample_address` + `AIL_set_sample_type`)直接吃裸 PCM buffer 的用法完全吻合:不需要 WAV/VOC
 檔頭,取樣率/位元深度另由 `AIL_set_sample_type`/`AIL_set_sample_playback_rate` 呼叫端設定(未逐一反組譯
 其立即數,取樣率待後輪用實機錄音比對確認,推定 11025Hz ── 1995 年 AIL 遊戲常見預設值)。
+**續一百六十一(FD2.EXE 反組譯)**:取樣率不由呼叫端設定 —— `AIL_init_sample`(`0x39521`)在 `0x39584` 呼叫 `0x414e0`,它把樣本 `+0x3c` 預設成 `0x2b11` = 11025、格式 `+0x34` = 0(8-bit mono);`play_sfx_a`(`0x25a96`)只呼叫 stop / init / set_sample_address / set_sample_loop_count / start,不改這兩個欄位。11025 Hz / 8-bit mono 由推定改為已確認(`evidence/timer_base_and_delay_slowdown_s161_20261028.json`)。
 
 ## `.DIG` / `SAMPLE.*` 的角色釐清(避免與資料混淆)
 
@@ -169,6 +170,7 @@ uint32 表 + `ADLIB-`/樂器名字串),且遊戲程式碼中未找到任何對 `
 - [x] 取樣率呼叫端已追蹤(見下方「取樣率:負向證據」),**確認遊戲程式碼從未呼叫**
   `AIL_set_sample_type`/`AIL_set_sample_playback_rate`,故無法從呼叫端立即數反查——沿用 11025Hz/8-bit
   推定值,已從「未查證」升級為「查證後仍無直接證據,推定值維持」。
+  續一百六十一:直接證據找到了,是 `AIL_init_sample` 的預設值(`0x414e0` 設 `+0x3c` = `0x2b11`,FD2.EXE 反組譯),見開頭。
 - [x] `FDOTHER.DAT` #1（同一次 init 載入至 `[0x53a4d]`）是 `0x122dc/0x126f7` range overlay 的 20-entry
   24×24 four-mode RLE descriptor bank，#0..18 由 modes 1..5 使用；#2 是 action overlay raw cell bank。
 
@@ -290,6 +292,8 @@ call 0x25a96         ; (或 0x25b45 = handle B,允許與 handle A 疊播)
 驅動的預設輸出格式決定(driver-level default,而非 per-sample 設定)——這條線需要追 `.DIG` 驅動初始化
 (`AIL_startup` 一類呼叫)才可能挖到,超出本輪範圍。`11025Hz/8-bit` 維持**推定值**,但現在有明確的
 「查過、查無呼叫端證據」記錄,避免後續重複查找同一批 wrapper。
+
+**續一百六十一**:上面「由 `.DIG` 驅動的預設輸出格式決定」的推測不需要了 —— 預設值在 `AIL_init_sample` 裡(`0x39584` → `0x414e0`,`+0x3c` = `0x2b11` = 11025、`+0x34` = 0;FD2.EXE 反組譯)。`AIL_set_sample_playback_rate`(`0x3994c`)的 5 個呼叫端都在 AIL 的檔案載入函式裡(`0x41b84` / `0x41deb` / `0x458f0`),從 main(`0x25bf4`)沿直接呼叫到不了(`callgraph_le.py` 的可達集;對照組 `0x25b03` 到得了)。證據 `evidence/timer_base_and_delay_slowdown_s161_20261028.json`。
 
 ## 工具
 
@@ -775,6 +779,7 @@ action函式本體去找有沒有其他函式也碰這三個位址(2026-09-06已
 10444-byte 有效 raw PCM 與1個空哨兵，因此目前 `--battle` 共匯出43個 WAV。
 11025Hz 仍是工具鏈推定值，#95 的玩家可聽語意也仍未知；不能因 runtime 已接線
 就提升成已證實的音效名稱。
+(續一百六十一:11025 Hz 已由 `AIL_init_sample` 的預設值確認(`0x414e0`,FD2.EXE 反組譯),見本文件開頭;#95 的玩家可聽語意仍未知。)
 `--res <idx>` 可導出任意單一 FDOTHER.DAT 資源號(供後續驗證其他候選用)。
 
 ## 2026-09-04:原版實機確認 `play_sfx_a`,並更正 worklist 沿用的舊位址
@@ -1350,6 +1355,7 @@ byte-signature去搜真正的`FDOTHER.DAT`檔案，在檔案offset **2,863,791**
 
 **取樣率**：沿用既有resource#31/battle家族的11025Hz推定值(見本文件開頭既有段落)，本輪
 沒有找到`AIL_set_sample_type`立即數呼叫點確認確切取樣率，維持既有已知限制。
+(續一百六十一:取樣率已由 `AIL_init_sample` `0x414e0` 的預設值 `0x2b11` 確認,見本文件開頭。)
 
 **⚠已於2026-09-07補完並訂正，見本檔案末「item 1117 殘留補完」段落。** **誠實範圍**：只驗證了7個已知type對應的sub-index(1/5/6/7/8/12/14)，17個子項裡其餘10個
 (0/2/3/4/9/10/11/13/15/16)尚未對到具體item effect type；`FUN_0001d4cb`的其餘5個caller

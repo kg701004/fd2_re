@@ -179,10 +179,24 @@ def find_str_xref(d, meta, s):
     return lin, sorted(srcs)
 
 
-def find_callers(d, target):
+def code_file_range(meta):
+    """obj1(程式碼段)在檔案裡的 [起, 迄)。"""
+    ob = meta["objs"][0]
+    fstart = page_file(meta, ob["first"] - 1)
+    return fstart, fstart + ob["vsize"]
+
+
+def find_callers(d, target, meta=None):
+    # 2026-10-28 修正(續一百六十一):掃描範圍原本寫死檔案位移 0x10000..0x4ec00,
+    # 那是舊版 EXE 的程式碼段。新版 obj1 在檔案 0x36014..0x74f3d(file = linear +
+    # 0x26014),舊範圍只蓋到 linear 0x28bec,之後的呼叫端一律回 0 處 —— 已知
+    # 0x3ec17 的呼叫端 0x3f3b9(file 0x653cd)就是這樣漏掉的。改由 LE 表頭推出範圍。
+    if meta is None:
+        meta = parse_le(d)
+    lo, hi = code_file_range(meta)
     out = []
-    for m in re.finditer(b"\xe8", d[0x10000:0x4ec00]):
-        p = 0x10000 + m.start()
+    for m in re.finditer(b"\xe8", d[lo:hi - 4]):
+        p = lo + m.start()
         rel = struct.unpack_from("<i", d, p + 1)[0]
         if p + 5 + rel == target:
             out.append(p)
@@ -201,7 +215,7 @@ def main(argv):
             print(f"  0x{s:x}")
     elif argv[2] == "calls":
         t = int(argv[3], 16)
-        cs = find_callers(d, t)
+        cs = find_callers(d, t, meta)
         print(f"0x{t:x} 相對呼叫端 {len(cs)} 處:")
         for c in cs:
             print(f"  0x{c:x}")

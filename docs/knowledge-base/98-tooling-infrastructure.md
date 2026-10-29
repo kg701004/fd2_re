@@ -11435,3 +11435,118 @@ delay 的校準:開機量的是每秒 9057 次 int 21h,標題閃爍時 delay 實
 - 第 6 項:修補者身分沒有記載(只能到「發行後的第三方」這一層)。
 - 標題閃爍時 int 21h 比開機校準慢的原因(紀錄沒有記 int 21h 本身)。
 - 第一輪 #6 的位置;BIOS tick 掉中斷的是哪一條路、5 ms 基底是哪個通道設的(同續一百五十八)。
+
+## 2026-10-28 續一百六十一:5 ms 基底是 AIL 的 DIG 服務計時器 `0x404c0`(200 Hz);標題閃爍時 delay 變慢的中斷工作分三段,分界在確認音效播完;兩個 `calls` 工具修好
+
+起因:續一百六十留下的 ③a(續一百五十八的 5 ms 格點是哪個計時通道設的)與 ①(標題閃爍時每秒的 int 21h 比開機校準少)。使用者 2026-10-28「先做 ③a 和 ① 的靜態分析」,
+之後「1 和 2 要現在做」(寫進 repo、修兩個 `calls` 工具)。只用 FD2.EXE 反組譯與續一百六十既有的 lc159b 呼叫紀錄,沒有實機。
+證據 `evidence/timer_base_and_delay_slowdown_s161_20261028.json`,產生器 `ev_s161.py`(變異測試 `mut_s161.py` 32 個),`inputs_manifest.json` 登錄 5 筆。
+
+**工具(先修,下面的呼叫端列表靠它們)**:
+- `disasm_le.py calls`:capstone 的 `md.disasm()` 遇到第一個解不出的位元組就整段停下、不報錯。FD2.EXE obj1 到 0x4ef29,單次掃描停在 0x3cae4,
+  後段約 75 KB(AIL 的計時與音效驅動都在這裡)的呼叫端一律回空結果,與「確實沒有呼叫端」分不出來。
+  改成 `resync_sweep`:停下就跳 1 byte 續掃(全段 42 處,stderr 印出處數);另用 E8 / E9 rel32 位元組掃描補上線性掃描錯位的地方,
+  只由位元組掃描命中的列加註「線性掃描在此錯位」(例如 0x4d68c `ret` + 兩個 00 填充之後的 `0x4d690 jmp 0x4dc3a`,掃描把 00 E9 讀成 `add cl, ch`)。
+- 對照(FD2.EXE 反組譯,function_inventory 的 1356 個入口):續掃後指向入口的 call / jmp rel32 共 6354 條,位元組掃描 6362 條,多出的 8 條都是上面那種錯位,續掃沒有位元組掃描以外的邊。
+  舊版漏掉 1028 條邊;244 個入口在舊版看起來沒有呼叫端,其中 47 個在 0x3cae4 之前(例如 main 0x25bf4 的呼叫端是 0x460dc、`AIL_set_preference` 0x37f70 的 18 個呼叫端都在 0x3fcb5 起)。
+- `le_xref.py calls`:掃描範圍寫死檔案位移 0x10000 .. 0x4ec00(舊版 EXE 的程式碼段)。新版 obj1 在檔案 0x36014 .. 0x74f3d(file = linear + 0x26014),
+  linear 0x28bec 以上的呼叫端都漏掉,已知的 0x3f3b9 → 0x3ec17 也回 0 處。改由 LE 表頭推出 obj1 的檔案範圍(`code_file_range`)。
+- `disasm_le.py --selftest` 加第 (8)、(8b)、(8c)、(9)、(10) 題:已知呼叫端 0x3f3b9 → 0x3ec17 落在單次掃描停點之後(前提一併斷言,續掃 42 處、第一條指令在 0x10000)、
+  三條錯位的邊(0x4d690 往後的 jmp、0x4ac65 往前的 jmp、0x40118 的 call)要補上且標成未對齊、合成碼裡最後一格的 E8 也要掃到、
+  `le_xref.find_callers` 的範圍涵蓋 0x3ec17 的呼叫端(file 0x653cd,在舊範圍之外)、`build_fixups` 的物件過濾 = 全物件結果限定在該物件範圍。
+- `build_fixups`(FD2.EXE fixup 表):改了 `disasm_le.py` 之後窮舉變異(`verify_selftest_discrimination.py --exhaustive --tool disasm_le.py`)報 14 個逃逸,
+  6 個在新程式碼(上面的題目補上)、8 個在既有的手寫 fixup 解析器:16 位元物件編號(flag 0x40)的兩個分支一模一樣、外部目標與清單型記錄都不處理,
+  FD2.EXE 的 7959 筆記錄全是來源型別 7、flag 0x00 / 0x10,所以那些分支在真資料上分不出來。改成直接用 `le_xref.parse_fixups`(2026-08-14 對照 Open Watcom 修過的那份);
+  改之前逐筆比過 objects = None / {1} / {2} / {3} / {1, 2},7948 / 7536 / 285 / 127 / 7821 筆全部相同。之後窮舉歸零。
+- 既有結論用修好的工具重跑(FD2.EXE 反組譯):doc39「全域 calls 0x1f73f 僅命中 0x1fbaf 一處」、本文件續八十五「0x37eb7 沒有任何呼叫端」都仍成立。
+
+**③a 5 ms 基底(FD2.EXE 反組譯)**:
+- 計時器都掛在 Miles AIL 的計時管理上,遊戲本身不登錄。登錄端完整列出(續掃反組譯與位元組掃描一致):`AIL_register_timer` 0x387bc ← 0x3fb1b / 0x411ef / 0x43f6a;
+  內部 0x3f236 ← 0x37e7b(AIL_startup 0x37d3e)/ 0x38820(公開版轉呼叫)。`AIL_set_timer_divisor` 0x38a86 沒有呼叫端。
+- 預設值:AIL_startup 在 0x3fcae .. 0x3fd87 呼叫 18 次 `AIL_set_preference(n, v)`,內部 0x3f937 寫進 dword 陣列 0x5430c[n];pref[0] = 200、pref[10] = 120。
+
+| 通道(回呼) | 登錄 / 設頻率 | 頻率 | 週期(1e6 / Hz,0x3f3c8) |
+|---|---|---|---|
+| DIG 服務 0x404c0 | 0x411ef / 0x412ae 讀 [0x5430c](pref[0]) | 200 Hz | **5000 µs** |
+| MDI 服務 0x43270 | 0x43f6a / 0x44155 讀 [0x54334](pref[10]) | 120 Hz | 8333 µs |
+| AIL 內部 0x37c30 | 0x37e7b / 0x37e8b `push 0x64` | 100 Hz | 10000 µs |
+| BIOS 轉接(通道 15) | 0x3ed49 `push 0xd68d` → `AIL_set_timer_period` 0x3899a | — | 54925 µs |
+| 驅動自己的 0x3f565 | 0x3fb1b / 0x3fb76 讀驅動描述 +0x2e(word,0x3fb0b 只有 > 0 才登錄) | 看 .DIG / .MDI 檔 | 沒讀 |
+
+- main 到登錄點每一步都是直接 call(FD2.EXE 反組譯):0x25c01 → AIL_startup;0x25c2b → `AIL_install_DIG_INI` 0x3908b → 0x413c0 → `AIL_install_DIG_driver_file` 0x39176
+  → 0x41300 → 0x40cf0(0x411ef 登錄、0x412ae 設頻率、0x412ba start);0x25c06 → `AIL_install_MDI_INI` 0x3aa72 → 0x44240 → `AIL_install_MDI_driver_file` 0x3ab49 → 0x44180 → 0x43ad0。
+- PIT 取所有非空通道的最小週期(0x3ec17 掃 16 個通道、寫 [0x52be2]),除數 = µs × 10000 / 8380(0x3ebe4)。最小是 DIG 的 5000 µs(除數 5966)。
+  續一百五十八 DOSBox-X 實測 lc157c / lc157d 的最佳格點都是 5.000 ms,相符;驅動自己的通道若比 200 Hz 快,格點會更短,實測也排除了這一點。
+- 中斷處理程式 0x3ea8e(FD2.EXE 反組譯):重入計數 [0x52be6] 非 0 時 `ja 0x3ebad`,只送 EOI 就 `iretd`,所有通道的累加器都不加 —— 這一次中斷的 5 ms 對全部通道都丟掉。
+  正常路徑先在 0x3eb13 送 EOI、0x3eb15 開中斷,才在 0x3eb3c 跑回呼(通道 0 .. 14),所以回呼跑超過 5 ms 時,下一次中斷走的就是這條路。
+  這是續一百五十八「BIOS tick 掉中斷」的一個候選;另一個是關中斷區間把中斷合併。哪一個要實機分,這輪沒做。
+
+**① 標題閃爍時 delay 變慢**:
+- 校準在 AIL 之前(FD2.EXE 反組譯):0x3dfef 沒有直接呼叫端,唯一的參照是 Watcom 初始化表 0x539b0 .. 0x539e0 裡 0x539b6 那一筆(旗標 0、優先序 0x20、0x539b8 的 fixup → 0x3dfef)。
+  啟動碼 0x3ced5 呼叫走表程式 0x460ea(6 bytes 一筆、先跑優先序小的),之後 0x3cedc 呼叫 0x4609b,它在 0x460dc 呼叫 main;main 在 0x25c01 才呼叫 AIL_startup。
+  所以校準時還沒有 200 Hz 的計時中斷。校準迴圈 0x3e00b 與 delay 迴圈 0x3e04b 都是 5 條指令(`mov ah, 0x2c` / `int 0x21` / 計數 / `cmp bl, dh` / 跳)。
+- delay 拆解(續一百六十的 DOSBox-X 呼叫紀錄 lc159b,不重跑):969 次 delay(0x3e01d),每次有遊戲選擇子的指令數 i 與全部指令數 n。
+  330 次 delay(2) 的 i 正好是「每圈 6 條 + 3」,其餘每次都多 50 條以上;多出來的是中斷處理程式在遊戲選擇子裡跑的指令。每圈 6 條比迴圈本身多 1 條,來源沒查。
+
+| 類別(DOSBox-X 呼叫紀錄) | 次數 | 每秒圈數 | 每圈全部指令 | 每圈中斷工作(遊戲選擇子) |
+|---|---|---|---|---|
+| 開機校準 `[0x541b0]` | — | 9057 | — | — |
+| 沒遇到中斷(都是 delay(2)) | 330 | 8767.8 | 481.9 | 0 |
+| 8 ms 以上、閃爍除外 | 381 | 7989.6 | 530.8 | 33.0 |
+| 閃爍第 1 .. 4 次 delay(80) | 4 | 7488.0 | 571.8 | 75.7 |
+| 閃爍第 5 次 | 1 | 7837.8 | 545.1 | 52.0 |
+| 閃爍第 6 .. 8 次 | 3 | 7833.7 | 538.8 | 37.4 |
+
+- 確認音效(FD2.EXE 反組譯 + 資料):確認 0x1fed3 呼叫 `play_sfx_a` 0x25a96(表、第 1 段、播 1 次),表是 0x1f8de 從 "FDOTHER.DAT" 載入的 #0x4d(#77)。
+  `play_sfx_a` 取 [表 + 6 + 4 × 段] 到下一段的位移,依序呼叫 `AIL_stop_sample`、`AIL_init_sample`、`AIL_set_sample_address`、`AIL_set_sample_loop_count`、`AIL_start_sample`。
+  `extracted/raw/FDOTHER/FDOTHER_077.bin` 第 1 段 0xa18f .. 0xb244 = 4277 bytes;`AIL_init_sample` 0x39521 在 0x39584 呼叫 0x414e0,把取樣率 +0x3c 設成 0x2b11 = 11025、
+  格式 +0x34 = 0(8-bit mono),所以長 0.3879 s。這也確認了 doc36 的 11025 Hz 推定(`AIL_set_sample_playback_rate` 0x3994c 的 5 個呼叫端在 AIL 檔案載入函式裡,從 main 沿直接呼叫到不了)。
+- 時間對照(DOSBox-X 呼叫紀錄,從第一筆記錄起算):確認 9.2878 s,音效 9.6757 s 播完;閃爍第 4 次 delay 9.5814 s 開始、第 5 次 9.6790 s 開始。
+  每圈中斷工作:確認前選單最後 4 次 delay(8)(`0x1fd73`)14.5 .. 18.4 條、閃爍第 1 .. 4 次 74.6 .. 76.9、第 5 次 52.0、第 6 .. 8 次 36.3 .. 39.1。
+  前 4 次與後 3 次的分界落在音效播完的那一次 delay,符合「DIG 服務在播放時做混音」(推論,沒看 0x404c0 的內部)。
+- 結論:閃爍 762.9 ms(續一百六十)比標稱長,是因為每圈 int 21h 之外還要分攤計時中斷的工作;前 4 次多出的那一段與確認音效的播放期間吻合(推論;DOSBox-X 呼叫紀錄 lc159b、FD2.EXE 反組譯)。
+
+| 產生器 | ESCAPED | KILLED | CRASH | INERT |
+|---|---|---|---|---|
+| `ev_s161`(新) | 0 | 299 | 68 | 60 |
+
+第一次 sweep 是 ESCAPED 26:輸出時另外寫的常數(BIOS 週期、100 Hz、PIT 的 10000 / 8380、XI 表範圍、取樣率、格式、播放次數)與另外四捨五入的值(時間、分位數、選單 delay 的位置);常數改成從 FD2.EXE 那一條指令的運算元取(`_exeops.operand`),其餘先算好、釘住,輸出用同一個名稱。輸出逐 byte 不變。
+
+**突變窮舉**(`--exhaustive`:改動的 `disasm_le` 與 import 它或 `le_xref` 的 12 支;其中 `derive_native_argcounts` 與 `verify_address_claim_coverage` 這輪為了補題也改了):
+`disasm_le` 原本 14 個逃逸已在上面處理;另外 9 個不是這輪的程式改動造成 —— `callgraph_le` / `derive_native_argcounts` 只用到 `le_xref` 沒改的 `parse_le` / `parse_fixups`,
+`verify_address_claim_coverage` 那個是文件數字湊巧。判定方式:在 repo 外的副本逐一套用突變,對 FD2.EXE 的 857 個目標(`_scan` 的 541 個入口加呼叫目標)比對 `callee_argc` 的回傳值與 trace。
+- `derive_native_argcounts.callee_argc` 補 4 題(合成邊界 (v)(w)(x)):`leave` 沒算位移(真 EXE 有 80 個 leaf 會變 None;原題 (j) 在 ret 前沒有再讀堆疊,所以看不出)、
+  描述字串的 ebp 標記兩個方向、條件跳躍跳出本體不算乾淨出口(只有 `jmp imm` 算 tail)。
+- 修正 `callee_argc`:有序頭、但本體第一條就解不出來時原本回 0,改回 None(docstring 的「None 不是 0」),(y) 釘住。真 EXE 541 個序頭入口沒有這種,857 個目標修改前後逐筆相同。
+- 登錄等價 3 個:`callee_argc` 走訪根節點的 via_jmp 初值、跳表補走迴圈的 `prev_seen` 初值(兩個都讀不到);`callgraph_le._insn` 解碼長度 15 → 16
+  (x86 指令最長 15 bytes;物件 1 全部 257833 個位址兩種長度解出的指令相同)。
+- `verify_address_claim_coverage.gate` 涵蓋百分比的係數 100 → 101 逃掉:512 / 1347 時兩者都取整成 38%。抽成 `coverage_pct`,以 1 / 1 → 100、1 / 3 → 33、0 / 0 → 0 釘住。
+  原本登錄為等價的 `max(1, total)` → `max(2, total)`(理由:total 遠大於 2)現在被 1 / 1 → 100 抓到,刪掉那筆登錄。
+- `verify_native_tables_new_edition` 逃掉 49 個(95 個只抓到 46),根因是一個工具 bug:L3 的 staging helper 寫成 `0x35822 + delta`(舊版位址 + 位移;新版實際位址 `0x35b78`),
+  只在 `event_id_groups.json` 是舊版座標(位移 +0x356)時對;資料換成新版座標(位移 0)後 10 筆 staging 都判成對不上(FD2.EXE 實測,實際呼叫目標是 0x35b78),L3「spawn 逐筆驗證」一直 FAIL
+  (34 吻合 / 1 tail-call / 10 對不上),陽性對照又只看 L1/L2,注入 6、7 要求的 FAIL 在基準就成立。改成新版位址 `0x35b78`(與 `SPAWN` 一樣寫新版值),
+  結果回到 09-03 記載的 44 / 45 吻合 + 1 筆 tail-call;selftest 補 L3 陽性對照,並把未注入時的完整輸出(7 筆)逐欄釘住。
+  修完還剩 23 個,都是只印不驗的明細或只有合成資料碰得到的邊界:再釘注入 3/5/6/7 的完整明細,補注入 8~11(拿掉唯一的 tail-call、
+  全部 group 改錯看註記上限、三個引數的註記順序)、合成影像(重疊命中、恰好 2 處命中、表尾在影像最後一個 byte)、合成 fixup map
+  (恰好 90 筆的連續段在最前面 / 最後面、5 段都不涵蓋只列前 4 段)與 fixup map 回歸(7948 筆、雜湊 `3bddfe84cc36`),selftest 12 → 27 題。
+  登錄等價 3 個:fixup flags 0x10 → 0x11(FD2.EXE 7959 筆只有 0x00 / 0x10)、物件編號超範圍時的基底 0 → 1(物件編號全在 1..3)、
+  反組譯視窗 0x400 → 0x401(45 筆呼叫點離 handler 起點最遠 0x12f)。
+- `function_inventory` 沒改,但它 import 的 `disasm_le`、`derive_native_argcounts`、`verify_address_claim_coverage` 都改了,連帶窮舉:
+  254 個可達突變逃掉 14 個(先前沒窮舉過,不是這輪改出來的)。14 個在副本上逐一突變,對 FD2.EXE 比對清單、結構命名、check_names
+  三種產物都逐位元組相同(FD2.EXE 實測;同一行另 2 個已被抓到的 `zero_at` 突變會改變清單,證明比對量得到差異)。
+  12 個補合成題抓:`implausible` 的可印字元邊界(空白算、DEL 不算)與只看前 16 bytes、`island_entries` 的 fixup 來源只佔 4 bytes、
+  `pointer_refs` 的 `mov [槽], 立即值` 取槽、`discover_fnptr` 換掉下游函式後看 inside 的嚴格內部、`zero_at` 到 hi 前 4 bytes、
+  第 1 輪收斂記 1 輪與不收斂剛好 `FNPTR_MAX_ROUNDS` 輪後報錯。登錄等價 2 個:`pointer_refs` 的 15 → 16(指令最長 15 bytes,
+  內層迴圈第一筆就跳出)、`local_body` 的 `terms += 1` → 2(只當真假值用)。
+
+**檢查**:見提交訊息;`mut_s161` 32 / 32;assert_census `--update --executed`:`ev_s161` 90 個 assert,全部執行到;`build_manifest.py ev_s161` 5 筆輸入。
+
+**仍留**:
+- 校準 9057 與沒遇到中斷的 8767.8 差 3.3%:兩個迴圈指令數相同,差在哪要實機量開機那一段(lc159b 的閘門在 GAME OVER,沒錄到開機)。
+- 音效播完後每圈中斷工作 36 .. 39 條,仍比選單的 15 條左右高,原因沒查。
+- 續一百五十八的 BIOS tick 掉中斷走哪一條路(重入 0x3ebad 還是關中斷合併):要實機,入口加 0x3ea8e / 0x3ebad / 0x404c0 / 0x43270 / 0x37c30 / 0x3dfef、不設閘門;要另外核准。
+- 驅動自己的服務頻率(.DIG / .MDI 描述 +0x2e)沒讀。第一輪 #6 的位置。
+- 第 6 項(修補者身分):使用者 2026-10-28 判斷是早年的破解,當年的破解不會留下紀錄,結案,不再找。
+- 工具(只記錄,沒修):`callgraph_le.py path` 把終點同時當成種子(`av[4]` 被 `parse_seeds` 讀走),永遠回空結果,這輪改用 `rpath`;
+  `disasm_le.py range` / `dis` 遇到解不出的位元組也會安靜停下(這輪只修了 `calls`);
+  `function_inventory.implausible` 的字串判斷只看前 16 bytes,16 個以上可印字元接 NUL 不判字串(模組說明寫「>= 3 個」,沒有上限)。

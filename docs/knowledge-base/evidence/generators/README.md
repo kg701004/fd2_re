@@ -1,7 +1,18 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 58 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 59 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百六十一(2026-10-28)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s161.py` | `timer_base_and_delay_slowdown_s161_20261028.json` | `mut_s161.py`(32) |
+
+只用 FD2.EXE 反組譯與續一百六十的 lc159b 呼叫紀錄(DOSBox-X,不重跑):修好的 `disasm_le.py calls` 與位元組掃描、舊版單次掃描的對照;
+AIL 計時通道的登錄端、預設值(`0x3fcae` 起 18 次 `AIL_set_preference`)、各通道週期與 PIT 取最小值(DIG 服務 `0x404c0` 200 Hz = 5000 µs);
+中斷處理程式 `0x3ea8e` 的重入路徑;校準 `0x3dfef` 由 Watcom 初始化表在 main 之前呼叫;確認音效(FDOTHER #77 第 1 段,`AIL_init_sample` 預設 11025 Hz);
+每次 delay `0x3e01d` 的指令數拆解(沒遇到中斷 / 選單 / 閃爍前 4 次 / 後 3 次)。
 
 ## 續一百六十(2026-10-28)
 

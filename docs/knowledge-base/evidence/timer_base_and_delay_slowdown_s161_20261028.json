@@ -1,0 +1,354 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s161.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calls_tool_crosscheck": {
+  "single_sweep_end": "0x3cae4",
+  "resync_stops": 42,
+  "entries": 1356,
+  "sweep_edges": 6354,
+  "byte_edges": 6362,
+  "byte_only_unaligned": [
+   [
+    "0x40118",
+    "0x365da"
+   ],
+   [
+    "0x4ac65",
+    "0x4a104"
+   ],
+   [
+    "0x4ac76",
+    "0x4b828"
+   ],
+   [
+    "0x4adac",
+    "0x4a104"
+   ],
+   [
+    "0x4adb9",
+    "0x4a104"
+   ],
+   [
+    "0x4b044",
+    "0x4cbc4"
+   ],
+   [
+    "0x4b152",
+    "0x4c4bd"
+   ],
+   [
+    "0x4d690",
+    "0x4dc3a"
+   ]
+  ],
+  "edges_missed_by_old": 1028,
+  "targets_zero_callers_in_old": 244,
+  "of_which_below_old_end": 47
+ },
+ "timer_channels": {
+  "preferences_0x5430c": {
+   "0": 200,
+   "1": 1,
+   "2": 32768,
+   "3": 100,
+   "4": 16,
+   "5": 100,
+   "6": 655,
+   "7": 0,
+   "8": 0,
+   "9": 1,
+   "10": 120,
+   "11": 8,
+   "12": 127,
+   "13": 1,
+   "14": 0,
+   "15": 2,
+   "16": 1,
+   "17": 1
+  },
+  "register_sites": {
+   "0x3fb1b": "0x3f565",
+   "0x411ef": "0x404c0",
+   "0x43f6a": "0x43270",
+   "0x37e7b": "0x37c30"
+  },
+  "register_internal_sites": [
+   "0x37e7b",
+   "0x38820"
+  ],
+  "frequency_sites": [
+   "0x3fb76",
+   "0x412ae",
+   "0x44155"
+  ],
+  "period_us": {
+   "DIG 服務 0x404c0": 5000,
+   "MDI 服務 0x43270": 8333,
+   "AIL_startup 0x37c30": 10000,
+   "BIOS 轉接(通道 15)": 54925
+  },
+  "driver_own_timer": "0x3fb1b 登錄 0x3f565,頻率 = 驅動描述 +0x2e(word),> 0 才登錄;值在 .DIG / .MDI 檔裡,這裡沒讀",
+  "base_us": 5000,
+  "pit_divisor": 5966,
+  "chains_from_main": {
+   "AIL_startup": [
+    [
+     "0x25c01",
+     "0x37d3e"
+    ]
+   ],
+   "DIG": [
+    [
+     "0x25c2b",
+     "0x3908b"
+    ],
+    [
+     "0x390e5",
+     "0x413c0"
+    ],
+    [
+     "0x41402",
+     "0x39176"
+    ],
+    [
+     "0x391e3",
+     "0x41300"
+    ],
+    [
+     "0x4135c",
+     "0x40cf0"
+    ]
+   ],
+   "MDI": [
+    [
+     "0x25c06",
+     "0x3aa72"
+    ],
+    [
+     "0x3aacc",
+     "0x44240"
+    ],
+    [
+     "0x44282",
+     "0x3ab49"
+    ],
+    [
+     "0x3abb6",
+     "0x44180"
+    ],
+    [
+     "0x441dc",
+     "0x43ad0"
+    ]
+   ]
+  },
+  "s158_bios_tick_grid_ms": {
+   "lc157c": 5.0,
+   "lc157d": 5.0,
+   "lc157e": 5.0
+  },
+  "isr": {
+   "reentry_check": "0x3ea8e cmp [0x52be6],0 ; ja 0x3ebad",
+   "drop_path": "0x3ebad EOI + iretd(累加器不加)",
+   "eoi_sti_before_callbacks": [
+    "0x3eb13",
+    "0x3eb15",
+    "0x3eb3c"
+   ],
+   "reentry_dec": [
+    "0x3eb5d",
+    "0x3eb91"
+   ]
+  }
+ },
+ "calibration": {
+  "function": "0x3dfef",
+  "xi_table": [
+   "0x539b0",
+   "0x539e0"
+  ],
+  "xi_records": [
+   [
+    "0x539b0",
+    0,
+    32,
+    "0x37028"
+   ],
+   [
+    "0x539b6",
+    0,
+    32,
+    "0x3dfef"
+   ],
+   [
+    "0x539bc",
+    0,
+    32,
+    "0x46170"
+   ],
+   [
+    "0x539c2",
+    0,
+    1,
+    "0x3cf1c"
+   ],
+   [
+    "0x539c8",
+    0,
+    2,
+    "0x46425"
+   ],
+   [
+    "0x539ce",
+    0,
+    32,
+    "0x46464"
+   ],
+   [
+    "0x539d4",
+    0,
+    32,
+    "0x46c48"
+   ],
+   [
+    "0x539da",
+    0,
+    32,
+    "0x4cf4d"
+   ]
+  ],
+  "init_walker_call": "0x3ced5 call 0x460ea",
+  "main_call": "0x460dc call 0x25bf4",
+  "cal_loop": [
+   "mov ah, 0x2c",
+   "int 0x21",
+   "inc esi",
+   "cmp bl, dh",
+   "je 0x3e00b"
+  ],
+  "delay_loop": [
+   "mov ah, 0x2c",
+   "int 0x21",
+   "cmp bl, dh",
+   "dec esi",
+   "jne 0x3e04b"
+  ]
+ },
+ "confirm_sfx": {
+  "table": "FDOTHER.DAT #0x4d(0x1f8de)",
+  "index": 1,
+  "loop_count": 1,
+  "offsets": [
+   26,
+   41359,
+   45636,
+   45796,
+   52031
+  ],
+  "bytes": 4277,
+  "rate_hz": 11025,
+  "format_field_0x34": 0,
+  "duration_s": 0.3879,
+  "play_sfx_calls": [
+   [
+    "0x25acd",
+    "call 0x39805"
+   ],
+   [
+    "0x25b03",
+    "call 0x39521"
+   ],
+   [
+    "0x25b18",
+    "call 0x39694"
+   ],
+   [
+    "0x25b2a",
+    "call 0x39aae"
+   ],
+   [
+    "0x25b38",
+    "call 0x39798"
+   ]
+  ]
+ },
+ "delay_decomposition": {
+  "calllog": ".wsl_build/lc159_live/lc159b_calllog_filtered.txt",
+  "calibration": 9057,
+  "game_instr_per_iter": 6,
+  "overhead_per_call": 3,
+  "classes": {
+   "no_isr": {
+    "n": 330,
+    "iter_per_s": 8767.8,
+    "instr_per_iter": 481.9,
+    "isr_game_instr_per_iter": 0.0
+   },
+   "normal_ge_8ms": {
+    "n": 381,
+    "iter_per_s": 7989.6,
+    "instr_per_iter": 530.8,
+    "isr_game_instr_per_iter": 33.0
+   },
+   "blink_1_4": {
+    "n": 4,
+    "iter_per_s": 7488.0,
+    "instr_per_iter": 571.8,
+    "isr_game_instr_per_iter": 75.7
+   },
+   "blink_5": {
+    "n": 1,
+    "iter_per_s": 7837.8,
+    "instr_per_iter": 545.1,
+    "isr_game_instr_per_iter": 52.0
+   },
+   "blink_6_8": {
+    "n": 3,
+    "iter_per_s": 7833.7,
+    "instr_per_iter": 538.8,
+    "isr_game_instr_per_iter": 37.4
+   }
+  },
+  "blink_isr_game_instr_per_iter": [
+   74.6,
+   76.9,
+   75.4,
+   76.0,
+   52.0,
+   36.8,
+   36.3,
+   39.1
+  ],
+  "pre_confirm_last4": [
+   14.9,
+   15.1,
+   18.4,
+   14.5
+  ],
+  "pre_confirm_sites": [
+   "0x1fd73"
+  ],
+  "delay8_quantiles_10_50_90": [
+   3.1,
+   14.6,
+   26.0
+  ],
+  "confirm_s": 9.2878,
+  "sfx_end_s": 9.6757,
+  "blink_delay_t0_s": [
+   9.289,
+   9.3853,
+   9.4848,
+   9.5814,
+   9.679,
+   9.7722,
+   9.8647,
+   9.9559
+  ],
+  "calibration_over_no_isr": 1.033
+ },
+ "conclusion": {
+  "3a": "5 ms 基底是 AIL 的 DIG 服務計時器(回呼 0x404c0):AIL_startup 把 pref[0] 預設成 200 Hz,DIG 驅動安裝時以它設頻率;其餘通道 120 Hz / 100 Hz / 54925 µs 都比較慢。(CODE;續一百五十八實測 5.000 ms 格點相符)",
+  "1": "校準在 main 之前、AIL 之前,沒有 200 Hz 計時中斷。遊戲中 delay 沒遇到中斷時每秒 8767.8 圈;每圈多出的中斷工作:確認前選單約 15 條、閃爍前 4 次約 76 條(7488 圈 / 秒)、後 3 次約 37 條。前後段的分界落在確認音效(0.388 s)播完的那一次 delay(推論:DIG 混音);後 3 次仍高於選單,校準 / 沒中斷 = 1.033 的差距,兩者都未解釋。"
+ }
+}

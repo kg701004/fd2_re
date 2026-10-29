@@ -813,6 +813,11 @@ def one(addr_s: str) -> int:
     return 0
 
 
+def coverage_pct(covered: int, total: int) -> int:
+    """閘門摘要的涵蓋百分比:無條件捨去到整數,分母 0 時為 0。"""
+    return 100 * covered // max(1, total)
+
+
 def gate() -> int:
     r = classify_all()
     claims, covered, erratum, un = r["claims"], r["covered"], r["erratum"], r["unreviewed"]
@@ -821,7 +826,7 @@ def gate() -> int:
 
     total = len(claims)
     print(f"知識庫宣稱為入口的相異 obj1 位址:{total}")
-    print(f"  有位元組訊號   {len(covered):4d}({100 * len(covered) // max(1, total)}%)")
+    print(f"  有位元組訊號   {len(covered):4d}({coverage_pct(len(covered), total)}%)")
     print(f"  已登記為勘誤   {len(erratum):4d}")
     print(f"  函式內部引用   {len(r['inner']):4d}  (落在有訊號函式內部的合法指令邊界,不是入口主張)")
     print(f"  審過非主張     {len(r['reviewed']):4d}  (address_claim_reviews.json:offset/live/近似/舊版內部/被推翻)")
@@ -1275,6 +1280,8 @@ def selftest() -> int:
             lines16 = out16.getvalue().splitlines()
             pct16 = f"({100 * len(r16['covered']) // max(1, len(r16['claims']))}%)"
             b16["閘門摘要的涵蓋百分比"] = any(ln.startswith("  有位元組訊號") and pct16 in ln for ln in lines16)
+            # 2026-10-28 續一百六十一:512 / 1347 時係數 100 與 101 都取整成 38%,上一題看不出係數錯;以合成值釘住
+            b16["涵蓋百分比的係數、捨去與分母下限"] = (coverage_pct(1, 1), coverage_pct(1, 3), coverage_pct(0, 0)) == (100, 33, 0)
             exp16 = [f"  {a:#08x} -> {a + st_all['open'][a]:#08x}  "
                      f"{st_all['mentions'][a][0][0]}:{st_all['mentions'][a][0][1]}" for a in sorted(st_all["open"])[:20]]
             got16 = [ln for ln in lines16 if re.match(r"  0x[0-9a-f]{6} -> 0x", ln)]
