@@ -97,17 +97,58 @@ def resync_sweep(md, code, base):
     `calls` 回的空結果與「確實沒有呼叫端」長得一模一樣。實測全段共 42 個續掃點。
     """
     insns, stops = [], []
-    off = 0
-    while off < len(code):
-        end = off
-        for insn in md.disasm(code[off:], base + off):
-            insns.append(insn)
-            end = insn.address + insn.size - base
-        if end >= len(code):
-            break
-        stops.append(base + end)
-        off = end + 1
+    for x in sweep_range(md, code, base, base, base + len(code)):
+        if isinstance(x, tuple):
+            stops.append(x[0])
+        else:
+            insns.append(x)
     return insns, stops
+
+
+def sweep_range(md, code, base, start, end):
+    """線性反組譯 linear [start, end);capstone 停下的位置產生 `(linear, byte)` 後跳 1 byte 續掃。
+
+    產出 capstone 指令,或 `(linear, byte)` 表示該位址無法解碼。起點在 end 之前的指令整條產出
+    (可以跨過 end)。`resync_sweep`(calls)與 `range_lines`(dis / range)共用這一套續掃。
+    """
+    lim = min(end, base + len(code)) - base
+    off = start - base
+    while off < lim:
+        nxt = off
+        for insn in md.disasm(code[off:], base + off):
+            if insn.address - base >= lim:
+                return
+            yield insn
+            nxt = insn.address + insn.size - base
+        if nxt >= lim:
+            return
+        yield (base + nxt, code[nxt])
+        off = nxt + 1
+
+
+def range_lines(md, code, base, fx, start, end, cnt):
+    """`dis` / `range` 的輸出行;回傳 (行清單, 無法解碼的位元組數)。`cnt` 只算指令。
+
+    2026-10-29 續一百六十二:原本直接 `md.disasm()`,碰到第一個無法解碼的位元組就安靜停下
+    (`range 0x10000 0x50000` 停在 0x3cae3,後段約 75 KB 沒印也沒提示)。改用 `sweep_range`:
+    無法解碼的位元組印成 `db` 行,跳 1 byte 續掃。
+    """
+    out, bad, n = [], 0, 0
+    for x in sweep_range(md, code, base, start, end):
+        if isinstance(x, tuple):
+            out.append(f'{x[0]:#08x}  {"db":<7} {x[1]:#04x}  ; 無法解碼,跳 1 byte 續掃')
+            bad += 1
+            continue
+        tgt = ''
+        for o2 in range(x.address, x.address + x.size):
+            if o2 in fx:
+                tgt = f'  ; ->{hex(fx[o2])}'
+                break
+        out.append(f'{x.address:#08x}  {x.mnemonic:<7} {x.op_str}{tgt}'.rstrip())
+        n += 1
+        if n >= cnt:
+            break
+    return out, bad
 
 
 def find_rel_callers(md, code, base, tgt):
@@ -370,6 +411,29 @@ def selftest():
         if not ok8c:
             fails.append(f"位元組掃描漏掉最後一格:{hits_s}")
 
+        print("\n(8d) dis / range 遇到無法解碼的位元組印 db 行續掃,不安靜停下(續一百六十二)")
+        # 合成:nop / FE F8(FE /7 無效)/ clc / mov eax, 1(fixup 在第 2 個 imm byte)/ ret
+        c8 = b"\x90\xfe\xf8\xb8\x01\x00\x00\x00\xc3"
+        L = ['0x001000  nop', '0x001001  db      0xfe  ; 無法解碼,跳 1 byte 續掃', '0x001002  clc',
+             '0x001003  mov     eax, 1  ; ->0x2000', '0x001008  ret']
+        got8d = [range_lines(md, c8, 0x1000, {0x1004: 0x2000}, s, e, n)
+                 for s, e, n in ((0x1000, 0x1009, 10**9), (0x1000, 0x1008, 10**9), (0x1000, 0x1004, 10**9),
+                                 (0x1000, 0x1001, 10**9), (0x1000, 0x2000, 2), (0x1002, 0x2000, 10**9))]
+        want8d = [(L, 1), (L[:4], 1), (L[:4], 1), (L[:1], 0), (L[:3], 1), (L[2:], 0)]
+        # 真 EXE:0x3cae4 是第一個停點(原本 range 停在這裡);全段的 db 行數 = calls 的續掃點數
+        lines_r, bad_r = range_lines(md, code, base, {}, 0x3CAD6, 0x3CAE8, 10**9)
+        full, bad_f = range_lines(md, code, base, {}, base, base + len(code), 10**9)
+        db_f = [ln[:8] for ln in full if ln[10:12] == 'db']
+        ok8d = (got8d == want8d and bad_r == 1
+                and [ln[:8] for ln in lines_r] == ['0x03cad6', '0x03cadb', '0x03cadc', '0x03cae1', '0x03cae3',
+                                                   '0x03cae4', '0x03cae5', '0x03cae6', '0x03cae7']
+                and bad_f == 42 and db_f == [f'{s:#08x}' for s in stops]
+                and full[-1] == '0x04ef28  ret' and len(full) == len(sweep_insns) + 42)
+        print(f"    {'PASS' if ok8d else 'FAIL'}: 合成 {len(got8d)} 組;0x3cad6..0x3cae8 {[ln[:8] for ln in lines_r]};"
+              f"全段 {len(full)} 行、db {bad_f} 行、最後 {full[-1]!r}")
+        if not ok8d:
+            fails.append(f"dis / range 續掃不對:{got8d} {lines_r} db {bad_f}")
+
     print("\n(9) le_xref.find_callers 的掃描範圍必須由 LE 表頭推出,涵蓋新版 obj1 後段")
     from le_xref import find_callers, code_file_range
     lo, hi = code_file_range(meta)
@@ -402,7 +466,7 @@ def selftest():
         return 1
     print("\n--selftest passed(資料段錨點回歸 + 跨工具逐位址對照 + 越界拒絕 + "
           "非恆真控制 + fixup 全物件涵蓋 + 已知真值配對負向控制 + 頁號歸屬 + "
-          "calls 全段涵蓋與錯位補掃 + le_xref 掃描範圍)。")
+          "calls 全段涵蓋與錯位補掃 + dis / range 續掃 + le_xref 掃描範圍)。")
     return 0
 
 
@@ -436,27 +500,20 @@ def main(a):
         return 0
 
     if cmd in ('dis', 'range'):
+        start = int(a[3], 16)
         if cmd == 'dis':
-            start = int(a[3], 16); cnt = int(a[4]) if len(a) > 4 else 40
-            end = start + 0x400
+            cnt = int(a[4]) if len(a) > 4 else 40
+            end = base + len(code)   # 原本固定看 0x400 bytes,count 超過也會安靜截斷
         else:
-            start = int(a[3], 16); end = int(a[4], 16); cnt = 10**9
-        fx = build_fixups(d, meta)
-        off = start - base
-        n = 0
-        for insn in md.disasm(code[off:off + (end - start)], start):
-            tgt = ''
-            for o2 in range(insn.address, insn.address + insn.size):
-                if o2 in fx:
-                    tgt = f'  ; ->{hex(fx[o2])}'
-                    break
-            print((
-                f'{insn.address:#08x}  {insn.mnemonic:<7} '
-                f'{insn.op_str}{tgt}'
-            ).rstrip())
-            n += 1
-            if n >= cnt:
-                break
+            end = int(a[4], 16); cnt = 10**9
+        if not base <= start < base + len(code):
+            print(f"{cmd}: {start:#x} 不在 obj1 程式碼 {base:#x}..{base + len(code):#x}", file=sys.stderr)
+            return 1
+        lines, bad = range_lines(md, code, base, build_fixups(d, meta), start, end, cnt)
+        for ln in lines:
+            print(ln)
+        if bad:
+            print(f"# {cmd}:{bad} 個無法解碼的位元組,印成 db 行後各跳 1 byte 續掃", file=sys.stderr)
         return 0
 
     if cmd == 'calls':

@@ -11550,3 +11550,31 @@ delay 的校準:開機量的是每秒 9057 次 int 21h,標題閃爍時 delay 實
 - 工具(只記錄,沒修):`callgraph_le.py path` 把終點同時當成種子(`av[4]` 被 `parse_seeds` 讀走),永遠回空結果,這輪改用 `rpath`;
   `disasm_le.py range` / `dis` 遇到解不出的位元組也會安靜停下(這輪只修了 `calls`);
   `function_inventory.implausible` 的字串判斷只看前 16 bytes,16 個以上可印字元接 NUL 不判字串(模組說明寫「>= 3 個」,沒有上限)。
+  (三項都在續一百六十二修好。)
+
+## 2026-10-29 續一百六十二:續一百六十一只記錄的三個工具問題修好 —— `callgraph_le path` 回空、`disasm_le range` / `dis` 安靜停下、`implausible` 只看 16 bytes
+
+起因:使用者「沒修的三個工具問題 請進行優化及改善」(續一百六十一「仍留」的工具項)。只用 FD2.EXE 靜態分析,沒有實機。
+
+- `callgraph_le.py path <from> <to> [seeds]`:種子原本讀 av[4](也就是終點),可達集從終點自己開始建,終點的 caller 一律找不到,永遠回空;from 也沒用到。
+  改成種子讀 av[5](沒給用 main 0x25bf4)、from 一起當種子;新增 `CG.path`(正向 BFS,函式歸屬與 `rpath` 同一套 `funcof`),印 `from → … → to`。種子位置抽成 `cli_seeds`。
+  對照(FD2.EXE):從 main 可達的 607 個 direct-call 目標,`path(main, X)` 與 `rpath(X)`(反向 BFS)的最短長度 602 個相同、5 個兩邊都找不到、0 個不一致。
+  selftest 7 → 9 題:(8) 各子命令的種子位置;(9) 合成呼叫圖 —— 取最短(先被呼叫的是長的那條,DFS 會走錯)、方向、起點 = 終點、maxdepth 1 / 2 的邊界。
+- `disasm_le.py range` / `dis`:原本直接 `md.disasm()`,`range 0x10000 0x50000` 停在 0x3cae3(0x3cae4 的 `0xfe` 解不出),後段約 75 KB 沒印、也沒提示。
+  改成共用 `sweep_range`(`resync_sweep` 也改用它):無法解碼的位元組印成 `db 0xNN  ; 無法解碼,跳 1 byte 續掃` 後續掃,stderr 印個數;
+  `dis` 原本固定只看 0x400 bytes(count 大時也會安靜截斷),改成看到 obj1 結尾;起點不在 obj1 改成報錯 exit 1(原本印空)。
+  全段 52835 → 78968 行,`db` 42 行,位址與 `calls` 的 42 個續掃點逐一相同;停點之前逐行相同,`dis 0x25bf4 60` 逐位元組相同。selftest 加 (8d)(合成 6 組 + 真 EXE 停點附近 + 全段)。
+  `dispatch_index_bounds_table_split_20261015.json` 的 `dispatch_truth_path` 寫「線性反組譯整個 obj1(range 0x10000 0x50000)」,當時實際只掃到 0x3cae3。
+  重跑後 0x3cae4 之後多出的 2 條 `call dword ptr [reg*4 + 表]` 指向 0x47b88 / 0x47988,不是 0x51b91 / 0x51d01,那份證據的結論不變(只記錄,沒改)。
+- `function_inventory.implausible`:字串判斷原本只看前 16 bytes,16 個以上可印字元接 NUL 時看不到 NUL;改成一路掃到第一個非可印字元(上限 hi),NUL 要在 hi 之前。
+  FD2.EXE 的清單、結構命名、check_names 三種產物改前改後逐位元組相同。原本釘住舊行為的合成題(16 個 `a` 接 NUL)改成判 string,
+  另補「3 個可印字元接非 NUL」「可印字元一路到 hi」「NUL 落在 hi」三例。
+- 登錄表:`callgraph_le` 的 `CG._insn` 那筆因同一類別加了方法而要重驗,`--revalidate-registry` 探針 OK,只更新雜湊。
+
+**突變窮舉**(`--exhaustive`:改動的 3 支與 INVOKE 相依 8 支,共 11 支,全部歸零,沒有新登錄):
+`callgraph_le` 可達 42(28 → 42,新增的 `CG.path` 4 個、`cli_seeds` 7 個都在內)、`disasm_le` 31(`sweep_range` 4、`range_lines` 7)、`function_inventory` 257;
+相依的 `derive_ail_entry_points`、`derive_item_row_fields`、`derive_native_argcounts`、`dump_chapter_beats`、`event_handler_dump`(沒有突變點)、
+`export_handler_scripts`、`verify_address_claim_coverage`、`verify_event_dispatch_table` 也都歸零。
+
+**仍留**:
+- 續一百六十一記下的 `verify_native_tables_new_edition`「最長的幾段」清單沒有照長度排序,這輪沒動。

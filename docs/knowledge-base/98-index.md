@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 206 節、19 個主題。
+共 207 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 10961:2026-10-24 續一百五十二:`ev_s75` / `ev_s76` 的 sweep ESCAPED 補判準(32 → 0) 〔來源:DOSBox-X〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 11059:2026-10-27 續一百五十四:lut 的單位排除框改用 draw_unit_sprite 的幾何(原本「24 × 36、往上 12」不對);item79_aim 的 KEEP 由紀錄算 〔來源:FD2.EXE〕
 - 行 11104:2026-10-27 續一百五十五:lut 的資訊框改由 draw_map_hud 與 FDOTHER #5 定(69 × 34),單位格改由 FDICON 單位圖比對定;要實機的 6 項重看 〔來源:DOSBox-X、capstone、反組譯〕
@@ -17,6 +16,7 @@
 - 行 11331:2026-10-28 續一百五十九:防拷兩處是誰改的 —— FD2_APK 的 PASS.DAT 是 COMP 的比對紀錄,原版是 75 / 74;第 5 項第 5 次在設定步驟 FAIL 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 11383:2026-10-28 續一百六十:第 5 項第 6 次 —— 選新遊戲的是選單清掉鍵盤緩衝後的第一個 Return(這次是 YES 之後第 12 次);閃爍與淡出比預測慢 〔來源:DOSBox-X、斷點、FD2.EXE〕
 - 行 11439:2026-10-28 續一百六十一:5 ms 基底是 AIL 的 DIG 服務計時器 `0x404c0`(200 Hz);標題閃爍時 delay 變慢的中斷工作分三段,分界在確認音效播完;兩個 `calls` 工具修好 〔來源:DOSBox-X、capstone、反組譯〕
+- 行 11555:2026-10-29 續一百六十二:續一百六十一只記錄的三個工具問題修好 —— `callgraph_le path` 回空、`disasm_le range` / `dis` 安靜停下、`implausible` 只看 16 bytes 〔來源:disasm、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -262,7 +262,7 @@
 - 行 10874:2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(41 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(42 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -305,6 +305,7 @@
 - 行 11331:2026-10-28 續一百五十九:防拷兩處是誰改的 —— FD2_APK 的 PASS.DAT 是 COMP 的比對紀錄,原版是 75 / 74;第 5 項第 5 次在設定步驟 FAIL 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 11383:2026-10-28 續一百六十:第 5 項第 6 次 —— 選新遊戲的是選單清掉鍵盤緩衝後的第一個 Return(這次是 YES 之後第 12 次);閃爍與淡出比預測慢 〔來源:DOSBox-X、斷點、FD2.EXE〕
 - 行 11439:2026-10-28 續一百六十一:5 ms 基底是 AIL 的 DIG 服務計時器 `0x404c0`(200 Hz);標題閃爍時 delay 變慢的中斷工作分三段,分界在確認音效播完;兩個 `calls` 工具修好 〔來源:DOSBox-X、capstone、反組譯〕
+- 行 11555:2026-10-29 續一百六十二:續一百六十一只記錄的三個工具問題修好 —— `callgraph_le path` 回空、`disasm_le range` / `dis` 安靜停下、`implausible` 只看 16 bytes 〔來源:disasm、FD2.EXE〕
 
 ## dispatch 跳表與指令表(4 節)
 

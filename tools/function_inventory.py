@@ -618,9 +618,13 @@ def implausible(t: int, code: bytes, base: int, hi: int, insn_at, inside_insn) -
     """
     if inside_insn(t):
         return "misaligned"
-    b = code[t - base:t - base + 16]
-    n = next((i for i, c in enumerate(b) if not 0x20 <= c < 0x7F), len(b))
-    if 3 <= n < len(b) and b[n] == 0:
+    # 2026-10-29 續一百六十二:原本只看前 16 bytes,16 個以上可印字元接 NUL 看不到 NUL、不判字串
+    # (改落到後面的解碼理由)。改成一路掃到第一個非可印字元,上限 hi;NUL 要在 [t, hi) 內。
+    lim = min(len(code), hi - base)
+    i = t - base
+    while i < lim and 0x20 <= code[i] < 0x7F:
+        i += 1
+    if i - (t - base) >= 3 and i < lim and code[i] == 0:
         return "string"
     a = t
     while a < min(hi, t + PLAUSIBLE_MAX):
@@ -1733,10 +1737,16 @@ def _selftest_pure(fails: list[str]) -> None:
     code_p = bytearray(b"\x55" * 0x40)
     code_p[0x00:0x04] = b" ab\x00"            # 空白(0x20)算可印字元
     code_p[0x08:0x0c] = b"\x7fab\x00"         # DEL(0x7f)不算:可印字元 0 個,不是字串
-    code_p[0x10:0x21] = b"a" * 16 + b"\x00"   # 只看前 16 bytes:第 17 個 byte 的 NUL 看不到,不判字串
-    check("implausible:可印字元是 0x20..0x7e(空白算、DEL 不算);字串只看前 16 bytes",
-          [implausible(t, bytes(code_p), 0x1000, 0x1040, {}.get, lambda _x: False) for t in (0x1000, 0x1008, 0x1010)],
-          ["string", "bad_decode", "bad_decode"])
+    code_p[0x10:0x21] = b"a" * 16 + b"\x00"   # 16 個以上也算(續一百六十二前只看前 16 bytes,這裡判 bad_decode)
+    code_p[0x28:0x2b] = b"abc"                # 0x28:3 個可印字元接 0x55(不是 NUL)
+    code_p[0x3c:0x40] = b"abcd"               # 0x3c:可印字元一路到 hi,沒有 NUL
+    check("implausible:可印字元是 0x20..0x7e(空白算、DEL 不算);字串長度沒有上限;NUL 要在 hi 之前",
+          [implausible(t, bytes(code_p), 0x1000, 0x1040, {}.get, lambda _x: False)
+           for t in (0x1000, 0x1008, 0x1010, 0x1028, 0x103c)],
+          ["string", "bad_decode", "string", "bad_decode", "bad_decode"])
+    # hi 之後才出現的 NUL 不算(code 比 hi 長):0x1000 起 4 個可印字元,NUL 在 hi = 0x1004
+    check("implausible:NUL 落在 hi(範圍外)不判字串",
+          implausible(0x1000, b"abcd\x00", 0x1000, 0x1004, {}.get, lambda _x: False), "bad_decode")
     fake_j = {0x1000: (6, "jmp", "dword ptr [0x2000]"), 0x1006: (1, "inc", "eax"), 0x1007: (1, "ret", "")}
     check("island_entries:fixup 來源只佔 4 bytes —— 緊接在 jmp [表] 的位移(fixup 0x1002..0x1005)之後的 0x1006 照收",
           island_entries({0x1000}, fake_j.get, b"\x55" * 0x40, 0x1000, 0x1040, {0x1000, 0x1020}, {0x1002: 0x9000}),

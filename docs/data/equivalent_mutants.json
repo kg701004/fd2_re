@@ -848,7 +848,7 @@
    "key": "CG._insn|for ins in self.md.disasm(self.code[off:off + 15], addr):|int 15->16#0",
    "reason": "x86 指令最長 15 bytes,只取第一條指令時多給的第 16 個 byte 永遠不會被讀到。",
    "evidence": "續一百六十一 2026-10-28:FD2.EXE 物件 1 全部 257833 個位址,capstone 5.0.7 以 15 與 16 bytes 解第一條指令,(長度, 助記符, 運算元) 逐位址相同",
-   "scope_hash": "843eae712f1f"
+   "scope_hash": "7183489f801d"
   },
   {
    "tool": "verify_native_tables_new_edition.py",

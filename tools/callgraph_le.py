@@ -16,7 +16,9 @@ linear↔file:obj1 code,file = linear − 0xe00(base 0x10000)。
   python3 callgraph_le.py <EXE> callers <target_hex> [seeds_csv]      可達 caller(預設種子=main 0x25bf4)
   python3 callgraph_le.py <EXE> edges <func_hex> [seeds_csv]          某函式內所有 call 目標(可達)
   python3 callgraph_le.py <EXE> jtab <table_hex> <count>              用 fixup 解跳表 N 個 entry
-  python3 callgraph_le.py <EXE> path <from_hex> <to_hex> [seeds_csv]  call 路徑(BFS 最短)
+  python3 callgraph_le.py <EXE> path <from_hex> <to_hex> [seeds_csv]  from → to 的 direct-call 路徑(BFS 最短,函式層級)
+  python3 callgraph_le.py <EXE> rpath <to_hex>                        to → main 的反向 call 路徑
+  python3 callgraph_le.py <EXE> funcof <addr_hex>                     包含 addr 的函式入口
 """
 import sys, struct
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
@@ -192,9 +194,49 @@ class CG:
                     q.append((f, path + [f]))
         return results
 
+    def path(self, frm, to, seeds, maxdepth=12):
+        """正向 BFS:從 frm 沿 direct call 到 to 的最短路徑(函式層級);回 [frm, ..., to],找不到回 None。
+
+        函式歸屬與 `rpath` 同一套近似(`funcof`:最大的入口 <= 呼叫點),入口含 `seeds` 與 frm。
+        """
+        from collections import deque
+        ents = self.entries(list(seeds) + [frm])
+        callees = {}
+        for a, t in self.calls.items():
+            f = self.funcof(a, ents)
+            if f is not None:
+                callees.setdefault(f, set()).add(t)
+        q = deque([[frm]])
+        seen = {frm}
+        while q:
+            p = q.popleft()
+            if p[-1] == to:
+                return p
+            if len(p) > maxdepth:
+                continue
+            for t in sorted(callees.get(p[-1], ())):
+                if t not in seen:
+                    seen.add(t)
+                    q.append(p + [t])
+        return None
+
 
 def parse_seeds(s):
     return [int(x, 16) for x in s.split(',') if x.strip()]
+
+
+def cli_seeds(av):
+    """命令列的種子:`reach` 取 av[3];`callers` / `edges` 取 av[4];`path` 取 av[5](av[3]、av[4] 是起訖);
+    沒給用 DEFAULT_SEEDS。
+
+    2026-10-29 續一百六十二:`path` 原本跟 `callers` 一樣讀 av[4],把終點當成唯一種子,
+    可達集從終點自己開始建,終點的 caller 一律找不到,永遠回空結果。
+    """
+    cmd = av[2]
+    if cmd == 'reach':
+        return parse_seeds(av[3])
+    i = {'callers': 4, 'edges': 4, 'path': 5}.get(cmd)
+    return parse_seeds(av[i]) if i is not None and len(av) > i else list(DEFAULT_SEEDS)
 
 
 def selftest():
@@ -314,13 +356,50 @@ def selftest():
     if not ok7:
         fails.append(f"帶前綴的 jmp/ret 沒被當終點:reached={sorted(hex(a) for a in cg7.reached)[:6]}")
 
+    print("\n(8) 命令列種子:`path` 的種子在 av[5](av[3]、av[4] 是起訖),不是終點")
+    # 續一百六十二前 path 跟 callers 一樣讀 av[4],終點變成唯一種子,永遠回空結果。
+    ex = ["cg", "EXE"]
+    got8 = [cli_seeds(ex + v) for v in (["path", "1000", "2000"], ["path", "1000", "2000", "3000,4000"],
+                                        ["callers", "2000"], ["callers", "2000", "5000"], ["edges", "2000", "6000"],
+                                        ["reach", "7000,8000"], ["rpath", "2000", "9000"])]
+    want8 = [DEFAULT_SEEDS, [0x3000, 0x4000], DEFAULT_SEEDS, [0x5000], [0x6000], [0x7000, 0x8000], DEFAULT_SEEDS]
+    ok8 = got8 == want8
+    print(f"    {'PASS' if ok8 else 'FAIL'}: {[[hex(s) for s in g] for g in got8]}")
+    if not ok8:
+        fails.append(f"cli_seeds 取錯參數位置:{got8}")
+
+    print("\n(9) path(合成位元組):BFS 取最短、方向是 from → to、maxdepth 邊界")
+    # 0x1000 call 0x1030; call 0x1010; ret   0x1010 call 0x1020; ret   0x1020 ret
+    # 0x1030 call 0x1040; ret                0x1040 call 0x1020; ret
+    # 到 0x1020 有兩條:經 0x1010(3 個函式)與經 0x1030、0x1040(4 個);0x1030 先被呼叫,DFS 會先走長的那條。
+    syn9 = bytearray(b"\xcc" * 0x50)
+    def put_call(a, t):
+        syn9[a - 0x1000] = 0xE8
+        syn9[a - 0x1000 + 1:a - 0x1000 + 5] = (t - a - 5).to_bytes(4, "little", signed=True)
+    put_call(0x1000, 0x1030); put_call(0x1005, 0x1010); syn9[0x0a] = 0xC3
+    put_call(0x1010, 0x1020); syn9[0x15] = 0xC3
+    syn9[0x20] = 0xC3
+    put_call(0x1030, 0x1040); syn9[0x35] = 0xC3
+    put_call(0x1040, 0x1020); syn9[0x45] = 0xC3
+    cg9 = CG(exe)
+    cg9.code, cg9.base, cg9.end = bytes(syn9), 0x1000, 0x1000 + len(syn9)
+    cg9.build([0x1000])
+    got9 = [cg9.path(0x1000, 0x1020, [0x1000]), cg9.path(0x1020, 0x1000, [0x1000]),
+            cg9.path(0x1000, 0x1000, [0x1000]), cg9.path(0x1030, 0x1020, [0x1000]),
+            cg9.path(0x1000, 0x1020, [0x1000], maxdepth=1), cg9.path(0x1000, 0x1020, [0x1000], maxdepth=2)]
+    want9 = [[0x1000, 0x1010, 0x1020], None, [0x1000], [0x1030, 0x1040, 0x1020], None, [0x1000, 0x1010, 0x1020]]
+    ok9 = got9 == want9
+    print(f"    {'PASS' if ok9 else 'FAIL'}: {got9}")
+    if not ok9:
+        fails.append(f"path 結果不對:{got9}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(不變量 + 跨工具獨立實作對照 + 已知錨點 + "
-          "故障注入 + 非空控制 + fixup 後備分支邊界 + 帶前綴的控制轉移)。")
+          "故障注入 + 非空控制 + fixup 後備分支邊界 + 帶前綴的控制轉移 + 命令列種子 + path 最短路徑)。")
     return 0
 
 
@@ -340,8 +419,10 @@ def main(av):
             print(f'  [{i:2d}] {site:#08x} -> {hex(t) if t else "(no fixup)"}')
         return 0
 
-    seeds = parse_seeds(av[4]) if len(av) > 4 and cmd in ('callers', 'edges', 'path') else \
-            (parse_seeds(av[3]) if cmd == 'reach' else DEFAULT_SEEDS)
+    seeds = cli_seeds(av)
+    if cmd == 'path':
+        frm, to = int(av[3], 16), int(av[4], 16)
+        seeds = seeds + [frm]   # frm 不一定從預設種子可達;一起建可達集
     if cmd == 'reach':
         cg.build(seeds)
         print(f'種子 {[hex(s) for s in seeds]}:可達指令 {len(cg.reached)},direct call 點 {len(cg.calls)}')
@@ -363,9 +444,11 @@ def main(av):
         for a, t in outs: print(f'  {a:#08x} call {hex(t)}')
         return 0
     if cmd == 'path':
-        frm, to = int(av[3], 16), int(av[4], 16)
-        c, j = cg.callers(to)
-        print(f'{hex(to)} 的直接可達 caller:{[hex(x) for x in sorted(c+j)]}')
+        p = cg.path(frm, to, seeds)
+        if p is None:
+            print(f'{hex(frm)} → {hex(to)} 無 direct-call 路徑(可能經跳表/間接,或超過 12 層)')
+        else:
+            print(' → '.join(hex(x) for x in p))
         return 0
     if cmd == 'funcof':
         a = int(av[3], 16)
