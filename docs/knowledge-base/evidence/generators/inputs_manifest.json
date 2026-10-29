@@ -13083,6 +13083,33 @@
     ]
    }
   },
+  "ev_s166": {
+   "outputs": [
+    "battle_interrupt_loss_s166_20261029.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc163_live/lc163a_CALLLOG.TXT": [
+     5021889,
+     "622aa98c7bcc95bf10b9c20d5e2a4f93b24f6896d835dcbd7bbd040569bf26a9"
+    ],
+    ".wsl_build/lc163_live/lc163a_meta.txt": [
+     313,
+     "b4d47a2195dc5cb44398213f9eade2f46b9b745435d4d5503571a32bd9669fbf"
+    ],
+    ".wsl_build/lc166_live/lc166a_CALLLOG.TXT": [
+     19969498,
+     "a87444827371218803211c7dc71d9ce18b180dfc6ee58771e1afb9de96e1a214"
+    ],
+    ".wsl_build/lc166_live/lc166a_meta.txt": [
+     321,
+     "ef74b249f8ad4af1b02cfb77f502805110d67d55dbd4c5788eab10ae23d848e1"
+    ],
+    ".wsl_build/lc166_live/lc166a_run.json": [
+     1064,
+     "319f612adfa485166f3576a13014d233e2ebb06c43854913983911ad1474d422"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

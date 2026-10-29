@@ -1,0 +1,148 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s166.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-29「核准戰場跑實機的部分」;實機一次 lc166a,不改記憶體、不下斷點",
+ "prediction_file": {
+  "path": "docs/knowledge-base/evidence/generators/drivers_s166/pred166_battle.txt",
+  "md5": "3b5266e85aa0ccee3ff87710554f7124"
+ },
+ "run": {
+  "calllog": ".wsl_build/lc166_live/lc166a_CALLLOG.TXT",
+  "calllog_md5": "4a838626822473b4352591fd16c642cd",
+  "lines": 117066,
+  "records": 117017,
+  "entries": [
+   "0x11cac",
+   "0x1f894",
+   "0x1fc66",
+   "0x1fd7c",
+   "0x1fe63",
+   "0x1fed3",
+   "0x1fef0",
+   "0x1ff31",
+   "0x1ff36",
+   "0x25bf4",
+   "0x25c01",
+   "0x32326",
+   "0x370f0",
+   "0x37c30",
+   "0x3dfef",
+   "0x3e01d",
+   "0x3ea8e",
+   "0x3ebad",
+   "0x404c0",
+   "0x43270"
+  ],
+  "route": "patch_chapter 1 → 讀檔 → 城鎮 → 要進入戰場嗎 YES → 戰場開場對話 → 閒置 30 s",
+  "redraw_span_ms": [
+   42476.106,
+   47524.028
+  ],
+  "redraw_calls": 71
+ },
+ "method_check_lc163a": {
+  "t_ms": [
+   3538.26,
+   31033.675
+  ],
+  "slots": 5499,
+  "reentry": 78,
+  "merged": 3,
+  "lost": 81,
+  "fraction": 0.01473,
+  "bios_tick_avg_ms": 55.746,
+  "double": 2
+ },
+ "grid": {
+  "phase_mode_ms": 0.0,
+  "within_0_1ms": 21982,
+  "isr_entries": 22144,
+  "segments": {
+   "all": {
+    "t_ms": [
+     3529.999,
+     114276.67
+    ],
+    "slots": 22149,
+    "reentry": 123,
+    "merged": 6,
+    "lost": 129,
+    "fraction": 0.00582,
+    "bios_tick_avg_ms": 55.247,
+    "double": 1
+   },
+   "pre": {
+    "t_ms": [
+     3529.999,
+     42475.587
+    ],
+    "slots": 7789,
+    "reentry": 47,
+    "merged": 2,
+    "lost": 49,
+    "fraction": 0.00629,
+    "bios_tick_avg_ms": 55.273,
+    "double": 1
+   },
+   "post": {
+    "t_ms": [
+     42475.587,
+     114276.67
+    ],
+    "slots": 14360,
+    "reentry": 76,
+    "merged": 4,
+    "lost": 80,
+    "fraction": 0.00557,
+    "bios_tick_avg_ms": 55.233,
+    "double": 0
+   }
+  }
+ },
+ "reentry_types": {
+  "pre": {
+   "DIG": 40,
+   "MDI": 5,
+   "MDI_AGAIN": 2,
+   "other": 0
+  },
+  "post": {
+   "DIG": 48,
+   "MDI": 28,
+   "MDI_AGAIN": 0,
+   "other": 0
+  }
+ },
+ "predicted_di": {
+  "DIG": {
+   "0x3eb9d": 93,
+   "0x3eb69": 94
+  },
+  "MDI": 62,
+  "MDI_AGAIN": 57
+ },
+ "long_dig_services": {
+  "pre": {
+   "dig_calls": 7741,
+   "long": 65,
+   "share": 0.0084
+  },
+  "post": {
+   "dig_calls": 14279,
+   "long": 60,
+   "share": 0.0042
+  }
+ },
+ "predictions": {
+  "P1_reentry_share_ge_0_9": "PASS",
+  "P2_all_classified": "PASS",
+  "P3_fraction_1_to_3pct": "FAIL",
+  "P3_main_1_to_2pct": "FAIL",
+  "P4_tick_55_5_to_56_5": "FAIL"
+ },
+ "conclusion": {
+  "battle": "第 1 章戰場地圖(開場對話期間)200 Hz 的 14360 格裡,沒算進累加器 80 次(0.557%):重入 76、合併 4;換算 BIOS tick 平均 55.233 ms。重入全部歸得進兩型(DIG 48、MDI 28)。",
+  "compare": "同一次的戰場前(標題、讀檔、城鎮)0.629%;續一百六十三新遊戲開場 1.47%。DIG 長服務(> 10000 條)占比戰場 0.42%、戰場前 0.84%。續一百五十八戰場量到的 56.21 .. 56.44 ms 是敵方法術動畫期間,和這次的對話期間負載不同,不能直接比。",
+  "predictions": "P1 PASS(重入占 95%)、P2 PASS(未歸類 0)、P3 FAIL(實測 0.56% < 1%)、P4 FAIL(55.233 ms < 55.5)。"
+ }
+}
