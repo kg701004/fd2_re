@@ -1,0 +1,426 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s167.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-29「永遠核准你進行實機」;實機 lc167a,不改記憶體、不下斷點、不進除錯器",
+ "prediction_file": {
+  "path": "docs/knowledge-base/evidence/generators/drivers_s167/pred167_turns.txt",
+  "md5": "ecf9abcb043fccd40eca5fa60bb8279c"
+ },
+ "run": {
+  "calllog": ".wsl_build/lc167_live/lc167a_CALLLOG.TXT",
+  "calllog_md5": "ac9401da607102caa569be467c178b92",
+  "lines": 631212,
+  "records": 630965,
+  "entries": [
+   "0x117e7",
+   "0x11cac",
+   "0x14ef0",
+   "0x16f55",
+   "0x1a30b",
+   "0x1d80b",
+   "0x1d8ba",
+   "0x1f894",
+   "0x1fc66",
+   "0x1fd7c",
+   "0x1fe63",
+   "0x1fed3",
+   "0x1fef0",
+   "0x1ff31",
+   "0x1ff36",
+   "0x25bf4",
+   "0x25c01",
+   "0x32326",
+   "0x370f0",
+   "0x37c30",
+   "0x3dfef",
+   "0x3e01d",
+   "0x3ea8e",
+   "0x3ebad",
+   "0x404c0",
+   "0x43270"
+  ],
+  "markers": {
+   "0x117e7": [
+    5,
+    4
+   ],
+   "0x14ef0": [
+    10,
+    10
+   ],
+   "0x16f55": [
+    1,
+    1
+   ],
+   "0x1a30b": [
+    1,
+    1
+   ],
+   "0x1d80b": [
+    1,
+    1
+   ],
+   "0x1d8ba": [
+    1,
+    1
+   ]
+  },
+  "marker_t_ms": {
+   "E_ring": 480443.5962,
+   "R_ring": 572474.7096,
+   "E_adv": 519657.0384,
+   "R_adv": 572474.708,
+   "E_friend": 519767.6844,
+   "R_friend": 533400.0644,
+   "E_enemy": 538025.919,
+   "R_enemy": 564129.218
+  },
+  "speed_emulated_over_host": {
+   "P": 0.9999,
+   "P2": 1.0006
+  },
+  "first_end_turn": "find_empty_adjacent_tile 往上找到空格,但後面 Return / Down / Return / Return 沒開出指令環(0x16f55 沒進入),停在索爾的狀態畫面,240 秒沒等到敵方回合;同一個 instance 逐鍵截圖改走(steps),之後按 YES",
+  "steps": [
+   {
+    "label": "esc",
+    "key": "Escape",
+    "t": 443967.6174
+   },
+   {
+    "label": "close",
+    "key": "Return",
+    "t": 454307.6308
+   },
+   {
+    "label": "ring",
+    "key": "Down",
+    "t": 480168.0484
+   },
+   {
+    "label": "ring",
+    "key": "Return",
+    "t": 481388.2074
+   },
+   {
+    "label": "end",
+    "key": "Down",
+    "t": 495118.299
+   },
+   {
+    "label": "end",
+    "key": "Return",
+    "t": 496363.2652
+   }
+  ]
+ },
+ "windows_ms": {
+  "P": [
+   89737.116,
+   118322.657
+  ],
+  "S": [
+   480443.596,
+   538025.919
+  ],
+  "EN": [
+   538025.919,
+   564129.218
+  ],
+  "P2": [
+   569539.407,
+   593144.901
+  ],
+  "S_ring": [
+   480443.596,
+   519657.038
+  ],
+  "S_adv": [
+   519657.038,
+   538025.919
+  ],
+  "S_friend": [
+   519767.684,
+   533400.064
+  ],
+  "diag": [
+   118822.657,
+   480443.596
+  ],
+  "P2_loop": [
+   572474.713,
+   593144.901
+  ]
+ },
+ "method_check_lc163a": {
+  "t_ms": [
+   3538.26,
+   31033.675
+  ],
+  "slots": 5499,
+  "reentry": 78,
+  "merged": 3,
+  "lost": 81,
+  "fraction": 0.01473,
+  "bios_tick_avg_ms": 55.746
+ },
+ "grid": {
+  "phase_mode_ms": 0.0,
+  "within_0_1ms": 119503,
+  "isr_entries": 120602
+ },
+ "segments": {
+  "P": {
+   "t_ms": [
+    89737.131,
+    118322.562
+   ],
+   "slots": 5717,
+   "reentry": 27,
+   "merged": 0,
+   "lost": 27,
+   "fraction": 0.00472,
+   "bios_tick_avg_ms": 55.186,
+   "types": {
+    "DIG": 0,
+    "MDI": 27,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.723,
+   "dig_calls": 5690,
+   "dig_long": 0,
+   "dig_long_share": 0.0
+  },
+  "S": {
+   "t_ms": [
+    480443.025,
+    538023.894
+   ],
+   "slots": 11516,
+   "reentry": 111,
+   "merged": 1,
+   "lost": 112,
+   "fraction": 0.00973,
+   "bios_tick_avg_ms": 55.464,
+   "types": {
+    "DIG": 57,
+    "MDI": 54,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.689,
+   "dig_calls": 11404,
+   "dig_long": 128,
+   "dig_long_share": 0.0112
+  },
+  "EN": {
+   "t_ms": [
+    538023.894,
+    564129.288
+   ],
+   "slots": 5221,
+   "reentry": 146,
+   "merged": 1,
+   "lost": 147,
+   "fraction": 0.02816,
+   "bios_tick_avg_ms": 56.516,
+   "types": {
+    "DIG": 61,
+    "MDI": 85,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 16.28,
+   "dig_calls": 5074,
+   "dig_long": 173,
+   "dig_long_share": 0.0341
+  },
+  "P2": {
+   "t_ms": [
+    569539.369,
+    593144.725
+   ],
+   "slots": 4721,
+   "reentry": 23,
+   "merged": 0,
+   "lost": 23,
+   "fraction": 0.00487,
+   "bios_tick_avg_ms": 55.194,
+   "types": {
+    "DIG": 0,
+    "MDI": 23,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.872,
+   "dig_calls": 4698,
+   "dig_long": 0,
+   "dig_long_share": 0.0
+  },
+  "S_ring": {
+   "t_ms": [
+    480443.025,
+    519653.617
+   ],
+   "slots": 7842,
+   "reentry": 59,
+   "merged": 1,
+   "lost": 60,
+   "fraction": 0.00765,
+   "bios_tick_avg_ms": 55.348,
+   "types": {
+    "DIG": 22,
+    "MDI": 37,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.718,
+   "dig_calls": 7782,
+   "dig_long": 31,
+   "dig_long_share": 0.004
+  },
+  "S_adv": {
+   "t_ms": [
+    519653.617,
+    538023.894
+   ],
+   "slots": 3674,
+   "reentry": 52,
+   "merged": 0,
+   "lost": 52,
+   "fraction": 0.01415,
+   "bios_tick_avg_ms": 55.714,
+   "types": {
+    "DIG": 35,
+    "MDI": 17,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.627,
+   "dig_calls": 3622,
+   "dig_long": 97,
+   "dig_long_share": 0.0268
+  },
+  "S_friend": {
+   "t_ms": [
+    519763.618,
+    533398.824
+   ],
+   "slots": 2727,
+   "reentry": 49,
+   "merged": 0,
+   "lost": 49,
+   "fraction": 0.01797,
+   "bios_tick_avg_ms": 55.93,
+   "types": {
+    "DIG": 35,
+    "MDI": 14,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 5.134,
+   "dig_calls": 2678,
+   "dig_long": 97,
+   "dig_long_share": 0.0362
+  },
+  "diag": {
+   "t_ms": [
+    118822.57,
+    480443.025
+   ],
+   "slots": 72323,
+   "reentry": 383,
+   "merged": 0,
+   "lost": 383,
+   "fraction": 0.0053,
+   "bios_tick_avg_ms": 55.217,
+   "types": {
+    "DIG": 28,
+    "MDI": 355,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 4.909,
+   "dig_calls": 71940,
+   "dig_long": 49,
+   "dig_long_share": 0.0007
+  },
+  "P2_loop": {
+   "t_ms": [
+    572474.414,
+    593144.725
+   ],
+   "slots": 4134,
+   "reentry": 21,
+   "merged": 0,
+   "lost": 21,
+   "fraction": 0.00508,
+   "bios_tick_avg_ms": 55.205,
+   "types": {
+    "DIG": 0,
+    "MDI": 21,
+    "MDI_AGAIN": 0,
+    "other": 0
+   },
+   "mdi_per_1000_slots": 5.08,
+   "dig_calls": 4113,
+   "dig_long": 0,
+   "dig_long_share": 0.0
+  }
+ },
+ "unclassified_before_P": [
+  {
+   "t": 12755.406,
+   "next": "E 0x404c0",
+   "di": 26,
+   "next2": "R 0x404c0"
+  },
+  {
+   "t": 21506.01,
+   "next": "E 0x3ea8e",
+   "di": 5,
+   "next2": "E 0x3ebad"
+  },
+  {
+   "t": 70304.844,
+   "next": "E 0x404c0",
+   "di": 26,
+   "next2": "R 0x404c0"
+  },
+  {
+   "t": 80574.992,
+   "next": "E 0x404c0",
+   "di": 26,
+   "next2": "R 0x404c0"
+  },
+  {
+   "t": 84364.72,
+   "next": "E 0x404c0",
+   "di": 26,
+   "next2": "R 0x404c0"
+  }
+ ],
+ "predicted_di": {
+  "DIG": {
+   "0x3eb9d": 93,
+   "0x3eb69": 94
+  },
+  "MDI": 62,
+  "MDI_AGAIN": 57
+ },
+ "predictions": {
+  "P1_P_0_3_to_0_8pct": "PASS",
+  "P2_EN_above_P_and_0_5_to_3pct": "PASS",
+  "P3_all_classified": "PASS",
+  "P4_reentry_share_ge_0_9": "PASS",
+  "P5_P2_within_0_3pp_of_P": "PASS",
+  "P6_S_mdi_rate_above_P": "FAIL"
+ },
+ "conclusion": {
+  "player": "玩家回合閒置(P,5717 格)0.472%、第二個玩家回合(P2)0.487%(主迴圈重新進入之後 0.508%);沒算進的全是 MDI 型重入,DIG 型 0 次,這兩段 DIG 長服務也是 0 次。續一百六十六戰場開場對話 0.557%。",
+  "enemy": "敵方回合(EN,5221 格)2.816%:重入 146(DIG 61、MDI 85)、合併 1;換算 BIOS tick 平均 56.516 ms。DIG 長服務占 3.41%、MDI 型每千格 16.28 次(其他時段 4.6 .. 5.1)。",
+  "switch": "換邊(S)0.973%:指令環與確認框 0.765%、推進到敵方回合前 1.415%(其中友軍回合 1.797%)。",
+  "mechanism": "DIG 型重入只出現在有 DIG 長服務的時段(長服務 0 次的 P / P2 也沒有 DIG 型);MDI 型在敵方回合以外每千格 4.6 .. 5.1 次,敵方回合升到 16.28 次。",
+  "predictions": "P1 PASS(0.47%)、P2 PASS(2.82% > P)、P3 PASS、P4 PASS(重入占 P 100%、EN 99%)、P5 PASS(相差 0.015 個百分點)、P6 FAIL(S 每千格 4.689 ≤ P 4.723)。"
+ }
+}

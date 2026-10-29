@@ -1,0 +1,27 @@
+續一百六十七 戰場玩家回合 / 敵方回合的掉中斷比例 —— 實機前預測(使用者 2026-10-29「永遠核准你進行實機」)
+寫於實機之前,之後不改。instance lc167a;只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL -d Ubuntu;
+不改記憶體、不下斷點、不進除錯器(sweep 的 confirm_end_turn 會進除錯器輪詢,這次不用它);
+只把 instance 工作目錄的 FD2.SAV 複本章節設 1(patch_chapter,同續一百六十六)。
+
+路線:同 lc166a 進第 1 章戰場 → ensure_battle_hud(按 Return 清開場對話,最多 60 次)→ 玩家回合閒置 30 秒(主機時間)
+→ find_empty_adjacent_tile → Return(指令環)→ Down(END)→ Return →(要結束本回合的行動嗎?)Return YES
+→ 每 5 秒 grep 呼叫紀錄,等 enemy_phase_dispatch 0x1d8ba 的 R → 再閒置 25 秒 → teardown。
+入口:lc166a 的 20 個,加 0x117e7 battle_main_input_loop、0x14ef0 ai_choose_action、0x16f55 field_command_ring、
+0x1a30b battle_phase_advance、0x1d80b friendly_phase_dispatch、0x1d8ba enemy_phase_dispatch(共 26 個)。ICOUNT,不設閘門。
+
+時段(模擬器時間,呼叫紀錄的 t):
+  P  玩家回合閒置:閒置開始與結束時各讀一次 CALLLOG.TXT 尾端最後一筆的 t(t_a、t_b,不停模擬器),P = [t_a + 1000, t_b − 500] ms。
+  S  換邊:第一次 E 0x16f55 → 第一次 E 0x1d8ba(指令環、確認框、ENEMY PHASE 橫幅、友軍回合、換曲)。
+  EN 敵方回合:第一次 E 0x1d8ba → 對應的 R。
+  P2 第二個玩家回合閒置:R 0x1d8ba 之後同 P 的讀法(t_c、t_d),P2 = [t_c + 1000, t_d − 500] ms。
+量法同續一百六十六(5 ms 格點,沒算進累加器 = 重入 0x3ebad + 合併)。
+
+P1 P 的比例在 0.3% .. 0.8%(主要假說:玩家回合閒置與開場對話期間 0.557% 相近)。
+P2 EN 的比例高於 P,且在 0.5% .. 3%(主要假說:移動動畫加重 DIG 以外的負載、續一百五十八敵方動畫期間換算 2.3 .. 2.7%)。
+   替代解釋:掉中斷只看 DIG / MDI 關中斷,和畫面負載無關 → EN 與 P 相近。
+P3 P、S、EN、P2 裡每一次重入都歸得進 DIG / MDI / 同格再叫 MDI 三型;未歸類 0。
+P4 P 與 EN 各自的「重入 / 沒算進」≥ 90%。
+P5 P2 的比例與 P 相差 ≤ 0.3 個百分點(重現)。
+P6(探索)S 的 MDI 型重入每千格次數高於 P(換曲要呼叫 MDI 驅動)。
+
+失敗條件:清不到 HUD、找不到空格、240 秒內等不到 R 0x1d8ba、或紀錄缺上面的標記 → 停止,先診斷,不盲目重跑。

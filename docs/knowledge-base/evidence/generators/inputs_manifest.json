@@ -13110,6 +13110,41 @@
     ]
    }
   },
+  "ev_s167": {
+   "outputs": [
+    "battle_turn_interrupt_loss_s167_20261029.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc163_live/lc163a_CALLLOG.TXT": [
+     5021889,
+     "622aa98c7bcc95bf10b9c20d5e2a4f93b24f6896d835dcbd7bbd040569bf26a9"
+    ],
+    ".wsl_build/lc166_live/lc166a_meta.txt": [
+     321,
+     "ef74b249f8ad4af1b02cfb77f502805110d67d55dbd4c5788eab10ae23d848e1"
+    ],
+    ".wsl_build/lc167_live/lc167a_CALLLOG.TXT": [
+     109702922,
+     "0a72bea382a31f26c32f7c5d3abeda0644d51ca848085c578d7b545dbafd5e83"
+    ],
+    ".wsl_build/lc167_live/lc167a_finish.json": [
+     347,
+     "535640c94f598363bdf8ae9faacd67403cc66d97f01fdf7d8f79ad827178cfa0"
+    ],
+    ".wsl_build/lc167_live/lc167a_meta.txt": [
+     365,
+     "fd4e568e5b338853bddbb3a00f61237d6dd5cf20319457c25c8cb4b0fb504ade"
+    ],
+    ".wsl_build/lc167_live/lc167a_run.json": [
+     1819,
+     "df59ae2042d33b49658906ac0de6e1795f3a8202da91f8300e161b9f7750b9df"
+    ],
+    ".wsl_build/lc167_live/lc167a_steps.jsonl": [
+     707,
+     "152cd87b2ffe6b33edf519e6ba7e5c0f19d80975446b20c8c10e90214626ed6c"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
