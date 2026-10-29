@@ -1,0 +1,23 @@
+續一百六十三 ③b 實機預測(2026-10-29,實機前寫;之後不改)
+
+實機:DOSBox-X(修補版 calllog,FD2_CALLLOG_ICOUNT=1,不設閘門,CAP 1e8,DUMP 0),只對原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e,WSL -d Ubuntu。
+instance lc163a;cycles=5000(harness 固定)。從開機記到標題選單 Return(START)→ 確認音效 → 閃爍 → 淡出 → 新遊戲開場。
+使用者 2026-10-29「還沒做的兩件 請依照你的建議自動進行處理」核准一次;失敗就停,不自動重跑。
+
+入口(native,寫檔時 + 0x19c000):
+  0x3ea8e 計時中斷處理程式入口        0x3ebad 重入時只送 EOI 就 iretd 的分支
+  0x404c0 DIG 服務(200 Hz)           0x43270 MDI 服務(120 Hz)      0x37c30 AIL 內部(100 Hz)
+  0x3dfef delay 校準(Watcom XI 初始化表)  0x25bf4 main  0x25c01 main 呼叫 AIL_startup 的那一條
+  title:0x1f894 0x1fc66 0x1fd7c 0x370f0 0x1fe63 0x1fed3 0x1fef0 0x1ff31 0x1ff36 0x3e01d(delay)0x32326(新遊戲)
+
+要量的:
+  (a) 0x3dfef 在 0x25c01(AIL_startup)之前執行一次;它的 R 記錄的 i / n / t 給出校準那段的每圈成本(與續一百六十一 lc159b「沒遇到中斷的 delay」8767.8 圈 / 秒、481.9 條 / 圈對照,解 3.3% 差)。
+  (b) 應有中斷數 N = (最後一筆 0x3ea8e 的 t − 第一筆的 t) / 5.000 ms + 1;進入數 E = 0x3ea8e 的 E 記錄數;重入 D = 0x3ebad 的記錄數;
+      沒進來(合併)M = N − E。0x404c0 應 ≈ E − D(每次正常進入都服務 DIG);0x43270 ≈ 0.6 ×、0x37c30 ≈ 0.5 × 正常進入數。
+
+預測:
+  P1 0x3ea8e 的 E 記錄會出現在 cs 0170(推論;若一筆都沒有 = 中斷處理不在遊戲選擇子,③b 這次量不到,記 BLOCKED,不重跑)。
+  P2 相鄰兩次 0x3ea8e 的 t 差絕大多數 = 5.000 ms(±0.05)。
+  P3 主要假說:M > 0 且 D = 0 —— 掉的中斷是被合併(關中斷期間 PIC 只留一個請求),不是重入保護(DOSBox-X 在 cycles=5000 下回呼不會長過 5 ms)。
+     替代假說:D > 0,集中在確認音效播放期間(DIG 混音最重的那 0.39 s)。兩者都可能,信心低。
+  P4 0x3dfef 執行時還沒有任何 0x3ea8e 記錄(校準在 AIL 啟動前,續一百六十一 CODE CONFIRMED)。

@@ -1,0 +1,228 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s163.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-10-29「還沒做的兩件 請依照你的建議自動進行處理」;實機一次(lc163a),不重跑",
+ "prediction_file": "docs/knowledge-base/evidence/generators/drivers_s163/pred163_3b.txt",
+ "run": {
+  "instance": "lc163a",
+  "calllog": ".wsl_build/lc163_live/lc163a_CALLLOG.TXT",
+  "calllog_md5": "3bebd4f463c821dfc137cd267c5c6112",
+  "lines": 29842,
+  "header": "H fd2calllog 1 cs=0170 entries=19 cap=100000000 dump=0 lo=001bb894 hi=001df271 icount=1",
+  "entries_native": [
+   "0x1f894",
+   "0x1fc66",
+   "0x1fd7c",
+   "0x1fe63",
+   "0x1fed3",
+   "0x1fef0",
+   "0x1ff31",
+   "0x1ff36",
+   "0x25bf4",
+   "0x25c01",
+   "0x32326",
+   "0x370f0",
+   "0x37c30",
+   "0x3dfef",
+   "0x3e01d",
+   "0x3ea8e",
+   "0x3ebad",
+   "0x404c0",
+   "0x43270"
+  ],
+  "harness": [
+   [
+    "instance_up",
+    true
+   ],
+   [
+    "poll_title",
+    true
+   ]
+  ],
+  "events_ms": [
+   [
+    1781.374,
+    "calibration"
+   ],
+   [
+    3295.825,
+    "main_call_AIL_startup"
+   ],
+   [
+    3657.061,
+    "title_seq"
+   ],
+   [
+    7987.464,
+    "intro_key_exit"
+   ],
+   [
+    9967.982,
+    "menu_kbd_flush"
+   ],
+   [
+    10753.603,
+    "confirm"
+   ],
+   [
+    10754.207,
+    "blink"
+   ],
+   [
+    11515.742,
+    "fade"
+   ],
+   [
+    11952.569,
+    "clear"
+   ],
+   [
+    12402.422,
+    "new_game"
+   ]
+  ]
+ },
+ "timeline": {
+  "pit_divisor": 5966,
+  "period_ms": 5.000075,
+  "bios_tick_ms": 54.9254,
+  "pre_dig_intervals_ms": {
+   "bios_18hz": [
+    54.925,
+    55.346,
+    43.632
+   ],
+   "mdi_120hz": [
+    8.366,
+    8.333,
+    8.334,
+    7.208
+   ]
+  },
+  "first_mdi_ms": 3514.41,
+  "first_dig_ms": 3538.338,
+  "window_ms": [
+   3538.26,
+   31028.675
+  ],
+  "isr_entries": 5498,
+  "grid_slots": 5499,
+  "phase_mode_ms": 0.0,
+  "within_0_1ms": 5390,
+  "interval_within_0_05ms": 0.9169,
+  "empty_slots_merged": [
+   [
+    9078.344,
+    "intro_key_exit"
+   ],
+   [
+    9173.345,
+    "intro_key_exit"
+   ],
+   [
+    19948.508,
+    "new_game"
+   ]
+  ],
+  "double_slots": 2
+ },
+ "reentry": {
+  "count": 78,
+  "late_gt_0_3ms": 71,
+  "on_time": 7,
+  "by_phase": {
+   "blink": 5,
+   "intro_key_exit": 14,
+   "new_game": 56,
+   "title_seq": 3
+  },
+  "callback_running": {
+   "MDI": 15,
+   "DIG": 62,
+   "DIG+MDI": 1
+  },
+  "callback_spans_gt_period": {
+   "DIG": 61,
+   "MDI": 15
+  },
+  "late_entries_all": 92,
+  "late_not_reentry": 21
+ },
+ "loss": {
+  "reentry": 78,
+  "merged": 3,
+  "total": 81,
+  "slots": 5499,
+  "fraction": 0.0147,
+  "bios_tick_avg_ms": 55.75,
+  "s158_measured_ms": [
+   56.437,
+   56.365,
+   56.214
+  ]
+ },
+ "callbacks": {
+  "dig_calls": 5420,
+  "normal_entries_since_dig": 5420,
+  "mdi_calls": 3255,
+  "normal_entries_since_mdi": 5423,
+  "ail_internal_0x37c30_calls": 0
+ },
+ "calibration": {
+  "function": "0x3dfef",
+  "result_slot": "0x541b0",
+  "return_edx": "0x1f3705",
+  "dos_second": 55,
+  "dos_hundredths": 5,
+  "cs_per_tick": 5.4925,
+  "ticks_in_counted_second": 19,
+  "counted_second_ms": 1043.58,
+  "wait_phase_ms": 470.8,
+  "this_run_calibration_bounds": [
+   8750,
+   9249
+  ],
+  "bound_from": {
+   "delay(2) = 18 圈": 243
+  },
+  "s160_calibration": 9057,
+  "s161_no_isr_iter_per_s": 8767.8,
+  "calibration_iter_per_s": 8678.8,
+  "s161_ratio_split": {
+   "second_len": 1.0436,
+   "rate_ratio": 0.9898,
+   "product": 1.033
+  }
+ },
+ "predictions": {
+  "P1": [
+   "PASS",
+   "0x3ea8e 在 cs 0170 有 5505 筆 E 記錄"
+  ],
+  "P2": [
+   "PASS",
+   "200 Hz 期相鄰兩次進入的間隔 91.7% 在 5.0001 ± 0.05 ms 內;相位 ±0.1 ms 內 5390 / 5498"
+  ],
+  "P3_main": [
+   "FAIL",
+   "主要假說是 D = 0、全靠合併;實測重入 D = 78、合併 M = 3"
+  ],
+  "P3_alt": [
+   "FAIL",
+   "替代假說「D > 0、集中在確認音效」:D > 0,但 56 次在新遊戲開場、14 次在片頭,確認音效 / 閃爍期間只有 5 次"
+  ],
+  "P4": [
+   "PASS",
+   "校準在 1781.374 .. 3295.790 ms,早於 main 呼叫 AIL_startup(3295.825)與第一次 0x3ea8e"
+  ],
+  "callbacks": [
+   "PARTIAL",
+   "0x404c0 = 正常進入數 5420(相等);0x43270 / 正常進入 = 0.6002(預測 0.6);0x37c30 預測約 0.5 倍,實測 0 次"
+  ]
+ },
+ "conclusion": {
+  "3b": "200 Hz 期 5499 格裡,計時器中斷沒算進累加器的有 81 次(1.47%):重入 0x3ebad 78 次、合併 3 次。重入當下多半是 DIG 服務 0x404c0 還沒返回(62 次),其次 MDI 0x43270(15 次);71 次重入的中斷晚到 1 .. 4 ms(回呼裡有關中斷的區間)。這段的 BIOS tick 平均應為 55.75 ms(續一百五十八在戰場量到 56.2 .. 56.4 ms,負載不同)。",
+  "calibration": "0x3dfef 數的是 DOS 時間(int 21h AH=2Ch)的一秒;DOSBox-X 由 BIOS tick 換算時間,返回時 DL = 5 → 這一秒正好 19 個 tick(1043.58 ms)。續一百六十一的 1.033 = 1.0436(19 tick) × 0.9898(校準期間每圈比遊戲中沒遇到中斷的 delay 慢約 1%,原因沒查)。"
+ }
+}

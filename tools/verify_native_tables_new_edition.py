@@ -235,9 +235,12 @@ def layer_jump_table(raw: bytes, groups: dict, out: list[Finding]) -> int | None
         runs.append(cur)
     covering = [r for r in runs if r[0] <= JUMP_TABLE and JUMP_TABLE + 89 * 4 <= r[-1]]
     if not covering:
+        # 2026-10-29 續一百六十三:原本取 runs[:4](位址順序的前 4 段),標籤寫「最長」卻沒照長度排;
+        # 改成長度由大到小(同長保持位址順序,sorted 在 reverse 下仍穩定)。
+        longest = sorted(runs, key=len, reverse=True)[:4]
         _fail(out, "L2", "跳表存在性",
               f"新版在 {hex(JUMP_TABLE)} 沒有涵蓋 90 筆的連續 fixup run;"
-              f"最長的幾段:{[(hex(r[0]), len(r)) for r in runs[:4]]}")
+              f"最長的幾段:{[(hex(r[0]), len(r)) for r in longest]}")
         return None
     r = covering[0]
     _pass(out, "L2", "跳表存在性",
@@ -576,6 +579,16 @@ def selftest() -> int:
                          f"新版在 {hex(JUMP_TABLE)} 沒有涵蓋 90 筆的連續 fixup run;"
                          f"最長的幾段:{[(hex(0x100000 + 0x1000 * k), 90) for k in range(4)]}")],
             "5 段都不涵蓋時只列前 4 段")
+        # 位址順序與長度順序不同:90 / 95 / 100 / 91 / 120 筆,要列 120、100、95、91
+        lens = (90, 95, 100, 91, 120)
+        mixed = {0x100000 + 0x1000 * k + 4 * i: 0 for k, n in enumerate(lens) for i in range(n)}
+        globals()["_fixup_map"] = lambda _r, _m: mixed
+        o = []
+        layer_jump_table(raw, groups, o)
+        chk(rows(o) == [("L2", "跳表存在性", "FAIL",
+                         f"新版在 {hex(JUMP_TABLE)} 沒有涵蓋 90 筆的連續 fixup run;"
+                         f"最長的幾段:{[(hex(0x100000 + 0x1000 * k), lens[k]) for k in (4, 2, 1, 3)]}")],
+            "最長的幾段照長度由大到小")
     finally:
         globals()["_fixup_map"] = fx_saved
 
