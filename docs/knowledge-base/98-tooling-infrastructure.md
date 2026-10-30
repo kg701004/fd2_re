@@ -11942,3 +11942,65 @@ inputs_manifest 登錄 839 筆(827 張校準截圖 + lc167a / lc168a / lc169a �
 - 敵方回合結束到主迴圈那 991 次服務對不上兩首曲;換曲時每 8 次服務多一次的驅動呼叫是不是音量淡入淡出;4 次短驅動呼叫(532 / 558 條)的來源。
 - doc12 對 `0x51e81` 的舊說法(上面的文件差異)。
 - 續一百六十五的仍留(MDI 收中斷的點、離群 2 次、校準多出的 int 21h 指令)不變。
+
+## 2026-10-30 續一百七十一:工具新建 —— 呼叫紀錄看得到非遊戲段與中斷位置;校準多出的 int 21h 指令是 CF 分支加 rep 多記,MDI 型在驅動 iret 之後的第一條收中斷(DOSBox-X 呼叫紀錄 lc171a / lc171b)
+
+起因:使用者問「不確定性與還沒解決的是因為工具不足嗎?」,逐項拆開後只有續一百六十五那組是工具做不到(呼叫紀錄只數非遊戲指令的條數,
+看不到它們落在 DOS/4GW、驅動還是 BIOS 的哪一段);使用者「先進行工具新建和優化改善」「請繼續」。實機兩次(lc171a、lc171b),不重跑。
+證據 `evidence/calllog_segments_s171_20261030.json`,產生器 `ev_s171.py`(變異測試 `mut_s171.py` 17 個),inputs_manifest 登錄 lc171a / lc171b 的紀錄、
+FD2.EXE、SBPRO2.MDI;驅動腳本與 DOSBox-X 原始碼摘錄在 `evidence/generators/drivers_s171/`。
+
+**工具**(DOSBox-X 呼叫紀錄修補;STATIC ANALYSIS + 實機核對):
+- `tools/dosbox/fd2_calllog_patch.py` 加 `FD2_CALLLOG_SEGS=<t0>-<t1>[:x][,...]`(模擬 ms):時間窗內每段「同一 code selector、同一 CPU 模式」的連續指令
+  寫一筆 G(起訖 EIP、條數、結尾的總指令數;第一次看到的起點附 16 個碼位元組),`:x` 的窗改成每條指令一筆 S;每次 `CPU_Interrupt`
+  寫一筆 I(中斷號、種類、當時的模式 / CS:EIP、總指令數、時間)。I 要另外修補 `src/cpu/cpu.cpp`(`CPU_Interrupt` 開頭呼叫 `fd2calllog_interrupt`)。
+  不設時輸出與之前逐字相同。逐條紀錄原本的 `X frames-overflow` 已佔用 X,所以逐條用 S(DOSBox-X 修補)。
+- 已修補過舊版的樹用 `--upgrade`:換掉舊的插入段,目的檔留著,make 只重編兩個檔(39 秒)。新樹 `~/fd2-dosbox-calllog2`,舊樹保留;
+  最後一版工具對新樹再跑 `--upgrade` 兩個檔都 unchanged(建置用的就是提交的版本)(DOSBox-X)。
+- `tools/dosbox_harness.sh` 加 `FD2_HARNESS_CALLLOG_SEGS`(格式檢查、二進位沒有這個變數名就拒跑)。
+- `tools/calllog_segments.py`(新):`summary` / `episodes`(兩段遊戲指令之間的非遊戲指令依「離開 → 回來」的遊戲 EIP 分組,條數分布與路徑種類)/
+  `diff`(兩個 episode 逐段對齊;兩邊都有逐條紀錄時逐指令對齊並附反組譯)/ `irq` / `disasm`。指令數不相接的 episode 標成不完整,不進分組。
+- 兩支的 `--selftest` 登錄進 `verify_selftest_discrimination.py`(`dosbox/fd2_calllog_patch.py` 是第一支在子目錄的),`--exhaustive --tool` 都歸零:
+  `calllog_segments.py` 第一輪逃 15 個(錯誤訊息行號、G / I 之後的 S 不能併、I 各欄位、autojunk 等),補測試與把 `s_open` 改成 `prev_kind` 之後歸零;
+  autojunk 只有在 200 個以上、中間差一個時才看得出來,I 的 type 要兩位數才分得出 16 / 17 進位。
+  `fd2_calllog_patch.py`(DOSBox-X 修補)逃 3 個,都是 `str.replace(..., 1)` 的次數(前一行已確認恰好一處),拿掉次數參數後歸零。
+
+**實機**(DOSBox-X 呼叫紀錄 lc171a / lc171b;原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e、WSL -d Ubuntu):
+- 步驟、入口檔與續一百六十三 lc163a 相同(開機 → 標題 → START → 8 秒)。lc171a 錄校準 1700 .. 3400 ms 與片頭 3700 .. 7900 ms 的 G,
+  各一段 10 ms 逐條;lc171b 只錄逐條(校準 2000 ms、delay 3800 / 6300 ms;delay 的時段由 lc171a 的 G 紀錄找出)。
+- 紀錄本身(`ev_s171` (A)):lc171a 222031 段在時間窗內逐段相接,只在 3400 .. 3700 ms 空窗斷開一次;4979 筆 E / R / A 的指令數全落在遊戲段內;
+  22865 筆 I 全在「一段的結尾 = 下一段的開頭」上(DOSBox-X 呼叫紀錄 lc171a)。
+- 校準 0x3dfef 在 lc171a 是 1781.4 .. 3185.9 ms(1404.5 ms,int 21h 12183 次);續一百六十五 lc163a 是 1514 ms、13085 .. 13167 次,每 ms 的次數相近。
+
+**校準每次 int 21h 多出的非遊戲指令**(`ev_s171` (B)(C);CODE + LOG CONFIRMED;DOSBox-X 呼叫紀錄 lc171a / lc171b、FD2.EXE 反組譯、DOSBox-X 原始碼):
+- 校準兩個迴圈(0x3dffd、0x3e00d)與 delay(0x3e04d)的 int 21h 走同一條 9 段路徑(DOS/4GW 的 0080 / 0088 / 0070 三個 selector)。
+  固定差的 6 條全在 0088 從 0xe3b 進入那一段:`0x2149 test byte ptr [bp - 0x22], 1` / `0x214d jne 0x2152`,沒跳走 0x214f 起的 10 條、跳了走 0x2152 起的 4 條。
+- `[bp - 0x22]` 的位元 0 是 int 21h 返回時的 CF:DOSBox-X `dos.cpp` 的 AH=2Ch 沒有 `CALLBACK_SCF`,結尾的 `overhead()` 只做 `reg_ip += 2`
+  (摘錄 `drivers_s171/dosbox_dos_int21_2c.txt`),所以 CF 是遊戲在 int 21h 之前留下的。FD2.EXE:校準兩個迴圈前面是 `xor` 或相等的 `cmp`
+  (CF = 0);delay 迴圈是 `0x3e04f cmp bl, dh` → `dec esi` → `jne`,bl 恆為 0(`0x3e047 xor eax, eax`、`mov bl, al`),DH > 0 時 CF = 1;
+  每次 delay 呼叫的第一次前面是 `xor`(CF = 0)。
+- 判準(預測可被推翻):lc171a 的 delay int 21h,CF = 0 的 259 次全走長路、CF = 1 的 8431 次全走短路(另 1 次那段被中斷切開),反例 0;
+  lc171b 1 / 97 次同樣(DOSBox-X 呼叫紀錄 lc171a / lc171b)。G 紀錄只有段的起訖,所以分類依段的起點與條數:從 0x3e04f 起、不超過 5 條是迴圈,
+  超過 5 條是離開 delay 又從 0x3e01d 進來;被中斷切開的片段往前找被切的那段(iret 還原旗標,CF 不變)。
+  DH = 0 的那一秒(CF = 0、應走長路)兩份紀錄都沒遇到(NOT TESTED)。
+- 其餘 0 .. 4 條的起伏是同一條 rep 指令被記了不只一次(0088:21b5 `rep movsw`、0088:0e1f、0070:0cd4、0080:06b0 `rep movsd`):
+  lc171b 逐條窗校準 86 次、delay 迴圈 97 次,把連續相同的 rep 指令併成一條後各只剩一種序列,長度差 6;不併時不只一種(DOSBox-X 呼叫紀錄 lc171b)。
+  推測是 DOSBox-X 的核心在時間片用完時中斷 rep、下一片重新執行那條指令(INFERRED;沒有讀 DOSBox-X 核心的 rep 實作)。
+- 所以續一百六十五的校準 481.49 .. 484.51 與 delay 475.44 .. 476.5 = 481 / 475 加上 rep 多記;「校準多出 5 .. 9 條」的原因定案。
+
+**MDI 型重入收中斷的點**(`ev_s171` (D);CODE + LOG CONFIRMED;DOSBox-X 呼叫紀錄 lc171a、SBPRO2.MDI):
+- 片頭 MDI 驅動呼叫(遊戲 `0x3f1a2 int 0x31`)期間的硬體中斷 3 次,全收在真實模式 0c5c:1fad;每次前一段都是 0f71 從 0x132 起、結尾在 0x1b1 的那段。
+- 0f71 就是 SBPRO2.MDI 從位移 0 載入:紀錄裡 0f71 的 319 個位置的 16 個碼位元組與檔案同一位移全部相同;0x132 是續一百六十五的分派器入口、0x1b1 是它的 `iret`。
+- 0c5c 是 DOS/4GW 的真實模式模擬中斷:`0x1faa popf` / `0x1fab int 0x66`(中斷號由前面的 `xchg cs:[0x1fab], cx` 改寫)/ `0x1fad pushf` / `0x1fae cli`。
+  驅動 `iret` 把 IF 打開,中斷在 `0x1fad` 執行之前收,接著進 0c5c:111c 的中斷處理;沒被中斷的呼叫 iret 之後就從 0x1fad 往下走。
+  所以答案是「驅動 iret 之後、DOS/4GW 返回路徑的第一條(cli 之前)」,不是驅動 iret 本身。
+- 131 次完整的驅動呼叫裡 111 次 int 66h 先進 137c:016a 的掛勾(AX 在 0x300 .. 0x4ff 時 `ljmp cs:[0x36]` 轉給驅動),其餘直接進驅動,而且全排在前面;
+  137c 是誰的、何時掛上的沒查(DOSBox-X 呼叫紀錄 lc171a)。
+
+**續一百六十五仍留的狀態**:MDI 型收中斷的點、校準每次 int 21h 多出的指令兩項定案(上面兩節)。離群 2 次(DIG 601、MDI 375 非遊戲指令)在 lc163a,
+那份沒有 G 紀錄,沒辦法回頭看;delay 每條指令週期數隨時段變 0.5% 沒做。
+
+**仍留**:
+- 續一百六十五:離群 2 次要在有 G 紀錄的實機裡再遇到才看得到;delay 每條指令週期數隨時段變 0.5% 的原因。
+- 本輪:137c:016a 那個 int 66h 掛勾是誰的、何時掛上;DH = 0 那一秒 delay 應走長路(NOT TESTED);rep 多記的機制(INFERRED)。
+- 續一百七十的仍留(敵方回合結束後 991 次服務、每 8 次服務多一次驅動呼叫、4 次短驅動呼叫、doc12 對 `0x51e81` 的舊說法)不變。

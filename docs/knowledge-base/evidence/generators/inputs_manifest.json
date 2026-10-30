@@ -32098,6 +32098,29 @@
     ]
    }
   },
+  "ev_s171": {
+   "outputs": [
+    "calllog_segments_s171_20261030.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc171_live/lc171a_CALLLOG.TXT": [
+     16468973,
+     "f28a2b12d9d5bb2ec9b9326f56fc1afd8cb7fecb67da5bc5c38d245f4a3a92ab"
+    ],
+    ".wsl_build/lc171_live/lc171b_CALLLOG.TXT": [
+     6666443,
+     "d5cbd4e2c63ae0759605ca5d725bc3cbc4d805cb07e73aed23e73b873713100c"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/SBPRO2.MDI": [
+     16541,
+     "2aa48568783f6c41df8dfb7e699181299e306fa330415a178fc48b23036c9a77"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

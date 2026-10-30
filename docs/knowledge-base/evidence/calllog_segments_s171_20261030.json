@@ -1,0 +1,218 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s171.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "lc171a": {
+   "path": ".wsl_build/lc171_live/lc171a_CALLLOG.TXT",
+   "md5": "0323eeb1d98d77814b42148f6bd87a33",
+   "segs": "1700-2000,2000-2010:x,2010-3400,3700-5000,5000-5010:x,5010-7900"
+  },
+  "lc171b": {
+   "path": ".wsl_build/lc171_live/lc171b_CALLLOG.TXT",
+   "md5": "2b18d320078a7fbbf8465c4366efdc6f",
+   "segs": "2000-2010:x,3800-3810:x,6300-6310:x"
+  }
+ },
+ "validity": {
+  "lc171a": {
+   "runs": 222031,
+   "gaps": [
+    [
+     12747802,
+     13835989
+    ]
+   ],
+   "era": {
+    "inside_game_run": 4979,
+    "not_in_game_run": 0,
+    "outside_windows": 17287,
+    "truncated_last_line": 1
+   },
+   "irq": {
+    "irq_records": 22865,
+    "at_run_boundary": 22865
+   }
+  },
+  "lc171b": {
+   "runs": 1907,
+   "gaps": [
+    [
+     7283052,
+     14269399
+    ],
+    [
+     14312048,
+     25945352
+    ]
+   ],
+   "era": {
+    "inside_game_run": 24,
+    "not_in_game_run": 0,
+    "outside_windows": 17743,
+    "truncated_last_line": 1
+   },
+   "irq": {
+    "irq_records": 192,
+    "at_run_boundary": 192
+   }
+  }
+ },
+ "static": {
+  "0x3dff5": "xor eax, eax",
+  "0x3dffb": "mov ah, 0x2c",
+  "0x3dffd": "int 0x21",
+  "0x3e003": "cmp ebx, eax",
+  "0x3e005": "je 0x3dffb",
+  "0x3e00b": "mov ah, 0x2c",
+  "0x3e00d": "int 0x21",
+  "0x3e010": "cmp bl, dh",
+  "0x3e012": "je 0x3e00b",
+  "0x3e047": "xor eax, eax",
+  "0x3e049": "mov bl, al",
+  "0x3e04b": "mov ah, 0x2c",
+  "0x3e04d": "int 0x21",
+  "0x3e04f": "cmp bl, dh",
+  "0x3e051": "dec esi",
+  "0x3e052": "jne 0x3e04b",
+  "0x3f1a2": "int 0x31"
+ },
+ "dosbox_2c": "docs/knowledge-base/evidence/generators/drivers_s171/dosbox_dos_int21_2c.txt",
+ "int21": {
+  "main_path": [
+   "p 0080:84",
+   "p 0088:d67",
+   "p 0080:f24",
+   "p 0088:da3",
+   "p 0080:ba4",
+   "p 0070:c9e",
+   "p 0080:918",
+   "p 0088:e3b",
+   "p 0080:c3a"
+  ],
+  "groups": {
+   "cal_3dffd": {
+    "episodes": 3127,
+    "main_path_share": 3118
+   },
+   "cal_3e00d": {
+    "episodes": 9055,
+    "main_path_share": 9034
+   },
+   "delay_3e04d": {
+    "episodes": 8691,
+    "main_path_share": 8687
+   }
+  },
+  "calibration_e3b_class": {
+   "cal_3dffd": {
+    "long": 3127
+   },
+   "cal_3e00d": {
+    "long": 9053,
+    "split": 2
+   }
+  },
+  "cf_table": {
+   "lc171a": {
+    "cf0_first|long": 259,
+    "cf1_loop|short": 8431,
+    "cf1_loop|split": 1
+   },
+   "lc171b": {
+    "cf0_first|long": 1,
+    "cf1_loop|short": 97
+   }
+  },
+  "branch": {
+   "test": "test byte ptr [bp - 0x22], 1",
+   "jcc": "jne 0x2152",
+   "cf0_next": "jmp 0x2160",
+   "cf1_next": "mov ax, word ptr [bp - 0x34]"
+  },
+  "cal_only": [
+   "0000214f",
+   "00002160",
+   "00002163",
+   "00002166",
+   "0000216b",
+   "0000216e",
+   "00002172",
+   "00002176",
+   "0000217a",
+   "0000217c"
+  ],
+  "delay_only": [
+   "00002152",
+   "00002155",
+   "00002158",
+   "0000215d"
+  ]
+ },
+ "rep": {
+  "cal_3e00d": {
+   "episodes": 86,
+   "distinct_after_collapse": 1,
+   "collapsed_len": 462,
+   "totals": {
+    "481": 52,
+    "482": 27,
+    "483": 4,
+    "484": 3
+   }
+  },
+  "delay_loop": {
+   "episodes": 97,
+   "distinct_after_collapse": 1,
+   "collapsed_len": 456,
+   "totals": {
+    "475": 45,
+    "476": 34,
+    "477": 13,
+    "478": 4,
+    "479": 1
+   }
+  }
+ },
+ "s165": {
+  "calibration_per_int21": [
+   481.49,
+   484.51
+  ],
+  "delay_per_int21": [
+   475.44,
+   476.5
+  ]
+ },
+ "mdi_irq": {
+  "count": 3,
+  "where": "r 0c5c:1fad",
+  "before": [
+   "r 0f71:132-1b1",
+   "r 0f71:132-1b1",
+   "r 0f71:132-1b1"
+  ],
+  "chain": {
+   "stub_popf": "popf",
+   "stub_int": "int 0x66",
+   "stub_after": "pushf",
+   "stub_cli": "cli",
+   "hook_137c": "cmp ax, 0x300",
+   "hook_137c_chain": "ljmp cs:[0x36]",
+   "driver_entry": "cmp ax, 0x300",
+   "driver_iret": "iret"
+  },
+  "hook_137c": {
+   "calls": 131,
+   "via_137c": 111,
+   "without_first": true
+  },
+  "driver_bytes_checked": 319,
+  "uninterrupted_checked": 131
+ },
+ "conclusion": {
+  "tool": "lc171a 時間窗內 222031 段指令逐段相接(只在 3400 .. 3700 ms 空窗斷開一次);4979 筆 E / R / A 全落在遊戲段內;22865 筆 I 全在段的邊界上。",
+  "cf_branch": "校準與 delay 的 int 21h 走同一條 9 段路徑,固定差的 6 條在 DOS/4GW int 21h 轉送(selector 0088)的 test byte ptr [bp - 0x22], 1 / jne 0x2152:CF = 0 走 10 條、CF = 1 走 4 條。DOSBox-X 的 AH=2Ch 不動 CF,所以 CF 是遊戲留下的:校準兩個迴圈是 0(xor / 相等的 cmp),delay 迴圈是 cmp 0, dh(DH > 0 時 1),每次 delay 呼叫的第一次是 xor 之後的 0。lc171a:delay 第一次 259 次全走長路、迴圈內 8431 次全走短路,反例 0。",
+  "rep": "其餘起伏是同一條 rep movsw 被記了不只一次:lc171b 逐條窗校準 86 次、delay 迴圈 97 次,併掉連續相同的 rep 指令後各只剩一種序列,長度差 6。續一百六十五的 481.49 .. 484.51 與 475.44 .. 476.5 = 481 / 475 加上 rep 多記。",
+  "mdi_irq": "MDI 驅動呼叫期間的硬體中斷 3 次全收在 0c5c:1fad(DOS/4GW 真實模式模擬中斷那段 int 66h 的下一條 pushf,再下一條才 cli);前一段都是 SBPRO2.MDI(0f71,從位移 0 載入)結尾在 01b1 的 iret。所以是驅動 iret 把 IF 打開之後、DOS/4GW 返回路徑的第一條指令收的。完整的 131 次驅動呼叫裡 111 次 int 66h 先進 137c:016a 的掛勾(AX 0x300 .. 0x4ff,ljmp cs:[0x36] 轉給驅動),其餘直接進驅動、而且都在前面;137c 是誰的、何時掛上的沒查。"
+ }
+}

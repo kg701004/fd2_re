@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 67 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 68 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百七十一(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s171.py` | `calllog_segments_s171_20261030.json` | `mut_s171.py`(17) |
+
+呼叫紀錄的新工具(`tools/dosbox/fd2_calllog_patch.py` 的 `FD2_CALLLOG_SEGS`、解析 `tools/calllog_segments.py`)與兩次開機到 START 的實機 lc171a / lc171b(驅動腳本與 DOSBox-X 原始碼摘錄在 [`drivers_s171/`](drivers_s171/README.md)):紀錄本身的連續性、續一百六十五「校準每次 int 21h 多 4 .. 9 條」的來源(DOS/4GW int 21h 轉送裡看 CF 的分支 + 同一條 rep 指令多記)、MDI 型重入收中斷的點(SBPRO2.MDI `iret` 之後 DOS/4GW 返回路徑的第一條)。
 
 ## 續一百七十(2026-10-30)
 

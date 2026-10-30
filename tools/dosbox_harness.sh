@@ -356,6 +356,14 @@ cmd_launch() {
             grep -aq FD2_CALLLOG_GATE "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_GATE; rebuild with tools/dosbox/fd2_calllog_patch.py"
             calllog_env+="FD2_CALLLOG_GATE=$FD2_HARNESS_CALLLOG_GATE "
         fi
+        # 2026-10-30 續一百七十一: FD2_HARNESS_CALLLOG_SEGS=<t0>-<t1>[:x][,...] (emulated ms): inside those windows
+        # every code selector is logged (G runs, or S per instruction with :x) plus every CPU_Interrupt (I).
+        # Parsed by tools/calllog_segments.py.
+        if [[ -n "${FD2_HARNESS_CALLLOG_SEGS:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_SEGS" =~ ^[0-9]+(\.[0-9]+)?-[0-9]+(\.[0-9]+)?(:x)?(,[0-9]+(\.[0-9]+)?-[0-9]+(\.[0-9]+)?(:x)?)*$ ]] || die "FD2_HARNESS_CALLLOG_SEGS '$FD2_HARNESS_CALLLOG_SEGS' is not t0-t1[:x][,t0-t1[:x]...] in ms"
+            grep -aq FD2_CALLLOG_SEGS "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_SEGS; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_SEGS=$FD2_HARNESS_CALLLOG_SEGS "
+        fi
         echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
     fi
 

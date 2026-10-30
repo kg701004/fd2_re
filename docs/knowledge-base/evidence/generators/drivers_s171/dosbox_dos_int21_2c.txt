@@ -1,0 +1,57 @@
+source ~/fd2-dosbox-calllog2/dosbox-x/src/dos/dos.cpp (unknown) sha256 ef571bd87019bedd0d0ae2e6f6f77b4ede2e5eccdca112c1c6603da645e78c53 lines 1620-1671
+        case 0x2c: {    /* Get System Time */
+            // use BIOS to get RTC time
+            if (IS_PC98_ARCH) {
+                CPU_Push16(reg_ax);
+                CPU_Push16(reg_bx);
+                CPU_Push16(SegValue(es));
+                reg_sp -= 6;
+
+                reg_ah = 0;     // get time
+                reg_bx = reg_sp;
+                SegSet16(es,SegValue(ss));
+                CALLBACK_RunRealInt(0x1c);
+
+                uint32_t memaddr = ((PhysPt)SegValue(es) << 4u) + reg_bx;
+
+                reg_sp += 6;
+                SegSet16(es,CPU_Pop16());
+                reg_bx = CPU_Pop16();
+                reg_ax = CPU_Pop16();
+
+                reg_ch = BCD2BIN(mem_readb(memaddr+3));     // hours
+                reg_cl = BCD2BIN(mem_readb(memaddr+4));     // minutes
+                reg_dh = BCD2BIN(mem_readb(memaddr+5));     // seconds
+
+                reg_dl = 0;
+            }
+            else {
+                // It turns out according to real hardware, that DOS reads the date and time once on startup
+                // and then relies on the BIOS_TIMER counter after that for time, and caches the date. So
+                // the code prior to the April 2023 change was correct after all.
+                reg_ax=0; // get time
+                CALLBACK_RunRealInt(0x1a);
+                if(reg_al) DOS_AddDays(reg_al);
+                reg_ah=0x2c;
+
+                Bitu ticks=((Bitu)reg_cx<<16)|reg_dx;
+                Bitu time=(Bitu)((100.0/((double)PIT_TICK_RATE/65536.0)) * (double)ticks);
+
+                reg_dl=(uint8_t)((Bitu)time % 100); // 1/100 seconds
+                time/=100;
+                reg_dh=(uint8_t)((Bitu)time % 60); // seconds
+                time/=60;
+                reg_cl=(uint8_t)((Bitu)time % 60); // minutes
+                time/=60;
+                reg_ch=(uint8_t)((Bitu)time % 24); // hours
+            }
+
+            //Simulate DOS overhead for timing-sensitive games
+            //Robomaze 2
+            overhead();
+            break;
+        }
+--- same file lines 583-585 (overhead, called at the end of case 0x2c)
+static inline void overhead() {
+	reg_ip += 2;
+}

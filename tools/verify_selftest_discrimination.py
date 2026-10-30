@@ -220,6 +220,10 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_floodfill_stack_probe.py": (["--selftest"], "offline"),
     # 整支是 NO_EXEC 的實機掃描,但名冊推導那一層由已提交的 chapter_beats 決定,離線可判。
     "fd2_chapter_sweep.py":       (["--selftest"], "offline"),
+    # 續一百七十一:呼叫紀錄 G / S / I 紀錄的解析(合成紀錄,離線)。
+    "calllog_segments.py":        (["--selftest"], "offline"),
+    # 同輪:DOSBox-X 呼叫紀錄修補的文字修補(錨點、重複修補、升級);C++ 本身要建置後實機核對,不在這裡。
+    "dosbox/fd2_calllog_patch.py": (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

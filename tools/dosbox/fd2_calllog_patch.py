@@ -22,6 +22,14 @@
 FD2_CALLLOG_ICOUNT=1 在 E / R / A 行尾附指令數與模擬時間,用來量函式內部花了多久(BIOS tick 只有約 55 ms 的解析度);
 FD2_CALLLOG_GATE=<EIP> 在那個 EIP 第一次執行之前不寫 E,免得開機以來每一幀的重畫都進紀錄。兩個都不設時輸出與之前逐字相同。
 `verify_names_by_calllog.py` 的解析器只收沒有附加欄位的形式,附了指令數的紀錄不要取 `*_CALLLOG.TXT` 的檔名。
+
+2026-10-30 續一百七十一:加 FD2_CALLLOG_SEGS(harness 的 FD2_HARNESS_CALLLOG_SEGS)。呼叫紀錄原本只數非遊戲指令的條數,
+看不到它們落在 DOS/4GW、驅動還是 BIOS 的哪一段,硬體中斷在哪一條指令收的也只能推。設了之後,在指定的模擬時間窗內
+每段「同一 code selector、同一 CPU 模式」的連續指令寫一筆 G(起訖 EIP、條數;第一次看到的起點附 16 個碼位元組),
+窗尾加 `:x` 的窗改成每條指令一筆 S;每次 `CPU_Interrupt` 寫一筆 I(中斷號、種類、當時的 CS:EIP)。I 要另外修補
+src/cpu/cpu.cpp(`CPU_Interrupt` 開頭呼叫 `fd2calllog_interrupt`)。解析在 `tools/calllog_segments.py`。不設時輸出與之前逐字相同。
+已修補過舊版的樹用 `--upgrade` 換掉舊的插入段(目的檔留著,make 只重編 debug.cpp / cpu.cpp)。
+`--selftest` 只檢查文字修補本身(錨點、重複修補、升級、兩檔一致);C++ 是否編得過、紀錄是否正確要實際建置再跑。
 """
 from __future__ import annotations
 
@@ -30,9 +38,18 @@ from pathlib import Path
 
 ANCHOR = "bool DEBUG_HeavyIsBreakpoint(void) {\n"
 HOOK = "\tfd2calllog::step();\n"
+BEGIN = "/* ---- fd2_re: function call log (local patch, not upstream; tools/dosbox/fd2_calllog_patch.py) ----\n"
+END = "/* ---- end fd2_re call log ---- */\n"
+# 續一百七十以前的插入段沒有 END,以 namespace 結尾加一個空行收尾。
+OLD_END = "} // namespace fd2calllog\n\n"
 
-CODE = r'''/* ---- fd2_re: function call log (local patch, not upstream; tools/dosbox/fd2_calllog_patch.py) ----
- * Enabled only when env FD2_CALLLOG_ENTRIES names a file of hex EIPs (whitespace separated).
+CPU_ANCHOR = "\tlastint=(uint8_t)num;\n\tFillFlags();\n"
+CPU_HOOK = ("#if C_DEBUG && C_HEAVY_DEBUG\n"
+            "\t{ void fd2calllog_interrupt(Bitu num,Bitu type,uint32_t oldeip); /* fd2_re local patch */\n"
+            "\t  fd2calllog_interrupt(num,type,oldeip); }\n"
+            "#endif\n")
+
+CODE = BEGIN + r''' * Enabled only when env FD2_CALLLOG_ENTRIES names a file of hex EIPs (whitespace separated).
  * For a listed EIP executed in code selector FD2_CALLLOG_CS (hex, default 0170), the first
  * FD2_CALLLOG_CAP (default 200) hits per entry write an E record:
  *   E seq eip ret[?] esp ss eax ebx ecx edx esi edi ebp s=<8 dwords above ret> c=<16 code bytes>
@@ -42,14 +59,29 @@ CODE = r'''/* ---- fd2_re: function call log (local patch, not upstream; tools/d
  *   on the same stack.  A seq entry eip esp: the frame was left by a higher esp at another EIP.
  * Every hit is counted; "T tag n" + "C eip count" (changed counts) are written every 2^26
  * game-selector instructions and at exit.  Output: FD2_CALLLOG_OUT (default CALLLOG.TXT).
- * Optional (both unset = output identical to the version without them):
+ * Optional (all unset = output identical to the version without them):
  *   FD2_CALLLOG_ICOUNT=1 appends " i=<game-selector instructions> n=<all instructions> t=<PIC_FullIndex ms>"
  *     to every E, R and A record and " icount=1" to H; the counts include the current instruction.
  *   FD2_CALLLOG_GATE=<hex eip> writes no E record (and tracks no frame) until that EIP has executed in the
  *     game selector; hits are still counted.  H gets " gate=<eip>".
+ *   FD2_CALLLOG_SEGS=<t0>-<t1>[:x][,<t0>-<t1>[:x]...] (PIC_FullIndex ms, t0 inclusive, t1 exclusive): inside a
+ *     window, every selector is followed, not only the game's.  H gets " segs=<spec>".
+ *       G m cs eip0 eip1 count n=<all instructions through eip1>[ c=<16 code bytes at cs:eip0>]
+ *         one run of consecutive instructions with the same code selector and CPU mode; eip0 / eip1 are
+ *         the first / last executed (not a range), c= only the first time (m, cs, eip0) is seen.
+ *       S m cs eip n=<all instructions through this one>[ c=<16 code bytes>]
+ *         in a window ending in ":x", one record per instruction instead of G; c= on first sighting.
+ *       I num type m cs eip n=<all instructions executed before it> t=<ms>
+ *         every CPU_Interrupt call (needs the src/cpu/cpu.cpp hook); m cs = the selector it was taken in,
+ *         eip = the eip CPU_Interrupt is given (hardware: the interrupted instruction; software: the
+ *         instruction after INT).  type = CPU_INT_* bits (0 hardware, 1 software, 2/6 exception).
+ *     m = r real mode, v V86, p 16-bit protected, P 32-bit protected.  An open run is closed by an I record,
+ *     a selector or mode change, the window's end and exit.
  */
+#include <unordered_set>
 namespace fd2calllog {
 struct Frame { uint32_t ret, esp, entry; uint16_t ss; unsigned long long seq; };
+struct Win { double t0, t1; bool each; };
 static bool inited = false, enabled = false;
 static FILE *out = NULL;
 static uint16_t game_cs = 0x170;
@@ -63,9 +95,121 @@ static uint32_t dumplen = 32;
 static bool icount = false, has_gate = false, gate_open = true;
 static uint32_t gate_eip = 0;
 static unsigned long long allinstr = 0;
+/* FD2_CALLLOG_SEGS state */
+static bool segs = false;
+static std::vector<Win> seg_win;
+static std::unordered_set<unsigned long long> seen;
+static bool run_open = false, run_first = false;
+static char run_m = 0;
+static uint16_t run_cs = 0;
+static uint32_t run_e0 = 0, run_e1 = 0;
+static unsigned long long run_n = 0, run_last = 0;
+static uint8_t run_code[16];
+static bool run_bad[16];
 
 static void put_icount(void) {
     if (icount) fprintf(out, " i=%llu n=%llu t=%.6f", ginstr, allinstr, (double)PIC_FullIndex());
+}
+
+static char cpu_mode(void) {
+    if (!cpu.pmode) return 'r';
+    if (GETFLAG(VM)) return 'v';
+    return cpu.code.big ? 'P' : 'p';
+}
+
+static bool parse_segs(const char *s) {
+    while (*s) {
+        char *end;
+        Win w;
+        w.t0 = strtod(s, &end);
+        if (end == s || *end != '-') return false;
+        s = end + 1;
+        w.t1 = strtod(s, &end);
+        if (end == s) return false;
+        s = end;
+        w.each = false;
+        if (*s == ':') {
+            if (s[1] != 'x') return false;
+            w.each = true;
+            s += 2;
+        }
+        if (!(w.t1 > w.t0)) return false;
+        seg_win.push_back(w);
+        if (*s == ',') {
+            s++;
+            if (!*s) return false;
+        } else if (*s) {
+            return false;
+        }
+    }
+    return !seg_win.empty();
+}
+
+/* -1 = outside every window, 0 = run window, 1 = per-instruction window */
+static int seg_window(void) {
+    const double now = (double)PIC_FullIndex();
+    for (size_t k = 0; k < seg_win.size(); k++)
+        if (now >= seg_win[k].t0 && now < seg_win[k].t1) return seg_win[k].each ? 1 : 0;
+    return -1;
+}
+
+/* true the first time (m, cs, eip) is seen */
+static bool first_sighting(char m, uint16_t c, uint32_t e) {
+    const unsigned long long key = ((unsigned long long)(uint8_t)m << 48) | ((unsigned long long)c << 32) | e;
+    return seen.insert(key).second;
+}
+
+static void read_code(uint8_t *buf, bool *bad) {
+    const uint32_t lin = (uint32_t)SegPhys(cs) + reg_eip;
+    for (uint32_t k = 0; k < 16; k++) bad[k] = mem_readb_checked((LinearPt)(lin + k), &buf[k]);
+}
+
+static void put_code(const uint8_t *buf, const bool *bad) {
+    fputs(" c=", out);
+    for (int k = 0; k < 16; k++) {
+        if (bad[k]) fputs("??", out);
+        else fprintf(out, "%02x", (unsigned)buf[k]);
+    }
+}
+
+static void close_run(void) {
+    if (!run_open) return;
+    run_open = false;
+    fprintf(out, "G %c %04x %08x %08x %llu n=%llu", run_m, (unsigned)run_cs, (unsigned)run_e0, (unsigned)run_e1,
+            run_n, run_last);
+    if (run_first) put_code(run_code, run_bad);
+    fputc('\n', out);
+}
+
+static void seg_step(void) {
+    const int w = seg_window();
+    if (w < 0) { close_run(); return; }
+    const char m = cpu_mode();
+    const uint16_t c = SegValue(cs);
+    const uint32_t e = reg_eip;
+    if (w == 1) {
+        close_run();
+        fprintf(out, "S %c %04x %08x n=%llu", m, (unsigned)c, (unsigned)e, allinstr);
+        if (first_sighting(m, c, e)) {
+            uint8_t buf[16];
+            bool bad[16];
+            read_code(buf, bad);
+            put_code(buf, bad);
+        }
+        fputc('\n', out);
+        return;
+    }
+    if (run_open && m == run_m && c == run_cs) {
+        run_e1 = e;
+        run_n++;
+        run_last = allinstr;
+        return;
+    }
+    close_run();
+    run_open = true;
+    run_m = m; run_cs = c; run_e0 = e; run_e1 = e; run_n = 1; run_last = allinstr;
+    run_first = first_sighting(m, c, e);
+    if (run_first) read_code(run_code, run_bad);
 }
 
 static void dump_counts(const char *tag) {
@@ -80,7 +224,7 @@ static void dump_counts(const char *tag) {
 }
 
 static void at_exit_flush(void) {
-    if (enabled && out) { dump_counts("exit"); fclose(out); out = NULL; enabled = false; }
+    if (enabled && out) { close_run(); dump_counts("exit"); fclose(out); out = NULL; enabled = false; }
 }
 
 static void init(void) {
@@ -97,8 +241,13 @@ static void init(void) {
     if (dumplen > 256) dumplen = 256;
     const char *ic_s = getenv("FD2_CALLLOG_ICOUNT");
     const char *gate_s = getenv("FD2_CALLLOG_GATE");
+    const char *segs_s = getenv("FD2_CALLLOG_SEGS");
     icount = ic_s && *ic_s && strcmp(ic_s, "0") != 0;
     if (gate_s && *gate_s) { has_gate = true; gate_open = false; gate_eip = (uint32_t)strtoul(gate_s, NULL, 16); }
+    if (segs_s && *segs_s) {
+        if (!parse_segs(segs_s)) E_Exit("FD2_CALLLOG: bad FD2_CALLLOG_SEGS '%s' (t0-t1[:x][,...], ms)", segs_s);
+        segs = true;
+    }
     std::vector<uint32_t> addrs;
     FILE *f = fopen(ef, "r");
     if (!f) E_Exit("FD2_CALLLOG: cannot open entries file %s", ef);
@@ -122,6 +271,7 @@ static void init(void) {
             (unsigned)game_cs, (unsigned)addrs.size(), cap, (unsigned)dumplen, (unsigned)lo, (unsigned)hi);
     if (icount) fputs(" icount=1", out);
     if (has_gate) fprintf(out, " gate=%08x", (unsigned)gate_eip);
+    if (segs) fprintf(out, " segs=%s", segs_s);
     fputc('\n', out);
     fflush(out);
     atexit(at_exit_flush);
@@ -140,6 +290,7 @@ static void step(void) {
     if (GCC_UNLIKELY(!inited)) init();
     if (!enabled) return;
     allinstr++;
+    if (segs) seg_step();
     if (SegValue(cs) != game_cs) return;
     ginstr++;
     const uint32_t eip = reg_eip, esp = reg_esp;
@@ -194,42 +345,194 @@ static void step(void) {
 }
 } // namespace fd2calllog
 
-'''
+/* Called from CPU_Interrupt (src/cpu/cpu.cpp, same local patch) before the interrupt is delivered. */
+void fd2calllog_interrupt(Bitu num, Bitu type, uint32_t oldeip) {
+    if (GCC_UNLIKELY(!fd2calllog::inited)) fd2calllog::init();
+    if (!fd2calllog::enabled || !fd2calllog::segs || fd2calllog::seg_window() < 0) return;
+    fd2calllog::close_run();
+    fprintf(fd2calllog::out, "I %02x %x %c %04x %08x n=%llu t=%.6f\n", (unsigned)num, (unsigned)type,
+            fd2calllog::cpu_mode(), (unsigned)SegValue(cs), (unsigned)oldeip, fd2calllog::allinstr,
+            (double)PIC_FullIndex());
+}
+''' + END + "\n"
 
 
-def patch_text(src: str) -> str:
+def _strip_block(src: str) -> str:
+    """拿掉 debug.cpp 裡已插入的呼叫紀錄段(新版以 END 收尾,續一百七十以前的版本以 OLD_END 收尾)。
+
+    Args:
+        src: 已修補的 debug.cpp 內容。
+
+    Returns:
+        拿掉插入段與 HOOK 後的內容。
+
+    Raises:
+        ValueError: 起點、終點或 HOOK 不是恰好一處。
+    """
+    if src.count(BEGIN) != 1:
+        raise ValueError(f"block start found {src.count(BEGIN)} times, expected 1")
+    a = src.index(BEGIN)
+    if END in src:
+        end_mark = END + "\n"
+    else:
+        end_mark = OLD_END
+    if src.count(end_mark) != 1:
+        raise ValueError(f"block end found {src.count(end_mark)} times, expected 1")
+    b = src.index(end_mark) + len(end_mark)
+    if b <= a:
+        raise ValueError("block end precedes block start")
+    out = src[:a] + src[b:]
+    if out.count(ANCHOR + HOOK) != 1:
+        raise ValueError("hook after anchor not found exactly once")
+    return out.replace(ANCHOR + HOOK, ANCHOR)  # 上面已確認恰好一處
+
+
+def patch_text(src: str, upgrade: bool = False) -> str:
     """回傳插入呼叫紀錄後的 debug.cpp 內容。
 
     Args:
-        src: 原始 debug.cpp 內容。
+        src: 原始 debug.cpp 內容(`upgrade` 時可以是已修補過的版本)。
+        upgrade: 已修補過時先拿掉舊的插入段再插入目前版本;沒修補過時與 False 相同。
 
     Returns:
         修補後內容。
 
     Raises:
-        ValueError: 已修補過,或錨點(`DEBUG_HeavyIsBreakpoint` 定義)不是恰好一處。
+        ValueError: 已修補過而沒有指定 `upgrade`,或錨點(`DEBUG_HeavyIsBreakpoint` 定義)不是恰好一處。
     """
     if "fd2calllog" in src:
-        raise ValueError("already patched")
+        if not upgrade:
+            raise ValueError("already patched")
+        src = _strip_block(src)
+        if "fd2calllog" in src:
+            raise ValueError("call-log text left after removing the old block")
     if src.count(ANCHOR) != 1:
         raise ValueError(f"anchor found {src.count(ANCHOR)} times, expected 1")
-    return src.replace(ANCHOR, CODE + ANCHOR + HOOK, 1)
+    return src.replace(ANCHOR, CODE + ANCHOR + HOOK)  # 上面已確認恰好一處
+
+
+def patch_cpu_text(src: str) -> str:
+    """回傳在 `CPU_Interrupt` 開頭加上 `fd2calllog_interrupt` 呼叫後的 cpu.cpp 內容(已加過則原樣回傳)。
+
+    Args:
+        src: src/cpu/cpu.cpp 內容。
+
+    Returns:
+        修補後內容。
+
+    Raises:
+        ValueError: 錨點(`lastint=(uint8_t)num;` 後接 `FillFlags();`)不是恰好一處。
+    """
+    if "fd2calllog_interrupt" in src:
+        if src.count(CPU_ANCHOR + CPU_HOOK) != 1:
+            raise ValueError("cpu.cpp mentions fd2calllog_interrupt but not as the expected hook")
+        return src
+    if src.count(CPU_ANCHOR) != 1:
+        raise ValueError(f"cpu.cpp anchor found {src.count(CPU_ANCHOR)} times, expected 1")
+    return src.replace(CPU_ANCHOR, CPU_ANCHOR + CPU_HOOK)  # 上面已確認恰好一處
+
+
+def selftest() -> int:
+    """文字修補的自我檢查(不編譯 C++)。
+
+    Returns:
+        0 = 全部通過,1 = 有失敗。
+    """
+    fails: list[str] = []
+
+    def check(cond: bool, what: str) -> None:
+        if not cond:
+            fails.append(what)
+
+    dbg = "int a;\n#if C_HEAVY_DEBUG\n" + ANCHOR + "\treturn false;\n}\n#endif\n"
+    p1 = patch_text(dbg)
+    check(p1.count(BEGIN) == 1 and p1.count(END) == 1, "patch inserts one block")
+    check(p1.index(BEGIN) < p1.index(ANCHOR) < p1.index(HOOK), "block precedes anchor, hook follows it")
+    check(p1.index(ANCHOR + HOOK) >= 0, "hook directly after anchor")
+    check(p1.startswith("int a;\n#if C_HEAVY_DEBUG\n" + BEGIN), "block inserted right before the anchor")
+    check(p1.endswith(ANCHOR + HOOK + "\treturn false;\n}\n#endif\n"), "text after the anchor unchanged")
+    try:
+        patch_text(p1)
+        check(False, "re-patch without upgrade must fail")
+    except ValueError as e:
+        check("already patched" in str(e), "re-patch error names the reason")
+    p2 = patch_text(p1, upgrade=True)
+    check(p2 == p1, "upgrade of the current version is a no-op")
+    # 舊版插入段(以 OLD_END 收尾、沒有 END)要能升級成目前版本
+    old_block = BEGIN + " * old\n */\nnamespace fd2calllog {\nstatic void step(void) {}\n" + OLD_END
+    old = "int a;\n#if C_HEAVY_DEBUG\n" + old_block + ANCHOR + HOOK + "\treturn false;\n}\n#endif\n"
+    p3 = patch_text(old, upgrade=True)
+    check(p3 == p1, "upgrade from the pre-SEGS block gives the current patch")
+    check(" * old\n" not in p3, "old block text removed")
+    # 只有 END、沒有 BEGIN(半個插入段)不能被當成已修補而升級
+    try:
+        patch_text(dbg.replace("int a;", "int a; /* fd2calllog */"), upgrade=True)
+        check(False, "upgrade of a tree without the block start must fail")
+    except ValueError:
+        pass
+    try:
+        patch_text(dbg + ANCHOR)
+        check(False, "two anchors must fail")
+    except ValueError as e:
+        check("2 times" in str(e), "anchor count reported")
+    for env in ("FD2_CALLLOG_ENTRIES", "FD2_CALLLOG_ICOUNT", "FD2_CALLLOG_GATE", "FD2_CALLLOG_SEGS"):
+        check(env in CODE, f"CODE reads {env}")
+    check("void fd2calllog_interrupt(Bitu num, Bitu type, uint32_t oldeip)" in CODE,
+          "CODE defines the function the cpu.cpp hook declares")
+    check("fd2calllog_interrupt(Bitu num,Bitu type,uint32_t oldeip)" in CPU_HOOK, "cpu hook declares it")
+
+    cpu = "void CPU_Interrupt(Bitu num,Bitu type,uint32_t oldeip) {\n" + CPU_ANCHOR + "\tx();\n}\n"
+    c1 = patch_cpu_text(cpu)
+    check(c1 == cpu.replace(CPU_ANCHOR, CPU_ANCHOR + CPU_HOOK), "cpu hook right after FillFlags")
+    check(patch_cpu_text(c1) == c1, "cpu re-patch is a no-op")
+    try:
+        patch_cpu_text(cpu.replace("FillFlags", "FillFlagz"))
+        check(False, "missing cpu anchor must fail")
+    except ValueError as e:
+        check("0 times" in str(e), "cpu anchor count reported")
+    try:
+        patch_cpu_text(cpu + "/* fd2calllog_interrupt */\n")
+        check(False, "a stray mention without the hook must fail")
+    except ValueError:
+        pass
+    for f in fails:
+        print("FAIL:", f)
+    print("selftest:", "PASS" if not fails else f"FAIL ({len(fails)})")
+    return 0 if not fails else 1
 
 
 def main(argv: list[str]) -> int:
-    """命令列:`fd2_calllog_patch.py <dosbox-x 樹根>`。"""
+    """命令列:`fd2_calllog_patch.py [--upgrade] <dosbox-x 樹根>`,或 `--selftest`。"""
+    if argv == ["--selftest"]:
+        return selftest()
+    upgrade = False
+    if argv and argv[0] == "--upgrade":
+        upgrade = True
+        argv = argv[1:]
     if len(argv) != 1:
         print(__doc__)
         return 2
-    p = Path(argv[0]) / "src" / "debug" / "debug.cpp"
+    root = Path(argv[0])
+    p = root / "src" / "debug" / "debug.cpp"
+    q = root / "src" / "cpu" / "cpu.cpp"
     src = p.read_text(encoding="utf-8", errors="surrogateescape")
+    csrc = q.read_text(encoding="utf-8", errors="surrogateescape")
     try:
-        out = patch_text(src)
+        out = patch_text(src, upgrade=upgrade)
+        cout = patch_cpu_text(csrc)
     except ValueError as e:
-        print(f"FAIL: {p}: {e}")
+        print(f"FAIL: {e}")
         return 1
-    p.write_text(out, encoding="utf-8", errors="surrogateescape", newline="\n")
-    print("patched", p)
+    if out != src:
+        p.write_text(out, encoding="utf-8", errors="surrogateescape", newline="\n")
+        print("patched", p)
+    else:
+        print("unchanged", p)
+    if cout != csrc:
+        q.write_text(cout, encoding="utf-8", errors="surrogateescape", newline="\n")
+        print("patched", q)
+    else:
+        print("unchanged", q)
     return 0
 
 
