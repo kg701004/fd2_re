@@ -1,0 +1,170 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s169.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "flush_model": {
+  "patch": "tools/dosbox/fd2_calllog_patch.py",
+  "block_bytes": 4096,
+  "logs": {
+   "lc167a": {
+    "bytes": 109702922,
+    "E": 315486,
+    "explicit_flushes": 347,
+    "marks": [
+     "P2_c",
+     "P2_d",
+     "P_a",
+     "P_b",
+     "yes"
+    ]
+   },
+   "lc168a": {
+    "bytes": 38453421,
+    "E": 112101,
+    "explicit_flushes": 121,
+    "marks": [
+     "P2_c",
+     "P2_d",
+     "P_a",
+     "P_b"
+    ]
+   }
+  },
+  "hits_by_block": {
+   "4096": 9,
+   "8192": 7,
+   "65536": 1,
+   "1048576": 0
+  },
+  "lines_since_explicit_flush": [
+   2008,
+   500,
+   233,
+   1262,
+   1168,
+   358,
+   618,
+   381,
+   283
+  ],
+  "null_control": {
+   "pseudo_reads": 1000,
+   "hits": 43,
+   "rate": 0.043
+  },
+  "chance_all_9": 1.9781690554933616e-11,
+  "bytes_per_1024_E": {
+   "lc167a": 356072,
+   "lc168a": 351257
+  }
+ },
+ "lag_upper_bound_ms": {
+  "lc167a:P_a": 25.0,
+  "lc167a:P_b": 24.98,
+  "lc167a:yes": 25.0,
+  "lc167a:P2_c": 24.98,
+  "lc167a:P2_d": 24.97,
+  "lc168a:P_a": 25.0,
+  "lc168a:P_b": 20.15,
+  "lc168a:P2_c": 20.04,
+  "lc168a:P2_d": 24.98
+ },
+ "s167_idle_windows": {
+  "lead_ms": 1000,
+  "max_lag_ms": 25.0,
+  "margin_ms": 975.0
+ },
+ "s168_claim_flush_interval_s": 1.92,
+ "hud_frame": {
+  "labels": {
+   "path": "docs/knowledge-base/evidence/generators/drivers_s169/hud_labels.txt",
+   "md5": "5af97317dd2080e2ddcbfa9279155261",
+   "hud": 139,
+   "frames": 827
+  },
+  "template_px": 868,
+  "threshold": 0.8,
+  "gap": {
+   "labelled_side_min": 1.0,
+   "other_sides_max": 0.4009,
+   "other_sides": 1515
+  },
+  "confusion": {
+   "old_blue_fraction": {
+    "tp": 105,
+    "fp": 75,
+    "fn": 34,
+    "tn": 613
+   },
+   "frame_only": {
+    "tp": 139,
+    "fp": 0,
+    "fn": 0,
+    "tn": 688
+   },
+   "tool_now": {
+    "tp": 139,
+    "fp": 75,
+    "fn": 0,
+    "tn": 613
+   }
+  },
+  "gained_by_dir": {
+   ".wsl_build/chapter_sweep_ch11chest/real_open5/shots": 1,
+   ".wsl_build/ctr/terr2/ch20/shots": 20,
+   ".wsl_build/ctr/terr2/ch29/shots_t2": 13
+  },
+  "side": {
+   "new_correct": 139,
+   "old_tp_correct": 105
+  }
+ },
+ "select_live": {
+  "approval": "使用者 2026-10-29「永遠核准你進行實機」;2026-10-30「依照你的建議自動繼續進行處理」;不改記憶體、不下斷點、不進除錯器",
+  "prediction_file": {
+   "path": "docs/knowledge-base/evidence/generators/drivers_s169/pred169_select.txt",
+   "md5": "21ab7bd7a3157df7da843f3f0e2b8a8a"
+  },
+  "calllog": ".wsl_build/lc169_live/lc169a_CALLLOG.TXT",
+  "calllog_md5": "62f7fb794580a40befef7673d69a12fa",
+  "markers": {
+   "E 0x117e7": 1,
+   "E 0x18890": 1
+  },
+  "times_ms": {
+   "E_loop": 81277.4,
+   "press_send_start": 81643.2,
+   "E_select": 81686.2,
+   "after_press_tail": 81828.0948,
+   "last_dialogue_frame": 80071.2
+  },
+  "replica": {
+   "frame": 64,
+   "t_host_press": 1793299462.437,
+   "pre_frame_hud": true,
+   "pre_frame_panel": false,
+   "trigger": "loop_E",
+   "dialogue_returns_before": 25
+  },
+  "saturation": {
+   "c064": 161.9,
+   "sel_0": 102.1,
+   "sel_up": 110.8
+  },
+  "s6_manual": "sel_0:左上標頭卡「索爾 LV·06 HP 823 MP 805」,移動範圍外的地圖變暗(人工比對截圖)"
+ },
+ "predictions": {
+  "S1_no_select_before_replica": "PASS",
+  "S2_one_select_no_status_card": "PASS",
+  "S3_first_half_after_loop": "PASS",
+  "S3_second_half_vs_pre_press_tail": "NOT TESTED",
+  "S4_sat_le_110": "FAIL",
+  "S5_no_hud_before_replica": "FAIL",
+  "S6_sol_header_card": "PASS (MANUAL)"
+ },
+ "conclusion": {
+  "flush": "lc167a / lc168a 的 9 次尾端讀數,檔尾全在「上一次明確 fflush + k × 4096」上(1 MiB 模型 0 次;整份紀錄均勻取的 1000 個假讀數命中 43 次)。寫入端 setvbuf 的 buf 是 NULL,實際是 4 KiB 區塊緩衝。",
+  "lag": "讀數落後真實時刻的上界 20.04 .. 25.0 ms;續一百六十七閒置窗開頭扣 1000 ms,窗口開頭至少晚於真實時刻 975.0 ms,P / P2 不必重算。續一百六十八 (D) 的「約每 1.92 秒寫盤」不成立。",
+  "hud": "HUD 邊框樣板 868 個像素:有框那一側吻合率 1.0,其他 1515 個側別最高 0.4009。827 張人工標記(139 張有框)上,只用樣板 0 誤判 0 漏判;舊藍佔比判準誤判 75、漏判 34;工具先樣板後藍佔比,漏判 0、誤判照舊 75(保留舊判準的每個 True)。",
+  "select": "lc169a:清對話 Return 25 次(與 lc168a 相同),E 0x117e7 出現後送一次 Return,約 43.0 ms 後 E 0x18890(選格 / 動作分派),全份恰 1 筆、狀態卡 0x17aed 0 筆、0x18890 沒有返回;sel_0 是索爾的標頭卡。輸入迴圈裡、游標在初始位置時按 Return 會選中索爾。送鍵時 HUD 已畫出(S5 FAIL),Up 之後飽和度 110.8(S4 FAIL,門檻 110)。"
+ }
+}

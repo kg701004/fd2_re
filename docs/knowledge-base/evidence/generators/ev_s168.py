@@ -57,6 +57,14 @@ def markers(path) -> list[tuple[str, str, float]]:
     return out
 
 
+def hud_s168(p) -> bool:
+    """續一百六十八當時的 screen_shows_battle_hud(只有藍佔比判準)。續一百六十九起工具先比對 HUD 邊框樣板,
+    這裡固定用舊判準,讓本證據的重算結果不變。"""
+    im = Image.open(p).convert("RGB")
+    return (sw._box_and_strip_pass(im, sw.BATTLE_HUD_BOX_REGION, sw.BATTLE_HUD_RIGHT_STRIP_REGION)
+            or sw._box_and_strip_pass(im, sw.BATTLE_HUD_BOX_REGION_R, sw.BATTLE_HUD_LEFT_STRIP_REGION_R))
+
+
 def sat(p) -> float:
     return round(ImageStat.Stat(Image.open(p).convert("HSV").crop(SAT_REGION)).mean[1], 1)
 
@@ -102,7 +110,7 @@ for f in CALIB:
         col, n = c.most_common(1)[0]
         frac = n / sum(c.values()) if sw._is_hud_blue(col) else 0.0
         best = max(best, (frac, col), key=lambda x: x[0])
-    ROWS.append({"f": rel(f), "hud": sw.screen_shows_battle_hud(f), "panel": sw.screen_shows_dialogue_panel(f),
+    ROWS.append({"f": rel(f), "hud": hud_s168(f), "panel": sw.screen_shows_dialogue_panel(f),
                  "flat": round(best[0], 3), "color": best[1]})
 # 自己算的比例要與工具的判準一致(兩種寫法:Counter.most_common 與工具的 dict 計數)
 assert all(r["panel"] == (r["flat"] >= sw.DIALOGUE_PANEL_FLAT_MIN) for r in ROWS)
@@ -118,7 +126,7 @@ assert CAL["high_colors"] == ["(40, 69, 138)", "(56, 85, 154)"], CAL["high_color
 # 藍色地形:HUD 在畫面上但 HUD 判準漏判(範圍外,只記錄),面板判準也不能把它當成面板
 BLUE_TERRAIN = {n: ROOT / ".wsl_build" / "ctr" / "terr2" / n for n in ("ch20/shots/hudcheck_hud3_clear4.png",
                                                                        "ch29/shots_t2/hudcheck_t2_clear1.png")}
-BT = {n: {"hud": sw.screen_shows_battle_hud(p), "panel": sw.screen_shows_dialogue_panel(p)} for n, p in BLUE_TERRAIN.items()}
+BT = {n: {"hud": hud_s168(p), "panel": sw.screen_shows_dialogue_panel(p)} for n, p in BLUE_TERRAIN.items()}
 assert all(v == {"hud": False, "panel": False} for v in BT.values()), BT
 assert all(rel(p) in {r["f"] for r in ROWS} for p in BLUE_TERRAIN.values())
 
@@ -126,7 +134,7 @@ assert all(rel(p) in {r["f"] for r in ROWS} for p in BLUE_TERRAIN.values())
 FR167 = RAW167 / "frames"
 SEQ167 = ["hudcheck_hud.png"] + [f"hudcheck_hud_clear{i}.png" for i in range(33)]
 P167 = [sw.screen_shows_dialogue_panel(FR167 / n) for n in SEQ167]
-H167 = [sw.screen_shows_battle_hud(FR167 / n) for n in SEQ167]
+H167 = [hud_s168(FR167 / n) for n in SEQ167]
 OLD167 = [sw.screen_looks_like_dialogue(FR167 / n) for n in SEQ167]
 assert H167 == [False] * 33 + [True], H167
 # 每張非 HUD 畫面之後都按了一次 Return(舊路徑),其中畫面上沒有面板的:
@@ -178,16 +186,16 @@ WAIT_Q = [f"hudcheck_hud_wait{i}.png" for i in range(len(WAITS))]
 ORDER, PRESS_AFTER, last = [], [], "hudcheck_hud.png"
 for k in range(len(CLEARS) + 1):
     ORDER.append(last)
-    while not sw.screen_shows_dialogue_panel(FR / last) and not sw.screen_shows_battle_hud(FR / last):
+    while not sw.screen_shows_dialogue_panel(FR / last) and not hud_s168(FR / last):
         last = WAIT_Q.pop(0)
         ORDER.append(last)
-    if sw.screen_shows_battle_hud(FR / last):
+    if hud_s168(FR / last):
         break
     PRESS_AFTER.append(last)
     last = f"hudcheck_hud_clear{k}.png"
 assert WAIT_Q == [] and len(PRESS_AFTER) == RUN["hud"]["clears"] and ORDER[-1] == "hudcheck_hud_wait9.png", (WAIT_Q, ORDER[-3:])
 PRE_PRESS_NOPANEL = [n for n in PRESS_AFTER if not sw.screen_shows_dialogue_panel(FR / n)]
-NOPANEL_168 = [n for n in ORDER if not sw.screen_shows_dialogue_panel(FR / n) and not sw.screen_shows_battle_hud(FR / n)]
+NOPANEL_168 = [n for n in ORDER if not sw.screen_shows_dialogue_panel(FR / n) and not hud_s168(FR / n)]
 assert NOPANEL_168 == ["hudcheck_hud_clear1.png", "hudcheck_hud_wait0.png", "hudcheck_hud_wait1.png", "hudcheck_hud_clear4.png",
                        "hudcheck_hud_wait3.png", "hudcheck_hud_wait4.png", "hudcheck_hud_wait5.png", "hudcheck_hud_clear13.png",
                        "hudcheck_hud_wait7.png", "hudcheck_hud_clear24.png"], NOPANEL_168
@@ -195,11 +203,11 @@ assert NOPANEL_168 == ["hudcheck_hud_clear1.png", "hudcheck_hud_wait0.png", "hud
 SELF_ADVANCED = [n for n in ORDER if n.startswith("hudcheck_hud_wait") and sw.screen_shows_dialogue_panel(FR / n)]
 assert SELF_ADVANCED == ["hudcheck_hud_wait2.png", "hudcheck_hud_wait6.png", "hudcheck_hud_wait8.png"], SELF_ADVANCED
 LAST = {"clear24_panel": sw.screen_shows_dialogue_panel(FR / "hudcheck_hud_clear24.png"),
-        "clear24_hud": sw.screen_shows_battle_hud(FR / "hudcheck_hud_clear24.png"),
-        "wait9_hud": sw.screen_shows_battle_hud(FR / "hudcheck_hud_wait9.png")}
+        "clear24_hud": hud_s168(FR / "hudcheck_hud_clear24.png"),
+        "wait9_hud": hud_s168(FR / "hudcheck_hud_wait9.png")}
 STATE = RUN["state_pre_idle"]
 PRE = FR / "state_pre_idle.png"
-assert STATE == {"hud": sw.screen_shows_battle_hud(PRE), "panel": sw.screen_shows_dialogue_panel(PRE),
+assert STATE == {"hud": hud_s168(PRE), "panel": sw.screen_shows_dialogue_panel(PRE),
                  "sat": sat(PRE), "loop_E": 1, "ring_E": 0}, STATE
 END = RUN["end_turn"]
 RING_WAIT_S = round(END["t_host"]["ring_seen"] - END["t_host"]["ring"], 2)

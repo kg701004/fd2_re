@@ -793,9 +793,12 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
 def calllog_count(name: str, kind: str, eip_live: int) -> int | None:
     """instance 工作目錄 CALLLOG.TXT 裡 `kind`(E / R / A)記錄落在 `eip_live` 的筆數。
 
-    只讀檔,不進除錯器、不停模擬器。注意寫入端(DOSBox-X fd2calllog)每 1024 筆 E 才 fflush
-    一次(緩衝 1 MiB),續一百六十七的玩家回合約每 2 秒一次,所以結果可能落後約 2 秒;
-    呼叫端要用輪詢加逾時,不能只讀一次。
+    只讀檔,不進除錯器、不停模擬器。寫入端(DOSBox-X fd2calllog)是區塊緩衝:
+    `setvbuf(out, NULL, _IOFBF, 1 << 20)` 的 buf 傳 NULL,glibc 不採用指定大小,實際是
+    4096 位元組的預設緩衝,每次明確 fflush(每 1024 筆 E、periodic 計數)之後每滿 4096 位元組
+    寫出一塊。續一百六十九對 lc167a / lc168a 的 9 次尾端讀數驗證了這個寫盤位置,讀數落後
+    真實時刻 ≤ 25 ms(續一百六十八寫的「約 2 秒」是錯的)。寫入間隔仍隨紀錄速率而變,
+    呼叫端照樣用輪詢加逾時,不能只讀一次。
 
     Args:
         name: harness instance 名。
@@ -1397,6 +1400,51 @@ def _box_and_strip_pass(im, box_region: tuple[int, int, int, int],
     return strip_frac < BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC
 
 
+# 2026-10-30 續一百六十九:HUD 框的「邊框樣板」。上面的藍佔比判準在藍色地形上漏判
+# (ch20 洞窟水面、ch29 遺跡:框右細長條本來就是藍色地形,strip 判準把真 HUD 擋掉,
+# 那兩輪連按 Return 到 clear55 / clear37),在藍色樹林 / 水面 / 屋頂上又會誤判。HUD 框本身是
+# 固定位置、固定圖形:上下兩條邊框各為兩列淺色 (154,174,174) + 兩列深色 (56,81,81),
+# 頭像框上緣兩列陰影 (28,52,117)、下緣兩列亮線 (85,113,182),各章調色盤下這幾色都不變。
+# 下面的線段是從 139 張人工確認有 HUD 框的歷史截圖中「每一張都相同」的像素取出的(右側 = 左側 + 474)。
+# 校準(827 張 hudcheck 截圖,ev_s169 (B)):有 HUD 框的那一側吻合率 1.0,其餘 1515 個側別 ≤ 0.41。
+BATTLE_HUD_FRAME_LIGHT = (154, 174, 174)
+BATTLE_HUD_FRAME_DARK = (56, 81, 81)
+BATTLE_HUD_FRAME_SHADOW = (28, 52, 117)
+BATTLE_HUD_FRAME_HILITE = (85, 113, 182)
+BATTLE_HUD_FRAME_RUNS = (  # (y, x0, x1 含, 顏色);左側框的螢幕座標
+    (523, 230, 317, BATTLE_HUD_FRAME_LIGHT), (524, 230, 317, BATTLE_HUD_FRAME_LIGHT),
+    (525, 230, 317, BATTLE_HUD_FRAME_DARK), (526, 230, 317, BATTLE_HUD_FRAME_DARK),
+    (587, 230, 315, BATTLE_HUD_FRAME_LIGHT), (588, 230, 315, BATTLE_HUD_FRAME_LIGHT),
+    (589, 230, 315, BATTLE_HUD_FRAME_DARK), (590, 230, 315, BATTLE_HUD_FRAME_DARK),
+    (531, 220, 263, BATTLE_HUD_FRAME_SHADOW), (532, 220, 263, BATTLE_HUD_FRAME_SHADOW),
+    (581, 220, 261, BATTLE_HUD_FRAME_HILITE), (582, 220, 261, BATTLE_HUD_FRAME_HILITE),
+)
+BATTLE_HUD_FRAME_DX_R = BATTLE_HUD_BOX_REGION_R[0] - BATTLE_HUD_BOX_REGION[0]  # 474
+BATTLE_HUD_FRAME_MATCH_MIN = 0.8
+
+
+def _hud_frame_match(im, side: str) -> float:
+    """HUD 框邊框樣板在指定側的吻合率(0 .. 1)。
+
+    Args:
+        im: 1024x768 的 RGB 截圖。
+        side: "L"(左下)或 "R"(右下,座標 + BATTLE_HUD_FRAME_DX_R)。
+
+    Returns:
+        樣板像素中顏色完全相同的比例;截圖尺寸不是 1024x768 時回 0.0(座標無意義)。
+    """
+    if im.size != (1024, 768):
+        return 0.0
+    dx = 0 if side == "L" else BATTLE_HUD_FRAME_DX_R
+    px = im.load()
+    hit = total = 0
+    for y, x0, x1, color in BATTLE_HUD_FRAME_RUNS:
+        for x in range(x0, x1 + 1):
+            total += 1
+            hit += px[x + dx, y] == color
+    return hit / total
+
+
 def _find_hud_box_side(im) -> str | None:
     """Returns "L" if the battle HUD box is showing in its original
     bottom-left calibrated position (BATTLE_HUD_BOX_REGION), "R" if it's
@@ -1410,7 +1458,15 @@ def _find_hud_box_side(im) -> str | None:
     read "plain terrain, no portrait" regardless of what's really under the
     cursor, since the wrong-side crop is never anything but background
     map art. This was caught live during the ch19diag round before it could
-    bite confirm_end_turn()'s cursor-placement logic for ch19."""
+    bite confirm_end_turn()'s cursor-placement logic for ch19.
+
+    2026-10-30 續一百六十九:先比對邊框樣板(BATTLE_HUD_FRAME_RUNS),吻合率
+    ≥ BATTLE_HUD_FRAME_MATCH_MIN 的那一側就是答案;兩側都不吻合才退回原本的藍佔比判準。
+    退回這一步保留原判準的每一個 True(呼叫端的行為只會多、不會少),所以藍色地形上的
+    漏判被補上,原判準在藍色樹林等處的誤判則照舊(呼叫端另有敵軍紀錄把關,見上面 docstring)。"""
+    for side in ("L", "R"):
+        if _hud_frame_match(im, side) >= BATTLE_HUD_FRAME_MATCH_MIN:
+            return side
     if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION):
         return "L"
     if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION_R, BATTLE_HUD_LEFT_STRIP_REGION_R):
@@ -3774,7 +3830,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(索引慣例的兩個交叉核對 + 刻意範圍差異的後果 + "
           "反向對照 + 時序去重 + 非平凡性 + 畫面判準的六個合成案例 + "
-          "面板判準與 panel_gate / send_end_turn_keys 的送鍵決策)。"
+          "面板判準與 panel_gate / send_end_turn_keys 的送鍵決策 + HUD 邊框樣板)。"
           "tmux/除錯器那一層仍未涵蓋(NO_EXEC),見 docstring。")
     return 0
 
@@ -4065,6 +4121,46 @@ def _selftest_live_gates() -> list[str]:
     print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c9.items()))
     if not ok9:
         fails.append(f"send_end_turn_keys 決策不符:{[k for k, v in c9.items() if not v]}")
+
+    print("\n(10) HUD 邊框樣板:藍色地形上的真 HUD、吻合率卡在門檻、先樣板後藍佔比")
+    frame_px = [(x, y, c) for y, x0, x1, c in BATTLE_HUD_FRAME_RUNS for x in range(x0, x1 + 1)]
+    n_frame = len(frame_px)
+
+    def blue_terrain(frame_side: str | None = None, corrupt: int = 0):
+        """下半部塗滿雜色藍地形(每一色都算 HUD 藍,舊判準的 strip 必然擋掉),再畫邊框樣板、弄壞前 corrupt 個像素。"""
+        from PIL import Image
+        im = Image.new("RGB", (1024, 768), (0, 0, 0))
+        px = im.load()
+        tones = ((16, 48, 77), (24, 60, 110), (40, 80, 150), (30, 70, 140), (50, 90, 160))
+        for y in range(500, 600):
+            for x in range(195, 830):
+                px[x, y] = tones[(x * 7 + y * 3) % len(tones)]
+        if frame_side:
+            dx = 0 if frame_side == "L" else BATTLE_HUD_FRAME_DX_R
+            for k, (x, y, c) in enumerate(frame_px):
+                px[x + dx, y] = (0, 0, 0) if k < corrupt else c
+        return im
+
+    # 期望值寫死、不從常數推:0.8 × 868 = 694.4,所以 695 個吻合算有框、694 個不算。
+    # (常數被改成 0.7 時,694/868 = 0.7995 會翻成有框;若由常數推算 need,測試會跟著常數一起改而抓不到。)
+    need = 695
+    cave_l, cave_r, cave_none = blue_terrain("L"), blue_terrain("R"), blue_terrain(None)
+    at_min, below_min = blue_terrain("L", n_frame - need), blue_terrain("L", n_frame - need + 1)
+    c10 = {
+        "前提:樣板 868 個像素": n_frame == 868,
+        "藍色地形 + 左框 -> L": _find_hud_box_side(cave_l) == "L",
+        "藍色地形 + 右框 -> R": _find_hud_box_side(cave_r) == "R",
+        "藍色地形、沒有框 -> None": _find_hud_box_side(cave_none) is None,
+        "舊藍佔比判準在左框那張確實不成立(補上的是它的漏判)":
+            not _box_and_strip_pass(cave_l, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION),
+        f"吻合 {need}/{n_frame} -> L": _find_hud_box_side(at_min) == "L",
+        f"吻合 {need - 1}/{n_frame} -> None": _find_hud_box_side(below_min) is None,
+        "尺寸不是 1024x768 -> 吻合率 0": _hud_frame_match(cave_l.crop((0, 0, 1023, 768)), "L") == 0.0,
+    }
+    ok10 = all(c10.values())
+    print(f"    {'PASS' if ok10 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c10.items()))
+    if not ok10:
+        fails.append(f"HUD 邊框樣板判準不符:{[k for k, v in c10.items() if not v]}")
     return fails
 
 

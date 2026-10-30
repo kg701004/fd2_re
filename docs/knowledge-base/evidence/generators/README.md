@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 65 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 66 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百六十九(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s169.py` | `driver_followups_s169_20261030.json` | `mut_s169.py`(23) |
+
+續一百六十八的三個仍留(驅動、人工標記與預測在 [`drivers_s169/`](drivers_s169/README.md)):CALLLOG 尾端讀數的寫盤位置與落後上界(lc167a / lc168a)、`tools/fd2_chapter_sweep.py` HUD 邊框樣板在 827 張人工標記截圖上的校準,以及實機 lc169a「輸入迴圈裡的 Return 選中索爾」的預測 S1 .. S6(DOSBox-X 呼叫紀錄)。`ev_s168.py` 改為固定用續一百六十八當時的 HUD 判準重算(輸出不變)。
 
 ## 續一百六十八(2026-10-30)
 
