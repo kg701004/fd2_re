@@ -886,6 +886,13 @@
    "reason": "terms 只在 `if not terms` 當真假值用,每次加 1 或加 2 的真假完全相同。",
    "evidence": "續一百六十一 2026-10-29:local_body 裡 terms 只有這一處讀取;突變後 FD2.EXE 三種產物逐位元組相同",
    "scope_hash": "e44fce656070"
+  },
+  {
+   "tool": "fd2_chapter_sweep.py",
+   "key": "_flat_blue_fraction|counts[p] = counts.get(p, 0) + 1|int 1->2#0",
+   "reason": "每色計數 +1 改成 +2 等於每個計數都乘 2:最多色(含平手時 dict 插入順序的先後)不變,比例 2n / 2s 與 n / s 是同一個有理數,int 真除法正確捨入,結果逐位相同。",
+   "evidence": "續一百六十九 2026-10-30:drivers_s169/equiv_flat.py 在 827 張校準截圖(drivers_s168/calib_frames.txt)的 1654 條帶(693 條比例非零)上,原版與此突變 0 條不同;對照突變 0->1 有 674 條不同",
+   "scope_hash": "6142b8bfcedb"
   }
  ]
 }

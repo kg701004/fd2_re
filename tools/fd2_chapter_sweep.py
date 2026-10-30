@@ -4007,6 +4007,8 @@ def _selftest_live_gates() -> list[str]:
         return im
 
     k_at = int(DIALOGUE_PANEL_FLAT_MIN * n_band)           # 比例恰等於門檻 -> 算面板(>=)
+    # 續一百六十九 --exhaustive:比例 1/2 時「每色計數 +1」(兩色各 +1)比例不變,所以另用 3/4 驗比例本身
+    k_3q = 3 * n_band // 4
     premise7 = _is_hud_blue(panel) and k_at / n_band == DIALOGUE_PANEL_FLAT_MIN \
         and all(_is_hud_blue((20 + j, 50 + j, 100 + 3 * j)) for j in range(8))
     with tempfile.TemporaryDirectory() as td:
@@ -4023,6 +4025,8 @@ def _selftest_live_gates() -> list[str]:
             "雜色藍地形(ch20 洞窟水面那類)-> 不是面板":
                 not screen_shows_dialogue_panel(p(band_img(0, mix=True), "d.png")),
             "最多色不是 HUD 藍 -> 0": _flat_blue_fraction(band_img(0), DIALOGUE_PANEL_BANDS[1]) == 0.0,
+            "比例 3/4 -> 恰為 k/n(不是 (k+1)/(n+2))":
+                _flat_blue_fraction(band_img(k_3q), DIALOGUE_PANEL_BANDS[1]) == k_3q / n_band,
         }
     ok7 = all(c7.values())
     print(f"    {'PASS' if ok7 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c7.items()))
@@ -4042,8 +4046,9 @@ def _selftest_live_gates() -> list[str]:
         def sleep(self, s: float) -> None:
             self.now += s
 
-    def run_ensure(frames: list[str], **kw) -> tuple[tuple[bool, int], list[str]]:
-        """frames:每次截圖依序得到的畫面種類("panel" / "none" / "hud");用完後重複最後一個。"""
+    def run_ensure(frames: list[str], log: list[str] | None = None, **kw) -> tuple[tuple[bool, int], list[str]]:
+        """frames:每次截圖依序得到的畫面種類("panel" / "none" / "hud");用完後重複最後一個。
+        給了 `log` 時訊息寫進它(驗 log 裡回報的按鍵數 / 等待幀數)。"""
         keys: list[str] = []
         seq = list(frames)
         kinds: dict[str, str] = {}
@@ -4059,18 +4064,22 @@ def _selftest_live_gates() -> list[str]:
             g["screen_shows_battle_hud"] = lambda q: kinds[str(q)] == "hud"
             g["screen_shows_dialogue_panel"] = lambda q: kinds[str(q)] == "panel"
             g["time"] = _Clock()
-            got = ensure_battle_hud("x", Path("selftest_shots"), [], "t", max_clears=10, **kw)
+            got = ensure_battle_hud("x", Path("selftest_shots"), [] if log is None else log, "t",
+                                    max_clears=10, **kw)
         finally:
             g.update(saved)
         return got, keys
 
     lc167 = ["panel", "panel", "none", "hud"]     # 首張 + 每次 Return 後各一張(clear30、clear31、clear32)
-    old = run_ensure(lc167)
+    old_log: list[str] = []
+    old = run_ensure(lc167, old_log)
     new = run_ensure(lc167, panel_gate=True)
     # 已有控制權、HUD 一直沒認出(ch20 / ch29 那類藍色地形讓 HUD 判準漏判)
     probe_true = run_ensure(["panel", "none"], panel_gate=True, control_probe=lambda: True)
     # 無字幕過場:看不到面板,也沒有控制權 -> 等滿 settle_s 才補一次 Return
-    beat = run_ensure(["none", "none", "none", "none", "none", "none", "none", "hud"],
+    # 首張 + 5 張等待幀 -> 補一次 Return(clear0)-> 第 6 張等待幀看到 HUD
+    beat_log: list[str] = []
+    beat = run_ensure(["none", "none", "none", "none", "none", "none", "none", "hud"], beat_log,
                       panel_gate=True, settle_s=4.0, control_probe=lambda: False)
     # 等待中出現對話框 -> 立刻按(不能一直等到 HUD 自己出現;這段對話要按鍵才會走完)
     beat_then_panel = run_ensure(["none", "panel", "hud"], panel_gate=True, control_probe=lambda: True)
@@ -4080,12 +4089,17 @@ def _selftest_live_gates() -> list[str]:
         "probe 說已有控制權 -> 一次也不再按": probe_true == ((True, 1), ["Return"]),
         "無字幕過場:等滿 4 秒(5 張等待幀)才補一次": beat == ((True, 1), ["Return"]),
         "等待中出現對話框 -> 立刻按": beat_then_panel == ((True, 1), ["Return"]),
+        # log 是實機紀錄裡唯一的等待幀數,所以數字本身要對
+        "舊路徑 log 回報 3 次 Return": old_log[-1:] == ["[t] battle HUD recovered after 3 clear-Return(s)"],
+        "無字幕過場 log 回報 1 次 Return、6 張等待幀":
+            beat_log[-1:] == ["[t] battle HUD recovered after 1 clear-Return(s), 6 no-key wait frame(s)"],
     }
     ok8 = all(c8.values())
     print(f"    {'PASS' if ok8 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c8.items()))
     if not ok8:
         fails.append(f"ensure_battle_hud 送鍵決策不符:{[k for k, v in c8.items() if not v]} "
-                     f"old={old} new={new} probe={probe_true} beat={beat}")
+                     f"old={old} new={new} probe={probe_true} beat={beat} "
+                     f"old_log={old_log[-1:]} beat_log={beat_log[-1:]}")
 
     print("\n(9) send_end_turn_keys:每一步確認後才送下一個鍵")
 
@@ -4116,6 +4130,8 @@ def _selftest_live_gates() -> list[str]:
         "指令環沒開(lc167a 那次)-> 不送 Down": no_ring[0]["stage"] == "ring" and no_ring[1] == ["Return"],
         "沒有確認框 -> 不送 YES": no_prompt[0]["stage"] == "prompt" and no_prompt[1] == ["Return", "Down", "Return"],
         "找不到空格 -> 一個鍵都不送": no_tile[0]["stage"] == "empty_tile" and no_tile[1] == [],
+        # 呼叫端只看 ok 決定要不要往下走,三條停下的路徑都必須是 False
+        "三條停下的路徑 ok 都是 False": [r[0]["ok"] for r in (no_ring, no_prompt, no_tile)] == [False] * 3,
     }
     ok9 = all(c9.values())
     print(f"    {'PASS' if ok9 else 'FAIL'}: " + "、".join(f"{k}={v}" for k, v in c9.items()))
@@ -4155,6 +4171,8 @@ def _selftest_live_gates() -> list[str]:
             not _box_and_strip_pass(cave_l, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION),
         f"吻合 {need}/{n_frame} -> L": _find_hud_box_side(at_min) == "L",
         f"吻合 {need - 1}/{n_frame} -> None": _find_hud_box_side(below_min) is None,
+        # 計數從 1 起算時 696/869 與 695/869 落在門檻兩側不變,只有比例本身看得出來
+        f"吻合率恰為 {need}/{n_frame}": _hud_frame_match(at_min, "L") == need / n_frame,
         "尺寸不是 1024x768 -> 吻合率 0": _hud_frame_match(cave_l.crop((0, 0, 1023, 768)), "L") == 0.0,
     }
     ok10 = all(c10.values())
