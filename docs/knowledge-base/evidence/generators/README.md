@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 66 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 67 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百七十(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s170.py` | `followups_s170_20261030.json` | `mut_s170.py`(28) |
+
+續一百六十九 / 一百六十七的仍留(探針、截圖清單與人工判讀在 [`drivers_s170/`](drivers_s170/README.md)):WSL 實測 CALLLOG 的 `setvbuf` 緩衝、lc167a 每次 MDI 服務的驅動呼叫逐次對齊 FDMUS_019 / 012 的事件 tick(敵方回合 MDI 型重入多的原因)、P 之前 5 次未歸類重入的靜態路徑與 AIL 鎖補叫,以及 HUD 邊框樣板在校準集沒涵蓋的 20 章 3015 張截圖上的判定(`tools/fd2_chapter_sweep.py` 改為只看樣板)。`ev_s169.py` 改為固定用續一百六十九當時的 HUD 判準重算(輸出不變)。
 
 ## 續一百六十九(2026-10-30)
 

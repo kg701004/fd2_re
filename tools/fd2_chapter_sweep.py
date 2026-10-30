@@ -1380,7 +1380,10 @@ def screen_shows_battle_hud(png_path: Path) -> bool:
     the strip check alone was already sufficient to reject them, the
     variance gate was redundant for these specific cases and simply never
     tested against a lower-contrast chapter until now) while now correctly
-    detecting ch19's real battle within its existing tap budget."""
+    detecting ch19's real battle within its existing tap budget.
+
+    2026-10-30 續一百七十:判定只看 HUD 邊框樣板(見 _find_hud_box_side);上面的藍佔比
+    box / strip 判準不再參與。"""
     try:
         from PIL import Image
     except ImportError:
@@ -1463,14 +1466,15 @@ def _find_hud_box_side(im) -> str | None:
     2026-10-30 續一百六十九:先比對邊框樣板(BATTLE_HUD_FRAME_RUNS),吻合率
     ≥ BATTLE_HUD_FRAME_MATCH_MIN 的那一側就是答案;兩側都不吻合才退回原本的藍佔比判準。
     退回這一步保留原判準的每一個 True(呼叫端的行為只會多、不會少),所以藍色地形上的
-    漏判被補上,原判準在藍色樹林等處的誤判則照舊(呼叫端另有敵軍紀錄把關,見上面 docstring)。"""
+    漏判被補上,原判準在藍色樹林等處的誤判則照舊(呼叫端另有敵軍紀錄把關,見上面 docstring)。
+
+    2026-10-30 續一百七十:拿掉退回藍佔比那一步,只看邊框樣板。校準集沒涵蓋的 20 章
+    (.wsl_build 截圖依像素去重 3015 張,ev_s170 (D))上,樣板判有框的 464 張吻合率都是 1.0、
+    其餘最高 0.4009;退回那一步多判的 348 張逐張目視都沒有 HUD 框(城鎮招牌、水面、藍色樹林等),
+    校準集上也只多出 75 個誤判。_box_and_strip_pass 保留給 ev_s168 / ev_s169 重算當時的判準。"""
     for side in ("L", "R"):
         if _hud_frame_match(im, side) >= BATTLE_HUD_FRAME_MATCH_MIN:
             return side
-    if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION):
-        return "L"
-    if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION_R, BATTLE_HUD_LEFT_STRIP_REGION_R):
-        return "R"
     return None
 
 
@@ -3907,18 +3911,35 @@ def _selftest_screen_predicates() -> list[str]:
         # (d) 空白畫面 = null 對照。
         blank = _selftest_synth_screen([], "textured")
 
-        pa = as_png(real_l, td, "a.png")
-        pb = as_png(fake_panel, td, "b.png")
-        pc = as_png(real_r, td, "c.png")
-        pd = as_png(blank, td, "d.png")
+        def with_frame(im, side: str):
+            """畫上 HUD 邊框樣板(續一百七十起 screen_shows_battle_hud 只看樣板)。"""
+            im = im.copy()
+            px = im.load()
+            dx = 0 if side == "L" else BATTLE_HUD_FRAME_DX_R
+            for y, x0, x1, c in BATTLE_HUD_FRAME_RUNS:
+                for x in range(x0, x1 + 1):
+                    px[x + dx, y] = c
+            return im
 
+        pa = as_png(with_frame(real_l, "L"), td, "a.png")
+        pb = as_png(fake_panel, td, "b.png")
+        pc = as_png(with_frame(real_r, "R"), td, "c.png")
+        pd = as_png(blank, td, "d.png")
+        pa0 = as_png(real_l, td, "a0.png")   # 藍佔比判準成立、但沒有邊框
+
+        # 藍佔比判準本身(_box_and_strip_pass,ev_s168 / ev_s169 重算當時判準用)的成對案例
+        old = (_box_and_strip_pass(real_l, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION),
+               _box_and_strip_pass(fake_panel, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION),
+               _box_and_strip_pass(real_r, BATTLE_HUD_BOX_REGION_R, BATTLE_HUD_LEFT_STRIP_REGION_R),
+               _box_and_strip_pass(blank, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION))
         got = (screen_shows_battle_hud(pa), screen_shows_battle_hud(pb),
-               screen_shows_battle_hud(pc), screen_shows_battle_hud(pd))
-        ok6 = got == (True, False, True, False)
-        print(f"    {'PASS' if ok6 else 'FAIL'}: 真HUD左={got[0]} flashback誤判={got[1]}"
-              f"(須 False) ch19鏡像右={got[2]} 空白={got[3]}")
+               screen_shows_battle_hud(pc), screen_shows_battle_hud(pd), screen_shows_battle_hud(pa0))
+        ok6 = old == (True, False, True, False) and got == (True, False, True, False, False)
+        print(f"    {'PASS' if ok6 else 'FAIL'}: 藍佔比 真HUD左={old[0]} flashback誤判={old[1]}(須 False)"
+              f" ch19鏡像右={old[2]} 空白={old[3]};工具 有框左={got[0]} flashback={got[1]} 有框右={got[2]}"
+              f" 空白={got[3]} 藍佔比成立但沒框={got[4]}(須 False,續一百七十拿掉退回)")
         if not ok6:
-            fails.append(f"HUD 判準的成對案例不符:{got}")
+            fails.append(f"HUD 判準的成對案例不符:藍佔比 {old}、工具 {got}")
 
         print("    (6b) 非平凡性:(a) 與 (b) 只在框右細長條不同,其餘像素完全相同")
         da, db = list(real_l.getdata()), list(fake_panel.getdata())
@@ -3931,7 +3952,7 @@ def _selftest_screen_predicates() -> list[str]:
             fails.append("成對案例的差異不只在 strip,判準歸因不成立")
 
         print("    (6c) _find_hud_box_side 必須說出是哪一側,不能只回真假")
-        sides = (_find_hud_box_side(real_l), _find_hud_box_side(real_r),
+        sides = (_find_hud_box_side(with_frame(real_l, "L")), _find_hud_box_side(with_frame(real_r, "R")),
                  _find_hud_box_side(blank))
         ok6c = sides == ("L", "R", None)
         print(f"        {'PASS' if ok6c else 'FAIL'}: {sides}(應為 ('L','R',None))")
@@ -4138,7 +4159,7 @@ def _selftest_live_gates() -> list[str]:
     if not ok9:
         fails.append(f"send_end_turn_keys 決策不符:{[k for k, v in c9.items() if not v]}")
 
-    print("\n(10) HUD 邊框樣板:藍色地形上的真 HUD、吻合率卡在門檻、先樣板後藍佔比")
+    print("\n(10) HUD 邊框樣板:藍色地形上的真 HUD、吻合率卡在門檻、只看樣板(續一百七十拿掉退回藍佔比)")
     frame_px = [(x, y, c) for y, x0, x1, c in BATTLE_HUD_FRAME_RUNS for x in range(x0, x1 + 1)]
     n_frame = len(frame_px)
 

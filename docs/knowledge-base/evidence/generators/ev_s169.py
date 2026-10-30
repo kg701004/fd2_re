@@ -167,6 +167,15 @@ def old_side(im) -> str | None:
     return None
 
 
+def s169_side(im) -> str | None:
+    """續一百六十九當時的 _find_hud_box_side(先比對邊框樣板,兩側都不吻合才退回藍佔比判準)。
+    續一百七十起工具只用樣板(ev_s170 (D));這裡固定用當時的判準,證據檔不變。"""
+    for side in "LR":
+        if sw._hud_frame_match(im, side) >= sw.BATTLE_HUD_FRAME_MATCH_MIN:
+            return side
+    return old_side(im)
+
+
 ROWS = []
 _const = {}                                                           # 樣板像素在有框那一側的顏色是否每張都一樣
 for f in CALIB:
@@ -182,8 +191,8 @@ for f in CALIB:
         dx = 0 if lab == "L" else 474
         for x, y, c in FRAME_PX:
             _const.setdefault((x, y), set()).add(px[x + dx, y])
-    ROWS.append({"f": rel(f), "label": lab, "match": m, "old": old_side(im), "new": sw._find_hud_box_side(im),
-                 "hud": sw.screen_shows_battle_hud(f)})
+    ROWS.append({"f": rel(f), "label": lab, "match": m, "old": old_side(im), "new": s169_side(im),
+                 "hud": s169_side(im) is not None})
 assert all(v == {c} for (x, y), v in _const.items() for xx, yy, c in [next(p for p in FRAME_PX if p[:2] == (x, y))])
 ON = [r["match"][r["label"]] for r in ROWS if r["label"]]
 OFF = [v for r in ROWS for s, v in r["match"].items() if s != r["label"]]

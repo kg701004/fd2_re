@@ -1,0 +1,463 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s170.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "buffer_probe": {
+  "script": "docs/knowledge-base/evidence/generators/drivers_s170/setvbuf_probe.py",
+  "output": "docs/knowledge-base/evidence/generators/drivers_s170/setvbuf_probe_out.txt",
+  "st_blksize": 4096,
+  "sizes": {
+   "null_1MiB:phase0": [
+    0,
+    4096,
+    8192,
+    12288,
+    16384
+   ],
+   "null_1MiB:phase1": [
+    20000,
+    24096,
+    28192,
+    32288,
+    36384
+   ],
+   "buf_1MiB:phase0": [
+    0
+   ],
+   "buf_1MiB:phase1": [
+    20000
+   ],
+   "default:phase0": [
+    0,
+    4096,
+    8192,
+    12288,
+    16384
+   ],
+   "default:phase1": [
+    20000,
+    24096,
+    28192,
+    32288,
+    36384
+   ]
+  },
+  "checks": {
+   "null_1MiB_blocks": true,
+   "null_1MiB_after_fflush": true,
+   "same_as_default": true,
+   "control_real_1MiB_no_write": true
+  }
+ },
+ "calllog": {
+  "path": ".wsl_build/lc167_live/lc167a_CALLLOG.TXT",
+  "md5": "ac9401da607102caa569be467c178b92"
+ },
+ "enemy_mdi": {
+  "static": {
+   "0x1a507": "movzx ebx, byte ptr [eax + 0x1e63]",
+   "0x1a50e": "movzx eax, byte ptr [eax + 0x1e81]",
+   "0x1a519": "push 0",
+   "0x1a51b": "push -1",
+   "0x1a51d": "call 0x25977",
+   "0x1a57a": "movzx eax, byte ptr [eax + 0x1e81]",
+   "0x1a581": "push eax",
+   "0x1a582": "call 0x25977",
+   "0x1a58f": "call 0x1d8ba",
+   "0x1a5c3": "push 0",
+   "0x1a5c5": "push -1",
+   "0x1a5c7": "call 0x25977",
+   "0x1a610": "movzx eax, byte ptr [eax + 0x1e63]",
+   "0x1a617": "push eax",
+   "0x1a618": "call 0x25977"
+  },
+  "tracks": {
+   "base": 19,
+   "enemy": 12
+  },
+  "songs": {
+   "FDMUS_019": {
+    "md5": "a14f54e55de810e5d85dceff122b57bc",
+    "max_tick": 2075,
+    "event_ticks": 129,
+    "density": 0.0621
+   },
+   "FDMUS_012": {
+    "md5": "2fb1701e656d5cbab53b958e70ebbc52",
+    "max_tick": 1440,
+    "event_ticks": 327,
+    "density": 0.2269
+   }
+  },
+  "unclosed_mdi_services": 604,
+  "align": {
+   "P": {
+    "song": 19,
+    "services": 3414,
+    "best": {
+     "match": 3414,
+     "offset": 1617,
+     "period": 2076
+    },
+    "second_best_match": 3394,
+    "all_false_match": 3203,
+    "other_song_best_match": 2550
+   },
+   "S_ring": {
+    "song": 19,
+    "services": 4670,
+    "best": {
+     "match": 4670,
+     "offset": 1617,
+     "period": 2076
+    },
+    "second_best_match": 4638,
+    "all_false_match": 4380,
+    "other_song_best_match": 3480
+   },
+   "P2_loop": {
+    "song": 19,
+    "services": 2468,
+    "best": {
+     "match": 2468,
+     "offset": 866,
+     "period": 2076
+    },
+    "second_best_match": 2452,
+    "all_false_match": 2315,
+    "other_song_best_match": 1853
+   },
+   "EN": {
+    "song": 12,
+    "services": 3044,
+    "best": {
+     "match": 3018,
+     "offset": 276,
+     "period": 1441
+    },
+    "second_best_match": 2582,
+    "all_false_match": 2326,
+    "other_song_best_match": 2250
+   }
+  },
+  "diag": {
+   "services": 43165,
+   "match": 43164,
+   "extra": [
+    [
+     119237.6,
+     532
+    ]
+   ]
+  },
+  "en_extra": {
+   "on_one_phase_of_8": 23,
+   "phase_span_ms": [
+    538088.9,
+    540079.0
+   ],
+   "others": [
+    [
+     540499.0,
+     558
+    ],
+    [
+     542774.0,
+     558
+    ],
+    [
+     542959.0,
+     558
+    ]
+   ]
+  },
+  "transitions": {
+   "friend_end_to_enemy": {
+    "services": 553,
+    "song_events": 34,
+    "song_events_called": 34,
+    "extra": 56,
+    "extra_on_one_phase_of_8": 55,
+    "extra_span_ms": [
+     533408.9,
+     537363.9
+    ]
+   },
+   "enemy_end_to_loop": {
+    "services": 991,
+    "called": 230,
+    "base_song_best": 776,
+    "enemy_song_best": 822,
+    "all_false": 761
+   }
+  },
+  "rates": {
+   "P": {
+    "services": 3414,
+    "driver_calls": 211,
+    "driver_calls_per_s": 7.38,
+    "mdi_reentry": 27,
+    "hit_per_driver_call": 0.128
+   },
+   "diag": {
+    "services": 43165,
+    "driver_calls": 2683,
+    "driver_calls_per_s": 7.42,
+    "mdi_reentry": 355,
+    "hit_per_driver_call": 0.1323
+   },
+   "S_ring": {
+    "services": 4670,
+    "driver_calls": 290,
+    "driver_calls_per_s": 7.4,
+    "mdi_reentry": 37,
+    "hit_per_driver_call": 0.1276
+   },
+   "S_adv": {
+    "services": 2173,
+    "driver_calls": 191,
+    "driver_calls_per_s": 10.4,
+    "mdi_reentry": 17,
+    "hit_per_driver_call": 0.089
+   },
+   "EN": {
+    "services": 3044,
+    "driver_calls": 718,
+    "driver_calls_per_s": 27.51,
+    "mdi_reentry": 85,
+    "hit_per_driver_call": 0.1184
+   },
+   "P2_loop": {
+    "services": 2468,
+    "driver_calls": 153,
+    "driver_calls_per_s": 7.4,
+    "mdi_reentry": 21,
+    "hit_per_driver_call": 0.1373
+   }
+  },
+  "hit": {
+   "EN": [
+    85,
+    718
+   ],
+   "rest": [
+    457,
+    3528
+   ],
+   "fisher_p": 0.462
+  },
+  "ratios": {
+   "driver_calls_EN_over_P": 3.73,
+   "mdi_per_1000_slots_EN_over_others_max": 3.34,
+   "song_density_enemy_over_base": 3.65
+  }
+ },
+ "unclassified": {
+  "cases": [
+   {
+    "t": 12755.406,
+    "outer": "E 0x404c0",
+    "nongame_before": 229,
+    "next": "E 0x404c0",
+    "di_next": 26,
+    "next_ret": "0x3eb42",
+    "kind": "DIG_AGAIN"
+   },
+   {
+    "t": 21506.01,
+    "outer": "E 0x404c0",
+    "nongame_before": 229,
+    "next": "E 0x3ea8e",
+    "di_next": 5,
+    "second_reentry_di": 7,
+    "nongame_until_second": 748,
+    "second_to_epi": 93,
+    "kind": "DIG_DOUBLE"
+   },
+   {
+    "t": 70304.844,
+    "outer": "E 0x404c0",
+    "nongame_before": 229,
+    "next": "E 0x404c0",
+    "di_next": 26,
+    "next_ret": "0x3eb42",
+    "kind": "DIG_AGAIN"
+   },
+   {
+    "t": 80574.992,
+    "outer": "E 0x404c0",
+    "nongame_before": 229,
+    "next": "E 0x404c0",
+    "di_next": 26,
+    "next_ret": "0x3eb42",
+    "kind": "DIG_AGAIN"
+   },
+   {
+    "t": 84364.72,
+    "outer": "E 0x404c0",
+    "nongame_before": 229,
+    "next": "E 0x404c0",
+    "di_next": 26,
+    "next_ret": "0x3eb42",
+    "kind": "DIG_AGAIN"
+   }
+  ],
+  "path_end": 77,
+  "path_again": 10,
+  "predicted_again": 26,
+  "dig_type_nongame_229": 401,
+  "dig_type_total": 416,
+  "catchup": {
+   "lock_runs": [
+    {
+     "t": 3022.57,
+     "skipped": 4,
+     "next_t": 3176.95,
+     "next_dig": 0,
+     "after_first_dig": false
+    },
+    {
+     "t": 3185.29,
+     "skipped": 2,
+     "next_t": 3200.83,
+     "next_dig": 1,
+     "after_first_dig": false
+    },
+    {
+     "t": 3310.86,
+     "skipped": 2,
+     "next_t": 3320.83,
+     "next_dig": 3,
+     "after_first_dig": true
+    },
+    {
+     "t": 12741.03,
+     "skipped": 1,
+     "next_t": 12745.97,
+     "next_dig": 2,
+     "after_first_dig": true
+    },
+    {
+     "t": 15776.05,
+     "skipped": 3,
+     "next_t": 15791.02,
+     "next_dig": 4,
+     "after_first_dig": true
+    },
+    {
+     "t": 24151.18,
+     "skipped": 1,
+     "next_t": 24156.18,
+     "next_dig": 2,
+     "after_first_dig": true
+    },
+    {
+     "t": 70291.89,
+     "skipped": 1,
+     "next_t": 70296.84,
+     "next_dig": 2,
+     "after_first_dig": true
+    },
+    {
+     "t": 80562.04,
+     "skipped": 1,
+     "next_t": 80566.99,
+     "next_dig": 2,
+     "after_first_dig": true
+    },
+    {
+     "t": 84347.07,
+     "skipped": 1,
+     "next_t": 84352.05,
+     "next_dig": 2,
+     "after_first_dig": true
+    }
+   ],
+   "catchup_isr": 7,
+   "catchup_isr_with_again_reentry": 4
+  },
+  "lateness_ms": {
+   "double_first": 4.909,
+   "double_second": 0.074,
+   "dig_type_max": 4.74,
+   "gap_ms": 0.166
+  }
+ },
+ "hud_uncovered": {
+  "frames_list": "docs/knowledge-base/evidence/generators/drivers_s170/uncovered_frames.txt",
+  "labels": "docs/knowledge-base/evidence/generators/drivers_s170/hud_labels_s170.txt",
+  "covered_chapters": [
+   1,
+   2,
+   11,
+   19,
+   20,
+   21,
+   23,
+   25,
+   26,
+   27,
+   29
+  ],
+  "summary": {
+   "frames": 3015,
+   "chapters": [
+    0,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    22,
+    24,
+    28,
+    30
+   ],
+   "template_pos": 464,
+   "template_pos_min": 1.0,
+   "template_neg_max": 0.4009,
+   "old_pos": 812,
+   "old_only": 348,
+   "template_only": 0,
+   "template_pos_by_ch": {
+    "3": 116,
+    "4": 69,
+    "5": 86,
+    "6": 5,
+    "7": 34,
+    "8": 2,
+    "9": 3,
+    "10": 3,
+    "12": 16,
+    "13": 4,
+    "14": 5,
+    "15": 83,
+    "16": 3,
+    "17": 11,
+    "18": 3,
+    "22": 8,
+    "24": 8,
+    "28": 5
+   }
+  },
+  "labelled_no_hud": 348,
+  "labelled_sample": 66,
+  "s169_tool_fp_on_calib": 75
+ },
+ "conclusion": {
+  "buffer": "WSL 實測(glibc 2.39,與 DOSBox-X 同一份 libc、與 harness 目錄同一檔案系統,st_blksize 4096):setvbuf(NULL, _IOFBF, 1 MiB) 的寫盤位置是 4096 的倍數,明確 fflush 之後是「fflush 位置 + k × 4096」,與不呼叫 setvbuf 相同;對照組明確給 1 MiB buf 時 40000 位元組都沒寫盤。續一百六十九的 4 KiB 由 INFERRED 改為實測確認。",
+  "enemy_mdi": "敵方回合 MDI 型重入多,是因為換了曲:battle_phase_advance 在呼叫 0x1d8ba 前換成 0x51e81[章] = FDMUS_012,之後換回 0x51e63[章] = FDMUS_019。每次 MDI 服務有沒有叫驅動,玩家回合 P / S_ring / P2_loop 與 FDMUS_019 的事件 tick 逐次相符(3414 / 4670 / 2468 次全中;diag 43164 / 43165,唯一不符是 1 次多叫的短驅動呼叫),敵方回合與 FDMUS_012 相符 3018 / 3044(不符 26 次全是多叫:開頭 23 次每 8 次服務一次、另 3 次很短)。驅動呼叫每秒 27.51 對 7.38(3.73 倍;兩首曲的事件 tick 密度比 3.65);每次驅動呼叫被計時器中斷撞上的比例敵方回合 85 / 718、其他 457 / 3528(Fisher p = 0.462)。多出來的驅動呼叫全來自曲子本身,曲子以外的只有開頭 23 次與 3 次短呼叫,所以不是敵方移動的音效讓驅動變忙。",
+  "transition": "友軍回合結束到敵方回合開始的 553 次服務:FDMUS_019 照常(34 個事件全叫),另外多叫 56 次,其中 55 次落在同一個 8 次服務的相位上;敵方回合結束到主迴圈的 991 次服務兩首曲都對不上(未解)。",
+  "unclassified": "P 之前 5 次未歸類重入的插斷點都與 DIG 型相同(外層 DIG 進入後 229 條非遊戲指令;DIG 型 401 / 416 次是 229)。其中 4 次是 DIG 補叫:AIL 鎖([0x52bea] > 0)讓前一次 ISR 沒派送,這次 ISR 叫 DIG 兩次,重入落在第一次的驅動呼叫裡,返回後走 10 條進第二次 DIG,而不是 77 條到 0x3eb9d:93 − 77 + 10 = 26,與紀錄的 26 相同。鎖之後補叫的 7 次 ISR 都恰好多叫「被跳過的 ISR 數」次 DIG。另 1 次是重入了兩次:第一次晚了 4.909 ms(其他 DIG 型最晚 4.74 ms),0.166 ms 後下一個 tick 又進來,第二次重入之後 93 條到 0x3eb9d(DIG 型)。",
+  "hud_uncovered": "校準集(827 張,章節 1, 2, 11, 19, 20, 21, 23, 25, 26, 27, 29)沒涵蓋的 20 章,.wsl_build 截圖依像素去重 3015 張:邊框樣板判有框 464 張(分佈在 18 章),吻合率全是 1.0,其餘最高 0.4009(與校準集相同)。舊藍佔比判準判有 812 張,其中 348 張樣板判沒有,逐張目視都沒有 HUD 框;樣板有、舊判準沒有的 0 張。所以工具拿掉退回藍佔比那一步:這 20 章少掉 348 個誤判、校準集少掉 75 個,沒有漏掉任何有框的截圖。"
+ }
+}

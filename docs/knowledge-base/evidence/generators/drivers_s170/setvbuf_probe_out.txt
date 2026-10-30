@@ -1,0 +1,15 @@
+glibc 2.39; probe libc /usr/lib/x86_64-linux-gnu/libc.so.6; dosbox-x libc /usr/lib/x86_64-linux-gnu/libc.so.6; same=True
+testdir st_dev=2096 home st_dev=2096 st_blksize=4096; harness dirs 290 same_fs=True
+null_1MiB: phase0 sizes [0, 4096, 8192, 12288, 16384]
+null_1MiB: phase1 sizes [20000, 24096, 28192, 32288, 36384]
+buf_1MiB: phase0 sizes [0]
+buf_1MiB: phase1 sizes [20000]
+default: phase0 sizes [0, 4096, 8192, 12288, 16384]
+default: phase1 sizes [20000, 24096, 28192, 32288, 36384]
+PASS DOSBox-X 與探針是同一份 libc
+PASS 測試檔與 fd2-run-harness-* 同一個檔案系統
+PASS A 第一段:寫盤位置都是 st_blksize 的倍數、且有 ≥ 4 個
+PASS A 第二段:寫盤位置都是 fflush 位置 + k × st_blksize、且有 ≥ 4 個
+PASS A 與 C(預設)寫盤位置相同
+PASS B 對照(真 1 MiB):兩段都沒寫盤
+PASS
