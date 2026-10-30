@@ -12179,3 +12179,61 @@ doc12 §結論一「五處全部走 `0x51e63`」只對它列的五處成立;§`0
 - DIG 服務長的那幾次是不是 0x49923 填緩衝(沒反組譯);DOS/4GW 0070:0d81 .. 0e6b 那段關中斷在做什麼。
 - 續一百七十的 4 次短驅動呼叫(532 / 558 條)的來源;敵方回合結束時讓序列停一次服務的是哪一個呼叫。
 - `sweep_literals` 沒跑 ev_s170(改過)/ ev_s172 / ev_s173(NOT TESTED)。
+
+## 2026-10-31 續一百七十四:工具 —— 呼叫紀錄加觸發式擷取(FD2_CALLLOG_TRIG):罕見、時刻不定的一段只在條數符合時寫出;實機兩次核對(DOSBox-X 呼叫紀錄 lc174a / lc174b)
+
+起因:續一百七十三的仍留(續一百六十五的 MDI 375、9262 ms 那次 DOS/4GW 0070 關中斷)都卡在 G / S 只能用時間窗指定,窗外只剩條數;
+使用者「還未解的 是不是工具需要改善」→「先完善優化工具」。工具改三支,實機兩次(lc174a 找出工具缺口、修正後 lc174b),不重跑。
+驅動腳本、實機前的預測(`pred174.txt`)、逐項核對(`check174.py`)在 `evidence/generators/drivers_s174/`;沒有證據產生器(ev_s174)。
+
+**工具**(DOSBox-X 呼叫紀錄修補;STATIC ANALYSIS + MOCK VERIFIED + 實機核對):
+- `tools/dosbox/fd2_calllog_patch.py` 加 `FD2_CALLLOG_TRIG=<ng|if>:<lo>[-[<hi>]][@cs[:eip]][,...]`:每條指令與每次 `CPU_Interrupt`
+  進記憶體裡的環形緩衝(`_TRIGRING`,預設 131072 筆),一段「非遊戲 selector」(ng)或「開始執行時 IF = 0」(if)的連續指令結束時,
+  條數(與第一條的 CS:EIP)符合規則才寫 Y .. YE 區塊(前文 `_TRIGPRE` 預設 64 條 + 區間 + 結束那一條;YS 逐條帶 IF,YI 中斷);
+  每條規則最多 `_TRIGCAP`(預設 20)個;`_TRIGT=<t0>-<t1>` 只算在窗內結束的區間;YC(每條規則符合 / 寫出)與 YN(每種區間總數)
+  在每寫一個區塊、每 >= 1000 ms 與結尾寫並 flush。不設時 DOSBox-X 的輸出與之前逐字相同。
+- 同支加 `--mocktest`(要 g++,WSL 端):把插入的 C++ 與替身(CPU 狀態、記憶體、PIC 時間)編成小程式,餵合成指令序列,
+  A .. M 共 13 組(在 DOSBox-X 外單獨編譯)、每組有成對對照(含不設 TRIG 時與上一版逐字比對 308 行、`_exit` 模擬被砍掉);`--mockmut`:C++ 故障注入 31 / 31 全殺。
+- `tools/calllog_segments.py`:Y 區塊另存 `Log.trigs`(不進 runs)、`trig_problems`(解析端另寫的判準重核:n 連號、條數、第一條、
+  區間內外)、`trig` 子命令;`_read` 只在檔尾沒有換行時丟掉最後一行(`tail_cut`)。
+- `tools/dosbox_harness.sh` 加 `FD2_HARNESS_CALLLOG_TRIG` / `_TRIGRING` / `_TRIGPRE` / `_TRIGCAP` / `_TRIGT`。
+- `--exhaustive --tool`:`calllog_segments.py` 183 / 183、`dosbox/fd2_calllog_patch.py` 21 / 21 歸零。
+  DOSBox-X 建置 `~/fd2-dosbox-calllog4`(calllog3 的複本)編譯沒有插入段的警告。
+
+**實機**(原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e、WSL -d Ubuntu;開機 → 標題 → START → 16 秒;設定同 lc173a,
+另加 `TRIG=if:40000-,ng:600-604,ng:375,if:1000-2000@0070`、`TRIGCAP=8`,lc174b 再加 `TRIGT=9500-24000`):
+lc174a md5 0aaee517…(1325050 行)、lc174b md5 9be49f77…(1185411 行),兩份最後一行都寫到一半(harness 收尾砍掉模擬器)。
+
+**P1 / P2**(`check174.py`;LOG CONFIRMED + CODE;DOSBox-X 呼叫紀錄 lc174a):成立。
+- 24 個區塊都有 YE,`trig_problems` 全部沒有問題。
+- 續一百七十三 lc173a 那段 DIG 服務長關中斷,lc174a 抓到 7 次:區間第一條 `0x3f0ab ret`(`0x3f0aa cli` 之後)、最後一條 `0x3f0bc sti`、
+  結束那一條 `0x3f0bd pop ebp`(IF = 1),全在 cs 0170,6 次 43928 條、1 次 43929 條。
+- 同一份紀錄的 G:每次都是一筆 P 0170 涵蓋整段,條數 = 前段 + 區間 + 1(例:44078 = 149 + 43928 + 1,前段是 ISR 進入 `0x3ea8e` 到 cli;
+  另有前段 72 / 686 / 703 的),Y 與 G 兩條路徑一致。
+
+**lc174a 暴露的工具缺口 → 修正**:第一版只在結尾寫 YC / YN,模擬器被砍掉就沒有(「沒寫出」和「沒發生」分不開);
+每條規則 8 個的上限在 START 之前就用完。修正為區塊後 / 定期寫統計並 flush、加 `TRIGT`、`_read` 丟掉檔尾寫到一半的行,重編後跑 lc174b。
+
+**P4 .. P6**(`check174.py`;LOG CONFIRMED;DOSBox-X 呼叫紀錄 lc174b):成立。
+- 被砍掉之後仍有 4 條規則的 YC 與 ng / if 的 YN;每條規則寫出數 = 區塊數 <= 符合數(if:40000- 7 / 7、ng:600-604 3 / 3、ng:375 0 / 0、
+  if:1000-2000@0070 25 / 8);最早的區塊在 9528.19 ms 結束(TRIGT 9500)。
+- START 那一下:按下 10617.0、放開 10624.0 ms;DIG 型 if 區塊 10618.35 .. 10627.60 ms(43928 條)結束後,ng 601 條的區塊
+  從 0080:0ed6 起、在 0080:06ca 收 IRQ 1(10627.66 ms,放開後 3.66 ms)、結束在 `0x3f0be`。同型在 lc174a 是 START 那一下的 ng 601。
+  續一百七十三的鏈(START 讓 DIG 服務關中斷 9 ms 多,放開鍵落在裡面,IRQ 1 接在 DOS/4GW 返回段收)兩次都再出現。
+
+**P3 探查**(照實記,解讀未做;DOSBox-X 呼叫紀錄 lc174a / lc174b):
+- ng 375:lc174a 一次(21843.60 ms;0080:0ed6 起,含 r 137c(SB16.DIG 段)73 條,結束在遊戲 `0x3f1a4`);lc174b 0 次(YC 0 / 0)。
+  是不是續一百六十五的 MDI 375(那時的計法是「重入之後到下一筆的非遊戲指令」)沒有核對。
+- 0070 起頭、1000 .. 2000 條的 if 區間:lc174b 符合 25 次,寫出的 8 個成兩型 —— 0070:0eb5 起、在 0c5c:10b4 `popf` 結束(約 1110 .. 1124 條,
+  下一條 `int 21h`)與 0070:0eb5 起、在遊戲 `0x3eb15 sti` 結束(約 1616 .. 1620 條)。續一百七十三 9262 ms 那次的 0070:0d81 .. 0e6b
+  這兩次都沒有被寫成區塊(那次是按鍵晚收的時刻,不是這次規則的條件)。
+- ng 600 .. 604 另有一型:0080:0084 起、在 0080:0ed4 `iretd` 結束、下一條是遊戲 ISR `0x3ea8e`(IF = 0),601 / 603 / 604 / 600 條。
+
+**驗證**(DOSBox-X 呼叫紀錄修補與解析):`fd2_calllog_patch.py --selftest`、`--mocktest --baseline <上一版>`(13 組)、`--mockmut` 31 / 31;`calllog_segments.py --selftest`
+(Windows / WSL);`--exhaustive --tool` 兩支歸零;harness `bash -n` 與 TRIG 正規式(合法 5、非法 9);`check174.py` 通過,
+兩份紀錄對調時 md5 檢查擋下(對照)。
+
+**仍留**:
+- P3 三項的解讀(MDI 375 是否同一型、0070 兩型 if 區間各是什麼、0080:0084 型 ng 601)。
+- 續一百七十三的其餘仍留不變(DIG 服務長的那幾次是不是 0x49923 填緩衝;續一百七十的 4 次短驅動呼叫;`sweep_literals` 沒跑 ev_s170 / ev_s172 / ev_s173)。
+- 本輪沒有證據產生器與變異測試(`check174.py` 只逐項 assert);要引用 P3 的數字前先補 ev_s174。

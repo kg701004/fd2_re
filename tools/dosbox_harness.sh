@@ -400,6 +400,30 @@ cmd_launch() {
             grep -aq FD2_CALLLOG_KBD "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_KBD; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
             calllog_env+="FD2_CALLLOG_KBD=$FD2_HARNESS_CALLLOG_KBD "
         fi
+        # 2026-10-31 續一百七十四: FD2_HARNESS_CALLLOG_TRIG=<ng|if>:<lo>[-[<hi>]][@cs[:eip]][,...] keeps recent
+        # instructions in a ring and writes a non-game-selector (ng) or IF=0 (if) span only when its instruction
+        # count matches (Y .. YE blocks; YC / YN running totals, flushed). _TRIGRING / _TRIGPRE / _TRIGCAP / _TRIGT
+        # are optional.
+        # Parsed by calllog_segments.py trig.
+        if [[ -n "${FD2_HARNESS_CALLLOG_TRIG:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_TRIG" =~ ^(ng|if):[0-9]+(-[0-9]*)?(@[0-9a-fA-F]+(:[0-9a-fA-F]+)?)?(,(ng|if):[0-9]+(-[0-9]*)?(@[0-9a-fA-F]+(:[0-9a-fA-F]+)?)?)*$ ]] || die "FD2_HARNESS_CALLLOG_TRIG '$FD2_HARNESS_CALLLOG_TRIG' is not <ng|if>:<lo>[-[<hi>]][@cs[:eip]][,...]"
+            grep -aq FD2_CALLLOG_TRIG "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_TRIG; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_TRIG=$FD2_HARNESS_CALLLOG_TRIG "
+            local tv
+            for tv in TRIGRING TRIGPRE TRIGCAP; do
+                local tval="FD2_HARNESS_CALLLOG_$tv"
+                if [[ -n "${!tval:-}" ]]; then
+                    [[ "${!tval}" =~ ^[0-9]+$ ]] || die "$tval '${!tval}' is not a number"
+                    calllog_env+="FD2_CALLLOG_$tv=${!tval} "
+                fi
+            done
+            # _TRIGT=<t0>-<t1> (emulated ms): only spans ending inside it are counted / written.
+            if [[ -n "${FD2_HARNESS_CALLLOG_TRIGT:-}" ]]; then
+                [[ "$FD2_HARNESS_CALLLOG_TRIGT" =~ ^[0-9]+(\.[0-9]+)?-[0-9]+(\.[0-9]+)?$ ]] || die "FD2_HARNESS_CALLLOG_TRIGT '$FD2_HARNESS_CALLLOG_TRIGT' is not t0-t1 in ms"
+                grep -aq FD2_CALLLOG_TRIGT "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_TRIGT; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+                calllog_env+="FD2_CALLLOG_TRIGT=$FD2_HARNESS_CALLLOG_TRIGT "
+            fi
+        fi
         echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
     fi
 

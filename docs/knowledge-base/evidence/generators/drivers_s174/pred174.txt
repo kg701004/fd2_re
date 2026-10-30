@@ -1,0 +1,29 @@
+續一百七十四 實機前預測(lc174a;跑完不改)
+
+設定:與 lc173a 相同(開機 → 標題 → START → 16 秒;SEGS 3000-3150,3150-3250:x,3250-24000、SLICES、PICEV、IO、KBD、DOS 時間 12:00:54),
+另加 FD2_CALLLOG_TRIG=if:40000-,ng:600-604,ng:375,if:1000-2000@0070、TRIGCAP=8(TRIGRING / TRIGPRE 預設 131072 / 64)。
+dosbox-x 是 ~/fd2-dosbox-calllog4(calllog3 的複本,以續一百七十四的 fd2_calllog_patch.py --upgrade 重編)。
+
+P1 工具本身:H 帶 trig= / trigring= / trigpre= / trigcap=;結尾有 YC(4 條規則)與 YN(ng、if);每個 Y 區塊都有 YE,
+   `calllog_segments.trig_problems`(解析端另寫的判準)對每個區塊都沒有問題。
+
+P2 已知的 DIG 服務長關中斷(續一百七十三 lc173a:G 一筆 0x3ea8e .. 0x3f0bd 共 44077 條遊戲指令、9.327 ms 沒有中斷):
+   至少一個 if 區塊、條數 >= 40000,而且是這一型:區間第一條 rt(0x3f0ab) ret(0x3f0aa cli 之後)、最後一條 rt(0x3f0bc) sti、
+   結束那一條 rt(0x3f0bd) pop ebp(if=1);區間內全是 cs 0170(rt = 靜態 + 0x19c000)。
+   同一份紀錄的 G 紀錄:涵蓋這段 n 的 G 都是 P 0170(條數相加 = 區塊條數),Y 與 G 兩條路徑一致。
+   這型的條數 < 44077(G 那筆還包含 ISR 進入到 cli 之前的部分)。
+
+P3 探查(不判成敗):ng 600 .. 604(續一百七十二的 602 = 69 + 533)、ng 375(續一百六十五的 MDI 離群)、
+   0070 起頭、1000 .. 2000 條的 if 區間(續一百七十三 9262 ms 那次的 DOS/4GW 0070:0d81 .. 0e6b)出不出現、出現在哪,照實記。
+   沒寫出不等於沒發生:看 YC 的符合數與 YN 的區間總數。
+
+---- lc174a 之後、lc174b 之前補(lc174a 結果見 README;lc174b 跑完不改) ----
+lc174a 暴露的工具缺口(已修,calllog4 重編):harness 收尾砍掉模擬器 → 只在結尾寫的 YC / YN 沒寫出、最後一行寫到一半;
+每條規則 8 個的上限在 START 之前就用完。修正:每寫一個區塊與每 >= 1000 ms 寫一組 YC / YN 並 flush、FD2_CALLLOG_TRIGT 時間窗、
+calllog_segments `_read` 丟掉檔尾沒有換行的那一行(tail_cut)。
+lc174b 設定:同 lc174a,另加 FD2_CALLLOG_TRIGT=9500-24000。
+
+P4 被砍掉之後:紀錄裡有 4 條規則的 YC 與 ng / if 的 YN(最後一組);每個區塊都有 YE;YC 的寫出數 = 該規則的區塊數、<= 符合數。
+P5 時間窗:沒有 t1 < 9500 的區塊。
+P6 START 那一下:START 的放開鍵(最後一個 K 09c)之後 10 ms 內,有一個 ret(0x3f0ab).. sti(0x3f0bc)型的 if 區塊結束,
+   之後有一個 ng 600 .. 604 區塊:第一條 0080:0ed6、結束那一條 rt(0x3f0be)、區塊內有 YI 09 在 0080:06ca(lc173a 的 602 型、lc174a 的 #13)。

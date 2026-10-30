@@ -23,6 +23,8 @@ episode  兩段遊戲 selector 之間的非遊戲 run 與 I 紀錄;以「離開�
     python tools/calllog_segments.py irq      <CALLLOG>           # 硬體中斷(I type 0)收在哪:(模式, CS, EIP) 與所在 episode
     python tools/calllog_segments.py disasm   <CALLLOG> [--cs CS] # 紀錄裡帶 c= 的每個位置的第一條指令(capstone;沒有就只印位元組)
     python tools/calllog_segments.py io       <CALLLOG> [--port P] # O / N(FD2_CALLLOG_IO)與 K(FD2_CALLLOG_KBD)依 n 排序
+    python tools/calllog_segments.py trig     <CALLLOG> [--block SEQ] [--insns]
+                                                       # 觸發區塊(FD2_CALLLOG_TRIG):統計、自核、run 路徑;--insns 逐條
     python tools/calllog_segments.py --selftest
 
 模式字元:r 真實模式、v V86、p 16 位元保護模式、P 32 位元保護模式(r / v / p 以 16 位元反組譯)。
@@ -30,12 +32,19 @@ episode  兩段遊戲 selector 之間的非遊戲 run 與 I 紀錄;以「離開�
 它們在指令執行當中寫出,不切斷 S 的合併,與 G 的先後以 n 為準。O / N 的 eip:CPU 的 in / out 是那條指令本身
 (lc173a 逐條窗內 144 / 144 與同 n 的 S 相同);DOSBox-X callback(C++ 的 BIOS 程式)自己做的 I/O 是 callback 指令之後
 (lc173a 的 25 筆 N 0021 在 f000:d105,同 n 的 S 是 f000:d101)。
+續一百七十四:Y .. YE 是 FD2_CALLLOG_TRIG 觸發寫出的區塊(一段非遊戲 selector 的連續指令,或一段開始執行時 IF = 0 的連續指令,
+條數符合規則才寫;前文若干條 + 區間 + 結束那一條),YS 逐條、YI 中斷,另存在 `Log.trigs`,不進 runs(n 與 G / S 不相接)。
+`trig_problems` 用這裡自己的定義重核每個區塊(與 C++ 端分開實作):n 連號、條數、第一條、區間內外的判斷。
+YC / YN 是到那時為止的每條規則符合 / 寫出數與每種區間總數(每寫一個區塊、定期與結尾都寫,取最後一組;
+沒寫出的不等於沒發生,看這兩個)。harness 收尾是砍掉模擬器,最後一行常寫到一半:`_read` 只在檔尾沒有換行時丟掉那一行(`tail_cut`)。
 只讀紀錄檔,不寫任何檔案。
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
 import difflib
+import io as io_mod
 import re
 import statistics
 import sys
@@ -56,6 +65,14 @@ _I = re.compile(r"^I ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{
 _IO = re.compile(r"^([ON]) ([0-9a-f]{4}) ([0-9a-f]+) ([124]) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)"
                  + _SL + "$")
 _K = re.compile(r"^K ([0-9a-f]{3}) (\d+) n=(\d+) t=([0-9.]+)" + _SL + "$")
+# 續一百七十四 FD2_CALLLOG_TRIG:觸發寫出的區塊 Y .. YE(內含 YS / YI)與結尾統計 YC / YN
+_Y = re.compile(r"^Y (\d+) (ng|if) (\d+) (\d+) n0=(\d+) n1=(\d+) t0=([0-9.]+) t1=([0-9.]+) ([0-9a-f]{4}) ([0-9a-f]{8})"
+                r"( trunc=1)?$")
+_YS = re.compile(r"^YS ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) if=([01])" + _SL + r"(?: c=([0-9a-f?]{32}))?$")
+_YI = re.compile(r"^YI ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)" + _SL + "$")
+_YE = re.compile(r"^YE (\d+)$")
+_YC = re.compile(r"^YC (\d+) (ng|if) (\d+) (\d+)$")
+_YN = re.compile(r"^YN (ng|if) (\d+)$")
 _H_CS = re.compile(r"\bcs=([0-9a-f]{4})\b")
 
 
@@ -123,6 +140,59 @@ class Key:
 
 
 @dataclass
+class Insn:
+    """觸發區塊裡的一條指令(YS)。"""
+
+    m: str
+    cs: int
+    eip: int
+    n: int
+    iff: int  # 這條指令開始執行前的 IF
+    sl: tuple[int, int, int] | None = None
+
+
+@dataclass
+class Trig:
+    """FD2_CALLLOG_TRIG 寫出的一個區塊(Y .. YE)。"""
+
+    seq: int
+    kind: str      # "ng" / "if"
+    rule: int
+    count: int     # 區間的指令數
+    n0: int        # 區間第一條指令的 n
+    n1: int        # 區間最後一條指令的 n
+    t0: float
+    t1: float
+    cs: int        # 區間第一條指令
+    eip: int
+    trunc: bool    # 環形緩衝已經沒有區間開頭
+    insns: list[Insn] = field(default_factory=list)
+    irqs: list[Irq] = field(default_factory=list)
+    order: list[tuple[str, int]] = field(default_factory=list)  # ("S", insns 索引) / ("I", irqs 索引)
+    code: dict[tuple[str, int, int], bytes | None] = field(default_factory=dict)
+    complete: bool = False  # 讀到相符的 YE
+
+    def span(self) -> list[Insn]:
+        """區間本身的指令(不含前文與結束那一條)。"""
+        return [x for x in self.insns if self.n0 <= x.n <= self.n1]
+
+    def runs(self) -> list[Run]:
+        """區塊內連續同 selector / 模式的指令併成 run(帶逐條 EIP)。"""
+        out: list[Run] = []
+        for x in self.insns:
+            last = out[-1] if out else None
+            if last is not None and last.m == x.m and last.cs == x.cs and last.n_end + 1 == x.n:
+                last.e1 = x.eip
+                last.count += 1
+                last.n_end = x.n
+                assert last.eips is not None
+                last.eips.append(x.eip)
+            else:
+                out.append(Run(x.m, x.cs, x.eip, x.eip, 1, x.n, [x.eip]))
+        return out
+
+
+@dataclass
 class Episode:
     """兩段遊戲 selector 之間的非遊戲指令。"""
 
@@ -155,6 +225,10 @@ class Log:
     gaps: list[tuple[int, int]]     # (前一段 n_end, 這段 n_start) 不相接的地方
     ios: list[Io] = field(default_factory=list)    # O / N,檔案次序
     keys: list[Key] = field(default_factory=list)  # K,檔案次序
+    trigs: list[Trig] = field(default_factory=list)                    # Y .. YE 區塊
+    trig_counts: dict[int, tuple[str, int, int]] = field(default_factory=dict)  # YC:規則 -> (種類, 符合, 寫出)
+    trig_spans: dict[str, int] = field(default_factory=dict)          # YN:種類 -> 區間數
+    tail_cut: bool = False  # 檔尾最後一行沒有換行(寫的人被砍掉),`_read` 已丟掉那一行
 
 
 def _slices(mt: re.Match[str], first: int) -> tuple[int, int, int] | None:
@@ -190,11 +264,65 @@ def parse(lines: Iterable[str]) -> Log:
     ios: list[Io] = []
     keys: list[Key] = []
     prev_kind = ""  # 上一筆 G / S / I 紀錄的種類;只有接在 S 後面的 S 才能併進同一段
+    trigs: list[Trig] = []
+    trig_counts: dict[int, tuple[str, int, int]] = {}
+    trig_spans: dict[str, int] = {}
     for ln, raw in enumerate(lines, 1):
         line = raw.rstrip("\r\n")
         if not line:
             continue
         k = line[0]
+        if k == "Y":
+            # 觸發區塊與主紀錄分開存:區塊的 n 不與 G / S 相接,不能進 runs
+            tag = line.partition(" ")[0]
+            cur = trigs[-1] if trigs and not trigs[-1].complete else None
+            if tag == "Y":
+                my = _Y.match(line)
+                if not my:
+                    raise ValueError(f"line {ln}: bad Y record: {line[:80]}")
+                trigs.append(Trig(int(my.group(1)), my.group(2), int(my.group(3)), int(my.group(4)), int(my.group(5)),
+                                  int(my.group(6)), float(my.group(7)), float(my.group(8)), int(my.group(9), 16),
+                                  int(my.group(10), 16), my.group(11) is not None))
+            elif tag == "YS":
+                ms = _YS.match(line)
+                if not ms:
+                    raise ValueError(f"line {ln}: bad YS record: {line[:80]}")
+                if cur is None:
+                    raise ValueError(f"line {ln}: YS outside a Y block")
+                m, cs, e = ms.group(1), int(ms.group(2), 16), int(ms.group(3), 16)
+                if ms.group(9) is not None:
+                    cur.code[(m, cs, e)] = _code(ms.group(9))
+                cur.insns.append(Insn(m, cs, e, int(ms.group(4)), int(ms.group(5)), _slices(ms, 6)))
+                cur.order.append(("S", len(cur.insns) - 1))
+            elif tag == "YI":
+                mi = _YI.match(line)
+                if not mi:
+                    raise ValueError(f"line {ln}: bad YI record: {line[:80]}")
+                if cur is None:
+                    raise ValueError(f"line {ln}: YI outside a Y block")
+                cur.irqs.append(Irq(int(mi.group(1), 16), int(mi.group(2), 16), mi.group(3), int(mi.group(4), 16),
+                                    int(mi.group(5), 16), int(mi.group(6)), float(mi.group(7)), _slices(mi, 8)))
+                cur.order.append(("I", len(cur.irqs) - 1))
+            elif tag == "YE":
+                me = _YE.match(line)
+                if not me:
+                    raise ValueError(f"line {ln}: bad YE record: {line[:80]}")
+                if cur is None or cur.seq != int(me.group(1)):
+                    raise ValueError(f"line {ln}: YE {me.group(1)} does not close the open Y block")
+                cur.complete = True
+            elif tag == "YC":
+                mc = _YC.match(line)
+                if not mc:
+                    raise ValueError(f"line {ln}: bad YC record: {line[:80]}")
+                trig_counts[int(mc.group(1))] = (mc.group(2), int(mc.group(3)), int(mc.group(4)))
+            elif tag == "YN":
+                mn = _YN.match(line)
+                if not mn:
+                    raise ValueError(f"line {ln}: bad YN record: {line[:80]}")
+                trig_spans[mn.group(1)] = int(mn.group(2))
+            else:
+                raise ValueError(f"line {ln}: unknown Y record: {line[:80]}")
+            continue
         if k == "H" and game_cs is None:
             mh = _H_CS.search(line)
             if not mh:
@@ -256,7 +384,7 @@ def parse(lines: Iterable[str]) -> Log:
     if game_cs is None:
         raise ValueError("no H record")
     gaps = [(a.n_end, b.n_start) for a, b in zip(runs, runs[1:]) if b.n_start != a.n_end]
-    return Log(game_cs, runs, irqs, order, code, gaps, ios, keys)
+    return Log(game_cs, runs, irqs, order, code, gaps, ios, keys, trigs, trig_counts, trig_spans)
 
 
 def episodes(log: Log) -> list[Episode]:
@@ -389,8 +517,13 @@ def disasm_one(m: str, eip: int, code: bytes) -> str:
 
 
 def _read(path: str) -> Log:
-    with open(path, encoding="ascii", errors="replace") as f:
-        return parse(f)
+    """讀紀錄檔;檔尾沒有換行的最後一行(harness 砍掉模擬器時寫到一半)丟掉並標 `tail_cut`,其餘格式錯誤照樣報。"""
+    with open(path, encoding="ascii", errors="replace", newline="") as f:
+        lines = f.readlines()
+    cut = bool(lines) and not lines[-1].endswith("\n")
+    log = parse(lines[:-1] if cut else lines)
+    log.tail_cut = cut
+    return log
 
 
 def cmd_summary(log: Log) -> int:
@@ -495,6 +628,82 @@ def cmd_io(log: Log, ports: list[int]) -> int:
     for line in io_events(log, set(ports) if ports else None):
         print(line)
     return 0
+
+
+def trig_problems(t: Trig, game_cs: int) -> list[str]:
+    """用解析端自己的定義重核一個觸發區塊(與 C++ 端判斷分開實作),回傳不符的地方。
+
+    Args:
+        t: 一個 Y 區塊。
+        game_cs: H 的遊戲 selector。
+
+    Returns:
+        問題清單;空清單 = 區塊與它的標頭一致。
+    """
+    bad: list[str] = []
+    if not t.complete:
+        bad.append("no YE")
+    ns = [x.n for x in t.insns]
+    if any(b != a + 1 for a, b in zip(ns, ns[1:])):
+        bad.append("YS n not consecutive")
+    if t.n1 - t.n0 + 1 != t.count:
+        bad.append(f"n1 - n0 + 1 = {t.n1 - t.n0 + 1} != count {t.count}")
+    sp = t.span()
+    if not t.trunc:
+        if len(sp) != t.count:
+            bad.append(f"span holds {len(sp)} instructions, header says {t.count}")
+        elif (sp[0].cs, sp[0].eip) != (t.cs, t.eip):
+            bad.append("first span instruction differs from the header")
+    inside = (lambda x: x.cs != game_cs) if t.kind == "ng" else (lambda x: x.iff == 0)
+    if not all(inside(x) for x in sp):
+        bad.append(f"a span instruction is outside the {t.kind} span")
+    after = [x for x in t.insns if x.n == t.n1 + 1]
+    if len(after) != 1 or inside(after[0]):
+        bad.append("the instruction after the span is missing or still inside it")
+    before = [x for x in t.insns if x.n == t.n0 - 1]
+    if before and inside(before[0]) and not t.trunc:
+        bad.append("the instruction before the span is inside it")
+    return bad
+
+
+def cmd_trig(log: Log, block: int | None, insns: bool) -> int:
+    """印觸發區塊:結尾統計、每個區塊的標頭、自核結果、run 路徑、中斷;--insns 逐條反組譯。"""
+    for r, (kind, matched, written) in sorted(log.trig_counts.items()):
+        print(f"rule {r} {kind}: matched {matched}, written {written}")
+    for kind, n in sorted(log.trig_spans.items()):
+        print(f"{kind} spans {n}")
+    rc = 0
+    for t in log.trigs:
+        if block is not None and t.seq != block:
+            continue
+        bad = trig_problems(t, log.game_cs)
+        rc |= 1 if bad else 0
+        print(f"#{t.seq} {t.kind} rule {t.rule}: {t.count} instructions n {t.n0}..{t.n1}, {t.t0:.6f} .. {t.t1:.6f} ms "
+              f"({t.t1 - t.t0:.4f}), first {t.cs:04x}:{t.eip:08x}{' TRUNC' if t.trunc else ''}"
+              f"{'' if not bad else ' PROBLEMS: ' + '; '.join(bad)}")
+        if insns:
+            irq_at: defaultdict[int, list[Irq]] = defaultdict(list)
+            for q in t.irqs:
+                irq_at[q.n].append(q)
+            for x in t.insns:
+                for q in irq_at.pop(x.n - 1, []):
+                    print(f"    I {q.num:02x} type {q.type:x} at {q.m} {q.cs:04x}:{q.eip:08x} {q.t:.6f}")
+                c = t.code.get((x.m, x.cs, x.eip))
+                text = "" if c is None else disasm_one(x.m, x.eip, c)
+                mark = "*" if t.n0 <= x.n <= t.n1 else " "
+                print(f"  {mark}{x.m} {x.cs:04x}:{x.eip:08x} if={x.iff} n={x.n}  {text}")
+            for lst in irq_at.values():
+                for q in lst:
+                    print(f"    I {q.num:02x} type {q.type:x} at {q.m} {q.cs:04x}:{q.eip:08x} {q.t:.6f} (n={q.n})")
+        else:
+            rs = t.runs()
+            for r in rs[:40]:
+                print(f"    {r.m} {r.cs:04x}:{r.e0:08x}-{r.e1:08x} x{r.count}")
+            if len(rs) > 40:
+                print(f"    ... +{len(rs) - 40} runs")
+            for q in t.irqs:
+                print(f"    I {q.num:02x} type {q.type:x} at {q.m} {q.cs:04x}:{q.eip:08x} n={q.n} {q.t:.6f}")
+    return rc
 
 
 def selftest() -> int:
@@ -657,6 +866,133 @@ def selftest() -> int:
             check(False, f"bad record must raise: {bad}")
         except ValueError as e:
             check(str(e).startswith(f"line 2: bad {bad[0]} record"), f"error names the kind: {bad}")
+    # 續一百七十四:觸發區塊(ng 區間 3 條,前文 2 條,結束那一條回到遊戲;中間一筆 YI 不切斷)
+    c90 = "90" * 16
+    yl = ["H fd2calllog 1 cs=0170 trig=ng:3 trigring=1024 trigpre=2 trigcap=20",
+          "Y 1 ng 0 3 n0=12 n1=14 t0=1.5 t1=1.75 0080 00000ed6",
+          "YS P 0170 0003eb10 n=10 if=1 c=" + c90,
+          "YS P 0170 0003eb11 n=11 if=1",
+          "YS p 0080 00000ed6 n=12 if=0 c=cf" + "00" * 15,
+          "YI 1c 1e p 0080 00000ed7 n=12 t=1.6 k=7 b=8 w=-9",
+          "YS p 0088 00000ed7 n=13 if=1 k=4 b=5 w=-6",
+          "YS p 0080 00000ed8 n=14 if=1",
+          "YS P 0170 0003eb12 n=15 if=1",
+          "YE 1",
+          "YC 0 ng 3 2", "YN ng 5", "YN if 2"]
+    ty = parse(yl)
+    check(len(ty.trigs) == 1 and ty.runs == [] and ty.irqs == [] and ty.code == {},
+          "trigger block kept apart from the main runs / irqs / code")
+    t1 = ty.trigs[0]
+    check((t1.seq, t1.kind, t1.rule, t1.count, t1.n0, t1.n1, t1.t0, t1.t1, t1.cs, t1.eip, t1.trunc, t1.complete) ==
+          (1, "ng", 0, 3, 12, 14, 1.5, 1.75, 0x80, 0xED6, False, True), "Y header fields")
+    check([x.n for x in t1.span()] == [12, 13, 14] and len(t1.insns) == 6, "span vs pre-context and closing instruction")
+    check(t1.insns[3] == Insn("p", 0x88, 0xED7, 13, 1, (4, 5, -6)) and t1.insns[2].iff == 0, "YS fields")
+    check(t1.irqs == [Irq(0x1C, 0x1E, "p", 0x80, 0xED7, 12, 1.6, (7, 8, -9))]
+          and t1.order == [("S", 0), ("S", 1), ("S", 2), ("I", 0), ("S", 3), ("S", 4), ("S", 5)],
+          "YI fields (hex num / type, slices) and order")
+    check([(r.m, r.cs, r.e0, r.e1, r.count) for r in t1.runs()] ==
+          [("P", 0x170, 0x3EB10, 0x3EB11, 2), ("p", 0x80, 0xED6, 0xED6, 1), ("p", 0x88, 0xED7, 0xED7, 1),
+           ("p", 0x80, 0xED8, 0xED8, 1), ("P", 0x170, 0x3EB12, 0x3EB12, 1)], "block runs split by selector, not by YI")
+    check(Trig(1, "ng", 0, 2, 1, 2, 0.0, 0.0, 0x80, 1, False,
+               [Insn("p", 0x80, 1, 1, 1), Insn("p", 0x80, 2, 3, 1)]).runs()[1].e0 == 2, "n gap splits a block run")
+    check(t1.code == {("P", 0x170, 0x3EB10): bytes.fromhex(c90), ("p", 0x80, 0xED6): bytes.fromhex("cf" + "00" * 15)},
+          "block code bytes")
+    check(ty.trig_counts == {0: ("ng", 3, 2)} and ty.trig_spans == {"ng": 5, "if": 2}, "YC / YN")
+    check(trig_problems(t1, 0x170) == [], "consistent block has no problems")
+    # 對照:每種不一致各注入一次,都要被抓到
+    def tp(repl: tuple[int, str]) -> list[str]:
+        ls = list(yl)
+        ls[repl[0]] = repl[1]
+        return trig_problems(parse(ls).trigs[0], 0x170)
+
+    check("n1 - n0 + 1 = 3 != count 4" in tp((1, "Y 1 ng 0 4 n0=12 n1=14 t0=1.5 t1=1.75 0080 00000ed6")),
+          "fault: header count off by one")
+    check(any("consecutive" in p for p in tp((6, "YS p 0080 00000ed7 n=12 if=1"))), "fault: repeated n")
+    check(any("after the span" in p for p in tp((8, "YS p 0080 0003eb12 n=15 if=1"))), "fault: span did not end")
+    check(any("before the span" in p for p in tp((3, "YS p 0080 0003eb11 n=11 if=1"))), "fault: span started earlier")
+    check(any("outside the ng span" in p for p in tp((6, "YS P 0170 00000ed7 n=13 if=1"))), "fault: game insn in span")
+    check(any("differs from the header" in p for p in tp((1, "Y 1 ng 0 3 n0=12 n1=14 t0=1.5 t1=1.75 0088 00000ed6"))),
+          "fault: header first selector")
+    check(any("differs from the header" in p for p in tp((1, "Y 1 ng 0 3 n0=12 n1=14 t0=1.5 t1=1.75 0080 00000ed7"))),
+          "fault: header first instruction")
+    open_blk = parse(yl[:9]).trigs[0]
+    check(not open_blk.complete and "no YE" in trig_problems(open_blk, 0x170), "fault: missing YE")
+    # if 區間用 IF 判斷(對照:同一份資料當 ng 看就不符)
+    il = ["H x cs=0170", "Y 2 if 1 2 n0=6 n1=7 t0=1.0 t1=2.0 0170 00000010",
+          "YS P 0170 0000000f n=5 if=1", "YS P 0170 00000010 n=6 if=0", "YS P 0170 00000011 n=7 if=0",
+          "YS P 0170 00000012 n=8 if=1", "YE 2"]
+    ti = parse(il).trigs[0]
+    check(trig_problems(ti, 0x170) == [], "if block consistent")
+    ti.kind = "ng"
+    check(trig_problems(ti, 0x170) != [], "control: same block judged as ng fails")
+    # trunc:區間比留下的短時只在 trunc=1 下可以
+    tl = ["H x cs=0170", "Y 3 ng 0 4 n0=10 n1=13 t0=1.0 t1=2.0 0080 00000001 trunc=1",
+          "YS p 0080 00000003 n=12 if=1", "YS p 0080 00000004 n=13 if=1", "YS P 0170 00000005 n=14 if=1", "YE 3"]
+    check(trig_problems(parse(tl).trigs[0], 0x170) == [], "truncated block accepted with trunc=1")
+    check(any("span holds 2" in p for p in trig_problems(parse([tl[0], tl[1].replace(" trunc=1", "")] + tl[2:]).trigs[0],
+                                                          0x170)), "control: same block without trunc=1 fails")
+    for bad, msg in ((["YS P 0170 00000001 n=1 if=1"], "outside a Y block"),
+                     (yl[1:3] + ["YE 9"], "does not close"),
+                     (["YZ 1"], "unknown Y record"),
+                     (["Y 1 ng 0 3 n0=1 n1=3 t0=1 t1=2 80 00000001"], "bad Y record"),
+                     (yl[1:2] + ["YS P 0170 00000001 n=1 if=2"], "bad YS record")):
+        try:
+            parse(["H x cs=0170"] + bad)
+            check(False, f"must raise: {msg}")
+        except ValueError as e:
+            check(msg in str(e), f"error text: {msg}")
+    buf = io_mod.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc_ok = cmd_trig(ty, None, True)
+    out_lines = buf.getvalue().splitlines()
+    check(rc_ok == 0 and out_lines[0] == "rule 0 ng: matched 3, written 2", "cmd_trig summary and rc 0")
+    i_line = next((k for k, s in enumerate(out_lines) if s.startswith("    I 1c type 1e at p 0080:00000ed7")), -1)
+    check(i_line > 0 and "n=13" in out_lines[i_line + 1] and "n=12" in out_lines[i_line - 1],
+          "YI printed between the instructions it fell between")
+    check(sum(1 for s in out_lines if s.startswith("  *")) == 3, "span instructions marked")
+    with contextlib.redirect_stdout(io_mod.StringIO()):
+        rc_bad = cmd_trig(parse(yl[:9]), None, False)
+    check(rc_bad == 1, "cmd_trig rc 1 on a block with problems")
+    # --block 篩選(對照:不存在的 seq 一個區塊也不印)
+    for seq, want in ((1, 1), (2, 0)):
+        buf = io_mod.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_trig(ty, seq, False)
+        check(sum(1 for s in buf.getvalue().splitlines() if s.startswith("#")) == want, f"--block {seq} prints {want}")
+    # run 超過 40 個只印前 40 個:42 條交替 selector + 結束那條(0170,接在 0171 後另起)= 43 個 run;
+    # 41 條時最後一條是 0170,結束那條併進去 = 41 個 run(對照:剛好超過 1 個也要截)
+    for nr, more in ((42, 3), (41, 1)):
+        ml = ["H x cs=0170", f"Y 5 if 0 {nr} n0=1 n1={nr} t0=1.0 t1=2.0 0170 00000000"]
+        ml += [f"YS P {0x170 if k % 2 == 0 else 0x171:04x} {k:08x} n={k + 1} if=0" for k in range(nr)]
+        ml += [f"YS P 0170 {nr:08x} n={nr + 1} if=1", "YE 5"]
+        buf = io_mod.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_trig(parse(ml), None, False)
+        lines_m = buf.getvalue().splitlines()
+        check(sum(1 for s in lines_m if s.startswith("    P ")) == 40 and f"    ... +{more} runs" in lines_m,
+              f"run listing capped at 40 ({40 + more} runs)")
+    # 檔尾寫到一半(沒有換行)的那一行丟掉並標 tail_cut;對照:有換行的壞行照樣報錯、完整檔不標
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        good = "H x cs=0170\nS r f000 00000010 n=1\n"
+        pth = Path(td) / "c.txt"
+        pth.write_bytes((good + "S r f000 0000").encode("ascii"))
+        lc = _read(str(pth))
+        check(lc.tail_cut and len(lc.runs) == 1, "cut tail dropped and flagged")
+        pth.write_bytes(good.encode("ascii"))
+        check(not _read(str(pth)).tail_cut and len(_read(str(pth)).runs) == 1, "control: complete file not flagged")
+        pth.write_bytes((good + "S r f000 0000\n").encode("ascii"))
+        try:
+            _read(str(pth))
+            check(False, "a bad line with its newline must still raise")
+        except ValueError:
+            pass
+        pth.write_bytes((good + "S r f000 0000\r\n").encode("ascii"))
+        try:
+            _read(str(pth))
+            check(False, "a bad CRLF line must still raise")
+        except ValueError:
+            pass
     # 反組譯:同一組位元組 16 / 32 位元解法不同(模式要真的影響結果)
     b = bytes.fromhex("b801000000")
     d16, d32 = disasm_one("r", 0, b), disasm_one("P", 0, b)
@@ -674,10 +1010,10 @@ def selftest() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """命令列入口。"""
-    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 G / S / I / O / N / K 紀錄")
+    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 G / S / I / O / N / K / Y 紀錄")
     ap.add_argument("--selftest", action="store_true")
     sub = ap.add_subparsers(dest="cmd")
-    for name in ("summary", "episodes", "diff", "irq", "disasm", "io"):
+    for name in ("summary", "episodes", "diff", "irq", "disasm", "io", "trig"):
         sp = sub.add_parser(name)
         sp.add_argument("log")
         if name == "episodes":
@@ -689,6 +1025,9 @@ def main(argv: list[str] | None = None) -> int:
             sp.add_argument("--cs", type=lambda s: int(s, 16), default=None)
         if name == "io":
             sp.add_argument("--port", action="append", type=lambda s: int(s, 16), default=[])
+        if name == "trig":
+            sp.add_argument("--block", type=int, default=None, help="只印這個區塊(Y 的 seq)")
+            sp.add_argument("--insns", action="store_true", help="逐條指令(含反組譯與中斷位置)")
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
@@ -700,6 +1039,8 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as e:
         print(f"FAIL: {args.log}: {e}")
         return 1
+    if log.tail_cut:
+        print("note: last line had no newline (writer killed); dropped", file=sys.stderr)
     if args.cmd == "summary":
         return cmd_summary(log)
     if args.cmd == "episodes":
@@ -710,6 +1051,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_irq(log)
     if args.cmd == "io":
         return cmd_io(log, args.port)
+    if args.cmd == "trig":
+        return cmd_trig(log, args.block, args.insns)
     return cmd_disasm(log, args.cs)
 
 
