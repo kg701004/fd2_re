@@ -115,6 +115,13 @@
    "excerpt": "> 續一百五十七更正(doc98,DOSBox-X 除錯器讀 DAC):上一段的「全部 256 色」應為索引 0 .. 254。0x2df01 的上界 0xff 不含,",
    "verdict": "not_address_erratum",
    "note": "訂正的是 0x2df01 寫到的 DAC 索引範圍(256 色 → 0 .. 254),位址本身沒有錯"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "6f2570654ce604f812f1437822c58eb95f82f00a",
+   "excerpt": "doc12 §結論一「五處全部走 `0x51e63`」只對它列的五處成立;§`0x51e81` 改為敵方回合曲(續一百七十 lc167a 的驅動呼叫逐次對上 FDMUS_012)(STATIC ANALYSIS + DOSBox-X 呼叫紀",
+   "verdict": "not_address_erratum",
+   "note": "更正的是 0x51e81 表的語意(敵方回合曲)與 doc12 一句話的適用範圍,兩個表位址本身沒錯"
   }
  ]
 }

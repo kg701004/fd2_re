@@ -355,7 +355,7 @@ def via_hook(e: cs.Episode) -> bool:
 MDI_ALL = [e for e in G_A[(rt(0x3F1A2), rt(0x3F1A2) + 2)] if DRV_IN in [(r.m, r.cs, r.e0) for r in e.runs]]
 _hook = [via_hook(e) for e in MDI_ALL]
 HOOKED = {"calls": len(_hook), "via_137c": sum(_hook),
-          # 沒經過 137c 的全排在經過的前面(只記錄觀察;137c 是誰、何時掛上的沒查)
+          # 沒經過 137c 的全排在經過的前面(續一百七十二:137c 是 DIG 驅動,在 3400 .. 3700 ms 空窗裡掛上)
           "without_first": max(e.index for e, h in zip(MDI_ALL, _hook) if not h) < min(e.index for e, h in zip(MDI_ALL, _hook) if h)}
 assert HOOKED == {"calls": 131, "via_137c": 111, "without_first": True}, HOOKED
 MDI_EPS = [_ep_of_irq[id(q)] for q in MDI_IRQ]
@@ -378,7 +378,8 @@ CONC = {
     "mdi_irq": f"MDI 驅動呼叫期間的硬體中斷 {len(MDI_IRQ)} 次全收在 0c5c:1fad(DOS/4GW 真實模式模擬中斷那段 int 66h 的下一條 pushf,"
                f"再下一條才 cli);前一段都是 SBPRO2.MDI(0f71,從位移 0 載入)結尾在 01b1 的 iret。所以是驅動 iret 把 IF 打開之後、"
                f"DOS/4GW 返回路徑的第一條指令收的。完整的 {HOOKED['calls']} 次驅動呼叫裡 {HOOKED['via_137c']} 次 int 66h 先進 137c:016a 的掛勾"
-               f"(AX 0x300 .. 0x4ff,ljmp cs:[0x36] 轉給驅動),其餘直接進驅動、而且都在前面;137c 是誰的、何時掛上的沒查。",
+               f"(AX 不在自己的 0x300 .. 0x4ff 時經 ljmp cs:[0x36] 轉給驅動),其餘直接進驅動、而且都在前面。"
+               f"(續一百七十二更正:原寫成「0x300 .. 0x4ff 時轉給驅動」是反的;137c 是 DIG 驅動 SB16.DIG,在 3400 .. 3700 ms 空窗裡掛上。)",
 }
 for _part, _key in (("6 條", "cf_branch"), ("259 次全走長路", "cf_branch"), ("8431 次全走短路", "cf_branch"),
                     ("481.49 .. 484.51", "rep"), ("475.44 .. 476.5", "rep"), ("長度差 6", "rep"), ("3 次全收在 0c5c:1fad", "mdi_irq"), ("01b1 的 iret", "mdi_irq")):

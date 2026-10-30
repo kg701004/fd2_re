@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 68 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 69 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百七十二(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s172.py` | `calllog_slices_s172_20261030.json` | `mut_s172.py`(25) |
+
+呼叫紀錄加時間片欄位(`FD2_CALLLOG_SLICES`)與 PIC 事件計數(`FD2_CALLLOG_PICEV`)、harness 加 `FD2_HARNESS_DOS_TIME`,兩次開機到 START 的實機 lc172a / lc172b(驅動、實機前的預測、DOSBox-X 原始碼摘錄與 nm 子集在 [`drivers_s172/`](drivers_s172/README.md)):DOS 秒數 0 那一秒 delay 走長路、delay 每條指令時間隨時段變的原因(DOSBox-X Sound Blaster 的 DMA_DAC_Event 切出的時間片)、rep 多記的機制、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄)。
 
 ## 續一百七十一(2026-10-30)
 

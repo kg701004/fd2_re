@@ -29,6 +29,11 @@ FD2_CALLLOG_GATE=<EIP> 在那個 EIP 第一次執行之前不寫 E,免得開機�
 窗尾加 `:x` 的窗改成每條指令一筆 S;每次 `CPU_Interrupt` 寫一筆 I(中斷號、種類、當時的 CS:EIP)。I 要另外修補
 src/cpu/cpu.cpp(`CPU_Interrupt` 開頭呼叫 `fd2calllog_interrupt`)。解析在 `tools/calllog_segments.py`。不設時輸出與之前逐字相同。
 已修補過舊版的樹用 `--upgrade` 換掉舊的插入段(目的檔留著,make 只重編 debug.cpp / cpu.cpp)。
+2026-10-30 續一百七十二:加 FD2_CALLLOG_SLICES(harness 的 FD2_HARNESS_CALLLOG_SLICES)。續一百六十五「delay 每條指令的週期數隨時段變 0.5%」
+與續一百七十一「同一條 rep 多記一次」都推到 DOSBox-X 的時間片,但紀錄看不到時間片。設了之後每筆 E / R / A / I / G / S 附
+「到這條指令為止」的時間片數 k、片起點多出的週期 b、片內多出的週期 w(定義寫在插入的 C++ 註解);不設時輸出與之前逐字相同。
+同輪另加 FD2_CALLLOG_PICEV(harness 的 FD2_HARNESS_CALLLOG_PICEV):時間片是在下一個 PIC 事件處切的,要知道片頭每 ms 多出的
+約 22 片是哪個模擬裝置排的事件,就在 src/hardware/pic.cpp 的 PIC_RunQueue 呼叫處理函式之前計數,每 100 ms 寫一筆 P。
 `--selftest` 只檢查文字修補本身(錨點、重複修補、升級、兩檔一致);C++ 是否編得過、紀錄是否正確要實際建置再跑。
 """
 from __future__ import annotations
@@ -47,6 +52,14 @@ CPU_ANCHOR = "\tlastint=(uint8_t)num;\n\tFillFlags();\n"
 CPU_HOOK = ("#if C_DEBUG && C_HEAVY_DEBUG\n"
             "\t{ void fd2calllog_interrupt(Bitu num,Bitu type,uint32_t oldeip); /* fd2_re local patch */\n"
             "\t  fd2calllog_interrupt(num,type,oldeip); }\n"
+            "#endif\n")
+
+# 續一百七十二:PIC 事件的處理函式計數(src/hardware/pic.cpp 的 PIC_RunQueue)。if 的本體只有一行,所以插在 if 之前。
+PIC_ANCHOR = ("            if (entry->pic_event != NULL)\n"
+              "                (entry->pic_event)(entry->value); // call the event handler\n")
+PIC_HOOK = ("#if C_DEBUG && C_HEAVY_DEBUG\n"
+            "            { void fd2calllog_picevent(void *fn); /* fd2_re local patch */\n"
+            "              fd2calllog_picevent((void *)entry->pic_event); }\n"
             "#endif\n")
 
 CODE = BEGIN + r''' * Enabled only when env FD2_CALLLOG_ENTRIES names a file of hex EIPs (whitespace separated).
@@ -77,8 +90,21 @@ CODE = BEGIN + r''' * Enabled only when env FD2_CALLLOG_ENTRIES names a file of 
  *         instruction after INT).  type = CPU_INT_* bits (0 hardware, 1 software, 2/6 exception).
  *     m = r real mode, v V86, p 16-bit protected, P 32-bit protected.  An open run is closed by an I record,
  *     a selector or mode change, the window's end and exit.
+ *   FD2_CALLLOG_SLICES=1 appends " k=<slices> b=<cycles> w=<cycles>" (cumulative, through the current
+ *     instruction) at the end of E / R / A (after i= n= t= when ICOUNT is set) and I, and after n= on G / S;
+ *     H gets " slices=1".  Emulated time in
+ *     cycles is A = PIC_Ticks * CPU_CycleMax + CPU_CycleMax - CPU_CycleLeft - CPU_Cycles, read at every
+ *     instruction; d = A - A(previous instruction) - 1 is the time that passed beyond one cycle per instruction.
+ *     A slice starts when CPU_CycleLeft or PIC_Ticks differs from the previous instruction's: k counts them,
+ *     b sums d over slice-start instructions, w sums d over the others (REP iterations, I/O delay).
+ *   FD2_CALLLOG_PICEV=1 counts PIC event handler calls (needs the src/hardware/pic.cpp hook) per 100 ms of
+ *     emulated time and writes, when a 100 ms bucket ends (and at exit):
+ *       P <bucket start ms> <handler address>=<calls>[ ...]   (addresses ascending)
+ *     H gets " picev=<run-time address of fd2calllog_picevent>"; subtract its nm address to resolve handlers.
  */
 #include <unordered_set>
+#include <map>
+void fd2calllog_picevent(void *fn);
 namespace fd2calllog {
 struct Frame { uint32_t ret, esp, entry; uint16_t ss; unsigned long long seq; };
 struct Win { double t0, t1; bool each; };
@@ -106,9 +132,47 @@ static uint32_t run_e0 = 0, run_e1 = 0;
 static unsigned long long run_n = 0, run_last = 0;
 static uint8_t run_code[16];
 static bool run_bad[16];
+static unsigned long long run_k = 0;
+static long long run_b = 0, run_w = 0;
+/* FD2_CALLLOG_SLICES state */
+static bool slices = false, sl_have = false;
+static unsigned long long sl_k = 0;
+static long long sl_b = 0, sl_w = 0, sl_a = 0, sl_left = 0;
+static Bitu sl_ticks = 0;
+/* FD2_CALLLOG_PICEV state */
+static bool picev = false;
+static std::map<uintptr_t, unsigned long long> pe_counts;
+static long long pe_bucket = -1;
+
+static void pe_flush(void) {
+    if (pe_counts.empty()) return;
+    fprintf(out, "P %lld", pe_bucket * 100);
+    for (std::map<uintptr_t, unsigned long long>::const_iterator it = pe_counts.begin(); it != pe_counts.end(); ++it)
+        fprintf(out, " %llx=%llu", (unsigned long long)it->first, it->second);
+    fputc('\n', out);
+    pe_counts.clear();
+}
+
+static void put_slices(unsigned long long k, long long b, long long w) {
+    if (slices) fprintf(out, " k=%llu b=%lld w=%lld", k, b, w);
+}
 
 static void put_icount(void) {
     if (icount) fprintf(out, " i=%llu n=%llu t=%.6f", ginstr, allinstr, (double)PIC_FullIndex());
+    put_slices(sl_k, sl_b, sl_w);
+}
+
+static void slice_step(void) {
+    const long long a = (long long)PIC_Ticks * (long long)CPU_CycleMax
+                        + (long long)(CPU_CycleMax - CPU_CycleLeft - CPU_Cycles);
+    const long long left = (long long)CPU_CycleLeft;
+    if (sl_have) {
+        const long long d = a - sl_a - 1;
+        if (left != sl_left || PIC_Ticks != sl_ticks) { sl_k++; sl_b += d; }
+        else sl_w += d;
+    }
+    sl_have = true;
+    sl_a = a; sl_left = left; sl_ticks = PIC_Ticks;
 }
 
 static char cpu_mode(void) {
@@ -177,6 +241,7 @@ static void close_run(void) {
     run_open = false;
     fprintf(out, "G %c %04x %08x %08x %llu n=%llu", run_m, (unsigned)run_cs, (unsigned)run_e0, (unsigned)run_e1,
             run_n, run_last);
+    put_slices(run_k, run_b, run_w);
     if (run_first) put_code(run_code, run_bad);
     fputc('\n', out);
 }
@@ -190,6 +255,7 @@ static void seg_step(void) {
     if (w == 1) {
         close_run();
         fprintf(out, "S %c %04x %08x n=%llu", m, (unsigned)c, (unsigned)e, allinstr);
+        put_slices(sl_k, sl_b, sl_w);
         if (first_sighting(m, c, e)) {
             uint8_t buf[16];
             bool bad[16];
@@ -203,11 +269,13 @@ static void seg_step(void) {
         run_e1 = e;
         run_n++;
         run_last = allinstr;
+        run_k = sl_k; run_b = sl_b; run_w = sl_w;
         return;
     }
     close_run();
     run_open = true;
     run_m = m; run_cs = c; run_e0 = e; run_e1 = e; run_n = 1; run_last = allinstr;
+    run_k = sl_k; run_b = sl_b; run_w = sl_w;
     run_first = first_sighting(m, c, e);
     if (run_first) read_code(run_code, run_bad);
 }
@@ -224,7 +292,7 @@ static void dump_counts(const char *tag) {
 }
 
 static void at_exit_flush(void) {
-    if (enabled && out) { close_run(); dump_counts("exit"); fclose(out); out = NULL; enabled = false; }
+    if (enabled && out) { close_run(); pe_flush(); dump_counts("exit"); fclose(out); out = NULL; enabled = false; }
 }
 
 static void init(void) {
@@ -242,7 +310,11 @@ static void init(void) {
     const char *ic_s = getenv("FD2_CALLLOG_ICOUNT");
     const char *gate_s = getenv("FD2_CALLLOG_GATE");
     const char *segs_s = getenv("FD2_CALLLOG_SEGS");
+    const char *sl_s = getenv("FD2_CALLLOG_SLICES");
+    const char *pe_s = getenv("FD2_CALLLOG_PICEV");
     icount = ic_s && *ic_s && strcmp(ic_s, "0") != 0;
+    slices = sl_s && *sl_s && strcmp(sl_s, "0") != 0;
+    picev = pe_s && *pe_s && strcmp(pe_s, "0") != 0;
     if (gate_s && *gate_s) { has_gate = true; gate_open = false; gate_eip = (uint32_t)strtoul(gate_s, NULL, 16); }
     if (segs_s && *segs_s) {
         if (!parse_segs(segs_s)) E_Exit("FD2_CALLLOG: bad FD2_CALLLOG_SEGS '%s' (t0-t1[:x][,...], ms)", segs_s);
@@ -272,6 +344,8 @@ static void init(void) {
     if (icount) fputs(" icount=1", out);
     if (has_gate) fprintf(out, " gate=%08x", (unsigned)gate_eip);
     if (segs) fprintf(out, " segs=%s", segs_s);
+    if (slices) fputs(" slices=1", out);
+    if (picev) fprintf(out, " picev=%llx", (unsigned long long)(uintptr_t)&fd2calllog_picevent);
     fputc('\n', out);
     fflush(out);
     atexit(at_exit_flush);
@@ -290,6 +364,7 @@ static void step(void) {
     if (GCC_UNLIKELY(!inited)) init();
     if (!enabled) return;
     allinstr++;
+    if (slices) slice_step();
     if (segs) seg_step();
     if (SegValue(cs) != game_cs) return;
     ginstr++;
@@ -345,14 +420,25 @@ static void step(void) {
 }
 } // namespace fd2calllog
 
+/* Called from PIC_RunQueue (src/hardware/pic.cpp, same local patch) before each event handler runs. */
+void fd2calllog_picevent(void *fn) {
+    if (GCC_UNLIKELY(!fd2calllog::inited)) fd2calllog::init();
+    if (!fd2calllog::enabled || !fd2calllog::picev) return;
+    const long long bucket = (long long)((double)PIC_FullIndex() / 100.0);
+    if (bucket != fd2calllog::pe_bucket) { fd2calllog::pe_flush(); fd2calllog::pe_bucket = bucket; }
+    fd2calllog::pe_counts[(uintptr_t)fn]++;
+}
+
 /* Called from CPU_Interrupt (src/cpu/cpu.cpp, same local patch) before the interrupt is delivered. */
 void fd2calllog_interrupt(Bitu num, Bitu type, uint32_t oldeip) {
     if (GCC_UNLIKELY(!fd2calllog::inited)) fd2calllog::init();
     if (!fd2calllog::enabled || !fd2calllog::segs || fd2calllog::seg_window() < 0) return;
     fd2calllog::close_run();
-    fprintf(fd2calllog::out, "I %02x %x %c %04x %08x n=%llu t=%.6f\n", (unsigned)num, (unsigned)type,
+    fprintf(fd2calllog::out, "I %02x %x %c %04x %08x n=%llu t=%.6f", (unsigned)num, (unsigned)type,
             fd2calllog::cpu_mode(), (unsigned)SegValue(cs), (unsigned)oldeip, fd2calllog::allinstr,
             (double)PIC_FullIndex());
+    fd2calllog::put_slices(fd2calllog::sl_k, fd2calllog::sl_b, fd2calllog::sl_w);
+    fputc('\n', fd2calllog::out);
 }
 ''' + END + "\n"
 
@@ -432,6 +518,27 @@ def patch_cpu_text(src: str) -> str:
     return src.replace(CPU_ANCHOR, CPU_ANCHOR + CPU_HOOK)  # 上面已確認恰好一處
 
 
+def patch_pic_text(src: str) -> str:
+    """回傳在 `PIC_RunQueue` 呼叫事件處理函式之前加上 `fd2calllog_picevent` 呼叫後的 pic.cpp 內容(已加過則原樣回傳)。
+
+    Args:
+        src: src/hardware/pic.cpp 內容。
+
+    Returns:
+        修補後內容。
+
+    Raises:
+        ValueError: 錨點(`if (entry->pic_event != NULL)` 後接呼叫處理函式那行)不是恰好一處。
+    """
+    if "fd2calllog_picevent" in src:
+        if src.count(PIC_HOOK + PIC_ANCHOR) != 1:
+            raise ValueError("pic.cpp mentions fd2calllog_picevent but not as the expected hook")
+        return src
+    if src.count(PIC_ANCHOR) != 1:
+        raise ValueError(f"pic.cpp anchor found {src.count(PIC_ANCHOR)} times, expected 1")
+    return src.replace(PIC_ANCHOR, PIC_HOOK + PIC_ANCHOR)  # 上面已確認恰好一處
+
+
 def selftest() -> int:
     """文字修補的自我檢查(不編譯 C++)。
 
@@ -475,7 +582,8 @@ def selftest() -> int:
         check(False, "two anchors must fail")
     except ValueError as e:
         check("2 times" in str(e), "anchor count reported")
-    for env in ("FD2_CALLLOG_ENTRIES", "FD2_CALLLOG_ICOUNT", "FD2_CALLLOG_GATE", "FD2_CALLLOG_SEGS"):
+    for env in ("FD2_CALLLOG_ENTRIES", "FD2_CALLLOG_ICOUNT", "FD2_CALLLOG_GATE", "FD2_CALLLOG_SEGS",
+                "FD2_CALLLOG_SLICES", "FD2_CALLLOG_PICEV"):
         check(env in CODE, f"CODE reads {env}")
     check("void fd2calllog_interrupt(Bitu num, Bitu type, uint32_t oldeip)" in CODE,
           "CODE defines the function the cpu.cpp hook declares")
@@ -493,6 +601,23 @@ def selftest() -> int:
     try:
         patch_cpu_text(cpu + "/* fd2calllog_interrupt */\n")
         check(False, "a stray mention without the hook must fail")
+    except ValueError:
+        pass
+    check("void fd2calllog_picevent(void *fn) {" in CODE, "CODE defines the function the pic.cpp hook declares")
+    check("void fd2calllog_picevent(void *fn);" in PIC_HOOK, "pic hook declares it")
+    pic = "\t\twhile (x) {\n" + PIC_ANCHOR + "            else\n                y();\n"
+    q1 = patch_pic_text(pic)
+    check(q1 == "\t\twhile (x) {\n" + PIC_HOOK + PIC_ANCHOR + "            else\n                y();\n",
+          "pic hook right before the if")
+    check(patch_pic_text(q1) == q1, "pic re-patch is a no-op")
+    try:
+        patch_pic_text(pic.replace("pic_event)(entry", "pic_event) (entry"))
+        check(False, "missing pic anchor must fail")
+    except ValueError as e:
+        check("0 times" in str(e), "pic anchor count reported")
+    try:
+        patch_pic_text(pic + "/* fd2calllog_picevent */\n")
+        check(False, "a stray pic mention without the hook must fail")
     except ValueError:
         pass
     for f in fails:
@@ -515,11 +640,14 @@ def main(argv: list[str]) -> int:
     root = Path(argv[0])
     p = root / "src" / "debug" / "debug.cpp"
     q = root / "src" / "cpu" / "cpu.cpp"
+    r = root / "src" / "hardware" / "pic.cpp"
     src = p.read_text(encoding="utf-8", errors="surrogateescape")
     csrc = q.read_text(encoding="utf-8", errors="surrogateescape")
+    psrc = r.read_text(encoding="utf-8", errors="surrogateescape")
     try:
         out = patch_text(src, upgrade=upgrade)
         cout = patch_cpu_text(csrc)
+        pout = patch_pic_text(psrc)
     except ValueError as e:
         print(f"FAIL: {e}")
         return 1
@@ -533,6 +661,11 @@ def main(argv: list[str]) -> int:
         print("patched", q)
     else:
         print("unchanged", q)
+    if pout != psrc:
+        r.write_text(pout, encoding="utf-8", errors="surrogateescape", newline="\n")
+        print("patched", r)
+    else:
+        print("unchanged", r)
     return 0
 
 

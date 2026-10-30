@@ -11995,7 +11995,7 @@ FD2.EXE、SBPRO2.MDI;驅動腳本與 DOSBox-X 原始碼摘錄在 `evidence/gener
   驅動 `iret` 把 IF 打開,中斷在 `0x1fad` 執行之前收,接著進 0c5c:111c 的中斷處理;沒被中斷的呼叫 iret 之後就從 0x1fad 往下走。
   所以答案是「驅動 iret 之後、DOS/4GW 返回路徑的第一條(cli 之前)」,不是驅動 iret 本身。
 - 131 次完整的驅動呼叫裡 111 次 int 66h 先進 137c:016a 的掛勾(AX 在 0x300 .. 0x4ff 時 `ljmp cs:[0x36]` 轉給驅動),其餘直接進驅動,而且全排在前面;
-  137c 是誰的、何時掛上的沒查(DOSBox-X 呼叫紀錄 lc171a)。
+  137c 是誰的、何時掛上的沒查(DOSBox-X 呼叫紀錄 lc171a)。(續一百七十二更正:轉送條件寫反了 —— 0x300 .. 0x4ff 是 DIG 自己的功能,其餘才 `ljmp cs:[0x36]` 轉給舊向量;137c 是 DIG 驅動 SB16.DIG,在 3400 .. 3700 ms 空窗裡掛上)
 
 **續一百六十五仍留的狀態**:MDI 型收中斷的點、校準每次 int 21h 多出的指令兩項定案(上面兩節)。離群 2 次(DIG 601、MDI 375 非遊戲指令)在 lc163a,
 那份沒有 G 紀錄,沒辦法回頭看;delay 每條指令週期數隨時段變 0.5% 沒做。
@@ -12004,3 +12004,88 @@ FD2.EXE、SBPRO2.MDI;驅動腳本與 DOSBox-X 原始碼摘錄在 `evidence/gener
 - 續一百六十五:離群 2 次要在有 G 紀錄的實機裡再遇到才看得到;delay 每條指令週期數隨時段變 0.5% 的原因。
 - 本輪:137c:016a 那個 int 66h 掛勾是誰的、何時掛上;DH = 0 那一秒 delay 應走長路(NOT TESTED);rep 多記的機制(INFERRED)。
 - 續一百七十的仍留(敵方回合結束後 991 次服務、每 8 次服務多一次驅動呼叫、4 次短驅動呼叫、doc12 對 `0x51e81` 的舊說法)不變。
+
+## 2026-10-30 續一百七十二:仍留收口 —— DH = 0 那一秒走長路(預測成立)、delay 時段差 0.5% 是 DOSBox-X Sound Blaster 的 DMA_DAC_Event 切片、rep 多記是每 4 次重啟加片尾、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄 lc172a / lc172b)
+
+起因:續一百七十一的仍留;使用者「還沒處理的 請依照你的建議自動繼續進行處理」。先加兩項工具,實機兩次(lc172a、lc172b),不重跑。
+證據 `evidence/calllog_slices_s172_20261030.json`,產生器 `ev_s172.py`(變異測試 `mut_s172.py` 25 個),inputs_manifest 登錄 14 筆
+(lc172a / lc172b / lc171a 的紀錄、FD2.EXE、DIG.INI、9 個 .DIG);驅動腳本、實機前的預測(`pred172.txt`)、DOSBox-X 原始碼摘錄與 nm 子集在
+`evidence/generators/drivers_s172/`。
+
+**工具**(DOSBox-X 修補;STATIC ANALYSIS + 實機核對):
+- `tools/dosbox/fd2_calllog_patch.py` 加 `FD2_CALLLOG_SLICES=1`:每筆 E / R / A / I / G / S 附累計的 `k`(時間片數)、`b`(片起點多出的週期)、`w`(片內多出的週期)。
+  模擬時間以週期計 A = PIC_Ticks × CPU_CycleMax + CPU_CycleMax − CPU_CycleLeft − CPU_Cycles,每條指令讀一次,d = ΔA − 1;
+  CPU_CycleLeft 或 PIC_Ticks 跟上一條不同就算新的一片(DOSBox-X 修補)。
+- 同支加 `FD2_CALLLOG_PICEV=1`:在 `src/hardware/pic.cpp` 的 PIC_RunQueue 呼叫事件處理函式之前計數,每 100 ms 寫一筆 P(處理函式位址 = 次數);
+  H 附 `fd2calllog_picevent` 的執行期位址,減掉 nm 位址就對得回函式名(DOSBox-X 是 PIE、符號沒去掉)。第三個修補檔,`patch_pic_text` 與 `--selftest` 對應(DOSBox-X 修補)。
+- `tools/dosbox_harness.sh` 加 `FD2_HARNESS_CALLLOG_SLICES`、`FD2_HARNESS_CALLLOG_PICEV`(二進位沒有變數名就拒跑)與 `FD2_HARNESS_DOS_TIME=HH:MM:SS`
+  (FD2.EXE 之前 `TIME`;DOSBox-X 的 TIME 經 int 21h AH=2Dh 設 BIOS tick,AH=2Ch 再由 tick 換回秒數)。
+- `tools/calllog_segments.py`:G / S / I 接受選用的 `k= b= w=`(`Run.sl`、`Run.sls`、`Irq.sl`;沒有時 None),selftest 補成對案例。
+- 都不設時輸出與之前逐字相同。重建 `~/fd2-dosbox-calllog2` 兩次(各約 20 秒,只重編修補的檔)(DOSBox-X 修補)。
+
+**實機**(原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e、WSL -d Ubuntu;開機 → 標題 → START → 16 秒;DOSBox-X 呼叫紀錄):
+- 兩次設定相同:G 3000 .. 24000 ms(3800 / 6300 ms 各 10 ms 逐條)、SLICES、DOS 時間 12:00:54;lc172b 另開 PICEV(之前先重編)。
+- lc172a 503236 行(md5 902d74f5…)、lc172b 497115 行(md5 204c139f…);窗內逐段相接,每筆 G / S / I 都帶 k / b / w,k 不減(`ev_s172` (A))。
+
+**P1 DH = 0 那一秒**(`ev_s172` (B);LOG CONFIRMED + CODE;DOSBox-X 呼叫紀錄 lc172a / lc172b、DOSBox-X 原始碼):成立。
+- delay 迴圈(CF 來自 `0x3e04f cmp bl, dh`)的 int 21h 只有一段連續走長路:lc172a 3634 次(7175.39 .. 8052.02 ms)、lc172b 4160 次(7086.09 .. 8052.72 ms);
+  段內沒有短路、段外沒有長路;每次 delay 呼叫的第一次(xor 之後 CF = 0)照樣全走長路(579 / 577 次)。續一百七十一 NOT TESTED 的這一項定案。
+- 結束點:最後一次長路的 CF 來自前一次 int 21h 讀到的 DH,兩者之間恰好一個 BIOS tick(int 1Ch;DOSBox-X int 08h 的 callback 先把 BIOS_TIMER 加一才 `int 1c`):
+  8051.9194 / 8055.2048 ms。
+- 長度:TIME 12:00:54 依 DOSBox-X 的公式設成第 787504 個 tick(換回是 53.97 秒,截斷),秒數 0 共 18 個 tick;從結束 tick 往前數 18 個是 7056.8918 / 7060.1912 ms,
+  落在資料允許的起點範圍內(段前最後一次短路與第一次長路之間),18 個間隔都是 54.6 .. 60.1 ms(沒漏 tick)。起點本身沒被 delay 夾緊,只是相容。
+- 預測裡「TIME 之後約 6 秒」:TIME 的模擬時刻沒有紀錄,沒辦法核(NOT TESTED)。
+
+**P2 delay 每條指令的時間隨時段變**(`ev_s172` (C);LOG CONFIRMED + CODE;DOSBox-X 呼叫紀錄 lc172a / lc172b、DOSBox-X 原始碼):原因是模擬器的時間片,不是遊戲。
+- S 窗逐條的 d 全部對得上上一條指令的種類(反例 0):一般指令片內 0、換片 +1;rep 每步 0 .. 4(一次最多 4 次迭代)再加換片;out +3、in +5(I/O 延遲);
+  單次 movsw +1;mov ss / pop ss −1(DOSBox-X `CPU_Cycles++; //Always do another instruction`);sti 換片時也有 0(有待處理 IRQ 時走 decode_end,沒有片尾多減)。
+  換片 +1 來自核心迴圈 `while (CPU_Cycles-->0)`:片的週期用完那一次判斷也減一(core_normal.cpp)。
+- 每次乾淨的 delay(2)(沒進遊戲 ISR、也沒有任何硬體 I 紀錄):5000·Δt − Δn − Δk = 1445,lc172a 259 次、lc172b 275 次每一次都是(不是平均)。
+  另列 3 次:2 次期間有在非遊戲碼收的 int 09h,是 1499(鍵盤處理的 in / out 有 I/O 延遲);1 次 int 08h 在 R 之後才進 ISR,仍是 1445。
+- 片數:片頭(3.4 .. 7.6 s)每 ms 51.0 .. 51.5 片、新遊戲開場(11.3 .. 13.1 s)29.2 片,差 21.8 / 22.2 片。
+- lc172b 的 P 紀錄:兩段都有 VGA_DrawSingleLine 每 ms 28.03 次、PIC_IRQCheckDelayed 0.40、PIT0_Event 0.20、VGA 垂直相關 4 個各 0.07;
+  只有片頭多了 **DMA_DAC_Event 每 ms 22.05 次**(每 100 ms 恰 2205)。它從 3100 ms 那一格的 224 次開始(推回 3189.84 ms;DIG 驅動 137c:031a 收的第一次 IRQ7 在 3189.868)、
+  到 8400 那一格的 1514 次停(推回 8468.66 ms);之後的 IRQ7 從 8562.02 ms 起每 93 ms 一次(2048 / 22050 秒,真正放音)。
+- DOSBox-X(摘錄):`goldplay` 預設開;`dma_dac_mode` 在 goldplay 且 DMA 只有一個樣本長(single_sample_dma)時成立;DMA_DAC_Event 每個樣本排一次,
+  DMA 通道遮住時也照樣再排下一次。推論:SB16.DIG 初始化用一個樣本長的 DMA 測 IRQ(3189.868 那次 IRQ7),之後通道遮住,事件就每秒 22050 次一直排到真正放音換模式
+  (INFERRED;DIG 的初始化程式碼沒反組譯)。
+- 所以續一百六十五「每 ms 4207.4 / 4225.3 條、時間差 0.5%」:片頭每次 delay 多約 45.5 片、每片 1 個週期。續一百六十五的時間差扣掉指令數差是 46.12 週期,
+  22.05 × 2.0643 ms = 45.52,相符(續一百六十五的數字取自 ev_s165 證據)。
+
+**P3 rep 多記**(`ev_s172` (D);LOG CONFIRMED + CODE;DOSBox-X 呼叫紀錄 lc172a / lc172b、DOSBox-X 原始碼):成立。
+- 4 個位置的前一條都是 `mov cx / ecx, imm`:N = 14 / 31 / 12 / 31。DOSBox-X `interruptible rep string op` 預設 -1 → 4,rep 每做 4 次就重新執行那條指令,
+  重度除錯掛勾每次都看到一次,所以基準次數 = ⌈N / 4⌉ = 4 / 8 / 3 / 8。
+- 多記 1 .. 2 次的每一次,rep 期間 k 都至少增加同樣次數(反例 0):時間片在 rep 中間結束,下一片重新執行。k 增加卻沒多記也有(lc172a 40、lc172b 26 次):
+  片剛好結束在 4 次一段的邊界上,本來就要重啟。少於基準的 3 次是 S 段頭尾被切開,或 iret 回到被中斷的 rep 續做(ECX 已減少)。
+- 續一百七十一「rep 多記的機制」由 INFERRED 改為 CODE + LOG CONFIRMED(DOSBox-X 原始碼 + DOSBox-X 呼叫紀錄 lc172a / lc172b)。
+
+**P4 137c**(`ev_s172` (E);LOG CONFIRMED + STATIC ANALYSIS;DOSBox-X 呼叫紀錄 lc172a / lc172b / lc171a、SB16.DIG):137c 是 DIG 驅動 SB16.DIG。
+- DIG.INI 的 DRIVER 是 SB16.DIG;SB16 / SBPRO / SBLASTER / PROAUDIO / RAP10 這 5 個 .DIG 標頭 +0x34 都是 0x16a、0x16a .. 0x1ff 逐位元組相同(org_game 原版驅動檔,capstone 反組譯)。
+  lc172a / lc172b 紀錄裡 137c 帶碼位元組的 3 個位置(0x16a、0x31a / 0x318、0x682)只有 SB16.DIG 每一處都對得上(遊戲目錄 9 個 .DIG 都比過)。
+- 分派段:`cmp ax, 0x300` / `jb 0x1ea` / `cmp ax, 0x4ff` / `ja 0x1ea` / `cmp bx, cs:[0x32]` / `jne 0x1ea` / `cli` … 到 0x1e9 `iret` 是自己的功能;
+  0x1ea `cmp cs:[0x36], 0` / `jne 0x1fa` / … / 0x1fa `ljmp cs:[0x36]` 轉給舊向量。MDI 的 0x502 超出範圍,走轉送(7 條)。
+- **更正續一百七十一**:原寫「AX 在 0x300 .. 0x4ff 時 `ljmp cs:[0x36]` 轉給驅動」是反的;ev_s171 的結論字串一併改,證據檔只改那一句。
+- 順序:lc172a 的 int 66h 前 17 次直接進 SBPRO2.MDI(0f71:0132);3185.54 ms 第一次進 137c 是自己的功能(到 0x1e9,59 條),之後全從 137c 進(自己的功能 12 次、轉送 495 次)。
+  續一百七十一 lc171a 直接進驅動的最後一次 3395.47 ms、第一次經 137c 3723.61 ms:DIG 是在當時 3400 .. 3700 ms 的空窗裡掛上的。
+- 預測「3400 .. 3700 ms 之間」不成立:lc172a 的 AIL 初始化整段早了約 200 ms(第一次 MDI 呼叫 3001.99 ms,lc171a 3203.37 ms);推論是先設 DOS 時間後
+  校準等換秒的對齊不同(INFERRED)。順序的預測成立。
+
+**P5 鍵盤與續一百六十五的 DIG 601**(`ev_s172` (F);LOG CONFIRMED;DOSBox-X 呼叫紀錄 lc171a / lc172a / lc172b):
+- int 09h 在遊戲碼收時,處理到回到被中斷的位置 532 .. 534 條(三份共 10 次,另 1 次期間又收 int 08h 不算);在 0070:0d23 收 539 / 540 條。
+- 重入之後到下一筆的非遊戲指令:lc172a 69 ×62、302 ×14、303 ×5、602 ×1;lc172b 69 / 70 ×60、302 / 303 ×18、602 ×1;lc171a 69 / 70 ×63、302 ×6、601 ×1。
+  601 / 602 連同續一百六十五 lc163a 的 601 都在 10.59 .. 10.77 s,poll_title 之後送 Return 的時段(INFERRED 是 START 那一下)。
+- lc172a / lc172b 的 602:DIG 型重入的正常路徑是 `p 0080 ed6-6d5` 69 條,這次在 0080:06ca 被 int 09h 切開(前 63 條),中間 533 條鍵盤處理,再回來做完 6 條:69 + 533 = 602。
+  lc171a 與續一百六十五 lc163a 的 601 數字同型(69 + 532),那兩份在那個時刻沒有 G 紀錄,型是比對出來的。
+- 四次都剛好在 START 那一下撞上 DIG 型重入、兩次新實機的鍵盤 IRQ 都在重入後 0.017 ms 收:原因沒查。
+- 續一百六十五的 MDI 375 在這三份都沒再出現(MDI 型只有 302 / 303)。
+
+**續一百七十的文件差異**(doc12 對 `0x51e81`):已改 doc12。`callgraph_le.py callers 0x25977` 26 個呼叫點裡 0x1a51d / 0x1a582 / 0x1a5c7 / 0x1a618 的 `funcof` 都是 0x1a30b
+(doc12 寫的 0x1a4fc 是函式內的位置);0x1a57a `movzx eax, byte ptr [eax + 0x1e81]` → 0x1a582 play_bgm → 0x1a58f `call 0x1d8ba`(敵方回合),0x1a610 讀 0x1e63 → 0x1a618 play_bgm。
+doc12 §結論一「五處全部走 `0x51e63`」只對它列的五處成立;§`0x51e81` 改為敵方回合曲(續一百七十 lc167a 的驅動呼叫逐次對上 FDMUS_012)(STATIC ANALYSIS + DOSBox-X 呼叫紀錄)。
+
+**驗證**:`ev_s172` 全部 assert 通過、輸出與提交檔逐位元組相同;`mut_s172` 25 / 25(第一輪 24 / 25,DMA_DAC 那處查不到時是 KeyError 不是 AssertionError,改成 `.get` 之後那一個重跑被殺,證據檔不變);`ev_s171` 只改結論字串那一句;`calllog_segments.py` 與 `dosbox/fd2_calllog_patch.py` `--exhaustive --tool` 都歸零(66 / 66、17 / 17);提交前閘門見提交訊息(DOSBox-X 呼叫紀錄 lc172a / lc172b 重算)。
+
+**仍留**:
+- 續一百六十五的 MDI 375:要在有 G 紀錄的實機裡再遇到才看得到。
+- START 那一下為什麼總撞上 DIG 型重入;SB16.DIG 初始化留下單一樣本 DMA 的推論(INFERRED,DIG 程式碼沒反組譯)。
+- 續一百七十:敵方回合結束後 991 次服務對不上兩首曲、每 8 次服務多一次驅動呼叫、4 次短驅動呼叫(532 / 558 條)的來源。

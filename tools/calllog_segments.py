@@ -43,9 +43,11 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-_G = re.compile(r"^G ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) ([0-9a-f]{8}) (\d+) n=(\d+)(?: c=([0-9a-f?]{32}))?$")
-_S = re.compile(r"^S ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+)(?: c=([0-9a-f?]{32}))?$")
-_I = re.compile(r"^I ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)$")
+# FD2_CALLLOG_SLICES(續一百七十二)的選用欄位:累計時間片數 k、片起點多出的週期 b、片內多出的週期 w
+_SL = r"(?: k=(\d+) b=(-?\d+) w=(-?\d+))?"
+_G = re.compile(r"^G ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) ([0-9a-f]{8}) (\d+) n=(\d+)" + _SL + r"(?: c=([0-9a-f?]{32}))?$")
+_S = re.compile(r"^S ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+)" + _SL + r"(?: c=([0-9a-f?]{32}))?$")
+_I = re.compile(r"^I ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)" + _SL + "$")
 _H_CS = re.compile(r"\bcs=([0-9a-f]{4})\b")
 
 
@@ -60,6 +62,8 @@ class Run:
     count: int
     n_end: int
     eips: list[int] | None = None  # 只有由 S 組成的 run 才有逐條 EIP
+    sl: tuple[int, int, int] | None = None  # 到 e1 為止的 (k, b, w);紀錄沒有 FD2_CALLLOG_SLICES 時 None
+    sls: list[tuple[int, int, int] | None] | None = None  # S 組成的 run:逐條的 (k, b, w)
 
     @property
     def n_start(self) -> int:
@@ -78,6 +82,7 @@ class Irq:
     eip: int
     n: int
     t: float
+    sl: tuple[int, int, int] | None = None  # (k, b, w);沒有 FD2_CALLLOG_SLICES 時 None
 
 
 @dataclass
@@ -111,6 +116,13 @@ class Log:
     order: list[tuple[str, int]]    # ("G", runs 索引) / ("I", irqs 索引),檔案次序
     code: dict[tuple[str, int, int], bytes | None]  # (模式, CS, EIP) -> 16 位元組(有 ?? 時 None)
     gaps: list[tuple[int, int]]     # (前一段 n_end, 這段 n_start) 不相接的地方
+
+
+def _slices(mt: re.Match[str], first: int) -> tuple[int, int, int] | None:
+    """從第 `first` 個群組起取 (k, b, w);沒有這組欄位時 None。"""
+    if mt.group(first) is None:
+        return None
+    return int(mt.group(first)), int(mt.group(first + 1)), int(mt.group(first + 2))
 
 
 def _code(hexs: str | None) -> bytes | None:
@@ -153,9 +165,9 @@ def parse(lines: Iterable[str]) -> Log:
             if not mg:
                 raise ValueError(f"line {ln}: bad G record: {line[:80]}")
             m, cs, e0, e1 = mg.group(1), int(mg.group(2), 16), int(mg.group(3), 16), int(mg.group(4), 16)
-            if mg.group(7) is not None:
-                code[(m, cs, e0)] = _code(mg.group(7))
-            runs.append(Run(m, cs, e0, e1, int(mg.group(5)), int(mg.group(6))))
+            if mg.group(10) is not None:
+                code[(m, cs, e0)] = _code(mg.group(10))
+            runs.append(Run(m, cs, e0, e1, int(mg.group(5)), int(mg.group(6)), sl=_slices(mg, 7)))
             order.append(("G", len(runs) - 1))
             prev_kind = "G"
         elif k == "S":
@@ -163,17 +175,20 @@ def parse(lines: Iterable[str]) -> Log:
             if not ms:
                 raise ValueError(f"line {ln}: bad S record: {line[:80]}")
             m, cs, e, n = ms.group(1), int(ms.group(2), 16), int(ms.group(3), 16), int(ms.group(4))
-            if ms.group(5) is not None:
-                code[(m, cs, e)] = _code(ms.group(5))
+            if ms.group(8) is not None:
+                code[(m, cs, e)] = _code(ms.group(8))
+            sl = _slices(ms, 5)
             last = runs[-1] if runs else None
             if prev_kind == "S" and last is not None and last.m == m and last.cs == cs and last.n_end + 1 == n:
                 last.e1 = e
                 last.count += 1
                 last.n_end = n
-                assert last.eips is not None
+                last.sl = sl
+                assert last.eips is not None and last.sls is not None
                 last.eips.append(e)
+                last.sls.append(sl)
             else:
-                runs.append(Run(m, cs, e, e, 1, n, [e]))
+                runs.append(Run(m, cs, e, e, 1, n, [e], sl, [sl]))
                 order.append(("G", len(runs) - 1))
             prev_kind = "S"
         elif k == "I":
@@ -181,7 +196,7 @@ def parse(lines: Iterable[str]) -> Log:
             if not mi:
                 raise ValueError(f"line {ln}: bad I record: {line[:80]}")
             irqs.append(Irq(int(mi.group(1), 16), int(mi.group(2), 16), mi.group(3), int(mi.group(4), 16),
-                            int(mi.group(5), 16), int(mi.group(6)), float(mi.group(7))))
+                            int(mi.group(5), 16), int(mi.group(6)), float(mi.group(7)), _slices(mi, 8)))
             order.append(("I", len(irqs) - 1))
             prev_kind = "I"
     if game_cs is None:
@@ -523,6 +538,15 @@ def selftest() -> int:
     check(_diff_eips(ra, rb, None) == ["    - 00000011", "    + 00000012"], "long eip sequence: only the one differing eip")
     # type 是任意位數的十六進位(單一位數在 16 / 17 進位下相同,要兩位數才分得出來)
     check(parse(["H x cs=0170", "I 0d 1e p 0088 00000001 n=1 t=1.0"]).irqs[0].type == 0x1E, "I type parsed as hex")
+    # FD2_CALLLOG_SLICES 的 k / b / w(三個值各不相同,w 可以是負的;對照:沒有這組欄位時是 None)
+    sl = parse(["H x cs=0170 slices=1", "G r f000 00000010 00000012 3 n=3 k=12 b=34 w=-5 c=90" + "00" * 15,
+                "S r f000 00000013 n=4 k=13 b=36 w=-5", "S r f000 00000014 n=5 k=13 b=36 w=7",
+                "I 08 0 r f000 00000014 n=5 t=1.0 k=14 b=38 w=9"])
+    check(sl.runs[0].sl == (12, 34, -5) and sl.code[("r", 0xF000, 0x10)] == bytes.fromhex("90" + "00" * 15),
+          "G slices and code bytes both parsed")
+    check(sl.runs[1].sls == [(13, 36, -5), (13, 36, 7)] and sl.runs[1].sl == (13, 36, 7), "S slices per instruction")
+    check(sl.irqs[0].sl == (14, 38, 9), "I slices parsed")
+    check(gs.runs[0].sl is None and gs.runs[1].sls == [None] and gs.irqs[0].sl is None, "control: no slices -> None")
     # 不相接的 S 不能併進前一段(對照:n 跳號)
     slog2 = parse(s_lines[:3] + ["S r f000 00000011 n=9"])
     check(len(slog2.runs) == 3 and slog2.gaps == [(2, 8)], "non-consecutive S starts a new run")

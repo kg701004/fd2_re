@@ -1,0 +1,319 @@
+=== src/cpu/core_normal.cpp sha256 45c80dcd819b15360c777188aa116c1149e1e0ac166907d399a761e9e4561e17 lines 160-222
+Bits CPU_Core_Normal_Run(void) {
+	if (CPU_Cycles <= 0)
+		return CBRET_NONE;
+
+	while (CPU_Cycles-->0) {
+		LOADIP;
+		last_prefix=MP_NONE;
+		core.opcode_index=cpu.code.big*(Bitu)0x200u;
+		core.prefixes=cpu.code.big;
+		last_ea86_offset=0;
+		core.ea_table=&EATable[cpu.code.big*256u];
+		BaseDS=SegBase(ds);
+		BaseSS=SegBase(ss);
+		core.base_val_ds=ds;
+#if C_DEBUG
+#if C_HEAVY_DEBUG
+		if (DEBUG_HeavyIsBreakpoint()) {
+			FillFlags();
+			return (Bits)debugCallback;
+		}
+#endif
+#endif
+		cycle_count++;
+restart_opcode:
+		switch (core.opcode_index+Fetchb()) {
+		#include "core_normal/prefix_none.h"
+		#include "core_normal/prefix_0f.h"
+		#include "core_normal/prefix_66.h"
+		#include "core_normal/prefix_66_0f.h"
+		default:
+		illegal_opcode:
+#if C_DEBUG	
+			{
+				bool ignore=false;
+				Bitu len=(GETIP-reg_eip);
+				LOADIP;
+				if (len>16) len=16;
+				char tempcode[16*2+1];char * writecode=tempcode;
+				if (ignore_opcode_63 && mem_readb(core.cseip) == 0x63)
+					ignore = true;
+				for (;len>0;len--) {
+					sprintf(writecode,"%02X",mem_readb(core.cseip++));
+					writecode+=2;
+				}
+				if (!ignore)
+					LOG(LOG_CPU,LOG_NORMAL)("Illegal/Unhandled opcode %s",tempcode);
+			}
+#endif
+			CPU_Exception(6,0);
+			continue;
+		gp_fault:
+			LOG_MSG("Segment limit violation");
+			CPU_Exception(EXCEPTION_GP,0);
+			continue;
+		}
+		SAVEIP;
+	}
+    FillFlags();
+    return CBRET_NONE;
+decode_end:
+	SAVEIP;
+	FillFlags();
+	return CBRET_NONE;
+=== src/cpu/core_normal/string.h sha256 b03b12f6b40c253013315b6378c765f25858db9bef4d4af7cf6434343639beb9 lines 38-69
+void DoString(STRING_OP_NORMAL type) {
+	static PhysPt  si_base,di_base;
+	static uint32_t	si_index,di_index;
+	static uint32_t	add_mask;
+	static Bitu	count,count_left;
+	static Bits	add_index;
+
+	count_left=0;
+	si_base=BaseDS;
+	di_base=SegBase(es);
+	add_mask=AddrMaskTable[core.prefixes & PREFIX_ADDR];
+	si_index=reg_esi & add_mask;
+	di_index=reg_edi & add_mask;
+	count=reg_ecx & add_mask;
+	add_index=cpu.direction;
+
+	if (!TEST_PREFIX_REP) {
+		count=1;
+	}
+	else {
+		/* we allow the user to cap our count as a way of making REP string operations interruptible (and at what granularity) */
+		/* NTS: This condition is less important now that the loops themselves break when CPU_Cycles <= 0. when this code was
+		 *      initially implemented the string ops stubbornly counted through the bytes regardless of pending interrupts and
+		 *      it caused problems with code that needed fine timing i.e. demos that played music through the LPT DAC while
+		 *      using REP OUTSB to the VGA palette suffered from audio quality problems. at this phase of implementation the
+		 *      "interruptible string ops" parameter is now merely a testing parameter that can be used to verify this code
+		 *      breaks and restarts string ops correctly. */
+		if (cpu_rep_max > 0 && count > (unsigned int)cpu_rep_max) {
+			count_left+=count-(unsigned int)cpu_rep_max;
+			count=(unsigned int)cpu_rep_max;
+		}
+	}
+=== src/cpu/core_normal/string.h sha256 b03b12f6b40c253013315b6378c765f25858db9bef4d4af7cf6434343639beb9 lines 100-108
+			switch (type) {
+				case R_OUTSB:
+					do {
+						IO_WriteB(reg_dx,LoadMb(si_base+si_index));
+						si_index=(si_index+(Bitu)add_index) & add_mask;
+						count--;
+
+						if ((--CPU_Cycles) <= 0) break;
+					} while (count != 0); break;
+=== src/cpu/core_normal/string.h sha256 b03b12f6b40c253013315b6378c765f25858db9bef4d4af7cf6434343639beb9 lines 538-560
+			reg_edi&=(~add_mask);
+			reg_edi|=(di_index & add_mask);
+			if (TEST_PREFIX_REP) {
+				count+=count_left;
+				reg_ecx&=(~add_mask);
+				reg_ecx|=(count & add_mask);
+
+				/* if the count is still nonzero, then there is still work to do and the
+				 * instruction has not finished executing---it needs to be restarted.
+				 * if the string op was REP CMPSB or REP SCASB then it also matters
+				 * whether the ZF flag matches the REP condition on whether or not we
+				 * restart the instruction. */
+				if (count != 0) {
+					if (type < R_SCASB) {
+						/* if count != 0 then restart the instruction */
+						LOADIP;
+					}
+					else {
+						/* if ZF matches the REP condition, restart the instruction */
+						if ((get_ZF()?1:0) == (core.rep_zero?1:0)) {
+							LOADIP;
+						}
+					}
+=== src/cpu/cpu.cpp sha256 82b595960c8d99cc1d5f3bdd26483411f6775d03f2f52bf0508730dd6c0ddb10 lines 118-118
+int cpu_rep_max = 0;
+=== src/cpu/cpu.cpp sha256 82b595960c8d99cc1d5f3bdd26483411f6775d03f2f52bf0508730dd6c0ddb10 lines 3869-3869
+		cpu_rep_max=section->Get_int("interruptible rep string op");
+=== src/cpu/cpu.cpp sha256 82b595960c8d99cc1d5f3bdd26483411f6775d03f2f52bf0508730dd6c0ddb10 lines 4219-4219
+		if (cpu_rep_max < 0) cpu_rep_max = 4;	/* compromise to help emulation speed without too much loss of accuracy */
+=== src/dosbox.cpp sha256 e6338c5ec53448e273eb2d41276067fb3daa3ee52ac6ddbbd37e2da9edddf572 lines 3152-3158
+    Pint = secprop->Add_int("interruptible rep string op",Property::Changeable::Always,-1);
+    Pint->SetMinMax(-1,65536);
+    Pint->Set_help("If nonzero, REP string instructions (LODS/MOVS/STOS/INS/OUTS) are interruptible (by interrupts or other events).\n"
+            "If zero, REP string instructions are carried out in full before processing events and interrupts.\n"
+            "Set to -1 for a reasonable default setting based on cpu type and other configuration.\n"
+            "A setting of 0 can improve emulation speed at the expense of emulation accuracy.\n"
+            "A nonzero setting (1-8) may be needed for DOS games and demos that use the IRQ 0 interrupt to play digitized samples\n"
+=== src/cpu/core_normal/prefix_none.h sha256 41015eac74307d6817cf1bb9a2f6f8bde34d8e6038e1cbf5fb05be6468b3e4a9 lines 82-85
+	CASE_W(0x17)												/* POP SS */
+		if (CPU_PopSeg(ss,false)) RUNEXCEPTION();
+		CPU_Cycles++; //Always do another instruction
+		break;
+=== src/cpu/core_normal/prefix_none.h sha256 41015eac74307d6817cf1bb9a2f6f8bde34d8e6038e1cbf5fb05be6468b3e4a9 lines 658-660
+#endif
+            case 0x02:                  /* MOV SS,Ew */
+                CPU_Cycles++; //Always do another instruction
+=== src/cpu/core_normal/prefix_66.h sha256 baec26694bfdad8a7778da2ab10056214ac10abde07a570433e033172a0fe431 lines 46-48
+	CASE_D(0x17)												/* POP SS */
+		if (CPU_PopSeg(ss,true)) RUNEXCEPTION();
+		CPU_Cycles++;
+=== src/hardware/iohandler.cpp sha256 0d023f8a50fdd14dd373ab52057dcef9121aea6e79ae4464197e7facc9a4f6e9 lines 410-424
+
+inline void IO_USEC_read_delay(const unsigned int szidx) {
+	if (io_delay_ns[szidx] > 0 && last_callback == 0/*NOT running within a callback function*/) {
+		Bits delaycyc = (CPU_CycleMax * io_delay_ns[szidx]) / 1000000;
+		CPU_Cycles -= delaycyc;
+		CPU_IODelayRemoved += delaycyc;
+	}
+}
+
+inline void IO_USEC_write_delay(const unsigned int szidx) {
+	if (io_delay_ns[szidx] > 0 && last_callback == 0/*NOT running within a callback function*/) {
+		Bits delaycyc = (CPU_CycleMax * io_delay_ns[szidx] * 3) / (1000000 * 4);
+		CPU_Cycles -= delaycyc;
+		CPU_IODelayRemoved += delaycyc;
+	}
+=== src/hardware/iohandler.cpp sha256 0d023f8a50fdd14dd373ab52057dcef9121aea6e79ae4464197e7facc9a4f6e9 lines 568-573
+	io_delay_ns[0] = section->Get_int("iodelay");
+	if (io_delay_ns[0] < 0) { // 8-bit transfers are said to have a transfer cycle with 4 wait states
+		// TODO: How can we emulate Intel 440FX chipsets that allow 8-bit PIO with 1 wait state, or zero wait state devices?
+		double t = (1000000000.0 * clockdom_ISA_BCLK.freq_div * 8.5) / clockdom_ISA_BCLK.freq;
+		io_delay_ns[0] = (int)floor(t);
+	}
+=== include/pic.h sha256 7fddfc4d3aae96de85d85d28a8908206dd8fc607637d36957f54d5ce53c96262 lines 60-74
+static INLINE pic_tickindex_t PIC_TickIndex(void) {
+	return ((pic_tickindex_t)(CPU_CycleMax-CPU_CycleLeft-CPU_Cycles)) / ((pic_tickindex_t)CPU_CycleMax);
+}
+
+static INLINE Bits PIC_TickIndexND(void) {
+	return CPU_CycleMax-CPU_CycleLeft-CPU_Cycles;
+}
+
+static INLINE Bits PIC_MakeCycles(const pic_tickindex_t amount) {
+	return (Bits)((pic_tickindex_t)CPU_CycleMax * amount);
+}
+
+static INLINE pic_tickindex_t PIC_FullIndex(void) {
+	return (pic_tickindex_t)PIC_Ticks + PIC_TickIndex();
+}
+=== src/hardware/pic.cpp sha256 5a773dde9693e704c6a4f3816a00efdfef121ab3b194ed81472f5ad657c05e05 lines 747-790
+    /* Check to see if a new millisecond needs to be started */
+    CPU_CycleLeft += CPU_Cycles;
+    CPU_Cycles = 0;
+
+#ifdef DEBUG_PIC_IRQCHECK_VS_IRR
+    // WARNING: If the problem is the cascade interrupt un-acknowledged, this will give a false positive
+    if (!PIC_IRQCheck && !PIC_IRQCheckPending && ((master.irr&master.imrr) != 0 || (slave.irr&slave.imrr) != 0))
+        LOG_MSG("PIC_IRQCheck not set and interrupts pending");
+#endif
+
+    if (CPU_CycleLeft > 0) {
+        if (PIC_IRQCheck)
+            PIC_runIRQs();
+
+        /* Check the queue for an entry */
+        Bits index_nd=PIC_TickIndexND();
+        InEventService = true;
+        while (pic_queue.next_entry && (pic_queue.next_entry->index*CPU_CycleMax<=index_nd)) {
+            PICEntry * entry=pic_queue.next_entry;
+            pic_queue.next_entry=entry->next;
+            srv_lag = entry->index;
+
+#if C_DEBUG && C_HEAVY_DEBUG
+            { void fd2calllog_picevent(void *fn); /* fd2_re local patch */
+              fd2calllog_picevent((void *)entry->pic_event); }
+#endif
+            if (entry->pic_event != NULL)
+                (entry->pic_event)(entry->value); // call the event handler
+            else
+                LOG(LOG_MISC,LOG_WARN)("PIC: Event in queue with NULL handler"); // This can happen after save state / load state
+
+            /* Put the entry in the free list */
+            entry->next=pic_queue.free_entry;
+            pic_queue.free_entry=entry;
+        }
+        InEventService = false;
+
+        /* Check when to set the new cycle end */
+        if (pic_queue.next_entry) {
+            Bits cycles=(Bits)(pic_queue.next_entry->index*CPU_CycleMax-index_nd);
+            if (GCC_UNLIKELY(!cycles)) cycles=1;
+            if (cycles<CPU_CycleLeft) {
+                CPU_Cycles=cycles;
+            } else {
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 1148-1158
+	if (dma.chan != NULL &&
+			dma.chan->basecnt < ((new_mode==DSP_DMA_16_ALIASED?2:1)*((stereo || mixer.sbpro_stereo)?2:1))/*size of one sample in DMA counts*/)
+		single_sample_dma = 1;
+	else
+		single_sample_dma = 0;
+
+	dma_dac_srcrate=freq;
+	if (dsp.force_goldplay || (goldplay && freq > 0 && single_sample_dma))
+		dma_dac_mode=1;
+	else
+		dma_dac_mode=0;
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 1226-1231
+	PIC_RemoveEvents(DMA_DAC_Event);
+	PIC_RemoveEvents(END_DMA_Event);
+
+	if (dma_dac_mode)
+		PIC_AddEvent(DMA_DAC_Event,1000.0 / dma_dac_srcrate,(card_index << CARD_INDEX_BIT));
+
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 3703-3713
+static void DMA_DAC_Event(Bitu val) {
+	const size_t ci = (size_t)(val >> (Bitu)CARD_INDEX_BIT); val &= (1u << CARD_INDEX_BIT) - 1u;
+	assert(ci < MAX_CARDS);
+	unsigned char tmp[4];
+	Bitu read,expct;
+	signed int L,R;
+	int16_t out[2];
+
+	if (sb[ci].dma.chan->masked) {
+		PIC_AddEvent(DMA_DAC_Event,1000.0 / sb[ci].dma_dac_srcrate,(ci << CARD_INDEX_BIT));
+		return;
+=== src/dosbox.cpp sha256 e6338c5ec53448e273eb2d41276067fb3daa3ee52ac6ddbbd37e2da9edddf572 lines 3968-3968
+			Pbool = secprop->Add_bool("goldplay",Property::Changeable::WhenIdle,true);
+=== src/cpu/callback.cpp sha256 7fdc256f23ab66297da6702c4587396164236ef7c48ee042bf93a7005a19b415 lines 393-412
+	case CB_IRQ0:	// timer int8
+		phys_writeb(physAddress+0x00,(uint8_t)0xFB);		//STI
+		if (use_cb) {
+			phys_writeb(physAddress+0x01,(uint8_t)0xFE);	//GRP 4
+			phys_writeb(physAddress+0x02,(uint8_t)0x38);	//Extra Callback instruction
+			phys_writew(physAddress+0x03,(uint16_t)callback);		//The immediate word
+			physAddress+=4;
+		}
+		phys_writeb(physAddress+0x01,(uint8_t)0x1e);		// push ds
+		phys_writeb(physAddress+0x02,(uint8_t)0x50);		// push ax
+		phys_writeb(physAddress+0x03,(uint8_t)0x52);		// push dx
+		phys_writew(physAddress+0x04,(uint16_t)0x1ccd);	// int 1c
+		phys_writeb(physAddress+0x06,(uint8_t)0xfa);		// cli
+		phys_writew(physAddress+0x07,(uint16_t)0x20b0);	// mov al, 0x20
+		phys_writew(physAddress+0x09,(uint16_t)(IS_PC98_ARCH ? 0x00e6 : 0x20e6));	// out 0x20, al / out 0x00, al (PC-98) (FIXME: PC-98 does not have INT 1Ch)
+		phys_writeb(physAddress+0x0b,(uint8_t)0x5a);		// pop dx
+		phys_writeb(physAddress+0x0c,(uint8_t)0x58);		// pop ax
+		phys_writeb(physAddress+0x0d,(uint8_t)0x1f);		// pop ds
+		phys_writeb(physAddress+0x0e,(uint8_t)0xcf);		//An IRET Instruction
+		return (use_cb?0x13:0x0f);
+=== src/ints/bios.cpp sha256 6cb9d20f2a252aae6bc1a66ac6cf198db5773d3d391866650bc65df3ed5f596e lines 6556-6558
+static Bitu INT8_Handler(void) {
+    /* Increase the bios tick counter */
+    uint32_t value = mem_readd(BIOS_TIMER) + 1;
+=== src/dos/dos.cpp sha256 ef571bd87019bedd0d0ae2e6f6f77b4ede2e5eccdca112c1c6603da645e78c53 lines 1686-1690
+                else {
+                    // timer ticks every 55ms
+                    const uint32_t csec = (((((reg_ch * 60u) + reg_cl) * 60u + reg_dh) * 100u) + reg_dl);
+                    const uint32_t ticks = (uint32_t)((double)csec * ((double)PIT_TICK_RATE/6553600.0));
+
+=== src/shell/shell_cmds.cpp sha256 3a98b4a4a2a92a757c46f6edc2f02670678d7dd4519c83adbb4c245b4ab68aca lines 3371-3378
+	char c=dos.tables.country[13], c1, c2;
+	if (sscanf(args,"%u%c%u%c%u",&newhour,&c1,&newminute,&c2,&newsecond)==5 && c1==c && c2==c) {
+		reg_ch = static_cast<uint16_t>(newhour);
+		reg_cl = static_cast<uint8_t>(newminute);
+		reg_dx = static_cast<uint8_t>(newsecond)<<8;
+
+		reg_ah=0x2d; // set system time
+		CALLBACK_RunRealInt(0x21);
+=== include/timer.h sha256 62f777436271ab0e73aaeaa6e024b8cd7b56ad22706d447dea926cd5c4371554 lines 25-25
+#define PIT_TICK_RATE_IBM 1193182
+=== src/hardware/timer.cpp sha256 d7e8f48f18cc265e8ebeb9c843aa1265b22e9239360176e09f900978e98e77ba lines 400-400
+unsigned long PIT_TICK_RATE = PIT_TICK_RATE_IBM;

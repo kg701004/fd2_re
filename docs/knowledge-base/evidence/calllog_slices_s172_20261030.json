@@ -1,0 +1,543 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s172.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "lc172a": {
+   "path": ".wsl_build/lc172_live/lc172a_CALLLOG.TXT",
+   "md5": "902d74f599b2786af3d1a09e0f47b886",
+   "segs": "3000-3800,3800-3810:x,3810-6300,6300-6310:x,6310-24000"
+  },
+  "lc172b": {
+   "path": ".wsl_build/lc172_live/lc172b_CALLLOG.TXT",
+   "md5": "204c139f6a85d6983539d06b7cafbf12",
+   "segs": "3000-3800,3800-3810:x,3810-6300,6300-6310:x,6310-24000"
+  },
+  "lc171a": {
+   "path": ".wsl_build/lc171_live/lc171a_CALLLOG.TXT",
+   "md5": "0323eeb1d98d77814b42148f6bd87a33"
+  }
+ },
+ "dosbox_src": "docs/knowledge-base/evidence/generators/drivers_s172/dosbox_src_s172.txt",
+ "nm": "docs/knowledge-base/evidence/generators/drivers_s172/nm_handlers_s172.txt",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s172/pred172.txt",
+ "validity": {
+  "lc172a": {
+   "runs": 347724,
+   "irqs": 37932,
+   "gaps": [],
+   "every_record_has_slices": true,
+   "k_nondecreasing": true,
+   "k_last": 856214
+  },
+  "lc172b": {
+   "runs": 342679,
+   "irqs": 37431,
+   "gaps": [],
+   "every_record_has_slices": true,
+   "k_nondecreasing": true,
+   "k_last": 855007
+  }
+ },
+ "dh0": {
+  "time_calc": {
+   "ticks_after_TIME": 787504,
+   "dos_seconds_of_day_at_TIME": 43253.97,
+   "dos_second_at_TIME": 53,
+   "ticks_to_second_0": 110,
+   "second_0_ticks": 18
+  },
+  "runs": {
+   "lc172a": {
+    "table": {
+     "cf0_first|long": 579,
+     "cf1_loop|long": 3634,
+     "cf1_loop|short": 24814,
+     "cf1_loop|split": 2
+    },
+    "cf1_long_block_ms": [
+     7175.3906,
+     8052.0224
+    ],
+    "cf1_short_neighbours_ms": [
+     6987.214,
+     8052.1374
+    ],
+    "end_tick_ms": 8051.9194,
+    "start_tick_ms_18_back": 7056.8918,
+    "tick_gaps_ms": [
+     59.977,
+     54.883,
+     55.115,
+     54.886,
+     55.485,
+     54.63,
+     54.888,
+     55.138,
+     54.864,
+     55.419,
+     54.747,
+     54.836,
+     55.149,
+     54.853,
+     55.109,
+     55.002,
+     54.953,
+     55.094
+    ]
+   },
+   "lc172b": {
+    "table": {
+     "cf0_first|long": 577,
+     "cf1_loop|long": 4160,
+     "cf1_loop|short": 23799,
+     "cf1_loop|split": 1
+    },
+    "cf1_long_block_ms": [
+     7086.0888,
+     8052.7182
+    ],
+    "cf1_short_neighbours_ms": [
+     6896.8186,
+     8057.92
+    ],
+    "end_tick_ms": 8055.2048,
+    "start_tick_ms_18_back": 7060.1912,
+    "tick_gaps_ms": [
+     60.087,
+     54.868,
+     55.054,
+     54.885,
+     55.484,
+     54.632,
+     54.888,
+     55.134,
+     54.939,
+     55.278,
+     54.768,
+     54.892,
+     55.106,
+     54.896,
+     55.103,
+     55.001,
+     54.953,
+     55.045
+    ]
+   }
+  }
+ },
+ "slices": {
+  "step_table": {
+   "lc172a": {
+    "in|0|5": 4,
+    "out|0|3": 1300,
+    "out|1|4": 58,
+    "plain|0|0": 78783,
+    "plain|1|1": 876,
+    "rep|0|1": 36,
+    "rep|0|2": 142,
+    "rep|0|3": 171,
+    "rep|0|4": 2316,
+    "rep|1|2": 76,
+    "rep|1|3": 20,
+    "rep|1|4": 20,
+    "rep|1|5": 27,
+    "ss|0|-1": 498,
+    "sti|0|0": 239,
+    "sti|1|0": 6,
+    "sti|1|1": 1,
+    "string1|0|1": 121
+   },
+   "lc172b": {
+    "in|0|5": 4,
+    "out|0|3": 1627,
+    "out|1|4": 60,
+    "plain|0|0": 78929,
+    "plain|1|1": 819,
+    "rep|0|1": 21,
+    "rep|0|2": 136,
+    "rep|0|3": 164,
+    "rep|0|4": 2085,
+    "rep|1|2": 63,
+    "rep|1|3": 29,
+    "rep|1|4": 19,
+    "rep|1|5": 16,
+    "ss|0|-1": 451,
+    "sti|0|0": 211,
+    "sti|1|0": 5,
+    "sti|1|1": 7,
+    "string1|0|1": 103,
+    "string1|1|2": 6
+   }
+  },
+  "delay": {
+   "lc172a": {
+    "clean_delay2": 259,
+    "with_kb_irq": [
+     {
+      "t": 3827.826,
+      "irq": "09",
+      "resid_minus_dk": 1499.0
+     },
+     {
+      "t": 3834.448,
+      "irq": "09",
+      "resid_minus_dk": 1499.0
+     },
+     {
+      "t": 6924.653,
+      "irq": "08",
+      "resid_minus_dk": 1445.0
+     }
+    ],
+    "resid_minus_dk": [
+     1445.0,
+     1445.0
+    ],
+    "periods": {
+     "early": {
+      "t_ms": [
+       3413.3,
+       7593.3
+      ],
+      "n": 141,
+      "slices_per_ms": 51.469,
+      "resid_mode": 1551,
+      "dk_mode": 106
+     },
+     "late": {
+      "t_ms": [
+       11332.1,
+       13084.7
+      ],
+      "n": 118,
+      "slices_per_ms": 29.258,
+      "resid_mode": 1508,
+      "dk_mode": 63
+     }
+    }
+   },
+   "lc172b": {
+    "clean_delay2": 275,
+    "with_kb_irq": [],
+    "resid_minus_dk": [
+     1445.0,
+     1445.0
+    ],
+    "periods": {
+     "early": {
+      "t_ms": [
+       3416.6,
+       7516.6
+      ],
+      "n": 159,
+      "slices_per_ms": 50.995,
+      "resid_mode": 1551,
+      "dk_mode": 106
+     },
+     "late": {
+      "t_ms": [
+       11305.6,
+       13081.9
+      ],
+      "n": 116,
+      "slices_per_ms": 29.171,
+      "resid_mode": 1508,
+      "dk_mode": 63
+     }
+    }
+   }
+  },
+  "pic_event_rates_per_ms": {
+   "early": {
+    "DMA_DAC_Event": 22.05,
+    "DSP_BusyComplete": 0.0,
+    "DSP_FinishReset": 0.0,
+    "END_DMA_Event": 0.0,
+    "KEYBOARD_TransferBuffer": 0.002,
+    "PIC_IRQCheckDelayed": 0.403,
+    "PIT0_Event": 0.2,
+    "VGA_DisplayStartLatch": 0.07,
+    "VGA_DrawSingleLine": 28.027,
+    "VGA_PanningLatch": 0.07,
+    "VGA_SetupDrawing": 0.0,
+    "VGA_VertInterrupt": 0.07,
+    "VGA_VerticalTimer": 0.07,
+    "cmos_timerevent": 0.001
+   },
+   "late": {
+    "DMA_DAC_Event": 0.0,
+    "DSP_BusyComplete": 0.0,
+    "DSP_FinishReset": 0.0,
+    "END_DMA_Event": 0.0,
+    "KEYBOARD_TransferBuffer": 0.0,
+    "PIC_IRQCheckDelayed": 0.399,
+    "PIT0_Event": 0.199,
+    "VGA_DisplayStartLatch": 0.07,
+    "VGA_DrawSingleLine": 28.039,
+    "VGA_PanningLatch": 0.07,
+    "VGA_SetupDrawing": 0.0,
+    "VGA_VertInterrupt": 0.07,
+    "VGA_VerticalTimer": 0.07,
+    "cmos_timerevent": 0.001
+   }
+  },
+  "dma_dac": {
+   "first_bucket": 3100,
+   "first_count": 224,
+   "last_bucket": 8400,
+   "last_count": 1514,
+   "contiguous": true,
+   "middle_counts": [
+    2205
+   ],
+   "start_ms_est": 3189.84,
+   "stop_ms_est": 8468.66
+  },
+  "irq7": {
+   "first": [
+    3189.868,
+    "r 137c:31a"
+   ],
+   "second_ms": 8562.0232,
+   "period_ms_median": 93.0,
+   "count": 118
+  },
+  "s165_link": {
+   "resid_step": 46.12,
+   "dac_per_delay": 45.52
+  }
+ },
+ "rep": {
+  "n": {
+   "0080:6b0": 14,
+   "0088:e1f": 31,
+   "0070:cd4": 12,
+   "0088:21b5": 31
+  },
+  "tables": {
+   "lc172a": {
+    "by_extra_dk": {
+     "0|0": 347,
+     "0|1": 39,
+     "0|2": 1,
+     "1|1": 74,
+     "1|2": 5,
+     "2|2": 6,
+     "2|3": 1
+    },
+    "cut_or_resumed": 1
+   },
+   "lc172b": {
+    "by_extra_dk": {
+     "0|0": 320,
+     "0|1": 26,
+     "1|1": 72,
+     "1|2": 5,
+     "2|2": 3
+    },
+    "cut_or_resumed": 2
+   }
+  }
+ },
+ "dig_137c": {
+  "dispatcher": {
+   "0x16a": "cmp ax, 0x300",
+   "0x16d": "jb 0x1ea",
+   "0x16f": "cmp ax, 0x4ff",
+   "0x172": "ja 0x1ea",
+   "0x174": "cmp bx, word ptr cs:[0x32]",
+   "0x179": "jne 0x1ea",
+   "0x17b": "cli",
+   "0x1e9": "iret",
+   "0x1ea": "cmp word ptr cs:[0x36], 0",
+   "0x1f0": "jne 0x1fa",
+   "0x1fa": "ljmp cs:[0x36]"
+  },
+  "dig_files_same_dispatcher": [
+   "SB16.DIG",
+   "SBPRO.DIG",
+   "SBLASTER.DIG",
+   "PROAUDIO.DIG",
+   "RAP10.DIG"
+  ],
+  "logged_positions": {
+   "lc172a": [
+    "0x16a",
+    "0x31a",
+    "0x682"
+   ],
+   "lc172b": [
+    "0x16a",
+    "0x318",
+    "0x682"
+   ]
+  },
+  "dig_match": {
+   "lc172a": {
+    "ADRV688.DIG": 0,
+    "JAMMER.DIG": 0,
+    "PROAUDIO.DIG": 2,
+    "RAP10.DIG": 2,
+    "SB16.DIG": 3,
+    "SBLASTER.DIG": 2,
+    "SBPRO.DIG": 2,
+    "SNDSCAPE.DIG": 0,
+    "ULTRA.DIG": 0
+   },
+   "lc172b": {
+    "ADRV688.DIG": 0,
+    "JAMMER.DIG": 0,
+    "PROAUDIO.DIG": 2,
+    "RAP10.DIG": 2,
+    "SB16.DIG": 3,
+    "SBLASTER.DIG": 2,
+    "SBPRO.DIG": 2,
+    "SNDSCAPE.DIG": 0,
+    "ULTRA.DIG": 0
+   }
+  },
+  "hook": {
+   "lc172a": {
+    "direct_before": 17,
+    "first_137c": [
+     3185.5406,
+     "r 137c:16a-1e9 x59"
+    ],
+    "own_function_calls": 12,
+    "chained_calls": 495,
+    "first_chain_ms": 3315.271
+   },
+   "lc172b": {
+    "direct_before": 17,
+    "first_137c": [
+     3188.873,
+     "r 137c:16a-1e9 x59"
+    ],
+    "own_function_calls": 12,
+    "chained_calls": 496,
+    "first_chain_ms": 3318.603
+   }
+  },
+  "timing": {
+   "first_direct_mdi_ms": {
+    "lc171a": 3203.3708,
+    "lc172a": 3001.9874,
+    "lc172b": 3001.9604
+   },
+   "lc171a_first_137c_ms": 3723.607,
+   "lc171a_last_direct_ms": 3395.472
+  }
+ },
+ "keyboard": {
+  "cost": {
+   "lc171a": {
+    "game": {
+     "532": 2,
+     "533": 1,
+     "nested": 1
+    },
+    "p 0070:d23": {
+     "539": 3,
+     "540": 2
+    },
+    "p 0088:21b5": {
+     "540": 1
+    }
+   },
+   "lc172a": {
+    "game": {
+     "532": 3,
+     "533": 1
+    },
+    "p 0070:d23": {
+     "539": 4,
+     "540": 1
+    },
+    "p 0080:6ca": {
+     "merged": 1
+    },
+    "p 0080:97c": {
+     "merged": 1
+    },
+    "r f000:cfcb": {
+     "merged": 1
+    }
+   },
+   "lc172b": {
+    "game": {
+     "532": 2,
+     "534": 1
+    },
+    "p 0070:d23": {
+     "539": 4,
+     "540": 1
+    },
+    "p 0070:d27": {
+     "540": 1
+    },
+    "p 0080:6a9": {
+     "merged": 1
+    },
+    "p 0080:6ca": {
+     "merged": 1
+    },
+    "r f000:cfce": {
+     "merged": 1
+    }
+   }
+  },
+  "game_cost_values": [
+   532,
+   533,
+   534
+  ],
+  "reentry_post": {
+   "lc171a": {
+    "69": 61,
+    "70": 2,
+    "302": 6,
+    "601": 1
+   },
+   "lc172a": {
+    "69": 62,
+    "302": 14,
+    "303": 5,
+    "602": 1
+   },
+   "lc172b": {
+    "69": 58,
+    "70": 2,
+    "302": 16,
+    "303": 2,
+    "602": 1
+   }
+  },
+  "split": {
+   "lc172a": {
+    "t": 10611.1616,
+    "post": 602,
+    "kb_irq_ms": 10611.1788,
+    "head": 63,
+    "normal_path": 69,
+    "normal_path_seen": 3276,
+    "kb_handling": 533
+   },
+   "lc172b": {
+    "t": 10589.3588,
+    "post": 602,
+    "kb_irq_ms": 10589.376,
+    "head": 63,
+    "normal_path": 69,
+    "normal_path_seen": 3272,
+    "kb_handling": 533
+   }
+  }
+ },
+ "conclusion": {
+  "dh0": "P1 成立(兩份):delay 迴圈的 int 21h 只有一段連續走長路(lc172a 3634 次、lc172b 4160 次),段內沒有短路、段外沒有長路;結束在 BIOS tick 8051.9194 / 8055.2048 ms。TIME 12:00:54 依 DOSBox-X 公式是第 787504 個 tick(換算 53.97 秒),秒數 0 共 18 個 tick;往前數 18 個 tick 落在資料允許的起點範圍內。",
+  "slices": "S 窗逐條的時間差全由換片 +1、rep 迭代、I/O 延遲(out +3 / in +5)、單次字串指令 +1、mov / pop ss −1、sti 換片 0 解釋。乾淨的 delay(2) 每一次:5000·Δt − Δn − 時間片數 = 1445(兩份相同)。片頭每 ms 50.995 片、新遊戲開場 29.171 片,差的是 DOSBox-X Sound Blaster 的 DMA_DAC_Event(每 ms 22.05 次,3189.84 .. 8468.66 ms:DIG 驅動初始化時的 IRQ7 之後到真正放音之前);每個時間片在核心迴圈多減一個週期。續一百六十五的 delay 時間差 46.12 週期 ≈ 22.05 × 2.0643 ms = 45.52。",
+  "rep": "rep 的基準次數 = ⌈N / 4⌉(N = {'0080:6b0': 14, '0088:e1f': 31, '0070:cd4': 12, '0088:21b5': 31});多記的每一次,rep 期間 k 都至少增加同樣次數(反例 0)。",
+  "dig_137c": "137c 是 DIG 驅動(DIG.INI 的 SB16.DIG;5 個 .DIG 的分派段逐位元組相同):AX 在 0x300 .. 0x4ff 且 BX 對上是自己的功能(到 0x1e9 iret),其餘經 0x1fa ljmp cs:[0x36] 轉給舊向量。lc172a 第一次經過 137c 是 3185.5406 ms 的自己功能,之後 MDI 的 0x502 全經它轉送;續一百七十一「0x300 .. 0x4ff 時轉給驅動」寫反了。",
+  "kb": "int 09h 在遊戲碼收時處理 532 .. 534 條;START 那一下的 602(lc172a / lc172b)是 DIG 型重入的 69 條在 0080:06ca 被鍵盤 IRQ 切開,中間 533 條鍵盤處理;lc171a 的 601、續一百六十五 lc163a 的 601 同型。MDI 375 三份新紀錄都沒再出現。"
+ }
+}

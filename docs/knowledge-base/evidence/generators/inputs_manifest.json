@@ -32121,6 +32121,69 @@
     ]
    }
   },
+  "ev_s172": {
+   "outputs": [
+    "calllog_slices_s172_20261030.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc171_live/lc171a_CALLLOG.TXT": [
+     16468973,
+     "f28a2b12d9d5bb2ec9b9326f56fc1afd8cb7fecb67da5bc5c38d245f4a3a92ab"
+    ],
+    ".wsl_build/lc172_live/lc172a_CALLLOG.TXT": [
+     38911584,
+     "b7cf295b171790ffd5719d267f6fd665e85a5ed58a833b40223831500917d2f5"
+    ],
+    ".wsl_build/lc172_live/lc172b_CALLLOG.TXT": [
+     38354718,
+     "1829b2a49cd9dec6dc636b43dd431a9ba9905be696b4358f641216288c6d9338"
+    ],
+    "{GAME}/ADRV688.DIG": [
+     11278,
+     "294a7de77d88a7f38f58b32fc7166ced87a4c44e6c9be760f78b1724744d7161"
+    ],
+    "{GAME}/DIG.INI": [
+     207,
+     "26fa505f40f5fd67275d08d8d5b4cd6eafaebfe17c1736b21746560b490049b6"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/JAMMER.DIG": [
+     3219,
+     "cca38c28eabe00b88e4bddd627fa68a68b2559029098b777129ca00201831a9c"
+    ],
+    "{GAME}/PROAUDIO.DIG": [
+     2127,
+     "63cc6ba6c0bebf80ebb073cfbef2b0de1ce508d006a94180095a0223ac4bb33c"
+    ],
+    "{GAME}/RAP10.DIG": [
+     2849,
+     "d4e03dd5313e02291df43d41be2d289f7006a30ed24a195d8e872518999566bf"
+    ],
+    "{GAME}/SB16.DIG": [
+     2812,
+     "865fab2e1318f341848dd12db578e881ecb45264e794ed39d47adc235071580e"
+    ],
+    "{GAME}/SBLASTER.DIG": [
+     2984,
+     "3e55f51b14d98cf9db92f334ebf96585a55e725816c590e7eac99fc387da79d2"
+    ],
+    "{GAME}/SBPRO.DIG": [
+     2763,
+     "250c3afdb960a8b3c6fb268e7e610db4a2a43f626c0e1ddee7ff952150a94dae"
+    ],
+    "{GAME}/SNDSCAPE.DIG": [
+     4171,
+     "a1459763f2fdcb1ada4f9fc6d28c9ea33077c00dad91b5809ee899f5a1b6c05c"
+    ],
+    "{GAME}/ULTRA.DIG": [
+     9478,
+     "4e63a94e272f37907910cc2a73120d2d21f3651a66bd06fcac7e80c93af55478"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

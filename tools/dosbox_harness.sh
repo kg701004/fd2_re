@@ -323,6 +323,15 @@ cmd_launch() {
         done
         echo "[$name] DOS environment before FD2.EXE:$dos_set_args"
     fi
+    # 2026-10-30 續一百七十二: optional DOS clock (FD2_HARNESS_DOS_TIME=HH:MM:SS -> -c 'TIME HH:MM:SS' before
+    # FD2.EXE). DOSBox-X's TIME sets the BIOS tick count through int 21h AH=2Dh, and int 21h AH=2Ch reads
+    # the time back from those ticks, so the DOS seconds the game sees follow emulated time from here on.
+    # TIME is a shell builtin like SET, so the EXEC count is unchanged.
+    if [[ -n "${FD2_HARNESS_DOS_TIME:-}" ]]; then
+        [[ "$FD2_HARNESS_DOS_TIME" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$ ]] || die "FD2_HARNESS_DOS_TIME '$FD2_HARNESS_DOS_TIME' is not HH:MM:SS"
+        dos_set_args+=" -c 'TIME $FD2_HARNESS_DOS_TIME'"
+        echo "[$name] DOS time before FD2.EXE: $FD2_HARNESS_DOS_TIME"
+    fi
 
     # Optional function call log (FD2_HARNESS_CALLLOG=<file of hex EIPs> -> $workdir/CALLLOG.TXT).
     #
@@ -363,6 +372,20 @@ cmd_launch() {
             [[ "$FD2_HARNESS_CALLLOG_SEGS" =~ ^[0-9]+(\.[0-9]+)?-[0-9]+(\.[0-9]+)?(:x)?(,[0-9]+(\.[0-9]+)?-[0-9]+(\.[0-9]+)?(:x)?)*$ ]] || die "FD2_HARNESS_CALLLOG_SEGS '$FD2_HARNESS_CALLLOG_SEGS' is not t0-t1[:x][,t0-t1[:x]...] in ms"
             grep -aq FD2_CALLLOG_SEGS "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_SEGS; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
             calllog_env+="FD2_CALLLOG_SEGS=$FD2_HARNESS_CALLLOG_SEGS "
+        fi
+        # 2026-10-30 續一百七十二: FD2_HARNESS_CALLLOG_SLICES=1 adds cumulative CPU time-slice counts and extra
+        # cycles (k= b= w=) to E/R/A/I/G/S records (definition in the patch's C++ comment).
+        if [[ -n "${FD2_HARNESS_CALLLOG_SLICES:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_SLICES" =~ ^[01]$ ]] || die "FD2_HARNESS_CALLLOG_SLICES '$FD2_HARNESS_CALLLOG_SLICES' is not 0 or 1"
+            grep -aq FD2_CALLLOG_SLICES "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_SLICES; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_SLICES=$FD2_HARNESS_CALLLOG_SLICES "
+        fi
+        # Same round: FD2_HARNESS_CALLLOG_PICEV=1 writes per-100-ms counts of PIC event handler calls (P records;
+        # needs the src/hardware/pic.cpp hook of the same patch).
+        if [[ -n "${FD2_HARNESS_CALLLOG_PICEV:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_PICEV" =~ ^[01]$ ]] || die "FD2_HARNESS_CALLLOG_PICEV '$FD2_HARNESS_CALLLOG_PICEV' is not 0 or 1"
+            grep -aq FD2_CALLLOG_PICEV "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_PICEV; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_PICEV=$FD2_HARNESS_CALLLOG_PICEV "
         fi
         echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
     fi

@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 216 節、19 個主題。
+共 217 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 11555:2026-10-29 續一百六十二:續一百六十一只記錄的三個工具問題修好 —— `callgraph_le path` 回空、`disasm_le range` / `dis` 安靜停下、`implausible` 只看 16 bytes 〔來源:disasm、FD2.EXE〕
 - 行 11582:2026-10-29 續一百六十三:③b 實機 —— 掉的計時器中斷 78 次走重入 `0x3ebad`、合併只 3 次;校準數的「一秒」是 19 個 BIOS tick;vnt「最長的幾段」照長度排 〔來源:DOSBox-X、反組譯、FD2.EXE〕
 - 行 11615:2026-10-29 續一百六十四:重入時關中斷的是 DIG 整段與 MDI 的真實模式驅動呼叫;`0x37c30` 只在 `AIL_DEBUG` 登錄;校準每圈慢的 1% 拆不完 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 11658:2026-10-29 續一百六十五:3665.216 ms 那次重入是 MDI 型(鎖住後補叫);MDI 期間擋 IRQ 的是驅動 SBPRO2.MDI;校準多出的指令不是 delay 的正常起伏 〔來源:DOSBox-X、反組譯、FD2.EXE〕
@@ -17,6 +16,7 @@
 - 行 11824:2026-10-30 續一百六十九:驅動的三個仍留 —— CALLLOG 尾端讀數只落後 ≤ 25 ms、HUD 邊框樣板補上藍色地形漏判、輸入迴圈裡的 Return 選中索爾(DOSBox-X 呼叫紀錄 lc169a) 〔來源:DOSBox-X、斷點〕
 - 行 11873:2026-10-30 續一百七十:仍留的離線收口 —— CALLLOG 的 4 KiB 緩衝實測確認、敵方回合 MDI 型重入多是換了曲、5 次未歸類重入是 DIG 補叫與兩次重入、HUD 判定只看邊框樣板(DOSBox-X 呼叫紀錄 lc167a、DOSBox-X 截圖) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 11946:2026-10-30 續一百七十一:工具新建 —— 呼叫紀錄看得到非遊戲段與中斷位置;校準多出的 int 21h 指令是 CF 分支加 rep 多記,MDI 型在驅動 iret 之後的第一條收中斷(DOSBox-X 呼叫紀錄 lc171a / lc171b) 〔來源:DOSBox-X、逐指令、FD2.EXE〕
+- 行 12008:2026-10-30 續一百七十二:仍留收口 —— DH = 0 那一秒走長路(預測成立)、delay 時段差 0.5% 是 DOSBox-X Sound Blaster 的 DMA_DAC_Event 切片、rep 多記是每 4 次重啟加片尾、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄 lc172a / lc172b) 〔來源:DOSBox-X、capstone、反組譯〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -137,7 +137,7 @@
 - 行 2974:2026-09-06(續)：新工具`fd2_env_healthcheck.py`——直接回應本輪C.16調查裡三度重演的
 - 行 3000:2026-09-06(續二)：`dosbox_harness.sh debugger-cmd`的`-l text`+`-l $'\r'`組合在批次寫入場景下 〔來源:debugger〕
 
-## 原版實機執行軌跡與函式呼叫紀錄(18 節)
+## 原版實機執行軌跡與函式呼叫紀錄(19 節)
 
 - 行 245:Ground-truth 執行流程追蹤(`tools/dosbox_exec_trace.sh` + `tools/dosbox_exec_trace_analyze.py`,2026-08-25) 〔來源:dosbox-x、斷點、Ghidra〕
 - 行 7571:2026-10-07 續八十一:分母補兩類漏網入口 —— LE 進入點與死函式島(1313 -> 1358) 〔來源:反組譯、FD2.EXE〕
@@ -157,6 +157,7 @@
 - 行 11824:2026-10-30 續一百六十九:驅動的三個仍留 —— CALLLOG 尾端讀數只落後 ≤ 25 ms、HUD 邊框樣板補上藍色地形漏判、輸入迴圈裡的 Return 選中索爾(DOSBox-X 呼叫紀錄 lc169a) 〔來源:DOSBox-X、斷點〕
 - 行 11873:2026-10-30 續一百七十:仍留的離線收口 —— CALLLOG 的 4 KiB 緩衝實測確認、敵方回合 MDI 型重入多是換了曲、5 次未歸類重入是 DIG 補叫與兩次重入、HUD 判定只看邊框樣板(DOSBox-X 呼叫紀錄 lc167a、DOSBox-X 截圖) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 11946:2026-10-30 續一百七十一:工具新建 —— 呼叫紀錄看得到非遊戲段與中斷位置;校準多出的 int 21h 指令是 CF 分支加 rep 多記,MDI 型在驅動 iret 之後的第一條收中斷(DOSBox-X 呼叫紀錄 lc171a / lc171b) 〔來源:DOSBox-X、逐指令、FD2.EXE〕
+- 行 12008:2026-10-30 續一百七十二:仍留收口 —— DH = 0 那一秒走長路(預測成立)、delay 時段差 0.5% 是 DOSBox-X Sound Blaster 的 DMA_DAC_Event 切片、rep 多記是每 4 次重啟加片尾、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄 lc172a / lc172b) 〔來源:DOSBox-X、capstone、反組譯〕
 
 ## 工具的自我驗證、突變測試與閘門(33 節)
 
@@ -268,7 +269,7 @@
 - 行 10874:2026-10-23 續一百五十一:跑不完的 2 個變異改成 KILLED;10-06 那批與移植產生器的 ESCAPED 逐一補判準(34 個產生器,ESCAPED 665 → 41) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(51 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(52 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -321,6 +322,7 @@
 - 行 11824:2026-10-30 續一百六十九:驅動的三個仍留 —— CALLLOG 尾端讀數只落後 ≤ 25 ms、HUD 邊框樣板補上藍色地形漏判、輸入迴圈裡的 Return 選中索爾(DOSBox-X 呼叫紀錄 lc169a) 〔來源:DOSBox-X、斷點〕
 - 行 11873:2026-10-30 續一百七十:仍留的離線收口 —— CALLLOG 的 4 KiB 緩衝實測確認、敵方回合 MDI 型重入多是換了曲、5 次未歸類重入是 DIG 補叫與兩次重入、HUD 判定只看邊框樣板(DOSBox-X 呼叫紀錄 lc167a、DOSBox-X 截圖) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 11946:2026-10-30 續一百七十一:工具新建 —— 呼叫紀錄看得到非遊戲段與中斷位置;校準多出的 int 21h 指令是 CF 分支加 rep 多記,MDI 型在驅動 iret 之後的第一條收中斷(DOSBox-X 呼叫紀錄 lc171a / lc171b) 〔來源:DOSBox-X、逐指令、FD2.EXE〕
+- 行 12008:2026-10-30 續一百七十二:仍留收口 —— DH = 0 那一秒走長路(預測成立)、delay 時段差 0.5% 是 DOSBox-X Sound Blaster 的 DMA_DAC_Event 切片、rep 多記是每 4 次重啟加片尾、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄 lc172a / lc172b) 〔來源:DOSBox-X、capstone、反組譯〕
 
 ## dispatch 跳表與指令表(4 節)
 
