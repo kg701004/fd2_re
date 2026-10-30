@@ -22,9 +22,14 @@ episode  兩段遊戲 selector 之間的非遊戲 run 與 I 紀錄;以「離開�
     python tools/calllog_segments.py diff     <CALLLOG> A B       # 兩個 episode(編號)逐 run / 逐指令對齊,列出多出 / 少掉的
     python tools/calllog_segments.py irq      <CALLLOG>           # 硬體中斷(I type 0)收在哪:(模式, CS, EIP) 與所在 episode
     python tools/calllog_segments.py disasm   <CALLLOG> [--cs CS] # 紀錄裡帶 c= 的每個位置的第一條指令(capstone;沒有就只印位元組)
+    python tools/calllog_segments.py io       <CALLLOG> [--port P] # O / N(FD2_CALLLOG_IO)與 K(FD2_CALLLOG_KBD)依 n 排序
     python tools/calllog_segments.py --selftest
 
 模式字元:r 真實模式、v V86、p 16 位元保護模式、P 32 位元保護模式(r / v / p 以 16 位元反組譯)。
+續一百七十三:O / N 是 I/O 寫 / 讀(埠、值、寬度、當時的模式 / CS / EIP),K 是進鍵盤控制器佇列的位元組;
+它們在指令執行當中寫出,不切斷 S 的合併,與 G 的先後以 n 為準。O / N 的 eip:CPU 的 in / out 是那條指令本身
+(lc173a 逐條窗內 144 / 144 與同 n 的 S 相同);DOSBox-X callback(C++ 的 BIOS 程式)自己做的 I/O 是 callback 指令之後
+(lc173a 的 25 筆 N 0021 在 f000:d105,同 n 的 S 是 f000:d101)。
 只讀紀錄檔,不寫任何檔案。
 """
 from __future__ import annotations
@@ -48,6 +53,9 @@ _SL = r"(?: k=(\d+) b=(-?\d+) w=(-?\d+))?"
 _G = re.compile(r"^G ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) ([0-9a-f]{8}) (\d+) n=(\d+)" + _SL + r"(?: c=([0-9a-f?]{32}))?$")
 _S = re.compile(r"^S ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+)" + _SL + r"(?: c=([0-9a-f?]{32}))?$")
 _I = re.compile(r"^I ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)" + _SL + "$")
+_IO = re.compile(r"^([ON]) ([0-9a-f]{4}) ([0-9a-f]+) ([124]) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)"
+                 + _SL + "$")
+_K = re.compile(r"^K ([0-9a-f]{3}) (\d+) n=(\d+) t=([0-9.]+)" + _SL + "$")
 _H_CS = re.compile(r"\bcs=([0-9a-f]{4})\b")
 
 
@@ -86,6 +94,35 @@ class Irq:
 
 
 @dataclass
+class Io:
+    """一筆 O(寫)/ N(讀)紀錄。"""
+
+    op: str
+    port: int
+    value: int
+    width: int
+    m: str
+    cs: int
+    eip: int
+    n: int
+    t: float
+    sl: tuple[int, int, int] | None = None
+    line: int = 0  # 檔案行號(同 n 時的先後)
+
+
+@dataclass
+class Key:
+    """一筆 K 紀錄:進鍵盤控制器佇列的位元組(0x100 = AUX)與當時已排隊的個數。"""
+
+    data: int
+    used: int
+    n: int
+    t: float
+    sl: tuple[int, int, int] | None = None
+    line: int = 0
+
+
+@dataclass
 class Episode:
     """兩段遊戲 selector 之間的非遊戲指令。"""
 
@@ -116,6 +153,8 @@ class Log:
     order: list[tuple[str, int]]    # ("G", runs 索引) / ("I", irqs 索引),檔案次序
     code: dict[tuple[str, int, int], bytes | None]  # (模式, CS, EIP) -> 16 位元組(有 ?? 時 None)
     gaps: list[tuple[int, int]]     # (前一段 n_end, 這段 n_start) 不相接的地方
+    ios: list[Io] = field(default_factory=list)    # O / N,檔案次序
+    keys: list[Key] = field(default_factory=list)  # K,檔案次序
 
 
 def _slices(mt: re.Match[str], first: int) -> tuple[int, int, int] | None:
@@ -132,7 +171,7 @@ def _code(hexs: str | None) -> bytes | None:
 
 
 def parse(lines: Iterable[str]) -> Log:
-    """解析呼叫紀錄的 H / G / S / I 紀錄;其他種類略過。
+    """解析呼叫紀錄的 H / G / S / I / O / N / K 紀錄;其他種類略過。
 
     Args:
         lines: 紀錄檔的各行。
@@ -141,13 +180,15 @@ def parse(lines: Iterable[str]) -> Log:
         `Log`;連續的同 selector / 模式 S 紀錄併成一個帶逐條 EIP 的 run。
 
     Raises:
-        ValueError: 沒有 H 紀錄,或 G / S / I 開頭的行格式不符。
+        ValueError: 沒有 H 紀錄,或 G / S / I / O / N / K 開頭的行格式不符。
     """
     game_cs: int | None = None
     runs: list[Run] = []
     irqs: list[Irq] = []
     order: list[tuple[str, int]] = []
     code: dict[tuple[str, int, int], bytes | None] = {}
+    ios: list[Io] = []
+    keys: list[Key] = []
     prev_kind = ""  # 上一筆 G / S / I 紀錄的種類;只有接在 S 後面的 S 才能併進同一段
     for ln, raw in enumerate(lines, 1):
         line = raw.rstrip("\r\n")
@@ -199,10 +240,23 @@ def parse(lines: Iterable[str]) -> Log:
                             int(mi.group(5), 16), int(mi.group(6)), float(mi.group(7)), _slices(mi, 8)))
             order.append(("I", len(irqs) - 1))
             prev_kind = "I"
+        elif k in "ON":
+            mo = _IO.match(line)
+            if not mo:
+                raise ValueError(f"line {ln}: bad {k} record: {line[:80]}")
+            ios.append(Io(mo.group(1), int(mo.group(2), 16), int(mo.group(3), 16), int(mo.group(4)), mo.group(5),
+                          int(mo.group(6), 16), int(mo.group(7), 16), int(mo.group(8)), float(mo.group(9)),
+                          _slices(mo, 10), ln))
+        elif k == "K":
+            mk = _K.match(line)
+            if not mk:
+                raise ValueError(f"line {ln}: bad K record: {line[:80]}")
+            keys.append(Key(int(mk.group(1), 16), int(mk.group(2)), int(mk.group(3)), float(mk.group(4)),
+                            _slices(mk, 5), ln))
     if game_cs is None:
         raise ValueError("no H record")
     gaps = [(a.n_end, b.n_start) for a, b in zip(runs, runs[1:]) if b.n_start != a.n_end]
-    return Log(game_cs, runs, irqs, order, code, gaps)
+    return Log(game_cs, runs, irqs, order, code, gaps, ios, keys)
 
 
 def episodes(log: Log) -> list[Episode]:
@@ -428,6 +482,21 @@ def cmd_disasm(log: Log, cs_filter: int | None) -> int:
     return 0
 
 
+def io_events(log: Log, ports: set[int] | None = None) -> list[str]:
+    """O / N(只取 ports 裡的埠;None = 全部)與 K 依 n 排序(同 n 依檔案次序),每筆一行。"""
+    ev = [(x.n, x.line, f"{x.t:.6f} {x.op} {x.port:04x} {x.value:x} w{x.width} {x.m} {x.cs:04x}:{x.eip:08x} n={x.n}")
+          for x in log.ios if ports is None or x.port in ports]
+    ev += [(y.n, y.line, f"{y.t:.6f} K {y.data:03x} used={y.used} n={y.n}") for y in log.keys]
+    return [text for _n, _ln, text in sorted(ev)]
+
+
+def cmd_io(log: Log, ports: list[int]) -> int:
+    """印 O / N / K。"""
+    for line in io_events(log, set(ports) if ports else None):
+        print(line)
+    return 0
+
+
 def selftest() -> int:
     """合成紀錄的自我檢查(含成對對照)。
 
@@ -561,6 +630,33 @@ def selftest() -> int:
         check(False, "missing H must raise")
     except ValueError:
         pass
+    # 續一百七十三:O / N / K(值與埠各不相同;夾在兩筆 S 中間不切斷合併)
+    io = parse(["H x cs=0170 io=0-f,220-22f kbd=1",
+                "S r 0f71 00000285 n=10",
+                "O 0003 1 1 r 0f71 00000286 n=10 t=12.5",
+                "K 01c 0 n=10 t=12.75",
+                "S r 0f71 00000286 n=11",
+                "N 022e ab 2 v 0088 00001234 n=11 t=13.0 k=7 b=8 w=-9",
+                "O 0060 9c 4 P 0170 0003e01d n=9 t=14.0",
+                "K 19c 3 n=12 t=15.0 k=1 b=2 w=3"])
+    check(io.ios[0] == Io("O", 3, 1, 1, "r", 0xF71, 0x286, 10, 12.5, None, 3), "O fields")
+    check(io.ios[1] == Io("N", 0x22E, 0xAB, 2, "v", 0x88, 0x1234, 11, 13.0, (7, 8, -9), 6), "N fields + slices")
+    check(io.keys == [Key(0x1C, 0, 10, 12.75, None, 4), Key(0x19C, 3, 12, 15.0, (1, 2, 3), 8)], "K fields")
+    check(len(io.runs) == 1 and io.runs[0].eips == [0x285, 0x286], "O / K between two S do not split the run")
+    check(io_events(io) == ["14.000000 O 0060 9c w4 P 0170:0003e01d n=9",
+                            "12.500000 O 0003 1 w1 r 0f71:00000286 n=10",
+                            "12.750000 K 01c used=0 n=10",
+                            "13.000000 N 022e ab w2 v 0088:00001234 n=11",
+                            "15.000000 K 19c used=3 n=12"], "io events by n, then file line")
+    check(io_events(io, {3}) == ["12.500000 O 0003 1 w1 r 0f71:00000286 n=10", "12.750000 K 01c used=0 n=10",
+                                 "15.000000 K 19c used=3 n=12"], "port filter keeps K")
+    check(gs.ios == [] and gs.keys == [], "control: no O / N / K -> empty")
+    for bad in ("O 0003 1 3 r 0f71 00000286 n=10 t=1.0", "N 03 1 1 r 0f71 00000286 n=10 t=1.0", "K 1c 0 n=1 t=1.0"):
+        try:
+            parse(["H x cs=0170", bad])
+            check(False, f"bad record must raise: {bad}")
+        except ValueError as e:
+            check(str(e).startswith(f"line 2: bad {bad[0]} record"), f"error names the kind: {bad}")
     # 反組譯:同一組位元組 16 / 32 位元解法不同(模式要真的影響結果)
     b = bytes.fromhex("b801000000")
     d16, d32 = disasm_one("r", 0, b), disasm_one("P", 0, b)
@@ -578,10 +674,10 @@ def selftest() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """命令列入口。"""
-    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 G / S / I 紀錄")
+    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 G / S / I / O / N / K 紀錄")
     ap.add_argument("--selftest", action="store_true")
     sub = ap.add_subparsers(dest="cmd")
-    for name in ("summary", "episodes", "diff", "irq", "disasm"):
+    for name in ("summary", "episodes", "diff", "irq", "disasm", "io"):
         sp = sub.add_parser(name)
         sp.add_argument("log")
         if name == "episodes":
@@ -591,6 +687,8 @@ def main(argv: list[str] | None = None) -> int:
             sp.add_argument("b", type=int)
         if name == "disasm":
             sp.add_argument("--cs", type=lambda s: int(s, 16), default=None)
+        if name == "io":
+            sp.add_argument("--port", action="append", type=lambda s: int(s, 16), default=[])
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
@@ -610,6 +708,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_diff(log, args.a, args.b)
     if args.cmd == "irq":
         return cmd_irq(log)
+    if args.cmd == "io":
+        return cmd_io(log, args.port)
     return cmd_disasm(log, args.cs)
 
 

@@ -387,6 +387,19 @@ cmd_launch() {
             grep -aq FD2_CALLLOG_PICEV "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_PICEV; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
             calllog_env+="FD2_CALLLOG_PICEV=$FD2_HARNESS_CALLLOG_PICEV "
         fi
+        # 2026-10-30 續一百七十三: FD2_HARNESS_CALLLOG_IO=<hex port>[-<hex port>][,...] writes every IO_Read / IO_Write
+        # of those ports (O / N records; src/hardware/iohandler.cpp hooks) and FD2_HARNESS_CALLLOG_KBD=1 every byte
+        # queued to the keyboard controller (K records; src/hardware/keyboard.cpp hook). Parsed by calllog_segments.py io.
+        if [[ -n "${FD2_HARNESS_CALLLOG_IO:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_IO" =~ ^[0-9a-fA-F]+(-[0-9a-fA-F]+)?(,[0-9a-fA-F]+(-[0-9a-fA-F]+)?)*$ ]] || die "FD2_HARNESS_CALLLOG_IO '$FD2_HARNESS_CALLLOG_IO' is not hex ports / lo-hi ranges, comma separated"
+            grep -aq FD2_CALLLOG_IO "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_IO; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_IO=$FD2_HARNESS_CALLLOG_IO "
+        fi
+        if [[ -n "${FD2_HARNESS_CALLLOG_KBD:-}" ]]; then
+            [[ "$FD2_HARNESS_CALLLOG_KBD" =~ ^[01]$ ]] || die "FD2_HARNESS_CALLLOG_KBD '$FD2_HARNESS_CALLLOG_KBD' is not 0 or 1"
+            grep -aq FD2_CALLLOG_KBD "$DOSBOX_BIN" || die "dosbox-x binary $DOSBOX_BIN predates FD2_CALLLOG_KBD; rebuild with tools/dosbox/fd2_calllog_patch.py --upgrade"
+            calllog_env+="FD2_CALLLOG_KBD=$FD2_HARNESS_CALLLOG_KBD "
+        fi
         echo "[$name] call log: $FD2_HARNESS_CALLLOG -> $workdir/CALLLOG.TXT"
     fi
 

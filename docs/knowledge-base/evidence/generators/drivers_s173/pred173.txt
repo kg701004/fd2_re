@@ -1,0 +1,29 @@
+續一百七十三 實機 lc173a 之前寫下的預測(2026-10-30;跑之前寫,跑完不改)
+
+設定:原版 FD2.EXE、~/fd2-dosbox-calllog3(續一百七十三 fd2_calllog_patch.py --upgrade,多 FD2_CALLLOG_IO / _KBD),
+步驟同 lc172(poll_title → Return → 16 秒),TIME 12:00:54,SLICES=1、PICEV=1、KBD=1,
+IO=0-f,20-21,40-43,60,64,81-8f,a0-a1,c0-df,220-22f,388-38b,SEGS=3000-3150,3150-3250:x,3250-24000。
+
+P1(工具機制:O / N 的 eip 是哪一條)
+  DOSBox-X 核心每條指令開頭 SAVEIP 後才呼叫 DEBUG_HeavyIsBreakpoint,I/O 函式在指令執行中被呼叫,
+  所以 O / N 的 eip = 那條 in / out 本身的位址(不是下一條)。在 3150 .. 3250:x 窗內,每筆 O / N 的 n 等於
+  某筆 S 的 n,且那筆 S 的 eip 等於 O / N 的 eip、S 的位元組解出來是 in / out。
+  反面:若 eip 是下一條,O / N 的 eip = S 的 eip + 指令長度。
+
+P2(工具 A 的靜態結果對實機)
+  SB16.DIG 載入段(續一百七十二:137c)上的 out,eip 落在 ail_driver_disasm.py io SB16.DIG 列出的 out 位址之內;
+  DMA 設定(0x233 .. 0x29f)那一串的埠依序是 遮罩(0x235 call 0x20e:byte[bx+0x148])→ 清 flip-flop(byte[bx+0x158])→
+  位址低 / 高(byte[bx+0x138])→ 計數低 / 高(byte[bx+0x140])→ 頁(byte[bx+0x130])→ 模式(byte[bx+0x150]),
+  實際埠號等於檔案表格在同一個 bx 的值(8 位元通道 bx 0..3:0a,0c,00/02/04/06,01/03/05/07,87/83/81/82,0b;
+  16 位元通道 bx 5..7:d4,d8,c4/c8/cc,c6/ca/ce,8b/89/8a,d6)。
+
+P3(單一樣本 DMA)
+  DMA_DAC_Event 第一次出現在 P 紀錄的那個 100 ms 之前,最後一次 DMA 計數暫存器寫入讓
+  (計數 + 1)小於一個樣本的 DMA 計數(DOSBox-X sblaster.cpp:basecnt < 1 或 16 位元 aliased / 立體聲時更大)。
+  不預測是 8 位元還是 16 位元通道、不預測是哪個功能號。反面:那次計數夠大(>= 一個樣本)→ 續一百七十二的推論錯。
+
+P4(START 那一下)
+  Return 的 K(make 01c)出現一次、break(09c)出現一次;第一筆 I 09 在 K 01c 之後。
+  若 K 01c 到 I 09 之間的時間比 DOSBox-X 的 KEYDELAY 大很多、且這段時間裡有 DIG 型重入(IF 關著或 IRQ 1 被遮),
+  就是「鍵盤 IRQ 等到重入之後才收」;若 K 01c 到 I 09 很短而重入是在 K 之後才開始,
+  就是按鍵本身與重入無關、時間上巧合需要別的解釋。兩種都可能,先不押。

@@ -34,7 +34,12 @@ src/cpu/cpu.cpp(`CPU_Interrupt` 開頭呼叫 `fd2calllog_interrupt`)。解析在
 「到這條指令為止」的時間片數 k、片起點多出的週期 b、片內多出的週期 w(定義寫在插入的 C++ 註解);不設時輸出與之前逐字相同。
 同輪另加 FD2_CALLLOG_PICEV(harness 的 FD2_HARNESS_CALLLOG_PICEV):時間片是在下一個 PIC 事件處切的,要知道片頭每 ms 多出的
 約 22 片是哪個模擬裝置排的事件,就在 src/hardware/pic.cpp 的 PIC_RunQueue 呼叫處理函式之前計數,每 100 ms 寫一筆 P。
-`--selftest` 只檢查文字修補本身(錨點、重複修補、升級、兩檔一致);C++ 是否編得過、紀錄是否正確要實際建置再跑。
+2026-10-30 續一百七十三:加 FD2_CALLLOG_IO 與 FD2_CALLLOG_KBD(harness 的 FD2_HARNESS_CALLLOG_IO / _KBD)。續一百七十二留下
+「SB16.DIG 初始化留下單一樣本 DMA」(DOSBox-X 只在 DMA 計數低於一個樣本時進 DMA_DAC_Event,INFERRED)與「START 那一下為什麼
+總撞上 DIG 型重入」:前者要看驅動實際寫了哪些埠、什麼值,後者要知道按鍵是什麼時候進模擬器的(I 紀錄只有 IRQ 1 何時被收)。
+IO=<埠範圍> 在 src/hardware/iohandler.cpp 的 IO_ReadB/W/D、IO_WriteB/W/D 記每次存取(O 寫、N 讀),KBD=1 在
+src/hardware/keyboard.cpp 的 KEYBOARD_AddBuffer 開頭記每個進鍵盤控制器佇列的位元組(K)。兩個都不設時輸出與之前逐字相同。
+`--selftest` 只檢查文字修補本身(錨點、重複修補、升級、各檔一致);C++ 是否編得過、紀錄是否正確要實際建置再跑。
 """
 from __future__ import annotations
 
@@ -60,6 +65,21 @@ PIC_ANCHOR = ("            if (entry->pic_event != NULL)\n"
 PIC_HOOK = ("#if C_DEBUG && C_HEAVY_DEBUG\n"
             "            { void fd2calllog_picevent(void *fn); /* fd2_re local patch */\n"
             "              fd2calllog_picevent((void *)entry->pic_event); }\n"
+            "#endif\n")
+
+# 續一百七十三:I/O 存取(src/hardware/iohandler.cpp)。寫入掛在 log_io 之後、交給裝置之前;讀出掛在 log_io 之後、return 之前。
+IO_HOOKS: list[tuple[str, str]] = [
+    (f"\tlog_io({w}, {wr}, port, {v});\n",
+     "#if C_DEBUG && C_HEAVY_DEBUG\n"
+     "\t{ void fd2calllog_io(Bitu port,Bitu val,unsigned width,bool wr); /* fd2_re local patch */\n"
+     f"\t  fd2calllog_io(port,(Bitu){v},{n},{wr}); }}\n"
+     "#endif\n")
+    for w, n in ((0, 1), (1, 2), (2, 4)) for wr, v in (("true", "val"), ("false", "retval"))]
+# 同輪:進鍵盤控制器佇列的位元組(src/hardware/keyboard.cpp),在佇列滿的檢查之前。
+KBD_ANCHOR = "void KEYBOARD_AddBuffer(uint16_t data) {\n"
+KBD_HOOK = ("#if C_DEBUG && C_HEAVY_DEBUG\n"
+            "    { void fd2calllog_key(uint16_t data,unsigned used); /* fd2_re local patch */\n"
+            "      fd2calllog_key(data,(unsigned)keyb.used); }\n"
             "#endif\n")
 
 CODE = BEGIN + r''' * Enabled only when env FD2_CALLLOG_ENTRIES names a file of hex EIPs (whitespace separated).
@@ -101,6 +121,17 @@ CODE = BEGIN + r''' * Enabled only when env FD2_CALLLOG_ENTRIES names a file of 
  *     emulated time and writes, when a 100 ms bucket ends (and at exit):
  *       P <bucket start ms> <handler address>=<calls>[ ...]   (addresses ascending)
  *     H gets " picev=<run-time address of fd2calllog_picevent>"; subtract its nm address to resolve handlers.
+ *   FD2_CALLLOG_IO=<hex port>[-<hex port>][,...] logs every IO_Read / IO_Write of those ports (needs the
+ *     src/hardware/iohandler.cpp hooks; V86 fake I/O and accesses that bypass IO_Read / IO_Write are not seen):
+ *       O port value width m cs eip n=<all instructions through the current one> t=<ms>   (write)
+ *       N port value width m cs eip n=... t=...                                       (read; value returned)
+ *     width in bytes; m cs eip as seen when the handler runs (eip may already point past the instruction).
+ *     Written immediately: an open G run that contains the instruction is written after it (order by n=).
+ *     H gets " io=<spec>".
+ *   FD2_CALLLOG_KBD=1 writes, at the top of KEYBOARD_AddBuffer (needs the src/hardware/keyboard.cpp hook),
+ *       K data used n=... t=...   data = the queued byte (0x100 bit = AUX), used = bytes already queued.
+ *     H gets " kbd=1".
+ *   O / N / K end with " k= b= w=" when FD2_CALLLOG_SLICES is set.
  */
 #include <unordered_set>
 #include <map>
@@ -143,6 +174,9 @@ static Bitu sl_ticks = 0;
 static bool picev = false;
 static std::map<uintptr_t, unsigned long long> pe_counts;
 static long long pe_bucket = -1;
+/* FD2_CALLLOG_IO / FD2_CALLLOG_KBD state */
+static std::vector<uint8_t> io_ports;   /* 65536 flags when FD2_CALLLOG_IO is set, empty otherwise */
+static bool kbd = false;
 
 static void pe_flush(void) {
     if (pe_counts.empty()) return;
@@ -207,6 +241,32 @@ static bool parse_segs(const char *s) {
         }
     }
     return !seg_win.empty();
+}
+
+static bool parse_io(const char *s) {
+    io_ports.assign(65536, 0);
+    while (*s) {
+        char *end;
+        const unsigned long a = strtoul(s, &end, 16);
+        if (end == s) return false;
+        unsigned long b = a;
+        s = end;
+        if (*s == '-') {
+            s++;
+            b = strtoul(s, &end, 16);
+            if (end == s) return false;
+            s = end;
+        }
+        if (b < a || b > 0xffffUL) return false;
+        for (unsigned long k = a; k <= b; k++) io_ports[k] = 1;
+        if (*s == ',') {
+            s++;
+            if (!*s) return false;
+        } else if (*s) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /* -1 = outside every window, 0 = run window, 1 = per-instruction window */
@@ -315,6 +375,11 @@ static void init(void) {
     icount = ic_s && *ic_s && strcmp(ic_s, "0") != 0;
     slices = sl_s && *sl_s && strcmp(sl_s, "0") != 0;
     picev = pe_s && *pe_s && strcmp(pe_s, "0") != 0;
+    const char *io_s = getenv("FD2_CALLLOG_IO");
+    const char *kb_s = getenv("FD2_CALLLOG_KBD");
+    kbd = kb_s && *kb_s && strcmp(kb_s, "0") != 0;
+    if (io_s && *io_s && !parse_io(io_s))
+        E_Exit("FD2_CALLLOG: bad FD2_CALLLOG_IO '%s' (hex port or lo-hi, comma separated)", io_s);
     if (gate_s && *gate_s) { has_gate = true; gate_open = false; gate_eip = (uint32_t)strtoul(gate_s, NULL, 16); }
     if (segs_s && *segs_s) {
         if (!parse_segs(segs_s)) E_Exit("FD2_CALLLOG: bad FD2_CALLLOG_SEGS '%s' (t0-t1[:x][,...], ms)", segs_s);
@@ -346,6 +411,8 @@ static void init(void) {
     if (segs) fprintf(out, " segs=%s", segs_s);
     if (slices) fputs(" slices=1", out);
     if (picev) fprintf(out, " picev=%llx", (unsigned long long)(uintptr_t)&fd2calllog_picevent);
+    if (!io_ports.empty()) fprintf(out, " io=%s", io_s);
+    if (kbd) fputs(" kbd=1", out);
     fputc('\n', out);
     fflush(out);
     atexit(at_exit_flush);
@@ -427,6 +494,27 @@ void fd2calllog_picevent(void *fn) {
     const long long bucket = (long long)((double)PIC_FullIndex() / 100.0);
     if (bucket != fd2calllog::pe_bucket) { fd2calllog::pe_flush(); fd2calllog::pe_bucket = bucket; }
     fd2calllog::pe_counts[(uintptr_t)fn]++;
+}
+
+/* Called from IO_ReadB/W/D and IO_WriteB/W/D (src/hardware/iohandler.cpp, same local patch). */
+void fd2calllog_io(Bitu port, Bitu val, unsigned width, bool wr) {
+    if (GCC_UNLIKELY(!fd2calllog::inited)) fd2calllog::init();
+    if (!fd2calllog::enabled || fd2calllog::io_ports.empty() || !fd2calllog::io_ports[port & 0xffffu]) return;
+    fprintf(fd2calllog::out, "%c %04x %x %u %c %04x %08x n=%llu t=%.6f", wr ? 'O' : 'N', (unsigned)(port & 0xffffu),
+            (unsigned)val, width, fd2calllog::cpu_mode(), (unsigned)SegValue(cs), (unsigned)reg_eip,
+            fd2calllog::allinstr, (double)PIC_FullIndex());
+    fd2calllog::put_slices(fd2calllog::sl_k, fd2calllog::sl_b, fd2calllog::sl_w);
+    fputc('\n', fd2calllog::out);
+}
+
+/* Called at the top of KEYBOARD_AddBuffer (src/hardware/keyboard.cpp, same local patch). */
+void fd2calllog_key(uint16_t data, unsigned used) {
+    if (GCC_UNLIKELY(!fd2calllog::inited)) fd2calllog::init();
+    if (!fd2calllog::enabled || !fd2calllog::kbd) return;
+    fprintf(fd2calllog::out, "K %03x %u n=%llu t=%.6f", (unsigned)data, used, fd2calllog::allinstr,
+            (double)PIC_FullIndex());
+    fd2calllog::put_slices(fd2calllog::sl_k, fd2calllog::sl_b, fd2calllog::sl_w);
+    fputc('\n', fd2calllog::out);
 }
 
 /* Called from CPU_Interrupt (src/cpu/cpu.cpp, same local patch) before the interrupt is delivered. */
@@ -539,6 +627,35 @@ def patch_pic_text(src: str) -> str:
     return src.replace(PIC_ANCHOR, PIC_HOOK + PIC_ANCHOR)  # 上面已確認恰好一處
 
 
+def _patch_after(src: str, pairs: list[tuple[str, str]], marker: str, what: str) -> str:
+    """每個錨點之後接上它的掛勾;已修補過(含 marker)時確認每組都恰好一處後原樣回傳。
+
+    Raises:
+        ValueError: 某個錨點不是恰好一處,或含 marker 卻不是預期的掛勾。
+    """
+    if marker in src:
+        for a, h in pairs:
+            if src.count(a + h) != 1:
+                raise ValueError(f"{what} mentions {marker} but not as the expected hooks")
+        return src
+    for a, _h in pairs:
+        if src.count(a) != 1:
+            raise ValueError(f"{what} anchor {a.strip()!r} found {src.count(a)} times, expected 1")
+    for a, h in pairs:
+        src = src.replace(a, a + h)  # 上面已確認每個恰好一處
+    return src
+
+
+def patch_io_text(src: str) -> str:
+    """回傳在 IO_ReadB/W/D、IO_WriteB/W/D 的 log_io 之後加上 `fd2calllog_io` 呼叫的 iohandler.cpp 內容(已加過則原樣回傳)。"""
+    return _patch_after(src, IO_HOOKS, "fd2calllog_io", "iohandler.cpp")
+
+
+def patch_kbd_text(src: str) -> str:
+    """回傳在 KEYBOARD_AddBuffer 開頭加上 `fd2calllog_key` 呼叫的 keyboard.cpp 內容(已加過則原樣回傳)。"""
+    return _patch_after(src, [(KBD_ANCHOR, KBD_HOOK)], "fd2calllog_key", "keyboard.cpp")
+
+
 def selftest() -> int:
     """文字修補的自我檢查(不編譯 C++)。
 
@@ -620,6 +737,54 @@ def selftest() -> int:
         check(False, "a stray pic mention without the hook must fail")
     except ValueError:
         pass
+    # 續一百七十三:IO / KBD
+    for env in ("FD2_CALLLOG_IO", "FD2_CALLLOG_KBD"):
+        check(env in CODE, f"CODE reads {env}")
+    check("void fd2calllog_io(Bitu port, Bitu val, unsigned width, bool wr) {" in CODE, "CODE defines fd2calllog_io")
+    check("void fd2calllog_key(uint16_t data, unsigned used) {" in CODE, "CODE defines fd2calllog_key")
+    check(len(IO_HOOKS) == 6 and all("void fd2calllog_io(Bitu port,Bitu val,unsigned width,bool wr);" in h
+                                     for _a, h in IO_HOOKS), "six io hooks declare it")
+    check([h.split("fd2calllog_io(port,(Bitu)")[1].split("); }")[0] for _a, h in IO_HOOKS] ==
+          ["val,1,true", "retval,1,false", "val,2,true", "retval,2,false", "val,4,true", "retval,4,false"],
+          "io hook value / width / direction per anchor")
+    check([a for a, _h in IO_HOOKS][:2] == ["\tlog_io(0, true, port, val);\n", "\tlog_io(0, false, port, retval);\n"]
+          and IO_HOOKS[5][0] == "\tlog_io(2, false, port, retval);\n", "io anchors")
+    check("void fd2calllog_key(uint16_t data,unsigned used);" in KBD_HOOK, "kbd hook declares it")
+    io = "".join(f"void F{i}() {{\n{a}\tx();\n}}\n" for i, (a, _h) in enumerate(IO_HOOKS))
+    o1 = patch_io_text(io)
+    check(o1 == "".join(f"void F{i}() {{\n{a}{h}\tx();\n}}\n" for i, (a, h) in enumerate(IO_HOOKS)),
+          "each io hook right after its log_io")
+    check(patch_io_text(o1) == o1, "io re-patch is a no-op")
+    try:
+        patch_io_text(io.replace("log_io(1, true", "log_io(1,true"))
+        check(False, "missing io anchor must fail")
+    except ValueError as e:
+        check("0 times" in str(e), "io anchor count reported")
+    try:
+        patch_io_text(io + IO_HOOKS[2][0])
+        check(False, "duplicated io anchor must fail")
+    except ValueError as e:
+        check("2 times" in str(e), "io duplicate count reported")
+    try:
+        patch_io_text(o1.replace(IO_HOOKS[3][0] + IO_HOOKS[3][1], IO_HOOKS[3][0]))
+        check(False, "a partly hooked iohandler.cpp must fail")
+    except ValueError:
+        pass
+    kb = "static void x();\n" + KBD_ANCHOR + "    if (keyb.used>=KEYBUFSIZE) {\n"
+    k1 = patch_kbd_text(kb)
+    check(k1 == "static void x();\n" + KBD_ANCHOR + KBD_HOOK + "    if (keyb.used>=KEYBUFSIZE) {\n",
+          "kbd hook right after the function's opening line")
+    check(patch_kbd_text(k1) == k1, "kbd re-patch is a no-op")
+    try:
+        patch_kbd_text(kb.replace("(uint16_t data) {", "(uint16_t data)\n{"))
+        check(False, "missing kbd anchor must fail")
+    except ValueError as e:
+        check("0 times" in str(e), "kbd anchor count reported")
+    try:
+        patch_kbd_text(kb + "/* fd2calllog_key */\n")
+        check(False, "a stray kbd mention without the hook must fail")
+    except ValueError:
+        pass
     for f in fails:
         print("FAIL:", f)
     print("selftest:", "PASS" if not fails else f"FAIL ({len(fails)})")
@@ -638,34 +803,23 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     root = Path(argv[0])
-    p = root / "src" / "debug" / "debug.cpp"
-    q = root / "src" / "cpu" / "cpu.cpp"
-    r = root / "src" / "hardware" / "pic.cpp"
-    src = p.read_text(encoding="utf-8", errors="surrogateescape")
-    csrc = q.read_text(encoding="utf-8", errors="surrogateescape")
-    psrc = r.read_text(encoding="utf-8", errors="surrogateescape")
+    jobs = [(root / "src" / "debug" / "debug.cpp", lambda s: patch_text(s, upgrade=upgrade)),
+            (root / "src" / "cpu" / "cpu.cpp", patch_cpu_text),
+            (root / "src" / "hardware" / "pic.cpp", patch_pic_text),
+            (root / "src" / "hardware" / "iohandler.cpp", patch_io_text),
+            (root / "src" / "hardware" / "keyboard.cpp", patch_kbd_text)]
+    srcs = [p.read_text(encoding="utf-8", errors="surrogateescape") for p, _f in jobs]
     try:
-        out = patch_text(src, upgrade=upgrade)
-        cout = patch_cpu_text(csrc)
-        pout = patch_pic_text(psrc)
+        outs = [f(s) for (_p, f), s in zip(jobs, srcs)]  # 全部先算完,任何一檔失敗就一檔都不寫
     except ValueError as e:
         print(f"FAIL: {e}")
         return 1
-    if out != src:
-        p.write_text(out, encoding="utf-8", errors="surrogateescape", newline="\n")
-        print("patched", p)
-    else:
-        print("unchanged", p)
-    if cout != csrc:
-        q.write_text(cout, encoding="utf-8", errors="surrogateescape", newline="\n")
-        print("patched", q)
-    else:
-        print("unchanged", q)
-    if pout != psrc:
-        r.write_text(pout, encoding="utf-8", errors="surrogateescape", newline="\n")
-        print("patched", r)
-    else:
-        print("unchanged", r)
+    for (p, _f), s, o in zip(jobs, srcs, outs):
+        if o != s:
+            p.write_text(o, encoding="utf-8", errors="surrogateescape", newline="\n")
+            print("patched", p)
+        else:
+            print("unchanged", p)
     return 0
 
 
