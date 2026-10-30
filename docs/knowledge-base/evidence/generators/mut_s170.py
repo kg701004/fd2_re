@@ -26,6 +26,17 @@ MUTANTS = [
     ("倍數拿 S_adv 當分母", "RATE[\"EN\"][\"driver_calls_per_s\"] / RATE[\"P\"][\"driver_calls_per_s\"]",
      "RATE[\"EN\"][\"driver_calls_per_s\"] / RATE[\"S_adv\"][\"driver_calls_per_s\"]"),
     ("結論的相符數寫成服務數", "相符 {EN['best']['match']} / {EN['services']}", "相符 {EN['services']} / {EN['services']}"),
+    # (B2) 續一百七十三:音量漸變與敵方回合結束後的 991 次
+    ("漸變週期當 4", "assert FADE_STEP == 1 + 7 ", "assert FADE_STEP == 1 + 3 "),
+    ("敵方曲不晚(晚的方向反了)", "return _pe[(j - _o_en - (j >= slip)) % _PE]", "return _pe[(j - _o_en + (j >= slip)) % _PE]"),
+    ("淡出相位不跟著晚一次", "FADE_OUT_PHASE = (_r0 + 1) % FADE_STEP", "FADE_OUT_PHASE = _r0 % FADE_STEP"),
+    ("基本曲起點不對 P2_loop", "B0 = GAP2[0] + (_o_p2 - GAP2[0]) % _PB", "B0 = GAP2[0] + (_o_p2 + 1 - GAP2[0]) % _PB"),
+    ("淡入只算一半", "_fi_all = range(_fi[0], _fi[-1] + 1, FADE_STEP)", "_fi_all = range(_fi[0], _fi[-1] + 1, 2 * FADE_STEP)"),
+    ("模型不含淡出", "MODEL = {j: bool(_pred1[j]) or j in _fo_all for j in R1}", "MODEL = {j: bool(_pred1[j]) for j in R1}"),
+    ("對照不拿掉淡出", "_no_fade = sum((bool(_pred1[j]) if j in R1 else bool(_pred2[j])) == DRVCALL[j] for j in GAP2)",
+     "_no_fade = sum(MODEL[j] == DRVCALL[j] for j in GAP2)"),
+    ("短呼叫拿淡出相位比", "all(p != _r0 for _t, _n, p in SHORT_EN)", "all(p != FADE_OUT_PHASE for _t, _n, p in SHORT_EN)"),
+    ("結論的相符數拿對照", "逐次相符 {END_LOOP['model_match']} / {END_LOOP['services']}", "逐次相符 {END_LOOP['control_no_fade']} / {END_LOOP['services']}"),
     # (C) 5 次未歸類重入
     ("DIG 當成派送表第 0 格", "_slots_left = (0x3C - DIG_EDI) // 4", "_slots_left = (0x3C - 0) // 4"),
     ("補叫路徑不含 DIG 進入", "0x3EB3B, 0x3EB3C, DIG]", "0x3EB3B, 0x3EB3C]"),

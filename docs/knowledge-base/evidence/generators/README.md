@@ -1,7 +1,15 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 69 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 70 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百七十三(2026-10-30)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s173.py` | `driver_io_keys_s173_20261030.json` | `mut_s173.py`(33) |
+
+呼叫紀錄加 I/O 與按鍵(`FD2_CALLLOG_IO` / `FD2_CALLLOG_KBD`)、AIL 3 驅動檔反組譯 `tools/ail_driver_disasm.py`,一次開機到 START 的實機 lc173a(驅動、實機前的預測、DOSBox-X 原始碼摘錄與 nm 子集在 [`drivers_s173/`](drivers_s173/README.md)):O / N 的 eip 是 in / out 本身(callback 例外)、工具 A 的靜態 I/O 清單對實機、SB16.DIG 初始化的單一樣本 DMA、START 放開鍵的 IRQ 1 晚 5.55 ms 是 DIG 服務關著中斷(DOSBox-X 呼叫紀錄)。
 
 ## 續一百七十二(2026-10-30)
 

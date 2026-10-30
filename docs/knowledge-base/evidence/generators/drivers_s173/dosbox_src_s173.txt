@@ -1,0 +1,129 @@
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 1148-1158
+	if (dma.chan != NULL &&
+			dma.chan->basecnt < ((new_mode==DSP_DMA_16_ALIASED?2:1)*((stereo || mixer.sbpro_stereo)?2:1))/*size of one sample in DMA counts*/)
+		single_sample_dma = 1;
+	else
+		single_sample_dma = 0;
+
+	dma_dac_srcrate=freq;
+	if (dsp.force_goldplay || (goldplay && freq > 0 && single_sample_dma))
+		dma_dac_mode=1;
+	else
+		dma_dac_mode=0;
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 2286-2294
+			/* Generic 8/16 bit DMA */
+			//      DSP_SetSpeaker(true);       //SB16 always has speaker enabled
+			dma.sign=(dsp.in.data[0] & 0x10) > 0;
+			dma.recording=(dsp.cmd & 0x8) > 0;
+			DSP_PrepareDMA_New((dsp.cmd & 0x10) ? DSP_DMA_16 : DSP_DMA_8,
+					1u+(unsigned int)dsp.in.data[1]+((unsigned int)dsp.in.data[2] << 8u),
+					(dsp.cmd & 0x4)>0,
+					(dsp.in.data[0] & 0x20) > 0
+					);
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 2296-2309
+		case 0xd5:  /* Halt 16-bit DMA */
+			DSP_SB16_ONLY;
+		case 0xd0:  /* Halt 8-bit DMA */
+			chan->FillUp();
+			//      DSP_ChangeMode(MODE_NONE);
+			//      Games sometimes already program a new dma before stopping, gives noise
+			if (mode==MODE_NONE) {
+				// possibly different code here that does not switch to MODE_DMA_PAUSE
+			}
+			mode=MODE_DMA_PAUSE;
+			PIC_RemoveEvents(END_DMA_Event);
+			PIC_RemoveEvents(DMA_DAC_Event);
+			break;
+		case 0xd1:  /* Enable Speaker */
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 2341-2348
+		case 0xd6:  /* Continue DMA 16-bit */
+			DSP_SB16_ONLY;
+		case 0xd4:  /* Continue DMA 8-bit*/
+			chan->FillUp();
+			if (mode==MODE_DMA_PAUSE) {
+				mode=MODE_DMA_MASKED;
+				if (dma.chan!=NULL) dma.chan->Register_Callback(DSP_DMA_CallBack);
+			}
+=== src/hardware/sblaster.cpp sha256 5c641a251901aaf5bb0788cb51cfc850a094dae88904d038bb8fa2d07997d7d2 lines 3711-3727
+	if (sb[ci].dma.chan->masked) {
+		PIC_AddEvent(DMA_DAC_Event,1000.0 / sb[ci].dma_dac_srcrate,(ci << CARD_INDEX_BIT));
+		return;
+	}
+	if (!sb[ci].dma.left)
+		return;
+
+	const bool psingle_sample = sb[ci].single_sample_dma;
+	/* Fix for 1994 Demoscene entry myth_dw: The demo's Sound Blaster Pro initialization will start DMA with
+	 * count == 1 or 2 (triggering Goldplay mode) but will change the DMA initial counter when it begins
+	 * normal playback. If goldplay stereo hack is enabled and we do not catch this case, the first 0.5 seconds
+	 * of music will play twice as fast. */
+	if (sb[ci].dma.chan != NULL &&
+		sb[ci].dma.chan->basecnt < ((sb[ci].dma.mode==DSP_DMA_16_ALIASED?2:1)*((sb[ci].dma.stereo || sb[ci].mixer.sbpro_stereo)?2:1))/*size of one sample in DMA counts*/)
+		sb[ci].single_sample_dma = 1;
+	else
+		sb[ci].single_sample_dma = 0;
+=== src/hardware/dma.cpp sha256 57f84574a17cc363024926b40b135fc177f741d94dbbdb9509ab19e7e81c57f5 lines 305-311
+		flipflop=!flipflop;
+		if (flipflop) {
+			chan->basecnt=(uint16_t)((chan->basecnt&0xff00)|val);
+			chan->currcnt=(uint16_t)((chan->currcnt&0xff00)|val);
+		} else {
+			chan->basecnt=(uint16_t)((chan->basecnt&0x00ff)|(val << 8));
+			chan->currcnt=(uint16_t)((chan->currcnt&0x00ff)|(val << 8));
+=== src/hardware/keyboard.cpp sha256 9ce3cc1b70f9dcc5408b3b115a15ecd4ab96b30186582b6af94090a4827ad6cb lines 2836-2840
+
+    if (machine == MCH_PCJR) // IBM Personal Computer PCjr Hardware Ref Tech Ref 2-104 Cordless Keyboard
+        KEYDELAY=0.440 * 21; // 440us bit cell times 21 bits (START + DATA(8) + PARITY + 11 STOP)
+    else
+        KEYDELAY=0.300f; //Considering 20-30 khz serial clock and 11 bits/char
+=== src/hardware/keyboard.cpp sha256 9ce3cc1b70f9dcc5408b3b115a15ecd4ab96b30186582b6af94090a4827ad6cb lines 261-276
+static void KEYBOARD_SetPort60(uint16_t val) {
+    keyb.auxchanged=(val&AUX)>0;
+    keyb.p60changed=true;
+    keyb.p60data=(uint8_t)val;
+    if (keyb.auxchanged) {
+        if (keyb.cb_irq12) {
+            PIC_ActivateIRQ(12);
+        }
+    }
+    else {
+        if (keyb.cb_irq1) {
+            if (machine == MCH_PCJR) CPU_Raise_NMI(); /* NTS: PCjr apparently hooked the keyboard to NMI */
+            else PIC_ActivateIRQ(1);
+        }
+    }
+}
+=== src/hardware/keyboard.cpp sha256 9ce3cc1b70f9dcc5408b3b115a15ecd4ab96b30186582b6af94090a4827ad6cb lines 293-303
+        return;
+    }
+
+    keyb.scheduled=false;
+    if (!keyb.used) {
+        LOG(LOG_KEYBOARD,LOG_NORMAL)("Transfer started with empty buffer");
+        return;
+    }
+    KEYBOARD_SetPort60(keyb.buffer[keyb.pos]);
+    if (++keyb.pos>=KEYBUFSIZE) keyb.pos-=KEYBUFSIZE;
+    keyb.used--;
+=== src/hardware/keyboard.cpp sha256 9ce3cc1b70f9dcc5408b3b115a15ecd4ab96b30186582b6af94090a4827ad6cb lines 353-364
+    /* Start up an event to start the first IRQ */
+    if (!keyb.scheduled) {
+        if (machine == MCH_PCJR) {
+            keyb.scheduled=true;
+            PIC_AddEvent(KEYBOARD_TransferBuffer,KEYDELAY);
+        }
+        else {
+            if (!keyb.p60changed) {
+                keyb.scheduled=true;
+                PIC_AddEvent(KEYBOARD_TransferBuffer,KEYDELAY);
+	    }
+        }
+=== src/cpu/core_normal/prefix_none.h sha256 41015eac74307d6817cf1bb9a2f6f8bde34d8e6038e1cbf5fb05be6468b3e4a9 lines 1489-1496
+		//      immediately, then it will undo the effects of STI without a chance to process
+		//      interrupts.
+		if (CPU_STI()) RUNEXCEPTION();
+		if (GETFLAG(IF) && PIC_IRQCheck) {
+			// FORCE another instruction decode before allowing interrupt processing
+			CPU_CycleLeft += CPU_Cycles - 1;
+			CPU_Cycles = 1;
+			SAVEIP;

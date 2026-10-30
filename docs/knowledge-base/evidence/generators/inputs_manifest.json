@@ -32184,6 +32184,29 @@
     ]
    }
   },
+  "ev_s173": {
+   "outputs": [
+    "driver_io_keys_s173_20261030.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc173_live/lc173a_CALLLOG.TXT": [
+     69037479,
+     "e12e1c8c5c961cc2fa8416e618022abb3a53ca36053b96e37c4761e9bd6e6fd2"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/SB16.DIG": [
+     2812,
+     "865fab2e1318f341848dd12db578e881ecb45264e794ed39d47adc235071580e"
+    ],
+    "{GAME}/SBPRO2.MDI": [
+     16541,
+     "2aa48568783f6c41df8dfb7e699181299e306fa330415a178fc48b23036c9a77"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

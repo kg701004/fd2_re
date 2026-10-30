@@ -1,0 +1,676 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s173.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllog": {
+  "path": ".wsl_build/lc173_live/lc173a_CALLLOG.TXT",
+  "md5": "3a8bb8b852d99b3f6307a64306408efb",
+  "segs": "3000-3150,3150-3250:x,3250-24000",
+  "io": "0-f,20-21,40-43,60,64,81-8f,a0-a1,c0-df,220-22f,388-38b"
+ },
+ "dosbox_src": "docs/knowledge-base/evidence/generators/drivers_s173/dosbox_src_s173.txt",
+ "nm": "docs/knowledge-base/evidence/generators/drivers_s173/nm_handlers_s173.txt",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s173/pred173.txt",
+ "validity": {
+  "runs": 356969,
+  "irqs": 38859,
+  "ios": 182080,
+  "keys": 14,
+  "gaps": [],
+  "every_record_has_slices": true,
+  "k_nondecreasing": true,
+  "k_last": 858737
+ },
+ "p1_io_eip": {
+  "in_window": 169,
+  "cpu_in_out_same_eip": 144,
+  "cpu_by_segment": {
+   "P 0170": 21,
+   "p 0070": 14,
+   "r 137c": 108,
+   "r f000": 1
+  },
+  "callback_after_fe38": {
+   "N 0021 r f000:d105 S d101": 25
+  },
+  "unexplained": []
+ },
+ "p2_static_vs_live": {
+  "drivers": {
+   "SB16.DIG": {
+    "live": 871,
+    "eips": 47,
+    "in_static": 47,
+    "same_direction": 47,
+    "imm_port_checked": 11,
+    "imm_port_same": 11,
+    "static_sites": 50,
+    "static_never_live": 3,
+    "code_bytes": 530,
+    "code_bytes_same": 530
+   },
+   "SBPRO2.MDI": {
+    "live": 161045,
+    "eips": 9,
+    "in_static": 9,
+    "same_direction": 9,
+    "imm_port_checked": 0,
+    "imm_port_same": 0,
+    "static_sites": 9,
+    "static_never_live": 0,
+    "code_bytes": 215,
+    "code_bytes_same": 215
+   }
+  },
+  "control": {
+   "SBPRO2.MDI_vs_SB16.DIG": {
+    "live": 161045,
+    "eips": 9,
+    "in_static": 0,
+    "same_direction": 0,
+    "imm_port_checked": 0,
+    "imm_port_same": 0,
+    "static_sites": 50,
+    "static_never_live": 50,
+    "code_bytes": 215,
+    "code_bytes_same": 0
+   },
+   "SB16.DIG_vs_SBPRO2.MDI": {
+    "live": 871,
+    "eips": 47,
+    "in_static": 0,
+    "same_direction": 0,
+    "imm_port_checked": 0,
+    "imm_port_same": 0,
+    "static_sites": 9,
+    "static_never_live": 9,
+    "code_bytes": 530,
+    "code_bytes_same": 0
+   }
+  },
+  "dma_eips": [
+   "0x220",
+   "0x231",
+   "0x244",
+   "0x27b",
+   "0x27e",
+   "0x285",
+   "0x288",
+   "0x28f",
+   "0x29d"
+  ],
+  "dma_groups": [
+   {
+    "t_ms": 3176.9408,
+    "bx": 5,
+    "channel": 5,
+    "writes": [
+     [
+      "0x220",
+      212,
+      5
+     ],
+     [
+      "0x244",
+      216,
+      0
+     ],
+     [
+      "0x27b",
+      196,
+      135
+     ],
+     [
+      "0x27e",
+      196,
+      158
+     ],
+     [
+      "0x285",
+      198,
+      1
+     ],
+     [
+      "0x288",
+      198,
+      0
+     ],
+     [
+      "0x28f",
+      139,
+      0
+     ],
+     [
+      "0x29d",
+      214,
+      73
+     ],
+     [
+      "0x231",
+      212,
+      1
+     ]
+    ],
+    "count_reg": 1,
+    "mode": 73
+   },
+   {
+    "t_ms": 8624.5726,
+    "bx": 1,
+    "channel": 1,
+    "writes": [
+     [
+      "0x220",
+      10,
+      5
+     ],
+     [
+      "0x244",
+      12,
+      0
+     ],
+     [
+      "0x27b",
+      2,
+      0
+     ],
+     [
+      "0x27e",
+      2,
+      80
+     ],
+     [
+      "0x285",
+      3,
+      255
+     ],
+     [
+      "0x288",
+      3,
+      15
+     ],
+     [
+      "0x28f",
+      131,
+      1
+     ],
+     [
+      "0x29d",
+      11,
+      89
+     ],
+     [
+      "0x231",
+      10,
+      1
+     ]
+    ],
+    "count_reg": 4095,
+    "mode": 89
+   }
+  ],
+  "dma_mask_only": {
+   "groups": 1,
+   "all_match_table": true
+  }
+ },
+ "p3_single_sample": {
+  "dsp": [
+   {
+    "t_ms": 3176.8952,
+    "cmd": "0xe1",
+    "args": []
+   },
+   {
+    "t_ms": 3176.9758,
+    "cmd": "0x41",
+    "args": [
+     86,
+     34
+    ]
+   },
+   {
+    "t_ms": 3176.998,
+    "cmd": "0xb0",
+    "args": [
+     48,
+     0,
+     0
+    ]
+   },
+   {
+    "t_ms": 8624.5934,
+    "cmd": "0x41",
+    "args": [
+     86,
+     34
+    ]
+   },
+   {
+    "t_ms": 8624.6172,
+    "cmd": "0xc6",
+    "args": [
+     0,
+     255,
+     7
+    ]
+   },
+   {
+    "t_ms": 10297.0228,
+    "cmd": "0xd0",
+    "args": []
+   },
+   {
+    "t_ms": 10790.9074,
+    "cmd": "0xd4",
+    "args": []
+   },
+   {
+    "t_ms": 11534.1234,
+    "cmd": "0xd0",
+    "args": []
+   },
+   {
+    "t_ms": 14903.448,
+    "cmd": "0xd4",
+    "args": []
+   },
+   {
+    "t_ms": 23541.0922,
+    "cmd": "0xd0",
+    "args": []
+   }
+  ],
+  "blocks": {
+   "init": {
+    "t_ms": 3176.998,
+    "cmd": "0xb0",
+    "bits": 16,
+    "autoinit": false,
+    "stereo": true,
+    "signed": true,
+    "length": 1
+   },
+   "play": {
+    "t_ms": 8624.6172,
+    "cmd": "0xc6",
+    "bits": 8,
+    "autoinit": true,
+    "stereo": false,
+    "signed": false,
+    "length": 2048
+   }
+  },
+  "rate": [
+   22050
+  ],
+  "single_sample": {
+   "init": {
+    "channel": 5,
+    "basecnt": 1,
+    "one_sample": 2,
+    "single_sample_dma": true
+   },
+   "play": {
+    "channel": 1,
+    "basecnt": 4095,
+    "one_sample": 1,
+    "single_sample_dma": false
+   }
+  },
+  "prediction_wording": {
+   "count_plus_1": 2,
+   "one_sample": 2,
+   "wording_holds": false,
+   "code_condition_holds": true
+  },
+  "dma_dac": {
+   "first_bucket": 3100,
+   "first_count": 506,
+   "last_bucket": 8600,
+   "last_count": 544,
+   "contiguous": true,
+   "middle_counts": [
+    2205
+   ],
+   "start_ms_est": 3177.05,
+   "stop_ms_est": 8624.67,
+   "b0_end_ms": 3177.0204,
+   "c6_end_ms": 8624.6574
+  },
+  "irq7": {
+   "first": [
+    3177.0672,
+    "r 137c:31a"
+   ],
+   "second_ms": 8718.0274,
+   "period_ms_median": 93.0,
+   "count": 120
+  }
+ },
+ "p4_keys": {
+  "keys": [
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 2521.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 2528.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 3849.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 3856.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 5191.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 5197.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 6545.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 6553.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 7929.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 7935.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 9262.0002
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 9269.0002
+   },
+   {
+    "data": "0x1c",
+    "used": 0,
+    "t_ms": 10790.0
+   },
+   {
+    "data": "0x9c",
+    "used": 0,
+    "t_ms": 10796.0002
+   }
+  ],
+  "rows": [
+   {
+    "key": "0x1c",
+    "t_ms": 3849.0002,
+    "irq1_ms": 3850.3688,
+    "delay_ms": 1.3686,
+    "at": "r 0c5c:1fad",
+    "irqs_before": []
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 3856.0002,
+    "irq1_ms": 3856.3012,
+    "delay_ms": 0.301,
+    "at": "P 0170:1b3ad4",
+    "irqs_before": []
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 5191.0002,
+    "irq1_ms": 5191.3012,
+    "delay_ms": 0.301,
+    "at": "P 0170:1b3add",
+    "irqs_before": []
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 5197.0002,
+    "irq1_ms": 5197.3098,
+    "delay_ms": 0.3096,
+    "at": "p 0080:6ca",
+    "irqs_before": [
+     [
+      "0x8",
+      5197.0758,
+      "P 0170:1b3add"
+     ]
+    ]
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 6545.0002,
+    "irq1_ms": 6545.3232,
+    "delay_ms": 0.323,
+    "at": "p 0070:d23",
+    "irqs_before": []
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 6553.0002,
+    "irq1_ms": 6553.3012,
+    "delay_ms": 0.301,
+    "at": "p 0088:21b5",
+    "irqs_before": []
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 7929.0002,
+    "irq1_ms": 7929.309,
+    "delay_ms": 0.3088,
+    "at": "p 0070:d23",
+    "irqs_before": []
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 7935.0002,
+    "irq1_ms": 7935.3422,
+    "delay_ms": 0.342,
+    "at": "p 0070:d23",
+    "irqs_before": []
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 9262.0002,
+    "irq1_ms": 9262.5842,
+    "delay_ms": 0.584,
+    "at": "P 0170:1dab1d",
+    "irqs_before": [
+     [
+      "0x8",
+      9262.51,
+      "p 0070:e6c"
+     ]
+    ]
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 9269.0002,
+    "irq1_ms": 9269.3012,
+    "delay_ms": 0.301,
+    "at": "P 0170:1d2fa8",
+    "irqs_before": []
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 10790.0,
+    "irq1_ms": 10790.3012,
+    "delay_ms": 0.3012,
+    "at": "r f000:cfd0",
+    "irqs_before": []
+   },
+   {
+    "key": "0x9c",
+    "t_ms": 10796.0002,
+    "irq1_ms": 10801.5524,
+    "delay_ms": 5.5522,
+    "at": "p 0080:6ca",
+    "irqs_before": [
+     [
+      "0x8",
+      10801.487,
+      "P 0170:1db0be"
+     ]
+    ]
+   }
+  ],
+  "normal": 9,
+  "transfer_buffer_per_bucket": {
+   "3800": [
+    2,
+    2
+   ],
+   "5100": [
+    2,
+    2
+   ],
+   "6500": [
+    2,
+    2
+   ],
+   "7900": [
+    2,
+    2
+   ],
+   "9200": [
+    2,
+    2
+   ],
+   "10700": [
+    2,
+    2
+   ]
+  },
+  "start_break": {
+   "make_irq1_ms": 10790.3012,
+   "dsp_d4_ms": 10790.9074,
+   "previous_dsp": [
+    "0xd0",
+    10297.0228
+   ],
+   "serve_irq0_ms": 10792.1602,
+   "serve_from": "p 0080:93b",
+   "sti_irq0_ms": 10801.487,
+   "if_off_ms": 9.327,
+   "game_insns": 44077,
+   "break_k_ms": 10796.0002,
+   "irq1_ms": 10801.5524,
+   "seq_serve": [
+    "O 0020 b 1",
+    "N 0020 1 1",
+    "E 4399 001daa8e 00000ed6",
+    "O 0020 20 1",
+    "E 4400 001dc4c0 001dab42",
+    "K 09c 0 n=45009218"
+   ],
+   "seq_after_sti": [
+    "O 0020 b 1",
+    "N 0020 1 1",
+    "E 4401 001daa8e 00000ed6",
+    "E 4402 001dabad 00000ed6",
+    "O 0020 20 1"
+   ]
+  },
+  "sti_windows": {
+   "count": 63,
+   "nums": [
+    8
+   ],
+   "ms_min": 3.533,
+   "ms_max": 9.805,
+   "d4_followed": [
+    true,
+    true
+   ]
+  },
+  "other_late": [
+   {
+    "key": "0x1c",
+    "t_ms": 3849.0002,
+    "irq1_ms": 3850.3688,
+    "delay_ms": 1.3686,
+    "at": "r 0c5c:1fad",
+    "irqs_before": [],
+    "site_ends_long_gaps": 4
+   },
+   {
+    "key": "0x1c",
+    "t_ms": 9262.0002,
+    "irq1_ms": 9262.5842,
+    "delay_ms": 0.584,
+    "at": "P 0170:1dab1d",
+    "irqs_before": [
+     [
+      "0x8",
+      9262.51,
+      "p 0070:e6c"
+     ]
+    ],
+    "site_ends_long_gaps": 8
+   }
+  ],
+  "other_late_runs": {
+   "3849.0002": {
+    "m": "r",
+    "cs": "0f71",
+    "e0": "0x132",
+    "e1": "0x1b1",
+    "count": 7617,
+    "n_end": 14516020,
+    "started_before_key": true,
+    "irq1_eip": "0x1fad"
+   },
+   "9262.0002": {
+    "m": "p",
+    "cs": "0070",
+    "e0": "0xd81",
+    "e1": "0xe6b",
+    "count": 1070,
+    "n_end": 38047706,
+    "started_before_key": true,
+    "irq1_eip": "0x1dab1d"
+   }
+  },
+  "reentry_post": {
+   "69": 60,
+   "70": 2,
+   "302": 13,
+   "303": 6,
+   "602": 1
+  },
+  "reentry_odd": [
+   {
+    "t": 10801.535,
+    "post": 602
+   }
+  ]
+ },
+ "conclusion": {
+  "p1_eip": "窗內 169 筆 O / N 的 n 都對到一筆 S:144 筆是 CPU 的 in / out,eip 是那條指令本身(碼位元組的方向、立即埠、寬度都對);25 筆是 DOSBox-X callback(FE 38)自己做的 I/O,eip 在 callback 指令之後 4 個位元組。",
+  "p2_static": "SB16.DIG 實機 47 個、SBPRO2.MDI 9 個 I/O 位置全在工具 A 的靜態清單內,方向與立即埠相同,S 帶的碼位元組與檔案同位置相同;對照(換成另一個驅動檔)方向對上 0 / 9。DMA 設定兩串的埠 = 檔案表格在 bx 5 / 1 的值。",
+  "p3_single": "SB16.DIG 初始化(3176.998 ms)送 0x41 22050 Hz、0xb0 16 位元立體聲長度 1,DMA 通道 5 計數暫存器 1 < 一個樣本 2 → 單一樣本 DMA;DMA_DAC_Event 推回 3177.05 .. 8624.67 ms,對上 0xb0 送完 3177.0204、0xc6 送完 8624.6574。真正放音 0xc6 8 位元自動重載長度 2048、通道 1 計數 4095,IRQ7 每 93.0 ms。預測句的「計數 + 1 小於一個樣本」差一(2 = 2),DOSBox-X 比的是暫存器值。",
+  "p4_start": "START 放開鍵 10796.0002 ms 進佇列、IRQ 1 10801.5524 ms 才收(晚 5.5522 ms)。按下的 IRQ 1 之後 SB16.DIG 送 DSP 0xd4(10790.9074 ms,前一個是 0xd0),10792.1602 ms 的計時器中斷進 DIG 服務 0x404c0,ISR 在 0x3eb15 sti、服務一開頭 0x3f0aa cli;從進 ISR 到 0x3f0bc sti 共 9.327 ms(44077 條遊戲指令)沒收任何中斷,sti 之後 IRQ 0 先收(重入只送 EOI)、IRQ 1 在 0080:06ca 收;續一百七十二的 602 就是這一次。收在 0x3f0be 的 63 筆全是 IRQ 0,兩次 0xd4 之後都有。MDI 375 仍沒出現。另兩次晚收:3849.0002 ms 按下時正在 SBPRO2.MDI 分派段(一段 7617 條)、9262.0002 ms 按下時正在 DOS/4GW 0070(一段 1070 條,之後 IRQ 0 先收、ISR 0x3eb15 sti 再一條才收 IRQ 1)。"
+ }
+}

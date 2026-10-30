@@ -249,6 +249,102 @@
    "driver_calls_EN_over_P": 3.73,
    "mdi_per_1000_slots_EN_over_others_max": 3.34,
    "song_density_enemy_over_base": 3.65
+  },
+  "s173_fade_static": {
+   "0x432bf": "cmp dword ptr [eax + 4], 4",
+   "0x432c3": "jne 0x4391f",
+   "0x432c9": "inc dword ptr [eax + 0x30]",
+   "0x43866": "mov ebx, dword ptr [eax + 0x34]",
+   "0x43869": "cmp ebx, dword ptr [eax + 0x38]",
+   "0x4386c": "je 0x438ca",
+   "0x438bb": "test byte ptr [eax + 0x30], 7",
+   "0x438bf": "jne 0x438ca",
+   "0x438c2": "call 0x43230",
+   "0x43250": "push 7",
+   "0x43252": "or al, 0xb0",
+   "0x43256": "call 0x42980",
+   "0x42b80": "mov edx, dword ptr [esi + 0x34]",
+   "0x42b83": "imul edx, edi",
+   "0x42b86": "mov edi, 0x7f",
+   "0x42b90": "idiv edi"
+  },
+  "s173_enemy_end_to_loop": {
+   "slip_services": [
+    66724,
+    66727
+   ],
+   "slip_ms": [
+    564129.3,
+    564154.3
+   ],
+   "en_window_end_ms": 564129.218,
+   "missed_with_slip": 2,
+   "missed_without_slip": 87,
+   "enemy_song_events": 129,
+   "enemy_song_called": 127,
+   "fade_in_phase_en": 7,
+   "fade_out_phase": 0,
+   "fade_out_steps": 58,
+   "fade_out_steps_called": 58,
+   "fade_out_ms": [
+    564309.3,
+    568164.4
+   ],
+   "base_start_service": 67298,
+   "base_start_ms": 568989.5,
+   "base_start_mod_period_equals_p2_loop": true,
+   "base_song_events": 26,
+   "base_song_called": 26,
+   "fade_in_phase": 1,
+   "fade_in_steps": 30,
+   "fade_in_steps_called": 30,
+   "fade_in_ms": [
+    569054.4,
+    570999.4
+   ],
+   "model_match": 987,
+   "services": 991,
+   "mismatch": [
+    [
+     564139.3,
+     "called",
+     1344
+    ],
+    [
+     568939.4,
+     "called",
+     777
+    ],
+    [
+     568949.4,
+     "missed",
+     0
+    ],
+    [
+     568954.4,
+     "missed",
+     0
+    ]
+   ],
+   "control_no_fade": 912,
+   "control_no_slip": 817,
+   "short_calls_en_phase": [
+    [
+     540499.0,
+     558,
+     0
+    ],
+    [
+     542774.0,
+     558,
+     2
+    ],
+    [
+     542959.0,
+     558,
+     0
+    ]
+   ]
   }
  },
  "unclassified": {
@@ -456,7 +552,7 @@
  "conclusion": {
   "buffer": "WSL 實測(glibc 2.39,與 DOSBox-X 同一份 libc、與 harness 目錄同一檔案系統,st_blksize 4096):setvbuf(NULL, _IOFBF, 1 MiB) 的寫盤位置是 4096 的倍數,明確 fflush 之後是「fflush 位置 + k × 4096」,與不呼叫 setvbuf 相同;對照組明確給 1 MiB buf 時 40000 位元組都沒寫盤。續一百六十九的 4 KiB 由 INFERRED 改為實測確認。",
   "enemy_mdi": "敵方回合 MDI 型重入多,是因為換了曲:battle_phase_advance 在呼叫 0x1d8ba 前換成 0x51e81[章] = FDMUS_012,之後換回 0x51e63[章] = FDMUS_019。每次 MDI 服務有沒有叫驅動,玩家回合 P / S_ring / P2_loop 與 FDMUS_019 的事件 tick 逐次相符(3414 / 4670 / 2468 次全中;diag 43164 / 43165,唯一不符是 1 次多叫的短驅動呼叫),敵方回合與 FDMUS_012 相符 3018 / 3044(不符 26 次全是多叫:開頭 23 次每 8 次服務一次、另 3 次很短)。驅動呼叫每秒 27.51 對 7.38(3.73 倍;兩首曲的事件 tick 密度比 3.65);每次驅動呼叫被計時器中斷撞上的比例敵方回合 85 / 718、其他 457 / 3528(Fisher p = 0.462)。多出來的驅動呼叫全來自曲子本身,曲子以外的只有開頭 23 次與 3 次短呼叫,所以不是敵方移動的音效讓驅動變忙。",
-  "transition": "友軍回合結束到敵方回合開始的 553 次服務:FDMUS_019 照常(34 個事件全叫),另外多叫 56 次,其中 55 次落在同一個 8 次服務的相位上;敵方回合結束到主迴圈的 991 次服務兩首曲都對不上(未解)。",
+  "transition": "友軍回合結束到敵方回合開始的 553 次服務:FDMUS_019 照常(34 個事件全叫),另外多叫 56 次,其中 55 次落在同一個 8 次服務的相位上;敵方回合結束到主迴圈的 991 次服務單看一首曲都對不上(續一百七十未解;續一百七十三:敵方曲在敵方回合結束時晚一次服務續播、相位 0 淡出 58 步,568989.5 ms 基本曲從第 0 tick 開始、相位 1 淡入 30 步,逐次相符 987 / 991)。每 8 次服務多叫的那一次是音量漸變:序列音量未到目標時 [eax+0x30] & 7 == 0 呼叫 0x43230 送各聲道 controller 7。",
   "unclassified": "P 之前 5 次未歸類重入的插斷點都與 DIG 型相同(外層 DIG 進入後 229 條非遊戲指令;DIG 型 401 / 416 次是 229)。其中 4 次是 DIG 補叫:AIL 鎖([0x52bea] > 0)讓前一次 ISR 沒派送,這次 ISR 叫 DIG 兩次,重入落在第一次的驅動呼叫裡,返回後走 10 條進第二次 DIG,而不是 77 條到 0x3eb9d:93 − 77 + 10 = 26,與紀錄的 26 相同。鎖之後補叫的 7 次 ISR 都恰好多叫「被跳過的 ISR 數」次 DIG。另 1 次是重入了兩次:第一次晚了 4.909 ms(其他 DIG 型最晚 4.74 ms),0.166 ms 後下一個 tick 又進來,第二次重入之後 93 條到 0x3eb9d(DIG 型)。",
   "hud_uncovered": "校準集(827 張,章節 1, 2, 11, 19, 20, 21, 23, 25, 26, 27, 29)沒涵蓋的 20 章,.wsl_build 截圖依像素去重 3015 張:邊框樣板判有框 464 張(分佈在 18 章),吻合率全是 1.0,其餘最高 0.4009(與校準集相同)。舊藍佔比判準判有 812 張,其中 348 張樣板判沒有,逐張目視都沒有 HUD 框;樣板有、舊判準沒有的 0 張。所以工具拿掉退回藍佔比那一步:這 20 章少掉 348 個誤判、校準集少掉 75 個,沒有漏掉任何有框的截圖。"
  }

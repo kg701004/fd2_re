@@ -11,6 +11,9 @@
 (D) HUD 邊框樣板在校準集沒涵蓋的章節:drivers_s170/uncovered_frames.txt(.wsl_build 下路徑標記為其他 20 章的 1024x768 截圖,
     依像素去重)逐張算樣板吻合率與舊藍佔比判準;兩者不一致的與抽樣的人工判讀在 drivers_s170/hud_labels_s170.txt。
     工具(續一百七十只看樣板)在這些截圖上的判定也一併核對。
+(B2) 續一百七十三補(使用者「請把還沒做的 進行處理」):MDI 服務 0x43270 的音量漸變(序列音量 [eax+0x34] 未到目標 [eax+0x38] 時,
+    每 8 次服務 [eax+0x30] & 7 == 0 呼叫 0x43230 送各聲道 controller 7)就是「每 8 次服務多叫一次」;敵方回合結束到主迴圈的
+    991 次服務 = 敵方曲晚一次服務續播 + 淡出(一個 8 次相位)+ 基本曲從頭開始 + 淡入(另一個相位)。
 任何判準不符就 assert 失敗。
 """
 from __future__ import annotations
@@ -275,6 +278,92 @@ TRANS["enemy_end_to_loop"] = _g2
 assert _g2 == {"services": 991, "called": 230, "base_song_best": 776, "enemy_song_best": 822, "all_false": 761}, _g2
 assert max(_g2["base_song_best"], _g2["enemy_song_best"]) <= 0.9 * _g2["services"], _g2    # 真的對上時是 ≥ 99%
 
+# ================= (B2) 續一百七十三:音量漸變與敵方回合結束後的 991 次服務 =================
+# 靜態:序列播放中([eax+4] == 4)每次服務 [eax+0x30] 加一並累加 tempo 進 tick;沒在播的那一次兩者都不動。
+# 序列音量 [eax+0x34] 未到目標 [eax+0x38] 時,[eax+0x30] & 7 == 0 那一次呼叫 0x43230:每個聲道送 controller 7(0xb0 | 聲道, 7, 值),
+# 0x42b80 把 controller 7 的值乘上序列音量 [esi+0x34] / 127 —— 每 8 次服務一次的音量更新。
+FADE_STATIC = {
+    0x432BF: "cmp dword ptr [eax + 4], 4", 0x432C3: "jne 0x4391f", 0x432C9: "inc dword ptr [eax + 0x30]",
+    0x43866: "mov ebx, dword ptr [eax + 0x34]", 0x43869: "cmp ebx, dword ptr [eax + 0x38]", 0x4386C: "je 0x438ca",
+    0x438BB: "test byte ptr [eax + 0x30], 7", 0x438BF: "jne 0x438ca", 0x438C2: "call 0x43230",
+    0x43250: "push 7", 0x43252: "or al, 0xb0", 0x43256: "call 0x42980",
+    0x42B80: "mov edx, dword ptr [esi + 0x34]", 0x42B83: "imul edx, edi", 0x42B86: "mov edi, 0x7f", 0x42B90: "idiv edi",
+}
+for a, txt in FADE_STATIC.items():
+    assert insn(a) == txt, (hex(a), insn(a), txt)
+assert FADE_STEP == 1 + 7                                                   # test [eax+0x30], 7 → 每 8 次
+_PE, _PB = EN["best"]["period"], ALIGN["P2_loop"]["best"]["period"]
+_pe = pattern(0x0C, _PE)
+_pb2 = pattern(0x13, _PB)
+_o_en, _o_p2 = EN["best"]["offset"], ALIGN["P2_loop"]["best"]["offset"]
+_jen = idx(*WIN["EN"])
+# 基本曲重新從第 0 tick 開始的那一次服務:與 P2_loop 的對齊同一個起點(GAP2 比一個週期短,唯一)
+B0 = GAP2[0] + (_o_p2 - GAP2[0]) % _PB
+assert B0 in GAP2 and len(GAP2) < _PB
+
+
+def en_pred(j: int, slip: int) -> int:
+    """敵方曲:slip 之前照 EN 的起點,之後晚一次服務。"""
+    return _pe[(j - _o_en - (j >= slip)) % _PE]
+
+
+def en_missed(slip: int) -> int:
+    return sum(1 for j in range(_jen[0], B0) if en_pred(j, slip) and not DRVCALL[j])
+
+
+_slips = {s: en_missed(s) for s in range(_jen[0], B0 + 1)}
+_m0 = min(_slips.values())
+SLIP = [s for s, m in _slips.items() if m == _m0]
+# 晚一次服務的位置:敵方回合結束(EN 窗的結尾)那幾次服務裡;不晚(slip = B0)會漏很多
+assert T[SLIP[0]] >= WIN["EN"][1] - 10 and T[SLIP[-1]] - WIN["EN"][1] < 30 and _slips[B0] >= _m0 + 50, (SLIP, _m0, _slips[B0])
+_s = SLIP[0]
+R1 = range(GAP2[0], B0)
+_pred1 = {j: en_pred(j, _s) for j in R1}
+_ext1 = [j for j in R1 if DRVCALL[j] and not _pred1[j]]
+FADE_OUT_PHASE = (_r0 + 1) % FADE_STEP                                     # 同一個序列,計數器也晚一次
+_fo = [j for j in _ext1 if j % FADE_STEP == FADE_OUT_PHASE]
+assert len(_fo) >= 40, len(_fo)
+_fo_all = range(_fo[0], _fo[-1] + 1, FADE_STEP)
+R2 = range(B0, GAP2[-1] + 1)
+_pred2 = {j: _pb2[(j - _o_p2) % _PB] for j in R2}
+_ext2 = [j for j in R2 if DRVCALL[j] and not _pred2[j]]
+_fi_phase, _fi_n = collections.Counter(j % FADE_STEP for j in _ext2).most_common(1)[0]
+_fi = [j for j in _ext2 if j % FADE_STEP == _fi_phase]
+assert _fi_n >= 20, _fi_n
+_fi_all = range(_fi[0], _fi[-1] + 1, FADE_STEP)
+MODEL = {j: bool(_pred1[j]) or j in _fo_all for j in R1}
+MODEL.update({j: bool(_pred2[j]) or j in _fi_all for j in R2})
+_bad = [j for j in GAP2 if MODEL[j] != DRVCALL[j]]
+END_LOOP = {
+    "slip_services": [SLIP[0], SLIP[-1]], "slip_ms": [round(T[SLIP[0]], 1), round(T[SLIP[-1]], 1)], "en_window_end_ms": WIN["EN"][1],
+    "missed_with_slip": _m0, "missed_without_slip": _slips[B0],
+    "enemy_song_events": sum(_pred1.values()), "enemy_song_called": sum(DRVCALL[j] for j in R1 if _pred1[j]),
+    "fade_in_phase_en": _r0, "fade_out_phase": FADE_OUT_PHASE, "fade_out_steps": len(_fo_all),
+    "fade_out_steps_called": sum(DRVCALL[j] for j in _fo_all), "fade_out_ms": [round(T[_fo[0]], 1), round(T[_fo[-1]], 1)],
+    "base_start_service": B0, "base_start_ms": round(T[B0], 1), "base_start_mod_period_equals_p2_loop": (B0 - _o_p2) % _PB == 0,
+    "base_song_events": sum(_pred2.values()), "base_song_called": sum(DRVCALL[j] for j in R2 if _pred2[j]),
+    "fade_in_phase": _fi_phase, "fade_in_steps": len(_fi_all), "fade_in_steps_called": sum(DRVCALL[j] for j in _fi_all),
+    "fade_in_ms": [round(T[_fi[0]], 1), round(T[_fi[-1]], 1)],
+    "model_match": len(GAP2) - len(_bad), "services": len(GAP2),
+    "mismatch": [(round(T[j], 1), "called" if DRVCALL[j] else "missed", CALLS[j][1]) for j in _bad],
+}
+# 淡出 / 淡入每一步都有叫驅動;兩首曲的事件只漏敵方曲最後 2 個(換曲前一刻);整段只剩 4 次對不上
+assert END_LOOP["fade_out_steps_called"] == END_LOOP["fade_out_steps"] and END_LOOP["fade_in_steps_called"] == END_LOOP["fade_in_steps"], END_LOOP
+assert END_LOOP["fade_in_phase"] != END_LOOP["fade_out_phase"] and END_LOOP["base_song_called"] == END_LOOP["base_song_events"], END_LOOP
+assert END_LOOP["enemy_song_events"] - END_LOOP["enemy_song_called"] == 2 and all(T[B0] - 50 < T[j] < T[B0] for j in _bad if not DRVCALL[j]), END_LOOP
+assert len(_bad) == 4 and END_LOOP["model_match"] >= 0.99 * len(GAP2), END_LOOP
+# 對照:同一個模型拿掉淡出 / 淡入,或不讓敵方曲晚一次,都差很多
+_no_fade = sum((bool(_pred1[j]) if j in R1 else bool(_pred2[j])) == DRVCALL[j] for j in GAP2)
+_no_slip = sum((bool(en_pred(j, B0)) or j in _fo_all if j in R1 else MODEL[j]) == DRVCALL[j] for j in GAP2)
+END_LOOP["control_no_fade"], END_LOOP["control_no_slip"] = _no_fade, _no_slip
+assert max(_no_fade, _no_slip) <= END_LOOP["model_match"] - 50, END_LOOP
+# 友軍回合結束 → 敵方回合開始:同樣是舊曲淡出(相位 0)、新曲淡入(EN 開頭,相位 _r0)
+assert _ph1[0] != _r0 and TRANS["friend_end_to_enemy"]["extra_on_one_phase_of_8"] == 55
+# EN 的 3 次 558 條短呼叫不在敵方曲的漸變相位上(EN 全段照同一起點對齊,序列沒有晚過),所以不是單步的音量更新(來源仍未解)
+SHORT_EN = [(round(T[j], 1), CALLS[j][1], j % FADE_STEP) for j in _rest]
+assert len(SHORT_EN) == 3 and all(p != _r0 for _t, _n, p in SHORT_EN), (SHORT_EN, _r0)
+END_LOOP["short_calls_en_phase"] = SHORT_EN
+
 # 每秒驅動呼叫次數、每次驅動呼叫被計時器中斷撞上的比例
 RATE = {}
 for nm in ("P", "diag", "S_ring", "S_adv", "EN", "P2_loop"):
@@ -498,7 +587,10 @@ CONC = {
                  f"多出來的驅動呼叫全來自曲子本身,曲子以外的只有開頭 {EN_EXTRA_SUM['on_one_phase_of_8']} 次與 {len(EN_EXTRA_SUM['others'])} 次短呼叫,所以不是敵方移動的音效讓驅動變忙。",
     "transition": f"友軍回合結束到敵方回合開始的 {TRANS['friend_end_to_enemy']['services']} 次服務:FDMUS_019 照常({TRANS['friend_end_to_enemy']['song_events']} 個事件全叫),"
                   f"另外多叫 {TRANS['friend_end_to_enemy']['extra']} 次,其中 {TRANS['friend_end_to_enemy']['extra_on_one_phase_of_8']} 次落在同一個 8 次服務的相位上;"
-                  f"敵方回合結束到主迴圈的 {_g2['services']} 次服務兩首曲都對不上(未解)。",
+                  f"敵方回合結束到主迴圈的 {_g2['services']} 次服務單看一首曲都對不上(續一百七十未解;續一百七十三:敵方曲在敵方回合結束時晚一次服務續播、"
+                  f"相位 {END_LOOP['fade_out_phase']} 淡出 {END_LOOP['fade_out_steps']} 步,{END_LOOP['base_start_ms']} ms 基本曲從第 0 tick 開始、相位 {END_LOOP['fade_in_phase']} "
+                  f"淡入 {END_LOOP['fade_in_steps']} 步,逐次相符 {END_LOOP['model_match']} / {END_LOOP['services']})。"
+                  f"每 8 次服務多叫的那一次是音量漸變:序列音量未到目標時 [eax+0x30] & 7 == 0 呼叫 0x43230 送各聲道 controller 7。",
     "unclassified": f"P 之前 5 次未歸類重入的插斷點都與 DIG 型相同(外層 DIG 進入後 229 條非遊戲指令;DIG 型 401 / 416 次是 229)。"
                     f"其中 4 次是 DIG 補叫:AIL 鎖([0x52bea] > 0)讓前一次 ISR 沒派送,這次 ISR 叫 DIG 兩次,重入落在第一次的驅動呼叫裡,"
                     f"返回後走 {len(PATH_AGAIN)} 條進第二次 DIG,而不是 {len(PATH_END)} 條到 0x3eb9d:{D_DIG} − {len(PATH_END)} + {len(PATH_AGAIN)} = {D_AGAIN},"
@@ -512,6 +604,7 @@ CONC = {
 }
 for _part, _key in (("4096 的倍數", "buffer"), ("40000 位元組都沒寫盤", "buffer"), ("FDMUS_012", "enemy_mdi"), ("3414 / 4670 / 2468", "enemy_mdi"),
                     ("3018 / 3044", "enemy_mdi"), ("diag 43164 / 43165", "enemy_mdi"), ("85 / 718、其他 457 / 3528", "enemy_mdi"), ("3.73 倍", "enemy_mdi"), ("Fisher p = 0.462", "enemy_mdi"), ("多叫 56 次", "transition"),
+                    ("逐次相符 987 / 991", "transition"), ("相位 0 淡出 58 步", "transition"), ("相位 1 淡入 30 步", "transition"),
                     ("93 − 77 + 10 = 26", "unclassified"), ("晚了 4.909 ms", "unclassified"), ("3015 張", "hud_uncovered"),
                     ("其中 348 張樣板判沒有", "hud_uncovered"), ("最高 0.4009", "hud_uncovered"), ("少掉 75 個", "hud_uncovered")):
     assert _part in CONC[_key], (_part, CONC[_key])
@@ -526,7 +619,8 @@ OUTD = {
                   "songs": {f"FDMUS_{n:03d}": {"md5": s["md5"], "max_tick": s["max_tick"], "event_ticks": len(s["ticks"]),
                                                "density": DENSITY[n]} for n, s in SONG.items()},
                   "unclosed_mdi_services": len(UNCLOSED), "align": ALIGN, "diag": DIAG, "en_extra": EN_EXTRA_SUM,
-                  "transitions": TRANS, "rates": RATE, "hit": HIT, "ratios": RATIO},
+                  "transitions": TRANS, "rates": RATE, "hit": HIT, "ratios": RATIO,
+                  "s173_fade_static": {hex(a): t for a, t in FADE_STATIC.items()}, "s173_enemy_end_to_loop": END_LOOP},
     "unclassified": {"cases": CASES, "path_end": len(PATH_END), "path_again": len(PATH_AGAIN), "predicted_again": D_AGAIN,
                      "dig_type_nongame_229": NG_DIG[True], "dig_type_total": NG_DIG[True] + NG_DIG[False],
                      "catchup": CATCHUP, "lateness_ms": LATE},
