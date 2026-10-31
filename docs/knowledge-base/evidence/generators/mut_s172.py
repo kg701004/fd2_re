@@ -24,10 +24,11 @@ MUTANTS = [
     ("進了 ISR 的 delay 也算乾淨", "if bisect.bisect_right(isr_t, t0) != bisect.bisect_left(isr_t, t1):\n            continue",
      "if False:\n            continue"),
     ("有鍵盤中斷的 delay 也算乾淨", "        if inside:\n", "        if False:\n"),
-    ("每 ms 時間片改用指令數", "\"slices_per_ms\": round(sum(g[3] for g in grp)", "\"slices_per_ms\": round(sum(g[2] for g in grp)"),
+    ("每 ms 時間片改用指令數", "\"slices_per_ms\": round(sum(g.dk for g in grp)", "\"slices_per_ms\": round(sum(g.dn for g in grp)"),
     ("nm 偏移的正負號反了", "BIAS = PICEV_REF - _ref", "BIAS = PICEV_REF + _ref"),
     ("DMA_DAC 時段改看 VGA", "if d.get(\"DMA_DAC_Event\"))", "if d.get(\"VGA_DrawSingleLine\"))"),
-    ("DMA_DAC 開始時間從格頭算", "DAC[\"start_ms_est\"] = round(3200 - 224 / 22.05, 2)", "DAC[\"start_ms_est\"] = round(3100 + 224 / 22.05, 2)"),
+    ("DMA_DAC 開始時間從格頭算", "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + BUCKET - DAC[\"first_count\"] / KHZ, ndigits=2)",
+     "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + DAC[\"first_count\"] / KHZ, ndigits=2)"),
     ("續一百六十五指令數差加錯號", "- (_ph[\"early\"][\"nongame_mean\"] - _ph[\"late\"][\"nongame_mean\"])",
      "+ (_ph[\"early\"][\"nongame_mean\"] - _ph[\"late\"][\"nongame_mean\"])"),
     # (D) P3:rep

@@ -1,0 +1,519 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s174.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "lc174a": {
+   "path": ".wsl_build/lc174_live/lc174a_CALLLOG.TXT",
+   "md5": "0aaee51798ec85a779a95aa78ed85cac"
+  },
+  "lc174b": {
+   "path": ".wsl_build/lc174_live/lc174b_CALLLOG.TXT",
+   "md5": "9be49f776cc0ed2fbbc3d7e962503b14"
+  },
+  "lc173a": {
+   "path": ".wsl_build/lc173_live/lc173a_CALLLOG.TXT",
+   "md5": "3a8bb8b852d99b3f6307a64306408efb"
+  }
+ },
+ "trig": "if:40000-,ng:600-604,ng:375,if:1000-2000@0070",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s174/pred174.txt",
+ "check": "docs/knowledge-base/evidence/generators/drivers_s174/check174.py",
+ "a_p1_p6": {
+  "blocks": {
+   "lc174a": 24,
+   "lc174b": 18
+  },
+  "dig_g_rows": [
+   {
+    "seq": 3,
+    "g_count": 44001,
+    "pre": 72,
+    "span": 43928,
+    "g_e0": "0x3f1a4"
+   },
+   {
+    "seq": 5,
+    "g_count": 44001,
+    "pre": 72,
+    "span": 43928,
+    "g_e0": "0x3f1a4"
+   },
+   {
+    "seq": 6,
+    "g_count": 44078,
+    "pre": 149,
+    "span": 43928,
+    "g_e0": "0x3ea8e"
+   },
+   {
+    "seq": 7,
+    "g_count": 44078,
+    "pre": 149,
+    "span": 43928,
+    "g_e0": "0x3ea8e"
+   },
+   {
+    "seq": 8,
+    "g_count": 44615,
+    "pre": 686,
+    "span": 43928,
+    "g_e0": "0x3ea8e"
+   },
+   {
+    "seq": 9,
+    "g_count": 44079,
+    "pre": 149,
+    "span": 43929,
+    "g_e0": "0x3ea8e"
+   },
+   {
+    "seq": 10,
+    "g_count": 44632,
+    "pre": 703,
+    "span": 43928,
+    "g_e0": "0x3ea8e"
+   }
+  ],
+  "yc_lc174b": {
+   "0": {
+    "kind": "if",
+    "matched": 7,
+    "written": 7
+   },
+   "1": {
+    "kind": "ng",
+    "matched": 3,
+    "written": 3
+   },
+   "2": {
+    "kind": "ng",
+    "matched": 0,
+    "written": 0
+   },
+   "3": {
+    "kind": "if",
+    "matched": 25,
+    "written": 8
+   }
+  },
+  "yn_lc174b": {
+   "ng": 17273,
+   "if": 22814
+  },
+  "p6": {
+   "break_ms": 10624.0002,
+   "dig_if": {
+    "seq": 5,
+    "t0": 10618.3484,
+    "t1": 10627.5954,
+    "count": 43928
+   },
+   "ng": {
+    "seq": 6,
+    "count": 601,
+    "irq1_ms": 10627.6608,
+    "irq1_after_break_ms": 3.6606
+   },
+   "lc174a_same_type": [
+    13,
+    601
+   ]
+  }
+ },
+ "b_mdi375": {
+  "lc174a": {
+   "seq": 24,
+   "t0": 21843.602,
+   "count": 375,
+   "irq": "0f r 0c5c:1fad",
+   "dig_handler": {
+    "cs": "137c",
+    "first": "0x682",
+    "last": "0x729",
+    "insns": 73,
+    "code_bytes_match_file": 73
+   }
+  },
+  "classes": {
+   "lc174a": {
+    "p 0080:ed6 -> 0x3f1a4 []": {
+     "302": 4,
+     "303": 1
+    },
+    "p 0080:ed6 -> 0x3f0be []": {
+     "69": 58,
+     "70": 4
+    },
+    "p 0080:ed6 -> 0x3f0be ['09 p', '15 r']": {
+     "601": 1
+    },
+    "p 0080:ed6 -> 0x3eb49 []": {
+     "69": 1
+    },
+    "p 0080:ed6 -> 0x3f1a4 ['0f r']": {
+     "375": 1
+    }
+   },
+   "lc174b": {
+    "p 0080:ed6 -> 0x3f1a4 []": {
+     "302": 6
+    },
+    "p 0080:ed6 -> 0x3f0be []": {
+     "69": 58,
+     "70": 2
+    },
+    "p 0080:ed6 -> 0x3f0be ['09 p', '15 r']": {
+     "601": 1
+    }
+   },
+   "lc173a": {
+    "p 0080:ed6 -> 0x3f1a4 []": {
+     "302": 5,
+     "303": 1
+    },
+    "p 0080:ed6 -> 0x3f0be []": {
+     "69": 60,
+     "70": 2
+    },
+    "p 0080:ed6 -> 0x3f0be ['09 p', '15 r']": {
+     "602": 1
+    }
+   }
+  }
+ },
+ "c_dos4gw": {
+  "file_base": "0x9ae0",
+  "int21_handler": {
+   "0x3f": "0xe02",
+   "0x40": "0xe7f"
+  },
+  "fd2_tmp_bytes": 207360,
+  "write": {
+   "lc174a": {
+    "t_ms": 12814.8628,
+    "next_int21_ms": 12873.3988,
+    "next_int21_at": "0x3cf70",
+    "chunks": [
+     1133,
+     1133,
+     1133,
+     1134,
+     1134,
+     1133,
+     1133,
+     1123,
+     1133,
+     1133,
+     1133,
+     1134,
+     1135,
+     1133,
+     1124,
+     1133,
+     1133,
+     1133,
+     1133,
+     1133,
+     1117,
+     1133,
+     1132,
+     1134,
+     1132,
+     417
+    ],
+    "hw_irqs": {
+     "08 p 0070:ee0": 1,
+     "08 r 0c5c:10b5": 7,
+     "08 r f000:ca43": 2,
+     "08 r f000:ca47": 1,
+     "08 r f000:ca4b": 1
+    }
+   },
+   "lc174b": {
+    "t_ms": 12575.267,
+    "next_int21_ms": 12634.7752,
+    "next_int21_at": "0x3cf70",
+    "chunks": [
+     1120,
+     1135,
+     1132,
+     1135,
+     1133,
+     1133,
+     1117,
+     1134,
+     1133,
+     1133,
+     1133,
+     1133,
+     1116,
+     1133,
+     1133,
+     1132,
+     1134,
+     1133,
+     1125,
+     1133,
+     1133,
+     1132,
+     1134,
+     1133,
+     1130,
+     414
+    ],
+    "hw_irqs": {
+     "08 r 0c5c:10b5": 7,
+     "08 r f000:ca47": 1,
+     "08 r f000:ca48": 1,
+     "08 r f000:ca49": 1,
+     "08 r f000:ca4a": 2
+    }
+   }
+  },
+  "rep_records_per_full_chunk": 1042,
+  "last_chunk_ratio": {
+   "lc174a": 0.3129,
+   "lc174b": 0.31
+  },
+  "y_types": {
+   "lc174a": [
+    {
+     "seq": 16,
+     "type": "a",
+     "count": 1123,
+     "ms": 1.0514
+    },
+    {
+     "seq": 17,
+     "type": "b",
+     "count": 1618,
+     "ms": 1.1568,
+     "to_popf": 1123,
+     "after_popf": 495
+    },
+    {
+     "seq": 18,
+     "type": "a",
+     "count": 1123,
+     "ms": 1.0514
+    },
+    {
+     "seq": 19,
+     "type": "b",
+     "count": 1616,
+     "ms": 1.1572,
+     "to_popf": 1123,
+     "after_popf": 493
+    },
+    {
+     "seq": 20,
+     "type": "a",
+     "count": 1124,
+     "ms": 1.0516
+    },
+    {
+     "seq": 21,
+     "type": "b",
+     "count": 1618,
+     "ms": 1.1576,
+     "to_popf": 1123,
+     "after_popf": 495
+    },
+    {
+     "seq": 22,
+     "type": "a",
+     "count": 1123,
+     "ms": 1.0514
+    },
+    {
+     "seq": 23,
+     "type": "a",
+     "count": 1113,
+     "ms": 1.046
+    }
+   ],
+   "lc174b": [
+    {
+     "seq": 11,
+     "type": "a",
+     "count": 1110,
+     "ms": 1.0442
+    },
+    {
+     "seq": 12,
+     "type": "b",
+     "count": 1620,
+     "ms": 1.158,
+     "to_popf": 1125,
+     "after_popf": 495
+    },
+    {
+     "seq": 13,
+     "type": "a",
+     "count": 1122,
+     "ms": 1.0512
+    },
+    {
+     "seq": 14,
+     "type": "b",
+     "count": 1618,
+     "ms": 1.158,
+     "to_popf": 1125,
+     "after_popf": 493
+    },
+    {
+     "seq": 15,
+     "type": "a",
+     "count": 1123,
+     "ms": 1.0516
+    },
+    {
+     "seq": 16,
+     "type": "b",
+     "count": 1618,
+     "ms": 1.1578,
+     "to_popf": 1123,
+     "after_popf": 495
+    },
+    {
+     "seq": 17,
+     "type": "a",
+     "count": 1107,
+     "ms": 1.042
+    },
+    {
+     "seq": 18,
+     "type": "b",
+     "count": 1620,
+     "ms": 1.1582,
+     "to_popf": 1124,
+     "after_popf": 496
+    }
+   ]
+  },
+  "read": {
+   "lc174a": {
+    "runs": 23,
+    "max_count": 1078,
+    "after_int21_at": {
+     "0x3dcf4": 23
+    },
+    "irq_inside_copy": 0,
+    "irq_at_e6c": 23
+   },
+   "lc174b": {
+    "runs": 28,
+    "max_count": 1078,
+    "after_int21_at": {
+     "0x3dcf4": 28
+    },
+    "irq_inside_copy": 0,
+    "irq_at_e6c": 28
+   },
+   "lc173a": {
+    "runs": 35,
+    "max_count": 1077,
+    "after_int21_at": {
+     "0x3dcf4": 35
+    },
+    "irq_inside_copy": 0,
+    "irq_at_e6c": 35
+   },
+   "lc173a_9262": {
+    "count": 1070,
+    "key_ms": 9262.0002,
+    "irq0_ms": 9262.51
+   }
+  }
+ },
+ "d_int21_0084": {
+  "lc174a": {
+   "spans": 827,
+   "min": 583,
+   "max": 14289,
+   "in_600_604": 5,
+   "from": {
+    "0x3e04f": 753,
+    "0x3dcf4": 54,
+    "0x3cf70": 8,
+    "0x3d0c5": 4,
+    "0x3d37b": 3,
+    "0x3fe6f": 3,
+    "0x3cff2": 1,
+    "0x3d474": 1
+   },
+   "post_one_irq": {
+    "237": 773,
+    "375": 32,
+    "230": 10,
+    "376": 9
+   }
+  },
+  "lc174b": {
+   "spans": 830,
+   "min": 584,
+   "max": 14289,
+   "in_600_604": 6,
+   "from": {
+    "0x3e04f": 759,
+    "0x3dcf4": 51,
+    "0x3cf70": 9,
+    "0x3fe6f": 4,
+    "0x3d37b": 3,
+    "0x3d0c5": 2,
+    "0x3cff2": 1,
+    "0x3d474": 1
+   },
+   "post_one_irq": {
+    "237": 783,
+    "375": 26,
+    "230": 14,
+    "376": 3
+   }
+  },
+  "y_blocks": {
+   "lc174a#2": {
+    "count": 601,
+    "irq0_at": "p 0080:928",
+    "before_irq0": 364
+   },
+   "lc174a#4": {
+    "count": 601,
+    "irq0_at": "p 0080:924",
+    "before_irq0": 364
+   },
+   "lc174a#11": {
+    "count": 601,
+    "irq0_at": "p 0080:928",
+    "before_irq0": 364
+   },
+   "lc174a#14": {
+    "count": 603,
+    "irq0_at": "p 0080:932",
+    "before_irq0": 366
+   },
+   "lc174a#15": {
+    "count": 600,
+    "irq0_at": "p 0080:924",
+    "before_irq0": 363
+   },
+   "lc174b#1": {
+    "count": 601,
+    "irq0_at": "p 0080:928",
+    "before_irq0": 364
+   },
+   "lc174b#8": {
+    "count": 604,
+    "irq0_at": "p 0080:935",
+    "before_irq0": 367
+   }
+  }
+ },
+ "conclusion": {
+  "p1_p6": "lc174a 24 個、lc174b 18 個區塊都有 YE、判準重核沒有問題;DIG 型長關中斷 lc174a 7 次(43928 ×6、43929 ×1),G 一筆涵蓋、條數 = 前段 + 區間 + 1。lc174b 被砍掉後仍有統計(規則 3 符合 25、寫出 8)、沒有 9500 ms 之前的區塊;START 放開 10624.0002 ms,DIG 型 if #5 結束後 ng #6 601 條,IRQ 1 在 0080:06ca 收(放開後 3.6606 ms)。",
+  "mdi375": "ng 375 = 續一百六十五的 MDI 375:重入 ISR 之後的非遊戲段,MDI 型(回到 0x3f1a4)沒中斷時 302 / 303,lc174a #24 中間在 0c5c:1fad 收了一次 IRQ 7,SB16.DIG 的實模式處理 137c:0682 .. 0729 73 條(碼位元組與檔案相同)→ 302 + 73 = 375。lc174b、lc173a 沒有。lc163a 沒有 I 紀錄,同型是由條數差 73 推的(INFERRED)。",
+  "dos4gw_write": "0070 起頭的 if 區間 = DOS/4GW int 21h AH=40h 的轉送(FD2.EXE 檔內 0x9ae0 + 位移,分派表 AH=40h → 0xe7f):spawn_group 把精靈快取 0x32a00 bytes 寫進 FD2.TMP,一次 write 分 26 塊(25 塊滿、最後一塊的拷貝量 0.3129 塊 ≈ 2560 / 8192),每塊 0x0eb4 cli 拷到轉送緩衝、切實模式,0c5c:10b4 popf 才開中斷(甲型 1.042 .. 1.0516 ms);IRQ 0 在裡面到就積著,popf 一開就收、反射到遊戲 ISR,popf 之後再 493 .. 496 條到 0x3eb15 sti(乙型)。兩份紀錄各 7 / 26 塊是乙型,拷貝段裡沒有收過中斷。",
+  "dos4gw_read": "續一百七十三 9262 ms 的 0070:0d81 .. 0e6b(1070 條)是 AH=3Fh(→ 0xe02)實模式讀完、切回來把轉送緩衝拷回使用者緩衝那段,0x0e6a sti 之前關著中斷;三份紀錄這型的段都接在 dos_read 之後,拷貝段裡沒收過中斷、sti 之後一條(0x0e6c)收過。它從實模式就關著,不是 0070 起頭,所以規則 3 沒有選到。",
+  "int21_0084": "ng 600 .. 604 的 0080:0084 型:delay 的 int 21h AH=2Ch(0x3e04d),IRQ 0 落在 DOS/4GW 保護模式的 int 21h 入口段,之後反射到遊戲 ISR 固定 237 條;這型 lc174a 827 段、條數 583 .. 14289,600 .. 604 只有 5 段,是規則選到的一小段,跟 START 那型的 601 條數相同是巧合。"
+ }
+}

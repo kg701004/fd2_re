@@ -308,7 +308,7 @@ def en_pred(j: int, slip: int) -> int:
 
 
 def en_missed(slip: int) -> int:
-    return sum(1 for j in range(_jen[0], B0) if en_pred(j, slip) and not DRVCALL[j])
+    return sum(bool(en_pred(j, slip)) and not DRVCALL[j] for j in range(_jen[0], B0))
 
 
 _slips = {s: en_missed(s) for s in range(_jen[0], B0 + 1)}
@@ -335,23 +335,25 @@ MODEL = {j: bool(_pred1[j]) or j in _fo_all for j in R1}
 MODEL.update({j: bool(_pred2[j]) or j in _fi_all for j in R2})
 _bad = [j for j in GAP2 if MODEL[j] != DRVCALL[j]]
 END_LOOP = {
-    "slip_services": [SLIP[0], SLIP[-1]], "slip_ms": [round(T[SLIP[0]], 1), round(T[SLIP[-1]], 1)], "en_window_end_ms": WIN["EN"][1],
+    "slip_services": [min(SLIP), max(SLIP)], "slip_ms": [round(T[min(SLIP)], ndigits=1), round(T[max(SLIP)], ndigits=1)], "en_window_end_ms": WIN["EN"][1],
     "missed_with_slip": _m0, "missed_without_slip": _slips[B0],
     "enemy_song_events": sum(_pred1.values()), "enemy_song_called": sum(DRVCALL[j] for j in R1 if _pred1[j]),
     "fade_in_phase_en": _r0, "fade_out_phase": FADE_OUT_PHASE, "fade_out_steps": len(_fo_all),
-    "fade_out_steps_called": sum(DRVCALL[j] for j in _fo_all), "fade_out_ms": [round(T[_fo[0]], 1), round(T[_fo[-1]], 1)],
-    "base_start_service": B0, "base_start_ms": round(T[B0], 1), "base_start_mod_period_equals_p2_loop": (B0 - _o_p2) % _PB == 0,
+    "fade_out_steps_called": sum(DRVCALL[j] for j in _fo_all), "fade_out_ms": [round(T[min(_fo)], ndigits=1), round(T[max(_fo)], ndigits=1)],
+    "base_start_service": B0, "base_start_ms": round(T[B0], ndigits=1), "base_start_mod_period_equals_p2_loop": (B0 - _o_p2) % _PB == 0,
     "base_song_events": sum(_pred2.values()), "base_song_called": sum(DRVCALL[j] for j in R2 if _pred2[j]),
     "fade_in_phase": _fi_phase, "fade_in_steps": len(_fi_all), "fade_in_steps_called": sum(DRVCALL[j] for j in _fi_all),
-    "fade_in_ms": [round(T[_fi[0]], 1), round(T[_fi[-1]], 1)],
+    "fade_in_ms": [round(T[min(_fi)], ndigits=1), round(T[max(_fi)], ndigits=1)],
     "model_match": len(GAP2) - len(_bad), "services": len(GAP2),
-    "mismatch": [(round(T[j], 1), "called" if DRVCALL[j] else "missed", CALLS[j][1]) for j in _bad],
+    "mismatch": [(round(T[j], ndigits=1), "called" if DRVCALL[j] else "missed", CALLS[j][1]) for j in _bad],
 }
 # 淡出 / 淡入每一步都有叫驅動;兩首曲的事件只漏敵方曲最後 2 個(換曲前一刻);整段只剩 4 次對不上
 assert END_LOOP["fade_out_steps_called"] == END_LOOP["fade_out_steps"] and END_LOOP["fade_in_steps_called"] == END_LOOP["fade_in_steps"], END_LOOP
 assert END_LOOP["fade_in_phase"] != END_LOOP["fade_out_phase"] and END_LOOP["base_song_called"] == END_LOOP["base_song_events"], END_LOOP
 assert END_LOOP["enemy_song_events"] - END_LOOP["enemy_song_called"] == 2 and all(T[B0] - 50 < T[j] < T[B0] for j in _bad if not DRVCALL[j]), END_LOOP
 assert len(_bad) == 4 and END_LOOP["model_match"] >= 0.99 * len(GAP2), END_LOOP
+assert END_LOOP["base_start_mod_period_equals_p2_loop"] is True, END_LOOP
+assert all((kd == "called") == (n is None or n > 0) for _t, kd, n in END_LOOP["mismatch"]), END_LOOP["mismatch"]
 # 對照:同一個模型拿掉淡出 / 淡入,或不讓敵方曲晚一次,都差很多
 _no_fade = sum((bool(_pred1[j]) if j in R1 else bool(_pred2[j])) == DRVCALL[j] for j in GAP2)
 _no_slip = sum((bool(en_pred(j, B0)) or j in _fo_all if j in R1 else MODEL[j]) == DRVCALL[j] for j in GAP2)
@@ -360,7 +362,8 @@ assert max(_no_fade, _no_slip) <= END_LOOP["model_match"] - 50, END_LOOP
 # 友軍回合結束 → 敵方回合開始:同樣是舊曲淡出(相位 0)、新曲淡入(EN 開頭,相位 _r0)
 assert _ph1[0] != _r0 and TRANS["friend_end_to_enemy"]["extra_on_one_phase_of_8"] == 55
 # EN 的 3 次 558 條短呼叫不在敵方曲的漸變相位上(EN 全段照同一起點對齊,序列沒有晚過),所以不是單步的音量更新(來源仍未解)
-SHORT_EN = [(round(T[j], 1), CALLS[j][1], j % FADE_STEP) for j in _rest]
+SHORT_EN = [(round(T[j], ndigits=1), CALLS[j][1], j % FADE_STEP) for j in _rest]
+assert [(t, n) for t, n, _p in SHORT_EN] == [tuple(x) for x in EN_EXTRA_SUM["others"]], (SHORT_EN, EN_EXTRA_SUM)
 assert len(SHORT_EN) == 3 and all(p != _r0 for _t, _n, p in SHORT_EN), (SHORT_EN, _r0)
 END_LOOP["short_calls_en_phase"] = SHORT_EN
 

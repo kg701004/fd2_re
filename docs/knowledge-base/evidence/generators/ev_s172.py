@@ -23,6 +23,7 @@ from __future__ import annotations
 import bisect
 import collections
 import hashlib
+import itertools
 import json
 import re
 import statistics
@@ -87,6 +88,9 @@ def validity(k: str) -> dict:
 
 
 VALID = {k: validity(k) for k in LOGS}
+# k_last = G / S / I 紀錄(validity 的 seq)裡最大的 k(k 不減,最後一筆就是最大)
+assert all(VALID[k]["k_last"] == max(int(m.group(1)) for ln in TEXT[k] if ln[:2] in ("G ", "S ", "I ")
+                                       for m in [re.search(r" k=(\d+) ", ln)] if m) for k in LOGS), VALID
 for k in LOGS:
     assert VALID[k]["gaps"] == [] and VALID[k]["every_record_has_slices"] and VALID[k]["k_nondecreasing"], VALID[k]
 
@@ -199,8 +203,9 @@ def dh0(k: str) -> dict:
     cf1 = [(t, b) for t, a, b in rows if a == "cf1_loop" and b in ("short", "long")]
     longs = [i for i, (_t1, b) in enumerate(cf1) if b == "long"]
     assert longs and longs == list(range(longs[0], longs[-1] + 1)), "迴圈內走長路的不是一段連續"
-    t_first, t_last = cf1[longs[0]][0], cf1[longs[-1]][0]
-    t_short_before, t_short_after = cf1[longs[0] - 1][0], cf1[longs[-1] + 1][0]
+    t_first, t_last = min(t for t, b in cf1 if b == "long"), max(t for t, b in cf1 if b == "long")
+    t_short_before = max(t for t, b in cf1 if b == "short" and t < t_first)
+    t_short_after = min(t for t, b in cf1 if b == "short" and t > t_last)
     allt = [t for t, _a, _b in rows]
     t_prev_last = allt[allt.index(t_last) - 1]                  # 最後一次長路讀的 DH 是它前一次 int 21h 讀到的
     ticks = sorted(q.t for q in LOG[k].irqs if q.num == 0x1C and q.type == 1)
@@ -209,7 +214,7 @@ def dh0(k: str) -> dict:
     ie = ticks.index(end[0])
     t_start = ticks[ie - SEC0_TICKS]
     assert t_short_before < t_start < t_first, (t_short_before, t_start, t_first)
-    gaps = [round(b - a, 3) for a, b in zip(ticks[ie - SEC0_TICKS:ie], ticks[ie - SEC0_TICKS + 1:ie + 1])]
+    gaps = [round(b - a, ndigits=3) for a, b in zip(ticks[ie - SEC0_TICKS:ie], ticks[ie - SEC0_TICKS + 1:ie + 1])]
     assert all(54.5 < g < 60.5 for g in gaps), gaps              # 沒有漏掉的 tick(AIL 在 5 ms 格點轉接 BIOS:約 55 或 60 ms)
     return {"table": {f"{a}|{b}": n for (a, b), n in sorted(tab.items())},
             "cf1_long_block_ms": [t_first, t_last], "cf1_short_neighbours_ms": [t_short_before, t_short_after],
@@ -217,6 +222,9 @@ def dh0(k: str) -> dict:
 
 
 DH0 = {k: dh0(k) for k in LOGS}
+_raw_e3b = {k: collections.Counter(s1[0].count for e in EPS[k] if e.complete and e.left_from == rt(DLY) and e.back_to == rt(DLY) + 2
+                                   for s1 in [[r for r in e.runs if (r.m, r.cs, r.e0) == E3B]] if len(s1) == 1) for k in LOGS}
+assert all(path_class(c) != "split" for k in LOGS for c, n in _raw_e3b[k].items() if n >= 10), _raw_e3b
 assert DH0["lc172a"]["table"]["cf1_loop|long"] == 3634 and DH0["lc172b"]["table"]["cf1_loop|long"] == 4160, DH0
 assert (DH0["lc172a"]["end_tick_ms"], DH0["lc172b"]["end_tick_ms"]) == (8051.9194, 8055.2048), DH0
 assert (DH0["lc172a"]["start_tick_ms_18_back"], DH0["lc172b"]["start_tick_ms_18_back"]) == (7056.8918, 7060.1912), DH0
@@ -268,7 +276,7 @@ def step_table(k: str) -> dict:
                 d = (sl[1] - prev[4][1]) if s else (sl[2] - prev[4][2])
                 cls = op_class(lg, prev[0], prev[1], prev[2])
                 assert step_ok(cls, s, d), (k, cls, s, d, prev[:3])
-                tab[(cls, s, d)] += 1
+                tab.update([(cls, s, d)])
             prev = (r.m, r.cs, e, n, sl)
     return {f"{a}|{b}|{c}": v for (a, b, c), v in sorted(tab.items())}
 
@@ -289,7 +297,12 @@ ISR = {rt(0x3EA8E), rt(0x3EBAD)}
 assert insn(0x3E01D) != "" and insn(0x3EA8E) != ""
 
 
-def clean_delays(k: str) -> tuple[list[tuple[float, float, int, int, int, int]], list[tuple[float, float, int, int, int, int, str]]]:
+Delay = collections.namedtuple("Delay", "t0 dt dn dk db dw")
+CYCLES = 5000                          # DOSBox-X 每 ms 的指令數(harness 的 config -set cycles)
+assert f"-c 'config -set cycles={CYCLES}'" in (ROOT / "tools/dosbox_harness.sh").read_text(encoding="utf-8")
+
+
+def clean_delays(k: str) -> tuple[list[Delay], list[tuple[Delay, str]]]:
     """delay(2) 的 (t0, Δt, Δn, Δk, Δb, Δw):乾淨的(E 到 R 之間沒有中斷處理程式進入、也沒有任何硬體 I 紀錄),
     與「沒有中斷處理程式進入、但有硬體 I 紀錄」的(在非遊戲碼收、不經遊戲 ISR 的中斷;另列)。"""
     opens: dict[str, tuple] = {}
@@ -319,10 +332,10 @@ def clean_delays(k: str) -> tuple[list[tuple[float, float, int, int, int, int]],
     for t0, t1, v0, v1 in pairs:
         if bisect.bisect_right(isr_t, t0) != bisect.bisect_left(isr_t, t1):
             continue
-        row = (t0, t1 - t0, v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2], v1[3] - v0[3])
+        row = Delay(t0, t1 - t0, v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2], v1[3] - v0[3])
         inside = hw[bisect.bisect_right(hw_n, v0[0]):bisect.bisect_right(hw_n, v1[0])]
         if inside:
-            other.append(row + (",".join(f"{num:02x}" for _n, num in inside),))
+            other.append((row, ",".join(f"{num:02x}" for _n, num in inside)))
         else:
             out.append(row)
     return out, other
@@ -331,24 +344,24 @@ def clean_delays(k: str) -> tuple[list[tuple[float, float, int, int, int, int]],
 _CD = {k: clean_delays(k) for k in LOGS}
 DELAYS = {k: v[0] for k, v in _CD.items()}
 # 另列:沒進遊戲 ISR、但期間有在非遊戲碼收的硬體中斷(都是 int 09h);殘差 − 時間片數比定值多(鍵盤處理的 in / out 有 I/O 延遲)
-HW_DELAYS = {k: [{"t": round(r[0], 3), "irq": r[6], "resid_minus_dk": round(r[1] * 5000 - r[2] - r[3], 3)} for r in v[1]]
+HW_DELAYS = {k: [{"t": round(r.t0, ndigits=3), "irq": irq, "resid_minus_dk": round(r.dt * CYCLES - r.dn - r.dk, ndigits=3)} for r, irq in v[1]]
              for k, v in _CD.items()}
 assert {k: sorted((d["irq"], d["resid_minus_dk"]) for d in v) for k, v in HW_DELAYS.items()} == {
     "lc172a": [("08", 1445.0), ("09", 1499.0), ("09", 1499.0)], "lc172b": []}, HW_DELAYS   # int 08h 那次在 R 之後才進 ISR,不影響
 RESID = {}
 for k, rows in DELAYS.items():
-    res = [dt * 5000 - dn for _t0, dt, dn, _dk, _db, _dw in rows]
+    res = [r.dt * CYCLES - r.dn for r in rows]
     assert all(abs(r - (db + dw)) < 1e-3 for r, (_t0, _dt, _dn, _dk, db, dw) in zip(res, rows))   # 定義上的恆等式(核對欄位)
     const = [r - dk for r, (_t0, _dt, _dn, dk, _db, _dw) in zip(res, rows)]
-    ts = [r[0] for r in rows]
+    ts = [r.t0 for r in rows]
     gi = max(range(1, len(ts)), key=lambda j: ts[j] - ts[j - 1])
     assert ts[gi] - ts[gi - 1] > 3000
     per = {}
     for nm, grp in (("early", rows[:gi]), ("late", rows[gi:])):
-        per[nm] = {"t_ms": [round(grp[0][0], 1), round(grp[-1][0], 1)], "n": len(grp),
-                   "slices_per_ms": round(sum(g[3] for g in grp) / sum(g[1] for g in grp), 3),
-                   "resid_mode": collections.Counter(round(g[1] * 5000 - g[2]) for g in grp).most_common(1)[0][0],
-                   "dk_mode": collections.Counter(g[3] for g in grp).most_common(1)[0][0]}
+        per[nm] = {"t_ms": [round(min(g.t0 for g in grp), ndigits=1), round(max(g.t0 for g in grp), ndigits=1)], "n": len(grp),
+                   "slices_per_ms": round(sum(g.dk for g in grp) / sum(g.dt for g in grp), ndigits=3),
+                   "resid_mode": statistics.mode(round(g.dt * CYCLES - g.dn) for g in grp),
+                   "dk_mode": statistics.mode(g.dk for g in grp)}
     RESID[k] = {"clean_delay2": len(rows), "with_kb_irq": HW_DELAYS[k], "resid_minus_dk": [round(min(const), 3), round(max(const), 3)], "periods": per}
     # 殘差 = 時間片數 + 定值(每一次都成立,不是平均)
     assert max(const) - min(const) < 1e-3, (k, min(const), max(const))
@@ -378,18 +391,22 @@ for ln in TEXT["lc172b"]:
             sym = NM.get(int(a, 16) - BIAS)
             assert sym is not None, (f[1], a)            # 每個處理函式都要對得到 nm 的名稱
             d[short(sym)] = int(c)
+        assert sum(1 for kv in f if "=" in kv) == len(d), f[:3]
         PREC[int(f[1])] = d
-assert all(b % 100 == 0 for b in PREC) and len(PREC) > 300
+BUCKET = 100                           # P 紀錄每格 ms
+assert all(b % BUCKET == 0 for b in PREC) and len(PREC) > 300 and {b - a for a, b in itertools.pairwise(sorted(PREC))} == {BUCKET}
 
 
 def rate(name: str, lo: int, hi: int) -> float:
     bs = [b for b in PREC if lo <= b < hi]
-    return round(sum(PREC[b].get(name, 0) for b in bs) / (len(bs) * 100), 3)
+    return round(sum(PREC[b].get(name, 0) for b in bs) / (len(bs) * BUCKET), ndigits=3)
 
 
 _rb = RESID["lc172b"]["periods"]
-EV_LO = (int(_rb["early"]["t_ms"][0] // 100 + 1) * 100, int(_rb["early"]["t_ms"][1] // 100) * 100)
-EV_HI = (int(_rb["late"]["t_ms"][0] // 100 + 1) * 100, int(_rb["late"]["t_ms"][1] // 100) * 100)
+EV_LO = (int(_rb["early"]["t_ms"][0] // BUCKET + 1) * BUCKET, int(_rb["early"]["t_ms"][1] // BUCKET) * BUCKET)
+EV_HI = (int(_rb["late"]["t_ms"][0] // BUCKET + 1) * BUCKET, int(_rb["late"]["t_ms"][1] // BUCKET) * BUCKET)
+for (_lo, _hi), _per in ((EV_LO, _rb["early"]["t_ms"]), (EV_HI, _rb["late"]["t_ms"])):
+    assert _lo - BUCKET < _per[0] <= _lo and _hi <= _per[1] < _hi + BUCKET, (_lo, _hi, _per)   # 段內第一個 / 最後一個完整格
 NAMES = sorted({n for d in PREC.values() for n in d})
 EVRATE = {"early": {n: rate(n, *EV_LO) for n in NAMES}, "late": {n: rate(n, *EV_HI) for n in NAMES}}
 assert EVRATE["early"]["DMA_DAC_Event"] == 22.05 and EVRATE["late"]["DMA_DAC_Event"] == 0, EVRATE
@@ -403,12 +420,14 @@ DAC = {"first_bucket": _dac[0], "first_count": PREC[_dac[0]].get("DMA_DAC_Event"
        "middle_counts": sorted({PREC[b].get("DMA_DAC_Event", 0) for b in _dac[1:-1]})}
 assert DAC == {"first_bucket": 3100, "first_count": 224, "last_bucket": 8400, "last_count": 1514, "contiguous": True,
                "middle_counts": [2205]}, DAC
-DAC["start_ms_est"] = round(3200 - 224 / 22.05, 2)
-DAC["stop_ms_est"] = round(8400 + 1514 / 22.05, 2)
+KHZ = DAC["middle_counts"][0] / BUCKET
+DAC["start_ms_est"] = round(DAC["first_bucket"] + BUCKET - DAC["first_count"] / KHZ, ndigits=2)
+DAC["stop_ms_est"] = round(DAC["last_bucket"] + DAC["last_count"] / KHZ, ndigits=2)
 _irq7 = [q for q in LOG["lc172b"].irqs if q.num == 0x0F and q.type == 0]
 IRQ7 = {"first": [_irq7[0].t, f"{_irq7[0].m} {_irq7[0].cs:04x}:{_irq7[0].eip:x}"],
         "second_ms": _irq7[1].t, "period_ms_median": round(statistics.median(b.t - a.t for a, b in zip(_irq7[1:], _irq7[2:])), 3),
         "count": len(_irq7)}
+assert IRQ7["first"][0] < IRQ7["second_ms"] and not any(IRQ7["first"][0] < q.t < IRQ7["second_ms"] for q in _irq7), IRQ7
 # DIG 驅動(137c)裡收的第一次 IRQ7 與 DMA_DAC_Event 開始同時;真正放音(每 2048 / 22050 秒一次 IRQ7)在它停了之後
 assert IRQ7["first"][1] == "r 137c:31a" and abs(IRQ7["first"][0] - DAC["start_ms_est"]) < 0.1, (IRQ7, DAC)
 assert DAC["stop_ms_est"] < IRQ7["second_ms"] and abs(IRQ7["period_ms_median"] - 2048 / 22.05) < 0.3, (IRQ7, DAC)
@@ -418,9 +437,9 @@ for _s in ("if (dsp.force_goldplay || (goldplay && freq > 0 && single_sample_dma
     assert _s in SRC, _s
 # 續一百六十五 lc163a:片頭 / 新遊戲開場 delay 的時間差扣掉指令數差 ≈ 22.05 × 每次 delay 的 ms
 _ph = S165["calibration"]["phase"]
-S165_LINK = {"resid_step": round((_ph["early"]["ms_median"] - _ph["late"]["ms_median"]) * 5000
+S165_LINK = {"resid_step": round((_ph["early"]["ms_median"] - _ph["late"]["ms_median"]) * CYCLES
                                  - (_ph["early"]["nongame_mean"] - _ph["late"]["nongame_mean"]), 2),
-             "dac_per_delay": round(22.05 * _ph["early"]["ms_median"], 2)}
+             "dac_per_delay": round(KHZ * _ph["early"]["ms_median"], ndigits=2)}
 assert abs(S165_LINK["resid_step"] - S165_LINK["dac_per_delay"]) < 3, S165_LINK
 
 # ================= (D) P3:rep 多記 =================
@@ -447,7 +466,7 @@ assert REP_N == {"0080:6b0": 14, "0088:e1f": 31, "0070:cd4": 12, "0088:21b5": 31
 def rep_table(k: str) -> dict:
     lg = LOG[k]
     tab: collections.Counter = collections.Counter()
-    edge = 0
+    edges = []
     for r in lg.runs:
         if r.eips is None:
             continue
@@ -465,12 +484,12 @@ def rep_table(k: str) -> dict:
                     # 只在 S 段的頭尾(時間窗或 I 紀錄切開),或前一條是 iret(被中斷的 rep 回來續做,ECX 已減少)
                     resumed = i > 0 and cs.disasm_one(r.m, E[i - 1], lg.code[(r.m, r.cs, E[i - 1])]) in ("iret", "iretd")
                     assert i == 0 or j == len(E) - 1 or resumed, (k, key, i, j)
-                    edge += 1
+                    edges.append((key, i, j))
                 else:
                     assert extra <= dk_in, (k, key, extra, dk_in)       # 多記一次 = rep 期間時間片結束一次
-                    tab[(extra, dk_in)] += 1
+                    tab.update([(extra, dk_in)])
             i = j + 1
-    return {"by_extra_dk": {f"{a}|{b}": v for (a, b), v in sorted(tab.items())}, "cut_or_resumed": edge}
+    return {"by_extra_dk": {f"{a}|{b}": v for (a, b), v in sorted(tab.items())}, "cut_or_resumed": len(edges)}
 
 
 REPT = {k: rep_table(k) for k in LOGS}
@@ -525,14 +544,14 @@ for k in ("lc172a", "lc172b"):
     own = [s for _t, s in kinds[i137:] if s != "r 137c:16a-1fa x7"]
     assert all(not s.split(" x")[0].endswith("-1fa") for s in own), own
     assert sum(s.startswith("r 137c:16a-1e9 ") for s in own) >= len(own) - 1, own
-    HOOK[k] = {"direct_before": i137, "first_137c": [kinds[i137][0], kinds[i137][1]], "own_function_calls": len(own),
+    HOOK[k] = {"direct_before": i137, "first_137c": list(kinds[i137]), "own_function_calls": len(own),
                "chained_calls": len(chain), "first_chain_ms": next(t for t, s in kinds if s == "r 137c:16a-1fa x7")}
     assert kinds[i137][1].startswith("r 137c:16a-1e9 ") and HOOK[k]["first_chain_ms"] > kinds[i137][0]
 # lc171a(續一百七十一):137c 第一次出現在 3400 .. 3700 的空窗之後;直接進驅動的 MDI 呼叫比 lc172a 晚約 200 ms
 _d171 = [t for t, s in I66["lc171a"] if s.startswith("r 0f71:132-")]
-TIMING = {"first_direct_mdi_ms": {"lc171a": _d171[0], "lc172a": I66["lc172a"][0][0], "lc172b": I66["lc172b"][0][0]},
+TIMING = {"first_direct_mdi_ms": {k: min(t for t, s in I66[k] if s.startswith("r 0f71:132-")) for k in ("lc171a", "lc172a", "lc172b")},
           "lc171a_first_137c_ms": next(t for t, s in I66["lc171a"] if s.startswith("r 137c:")),
-          "lc171a_last_direct_ms": _d171[-1]}
+          "lc171a_last_direct_ms": max(_d171)}
 assert TIMING["lc171a_last_direct_ms"] < 3400 < 3700 < TIMING["lc171a_first_137c_ms"], TIMING
 
 # ================= (F) P5:鍵盤 IRQ 與 START 那一下的 601 / 602 =================
@@ -552,11 +571,11 @@ def kb_costs(k: str) -> dict:
         back = next((r for r in lg.runs[j:j + 400] if (r.m, r.cs, r.e0) == (q.m, q.cs, q.eip)), None)
         key = "game" if (q.m, q.cs) == ("P", GAME_CS) else f"{q.m} {q.cs:04x}:{q.eip:x}"
         if back is None:
-            out[key]["merged"] += 1        # 回到的那條與處理程式最後一段同 selector,併成一段,切不出來
+            out[key].update(["merged"])        # 回到的那條與處理程式最後一段同 selector,併成一段,切不出來
         elif any(x.type == 0 and q.n < x.n < back.n_start for x in lg.irqs):
-            out[key]["nested"] += 1        # 處理期間又收了別的硬體中斷
+            out[key].update(["nested"])        # 處理期間又收了別的硬體中斷
         else:
-            out[key][str(back.n_start - q.n)] += 1
+            out[key].update([str(back.n_start - q.n)])
     return {a: dict(sorted(b.items())) for a, b in sorted(out.items())}
 
 
@@ -577,7 +596,7 @@ def reentry_post(k: str) -> tuple[collections.Counter, list[dict]]:
     for p, q in zip(recs, recs[1:]):
         if p[0] == "E" and p[1] == REENTRY:
             v = (q[3] - p[3]) - (q[2] - p[2])
-            c[v] += 1
+            c.update([v])
             if v not in (69, 70, 302, 303):
                 odd.append({"t": p[4], "post": v, "n0": p[3], "n1": q[3]})
     return c, odd
@@ -630,7 +649,7 @@ CONC = {
           f"MDI 375 三份新紀錄都沒再出現。",
 }
 for _part, _key in (("3634 次", "dh0"), ("4160 次", "dh0"), ("8051.9194 / 8055.2048", "dh0"), ("共 18 個 tick", "dh0"),
-                    ("= 1445", "slices"), ("每 ms 22.05 次", "slices"), ("46.12 週期", "slices"), ("反例 0", "rep"),
+                    ("換算 53.97 秒", "dh0"), ("第一次經過 137c 是 3185.5406 ms 的自己功能", "dig_137c"), ("= 1445", "slices"), ("每 ms 22.05 次", "slices"), ("46.12 週期", "slices"), ("反例 0", "rep"),
                     ("'0080:6b0': 14", "rep"), ("SB16.DIG", "dig_137c"), ("寫反了", "dig_137c"), ("602", "kb"),
                     ("中間 533 條", "kb"), ("532 .. 534", "kb")):
     assert _part in CONC[_key], (_part, CONC[_key])

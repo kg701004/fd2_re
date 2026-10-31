@@ -31,8 +31,8 @@ MUTANTS = [
     ("aliased 判斷反了", "aliased = b[\"bits\"] == 16 and channel < 4", "aliased = b[\"bits\"] == 16 and channel >= 4"),
     ("DSP 長度不加一", "\"length\": 1 + lo + (hi << 8)}", "\"length\": lo + (hi << 8)}"),
     ("0x41 只帶一個參數", "_NARGS = {0x41: 2,", "_NARGS = {0x41: 1,"),
-    ("DAC 開始時間從格頭算", "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + 100 - DAC[\"first_count\"] / 22.05, 2)",
-     "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + DAC[\"first_count\"] / 22.05, 2)"),
+    ("DAC 開始時間從格頭算", "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + 100 - DAC[\"first_count\"] / 22.05, ndigits=2)",
+     "DAC[\"start_ms_est\"] = round(DAC[\"first_bucket\"] + DAC[\"first_count\"] / 22.05, ndigits=2)"),
     ("預測句的比較放寬成 <=", "\"wording_holds\": SINGLE[\"init\"][\"basecnt\"] + 1 < SINGLE[\"init\"][\"one_sample\"]",
      "\"wording_holds\": SINGLE[\"init\"][\"basecnt\"] + 1 <= SINGLE[\"init\"][\"one_sample\"]"),
     # (E) P4:鍵盤

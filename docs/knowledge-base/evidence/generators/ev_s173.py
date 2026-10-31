@@ -22,6 +22,7 @@ from __future__ import annotations
 import bisect
 import collections
 import hashlib
+import itertools
 import json
 import re
 import statistics
@@ -82,6 +83,9 @@ def validity() -> dict:
 
 
 VALID = validity()
+# k_last = G / S / I 紀錄(validity 的 seq)裡最大的 k(k 不減,最後一筆就是最大;E / R / A / O / N 在 SEGS 窗外還有,不算)
+assert VALID["k_last"] == max(int(m.group(1)) for ln in TEXT if ln[:2] in ("G ", "S ", "I ")
+                              for m in [re.search(r" k=(\d+) ", ln)] if m), VALID
 assert VALID["gaps"] == [] and VALID["every_record_has_slices"] and VALID["k_nondecreasing"], VALID
 _ports = [(int(p.split("-")[0], 16), int(p.split("-")[-1], 16)) for p in IO_PORTS.split(",")]
 assert all(any(lo <= x.port <= hi for lo, hi in _ports) for x in LOG.ios)    # 只記設定的埠
@@ -190,7 +194,7 @@ def dma_group(g: list[cs.Io]) -> dict:
     cnt = [x.value for x in g if x.eip in (0x285, 0x288)]
     mode = [x.value for x in g if x.eip == 0x29D]
     assert len(cnt) == 2 and len(mode) == 1, g
-    return {"t_ms": round(g[0].t, 4), "bx": bxs[0], "channel": bxs[0], "writes": [[hex(x.eip), x.port, x.value] for x in g],
+    return {"t_ms": round(min(x.t for x in g), ndigits=4), "bx": bxs[0], "channel": bxs[0], "writes": [[hex(x.eip), x.port, x.value] for x in g],
             "count_reg": cnt[0] | (cnt[1] << 8), "mode": mode[0]}
 
 
@@ -224,9 +228,10 @@ def dsp_cmds() -> list[dict]:
         n = 3 if 0xB0 <= c <= 0xCF else _NARGS.get(c)
         assert n is not None, hex(c)
         args = [x.value for x in w[i + 1:i + 1 + n]]
-        assert len(args) == n, (hex(c), i)
+        assert len(args) == n and all(x.t - w[i].t < 1 for x in w[i + 1:i + 1 + n]), (hex(c), i)
         out.append({"t_ms": round(w[i].t, 4), "cmd": c, "args": args})
         i += 1 + n
+    assert sum(1 + len(d["args"]) for d in out) == len(w), (len(w), out)
     return out
 
 
@@ -260,6 +265,7 @@ SINGLE = {"init": {"channel": _dma_init["channel"], "basecnt": _dma_init["count_
           "play": {"channel": _dma_play["channel"], "basecnt": _dma_play["count_reg"], "one_sample": one_sample(BLK["play"], _dma_play["channel"])}}
 for _k, _v in SINGLE.items():
     _v["single_sample_dma"] = _v["basecnt"] < _v["one_sample"]
+assert BLK["play"]["autoinit"] and SINGLE["play"]["basecnt"] + 1 == 2 * BLK["play"]["length"] * SINGLE["play"]["one_sample"], (BLK, SINGLE)
 assert SINGLE["init"]["single_sample_dma"] and not SINGLE["play"]["single_sample_dma"], SINGLE
 assert (BLK["init"]["bits"], BLK["init"]["stereo"], BLK["init"]["length"], BLK["init"]["autoinit"]) == (16, True, 1, False), BLK
 assert (BLK["play"]["bits"], BLK["play"]["stereo"], BLK["play"]["autoinit"]) == (8, False, True), BLK
@@ -290,8 +296,8 @@ _dac = sorted(b for b, d in PREC.items() if d.get("DMA_DAC_Event"))
 DAC = {"first_bucket": _dac[0], "first_count": PREC[_dac[0]]["DMA_DAC_Event"], "last_bucket": _dac[-1],
        "last_count": PREC[_dac[-1]]["DMA_DAC_Event"], "contiguous": _dac == list(range(_dac[0], _dac[-1] + 100, 100)),
        "middle_counts": sorted({PREC[b]["DMA_DAC_Event"] for b in _dac[1:-1]})}
-DAC["start_ms_est"] = round(DAC["first_bucket"] + 100 - DAC["first_count"] / 22.05, 2)
-DAC["stop_ms_est"] = round(DAC["last_bucket"] + DAC["last_count"] / 22.05, 2)
+DAC["start_ms_est"] = round(DAC["first_bucket"] + 100 - DAC["first_count"] / 22.05, ndigits=2)
+DAC["stop_ms_est"] = round(DAC["last_bucket"] + DAC["last_count"] / 22.05, ndigits=2)
 assert DAC["contiguous"] and DAC["middle_counts"] == [2205], DAC
 # 開始 = 0xb0 那串送完(長度高位元組),結束 = 0xc6 那串;差在一個樣本週期(1 / 22.05 ms)內
 _b0_end = max(x.t for x in LOG.ios if x.op == "O" and x.port == 0x22C and x.t <= INIT["t_ms"] + 0.1)
@@ -301,6 +307,7 @@ assert abs(DAC["start_ms_est"] - _b0_end) < 1 / 22.05 + 0.01 and abs(DAC["stop_m
 _irq7 = [q for q in LOG.irqs if q.num == 0x0F and q.type == 0]
 IRQ7 = {"first": [_irq7[0].t, f"{_irq7[0].m} {_irq7[0].cs:04x}:{_irq7[0].eip:x}"], "second_ms": _irq7[1].t,
         "period_ms_median": round(statistics.median(b.t - a.t for a, b in zip(_irq7[1:], _irq7[2:])), 3), "count": len(_irq7)}
+assert IRQ7["first"][0] < IRQ7["second_ms"] and not any(IRQ7["first"][0] < q.t < IRQ7["second_ms"] for q in _irq7), IRQ7
 # 一個樣本的 DMA 傳完就 IRQ7(初始化測 IRQ);真正放音之後每 2048 / 22050 秒一次
 assert IRQ7["first"][1] == "r 137c:31a" and 0 < IRQ7["first"][0] - _b0_end < 0.1, IRQ7
 assert IRQ7["second_ms"] > _c6_end and abs(IRQ7["period_ms_median"] - BLK["play"]["length"] / 22.05) < 0.3, IRQ7
@@ -354,8 +361,12 @@ _rx_e = re.compile(r"^E (\d+) ([0-9a-f]{8}) ([0-9a-f]{8}) ")
 _li = next(i for i, ln in enumerate(TEXT) if ln.startswith("I 08 ") and f" n={qb.n} " in ln)
 _lj = next(i for i in range(_li, len(TEXT)) if TEXT[i].startswith("I 08 ") and f" n={qa.n} " in TEXT[i])
 _lk = next(i for i in range(_lj, len(TEXT)) if TEXT[i].startswith("I 09 "))
-SEQ_A = [ln.split()[0] + " " + " ".join(ln.split()[1:4]) for ln in TEXT[_li + 1:_lj] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]
-SEQ_B = [ln.split()[0] + " " + " ".join(ln.split()[1:4]) for ln in TEXT[_lj + 1:_lk] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]
+SEQ_A = [" ".join(ln.split()[:4]) for ln in TEXT[_li + 1:_lj] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]
+SEQ_B = [" ".join(ln.split()[:4]) for ln in TEXT[_lj + 1:_lk] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]
+for _sq, _ra in ((SEQ_A, range(_li, _lj)), (SEQ_B, range(_lj, _lk))):
+    _want = [ln for ln in TEXT[_ra.start:_ra.stop][1:] if re.match(r"[EONIK] ", ln)]
+    assert _sq and len(_sq) == len(_want) and all(x.split() == ln.split()[:len(x.split())] and len(x.split()) == len(ln.split()[:4])
+                                                  for x, ln in zip(_sq, _want)), (_sq, _want[:3])
 _ea = [_rx_e.match(ln) for ln in TEXT[_li + 1:_lj] if ln.startswith("E ")]
 _eb = [_rx_e.match(ln) for ln in TEXT[_lj + 1:_lk] if ln.startswith("E ")]
 assert [(int(m.group(2), 16), int(m.group(3), 16)) for m in _ea][:2] == [(ISR, 0xED6), (SERVE, rt(0x3EB42))], SEQ_A
@@ -378,26 +389,26 @@ for _a, _t in STATIC_CHAIN.items():
     assert insn(_a) == _t, (hex(_a), insn(_a), _t)
 assert "// FORCE another instruction decode before allowing interrupt processing" in SRC    # sti 之後多做一條(pop ebp)才收
 # 觸發:START 按下的 IRQ 1 之後、進服務之前,SB16.DIG 送 DSP 0xd4(暫停中的 8 位元 DMA 繼續);前一個 DSP 命令是 0xd0(暫停)
-_make_irq = KROWS[-2]["irq1_ms"]
+_make_irq = max((r for r in KROWS if r["key"] == "0x1c" and r["t_ms"] < START["t_ms"]), key=lambda r: r["t_ms"])["irq1_ms"]
 _d4 = [d for d in DSP if d["cmd"] == 0xD4 and _make_irq < d["t_ms"] < qb.t]
 assert len(_d4) == 1, _d4
 _prev = DSP[DSP.index(_d4[0]) - 1]
 assert _prev["cmd"] == 0xD0, _prev
 TRIGGER = {"make_irq1_ms": _make_irq, "dsp_d4_ms": _d4[0]["t_ms"], "previous_dsp": [hex(_prev["cmd"]), _prev["t_ms"]],
            "serve_irq0_ms": qb.t, "serve_from": f"{qb.m} {qb.cs:04x}:{qb.eip:x}", "sti_irq0_ms": qa.t,
-           "if_off_ms": round(qa.t - qb.t, 3), "game_insns": _lr.count, "break_k_ms": round(k_start.t, 4), "irq1_ms": START["irq1_ms"],
+           "if_off_ms": round(qa.t - qb.t, ndigits=3), "game_insns": _lr.count, "break_k_ms": round(k_start.t, 4), "irq1_ms": START["irq1_ms"],
            "seq_serve": SEQ_A, "seq_after_sti": SEQ_B}
 # 一般化:收在 0x3f0be 的 I 紀錄都是 IRQ 0(服務關中斷超過一個計時器週期);每次 DSP 0xd4 之後都接一個
 AT_STI = [q for q in HW if (q.m, q.cs, q.eip) == ("P", GAME_CS, rt(0x3F0BE))]
 _win = [(HW[HW.index(q) - 1].t, q.t) for q in AT_STI]
 STI_WIN = {"count": len(AT_STI), "nums": sorted({q.num for q in AT_STI}), "ms_min": round(min(b - a for a, b in _win), 3),
-           "ms_max": round(max(b - a for a, b in _win), 3)}
+           "ms_max": round(max(b - a for a, b in _win), ndigits=3)}
 _d4all = [d["t_ms"] for d in DSP if d["cmd"] == 0xD4]
 STI_WIN["d4_followed"] = [any(0 < a - t < 5.5 for a, _b in _win) for t in _d4all]
 assert STI_WIN["nums"] == [0x08] and all(STI_WIN["d4_followed"]) and len(_d4all) == 2, STI_WIN
 # 其他晚收的按鍵:收的位置也是長空窗結束的地方(關中斷的段落結束)
-_gap_end = collections.Counter(f"{b.m} {b.cs:04x}:{b.eip:x}" for a, b in zip(HW, HW[1:]) if b.t - a.t > 5.5 and a.t > LOG_T0)
-OTHER_LATE = [{**r, "site_ends_long_gaps": _gap_end.get(r["at"], 0) + sum(_gap_end.get(q[2], 0) for q in r["irqs_before"])}
+_gap_end = collections.Counter(f"{b.m} {b.cs:04x}:{b.eip:x}" for a, b in itertools.pairwise(HW) if b.t - a.t > 5.5 and a.t > LOG_T0)
+OTHER_LATE = [{**r, "site_ends_long_gaps": _gap_end[r["at"]] + sum(_gap_end[q[2]] for q in r["irqs_before"])}
               for r in LATE if r is not START]
 assert all(o["site_ends_long_gaps"] > 0 for o in OTHER_LATE), OTHER_LATE
 
@@ -430,7 +441,7 @@ POST_ODD = []
 for _p, _q in zip(_recs, _recs[1:]):
     if _p[0] == "E" and _p[1] == REENTRY:
         _v = (_q[3] - _p[3]) - (_q[2] - _p[2])
-        POST[_v] += 1
+        POST.update([_v])
         if _v not in (69, 70, 302, 303):
             POST_ODD.append({"t": _p[4], "post": _v})
 assert [o["post"] for o in POST_ODD] == [602] and abs(POST_ODD[0]["t"] - qa.t) < 0.1, POST_ODD
@@ -459,7 +470,7 @@ CONC = {
 for _part, _key in (("144 筆", "p1_eip"), ("25 筆", "p1_eip"), ("47 個", "p2_static"), ("9 個", "p2_static"), ("bx 5 / 1", "p2_static"),
                     ("計數暫存器 1 < 一個樣本 2", "p3_single"), ("差一(2 = 2)", "p3_single"), ("晚 5.5522 ms", "p4_start"),
                     ("前一個是 0xd0", "p4_start"), ("0xd4(10790.9074 ms", "p4_start"), ("0080:06ca", "p4_start"),
-                    ("SBPRO2.MDI 分派段(一段 7617 條)", "p4_start"), ("DOS/4GW 0070(一段 1070 條", "p4_start")):
+                    ("SBPRO2.MDI 分派段(一段 7617 條)", "p4_start"), ("另兩次晚收:3849.0002 ms", "p4_start"), ("DOS/4GW 0070(一段 1070 條", "p4_start")):
     assert _part in CONC[_key], (_part, CONC[_key])
 
 OUTD = {

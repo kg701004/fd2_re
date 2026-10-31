@@ -1,7 +1,19 @@
 # 證據產生器
 
-`docs/knowledge-base/evidence/` 的 70 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
+`docs/knowledge-base/evidence/` 的 72 份證據 JSON 都由本目錄的產生器從原始紀錄重算,
 不是手寫的。產生器逐項 `assert` 判準與預測,任何一項不符就失敗。
+
+## 續一百七十五(2026-10-31)
+
+| 產生器 | 證據檔 | 變異測試 |
+|---|---|---|
+| `ev_s174.py` | `trig_capture_s174_20261031.json` | `mut_s174.py`(26) |
+| `ev_s175.py` | `audio_followups_s175_20261031.json` | `mut_s175.py`(19) |
+
+續一百七十四觸發式擷取(`FD2_CALLLOG_TRIG`)的實機核對改成產生器(`drivers_s174/check174.py` 的判準),加上 P3 三型的解讀:
+ng 375 是 MDI 型重入夾一次 IRQ 7、0070 起頭的關中斷是 DOS/4GW int 21h 寫 FD2.TMP 的轉送拷貝(讀檔回來的拷貝是續一百七十三 9262 ms 那段)、
+0080:0084 型是 delay 的 int 21h 收 IRQ 0(DOSBox-X 呼叫紀錄 lc174a / lc174b / lc173a)。`ev_s175`:DIG 服務長的那幾次是填緩衝(看 IRQ 7)、
+續一百七十的 4 次短驅動呼叫是硬體中斷、敵方回合結束停一次的 MDI 服務是 AIL_set_sequence_volume 的忙碌計數擋掉(加上 lc167a)。
 
 ## 續一百七十三(2026-10-30)
 

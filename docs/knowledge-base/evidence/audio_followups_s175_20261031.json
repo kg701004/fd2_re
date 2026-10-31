@@ -1,0 +1,443 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s175.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "lc174a": {
+   "path": ".wsl_build/lc174_live/lc174a_CALLLOG.TXT",
+   "md5": "0aaee51798ec85a779a95aa78ed85cac"
+  },
+  "lc174b": {
+   "path": ".wsl_build/lc174_live/lc174b_CALLLOG.TXT",
+   "md5": "9be49f776cc0ed2fbbc3d7e962503b14"
+  },
+  "lc173a": {
+   "path": ".wsl_build/lc173_live/lc173a_CALLLOG.TXT",
+   "md5": "3a8bb8b852d99b3f6307a64306408efb"
+  },
+  "lc167a": {
+   "path": ".wsl_build/lc167_live/lc167a_CALLLOG.TXT",
+   "md5": "ac9401da607102caa569be467c178b92"
+  }
+ },
+ "a_dig_fill": {
+  "y_blocks": {
+   "lc174a": [
+    {
+     "seq": 3,
+     "count": 43928
+    },
+    {
+     "seq": 5,
+     "count": 43928
+    },
+    {
+     "seq": 6,
+     "count": 43928
+    },
+    {
+     "seq": 7,
+     "count": 43928
+    },
+    {
+     "seq": 8,
+     "count": 43928
+    },
+    {
+     "seq": 9,
+     "count": 43929
+    },
+    {
+     "seq": 10,
+     "count": 43928
+    }
+   ],
+   "lc174b": [
+    {
+     "seq": 2,
+     "count": 43929
+    },
+    {
+     "seq": 3,
+     "count": 43923
+    },
+    {
+     "seq": 4,
+     "count": 43928
+    },
+    {
+     "seq": 5,
+     "count": 43928
+    },
+    {
+     "seq": 7,
+     "count": 43928
+    },
+    {
+     "seq": 9,
+     "count": 43928
+    },
+    {
+     "seq": 10,
+     "count": 43928
+    }
+   ]
+  },
+  "per_function": {
+   "0x4809b": [
+    22529
+   ],
+   "0x49430": [
+    20481
+   ],
+   "0x49923": [
+    542,
+    547,
+    548
+   ],
+   "0x404c0": [
+    229
+   ],
+   "0x49690": [
+    90
+   ],
+   "0x49891": [
+    39
+   ],
+   "0x3f0ac": [
+    9
+   ],
+   "0x382db": [
+    3
+   ],
+   "0x3f0a8": [
+    1
+   ]
+  },
+  "fill_vs_irq7": {
+   "lc174a": {
+    "table": {
+     "fill irq7=0": 3,
+     "fill irq7=1": 115,
+     "short irq7=0": 3952,
+     "short irq7=1": 3
+    },
+    "odd": [
+     {
+      "t": 8619.3,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0x41",
+       "0x56",
+       "0x22",
+       "0xc6",
+       "0x0",
+       "0xff",
+       "0x7"
+      ]
+     },
+     {
+      "t": 10293.37,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 10858.41,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 11598.29,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 14968.41,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 23517.32,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     }
+    ],
+    "short_fill_lengths": {
+     "15182": 1,
+     "15183": 1,
+     "15184": 4,
+     "15188": 1,
+     "15189": 1,
+     "15190": 2,
+     "15191": 33,
+     "15192": 8,
+     "15304": 1,
+     "15305": 2,
+     "15306": 1
+    },
+    "fills_without_r": 63
+   },
+   "lc174b": {
+    "table": {
+     "fill irq7=0": 3,
+     "fill irq7=1": 114,
+     "short irq7=0": 3960,
+     "short irq7=1": 3
+    },
+    "odd": [
+     {
+      "t": 8598.26,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0x41",
+       "0x56",
+       "0x22",
+       "0xc6",
+       "0x0",
+       "0xff",
+       "0x7"
+      ]
+     },
+     {
+      "t": 10178.37,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 10618.35,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 11363.36,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 14733.3,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 23278.53,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     }
+    ],
+    "short_fill_lengths": {
+     "15182": 1,
+     "15183": 4,
+     "15187": 1,
+     "15190": 8,
+     "15191": 30,
+     "15192": 8,
+     "15305": 4
+    },
+    "fills_without_r": 61
+   },
+   "lc173a": {
+    "table": {
+     "fill irq7=0": 3,
+     "fill irq7=1": 116,
+     "short irq7=0": 3957,
+     "short irq7=1": 3
+    },
+    "odd": [
+     {
+      "t": 8627.36,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0x41",
+       "0x56",
+       "0x22",
+       "0xc6",
+       "0x0",
+       "0xff",
+       "0x7"
+      ]
+     },
+     {
+      "t": 10297.37,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 10792.24,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 11537.36,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     },
+     {
+      "t": 14907.3,
+      "fill": true,
+      "irq7": 0,
+      "dsp": [
+       "0xd4"
+      ]
+     },
+     {
+      "t": 23542.43,
+      "fill": false,
+      "irq7": 1,
+      "dsp": [
+       "0xd0"
+      ]
+     }
+    ],
+    "short_fill_lengths": {
+     "15182": 2,
+     "15183": 2,
+     "15184": 1,
+     "15187": 1,
+     "15190": 8,
+     "15191": 30,
+     "15192": 8,
+     "15300": 1,
+     "15304": 1,
+     "15305": 1,
+     "15306": 1
+    },
+    "fills_without_r": 63
+   }
+  }
+ },
+ "b_short_calls": {
+  "irq_cost_in_game_code": {
+   "lc174a": {
+    "09": {
+     "532": 2,
+     "533": 1
+    },
+    "0f": {
+     "558": 80,
+     "559": 10,
+     "560": 2,
+     "587": 1
+    }
+   },
+   "lc173a": {
+    "09": {
+     "532": 3,
+     "533": 1
+    },
+    "0f": {
+     "558": 82,
+     "559": 11,
+     "560": 2,
+     "629": 1
+    }
+   }
+  },
+  "lc167a_short": [
+   {
+    "t": 119237.6,
+    "nongame": 532,
+    "next_dig": {
+     "dt_ms": 0.235,
+     "fill": false
+    }
+   },
+   {
+    "t": 540499.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.242,
+     "fill": true
+    }
+   },
+   {
+    "t": 542774.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.242,
+     "fill": true
+    }
+   },
+   {
+    "t": 542959.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.244,
+     "fill": true
+    }
+   }
+  ],
+  "lc167a_fill_rate_530_545s": 0.021
+ },
+ "c_enemy_end_skip": {
+  "t": 564129.3,
+  "game_insns": 12,
+  "isr_t": 564129.287,
+  "isr_regs": {
+   "eax": "0x7b08",
+   "ebx": "0x3d0900",
+   "ecx": "0x7f",
+   "edx": "0x8",
+   "esi": "0x1f7018"
+  },
+  "enemy_phase_return_t": 564129.218,
+  "neighbours_g": [
+   1036,
+   446,
+   160,
+   12,
+   297,
+   173,
+   173
+  ],
+  "game_insn_hist_low": {
+   "12": 1,
+   "115": 44
+  }
+ },
+ "conclusion": {
+  "dig_fill": "DIG 服務長的那幾次是填緩衝:lc174a / lc174b 各 7 個 Y 區塊都走 0x4054e → 0x49923 清建構緩衝 (542 .. 548 條)→ 0x49690 混音 → 0x49891 輸出,結尾在 0x4066c 恢復 IF,沒走 0x40534(續一百七十三寫的 0x40534 是不填緩衝的出口,更正)。三份紀錄填不填與兩次服務之間收過 IRQ 7 一一對應(lc174a 有 IRQ 7 而填 115 次),例外各 3 + 3 次:DSP 0xc6 / 0xd4 之後沒 IRQ 也填、0xd0 之後有 IRQ 也不填。SB16.DIG 的 IRQ 處理在 137c:0716 xor 緩衝號;遊戲讀的 [drv+0x34] 是不是就是這個字沒有直接看到(INFERRED)。",
+  "short_calls": "續一百七十的 4 次短驅動呼叫是 MDI 服務期間收到的硬體中斷:在遊戲程式碼收一次 IRQ 1 是 532 / 533 條非遊戲指令、IRQ 7 是 558 .. 560(lc174a / lc173a);lc167a 那 3 次 558 之後 1 ms 內的 DIG 服務都是填緩衝(同時段填緩衝比例 0.021),532 那次不是。lc167a 沒有 I 紀錄,中斷號是由條數與 DIG 填緩衝推的(INFERRED)。",
+  "enemy_end_skip": "敵方回合結束時停一次的是 564129.3 ms 那次 MDI 服務:只跑 12 條遊戲指令(整份唯一),0x4327e 看到驅動結構 [+0x14] ≠ 0 提早返回。前一筆 ISR 進入時 eax 0x7b08、ebx 0x3d0900、ecx 0x7f、edx 0x8 = ail_impl_set_sequence_volume 在 0x44a3f idiv 之後(4000 ms × 1000 / 127),[+0x14] 在 0x449f0 加一、0x44a5a 才減回;4000 ms 只有 play_bgm(-1) 的 0x259a3。敵方回合 0x1d8ba 在前 0.069 ms 返回。續一百七十三推的「序列狀態 ≠ 4」更正為整次服務被 AIL 的忙碌計數擋掉。"
+ }
+}

@@ -27,4 +27,5 @@ lc174b md5 9be49f776cc0ed2fbbc3d7e962503b14(1185411 行,最後一行寫到一半
 - harness 收尾是砍掉模擬器(不跑 atexit):兩份紀錄的最後一行都寫到一半,`calllog_segments._read` 丟掉那一行(`tail_cut`)。
   lc174a 用的第一版只在結尾寫 YC / YN,所以 lc174a 沒有統計;修正版每寫一個區塊與每 >= 1000 ms 寫一組並 flush(lc174b 有)。
 - lc174a 每條規則 8 個的上限在 START 之前用完(START 那一刻的 DIG 型區塊沒寫出),lc174b 用 TRIGT 只算 9500 ms 之後。
-- 沒有證據產生器(ev_s174)與變異測試;`check174.py` 只是逐項 assert,`trig_problems` 的判準在 `calllog_segments --selftest` 裡有故障注入。
+- 續一百七十五補了證據產生器 `../ev_s174.py`(含 `check174.py` 的判準與 P3 的解讀)與變異測試 `../mut_s174.py`;
+  `check174.py` 留著當續一百七十四當時的逐項核對,`trig_problems` 的判準在 `calllog_segments --selftest` 裡有故障注入。
