@@ -278,6 +278,11 @@
    "executed": 33,
    "not_executed_lines": []
   },
+  "ev_s176": {
+   "asserts": 48,
+   "executed": 48,
+   "not_executed_lines": []
+  },
   "ev_s65": {
    "asserts": 24,
    "executed": 24,

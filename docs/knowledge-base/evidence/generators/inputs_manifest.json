@@ -32265,6 +32265,33 @@
     ]
    }
   },
+  "ev_s176": {
+   "outputs": [
+    "dig_fill_lengths_s176_20261031.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc173_live/lc173a_CALLLOG.TXT": [
+     69037479,
+     "e12e1c8c5c961cc2fa8416e618022abb3a53ca36053b96e37c4761e9bd6e6fd2"
+    ],
+    ".wsl_build/lc174_live/lc174a_CALLLOG.TXT": [
+     95407525,
+     "f3a10d6eb0f15625cccf5815c507a7dc2abe792306fa506d4b7fba9b5e7d7af5"
+    ],
+    ".wsl_build/lc174_live/lc174b_CALLLOG.TXT": [
+     83215885,
+     "f1a88a963d9b13686962934ccd7b68a211c53251e5f22321f308b0aeeb810dd5"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/SB16.DIG": [
+     2812,
+     "865fab2e1318f341848dd12db578e881ecb45264e794ed39d47adc235071580e"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

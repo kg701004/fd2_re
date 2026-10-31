@@ -1,0 +1,465 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s176.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "lc174a": {
+   "path": ".wsl_build/lc174_live/lc174a_CALLLOG.TXT",
+   "md5": "0aaee51798ec85a779a95aa78ed85cac"
+  },
+  "lc174b": {
+   "path": ".wsl_build/lc174_live/lc174b_CALLLOG.TXT",
+   "md5": "9be49f776cc0ed2fbbc3d7e962503b14"
+  },
+  "lc173a": {
+   "path": ".wsl_build/lc173_live/lc173a_CALLLOG.TXT",
+   "md5": "3a8bb8b852d99b3f6307a64306408efb"
+  }
+ },
+ "static": {
+  "output_table": "0x47988",
+  "mixer_table": "0x47b88",
+  "output_plain": "0x47d88",
+  "output_clip": "0x4809b",
+  "mixer": "0x49430",
+  "per_sample": {
+   "plain": 7,
+   "clip": 11,
+   "mix": 10
+  },
+  "mix_end": 3,
+  "src_done": 13,
+  "count_branch_diff": 3,
+  "pre": 15,
+  "post_fill": 13,
+  "g_nofill": 57,
+  "g_stopped": 50
+ },
+ "y_blocks": [
+  {
+   "log": "lc174a",
+   "seq": 3,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 5,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 6,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 7,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 8,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 9,
+   "count": 43929,
+   "stosd": 522,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174a",
+   "seq": 10,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 2,
+   "count": 43929,
+   "stosd": 522,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 3,
+   "count": 43923,
+   "stosd": 516,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 4,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 5,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 7,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 9,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  },
+  {
+   "log": "lc174b",
+   "seq": 10,
+   "count": 43928,
+   "stosd": 521,
+   "mix_call": 20575,
+   "out_clip": 22529,
+   "mix": 20481
+  }
+ ],
+ "prediction": {
+  "full": 43928,
+  "unmixed_span": 15163,
+  "unmixed_g": 15191,
+  "base0": 23447,
+  "jitter_window": [
+   -9,
+   2
+  ]
+ },
+ "observed": {
+  "nonfill_g_top": {
+   "50": 6047,
+   "57": 5831
+  },
+  "unmixed_g_mode": 15191,
+  "unmixed_no_r": [
+   15157,
+   15159,
+   15163,
+   15163,
+   15164,
+   15165
+  ],
+  "stop_span_mode": 15277,
+  "partial_groups": [
+   {
+    "values": {
+     "25264": 1,
+     "25272": 1,
+     "25273": 1
+    },
+    "n": 3,
+    "mode": 25273,
+    "mode_n": 1,
+    "m": 181.0
+   },
+   {
+    "values": {
+     "27069": 1,
+     "27072": 1,
+     "27073": 1
+    },
+    "n": 3,
+    "mode": 27073,
+    "mode_n": 1,
+    "m": 361.0
+   },
+   {
+    "values": {
+     "30133": 3
+    },
+    "n": 3,
+    "mode": 30133,
+    "mode_n": 3,
+    "m": 667.0
+   },
+   {
+    "values": {
+     "31244": 3,
+     "31245": 1,
+     "31246": 4,
+     "31248": 1,
+     "31249": 3,
+     "31250": 2,
+     "31252": 10,
+     "31253": 59,
+     "31254": 13
+    },
+    "n": 96,
+    "mode": 31253,
+    "mode_n": 59,
+    "m": 779.0
+   },
+   {
+    "values": {
+     "36785": 1,
+     "36786": 1,
+     "36790": 2,
+     "36792": 1,
+     "36793": 19,
+     "36794": 4
+    },
+    "n": 28,
+    "mode": 36793,
+    "mode_n": 19,
+    "m": 1333.0
+   }
+  ],
+  "per_log": {
+   "lc174a": {
+    "fills": 118,
+    "kinds": {
+     "full": 16,
+     "partial": 44,
+     "stop": 4,
+     "unmixed": 54
+    },
+    "sequence": "FFFFFFpuFFFFFFpuuXFFFFpuuXpuupuupupuupupupuupupuupupuupupupuupupuupupupuupupuupupupuupupuupupuupupuupupuuXpppppppppuuX",
+    "after_stop_g": {
+     "50": 947,
+     "57": 7
+    }
+   },
+   "lc174b": {
+    "fills": 117,
+    "kinds": {
+     "full": 16,
+     "partial": 44,
+     "stop": 4,
+     "unmixed": 53
+    },
+    "sequence": "FFFFFFpFFFFFFpuuXFFFFpuuXpuupupuupupuupupuupupuupupupuupupuupupupuupupuupupuupupupuupupuupupuupupupuupuuXpppppppppuuX",
+    "after_stop_g": {
+     "50": 967,
+     "57": 11
+    }
+   },
+   "lc173a": {
+    "fills": 119,
+    "kinds": {
+     "full": 16,
+     "partial": 45,
+     "stop": 4,
+     "unmixed": 54
+    },
+    "sequence": "FFFFFFpuFFFFFFpuuXFFFFpuuXpuupuupupuupupuupupupuupuupupupuupupupuupupuupupupuupupuupupuupupupuupupuupupuuXppppppppppuuX",
+    "after_stop_g": {
+     "50": 931,
+     "57": 4
+    }
+   }
+  },
+  "stop_chain": {
+   "lc174a": [
+    {
+     "t": 10198.26,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 10289.0,
+     "dispatch_before_irq7": [],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 11508.42,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 11598.0,
+     "dispatch_before_irq7": [
+      7,
+      7,
+      7
+     ],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 22308.41,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 22398.0,
+     "dispatch_before_irq7": [
+      59,
+      7
+     ],
+     "paused_at_irq7": false
+    },
+    {
+     "t": 23423.53,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 23512.0,
+     "dispatch_before_irq7": [],
+     "paused_at_irq7": true
+    }
+   ],
+   "lc174b": [
+    {
+     "t": 10088.37,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 10177.0,
+     "dispatch_before_irq7": [
+      7
+     ],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 11268.36,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 11361.0,
+     "dispatch_before_irq7": [
+      7,
+      7
+     ],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 22068.52,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 22161.0,
+     "dispatch_before_irq7": [
+      7,
+      59
+     ],
+     "paused_at_irq7": false
+    },
+    {
+     "t": 23183.42,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 23275.0,
+     "dispatch_before_irq7": [
+      7
+     ],
+     "paused_at_irq7": true
+    }
+   ],
+   "lc173a": [
+    {
+     "t": 10207.26,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 10297.0,
+     "dispatch_before_irq7": [],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 11442.25,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 11534.05,
+     "dispatch_before_irq7": [
+      7,
+      7,
+      7,
+      7,
+      7
+     ],
+     "paused_at_irq7": true
+    },
+    {
+     "t": 22242.57,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 22333.0,
+     "dispatch_before_irq7": [
+      59
+     ],
+     "paused_at_irq7": false
+    },
+    {
+     "t": 23452.43,
+     "own_dispatch": [
+      52
+     ],
+     "next_irq7_t": 23541.0,
+     "dispatch_before_irq7": [
+      7,
+      7,
+      7
+     ],
+     "paused_at_irq7": true
+    }
+   ]
+  }
+ },
+ "drv34": {
+  "fn301": "0x7b9",
+  "fn401": "0x9e4",
+  "fn402": "0xacc",
+  "path_402": 52,
+  "path_401_cancel": 59,
+  "word_index": {
+   "seg4": 3,
+   "off4": 0,
+   "seg8": 2,
+   "off8": 1
+  },
+  "points_to": "cs:0504",
+  "runtime_linear": "0x13cc4"
+ },
+ "conclusion": {
+  "unmixed": "15191 條那型是這次沒有任何樣本在放:0x404c0 只混 [+4] == 4 的樣本,一個都沒有就不叫 0x49690,[drv+0x64] = 0,0x49891 的旗標少 0x40,輸出走分派表第 0 格 0x47d88(每樣本 7 條)而不是第 0x40 格 0x4809b(每樣本 11 條、截幅)。由 Y 區塊 43928 條扣掉混音呼叫 20575 條、0x498c6 一條、輸出差 8192 條、加計數分支 3 條,預測 IF=0 區間 15163;加前段 15 / 後段 13 = 15191,三份紀錄有 R 的眾數 15191;沒有 R 的 6 次直接量到 15157 .. 15165。上下幾條:Y 區塊同型的差異是 rep stosd 記的筆數(-5 .. +1),沒有逐條紀錄的這型推為同因(INFERRED)。",
+  "stop": "15305 條那型(區間 15277,多 114 條)是連續第 3 次沒有樣本:[drv+0x58] 數到 2 就經 0x382e9 呼叫驅動功能 0x402(每次一個 int 31h 進 SB16.DIG 0x137c 段),[drv+0x54] 清 0,之後的服務走 0x404ff 的出口(50 條)。三份紀錄 4 / 4 / 4 次,每次前面都是「混音 → 沒樣本 → 沒樣本」。停播在下一次 IRQ 7 才生效:SB16.DIG 功能 0x402(0xacc,52 條)只把狀態 [0x578] 3 → 2,IRQ 處理看到 2 才送 DSP 0xd0並把 [0x504] 設 0xffff;三份紀錄各 3 / 3 / 3 次在下一次 IRQ 7 的 0.2 ms 內送出 0xd0,各 1 / 1 / 1 次在那之前有功能 0x401(0x9e4 狀態 2 → 3 的路徑,59 條)取消、沒有停。",
+  "mixed": "43928 條(Y 區塊)那型是一個樣本混滿整個緩衝:2048 個輸出樣本,混音器分派表第 0x60 格 0x49430(每樣本 10 條);混音型還有樣本在緩衝中途放完的:區間 = 23447 + 10m + 16,30133 / 31253 / 36793 三群眾數的 m = 667 / 779 / 1333(整數;收尾錯一條就都不是)。",
+  "drv34": "[drv+0x34] 指向 SB16.DIG 的 cs:0504(執行時 137c:0504,線性 0x13cc4):0x40d6d 呼叫驅動功能 0x301,SB16.DIG 的 0x301(0x7b9)回傳 dx:ax = cs:040c、cx:bx = cs:04fc;遊戲拼成 [drv+4] / [drv+8],0x40dd1 [drv+0x34] = [drv+8] + 8。IRQ 處理 0x6a4 push cs / pop ds 之後 0x716 xor [0x504], 1(換緩衝號)、0x6d8 停播時設 0xffff。回傳結構的字序(ax / bx / cx / dx)由兩組 seg:off 都拼出同一個 cs 而定、遊戲的 DS 基底 0(DOS/4GW 平坦模式)沒有直接看到(INFERRED)。"
+ }
+}
