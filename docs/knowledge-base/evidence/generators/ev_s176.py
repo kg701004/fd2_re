@@ -426,7 +426,9 @@ OUTD = {
     "prediction": {"full": FULL, "unmixed_span": U_PRED, "unmixed_g": PRE + U_PRED + POST_FILL, "base0": BASE0,
                    "jitter_window": list(JIT)},
     "observed": {"nonfill_g_top": dict(_g.most_common(2)), "unmixed_g_mode": U_G, "unmixed_no_r": U_NO_R, "stop_span_mode": X_MODE,
-                 "partial_groups": GROUPS, "per_log": ROWS, "stop_chain": CHAIN},
+                 "partial_groups": GROUPS, "per_log": ROWS, "stop_chain": CHAIN,
+                 # 續一百七十八:逐次填緩衝的 [時刻 ms, 種類, IF=0 區間](依時間序),給後續對音效用,不必重算
+                 "fills": {nm: [[f["t"], f["kind"], f["span"]] for f in v] for nm, v in FILLS.items()}},
     "drv34": {"fn301": hex(F301), "fn401": hex(F401), "fn402": hex(F402), "path_402": P402, "path_401_cancel": P401_CANCEL,
               "word_index": _WIDX, "points_to": f"{DRV34_SEG}:{DRV34_OFF:04x}", "runtime_linear": hex(DRV34_LINEAR)},
     "conclusion": CONC,

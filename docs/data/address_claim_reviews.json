@@ -458,6 +458,12 @@
    "verdict": "other",
    "note": "續一百六十一:capstone 單次線性掃描停下的位置(解不出指令的位元組),不是函式入口",
    "date": "2026-10-28"
+  },
+  {
+   "address": "0x13cc4",
+   "verdict": "live_address",
+   "note": "續一百七十八:執行時 DOS 記憶體線性位址(SB16.DIG 載在 137c 段時的 137c:0504),不是 FD2.EXE 位址",
+   "date": "2026-11-01"
   }
  ]
 }
