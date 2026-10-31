@@ -24,14 +24,13 @@ import collections
 import hashlib
 import json
 import re
-import struct
 
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 from _exeops import _CBASE, _CODE, _EXE, _MD, _META, insn, operand  # noqa: E402  (_exeops 已把 tools/ 加進 sys.path)
+import ail_driver_disasm as ad  # noqa: E402
 import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
-from capstone import CS_ARCH_X86, CS_MODE_16, Cs  # noqa: E402
 
 OUT = out_path("dig_fill_lengths_s176_20261031.json")
 MD5 = "33464c81e6a364fd0660141139aa8e6e"
@@ -46,13 +45,10 @@ SERVE = 0x404C0
 T_AFTER_INIT, T_SEGS_END = 3260.0, 24000.0   # 同 ev_s175:SB16.DIG 初始化之後、G 紀錄還在的範圍
 
 assert hashlib.md5(_EXE).hexdigest() == MD5
-TEXT: dict[str, list[str]] = {}
 LOG: dict[str, cs.Log] = {}
 for _nm, _p in RAW.items():
-    _b = _p.read_bytes()
-    assert hashlib.md5(_b).hexdigest() == LOG_MD5[_nm], _nm
-    TEXT[_nm] = _b.decode("ascii").split("\n")[:-1]   # 最後一段:空字串或寫到一半的那一行
-    LOG[_nm] = cs._read(str(_p))
+    assert hashlib.md5(_p.read_bytes()).hexdigest() == LOG_MD5[_nm], _nm
+    LOG[_nm] = cs._read(str(_p), calls=True)          # E / R 也由 calllog_segments 解(續一百七十七);寫到一半的末行已丟
     assert LOG[_nm].game_cs == GAME_CS
 
 
@@ -148,19 +144,14 @@ def partial_m(span: int) -> float:
 
 
 # ================= 每一次 DIG 服務 =================
-_RX = re.compile(r"^([ER]) (\d+) ([0-9a-f]{8}) (.*?) ?i=(\d+) n=(\d+) t=([0-9.]+)")
-
-
 def services(nm: str) -> list[dict]:
     """初始化之後每次 DIG 服務:g(有 R)或 IF=0 區間(沒有 R 時由結束在 0x3f0bd 的 G 推)、區間內 int 31h 與 137c 指令數。"""
-    es, rs = [], {}
-    for ln in TEXT[nm]:
-        if ln[:2] in ("E ", "R "):
-            m = _RX.match(ln)
-            if m and int(m.group(3), 16) == rt(SERVE):
-                row = (int(m.group(2)), int(m.group(5)), int(m.group(6)), float(m.group(7)))
-                (es.append(row) if m.group(1) == "E" else rs.__setitem__(row[0], row))
     lg = LOG[nm]
+    ce = [c for c in lg.calls if c.eip == rt(SERVE)]
+    cr = [r for r in lg.rets.values() if r.kind == "R" and r.entry == rt(SERVE)]
+    assert ce and all(x.ic for x in ce + cr), nm                         # 要有 FD2_CALLLOG_ICOUNT 的 i / n / t
+    es = [(c.seq, *c.ic) for c in ce]                                    # (seq, i, n, t)
+    rs = {r.seq: (r.seq, *r.ic) for r in cr}
     ends = [r for r in lg.runs if (r.m, r.cs, r.e1) == ("P", GAME_CS, rt(0x3F0BD))]
     end_n = [r.n_end for r in ends]
     q31 = [q.n for q in lg.irqs if q.num == 0x31]
@@ -275,25 +266,22 @@ assert all(max(c, key=c.get) == G_STOPPED for c in AFTER.values()), AFTER
 # 功能 0x402(0xacc)把狀態 [0x578] 3 → 2;IRQ 處理看到 2 就送 DSP [0x546 + bx](8 位元 bx = 0 → 0xd0)並把 [0x504] 設 0xffff;
 # 之間若有功能 0x401(0x9e4)而狀態是 2,就跳 0xab8 設回 3,不停。
 DIG = (GAME / "SB16.DIG").read_bytes()
-MD16 = Cs(CS_ARCH_X86, CS_MODE_16)
 
 
 def insn16(a: int) -> str:
-    """SB16.DIG 段內位移 a(= 檔案位移)那一條 16 位元指令的文字。"""
-    i = next(MD16.disasm(DIG[a:a + 16], a), None)
-    assert i is not None, hex(a)
-    return f"{i.mnemonic} {i.op_str}"
+    """SB16.DIG 段內位移 a(= 檔案位移)那一條 16 位元指令的文字(ail_driver_disasm.insn_text)。"""
+    try:
+        return ad.insn_text(DIG, a)
+    except ValueError as e:
+        raise AssertionError(e) from e
 
 
 def lin16(a: int, b: int) -> int:
-    """SB16.DIG:a 起線性反組譯到 b(含)的條數。"""
-    n = 0
-    for i in MD16.disasm(DIG[a:b + 16], a):
-        n += 1
-        if i.address == b:
-            return n
-        assert i.address < b, (hex(a), hex(b))
-    raise AssertionError((hex(a), hex(b)))
+    """SB16.DIG:a 起線性反組譯到 b(含)的條數(ail_driver_disasm.path_len);b 不是指令邊界就 AssertionError。"""
+    try:
+        return ad.path_len(DIG, a, b)
+    except ValueError as e:
+        raise AssertionError(e) from e
 
 
 STATIC16 = {0x16A: "cmp ax, 0x300", 0x191: "mov word ptr [0x124], ax", 0x194: "mov word ptr [0x126], bx",
@@ -305,16 +293,13 @@ STATIC16 = {0x16A: "cmp ax, 0x300", 0x191: "mov word ptr [0x124], ax", 0x194: "m
             0xAB8: "mov word ptr [0x578], 3", 0xACC: "cmp word ptr [0x578], 3", 0xAD3: "mov word ptr [0x578], 2"}
 for _a, _t in STATIC16.items():
     assert insn16(_a) == _t, (hex(_a), insn16(_a), _t)
-TBL_3XX, TBL_4XX = 0x10A, 0x118
-
-
-def drv_fn(fn: int) -> int:
-    """SB16.DIG 功能 fn 的處理位址(0x3xx 查 0x10a 表、0x4xx 查 0x118 表)。"""
-    tbl, base = (TBL_3XX, 0x300) if fn < 0x400 else (TBL_4XX, 0x400)
-    return struct.unpack_from("<H", DIG, tbl + 2 * (fn - base))[0]
-
-
-F301, F401, F402 = drv_fn(0x301), drv_fn(0x401), drv_fn(0x402)
+# 功能表由分派段的 mov si / sub ax / cmp ax 讀出(ail_driver_disasm.function_table):0x3xx 在 0x10a、0x4xx 在 0x118
+_KIND, _DISP_AT = ad.parse_header(DIG)
+_FTBL, _FCALL = ad.function_table(DIG, _DISP_AT)
+assert (_KIND, _DISP_AT, _FCALL) == ("DIG", 0x16A, 0x1C8), (_KIND, hex(_DISP_AT), _FCALL)
+FN = {f.num: f for f in _FTBL}
+assert (FN[0x301].slot, FN[0x401].slot) == (0x10A + 2, 0x118 + 2), (hex(FN[0x301].slot), hex(FN[0x401].slot))
+F301, F401, F402 = FN[0x301].addr, FN[0x401].addr, FN[0x402].addr
 assert (F301, F401, F402) == (0x7B9, 0x9E4, 0xACC), (hex(F301), hex(F401), hex(F402))
 _DISP, _BACK = lin16(0x16A, 0x1C8), lin16(0x1CA, 0x1E9)          # 0x4xx 派送(全直線)、返回到 iret
 P402 = _DISP + lin16(F402, 0xADF) + _BACK                         # 狀態 3 → 2

@@ -22,6 +22,7 @@
 FD2_CALLLOG_ICOUNT=1 在 E / R / A 行尾附指令數與模擬時間,用來量函式內部花了多久(BIOS tick 只有約 55 ms 的解析度);
 FD2_CALLLOG_GATE=<EIP> 在那個 EIP 第一次執行之前不寫 E,免得開機以來每一幀的重畫都進紀錄。兩個都不設時輸出與之前逐字相同。
 `verify_names_by_calllog.py` 的解析器只收沒有附加欄位的形式,附了指令數的紀錄不要取 `*_CALLLOG.TXT` 的檔名。
+(續一百七十七:附了欄位的 E / R / A 與 m= 傾印由 `tools/calllog_segments.py` 讀,`_read(path, calls=True)` 或 `calls` 子命令。)
 
 2026-10-30 續一百七十一:加 FD2_CALLLOG_SEGS(harness 的 FD2_HARNESS_CALLLOG_SEGS)。呼叫紀錄原本只數非遊戲指令的條數,
 看不到它們落在 DOS/4GW、驅動還是 BIOS 的哪一段,硬體中斷在哪一條指令收的也只能推。設了之後,在指定的模擬時間窗內

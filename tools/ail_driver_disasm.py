@@ -31,6 +31,7 @@
   只看立即值時這段沒走到);或 `int 21h` 時 AH = 25h 且 DX 已知。新進入點走完再掃一次,直到不再增加。
 * 沒走到的位元組逐段列出(檔頭、表格、資料、或靠暫存器 / 執行時資料才到得了的程式),
   「沒走到」不等於「是資料」。
+* 續一百七十七:`insn_text`(單條指令文字)與 `path_len`(直線路徑條數)給產生器用,不必再各寫一份 16 位元反組譯。
 
 子命令
 ------
@@ -139,6 +140,38 @@ def function_table(b: bytes, disp: int) -> tuple[list[FuncEntry], int | None]:
             elif ins.mnemonic == "cmp" and r == "ax" and si is not None:
                 out += [FuncEntry(base + i, si + 2 * i, _w(b, si + 2 * i)) for i in range(v)]
     return out, None
+
+
+def insn_text(b: bytes, a: int) -> str:
+    """位移 a 那一條指令的 `助憶碼 運算元`(capstone 的 mnemonic + " " + op_str;沒有運算元時尾端留一個空格)。
+
+    Raises:
+        ValueError: a 在檔外或那裡解不出指令。
+    """
+    i = next(_md().disasm(b[a:], a), None) if 0 <= a < len(b) else None
+    if i is None:
+        raise ValueError(f"no instruction at {a:#x}")
+    return f"{i.mnemonic} {i.op_str}"
+
+
+def path_len(b: bytes, a: int, end: int) -> int:
+    """a 起線性往下解到 end(含)的指令條數。
+
+    只是直線解碼:中間的跳轉不跟,呼叫端要自己確定這段是一條沒有分岔的路徑(例如先用 `insn_text` 核對分岔點)。
+
+    Raises:
+        ValueError: end 在 a 之前或檔外、不在 a 起的指令邊界上,或中途解不出指令。
+    """
+    if not 0 <= a <= end < len(b):
+        raise ValueError(f"bad range {a:#x} .. {end:#x} (file {len(b):#x} bytes)")
+    n = 0
+    for i in _md().disasm(b[a:], a):                    # 解到 end 就停,不必先截
+        n += 1
+        if i.address == end:
+            return n
+        if i.address > end:
+            break
+    raise ValueError(f"{end:#x} is not an instruction boundary from {a:#x}")
 
 
 class Regs:
@@ -596,6 +629,25 @@ def selftest() -> int:
     eq("table", [(f.num, f.slot, f.addr) for f in table], [(0x300, 0x40, 0x90), (0x301, 0x42, 0xA0), (0x400, 0x44, 0xB8)])
     eq("table call site", site, 0x7A)
     eq("table no call", function_table(fx[:0x7A], 0x60)[1], None)
+    # 續一百七十七:單條指令文字與直線條數(分派段 0x60 .. 0x7a 手算 11 條:3 3 3 2 3 3 3 2 2 2 + call)
+    eq("insn_text", (insn_text(fx, 0x69), insn_text(fx, 0x7C), insn_text(fx, 0x60)), ("jb 0x76", "iret ", "mov si, 0x40"))
+    eq("path_len", (path_len(fx, 0x60, 0x7A), path_len(fx, 0x60, 0x60), path_len(fx, 0x63, 0x69), path_len(fx, 0x7A, 0x7C)),
+       (11, 1, 3, 2))
+    # 檔頭 "AIL3" 也解得出指令(inc cx / dec cx / dec sp / xor ...):位移 0 是合法起點
+    eq("offset 0", (insn_text(fx, 0), path_len(fx, 0, 1), path_len(fx, 0, 2)), ("inc cx", 2, 3))
+    for name, args in (("mid-instruction end", (0x60, 0x61)), ("end before start", (0x63, 0x60)),
+                       ("end at file size", (0x60, len(fx))), ("negative start", (-1, 0x60))):
+        try:
+            path_len(fx, *args)
+            fails.append(f"path_len {name}: no ValueError")
+        except ValueError:
+            pass
+    for bad_a in (len(fx), -1):
+        try:
+            insn_text(fx, bad_a)
+            fails.append(f"insn_text {bad_a}: no ValueError")
+        except ValueError:
+            pass
 
     prog, _t, states = explore(fx)
     eq("entries", dict(sorted(prog.entries.items())),

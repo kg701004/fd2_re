@@ -25,6 +25,8 @@ episode  兩段遊戲 selector 之間的非遊戲 run 與 I 紀錄;以「離開�
     python tools/calllog_segments.py io       <CALLLOG> [--port P] # O / N(FD2_CALLLOG_IO)與 K(FD2_CALLLOG_KBD)依 n 排序
     python tools/calllog_segments.py trig     <CALLLOG> [--block SEQ] [--insns]
                                                        # 觸發區塊(FD2_CALLLOG_TRIG):統計、自核、run 路徑;--insns 逐條
+    python tools/calllog_segments.py calls    <CALLLOG> [--eip EIP] [--field PTR[+OFF]:SIZE ...]
+                                                       # E 紀錄:怎麼離開(R / A)與 m= 傾印裡的欄位(讀不到印 --)
     python tools/calllog_segments.py --selftest
 
 模式字元:r 真實模式、v V86、p 16 位元保護模式、P 32 位元保護模式(r / v / p 以 16 位元反組譯)。
@@ -37,6 +39,10 @@ episode  兩段遊戲 selector 之間的非遊戲 run 與 I 紀錄;以「離開�
 `trig_problems` 用這裡自己的定義重核每個區塊(與 C++ 端分開實作):n 連號、條數、第一條、區間內外的判斷。
 YC / YN 是到那時為止的每條規則符合 / 寫出數與每種區間總數(每寫一個區塊、定期與結尾都寫,取最後一組;
 沒寫出的不等於沒發生,看這兩個)。harness 收尾是砍掉模擬器,最後一行常寫到一半:`_read` 只在檔尾沒有換行時丟掉那一行(`tail_cut`)。
+續一百七十七:`parse(..., calls=True)` / `_read(..., calls=True)` 時 E / R / A(呼叫紀錄本體)也解析進 `Log.calls` / `Log.rets`
+(預設不解,舊呼叫端的行為不變),含 FD2_CALLLOG_ICOUNT / SLICES 的附加欄位與
+m= 傾印(`Call.field_at`;H 的 dump= 決定每格長度,超出或讀不到回 None)。`verify_names_by_calllog.parse_calllog`
+只收沒有附加欄位的舊形式,續一百五十七以後的紀錄由這裡讀;各產生器不必再各寫一份 E / R 的 regex。
 只讀紀錄檔,不寫任何檔案。
 """
 from __future__ import annotations
@@ -65,6 +71,15 @@ _I = re.compile(r"^I ([0-9a-f]{2}) ([0-9a-f]+) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{
 _IO = re.compile(r"^([ON]) ([0-9a-f]{4}) ([0-9a-f]+) ([124]) ([rvpP]) ([0-9a-f]{4}) ([0-9a-f]{8}) n=(\d+) t=([0-9.]+)"
                  + _SL + "$")
 _K = re.compile(r"^K ([0-9a-f]{3}) (\d+) n=(\d+) t=([0-9.]+)" + _SL + "$")
+# E / R / A(呼叫紀錄本體):FD2_CALLLOG_ICOUNT 的選用欄位 i / n / t 在前,FD2_CALLLOG_SLICES 的 k / b / w 在後
+_IC = r"(?: i=(\d+) n=(\d+) t=([0-9.]+))?"
+_E = re.compile(r"^E (\d+) ([0-9a-f]{8}) ([0-9a-f]{8})(\??) ([0-9a-f]{8}) ([0-9a-f]{4})((?: [0-9a-f]{8}){7})"
+                r" s=([0-9a-f]{8}(?:,[0-9a-f]{8}){7}) c=([0-9a-f?]{32}) m=([0-9a-f?,]*)" + _IC + _SL + "$")
+_R = re.compile(r"^R (\d+) ([0-9a-f]{8}) ([0-9a-f]{8}) ([0-9a-f]{8}) ([0-9a-f]{8})" + _IC + _SL + "$")
+_A = re.compile(r"^A (\d+) ([0-9a-f]{8}) ([0-9a-f]{8}) ([0-9a-f]{8})" + _IC + _SL + "$")
+_H_DUMP = re.compile(r"\bdump=(\d+)\b")
+E_REGS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp")                       # E 的暫存器欄位順序
+PTR_ORDER = ("eax", "edx", "ebx", "ecx", "esi", "edi", "s1", "s2", "s3", "s4")  # m= 的順序(C++ 的 ptrs[])
 # 續一百七十四 FD2_CALLLOG_TRIG:觸發寫出的區塊 Y .. YE(內含 YS / YI)與結尾統計 YC / YN
 _Y = re.compile(r"^Y (\d+) (ng|if) (\d+) (\d+) n0=(\d+) n1=(\d+) t0=([0-9.]+) t1=([0-9.]+) ([0-9a-f]{4}) ([0-9a-f]{8})"
                 r"( trunc=1)?$")
@@ -135,6 +150,55 @@ class Key:
     used: int
     n: int
     t: float
+    sl: tuple[int, int, int] | None = None
+    line: int = 0
+
+
+@dataclass
+class Call:
+    """一筆 E 紀錄:FD2_CALLLOG_ENTRIES 列的入口被執行到時的暫存器、堆疊與 DS: 指標處的位元組。"""
+
+    seq: int
+    eip: int                        # 執行時 EIP(沒減載入差)
+    ret: int                        # [esp];ret_bad 時是 0
+    ret_bad: bool                   # [esp] 讀不到(紀錄裡 ret 後面的 "?")
+    esp: int
+    ss: int
+    regs: dict[str, int]            # E_REGS
+    stack: list[int]                # [esp + 4] .. [esp + 0x20](s1 .. s8;讀不到是 0xdeadbeef)
+    code: bytes | None              # cs:eip 起 16 位元組;有讀不到的位元組時 None
+    mem: dict[str, bytes | None]    # PTR_ORDER -> DS:值 起 dump 個位元組;有讀不到的位元組時 None
+    mem_prefix: dict[str, bytes]    # PTR_ORDER -> 第一個讀不到的位元組之前的部分
+    ic: tuple[int, int, float] | None = None  # (i, n, t);沒有 FD2_CALLLOG_ICOUNT 時 None
+    sl: tuple[int, int, int] | None = None
+    line: int = 0
+
+    def ptr(self, name: str) -> int:
+        """m= 那一格傾印的起點(暫存器值或 s1 .. s4)。"""
+        if name not in PTR_ORDER:
+            raise KeyError(name)
+        return self.stack[int(name[1]) - 1] if name[0] == "s" else self.regs[name]
+
+    def field_at(self, name: str, off: int, size: int) -> int | None:
+        """DS:ptr(name) + off 起 size 個位元組(小端);超出讀得到的範圍時 None(不是 0)。"""
+        b = self.mem_prefix[name]
+        if off < 0 or size <= 0 or off + size > len(b):
+            return None
+        return int.from_bytes(b[off:off + size], "little")
+
+
+@dataclass
+class Ret:
+    """一筆 R(回到返回位址)或 A(在別的 EIP 以更高的 esp 離開框架)紀錄。"""
+
+    kind: str                       # "R" / "A"
+    seq: int                        # 對應 E 的 seq
+    entry: int
+    eax: int | None                 # 只有 R
+    edx: int | None                 # 只有 R
+    eip: int | None                 # 只有 A:離開時的 EIP
+    esp: int
+    ic: tuple[int, int, float] | None = None
     sl: tuple[int, int, int] | None = None
     line: int = 0
 
@@ -229,6 +293,10 @@ class Log:
     trig_counts: dict[int, tuple[str, int, int]] = field(default_factory=dict)  # YC:規則 -> (種類, 符合, 寫出)
     trig_spans: dict[str, int] = field(default_factory=dict)          # YN:種類 -> 區間數
     tail_cut: bool = False  # 檔尾最後一行沒有換行(寫的人被砍掉),`_read` 已丟掉那一行
+    calls: list[Call] = field(default_factory=list)   # E,檔案次序
+    rets: dict[int, Ret] = field(default_factory=dict)  # R / A,以 E 的 seq 索引
+    dump_len: int | None = None                        # H 的 dump=(m= 每格的位元組數)
+    calls_parsed: bool = False                         # parse(calls=True):沒解時 calls / rets 空不代表沒有
 
 
 def _slices(mt: re.Match[str], first: int) -> tuple[int, int, int] | None:
@@ -238,23 +306,55 @@ def _slices(mt: re.Match[str], first: int) -> tuple[int, int, int] | None:
     return int(mt.group(first)), int(mt.group(first + 1)), int(mt.group(first + 2))
 
 
+def _icount(mt: re.Match[str], first: int) -> tuple[int, int, float] | None:
+    """從第 `first` 個群組起取 (i, n, t);沒有這組欄位時 None。"""
+    if mt.group(first) is None:
+        return None
+    return int(mt.group(first)), int(mt.group(first + 1)), float(mt.group(first + 2))
+
+
+def _call(me: re.Match[str], ln: int, dump_len: int | None) -> Call:
+    """E 紀錄的比對結果 -> `Call`;m= 不是 10 格、或某格長度不等於 H 的 dump= 時 ValueError。"""
+    mems = me.group(10).split(",")
+    if len(mems) != len(PTR_ORDER):
+        raise ValueError(f"line {ln}: E m= has {len(mems)} dumps, want {len(PTR_ORDER)}")
+    mem: dict[str, bytes | None] = {}
+    pre: dict[str, bytes] = {}
+    for name, h in zip(PTR_ORDER, mems):
+        if len(h) % 2 or (dump_len is not None and len(h) != 2 * dump_len):
+            raise ValueError(f"line {ln}: E m= {name} has {len(h)} hex digits, header dump={dump_len}")
+        pairs = [h[i:i + 2] for i in range(0, len(h), 2)]
+        if any("?" in p and p != "??" for p in pairs):
+            raise ValueError(f"line {ln}: E m= {name} has a half-unreadable byte")
+        cut = pairs.index("??") if "??" in pairs else len(pairs)   # 第一個讀不到的位元組
+        pre[name] = bytes.fromhex("".join(pairs[:cut]))
+        mem[name] = pre[name] if cut == len(pairs) else None
+    return Call(int(me.group(1)), int(me.group(2), 16), int(me.group(3), 16), me.group(4) == "?",
+                int(me.group(5), 16), int(me.group(6), 16), dict(zip(E_REGS, (int(x, 16) for x in me.group(7).split()))),
+                [int(x, 16) for x in me.group(8).split(",")], _code(me.group(9)), mem, pre,
+                _icount(me, 11), _slices(me, 14), ln)
+
+
 def _code(hexs: str | None) -> bytes | None:
     if hexs is None or "?" in hexs:
         return None
     return bytes.fromhex(hexs)
 
 
-def parse(lines: Iterable[str]) -> Log:
-    """解析呼叫紀錄的 H / G / S / I / O / N / K 紀錄;其他種類略過。
+def parse(lines: Iterable[str], calls: bool = False) -> Log:
+    """解析呼叫紀錄的 H / G / S / I / O / N / K / Y 紀錄(calls 時另加 E / R / A);其他種類(C / T / X)略過。
 
     Args:
         lines: 紀錄檔的各行。
+        calls: 也解析 E / R / A(續一百七十七)。預設不解:續一百七十一 .. 一百七十三的產生器直接把整份文字
+            (含寫到一半的末行)丟進來,那時 E / R / A 是略過的;要讀它們的人用 `_read`(會丟掉末行)並開這個。
 
     Returns:
-        `Log`;連續的同 selector / 模式 S 紀錄併成一個帶逐條 EIP 的 run。
+        `Log`;連續的同 selector / 模式 S 紀錄併成一個帶逐條 EIP 的 run。`Log.calls_parsed` 記有沒有解 E / R / A
+        (沒解時 `calls` / `rets` 是空的,不等於紀錄裡沒有)。
 
     Raises:
-        ValueError: 沒有 H 紀錄,或 G / S / I / O / N / K 開頭的行格式不符。
+        ValueError: 沒有 H 紀錄,或上列種類開頭的行格式不符(E 在 H 之前、R / A 的 seq 重複也算)。
     """
     game_cs: int | None = None
     runs: list[Run] = []
@@ -267,6 +367,9 @@ def parse(lines: Iterable[str]) -> Log:
     trigs: list[Trig] = []
     trig_counts: dict[int, tuple[str, int, int]] = {}
     trig_spans: dict[str, int] = {}
+    call_list: list[Call] = []
+    rets: dict[int, Ret] = {}
+    dump_len: int | None = None
     for ln, raw in enumerate(lines, 1):
         line = raw.rstrip("\r\n")
         if not line:
@@ -328,8 +431,32 @@ def parse(lines: Iterable[str]) -> Log:
             if not mh:
                 raise ValueError(f"line {ln}: H record without cs=")
             game_cs = int(mh.group(1), 16)
+            md = _H_DUMP.search(line)
+            dump_len = int(md.group(1)) if md else None
             continue
-        if k == "G":
+        if k in "ERA" and not calls:
+            continue
+        if k == "E":
+            me = _E.match(line)
+            if not me:
+                raise ValueError(f"line {ln}: bad E record: {line[:80]}")
+            if game_cs is None:
+                raise ValueError(f"line {ln}: E record before H")
+            call_list.append(_call(me, ln, dump_len))
+        elif k in "RA":
+            mr = (_R if k == "R" else _A).match(line)
+            if not mr:
+                raise ValueError(f"line {ln}: bad {k} record: {line[:80]}")
+            seq = int(mr.group(1))
+            if seq in rets:
+                raise ValueError(f"line {ln}: second R / A for seq {seq}")
+            if k == "R":
+                rets[seq] = Ret("R", seq, int(mr.group(2), 16), int(mr.group(3), 16), int(mr.group(4), 16), None,
+                                int(mr.group(5), 16), _icount(mr, 6), _slices(mr, 9), ln)
+            else:
+                rets[seq] = Ret("A", seq, int(mr.group(2), 16), None, None, int(mr.group(3), 16),
+                                int(mr.group(4), 16), _icount(mr, 5), _slices(mr, 8), ln)
+        elif k == "G":
             mg = _G.match(line)
             if not mg:
                 raise ValueError(f"line {ln}: bad G record: {line[:80]}")
@@ -384,7 +511,8 @@ def parse(lines: Iterable[str]) -> Log:
     if game_cs is None:
         raise ValueError("no H record")
     gaps = [(a.n_end, b.n_start) for a, b in zip(runs, runs[1:]) if b.n_start != a.n_end]
-    return Log(game_cs, runs, irqs, order, code, gaps, ios, keys, trigs, trig_counts, trig_spans)
+    return Log(game_cs, runs, irqs, order, code, gaps, ios, keys, trigs, trig_counts, trig_spans,
+               calls=call_list, rets=rets, dump_len=dump_len, calls_parsed=calls)
 
 
 def episodes(log: Log) -> list[Episode]:
@@ -516,12 +644,15 @@ def disasm_one(m: str, eip: int, code: bytes) -> str:
     return "(bad) " + code.hex()
 
 
-def _read(path: str) -> Log:
-    """讀紀錄檔;檔尾沒有換行的最後一行(harness 砍掉模擬器時寫到一半)丟掉並標 `tail_cut`,其餘格式錯誤照樣報。"""
+def _read(path: str, calls: bool = False) -> Log:
+    """讀紀錄檔;檔尾沒有換行的最後一行(harness 砍掉模擬器時寫到一半)丟掉並標 `tail_cut`,其餘格式錯誤照樣報。
+
+    calls 傳給 `parse`(要不要解 E / R / A)。
+    """
     with open(path, encoding="ascii", errors="replace", newline="") as f:
         lines = f.readlines()
     cut = bool(lines) and not lines[-1].endswith("\n")
-    log = parse(lines[:-1] if cut else lines)
+    log = parse(lines[:-1] if cut else lines, calls)
     log.tail_cut = cut
     return log
 
@@ -627,6 +758,46 @@ def cmd_io(log: Log, ports: list[int]) -> int:
     """印 O / N / K。"""
     for line in io_events(log, set(ports) if ports else None):
         print(line)
+    return 0
+
+
+def parse_field_spec(spec: str) -> tuple[str, int, int]:
+    """`eax+0x34:4` -> ("eax", 0x34, 4);指標名取 PTR_ORDER,位移可省(0),大小 1 / 2 / 4。"""
+    mt = re.fullmatch(r"(eax|edx|ebx|ecx|esi|edi|s[1-4])(?:\+(0x[0-9a-fA-F]+|\d+))?:([124])", spec)
+    if not mt:
+        raise ValueError(f"bad field '{spec}' (PTR[+OFF]:SIZE, PTR in {'/'.join(PTR_ORDER)}, SIZE 1/2/4)")
+    return mt.group(1), int(mt.group(2) or "0", 0), int(mt.group(3))
+
+
+def call_rows(log: Log, eip: int | None, fields: list[tuple[str, int, int]]) -> list[str]:
+    """每筆 E(可只取某個 EIP):seq、EIP、時間、怎麼離開(R 的 eax / A 的 EIP / 沒離開)與指定的傾印欄位。
+
+    傾印欄位超出讀得到的範圍時印 `--`(H 的 dump= 太小或該處讀不到),不印 0。
+    """
+    out = []
+    for c in log.calls:
+        if eip is not None and c.eip != eip:
+            continue
+        r = log.rets.get(c.seq)
+        how = "-" if r is None else (f"R eax={r.eax:08x}" if r.kind == "R" else f"A {r.eip:08x}")
+        t = f" t={c.ic[2]:.6f}" if c.ic else ""
+        vals = []
+        for name, off, size in fields:
+            v = c.field_at(name, off, size)
+            vals.append(f" {name}+{off:#x}:{size}=" + ("--" if v is None else f"{v:0{2 * size}x}"))
+        out.append(f"E {c.seq} {c.eip:08x}{t} {how}" + "".join(vals))
+    return out
+
+
+def cmd_calls(log: Log, eip: int | None, specs: list[str]) -> int:
+    fields = [parse_field_spec(s) for s in specs]
+    rows = call_rows(log, eip, fields)
+    print(f"dump={log.dump_len} E={len(log.calls)} R={sum(r.kind == 'R' for r in log.rets.values())}"
+          f" A={sum(r.kind == 'A' for r in log.rets.values())} shown={len(rows)}")
+    if fields and log.dump_len is not None and any(off + size > log.dump_len for _, off, size in fields):
+        print(f"note: dump={log.dump_len} is shorter than a requested field; those print --", file=sys.stderr)
+    for s in rows:
+        print(s)
     return 0
 
 
@@ -993,6 +1164,172 @@ def selftest() -> int:
             check(False, "a bad CRLF line must still raise")
         except ValueError:
             pass
+    # 續一百七十七 E / R / A:新形式(附 i / n / t 與 k / b / w)與舊形式(沒附)都要讀;暫存器、指標、傾印各給不同的值
+    regs = " ".join(f"{v:08x}" for v in (0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77))
+    stk = ",".join(f"{v * 0x101:08x}" for v in range(1, 9))
+    dumps = ["0102030405060708", "1112131415161718", "2122232425262728", "3132333435363738", "41424344454647??",
+             "5152??5455565758", "6162636465666768", "7172737475767778", "8182838485868788", "9192939495969798"]
+    hd = "H fd2calllog 1 cs=0170 entries=2 cap=200 dump=8 lo=00000000 hi=00000001 icount=1 slices=1"
+    e1 = (f"E 1 001d9fef 001e2123 001f1678 0178 {regs} s={stk} c=5356b42ccd2131c088f089c3b42ccd21 m={','.join(dumps)}"
+          " i=4015 n=6315635 t=1781.461800 k=64310 b=2082728 w=508946")
+    e2 = f"E 2 001d30f0 00000000? 001f1600 0178 {regs} s={stk} c={'00' * 15}?? m={','.join(['00' * 8] * 10)}"
+    e3 = f"E 3 001d30f0 001e0000 001f1500 0178 {regs} s={stk} c={'90' * 16} m={','.join(['ff' * 8] * 10)}"
+    r1 = "R 1 001d9fef 00002c37 001f3802 001f167c i=57111 n=11330037 t=2966.271200 k=99173 b=2131195 w=1370124"
+    a2 = "A 2 001d30f0 001dab69 001ef5fc"
+    ce_lines = [hd, e1, g("P", 0x170, 0x3e01d, 0x3e025, 5, 5), e2, r1, a2, e3, "C 001d9fef 2", "T exit"]
+    ce = parse(ce_lines, calls=True)
+    check(ce.calls_parsed, "calls=True flagged")
+    # 預設不解 E / R / A:寫到一半的 E 末行照舊略過(續一百七十一 .. 一百七十三的產生器靠這個);開了就要報錯
+    plain = parse(ce_lines + [e1[:60]])
+    check(not plain.calls_parsed and plain.calls == [] and plain.rets == {} and len(plain.runs) == 1,
+          "default parse skips E / R / A")
+    try:
+        parse(ce_lines + [e1[:60]], calls=True)
+        check(False, "calls=True: a cut E line must raise")
+    except ValueError:
+        pass
+    check(ce.dump_len == 8 and len(ce.calls) == 3 and len(ce.runs) == 1, "E / R / A parsed beside G")
+    c1, c2, c3 = ce.calls
+    check((c1.seq, c1.eip, c1.ret, c1.ret_bad, c1.esp, c1.ss) == (1, 0x1D9FEF, 0x1E2123, False, 0x1F1678, 0x178), "E head fields")
+    check(c1.regs == {"eax": 0x11, "ebx": 0x22, "ecx": 0x33, "edx": 0x44, "esi": 0x55, "edi": 0x66, "ebp": 0x77},
+          "E register order eax ebx ecx edx esi edi ebp")
+    check(c1.stack == [k * 0x101 for k in range(1, 9)], "E stack s1 .. s8")
+    check(c1.code == bytes.fromhex("5356b42ccd2131c088f089c3b42ccd21") and c2.code is None, "E code bytes; ?? -> None")
+    check(c1.ic == (4015, 6315635, 1781.4618) and c1.sl == (64310, 2082728, 508946) and c1.line == 2, "E i/n/t and k/b/w")
+    check(c2.ret_bad and c2.ret == 0 and c2.ic is None and c2.sl is None, "old-form E: ret '?' and no suffix")
+    check([c1.mem[n] for n in ("eax", "edx", "ebx")] == [bytes.fromhex(dumps[0]), bytes.fromhex(dumps[1]),
+                                                         bytes.fromhex(dumps[2])], "m= order eax edx ebx")
+    check(c1.mem["esi"] is None and c1.mem_prefix["esi"] == bytes.fromhex(dumps[4][:14]), "trailing ?? -> None + prefix")
+    check(c1.mem["edi"] is None and c1.mem_prefix["edi"] == b"\x51\x52", "middle ?? cuts the prefix there")
+    check(c1.ptr("s2") == 0x202 and c1.ptr("edx") == 0x44 and c1.ptr("s4") == 0x404, "ptr: stack slot / register")
+    try:
+        c1.ptr("ebp")
+        check(False, "ptr: ebp is not dumped")
+    except KeyError:
+        pass
+    check(c1.field_at("eax", 0, 4) == 0x04030201 and c1.field_at("eax", 4, 4) == 0x08070605, "field_at little-endian")
+    check(c1.field_at("eax", 5, 4) is None and c1.field_at("eax", 4, 4) is not None, "field_at past dump= -> None")
+    check(c1.field_at("esi", 3, 4) == 0x47464544 and c1.field_at("esi", 4, 4) is None, "field_at up to the first ??")
+    check(c1.field_at("s3", 0, 2) == 0x8281 and c1.field_at("eax", -1, 2) is None and c1.field_at("eax", 0, 0) is None,
+          "field_at stack dump; bad offset / size")
+    check(ce.rets[1] == Ret("R", 1, 0x1D9FEF, 0x2C37, 0x1F3802, None, 0x1F167C, (57111, 11330037, 2966.2712),
+                            (99173, 2131195, 1370124), 5), "R fields")
+    check(ce.rets[2] == Ret("A", 2, 0x1D30F0, None, None, 0x1DAB69, 0x1EF5FC, None, None, 6), "old-form A fields")
+    check(3 not in ce.rets, "E without R / A")
+    rows = call_rows(ce, None, [("eax", 0, 4), ("esi", 4, 4)])
+    check(rows == ["E 1 001d9fef t=1781.461800 R eax=00002c37 eax+0x0:4=04030201 esi+0x4:4=--",
+                   "E 2 001d30f0 A 001dab69 eax+0x0:4=00000000 esi+0x4:4=00000000",
+                   "E 3 001d30f0 - eax+0x0:4=ffffffff esi+0x4:4=ffffffff"], f"call_rows ({rows})")
+    check(call_rows(ce, 0x1D30F0, []) == ["E 2 001d30f0 A 001dab69", "E 3 001d30f0 -"], "call_rows --eip filter")
+    check(parse_field_spec("eax+0x34:4") == ("eax", 0x34, 4) and parse_field_spec("s2:2") == ("s2", 0, 2)
+          and parse_field_spec("edi+12:1") == ("edi", 12, 1), "field spec")
+    for bad in ("ebp:4", "eax+0x34:3", "eax+0x34", "eax-4:4"):
+        try:
+            parse_field_spec(bad)
+            check(False, f"field spec '{bad}' must be rejected")
+        except ValueError:
+            pass
+    # 壞形狀都要報錯;對照:同一組紀錄改回正確就讀得過(上面的 ce)
+    hd0 = "H x cs=0170"
+    ok_m = ",".join(["0a0b"] * 10)
+    e_nodump = f"E 9 00000001 00000002 00000003 0178 {regs} s={stk} c={'00' * 16} m={ok_m}"
+    check(parse([hd0, e_nodump], True).dump_len is None and parse([hd0, e_nodump], True).calls[0].mem["s4"] == b"\x0a\x0b",
+          "control: H without dump= takes any even length")
+    for what, bad_lines in (("9 dumps", [hd, e1.replace(",9192939495969798", "")]),
+                            ("dump length vs H dump=", [hd, e1.replace("0102030405060708", "01020304050607")]),
+                            ("half-unreadable byte", [hd, e1.replace("5152??", "515?2?")]),
+                            ("second R for one seq", [hd, e1, r1, r1]),
+                            ("R and A for one seq", [hd, e1, r1, r1.replace("R 1 001d9fef 00002c37", "A 1 001d9fef")]),
+                            ("E before H", [e_nodump, hd0]),
+                            ("E missing s=", [hd, e1.replace(" s=", " t=")]),
+                            ("R missing esp", [hd, "R 1 001d9fef 00002c37 001f3802"]),
+                            ("A with an R shape", [hd, "A 2 001d30f0 001dab69 001ef5fc 00000000"])):
+        try:
+            parse(bad_lines, calls=True)
+            check(False, f"bad E / R / A not rejected: {what}")
+        except ValueError:
+            pass
+    check(c1.field_at("edx", 0, 1) == 0x11 and c1.field_at("edx", 7, 1) == 0x18, "field_at size 1")
+    an = parse([hd, e1, "A 1 001d9fef 001dab69 001ef5fc i=5 n=6 t=7.5 k=8 b=9 w=10"], calls=True).rets[1]
+    check((an.kind, an.eip, an.esp, an.ic, an.sl) == ("A", 0x1DAB69, 0x1EF5FC, (5, 6, 7.5), (8, 9, 10)), "new-form A suffix")
+
+    def run(argv: list[str]) -> tuple[object, list[str], str]:
+        """main 的回傳碼(argparse 拒絕時是 "exit")、stdout 各行、stderr。"""
+        bo, be = io_mod.StringIO(), io_mod.StringIO()
+        with contextlib.redirect_stdout(bo), contextlib.redirect_stderr(be):
+            try:
+                rc_: object = main(argv)
+            except SystemExit:
+                rc_ = "exit"
+        return rc_, bo.getvalue().splitlines(), be.getvalue()
+
+    with tempfile.TemporaryDirectory() as td:
+        pth = Path(td) / "e.txt"
+        r3 = "R 3 001d30f0 00000001 00000000 001f1504"
+        pth.write_bytes(("\n".join([hd, e1, r1, a2, e2, e3, r3]) + "\n").encode("ascii"))
+        rc, out, err = run(["calls", str(pth), "--eip", "1d9fef", "--field", "edx+1:2"])
+        check(rc == 0 and out == ["dump=8 E=3 R=2 A=1 shown=1",
+                                  "E 1 001d9fef t=1781.461800 R eax=00002c37 edx+0x1:2=1312"] and err == "", f"calls CLI ({out})")
+        rc, out, err = run(["calls", str(pth), "--eip", "1d9fef", "--field", "eax+6:4"])
+        check(rc == 0 and out[1].endswith("eax+0x6:4=--") and "note: dump=8 is shorter" in err, "calls CLI: past dump= -> -- + note")
+        check(run(["calls", str(pth), "--field", "ebp:4"])[0] == 2, "calls CLI: bad field -> 2")
+        # 其他子命令的選項(續一百七十七起 selftest 會跑到 main):各自要收得下自己的選項、16 進位照 16 進位解
+        cl = Path(td) / "c.txt"
+        cl.write_bytes(("\n".join(["H x cs=0170 io=20-21,220-22f", g("P", 0x170, 0x3e01d, 0x3e025, 5, 5, "cd21" + pad),
+                                   g("P", 0x0f00, 0x100, 0x120, 6, 11, "cd21" + pad), g("P", 0x170, 0x3e027, 0x3e02f, 5, 16),
+                                   "O 022c d0 1 r 137c 000006c9 n=16 t=1.0", "O 0020 20 1 r 137c 00000700 n=16 t=1.1"])
+                        + "\n").encode("ascii"))
+        rc, out, _ = run(["episodes", str(cl)])
+        check(rc == 0 and any(s.startswith("0003e025 -> 0003e027: 1 episodes") for s in out), f"episodes default --min 1 ({out})")
+        rc, out, _ = run(["episodes", str(cl), "--min", "2"])
+        check(rc == 0 and not any("->" in s for s in out), "episodes --min 2 hides the single group")
+        rc, out, _ = run(["disasm", str(cl), "--cs", "170"])
+        check(rc == 0 and len(out) == 1 and out[0].startswith("P 0170:0003e01d"), f"disasm --cs is hex ({out})")
+        rc, out, _ = run(["io", str(cl), "--port", "22c"])
+        check(rc == 0 and len(out) == 1 and " O 022c d0 " in out[0], f"io --port is hex ({out})")
+        check(run(["trig", str(cl), "--insns"])[0] != "exit" and run(["trig", str(cl), "--block", "1"])[0] != "exit",
+              "trig takes --insns / --block")
+    # episodes / disasm 全輸出(手算:分組依個數排序、中位數、路徑超過 8 段截斷;disasm 依 (cs, eip, 模式) 排序)
+    el = ["H x cs=0170", g("P", 0x170, 0x3E01D, 0x3E025, 5, 5, "cd21" + pad)]
+    el += [g("r", 0xF000, 0x10 + k * 0x10, 0x12 + k * 0x10, 1, 6 + k) for k in range(10)]
+    el += [g("P", 0x170, 0x3E027, 0x3E02F, 5, 20), g("r", 0xF000, 0x200, 0x204, 3, 23, "b80100" + "00" * 13),
+           g("P", 0x170, 0x3E027, 0x3E02F, 5, 28), g("r", 0xF000, 0x200, 0x206, 4, 32),
+           g("P", 0x170, 0x3E027, 0x3E02F, 5, 37), g("P", 0x0F00, 0x100, 0x120, 6, 43, "cd21" + pad),
+           g("r", 0x170, 0x50, 0x50, 1, 44, "b80100" + "00" * 13), g("P", 0x170, 0x3E027, 0x3E02F, 5, 49)]
+    # 剛好 9 段(> 8 才截)與另 4 種路徑(同一組共 7 種,只印前 5);最後一筆遊戲 run 與 r 0170:50 同 cs / eip、模式不同
+    # (排序第三鍵是模式:P 在 r 前;碼位元組 cd 比 b8 大、檔案次序在後,兩種錯的第三鍵都會反過來)
+    nn = 49
+    for k in range(9):
+        nn += 1
+        el.append(g("r", 0xF000, 0x400 + k, 0x400 + k, 1, nn))
+    el.append(g("P", 0x170, 0x3E027, 0x3E02F, 5, nn + 5))
+    nn += 5
+    for k in range(4):
+        el += [g("r", 0xF000, 0x500 + k, 0x500 + k, 1, nn + 1), g("P", 0x170, 0x3E027, 0x3E02F, 5, nn + 6)]
+        nn += 6
+    el.append(g("P", 0x170, 0x50, 0x50, 1, nn + 1, "cd21" + pad))
+    elog = parse(el)
+    outs = []
+    for fn, arg in ((cmd_episodes, 1), (cmd_disasm, None)):
+        buf = io_mod.StringIO()
+        with contextlib.redirect_stdout(buf):
+            fn(elog, arg)
+        outs.append(buf.getvalue().splitlines())
+    check(outs[0] == ["episodes 9 (complete 9)",
+                      "0003e02f -> 0003e027: 8 episodes, non-game 1 .. 9 (median 2.0); first #1",
+                      "    path x1 (1 runs; totals {3: 1}; e.g. #1): rf000:200-204",
+                      "    path x1 (1 runs; totals {4: 1}; e.g. #2): rf000:200-206",
+                      "    path x1 (2 runs; totals {7: 1}; e.g. #3): P0f00:100-120 r0170:50-50",
+                      "    path x1 (9 runs; totals {9: 1}; e.g. #4): " + " ".join(
+                          f"rf000:{0x400 + k:x}-{0x400 + k:x}" for k in range(8)) + " ... +1",
+                      "    path x1 (1 runs; totals {1: 1}; e.g. #5): rf000:500-500",
+                      "0003e025 -> 0003e027: 1 episodes, non-game 10 .. 10 (median 10); first #0",
+                      "    path x1 (10 runs; totals {10: 1}; e.g. #0): " + " ".join(
+                          f"rf000:{0x10 + k * 0x10:x}-{0x12 + k * 0x10:x}" for k in range(8)) + " ... +2"],
+          f"episodes full output ({outs[0]})")
+    if not disasm_one("r", 0, b"\x90").startswith("(no capstone)"):
+        check(outs[1] == ["P 0170:00000050  int 0x21", "r 0170:00000050  mov ax, 1", "P 0170:0003e01d  int 0x21",
+                          "P 0f00:00000100  int 0x21", "r f000:00000200  mov ax, 1"], f"disasm order (cs, eip, mode) ({outs[1]})")
     # 反組譯:同一組位元組 16 / 32 位元解法不同(模式要真的影響結果)
     b = bytes.fromhex("b801000000")
     d16, d32 = disasm_one("r", 0, b), disasm_one("P", 0, b)
@@ -1010,10 +1347,10 @@ def selftest() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """命令列入口。"""
-    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 G / S / I / O / N / K / Y 紀錄")
+    ap = argparse.ArgumentParser(description="解析呼叫紀錄的 E / R / A / G / S / I / O / N / K / Y 紀錄")
     ap.add_argument("--selftest", action="store_true")
     sub = ap.add_subparsers(dest="cmd")
-    for name in ("summary", "episodes", "diff", "irq", "disasm", "io", "trig"):
+    for name in ("summary", "episodes", "diff", "irq", "disasm", "io", "trig", "calls"):
         sp = sub.add_parser(name)
         sp.add_argument("log")
         if name == "episodes":
@@ -1028,6 +1365,10 @@ def main(argv: list[str] | None = None) -> int:
         if name == "trig":
             sp.add_argument("--block", type=int, default=None, help="只印這個區塊(Y 的 seq)")
             sp.add_argument("--insns", action="store_true", help="逐條指令(含反組譯與中斷位置)")
+        if name == "calls":
+            sp.add_argument("--eip", type=lambda s: int(s, 16), default=None, help="只印這個執行時 EIP(16 進位)")
+            sp.add_argument("--field", action="append", default=[], metavar="PTR[+OFF]:SIZE",
+                            help="印 m= 傾印裡的欄位,例如 eax+0x34:4(可重複)")
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
@@ -1035,7 +1376,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.print_help()
         return 2
     try:
-        log = _read(args.log)
+        log = _read(args.log, calls=args.cmd == "calls")
     except (OSError, ValueError) as e:
         print(f"FAIL: {args.log}: {e}")
         return 1
@@ -1053,6 +1394,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_io(log, args.port)
     if args.cmd == "trig":
         return cmd_trig(log, args.block, args.insns)
+    if args.cmd == "calls":
+        try:
+            return cmd_calls(log, args.eip, args.field)
+        except ValueError as e:
+            print(f"FAIL: {e}")
+            return 2
     return cmd_disasm(log, args.cs)
 
 

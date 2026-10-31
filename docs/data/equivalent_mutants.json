@@ -893,6 +893,14 @@
    "reason": "每色計數 +1 改成 +2 等於每個計數都乘 2:最多色(含平手時 dict 插入順序的先後)不變,比例 2n / 2s 與 n / s 是同一個有理數,int 真除法正確捨入,結果逐位相同。",
    "evidence": "續一百六十九 2026-10-30:drivers_s169/equiv_flat.py 在 827 張校準截圖(drivers_s168/calib_frames.txt)的 1654 條帶(693 條比例非零)上,原版與此突變 0 條不同;對照突變 0->1 有 674 條不同",
    "scope_hash": "6142b8bfcedb"
+  },
+  {
+   "tool": "calllog_segments.py",
+   "key": "cmd_episodes|lf = \"-\" if key[0] is None else f\"{key[0]:08x}\"|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "group_episodes 只收完整的 episode;episodes 只在已看過遊戲 run 時標完整(left_from = 那段的 e1),回到遊戲才填 back_to,所以分組鍵兩格都不會是 None,`key[0] is None` 改看 key[1] 結果都是 False。",
+   "evidence": "續一百七十七 2026-10-31:docs/knowledge-base/evidence/generators/drivers_s177/equiv_episodes.py 在 7 份紀錄(lc171a .. lc174b,216544 個完整 episode,鍵 None 0 個)上 cmd_episodes 原版與此突變輸出 7 / 7 逐位元組相同;對照突變(f-string 改印 key[1])7 / 7 不同",
+   "scope_hash": "eb1de2151037"
   }
  ]
 }

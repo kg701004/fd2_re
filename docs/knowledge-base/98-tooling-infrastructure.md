@@ -12387,3 +12387,46 @@ ev_s174 199 / 63 / 72、ev_s175 129 / 44 / 49)。tools/ 沒改。
 - (D) 的字序與 DS 基底要實機才能直接看(E 紀錄開 dump)。
 - 25264 .. 25273、27069 .. 27073 兩群各 3 筆的 m;31253 / 36793 型各是哪個音效沒對。
 - 續一百七十五 lc163a / lc167a 沒有 I 紀錄的兩項推論不變。
+
+## 2026-10-31 續一百七十七:工具 —— 呼叫紀錄的 E / R / A 與 m= 傾印改由 calllog_segments 解析(附加欄位也收);ail_driver_disasm 加單條指令文字與直線條數(`tools/calllog_segments.py`、`tools/ail_driver_disasm.py`、`ev_s176.py`)
+
+起因:使用者「先完善優化工具」。先盤點續一百七十六實際碰到的工具缺口,不是「工具壞了」,而是兩處重複 / 讀不到:
+- repo 裡唯一解 m= 傾印的 `verify_names_by_calllog.parse_calllog` 只收沒有附加欄位的 E / R(`len(t) != 16`、`len(t) != 6`);
+  續一百五十七以後的紀錄都附 i / n / t(續一百七十二起再附 k / b / w),整份會進 errors。產生器因此各寫一份 E / R 的 regex
+  (ev_s158、ev_s173、ev_s176),都沒解 m=。續一百七十六 (D) 的實機就算開了 dump,也沒有工具讀得出 [drv+0x34]。
+- ev_s176 自己寫了 SB16.DIG 的 16 位元單條反組譯、直線條數與功能表查詢(表位址寫死 0x10a / 0x118),
+  `ail_driver_disasm.function_table` 本來就能從分派段讀出。
+
+**改動**(CODE CONFIRMED):
+- `calllog_segments.parse(lines, calls=False)` / `_read(path, calls=False)`:calls 時 E → `Call`(暫存器、s1 .. s8、c=、
+  m= 依 C++ `ptrs[]` 的 eax / edx / ebx / ecx / esi / edi / s1 .. s4、i / n / t、k / b / w、行號;`ptr`、`field_at` 取 DS:指標 + 位移的小端值,
+  超出 dump 或遇到讀不到的位元組回 None,不回 0)、R / A → `Ret`;H 的 dump= 核每格長度;`Log.calls_parsed` 記有沒有解。
+  新子命令 `calls <CALLLOG> [--eip EIP] [--field PTR[+OFF]:SIZE ...]`:每筆 E 怎麼離開(R 的 eax / A 的 EIP / 沒離開)與傾印欄位。
+- 預設不解的原因(實測,DOSBox-X 呼叫紀錄 lc171a .. lc173a):首版預設就解,`run_all` ev_s171 / 172 / 173 三份 ERROR ——
+  它們把整份 DOSBox-X 紀錄文字(含寫到一半的末行)直接交給 `parse`,末行剛好是 E / R / A(以前略過)。
+  改成選用後六份 IDENTICAL,舊呼叫端讀同一批 DOSBox-X 紀錄的結果逐位元組不變,也不必為不用的 E 多花解析時間。
+- `ail_driver_disasm.insn_text`、`path_len`(終點不在指令邊界、在起點之前或檔外都 ValueError)。
+- ev_s176 改用以上:服務的 E / R 取 `Log.calls` / `Log.rets`;16 位元兩個函式包一層轉 AssertionError(變異仍以 AssertionError 死);
+  功能表由 `function_table` 讀,並核分派段 0x16a、`call [bx + si]` 在 0x1c8、0x301 / 0x401 的表格在 0x10c / 0x11a。assert 48 → 49。
+- `tools/dosbox/fd2_calllog_patch.py` 說明加一句指向這裡。
+
+**驗證**:
+- 獨立實作對照:12 份舊形式紀錄(cl1 .. cl14,dump=32,E 共 407582 筆)逐筆與 `verify_names_by_calllog.parse_calllog` 比
+  暫存器、堆疊與 10 格傾印(含讀不到的 None):全同。lc173a / lc174a / lc174b 的 E / R 序列與 ev_s176 原本的 regex 相同
+  (各差的那一筆是寫到一半的末行,`_read` 丟掉)。
+- `calllog_segments --selftest`、`ail_driver_disasm --selftest` PASS(新加:兩種形式、欄位順序、傾印截斷、壞形狀 9 種與對照、預設不解的對照、CLI)。
+- `run_all` ev_s171 .. ev_s176 6 / 6 IDENTICAL;`mut_s176` 36 / 36;`assert_census --update --executed` ev_s176 49 / 49、總表 72 / 72;
+  `sweep_literals` ev_s176 ESCAPED 0(KILLED 237 / INERT 49 / CRASH 22;比續一百七十六少的是刪掉的自寫反組譯)。
+- `verify_selftest_discrimination --exhaustive`:`dosbox/fd2_calllog_patch.py` 21 / 21;`ail_driver_disasm.py` 第一次逃 4 個
+  (位移 0 沒測、`+ 16` 的切片長度是等價的寫法 → 改成 `b[a:]`、加位移 0 的斷言)後 184 / 184;
+  `calllog_segments.py` 第一次逃 13 個 —— 新加的 CLI 測試讓 `main()` 第一次在 selftest 裡被執行,原本到不了的各子命令選項、
+  `cmd_episodes`、`cmd_disasm` 變成可達。補 episodes / disasm 全輸出(先印出來與手算對過:分組依個數、中位數、9 段 / 10 段的截斷、
+  7 種路徑只印 5 種、同 cs:eip 不同模式的排序)、`field_at` 1 位元組、新形式 A、R / A 計數不對稱、stderr 提示,13 → 12 → 5 → 1。
+  剩下的 `cmd_episodes` `key[0] is None` int 0->1 是等價突變:完整 episode 的分組鍵不會有 None;
+  `drivers_s177/equiv_episodes.py` 在 7 份紀錄 216544 個完整 episode 上突變輸出 7 / 7 相同、對照突變 7 / 7 不同,登錄進
+  `docs/data/equivalent_mutants.json`(118 筆,`--check-registry` 過期 0)。
+
+**仍留**:
+- ev_s158 / ev_s173 的私有 E / R regex 沒換:輸出正確、只是重複;換掉要連帶改它們的變異測試字串。
+- 續一百七十六 (D) 要實機時:`FD2_HARNESS_CALLLOG_DUMP` ≥ 56,`calls --eip 1dc4c0 --field s1+0x34:4`
+  (服務入口 `0x404db mov eax, dword ptr [esp + 0x10]`:三個 push 之後的 [esp + 0x10] = 入口時的 s1 = 驅動結構)。
