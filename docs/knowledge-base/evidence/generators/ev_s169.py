@@ -28,6 +28,7 @@ from _evpaths import EVIDENCE, GEN_DIR, ROOT, out_path, rel, require_inputs  # n
 require_inputs(__file__)
 warnings.filterwarnings("ignore", category=DeprecationWarning)      # Pillow getdata 的棄用警告
 sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 import fd2_chapter_sweep as sw  # noqa: E402
 from PIL import Image, ImageStat  # noqa: E402
 
@@ -248,10 +249,12 @@ LOOP, SELECT, STATUS_CARD = 0x117E7, 0x18890, 0x17AED
 _e168 = (ROOT / ".wsl_build" / "lc168_live" / "lc168a_meta.txt").read_text(encoding="utf-8").splitlines()[4].split()
 assert sorted(set(META[4].split()) - set(_e168)) == sorted(f"{a + DELTA:x}" for a in (SELECT, STATUS_CARD)) and len(META[4].split()) == 28
 MK = {}
-for m in re.finditer(rb"^([ERA]) (\d+) ([0-9a-f]{8}) [^\n]* t=([0-9.]+)\n", _cl, re.M):
-    e = int(m.group(3), 16) - DELTA
-    if e in (LOOP, SELECT, STATUS_CARD):
-        MK.setdefault((m.group(1).decode(), e), []).append(float(m.group(4)))
+# E / R / A 由 calllog_segments 解析(續一百八十起;原本是本檔的 regex)。(A) 的 flush 位置要位元組位移,仍直接掃原文
+_LOG = cs._read(str(CALLLOG), calls=True)
+for x in sorted([*_LOG.calls, *_LOG.rets.values()], key=lambda x: x.line):
+    k, e = ("E", x.eip - DELTA) if isinstance(x, cs.Call) else (x.kind, x.entry - DELTA)
+    if e in (LOOP, SELECT, STATUS_CARD) and x.ic is not None:
+        MK.setdefault((k, e), []).append(x.ic[2])
 MKN = {f"{k} {e:#x}": len(v) for (k, e), v in sorted(MK.items())}
 assert MKN == {"E 0x117e7": 1, "E 0x18890": 1}, MKN                   # 狀態卡 0 筆;0x18890 沒有 R(到 teardown 還在選格裡)
 T_LOOP, T_SEL = MK[("E", LOOP)][0], MK[("E", SELECT)][0]

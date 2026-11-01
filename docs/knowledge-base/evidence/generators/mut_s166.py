@@ -34,6 +34,10 @@ MUTANTS = [
     ("P4 下界 55", "if 55.5 <= BAT[\"bios_tick_avg_ms\"] <= 56.5 else", "if 55.0 <= BAT[\"bios_tick_avg_ms\"] <= 56.5 else"),
     ("判定讀戰場前", "REENTRY_SHARE = round(BAT[\"reentry\"] / BAT[\"lost\"], 4)", "REENTRY_SHARE = round(PRE[\"reentry\"] / PRE[\"lost\"], 4)"),
     ("預測檔改過", "assert \"P3 掉的比例在 1% .. 3% 之間\" in _pred", "assert \"P3 掉的比例在 0.5% .. 3% 之間\" in _pred"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('A 的離開位址取入口', '            r["at"] = x.eip - DELTA', '            r["at"] = eip - DELTA'),
+    ('記錄不依檔案次序(先 E 後 R / A)', 'key=lambda x: x.line)', 'key=lambda x: isinstance(x, cs.Ret))'),
+    ('i / n 對調', '        i, n, t = x.ic\n', '        n, i, t = x.ic\n'),
 ]
 
 if __name__ == "__main__":

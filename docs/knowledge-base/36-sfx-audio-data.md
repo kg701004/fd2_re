@@ -200,6 +200,8 @@ uint32 表 + `ADLIB-`/樂器名字串),且遊戲程式碼中未找到任何對 `
 依混音器 `0x49690` 的模型(步長 11025 / 22050、每次填緩衝累加器從 0x80000000 起)換回樣本長度,只對得到這幾段:
 `sfx_09`(390 bytes)每份 32 次、`sfx_02`(667 bytes)9 / 9 / 10 次、FDOTHER `#77` 第 1 段(4277,確認音效)、`#78` 第 0 段(6478)、
 6235 bytes 那段(FDOTHER `#49` 第 6 / `#53` 第 2 / `#77` 第 3 段逐位元組相同)。哪個畫面事件觸發 index 9 / 2 沒追。見 `98-tooling-infrastructure.md` 續一百七十八。
+續一百七十九:6235 那段是標題 `title_seq` `0x1fd24` 從 `#77` 放的(DOSBox-X 呼叫紀錄 cl1 .. cl14 的指標處就是 `#77` 開頭);
+`sfx_09` 是腳步音(`play_step_sfx`)、`sfx_02` 是對話打字音(`typewriter_tick`),見下面 index 表。
 
 ## ⚠ 位址勘誤(第 9 輪發現,影響本文件先前版本的絕對位址)
 
@@ -235,34 +237,53 @@ uint32 表 + `ADLIB-`/樂器名字串),且遊戲程式碼中未找到任何對 `
 
 ```
 push priority      ; 觀察到的呼叫端全部是常數 1(唯一例外見下)
-push index          ; 通常是常數(0/2/3/4/5/6/7/8/0xb/0xc),少數是暫存器(動態 index)
+push index          ; UI 池全部是常數 0 .. 0xc(見下表);其他池有暫存器(動態 index)
 push table_ptr       ; 通常是 [0x53eec](UI 音效池),戰鬥路徑另有動態表(見下)
 call 0x25a96         ; (或 0x25b45 = handle B,允許與 handle A 疊播)
 ```
 
 全 EXE 掃描(遞迴找 `call 0x25a96`/`call 0x25b45` 的相對呼叫端,而非線性 sweep,避免誤判):
-`play_sfx_a` **107 處**、`play_sfx_b` **11 處**。table_ptr 除了 `[0x53eec]`(UI 池,本篇 14 個樣本)外,
+`play_sfx_a` **111 處**、`play_sfx_b` **11 處**(續一百八十由 `ev_s180.py` 重算並鎖住;原本寫的 107 出自 2026-07-02,沒有留下
+產生器,無法重現,`tools/fd2_sfx_static_reachability.py` 2026-09-04 已數到 111)。table_ptr 除了 `[0x53eec]`(UI 池,本篇 14 個樣本)外,
 還有 `[0x53b13]`、`[0x54117]`、`[0x5411f]`(= 第 8 輪記錄的 `[0x5411f]`,戰鬥動態表,前綴 `0x54` 打字誤
 差 1 位)三個**不同的資源**,不是同一批 14 個 UI 樣本——**戰鬥音效與本篇 UI 音效是兩個獨立池**,對照
 時不要混用。
 
 ### `[0x53eec]`(UI 音效池,對應本篇 WAV)index 語意
 
-| index | 呼叫端數量(A+B) | 觸發情境(反組譯呼叫端上下文) | 信心 |
-|---|---|---|---|
-| 0 | 30+ | 遊戲各處大量重複出現;**5 處直接掛在方向鍵掃描碼比對之後**(`cmp eax,0x48/0x50/0x4b/0x4d` 分別對應上下左右,見 `0x117a1`/`0x11a33`/`0x11a54`/`0x11a75`/`0x11a96`),與 `sfx_00`(160 bytes,14.5ms 短促)長度吻合 | **確認:游標移動音** |
-| 2 | 2 | `0x16546` 等,前置呼叫非明顯繪圖/文字函式,語意未定 | 待確認 |
-| 3 | 1 | `0x1ddaa`,前置呼叫 `0x11eee`(帶 `0x1c8/0xd/8` 座標類參數,疑為繪視窗/框線)+ `0x127a9` | 待確認(疑開窗音) |
-| 4 | 2 | `0x1a3df` 等,前置呼叫 `0x11eb0`(同樣帶座標參數)並用回傳的 flag 條件觸發(`cmp byte ptr[esp+4],0`) | 待確認 |
-| 5 | 4 | `0x17c56`/`0x3060f` 等,前置皆呼叫 `0x4e8af`(帶字串指標參數,疑為顯示文字/訊息) | 待確認(疑文字顯示音) |
-| 6 | 3 | `0x17b2e`/`0x31b76` 等,一處是條件式(`0x1c269` 回傳非 0 才播)、一處是 12 項清單迴圈中 `ebx==0` 或 `ebx==7` 時播 | 待確認 |
-| 7 | 3(A)+1(B) | `0x1193a` 等,某位元旗標檢查失敗時播(`test eax,eax; je →播7`),否則呼叫另一函式 `0x17aed`(其內部在 `0x17b2e` 播 index 6) | 待確認 |
-| 8 | 1 | `0x17495`,前置為陣列索引運算後把 4 個 dword 設為 `0x390`(疑重置某計數) | 待確認 |
-| 0xb | 1 | `0x2cac3`,以 `某計數 % 9 == 0` 為觸發條件(`idiv 9; test edx,edx; jne 跳過`),疑週期性動畫 tick 音 | 待確認 |
-| 0xc | 1(僅 handle B) | `0x13d13`,伴隨把 `[某結構+0x31]`byte 設 1(疑「已選定」旗標),用 handle B 播放以便與正在播的 handle A 疊聲 | 待確認 |
+前四欄由 `evidence/generators/ev_s180.py` 逐格核對(續一百八十):靜態呼叫端 = 推本池與該 index 的路徑數(含經無條件 jmp 跳進共用尾端的),
+防拷問答函式唯一的呼叫點前面是無條件 jmp、走不到(續一百七十九);函式名取 `docs/data/function_names.json`;
+「cl1 .. cl14 次數」是續一百零七那 12 份 DOSBox-X 呼叫紀錄以本池實際播放的次數(每個入口只記前 200 次,只代表「有沒有出現」,不是頻率),
+每一次的返回位址都是同 index 的某個靜態呼叫端。改這四欄而沒有同步程式碼,`ev_s180.py` 就失敗。
 
-僅 index 0(游標移動)有多重獨立證據(5 個方向鍵分支 × 波形長度吻合)可視為確認;其餘 index 已列出
-確切呼叫端位址與上下文,但語意需要配合畫面實測(第 10 輪待辦)才能升級為確認,此處不臆測標籤。
+| index | 靜態呼叫端 | 呼叫端函式(登錄名) | cl1 .. cl14 次數 | 觸發情境 | 信心 |
+|---|---|---|---|---|---|
+| 0 | A 36 / B 0(防拷 1 處走不到) | `target_cursor_loop`、`battle_main_input_loop`、`item_grid_select`、`command_grid_select`、`town_hub_main`、`carousel_menu_select`、`item_list_select`、`choice_box_left_right`、`equip_compare_select`、`sortie_member_select`、`copy_protection_password_check` | 131 | 各種選單 / 游標的方向鍵分支(`cmp eax,0x48/0x50/0x4b/0x4d`,如 `0x117a1`/`0x11a33`/`0x11a54`/`0x11a75`/`0x11a96`);2026-09-07 實機在其中 4 處命中且與所按方向對應 | **確認:游標移動音** |
+| 1 | A 1 / B 0 | `town_hub_main` | 12 | `0x265a7` | 待確認 |
+| 2 | A 3 / B 0(防拷 2 處走不到) | `typewriter_tick`、`copy_protection_password_check` | 1846 | `0x16546`:對話 / 訊息逐字顯示時每字一次(doc14);2026-09-08 實機在按鍵開訊息時命中這裡 | **確認:對話打字音** |
+| 3 | A 1 / B 0 | `unit_death_sweep` | 0 | `0x1ddaa`:掃出 HP 0 且未標記死亡的單位、跑動畫後標記;2026-09-07 實機以 HP 0 / 上限 0 的存檔觸發命中 | **確認:陣亡音** |
+| 4 | A 2 / B 0 | `rest_hp_recover`、`battle_phase_advance` | 0 | `0x1a3df`:回合開始時只有我方有人受傷才播,接著 HP += 上限 / 5(2026-09-07 實機正反對照);`0x1403d` 在 `rest_hp_recover` | **確認:回血音** |
+| 5 | A 4 / B 0 | `unit_info_cards`、`info_card_open_anim`、`save_slot_selector`、`sortie_member_select` | 31 | cl1 .. cl14 在 `unit_info_cards` 每輪的順序:`0x17ede` 放 5 兩次 → 數已習得法術 → `0x17b2e` 放 6 → 畫列表 → `0x17c56` 放 5 → `0x17d26` 放 6 | 待確認(2026-09-07 記「法術列表前後兩階段」、09-08 記「開 / 關狀態卡」,兩者不一致) |
+| 6 | A 3 / B 0 | `unit_info_cards`、`sortie_member_select` | 16 | 同上;`0x17b2e` 只在已習得法術數非 0 時播 | 待確認(同上) |
+| 7 | A 4 / B 1(防拷 1 處走不到) | `battle_main_input_loop`、`save_slot_selector`、`sortie_member_select`、`copy_protection_password_check` | 37 | `0x1193a`:游標下沒有可行動的我方單位時按確認;2026-09-07 實機兩次命中 | **確認:無效選取音** |
+| 8 | A 2 / B 0 | `action_ring_open`、`action_ring_close` | 4 | `0x17495` / `0x176d3` | 待確認 |
+| 9 | A 1 / B 0 | `play_step_sfx` | 228 | `0x322c7`:步態 0 每 6 步、1 每 4 步(doc35 §16.4),經 `0x322c9` jmp 到 `0x32301` 的共用尾端 | **確認:腳步音** |
+| 0xa | A 1 / B 0 | `play_step_sfx` | 57 | `0x32280`:`0x1f183` 回傳非 0 時每 6 步,經 `0x32282` jmp 到同一尾端 | **確認:腳步音** |
+| 0xb | A 1 / B 0 | `play_step_sfx` | 0 | `0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS) |
+| 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13` / `0x191a9`,用 handle B 與 handle A 疊播 | 待確認 |
+
+續一百八十的更正:舊表 0xb 列寫的 `0x2cac3` 不是呼叫端(該處是 `cmp`,2026-09-07 實機已發現);舊表沒有 index 1 / 0xa;
+index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui_sfx_index_semantics.json` 撤回的「`0x32307` 放 index 10」
+其實成立 —— 那次只看到 `0x32307` 尾端合併的 9 / 0xb,漏了 `0x32280` 的 `push 0xa`;cl1 .. cl14 看得到 index 10 共 57 次,全來自這個尾端。
+該 json 的 index 2「UI 主迴圈動畫 tick」說法也已由 doc14 / 函式登錄表(2026-09-19)取代。實機紀錄的來源見該 json 的 `_live_*` 各節。
+
+續一百八十(二)(`evidence/sfx_dialogue_step_s180b_20261101.json`,產生器 `ev_s180b.py`;DOSBox-X 呼叫紀錄 cl1 .. cl14):
+- index 2 對到的句子:每次 `typewriter_tick` 歸到最內層包住它的 dialog(`0x15f84`)呼叫,取其文字表(指標處 32 位元組 = 某個 FDTXT 資源開頭)與字串索引。
+  2239 次裡 1258 次歸得到,共 15 句:序章 FDTXT_002 #0 .. #2(羅德鎮)、FDTXT_003 #0 .. #3(賽拉村前的橋)、FDTXT_033 #0 / #1(晉見父王),
+  與 FDTXT_000 的系統提示(#513「要進入戰場嗎?」、#419 / #420 結束回合、#415 / #416、#585)。其餘 981 次都在 dialog 已記滿 200 次的紀錄裡、
+  落在最後一次記到的 dialog 返回之後 —— 是紀錄上限,不是沒有對話。
+- index 9 / 0xa / 0xb 的單位:`play_step_sfx` 的第 1 個參數(單位索引)在 cl1 .. cl14 有 17 種,呼叫端是 `step_anim_left` / `step_anim_right` /
+  `step_anim_down` / `end_player_phase_if_all_acted`。單位索引對到哪個角色要看當時的單位表,沒有對。
 
 ### 戰鬥音效(`[0x5411f]`/`[0x54117]`/`[0x53b13]`)與本篇 UI 池的關係澄清
 

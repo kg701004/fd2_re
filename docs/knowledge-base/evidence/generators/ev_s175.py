@@ -19,7 +19,6 @@ import bisect
 import collections
 import hashlib
 import json
-import re
 
 from _evpaths import EVIDENCE, GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
@@ -59,18 +58,17 @@ def rt(a: int) -> int:
     return a + DELTA
 
 
-_RX = re.compile(r"^([ERA]) (\d+) ([0-9a-f]{8}) (.*?) ?i=(\d+) n=(\d+) t=([0-9.]+)")
-
-
 def era(nm: str) -> list[tuple]:
-    """E / R / A 紀錄:(種類, 序號, eip, 其餘欄位, i 遊戲指令累計, n 全部指令累計, t)。"""
+    """E / R / A 紀錄,依檔案次序:(種類, 序號, eip(R / A 是入口), 紀錄物件, i 遊戲指令累計, n 全部指令累計, t)。
+
+    由 calllog_segments 解析(續一百八十起;原本是本檔的 regex)。
+    """
+    lg = cs.parse(TEXT[nm], calls=True)
     out = []
-    for ln in TEXT[nm]:
-        if ln[:2] in ("E ", "R ", "A "):
-            m = _RX.match(ln)
-            assert m, ln[:120]
-            out.append((m.group(1), int(m.group(2)), int(m.group(3), 16), m.group(4), int(m.group(5)), int(m.group(6)),
-                        float(m.group(7))))
+    for x in sorted([*lg.calls, *lg.rets.values()], key=lambda x: x.line):
+        assert x.ic is not None, (nm, x.line)
+        kind, eip = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+        out.append((kind, x.seq, eip, x, *x.ic))
     return out
 
 
@@ -81,6 +79,7 @@ def services(nm: str, entry: int) -> list[dict]:
     """某個入口的每一次呼叫:E 的 n / t / i,配對到的 R(沒有就 None;長的 DIG 服務被重入蓋掉,沒有 R)。"""
     es = [r for r in ERA[nm] if r[0] == "E" and r[2] == rt(entry)]
     rs = {r[1]: r for r in ERA[nm] if r[0] == "R" and r[2] == rt(entry)}
+    assert es and rs, (nm, hex(entry), len(es), len(rs))
     out = []
     for e in es:
         r = rs.get(e[1])
@@ -251,9 +250,9 @@ for _a, _t in STATIC_C.items():
 assert sum(1 for a in STATIC_C if 0x43270 <= a <= 0x4327E) + sum(1 for a in STATIC_C if 0x4398F <= a <= 0x43995) == 12
 # 那一次服務之前最近的 ISR 進入:暫存器(E 紀錄:eip ret esp ss eax ebx ecx edx esi edi ebp)
 _isr = [r for r in ERA["lc167a"] if r[0] == "E" and r[2] == rt(ISR) and r[5] < SK["n"]][-1]
-_f = _isr[3].split()
-assert _f[0] == "00000ed6" and len(_f) >= 9, _f
-REGS = dict(zip(("ret", "esp", "ss", "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"), (int(x, 16) for x in _f[:10])))
+_c = _isr[3]
+assert _c.ret == 0xED6 and not _c.ret_bad, _c
+REGS = {"ret": _c.ret, "esp": _c.esp, "ss": _c.ss, **_c.regs}
 MS = 0xFA0
 assert REGS["ebx"] == MS * 1000 and REGS["ecx"] == 127 and (REGS["eax"], REGS["edx"]) == divmod(MS * 1000, 127), REGS
 assert 0 < SK["t"] - _isr[6] < 0.1

@@ -31,6 +31,11 @@ MUTANTS = [
     # 解讀層:結論文字
     ("結論的條數拿時刻", "只跑 {SK['g']} 條遊戲指令", "只跑 {SKIP_ROW['game_insn_hist_low']} 條遊戲指令"),
     ("結論的例外數拿表格", "例外各 {ODD_N['lc174a'][0]} + {ODD_N['lc174a'][1]} 次", "例外各 {FILL['lc174a']['table']['fill irq7=1']} + {ODD_N['lc174a'][1]} 次"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('E 的入口取返回位址', '("E", x.eip) if isinstance(x, cs.Call)', '("E", x.ret) if isinstance(x, cs.Call)'),
+    ('i / n 對調', 'out.append((kind, x.seq, eip, x, *x.ic))', 'out.append((kind, x.seq, eip, x, x.ic[1], x.ic[0], x.ic[2]))'),
+    ('ISR 返回位址前提改 0xed7', 'assert _c.ret == 0xED6', 'assert _c.ret == 0xED7'),
+    ('REGS 的 ebx 取 ecx', '"ss": _c.ss, **_c.regs}', '"ss": _c.ss, **_c.regs, "ebx": _c.regs["ecx"]}'),
 ]
 
 if __name__ == "__main__":

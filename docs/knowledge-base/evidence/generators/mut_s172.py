@@ -45,6 +45,11 @@ MUTANTS = [
     # 解讀層:結論文字
     ("結論的長路次數拿短路的", "lc172a {DH0['lc172a']['table']['cf1_loop|long']} 次", "lc172a {DH0['lc172a']['table']['cf1_loop|short']} 次"),
     ("結論的鍵盤處理用整個 602", "中間 {SPLIT['lc172a']['kb_handling']} 條鍵盤處理", "中間 {SPLIT['lc172a']['post']} 條鍵盤處理"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('delay 的毫秒數取 s2', 'opens[x.seq] = (t, v, x.stack[0])', 'opens[x.seq] = (t, v, x.stack[1])'),
+    ('delay 的 Δn 取 i', 'v = (x.ic[1], *x.sl)', 'v = (x.ic[0], *x.sl)'),
+    ('重入後的 i / n 對調', '(*era(x), *x.ic)', '(*era(x), x.ic[1], x.ic[0], x.ic[2])'),
+    ('R 的入口失效', '(x.kind, x.entry)', '(x.kind, x.entry if x.kind == "A" else 0)'),
 ]
 
 if __name__ == "__main__":

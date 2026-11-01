@@ -18,6 +18,7 @@ from pathlib import Path
 from _evpaths import GAME, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 
 EXE = GAME / "FD2.EXE"
@@ -65,14 +66,14 @@ assert HUD_X0 == 1, HUD_X0                       # 初值 1;另一個可能值 0
 
 # ================= (1) 相位迴圈 =================
 def parse(path: Path) -> tuple[str, list[tuple[int, int, int, int]], list[str]]:
-    header, recs, lines = None, [], []
-    for ln in path.read_text(encoding="ascii").split("\n"):
-        if ln.startswith("H "):
-            header = ln
-        elif ln.startswith("E "):
-            p = ln.split(" ")
-            recs.append((int(p[1]), int(p[2], 16), int(p[6], 16), int(p[7], 16)))
-            lines.append(ln)
+    text = path.read_text(encoding="ascii").split("\n")
+    _h = [ln for ln in text if ln.startswith("H ")]
+    header = _h[-1] if _h else None
+    lines = [ln for ln in text if ln.startswith("E ")]      # 原文:(2) 要數補零前後的 EIP 字串
+    # E 紀錄由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位)
+    log = cs._read(str(path), calls=True)
+    recs = [(c.seq, c.eip, c.regs["eax"], c.regs["ebx"]) for c in log.calls]
+    assert len(recs) == len(lines) and not log.tail_cut, (path.name, len(recs), len(lines))
     assert header is not None and "entries=5 " in header and "dump=0 " in header, header
     assert [r[0] for r in recs] == list(range(1, len(recs) + 1)), "seq 不連續"
     assert {r[1] for r in recs} <= {E_START, E_TICK, E_ADV, E_DRAW, E_END}
@@ -104,6 +105,7 @@ def cut(recs: list[tuple[int, int, int, int]]) -> dict:
             cur["drawn"].append(eax)
         elif eip == E_END:
             cur["tick_after"], cur["k_after"] = eax & 0xFFFF, ebx
+            assert loops, f"seq {seq}:收尾之前沒有 k = 1 的圈開頭"
             loops[-1].append(cur)
             cur, end_seen = None, True
     assert cur is None and len(loops) == 1, len(loops)

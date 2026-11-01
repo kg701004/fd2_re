@@ -12253,6 +12253,7 @@ lc174a md5 0aaee517…(1325050 行)、lc174b md5 9be49f77…(1185411 行),兩份
 - lc174a #24(21843.60 ms)是 MDI 型,中間在實模式 0c5c:1fad 收一次 IRQ 7,SB16.DIG 的實模式中斷處理 137c:0682 .. 0729(`iret`)73 條
   (Y 區塊的碼位元組與 SB16.DIG 檔案同一位移相同)→ 302 + 73 = 375。lc174b、lc173a 沒有這型。
 - lc163a(續一百六十五)沒有 I 紀錄,它的 375 是同一型由條數差 73 推的(INFERRED)。
+  (續一百七十九:之後 0.102 ms 的 DIG 服務是填緩衝,與 lc174a 那次同型;沒夾中斷的 302 / 303 型 66 次只有 1 次接著填,見該節)
 - 另有 lc174a 一次回到 ISR 自己的派送迴圈(`0x3eb46 add edi, 4` 之後的 `0x3eb49`,`0x3eb15 sti` 之後掃格子時被打斷),條數同 DIG 型 69:
   69 是回保護模式遊戲程式碼的共同返回段,不專屬 DIG 服務。
 
@@ -12291,6 +12292,7 @@ lc174a md5 0aaee517…(1325050 行)、lc174b md5 9be49f77…(1185411 行),兩份
 - 在遊戲程式碼收一次硬體中斷、回到同一個 eip:IRQ 1 是 532 / 533 條非遊戲指令,IRQ 7 是 558 .. 560(lc174a 93 次、lc173a 96 次,各 1 次離群)。
 - lc167a 的 4 次(119237.6 ms 532 條、540499.0 / 542774.0 / 542959.0 ms 558 條):558 那 3 次之後 0.24 ms 的 DIG 服務都是填緩衝
   (IRQ 7 的特徵;同時段填緩衝的比例 0.021),532 那次不是。lc167a 沒有 I 紀錄,中斷號是由條數與填緩衝推的(INFERRED)。
+  (續一百七十九:532 那次落在送 Up 鍵的窗內,558 那 3 次在最後一次送鍵之後 22 秒以上,見該節)
 - 所以這 4 次不是驅動呼叫:續一百七十「驅動呼叫除了漸變之外全對得上曲子」再補一句,4 次是 MDI 服務期間收的鍵盤 / 音效卡中斷。
 
 **ev_s175 (C) 敵方回合結束時讓序列停一次服務的呼叫**(CODE + LOG CONFIRMED;FD2.EXE、DOSBox-X 呼叫紀錄 lc167a):
@@ -12428,7 +12430,7 @@ ev_s174 199 / 63 / 72、ev_s175 129 / 44 / 49)。tools/ 沒改。
   `docs/data/equivalent_mutants.json`(118 筆,`--check-registry` 過期 0)。
 
 **仍留**:
-- ev_s158 / ev_s173 的私有 E / R regex 沒換:輸出正確、只是重複;換掉要連帶改它們的變異測試字串。
+- ev_s158 / ev_s173 的私有 E / R regex 沒換:輸出正確、只是重複;換掉要連帶改它們的變異測試字串。(續一百七十九:已換,見該節)
 - 續一百七十六 (D) 要實機時:`FD2_HARNESS_CALLLOG_DUMP` ≥ 56,`calls --eip 1dc4c0 --field s1+0x34:4`
   (服務入口 `0x404db mov eax, dword ptr [esp + 0x10]`:三個 push 之後的 [esp + 0x10] = 入口時的 s1 = 驅動結構)。
   (續一百七十八:不需要了 —— cl1 .. cl14 的 `calls --eip 1dc4c0 --field s1+4:4 --field s1+8:4` 已看到,[drv+0x34] 由 `0x40dd4` 入口的 eax 看到。)
@@ -12480,6 +12482,7 @@ ev_s174 199 / 63 / 72、ev_s175 129 / 44 / 49)。tools/ 沒改。
   每型只對到一份波形,五個 m 都是奇數(模型的必要條件)。對照:累加器從 0 起算時每個來源樣本都放兩次、m 只能是偶數,五型一個都對不到。
 - 這三份紀錄是開機 → 標題 → 開始(lc174a 的執行紀錄:標題選單、開始後兩張截圖)。6235 那段波形三個資源都有;標題時 `0x1f8de` 載入的是 #77,
   推為 #77 第 3 段(INFERRED)。31253 / 36793 型(index 9 / 2)是哪個畫面事件觸發沒追。
+  (續一百七十九:cl1 .. cl14 的播放指標處就是 #77 開頭,定案;index 9 = play_step_sfx 腳步音、index 2 = typewriter_tick 打字音,見該節)
 
 **本檔更正**:續一百七十六 (D)「要直接看需要實機」與仍留第 1、2 項、續一百七十七仍留「(D) 要實機時」各加一句指向本節。doc36 匯出 WAV 表後加一段。
 
@@ -12493,6 +12496,124 @@ ev_s174 199 / 63 / 72、ev_s175 129 / 44 / 49)。tools/ 沒改。
 - 初版把 MDI 的 0x300 當成 DIG 的(兩個驅動都呼叫 0x300):`0x382e9` 的第一個參數是驅動描述,改用 [drv+0] 分之後 12 份都過。
 
 **仍留**:
-- 31253 / 36793 型(index 9 / 2)是哪個畫面事件觸發;6235 那段是哪一張表放的(推為 #77)。
-- 續一百七十五 lc163a / lc167a 沒有 I 紀錄的兩項推論不變。
-- ev_s158 / ev_s173 的私有 E / R regex(續一百七十七仍留)。
+- 31253 / 36793 型(index 9 / 2)是哪個畫面事件觸發;6235 那段是哪一張表放的(推為 #77)。(續一百七十九:腳步音 / 對話打字音;#77,見該節)
+- 續一百七十五 lc163a / lc167a 沒有 I 紀錄的兩項推論不變。(續一百七十九:兩項各有獨立佐證(DOSBox-X 呼叫紀錄),仍不是直接看到,見該節)
+- ev_s158 / ev_s173 的私有 E / R regex(續一百七十七仍留)。(續一百七十九:已換,見該節)
+
+## 2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT)
+
+起因:使用者「依照你的建議自動繼續進行處理」(續一百七十八的三項仍留)。沒有新實機。
+證據 `evidence/sfx_triggers_irq_s179_20261101.json`(產生器 `ev_s179.py`,變異測試 `mut_s179.py` 33 個)。
+
+**6235 那段由 #77 放**(STATIC ANALYSIS + LOG CONFIRMED;FD2.EXE 反組譯,DOSBox-X 呼叫紀錄 cl1 .. cl14、lc174a / lc174b / lc173a):
+- title_seq `0x1f8de` 載入 FDOTHER #77 存 [esp+0x54];`0x1fd24` play_digital_sample([esp+0x5c], 3, 1)(先推兩個參數,同一格);
+  `0x1fedb` 以同一格放第 1 段(確認)。在它前面 `0x1fd14` 呼叫 ani_player,`0x2044f` 載入 #78、`0x2054d` 放 index esi。
+- cl1 .. cl14(續一百零七,每個入口前 200 次、指標處 32 位元組):12 份都是 `0x1f8de` 載入 #77 → `0x1fd24` 放第 3 段,
+  播放時指標處 32 位元組 = #77 的開頭(#49 / #53 的開頭不同);cl12 .. cl14 的 R 直接看到載入回傳 = 播放的指標;載入與播放之間沒有別的載入回同一指標。
+  ani_player(`0x2054d`)放的都是 #78 開頭、index 0;確認(`0x1fedb`)放的是同一指標第 1 段。
+- lc174a / lc174b / lc173a(續一百七十六的逐次填緩衝):前三個音效依序是 #78 第 0 段 → 6235 那段 → #77 第 1 段,與程式順序相同;
+  6235 那段在 `0x1fd7c` 之前放完;`0x1fed3` 之後第一次混音就是 #77 第 1 段(1.0 .. 4.0 ms 後;填緩衝最短間隔 84 ms)。續一百七十八「推為 #77」定案。
+
+**index 9 / 2**(STATIC ANALYSIS + LOG CONFIRMED;FD2.EXE 反組譯,DOSBox-X 呼叫紀錄 cl1 .. cl14、lc174a / lc174b / lc173a):
+- UI 音效池 [0x53eec] = game_main `0x25c70` 載入的 FDOTHER #31(doc36)。全 EXE 直接呼叫 play_sfx_a / play_sfx_b 共 122 處
+  (續一百六十一的續掃;doc36 記的 107 + 11 是續掃前),推 [0x53eec] 的都以立即數給 index;跳進「推音效池那條」的只有無條件 jmp,一併算進去。
+- index 9 只有 play_step_sfx `0x322c7`(push 9 → `0x322c9` jmp `0x32301` → `0x32307` call):doc35 §16.4 的腳步音,步態 0 每 6 步、1 每 4 步。
+- index 2:typewriter_tick `0x16546`(doc14:對話逐字顯示每字呼叫一次)與防拷問答 `0x34126` / `0x34162`;
+  防拷函式 `0x33faf` 唯一的呼叫點 `0x118ac` 前一條是 `0x118aa jmp 0x118b3`,沒有分支或 fixup 指到 `0x118ac` 或入口(續三十六),走不到。
+  fixup 查詢的對照:跳表裡已知的 `0x35854` 查得到。
+- cl1 .. cl14 實際呼叫(每份 play_sfx_a 前 200 次):[0x53eec] 的 index 2 共 1846 次全由 `0x1654b`(typewriter_tick)、index 9 共 228 次全由
+  `0x3230c`(play_step_sfx)呼叫,播放時指標處 32 位元組都是 #31 的開頭。
+- lc174a / lc174b / lc173a 的 sfx_09 32 / 32 / 32 次、sfx_02 9 / 9 / 10 次都在「開始」(`0x32326`)之後:開場劇情的腳步聲與對話打字聲。
+  是哪一句對話、哪個單位走路沒有對畫面。
+
+**lc163a / lc167a 中斷號的獨立佐證**(LOG CONFIRMED + INFERRED;DOSBox-X 呼叫紀錄 lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本):
+- lc163a:重入 `0x3ebad` 之後到下一筆的非遊戲指令(續一百六十五同計法,69 × 60、70 × 2、302 × 14、375、601 都重現)。
+  375(21060.7 ms)之後 0.102 ms 的 DIG 服務是填緩衝;lc174a 由 I 紀錄直接看到 IRQ 7 的那次 375(21843.6 ms)也是 0.102 ms 後填緩衝。
+  沒夾中斷的 302 / 303 型四份共 66 次,只有 1 次接著填。填不填由服務的遊戲指令數分(兩群之間差 10 倍以上,取上群最小值為界)。
+- lc167a 532 那次(119237.6 ms):`fd2_chapter_sweep.find_empty_adjacent_tile` 先截 findempty_000_start、再送方向鍵、等 0.5 秒截下一張
+  (沒有清對話的截圖,起點判讀不是 None)。兩張截圖的寫出時刻換成紀錄時間(以 lc167a_finish.json 的 yes / P2_c 兩點對齊,斜率 0.9998)
+  → 送 Up 的窗 119228.8 .. 119577.7 ms,532 那次在窗內。
+- lc167a 558 那 3 次(540.5 .. 543.0 s)在最後一次送鍵之後 22.2 秒以上:finish.py 只送 YES 一鍵(518.27 s),之後只截圖到結束(README 的步驟順序),沒有鍵盤中斷的來源。
+- 兩份 DOSBox-X 呼叫紀錄仍沒有 I 紀錄,這是獨立佐證、不是直接看到(INFERRED 不變,證據加強)。
+
+**ev_s158 / ev_s173 的 E / R / A 改由 calllog_segments 解析**(續一百七十七仍留;DOSBox-X 呼叫紀錄 lc157c .. lc157e、lc173a):
+- ev_s158 的 `parse()` 介面與回傳格式不變,內容改由 `cs._read(calls=True)` 填(i / n / t 照舊轉 float);ev_s173 的 `_rx_e` / `_rx_era` 改用
+  `cs.parse(..., calls=True)` 的 `Call.line` 取同一段行、E / R / A 依行號排(寫到一半的末行丟掉,同 `cs._read`)。兩份證據檔(由 DOSBox-X 呼叫紀錄重算)逐位元組不變。
+- 變異測試:`mut_s158` 原本打在自寫解析的 2 個(地形索引取 ecx、欄取 edi)改成新寫法的同義變異,另加 1 個(i / t 對調;先試的 i / n 對調存活,原因沒拆);
+  `mut_s173` + 2(第二段從第一段起算、E 的 i / n 對調)。
+- 以字串樣式粗掃,另有 11 個產生器自己解 E / R 行(ev_s130 / s132 / s137 / s161 / s164 / s166 / s167 / s168 / s169 / s172 / s175),
+  沒逐一核對是否都是完整的 E / R 解析,本次沒改。
+
+**本檔更正**:續一百七十八正文「推為 #77」與仍留第 1、2 項、續一百七十五 (B) 兩處 INFERRED 各加一句指向本節。
+doc36 UI 池 index 表:index 2 改為「確認:對話打字音」(`0x16546`)、新增 index 9「確認:腳步音」(`0x322c7`);續一百七十八那段加一句。
+
+**驗證**(證據檔由 DOSBox-X 呼叫紀錄、FD2.EXE、FDOTHER.DAT 與 lc167a 截圖時刻 / 驅動腳本重算):`run_all` ev_s158 / ev_s173 / ev_s179 IDENTICAL;
+`mut_s179` 33 / 33、`mut_s158` 25 / 25、`mut_s173` 35 / 35;`assert_census --update --executed` ev_s179 62 個全部執行到、總表 74 / 74;
+`build_manifest.py ev_s179` 21 筆輸入(12 + 4 份紀錄、lc167a 的 3 個時刻 / 送鍵檔、FD2.EXE、FDOTHER.DAT)。
+`sweep_literals` ev_s179 首掃 ESCAPED 11(只寫進輸出的計數 / 切片 / 單位換算 / 對照組號)→ 改成由資料推出或加判準後 ESCAPED 0
+(KILLED 114 / INERT 29 / CRASH 44)。`doc98_index --check`、`audit_evidence_provenance --gate / --diff`、`verify_address_citations --diff`、
+`verify_address_claim_coverage` 通過;doc98 那句「改為」用 `--mark-correction` 登為 not_address_erratum。tools/ 沒改。
+
+**仍留**:
+- sfx_09 / sfx_02 各對到哪一句對話、哪個單位走路(要對畫面)。(續一百八十:句子離線對到 15 句、單位索引 17 種,見該節)
+- doc36 UI 池 index 表其餘列(含 0xb 列的 `0x2cac3`)的位址與呼叫端數是當時的,本次沒有重核。(續一百八十:已重核並由 `ev_s180.py` 逐格鎖住,見該節)
+- 其餘 11 個產生器自己解 E / R 行(見上);要換時連同各自的變異測試字串。(續一百八十:實際是 15 個,已全部換掉並加閘門,見該節)
+
+## 2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT)
+
+起因:使用者「請解析說明仍留的項目根因和完全解決方案」後「依照你的建議自動繼續進行處理」(續一百七十九的三項仍留,加上 mut_s158 i / n 變異存活)。沒有新實機。
+證據 `evidence/sfx_ui_pool_table_s180_20261101.json`(`ev_s180.py`,`mut_s180.py` 17 個)、
+`evidence/sfx_dialogue_step_s180b_20261101.json`(`ev_s180b.py`,`mut_s180b.py` 11 個)。
+
+**mut_s158「i / n 對調」為什麼存活**(LOG CONFIRMED;DOSBox-X 呼叫紀錄 lc157c .. lc157e):不是 i = n —— 三份各 832 次貼圖裡 68 .. 70 次 Δi ≠ Δn,
+對調後輸出確實變(超額最大 3999 → 25856、貼圖總數中位數 137933 → 143602),但 (B) 的判準只看形狀(九成在最小值 + 10 內、超額 ≥ 250、
+c / d 預測相同、e − c > 4000),取三份最小值當成本又把非遊戲指令濾掉,換成 n 照樣全過。判準沒寫出「取的是遊戲指令數」。
+補:每次貼圖與整個地形層 `R.i − E.i ≤ R.n − E.n` 且至少一次嚴格小於;i / n 對調變異加回,26 / 26。
+
+**doc36 UI 池 index 表**(STATIC ANALYSIS + LOG CONFIRMED;FD2.EXE 反組譯,DOSBox-X 呼叫紀錄 cl1 .. cl14):
+- 根因:舊表與「107 處」出自 2026-07-02(c06070db),沒有留下產生器,無法重算;`tools/fd2_sfx_static_reachability.py` 2026-09-04 已數到 111,
+  `docs/data/ui_sfx_index_semantics.json` 2026-09-07 已發現 0xb 列的 `0x2cac3` 不成立,doc36 都沒跟著改 —— 表格是手寫文字,沒有任何檢查。
+- `ev_s180.py` 以續一百七十九同一套列舉(相對呼叫端 + 跳進共用尾端的無條件 jmp)算出 play_sfx_a 111 / play_sfx_b 11、UI 池 62 條路徑、
+  index 0 .. 0xc;cl1 .. cl14 每一次 UI 池播放的返回位址都是同 index 的某個靜態呼叫端。**並直接解析 doc36 表格的前四欄與「N 處 / M 處」那句逐格比對**,
+  之後表格與程式碼不一致,本產生器就失敗(變異「表頭改名」「讀到下一張表」「總數用舊的 107」都被殺)。
+- 更正:舊表 0xb 列 `0x2cac3` 是 `cmp`,0xb 只由 `play_step_sfx` 的 `0x322ff` 推;舊表沒有 index 1(`town_hub_main`)與 0xa;
+  index 8 / 0xc 各 2 處、index 4 多一處 `rest_hp_recover`;index 7 / 0 / 2 各有防拷函式裡走不到的。
+  `ui_sfx_index_semantics.json` 撤回的「`0x32307` 放 index 10」其實成立(漏看 `0x32280` 的 `push 0xa`;cl1 .. cl14 有 57 次)。
+- 語意欄沿用 2026-09-07 / 09-08 的實機紀錄(index 3 陣亡、4 回血、7 無效選取);index 5 / 6 兩次實機說法不一致,cl1 .. cl14 的順序
+  (`0x17ede` 5 ×2 → 數法術 → `0x17b2e` 6 → 畫列表 → `0x17c56` 5 → `0x17d26` 6)支持「法術列表前後兩階段」,但不能排除另一說,維持待確認。
+
+**sfx_02 / sfx_09 對到哪一句、哪個單位**(LOG CONFIRMED;DOSBox-X 呼叫紀錄 cl1 .. cl14,FDTXT):
+- 每次 `typewriter_tick` 歸到最內層包住它的 dialog(`0x15f84`);dialog 第 1 個參數指標處 32 位元組 = 某個 FDTXT 資源開頭(只對得到一個),
+  第 2 個是字串索引(doc14 九參數表)。2239 次裡 1258 次歸得到,共 15 句(FDTXT_002 #0 .. #2、FDTXT_003 #0 .. #3、FDTXT_033 #0 / #1、
+  FDTXT_000 系統提示 6 句);其餘 981 次都在 dialog 已記滿 200 次的紀錄裡、落在最後一次記到的 dialog 返回之後(記錄上限)。
+  cl1 .. cl14 裡逐字顯示的 dialog 都只有一層(DOSBox-X 呼叫紀錄;寫成前提 assert)。
+- `play_step_sfx` 第 1 個參數(單位索引)17 種,呼叫端 `step_anim_left / right / down`、`end_player_phase_if_all_acted`;每次都來自靜態呼叫端。
+  單位索引對到哪個角色要看當時的單位表,沒有對。
+
+**另 15 個產生器改用 calllog_segments**(各自的 DOSBox-X 呼叫紀錄重算,輸出逐位元組不變):
+- 根因:共用解析器到續一百七十七(2026-11-01)才收 E / R / A,這些產生器都寫在那之前;沒有閘門,新產生器照抄。續一百七十九以字串樣式粗掃說「另 11 個」,
+  本次改用 AST 規則重掃,實際是 15 個:ev_s130 / s132 / s137 / s160 / s161 / s163 / s164 / s165 / s166 / s167 / s168(兩處)/ s169 / s170 / s172 / s175
+  (s160 / s163 / s165 / s170 是舊樣式漏掉的;s168 第二處 `markers()` 也是)。
+- 每個:`run_all` IDENTICAL;舊變異裡打在原解析字串上的改成新寫法的同義變異(s137 兩個、s169 一個;s163 的「edx 取成 eax」由新的「R 的 edx 取 eax」取代),每個另加 2 .. 4 個解析變異。
+  加解析變異時抓到原本缺的判準:ev_s130 / s132 收尾前要有 k = 1 的圈開頭、ev_s164 兩種相鄰配對都要看得到、ev_s168 窗內 E 筆數 > 0、
+  ev_s175 `services()` 要找得到 E / R、ev_s160 has_key 回傳值集合 = {1}、ev_s161 delay 不以 A 離開(原本是 IndexError / ZeroDivisionError / KeyError,
+  或在本資料上等價)。等價變異(s161「A 也當成 R」、s172「A 的入口」、s169「R 的入口」、s180b「最外層 dialog」)換成會影響輸出的變異或前提翻轉。
+- ev_s163 的末行(teardown 截斷的 A)calllog_segments 不解,另外只取種類 / 序號 / 入口 / i 接在最後;ev_s169 (A) 的 fflush 位置要位元組位移,仍掃原文。
+- **閘門**:`assert_census.py` 靜態模式加 `PRIVATE_PARSE` / `STALE_ALLOW`(AST:對 E / R / A 前綴的 startswith、以 E / R / A 開頭的 regex、
+  左邊是下標的 in E / R / A 元組);允許清單 `PARSE_ALLOW` 只有拿原文行數與解析結果互相核對、或要位元組位置的 12 行,逐行寫理由。
+  AGENTS.md 已規定改產生器時跑 `assert_census.py`,不用改流程。`--selftest` 加第 7 題(三種寫法、解析後的種類過濾不算、允許清單三種判定)。
+
+**本檔更正**:續一百七十九仍留三項各加一句指向本節(「另 11 個」改記為實際 15 個)。doc36:「107 處」改 111 並註明來源;
+UI 池 index 表重寫成六欄(前四欄由 `ev_s180.py` 核對),加更正段與續一百八十(二)段。
+
+**驗證**(證據檔由 DOSBox-X 呼叫紀錄、FD2.EXE、FDTXT 重算):變動的 20 個產生器 `run_all` 20 / 20 IDENTICAL(全部檔案落地後重跑);變異測試 mut_s130 26 / s132 22 / s137 41 / s158 26 / s160 36 / s161 35 /
+s163 29 / s164 30 / s165 34 / s166 22 / s167 27 / s168 24 / s169 25 / s170 40 / s172 29 / s175 23 / s180 17 / s180b 11 全部被殺(先跑「目標字串恰好出現一次」);
+`assert_census --update --executed` 20 個產生器,靜態 76 / 76、私有解析 9 / 9、`--selftest` 通過(ev_s137 第 368 行沒執行到,與 HEAD 基準相同);
+`sweep_literals` ev_s180 首掃 3 → ESCAPED 0、ev_s180b 首掃 3 → ESCAPED 0;`build_manifest.py` ev_s180 14 筆、ev_s180b 輸入登錄。tools/ 沒改。
+
+**仍留**:
+- sfx_09 / 0xa / 0xb 的單位索引對到哪個角色(要當時的單位表);index 1 / 5 / 6 / 8 / 0xc 的語意(5 / 6 兩次實機說法不一致)。
+- 打字音 981 次、dialog 記滿 200 次之後的部分對不到句子(要不設上限的紀錄,屬實機)。
+- 續一百七十五 lc163a / lc167a 兩項中斷號維持 INFERRED + 獨立佐證(DOSBox-X 呼叫紀錄);要直接看到需開 I 紀錄重錄(實機,由使用者決定)。
+- ev_s158 (C) BIOS tick 段 `sweep_literals` ESCAPED 11(round 位數、0.6 ms 窗、top6 切片;本次沒動那段)。
+- `docs/data/ui_sfx_index_semantics.json` 的 index 2「tick」與 index 10「撤回」兩處舊說法沒有改檔(doc36 已註明);`docs/data/sfx_index_callers.json`(65 / 81)同樣是舊表。

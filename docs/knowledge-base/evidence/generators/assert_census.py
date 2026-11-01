@@ -7,6 +7,8 @@
     動態    --executed:在暫存目錄重算產生器,每個 assert 前插一個計數呼叫(AST 改寫,行號不變),
             記錄哪些 assert 從來沒執行到 —— 沒執行到的 assert 不是檢查。與基準的 executed 比,變少就 FAIL。
             輸入不符(MISSING_INPUT)的產生器記為 NOT TESTED,不算 FAIL 也不算 PASS。
+    私有解析 靜態檢查同時找「自己判斷呼叫紀錄 E / R / A 行」的地方(續一百八十;見 PARSE_ALLOW 上方的說明):
+            不在允許清單的 PRIVATE_PARSE、允許清單的行已不在原文 STALE_ALLOW 都 FAIL。
 
 用法:
     python assert_census.py                    靜態檢查(秒級;提交前跑)
@@ -20,6 +22,7 @@ import argparse
 import ast
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -34,6 +37,82 @@ HIT_FN = "__assert_census_hit__"
 def assert_lines(src: str) -> list[int]:
     """原始碼裡每個 assert 敘述的行號(由小到大)。"""
     return sorted(n.lineno for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Assert))
+
+
+# ================= 私有呼叫紀錄解析(續一百八十)=================
+# 呼叫紀錄的 E / R / A 一律由 tools/calllog_segments.py 解析(parse(calls=True) / _read)。續一百八十之前 17 個產生器各自切欄位,
+# 起因是共用解析器到續一百七十七才收 E / R / A;沒有閘門,新產生器照抄舊的寫法。這裡以 AST 找「自己判斷一行是不是 E / R / A」的地方:
+# 對 E / R / A 前綴字串的 startswith、以 E / R / A 開頭的 regex、左邊是下標(p[0] / ln[:2])而右邊是 E / R / A 元組的 in 比較。
+# 允許的只有拿原文和解析結果互相核對、或必須用原文位元組位置的行,逐行列理由;該行改了或不見了就是 STALE_ALLOW。
+REC_PFX = {"E ", "R ", "A "}
+_REC_RX = re.compile(r"^\^(?:[ERA] |\(\[[ERA]+\]\)|\([ERA](?:\|[ERA])+\))")
+PARSE_ALLOW: dict[str, dict[str, str]] = {
+    "ev_s132": {'lines = [ln for ln in text if ln.startswith("E ")]      # 原文:(2) 要數補零前後的 EIP 字串':
+                "續一百三十二的 grep 錯誤要看原文裡補零前後的 EIP 字串"},
+    "ev_s137": {'n_e = sum(ln.startswith("E ") for ln in (LOGS / name).read_text(encoding="utf-8").splitlines())':
+                "原文 E 行數 = 解析出的筆數(核對)"},
+    "ev_s158": {'assert len(re.findall(r"^E ", _cl, re.M)) == 0': "過濾後的紀錄原文沒有 E 行(核對過濾)",
+                '_n_e = len(re.findall(r"^E ", _cl, re.M))': "同上,寫進證據的計數"},
+    "ev_s161": {'assert not _LOG.tail_cut and len(_LOG.calls) == sum(ln.startswith("E ") for ln in _lines)':
+                "原文 E 行數 = 解析出的筆數(核對)",
+                'assert sum(r.kind == "R" for r in _LOG.rets.values()) == sum(ln.startswith("R ") for ln in _lines)':
+                "原文 R 行數 = 解析出的 R 筆數(核對)"},
+    "ev_s164": {'assert sum(1 for ln in _text.splitlines() if ln[:2] in ("E ", "R ", "A ")) == len(REC) + 1   # 只少截斷的那一筆':
+                "原文 E / R / A 行數 = 解析出的筆數 + 截斷的一筆(核對)"},
+    "ev_s166": {'_lines = sum(1 for ln in _raw.decode("ascii").splitlines() if ln[:2] in ("E ", "R ", "A "))': "同 ev_s164"},
+    "ev_s167": {'_lines = sum(1 for ln in _raw.decode("ascii").splitlines() if ln[:2] in ("E ", "R ", "A "))': "同 ev_s164"},
+    "ev_s169": {'flush += [m.end() for m in re.finditer(rb"^E (\\d+) [^\\n]*\\n", raw, re.M) if int(m.group(1)) % 1024 == 0]':
+                "要 E 行在檔案裡的位元組位置(fflush 點);calllog_segments 只給行號"},
+    "ev_s173": {'SEQ_A = [" ".join(ln.split()[:4]) for ln in TEXT[_li + 1:_lj] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]':
+                "兩段紀錄的原文前四欄序列互相比對(不取欄位值)",
+                'SEQ_B = [" ".join(ln.split()[:4]) for ln in TEXT[_lj + 1:_lk] if ln[:2] in ("E ", "O ", "N ", "I ", "K ")]': "同上"},
+}
+
+
+def _sval(n: ast.AST) -> str | None:
+    if isinstance(n, ast.Constant) and isinstance(n.value, (str, bytes)):
+        return n.value.decode("latin1") if isinstance(n.value, bytes) else n.value
+    return None
+
+
+def private_parse_lines(src: str) -> list[int]:
+    """自己判斷呼叫紀錄 E / R / A 行的位置(行號,由小到大、不重複)。"""
+    out = set()
+    for n in ast.walk(ast.parse(src)):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.args:
+            v = _sval(n.args[0])
+            if n.func.attr == "startswith" and v in REC_PFX:
+                out.add(n.lineno)
+            elif n.func.attr in ("compile", "match", "search", "finditer", "findall", "fullmatch") and v and _REC_RX.match(v):
+                out.add(n.lineno)
+        elif isinstance(n, ast.Compare) and isinstance(n.left, ast.Subscript) \
+                and any(isinstance(o, (ast.In, ast.NotIn)) for o in n.ops):
+            for c in n.comparators:
+                vals = {_sval(e) for e in c.elts} if isinstance(c, ast.Tuple) else set()
+                if vals & REC_PFX or ({"E", "R"} <= vals and vals <= {"E", "R", "A"}):
+                    out.add(n.lineno)
+    return sorted(out)
+
+
+def compare_parse(names: list[str], gen_dir: Path = GEN_DIR,
+                  allow: dict[str, dict[str, str]] | None = None) -> list[tuple[str, str, str]]:
+    """有私有解析的產生器各一列:全在允許清單 OK;否則 PRIVATE_PARSE;允許清單有、原文沒有的 STALE_ALLOW。"""
+    allow = PARSE_ALLOW if allow is None else allow
+    rows = []
+    for g in names:
+        lines = (gen_dir / f"{g}.py").read_text(encoding="utf-8").splitlines()
+        hit = {ln: lines[ln - 1].strip() for ln in private_parse_lines("\n".join(lines))}
+        ok = allow.get(g, {})
+        bad = [f"第 {ln} 行 {t[:80]}" for ln, t in hit.items() if t not in ok]
+        stale = [t[:80] for t in ok if t not in hit.values()]
+        if bad:
+            rows.append((g, "PRIVATE_PARSE", "呼叫紀錄改用 calllog_segments 解析:" + ";".join(bad)))
+        if stale:
+            rows.append((g, "STALE_ALLOW", "允許清單的行不見了或改了:" + ";".join(stale)))
+        if hit and not bad and not stale:
+            rows.append((g, "OK", f"私有解析 {len(hit)} 行,都在允許清單"))
+    rows += [(g, "STALE_ALLOW", "允許清單有、這次沒檢查到這個產生器") for g in allow if g not in names and names == generators()]
+    return rows
 
 
 def generators() -> list[str]:
@@ -240,12 +319,32 @@ def selftest() -> int:
         v = compare_static({gen: n_cut}, {gen: {"asserts": len(lines)}})[0][1]
         if n_cut != len(lines) - 1 or v != "SHRANK":
             fails.append(f"刪一個 assert:計數 {n_cut}(原 {len(lines)}),判定 {v}")
+    # 7. 私有呼叫紀錄解析:startswith / regex / 下標 in 元組三種都抓;解析後的種類過濾(左邊不是下標)不算;
+    #    允許清單逐行比原文:全允許 OK、少允許 PRIVATE_PARSE、允許的行不在原文 STALE_ALLOW
+    src = ('for ln in t:\n    if ln.startswith("E "):\n        pass\n'
+           'm = re.compile(r"^([ERA]) (\\d+)")\n'
+           'if p[0] not in ("E", "R"):\n    pass\n'
+           'if kind not in ("E", "R"):\n    pass\n'
+           'n = sum(ln[:2] in ("E ", "R ") for ln in t)\n')
+    if private_parse_lines(src) != [2, 4, 5, 9]:
+        fails.append(f"私有解析行號 {private_parse_lines(src)}")
+    with tempfile.TemporaryDirectory(prefix="census_parse_") as tdn:
+        td = Path(tdn)
+        (td / "ev_x.py").write_text(src, encoding="utf-8")
+        lines = src.splitlines()
+        full = {lines[k - 1].strip(): "t" for k in (2, 4, 5, 9)}
+        cases = {"OK": full, "PRIVATE_PARSE": dict(list(full.items())[1:]), "STALE_ALLOW": {**full, "x = 1": "t"}}
+        for want, al in cases.items():
+            got = [v for _g, v, _m in compare_parse(["ev_x"], td, {"ev_x": al})]
+            if got != [want]:
+                fails.append(f"允許清單 {want}:{got}")
     if fails:
         print("SELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("--selftest passed(靜態 6 種判定 + 巢狀計數 + 動態執行到 / 沒執行到 + 失敗時仍記錄 + 改寫不改輸出 + 刪 assert 抓得到)")
+    print("--selftest passed(靜態 6 種判定 + 巢狀計數 + 動態執行到 / 沒執行到 + 失敗時仍記錄 + 改寫不改輸出 + 刪 assert 抓得到"
+          " + 私有呼叫紀錄解析 3 種寫法 / 允許清單 3 種判定)")
     return 0
 
 
@@ -276,6 +375,7 @@ def main(argv: list[str]) -> int:
         print(f"基準已更新:{BASELINE.name}({len(names)} 個產生器)")
         return 0
     rc = report(compare_static(counts, {g: base[g] for g in names if g in base} if a.names else base), ("OK",))
+    rc |= report(compare_parse(names), ("OK",))
     if a.executed:
         rc |= report(compare_executed(ex, base), ("OK", "NOT TESTED"))
     return rc

@@ -8,8 +8,8 @@ from _mutrun import run_mutants
 
 MUTANTS = [
     # (A) 鏡頭與單位位置
-    ("地形索引取 ecx", '"ebx": int(t[7], 16)', '"ebx": int(t[8], 16)'),
-    ("欄取 edi", '"ebp": int(t[12], 16)', '"ebp": int(t[11], 16)'),
+    ("地形索引取 ecx", '"ebx": c.regs["ebx"]', '"ebx": c.regs["ecx"]'),
+    ("欄取 edi", '"ebp": c.regs["ebp"]', '"ebp": c.regs["edi"]'),
     ("只搜第 0 張地圖", "for _n in range(33):", "for _n in range(1):"),
     ("視窗 stride 400", "CELL, PITCH, UNIT_UP = 24, 0x1C8, 6", "CELL, PITCH, UNIT_UP = 24, 0x190, 6"),
     ("單位圖不上移", "CELL, PITCH, UNIT_UP = 24, 0x1C8, 6", "CELL, PITCH, UNIT_UP = 24, 0x1C8, 0"),
@@ -36,6 +36,11 @@ MUTANTS = [
     ("索爾 HP 預期 999", "assert SOL_AFTER == (200, 999) and MP11 == 6", "assert SOL_AFTER == (999, 999) and MP11 == 6"),
     ("圓形平均原點錯", "_mu = math.atan2(_s, _c) / (2 * math.pi) * GRID_MS", "_mu = math.atan2(_s, _c) / (3 * math.pi) * GRID_MS"),
     ("#12 .. #16 預期有施法", "assert _mp_others == [0, 0, 0, 0, 0]", "assert _mp_others == [20, 15, 60, 42, 30]"),
+    # 續一百七十九:E / R 改由 calllog_segments 解析
+    ("E / R 的 i / n 對調", 'return {} if ic is None else {k: float(v) for k, v in zip("int", ic)}',
+     'return {} if ic is None else {k: float(v) for k, v in zip("nit", ic)}'),
+    ("E / R 的 i / t 對調",'return {} if ic is None else {k: float(v) for k, v in zip("int", ic)}',
+     'return {} if ic is None else {k: float(v) for k, v in zip("tni", ic)}'),
 ]
 
 if __name__ == "__main__":

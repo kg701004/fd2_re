@@ -31,6 +31,9 @@ MUTANTS = [
      'assert not (vx - 8 <= hud["D-F"]["bbox"][0] and hud["D-F"]["bbox"][1] <= vx + CELL - 1 + 8), cx'),
     ("D-E 預期有差異", 'assert hud["D-E"] == {"in_cell_10_20": 0,', 'assert hud["D-E"] != {"in_cell_10_20": 0,'),
     ("(10, 20) 預期有單位", 'assert (9, 20) not in pos and (10, 20) not in pos', 'assert (9, 20) in pos or (10, 20) in pos'),
+    # E 紀錄改由 calllog_segments 解析(續一百八十)
+    ("E 的 eax 取 ecx", 'recs = [(c.seq, c.eip, c.regs["eax"], c.regs["ebx"])', 'recs = [(c.seq, c.eip, c.regs["ecx"], c.regs["ebx"])'),
+    ("E 的 ebx 取 esi", 'recs = [(c.seq, c.eip, c.regs["eax"], c.regs["ebx"])', 'recs = [(c.seq, c.eip, c.regs["eax"], c.regs["esi"])'),
 ]
 
 if __name__ == "__main__":

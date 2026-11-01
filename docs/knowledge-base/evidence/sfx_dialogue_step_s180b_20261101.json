@@ -1,0 +1,379 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s180b.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "upstream": {
+  "calllogs": "docs/knowledge-base/evidence/dig_word_order_sfx_s178_20261101.json",
+  "fdtxt": "extracted/raw/FDTXT",
+  "names": "docs/data/function_names.json"
+ },
+ "typewriter": {
+  "per_log": {
+   "cl1": {
+    "typewriter_calls": 39,
+    "attributed": 39,
+    "dialog_calls": 63,
+    "dialog_capped": false
+   },
+   "cl2": {
+    "typewriter_calls": 200,
+    "attributed": 6,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl3": {
+    "typewriter_calls": 200,
+    "attributed": 6,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl4": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl5": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl6": {
+    "typewriter_calls": 200,
+    "attributed": 0,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl7": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl9": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 82,
+    "dialog_capped": false
+   },
+   "cl11": {
+    "typewriter_calls": 200,
+    "attributed": 7,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl12": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl13": {
+    "typewriter_calls": 200,
+    "attributed": 0,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   },
+   "cl14": {
+    "typewriter_calls": 200,
+    "attributed": 200,
+    "dialog_calls": 200,
+    "dialog_capped": true
+   }
+  },
+  "calls": 2239,
+  "attributed": 1258,
+  "dialogue": [
+   {
+    "fdtxt": 2,
+    "string_index": 2,
+    "typewriter_calls": 417,
+    "boxes": 6,
+    "first_speaker": "unit#5(執行期決定)",
+    "first_line": "啊！強盜來了！快逃啊！"
+   },
+   {
+    "fdtxt": 2,
+    "string_index": 0,
+    "typewriter_calls": 197,
+    "boxes": 1,
+    "first_speaker": "亞雷斯",
+    "first_line": "我們已經抵達羅德鎮了。"
+   },
+   {
+    "fdtxt": 2,
+    "string_index": 1,
+    "typewriter_calls": 158,
+    "boxes": 3,
+    "first_speaker": "索爾",
+    "first_line": "亞雷斯，我看你的情報有誤"
+   },
+   {
+    "fdtxt": 33,
+    "string_index": 1,
+    "typewriter_calls": 140,
+    "boxes": 13,
+    "first_speaker": "unit#0(執行期決定)",
+    "first_line": "索爾，時間過得真快，你已"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 2,
+    "typewriter_calls": 88,
+    "boxes": 4,
+    "first_speaker": "unit#7(執行期決定)",
+    "first_line": "鐵諾，總算追上你了吧！"
+   },
+   {
+    "fdtxt": 33,
+    "string_index": 0,
+    "typewriter_calls": 60,
+    "boxes": 6,
+    "first_speaker": "索爾",
+    "first_line": "兒臣索爾，晉見父王陛下。"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 3,
+    "typewriter_calls": 47,
+    "boxes": 7,
+    "first_speaker": "希莉亞",
+    "first_line": "唉呀！看，橋上有人準備要"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 513,
+    "typewriter_calls": 42,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要進入戰場嗎？"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 0,
+    "typewriter_calls": 41,
+    "boxes": 2,
+    "first_speaker": "希莉亞",
+    "first_line": "過了這座橋，就快到以醫術"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 1,
+    "typewriter_calls": 17,
+    "boxes": 1,
+    "first_speaker": "鐵諾",
+    "first_line": "‥呼，這回大概是追不上了"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 420,
+    "typewriter_calls": 14,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "好的，"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 585,
+    "typewriter_calls": 12,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "有什麼事嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 419,
+    "typewriter_calls": 11,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要結束本回合的行動嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 415,
+    "typewriter_calls": 7,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要離開戰場嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 416,
+    "typewriter_calls": 7,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "那麼請休息吧！"
+   }
+  ]
+ },
+ "step": {
+  "rows": [
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 0,
+    "calls": 378
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 2,
+    "calls": 164
+   },
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 11,
+    "calls": 162
+   },
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 5,
+    "calls": 108
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 5,
+    "calls": 72
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 6,
+    "calls": 72
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 8,
+    "calls": 72
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 9,
+    "calls": 72
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 10,
+    "calls": 56
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 7,
+    "calls": 48
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 7,
+    "calls": 48
+   },
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 2,
+    "calls": 36
+   },
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 6,
+    "calls": 36
+   },
+   {
+    "caller": "end_player_phase_if_all_acted",
+    "unit": 7,
+    "calls": 30
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 14,
+    "calls": 30
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 15,
+    "calls": 30
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 16,
+    "calls": 30
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 18,
+    "calls": 30
+   },
+   {
+    "caller": "step_anim_down",
+    "unit": 8,
+    "calls": 24
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 5,
+    "calls": 24
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 9,
+    "calls": 24
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 13,
+    "calls": 24
+   },
+   {
+    "caller": "step_anim_down",
+    "unit": 17,
+    "calls": 18
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 17,
+    "calls": 12
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 19,
+    "calls": 8
+   },
+   {
+    "caller": "step_anim_down",
+    "unit": 38,
+    "calls": 6
+   },
+   {
+    "caller": "step_anim_left",
+    "unit": 13,
+    "calls": 6
+   },
+   {
+    "caller": "step_anim_right",
+    "unit": 0,
+    "calls": 6
+   }
+  ],
+  "units": [
+   0,
+   2,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   38
+  ],
+  "callers": [
+   "end_player_phase_if_all_acted",
+   "step_anim_down",
+   "step_anim_left",
+   "step_anim_right"
+  ]
+ },
+ "conclusion": "cl1 .. cl14 的 2239 次打字音(index 2)有 1258 次歸到確切的字串,共 15 句;其餘都在 dialog 記滿 200 次之後。腳步音(index 9 / 0xa / 0xb)來自 4 個呼叫端函式、17 個單位索引;單位索引對到哪個角色要看當時的單位表,本證據沒有對。"
+}

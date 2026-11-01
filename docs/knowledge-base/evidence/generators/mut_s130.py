@@ -35,6 +35,9 @@ MUTANTS = [
     ("對照 1 只有一項不符", '== ["推進 ⇔ 畫 k + 1", "至少一圈畫 k + 1"], ctl_k', '== ["推進 ⇔ 畫 k + 1"], ctl_k'),
     ("對照 2 多一項不符", '== ["畫的階 ∈ {k, k + 1}", "推進 ⇔ 畫 k + 1"], ctl_shift',
      '== ["畫的階 ∈ {k, k + 1}", "推進 ⇔ 畫 k + 1", "至少一圈畫 k + 1"], ctl_shift'),
+    # E 紀錄改由 calllog_segments 解析(續一百八十)
+    ("E 的 eax 取 ecx", '(c.seq, c.eip, c.regs["eax"], c.regs["ebx"], c.code.hex())', '(c.seq, c.eip, c.regs["ecx"], c.regs["ebx"], c.code.hex())'),
+    ("E 的 ebx 取 esi", '(c.seq, c.eip, c.regs["eax"], c.regs["ebx"], c.code.hex())', '(c.seq, c.eip, c.regs["eax"], c.regs["esi"], c.code.hex())'),
 ]
 
 if __name__ == "__main__":

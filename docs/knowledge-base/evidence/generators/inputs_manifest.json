@@ -32399,6 +32399,359 @@
     ]
    }
   },
+  "ev_s179": {
+   "outputs": [
+    "sfx_triggers_irq_s179_20261101.json"
+   ],
+   "inputs": {
+    ".wsl_build/cl11_CALLLOG.TXT": [
+     26220530,
+     "8fc538732752ab83aec20fa6db05c0e356f4d8a25365e6d14dbfda270aefee12"
+    ],
+    ".wsl_build/cl12_CALLLOG.TXT": [
+     27643521,
+     "6cd6c4e34c9ac211e9a8e95cf72f815dce333f62286376db6bbd8a8364f02df4"
+    ],
+    ".wsl_build/cl13_CALLLOG.TXT": [
+     30523634,
+     "9a632a6cd7c47fdd7a99f380e639793e0c03a9eaaa0db69d174440ce90ada42f"
+    ],
+    ".wsl_build/cl14_CALLLOG.TXT": [
+     31741843,
+     "0e6405ab2c151c569b3d8982f6e594225e3323c3ff4716ce4fa40fd4008bca90"
+    ],
+    ".wsl_build/cl1_CALLLOG.TXT": [
+     28577045,
+     "f79922cb3a6055f98da61dcbc141e480e942c9988957acf2f579fdd4826bea14"
+    ],
+    ".wsl_build/cl2_CALLLOG.TXT": [
+     37166651,
+     "0996afe72f0af3c20686ac0c3721ca34729af60739c37ecd731cef883eac13c9"
+    ],
+    ".wsl_build/cl3_CALLLOG.TXT": [
+     37821438,
+     "177bc70909898a697fc4e470eaf23aeae71fd7e0656ae809e1885c3c9cdefd9f"
+    ],
+    ".wsl_build/cl4_CALLLOG.TXT": [
+     30728401,
+     "34bdbc1696417692764b59848e05f41404b4c2323881edcbb17b59052ccee05f"
+    ],
+    ".wsl_build/cl5_CALLLOG.TXT": [
+     37508385,
+     "b1737ec66a733a5e829409024645431071bf7e8db39aacf969e6d2cb2772c999"
+    ],
+    ".wsl_build/cl6_CALLLOG.TXT": [
+     28570710,
+     "21f33c497373b408266bad044e0fc02bec6ec77bd2fcb2809055026c78e80195"
+    ],
+    ".wsl_build/cl7_CALLLOG.TXT": [
+     30105252,
+     "510a39f04fae20e160549994eaf5a88b6a1169bcfd1997e84f706e0d400d92d9"
+    ],
+    ".wsl_build/cl9_CALLLOG.TXT": [
+     24308762,
+     "cb419b283cc749be37c9dca374fb6dae0374b72712fcfb1ae16fbcc5601c713d"
+    ],
+    ".wsl_build/lc163_live/lc163a_CALLLOG.TXT": [
+     5021889,
+     "622aa98c7bcc95bf10b9c20d5e2a4f93b24f6896d835dcbd7bbd040569bf26a9"
+    ],
+    ".wsl_build/lc167_live/frames_mtime.json": [
+     1878,
+     "3be2368ebe2f19a191cdc7077fad28d45c49022c69ba3adbdc4398dcb9a1690a"
+    ],
+    ".wsl_build/lc167_live/lc167a_finish.json": [
+     347,
+     "535640c94f598363bdf8ae9faacd67403cc66d97f01fdf7d8f79ad827178cfa0"
+    ],
+    ".wsl_build/lc167_live/lc167a_steps.jsonl": [
+     707,
+     "152cd87b2ffe6b33edf519e6ba7e5c0f19d80975446b20c8c10e90214626ed6c"
+    ],
+    ".wsl_build/lc173_live/lc173a_CALLLOG.TXT": [
+     69037479,
+     "e12e1c8c5c961cc2fa8416e618022abb3a53ca36053b96e37c4761e9bd6e6fd2"
+    ],
+    ".wsl_build/lc174_live/lc174a_CALLLOG.TXT": [
+     95407525,
+     "f3a10d6eb0f15625cccf5815c507a7dc2abe792306fa506d4b7fba9b5e7d7af5"
+    ],
+    ".wsl_build/lc174_live/lc174b_CALLLOG.TXT": [
+     83215885,
+     "f1a88a963d9b13686962934ccd7b68a211c53251e5f22321f308b0aeeb810dd5"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDOTHER.DAT": [
+     3382481,
+     "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
+    ]
+   }
+  },
+  "ev_s180": {
+   "outputs": [
+    "sfx_ui_pool_table_s180_20261101.json"
+   ],
+   "inputs": {
+    ".wsl_build/cl11_CALLLOG.TXT": [
+     26220530,
+     "8fc538732752ab83aec20fa6db05c0e356f4d8a25365e6d14dbfda270aefee12"
+    ],
+    ".wsl_build/cl12_CALLLOG.TXT": [
+     27643521,
+     "6cd6c4e34c9ac211e9a8e95cf72f815dce333f62286376db6bbd8a8364f02df4"
+    ],
+    ".wsl_build/cl13_CALLLOG.TXT": [
+     30523634,
+     "9a632a6cd7c47fdd7a99f380e639793e0c03a9eaaa0db69d174440ce90ada42f"
+    ],
+    ".wsl_build/cl14_CALLLOG.TXT": [
+     31741843,
+     "0e6405ab2c151c569b3d8982f6e594225e3323c3ff4716ce4fa40fd4008bca90"
+    ],
+    ".wsl_build/cl1_CALLLOG.TXT": [
+     28577045,
+     "f79922cb3a6055f98da61dcbc141e480e942c9988957acf2f579fdd4826bea14"
+    ],
+    ".wsl_build/cl2_CALLLOG.TXT": [
+     37166651,
+     "0996afe72f0af3c20686ac0c3721ca34729af60739c37ecd731cef883eac13c9"
+    ],
+    ".wsl_build/cl3_CALLLOG.TXT": [
+     37821438,
+     "177bc70909898a697fc4e470eaf23aeae71fd7e0656ae809e1885c3c9cdefd9f"
+    ],
+    ".wsl_build/cl4_CALLLOG.TXT": [
+     30728401,
+     "34bdbc1696417692764b59848e05f41404b4c2323881edcbb17b59052ccee05f"
+    ],
+    ".wsl_build/cl5_CALLLOG.TXT": [
+     37508385,
+     "b1737ec66a733a5e829409024645431071bf7e8db39aacf969e6d2cb2772c999"
+    ],
+    ".wsl_build/cl6_CALLLOG.TXT": [
+     28570710,
+     "21f33c497373b408266bad044e0fc02bec6ec77bd2fcb2809055026c78e80195"
+    ],
+    ".wsl_build/cl7_CALLLOG.TXT": [
+     30105252,
+     "510a39f04fae20e160549994eaf5a88b6a1169bcfd1997e84f706e0d400d92d9"
+    ],
+    ".wsl_build/cl9_CALLLOG.TXT": [
+     24308762,
+     "cb419b283cc749be37c9dca374fb6dae0374b72712fcfb1ae16fbcc5601c713d"
+    ],
+    "docs/knowledge-base/evidence/sfx_triggers_irq_s179_20261101.json": [
+     9565,
+     "ffeb954f2fc03cd8e67ffc1805bc8bae2d6216a9e20ea4927a46c71bbece5e6f"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
+  "ev_s180b": {
+   "outputs": [
+    "sfx_dialogue_step_s180b_20261101.json"
+   ],
+   "inputs": {
+    ".wsl_build/cl11_CALLLOG.TXT": [
+     26220530,
+     "8fc538732752ab83aec20fa6db05c0e356f4d8a25365e6d14dbfda270aefee12"
+    ],
+    ".wsl_build/cl12_CALLLOG.TXT": [
+     27643521,
+     "6cd6c4e34c9ac211e9a8e95cf72f815dce333f62286376db6bbd8a8364f02df4"
+    ],
+    ".wsl_build/cl13_CALLLOG.TXT": [
+     30523634,
+     "9a632a6cd7c47fdd7a99f380e639793e0c03a9eaaa0db69d174440ce90ada42f"
+    ],
+    ".wsl_build/cl14_CALLLOG.TXT": [
+     31741843,
+     "0e6405ab2c151c569b3d8982f6e594225e3323c3ff4716ce4fa40fd4008bca90"
+    ],
+    ".wsl_build/cl1_CALLLOG.TXT": [
+     28577045,
+     "f79922cb3a6055f98da61dcbc141e480e942c9988957acf2f579fdd4826bea14"
+    ],
+    ".wsl_build/cl2_CALLLOG.TXT": [
+     37166651,
+     "0996afe72f0af3c20686ac0c3721ca34729af60739c37ecd731cef883eac13c9"
+    ],
+    ".wsl_build/cl3_CALLLOG.TXT": [
+     37821438,
+     "177bc70909898a697fc4e470eaf23aeae71fd7e0656ae809e1885c3c9cdefd9f"
+    ],
+    ".wsl_build/cl4_CALLLOG.TXT": [
+     30728401,
+     "34bdbc1696417692764b59848e05f41404b4c2323881edcbb17b59052ccee05f"
+    ],
+    ".wsl_build/cl5_CALLLOG.TXT": [
+     37508385,
+     "b1737ec66a733a5e829409024645431071bf7e8db39aacf969e6d2cb2772c999"
+    ],
+    ".wsl_build/cl6_CALLLOG.TXT": [
+     28570710,
+     "21f33c497373b408266bad044e0fc02bec6ec77bd2fcb2809055026c78e80195"
+    ],
+    ".wsl_build/cl7_CALLLOG.TXT": [
+     30105252,
+     "510a39f04fae20e160549994eaf5a88b6a1169bcfd1997e84f706e0d400d92d9"
+    ],
+    ".wsl_build/cl9_CALLLOG.TXT": [
+     24308762,
+     "cb419b283cc749be37c9dca374fb6dae0374b72712fcfb1ae16fbcc5601c713d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_000.bin": [
+     7636,
+     "7014ada401b9f493ca8773bb68ed90d8dafd583fb1230494001f0a5d48b64ebe"
+    ],
+    "extracted/raw/FDTXT/FDTXT_001.bin": [
+     4360,
+     "057c67c9c3860832da7dbc10434a2b91c419d1a596d12e177190ced58d80d984"
+    ],
+    "extracted/raw/FDTXT/FDTXT_002.bin": [
+     3498,
+     "922a58438c15996fa04d27f2fcb48cc7803cb523b5b3bdecfb6bfe5bce780088"
+    ],
+    "extracted/raw/FDTXT/FDTXT_003.bin": [
+     2458,
+     "fcc713f90843aecd410464ee8ea1c5710259e5dd317a57f008b47f8a3089899c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_004.bin": [
+     864,
+     "e983e547cc4c65ffcdf9c3e29a313f7540dd80daa2f68fd44fcd73f6b2fb64d7"
+    ],
+    "extracted/raw/FDTXT/FDTXT_005.bin": [
+     3106,
+     "fe6c29216563b8ac47b484804bac7cfbc7b3c9c7bcd8a44b7f9efd3f3bd033b0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_006.bin": [
+     3208,
+     "65c3b435d22315dfc114735c089094172aa6e4250ec2ae62380fb5a8a1a644c9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_007.bin": [
+     2022,
+     "da217a473a637bc3a2b286476d34b4288f7c93accd2355fe9f51661278422971"
+    ],
+    "extracted/raw/FDTXT/FDTXT_008.bin": [
+     1896,
+     "24e392c3e8dd697a5650b15ac99512de690444c3af92f5a7251c9be25267ae5d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_009.bin": [
+     2412,
+     "503d6e6ed48ada118a56cd2c7ec1d50d0ea15eda619cd9f8ce946716c9a4e256"
+    ],
+    "extracted/raw/FDTXT/FDTXT_010.bin": [
+     4494,
+     "b276204f255760ae4e2a4e195d2c3882332de8b24aafd160e05c9e8a9c65c376"
+    ],
+    "extracted/raw/FDTXT/FDTXT_011.bin": [
+     2448,
+     "bab2f3531d2b00e6f452ce87e5c7b9a3c9584798eb0065448bc75b68368d74f9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_012.bin": [
+     1550,
+     "bdc85a888f1cf44080cbeba65a1a18dff89783edbb27efb805da28f0d76cc1be"
+    ],
+    "extracted/raw/FDTXT/FDTXT_013.bin": [
+     2360,
+     "3423dbe32308691ea449eb57b79cd5cc48c252b0f22e996b02b9d8b72f937724"
+    ],
+    "extracted/raw/FDTXT/FDTXT_014.bin": [
+     1866,
+     "c592d13d828e3fa318d9f6108cf1b844e944b10d2012b49cc2e99a53b0ab3022"
+    ],
+    "extracted/raw/FDTXT/FDTXT_015.bin": [
+     4774,
+     "b4263a1940befb84d2abdd108f15319baf484499d1aab9fd4b4fb6bab332e53d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_016.bin": [
+     3258,
+     "4f0c05492290ec10a5ab6e70a3fad1d6e4e304f3de6561142908584a5268a66c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_017.bin": [
+     4434,
+     "c5b5b79040415085df55ca85f42065c73de30d38b17b7afd6653d9897d456c23"
+    ],
+    "extracted/raw/FDTXT/FDTXT_018.bin": [
+     4094,
+     "9f949d365c8459a912281ba64476aac4377db87f7091c57ddfffcb433cdc4e92"
+    ],
+    "extracted/raw/FDTXT/FDTXT_019.bin": [
+     1910,
+     "c5fdbe9345bb444bc156cd60282b6bb88f28bbe214660fc9cf8adf4527c42a6d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_020.bin": [
+     3836,
+     "d91efccabfdea4c79e07a590c713fffaa8f8bcdf9e7fd9a0e0cb1cfd28cdd6fb"
+    ],
+    "extracted/raw/FDTXT/FDTXT_021.bin": [
+     4660,
+     "6c099c2b4adb727bb026820b83ca9121810a914b16f99fea549a92df623fe2b8"
+    ],
+    "extracted/raw/FDTXT/FDTXT_022.bin": [
+     2742,
+     "10714540d6f7d207b6bbfcb25f3459819339d7b4153b12c65dc492e15941107a"
+    ],
+    "extracted/raw/FDTXT/FDTXT_023.bin": [
+     7168,
+     "c3ffb67922647a21a31d6164d5b68aa7bc011b4d9e3e57cbe7052eb3b9e55add"
+    ],
+    "extracted/raw/FDTXT/FDTXT_024.bin": [
+     1722,
+     "516876a704aa3179b377522f3a9e250f7dcc3efb0e5c5e86eed91d38c767f4d9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_025.bin": [
+     3350,
+     "82f6ef402619fd0299a136a1023aa92d9dc8cf93cc706132f8025c06a692b8b2"
+    ],
+    "extracted/raw/FDTXT/FDTXT_026.bin": [
+     5004,
+     "6a8a5c5e61227ccf58aa35a1731e2d2ce831f7f307c8e77dead639c5bc971a55"
+    ],
+    "extracted/raw/FDTXT/FDTXT_027.bin": [
+     5064,
+     "dc8d9472a7e10ee6536c0432b91707c487cc50ced748433ed397f58d6ace5790"
+    ],
+    "extracted/raw/FDTXT/FDTXT_028.bin": [
+     1628,
+     "18b4d4fb982cbfd7fa714fbae4b8109218d8ee7ce37b2b9fd67f9da5fb54cdf0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_029.bin": [
+     4792,
+     "6a89e3bdd5410d7ff5a6660221be27e2f49997f6475b0df952cd28f62230b430"
+    ],
+    "extracted/raw/FDTXT/FDTXT_030.bin": [
+     5762,
+     "dcbd0ae731b4a9283edd3d069d1580585cbf774a11c1e4fa623c976d871fbebc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_031.bin": [
+     6756,
+     "9473d6b21fbb7d3402d81f20fdc9455c3081b454522ab131e34d6995e2e9e4bc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_032.bin": [
+     2204,
+     "bd250484a25938d1ed3161cdc153a056ad5d66c64bcce2b0f9ad87c219f0b098"
+    ],
+    "extracted/raw/FDTXT/FDTXT_033.bin": [
+     3020,
+     "1e9ac41631b72e276331c438675ad2a27538a1af524016951b88b5aa44f60885"
+    ],
+    "extracted/raw/FDTXT/FDTXT_034.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

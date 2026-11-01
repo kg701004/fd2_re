@@ -19,12 +19,15 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 
 import numpy as np
 from PIL import Image
 
 from _evpaths import GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
+sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 
 RAW = ROOT / ".wsl_build" / "lc159_live"
 STEPS = RAW / "lc159b" / "steps"
@@ -56,21 +59,17 @@ assert META[4] == 'filter: awk !($3=="001ac620" && ($1=="E" || $4=="00000000"))'
 _lines = (RAW / "lc159b_calllog_filtered.txt").read_text(encoding="ascii").splitlines()
 assert _lines[0] == HDR
 assert len(_lines) == 2924 and len(_lines) < FULL_LINES
+# E / R 依檔案次序,由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位);A 不算(同原本)
 REC: list[dict] = []
-for ln in _lines:
-    t = ln.split()
-    if t[0] not in ("E", "R"):
-        continue
-    d = {"k": t[0], "seq": int(t[1]), "eip": int(t[2], 16) - DELTA}
-    if t[0] == "R":
-        d["eax"] = int(t[3], 16)
-    else:
-        d["ret"] = int(t[3], 16) - DELTA
-        d["s0"] = int(next(x for x in t if x.startswith("s="))[2:].split(",")[0], 16)
-    d["t"] = float(next(x for x in t if x.startswith("t="))[2:])
-    REC.append(d)
+_log = cs.parse(_lines, calls=True)
+for x in sorted([*_log.calls, *_log.rets.values()], key=lambda x: x.line):
+    if isinstance(x, cs.Call):
+        REC.append({"k": "E", "seq": x.seq, "eip": x.eip - DELTA, "ret": x.ret - DELTA, "s0": x.stack[0], "t": x.ic[2]})
+    elif x.kind == "R":
+        REC.append({"k": "R", "seq": x.seq, "eip": x.entry - DELTA, "eax": x.eax, "t": x.ic[2]})
 # 過濾規則確實套用:has_key 只剩回傳非 0 的 R 記錄
 assert not [r for r in REC if r["eip"] == 0x10620 and (r["k"] == "E" or r["eax"] == 0)]
+assert {r["eax"] for r in REC if r["eip"] == 0x10620} == {1}                  # has_key 有鍵時回傳 1
 assert {r["eip"] for r in REC} <= set(NAMES), {hex(r["eip"]) for r in REC} - set(NAMES)
 
 KILL = json.loads((RAW / "lc159b_kill.json").read_text(encoding="utf-8"))

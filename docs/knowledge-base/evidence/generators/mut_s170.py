@@ -57,6 +57,10 @@ MUTANTS = [
     ("人工判讀 N 對到樣板有框的", "assert {r[\"f\"] for r in OLD_ONLY} == {f for f, s in LAB.items() if s == \"N\"}",
      "assert {r[\"f\"] for r in OLD_ONLY} == {f for f, s in LAB.items() if s != \"N\"}"),
     ("工具判定固定回左", "\"tool\": sw._find_hud_box_side(im)})", "\"tool\": \"L\"})"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('E 的 edi 取 esi', 'x.ret - DELTA, x.regs["edi"]))', 'x.ret - DELTA, x.regs["esi"]))'),
+    ('A 的所在位址取入口', 'x.eip - DELTA if x.kind == "A" else None, None))', 'x.entry - DELTA if x.kind == "A" else None, None))'),
+    ('記錄不依檔案次序(先 E 後 R / A)', 'key=lambda x: x.line):', 'key=lambda x: isinstance(x, cs.Ret)):'),
 ]
 
 if __name__ == "__main__":

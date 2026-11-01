@@ -55,6 +55,8 @@ assert hashlib.md5(_b).hexdigest() == LOG_MD5
 TEXT = _b.decode("ascii").splitlines()
 LOG = cs.parse(TEXT)
 assert LOG.game_cs == GAME_CS
+# E / R / A 另由 calllog_segments 解(續一百七十九起;原本是本檔自寫的 regex):寫到一半的末行丟掉,同 cs._read
+ERA = cs.parse(TEXT if _b.endswith(b"\n") else TEXT[:-1], calls=True)
 _mh = re.fullmatch(r"H fd2calllog .* icount=1 segs=" + re.escape(SEGS) + r" slices=1 picev=([0-9a-f]+) io=" + re.escape(IO_PORTS)
                    + r" kbd=1", TEXT[0])
 assert _mh, TEXT[0]
@@ -357,7 +359,6 @@ assert qa.t - qb.t > 5.0                                          # 5 ms 基底�
 _long = [r for r in LOG.runs if qb.n < r.n_end <= qa.n]
 _lr = max(_long, key=lambda r: r.count)
 assert (_lr.m, _lr.cs, _lr.e0, _lr.e1, _lr.n_end) == ("P", GAME_CS, ISR, rt(0x3F0BD), qa.n) and _lr.n_start < k_start.n, _lr
-_rx_e = re.compile(r"^E (\d+) ([0-9a-f]{8}) ([0-9a-f]{8}) ")
 _li = next(i for i, ln in enumerate(TEXT) if ln.startswith("I 08 ") and f" n={qb.n} " in ln)
 _lj = next(i for i in range(_li, len(TEXT)) if TEXT[i].startswith("I 08 ") and f" n={qa.n} " in TEXT[i])
 _lk = next(i for i in range(_lj, len(TEXT)) if TEXT[i].startswith("I 09 "))
@@ -367,10 +368,10 @@ for _sq, _ra in ((SEQ_A, range(_li, _lj)), (SEQ_B, range(_lj, _lk))):
     _want = [ln for ln in TEXT[_ra.start:_ra.stop][1:] if re.match(r"[EONIK] ", ln)]
     assert _sq and len(_sq) == len(_want) and all(x.split() == ln.split()[:len(x.split())] and len(x.split()) == len(ln.split()[:4])
                                                   for x, ln in zip(_sq, _want)), (_sq, _want[:3])
-_ea = [_rx_e.match(ln) for ln in TEXT[_li + 1:_lj] if ln.startswith("E ")]
-_eb = [_rx_e.match(ln) for ln in TEXT[_lj + 1:_lk] if ln.startswith("E ")]
-assert [(int(m.group(2), 16), int(m.group(3), 16)) for m in _ea][:2] == [(ISR, 0xED6), (SERVE, rt(0x3EB42))], SEQ_A
-assert [int(m.group(2), 16) for m in _eb] == [ISR, REENTRY], SEQ_B
+_ea = [c for c in ERA.calls if _li + 1 < c.line <= _lj]       # TEXT[i] 是第 i + 1 行
+_eb = [c for c in ERA.calls if _lj + 1 < c.line <= _lk]
+assert [(c.eip, c.ret) for c in _ea][:2] == [(ISR, 0xED6), (SERVE, rt(0x3EB42))], SEQ_A
+assert [c.eip for c in _eb] == [ISR, REENTRY], SEQ_B
 _eoi_a = [x for x in LOG.ios if qb.n < x.n < qa.n and x.op == "O" and x.port == 0x20]
 _eoi_b = [x for x in LOG.ios if qa.n < x.n < HW[q9i].n and x.op == "O" and x.port == 0x20]
 assert [(x.m, x.cs, x.eip, x.value) for x in _eoi_a if x.cs == GAME_CS] == [("P", GAME_CS, rt(0x3EB13), 0x20)], _eoi_a
@@ -433,9 +434,8 @@ assert [q[0] for q in OTHER_LATE[1]["irqs_before"]] == ["0x8"] and _l2["n_end"] 
 assert _l2["irq1_eip"] == rt(0x3EB1D) and insn(0x3EB15) == "sti " and insn(0x3EB16) == "cmp dword ptr [0x2bea], 0" and insn(0x3EB1D) == "jg 0x3eb4e"
 
 # 重入之後的非遊戲指令數(同 ev_s172 (F)):602 = DIG 型 69 + 鍵盤 533,就是這一次;MDI 375 仍沒出現
-_rx_era = re.compile(r"^([ERA]) (\d+) ([0-9a-f]{8}) .*? i=(\d+) n=(\d+) t=([0-9.]+)")
-_recs = [(m.group(1), int(m.group(3), 16), int(m.group(4)), int(m.group(5)), float(m.group(6)))
-         for m in (_rx_era.match(ln) for ln in TEXT if ln[:2] in ("E ", "R ", "A ")) if m]
+_recs = [("E", x.eip, *x.ic) if isinstance(x, cs.Call) else (x.kind, x.entry, *x.ic)
+         for x in sorted([*ERA.calls, *ERA.rets.values()], key=lambda x: x.line) if x.ic is not None]
 POST = collections.Counter()
 POST_ODD = []
 for _p, _q in zip(_recs, _recs[1:]):

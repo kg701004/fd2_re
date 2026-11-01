@@ -52,6 +52,7 @@ assert all(f'"{k}": "{SEGS}"' in _drv_src and f'"{k}": "12:00:54"' in _drv_src f
 assert 'PICEV = {"lc172a": "0", "lc172b": "1"}' in _drv_src          # P 紀錄只有 lc172b
 TEXT: dict[str, list[str]] = {}
 LOG: dict[str, cs.Log] = {}
+ERA: dict[str, list] = {}               # E / R / A 依檔案次序(calllog_segments 解析;寫到一半的末行丟掉)
 EPS: dict[str, list[cs.Episode]] = {}
 for _k, _path, _md5 in [(k, RAW / f"{k}_CALLLOG.TXT", v) for k, v in LOGS.items()] + [
         ("lc171a", RAW171 / "lc171a_CALLLOG.TXT", LC171A_MD5)]:
@@ -59,6 +60,8 @@ for _k, _path, _md5 in [(k, RAW / f"{k}_CALLLOG.TXT", v) for k, v in LOGS.items(
     assert hashlib.md5(_b).hexdigest() == _md5, _k
     TEXT[_k] = _b.decode("ascii").splitlines()
     LOG[_k] = cs.parse(TEXT[_k])
+    _era = cs.parse(TEXT[_k] if _b.endswith(b"\n") else TEXT[_k][:-1], calls=True)
+    ERA[_k] = sorted([*_era.calls, *_era.rets.values()], key=lambda x: x.line)
     EPS[_k] = cs.episodes(LOG[_k])
     assert LOG[_k].game_cs == GAME_CS
 assert TEXT["lc172a"][0].endswith(f" icount=1 segs={SEGS} slices=1"), TEXT["lc172a"][0]
@@ -290,8 +293,9 @@ for _s in ("\twhile (CPU_Cycles-->0) {", "if (DEBUG_HeavyIsBreakpoint()) {", "Bi
            "CPU_IODelayRemoved += delaycyc;", "Pint = secprop->Add_int(\"interruptible rep string op\",Property::Changeable::Always,-1);"):
     assert _s in SRC, _s
 
-_rx_er = re.compile(r"^([ER]) (\d+) ([0-9a-f]{8}) .*? i=(\d+) n=(\d+) t=([0-9.]+) k=(\d+) b=(-?\d+) w=(-?\d+)$")
-_rx_s1 = re.compile(r" s=([0-9a-f]{8}),")
+def era(x) -> tuple[str, int]:
+    """(種類, 入口);E 的入口是 EIP、R / A 是對應 E 的入口。"""
+    return ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
 DELAY_E = rt(0x3E01D)
 ISR = {rt(0x3EA8E), rt(0x3EBAD)}
 assert insn(0x3E01D) != "" and insn(0x3EA8E) != ""
@@ -308,22 +312,20 @@ def clean_delays(k: str) -> tuple[list[Delay], list[tuple[Delay, str]]]:
     opens: dict[str, tuple] = {}
     pairs = []
     isr_t = []
-    for ln in TEXT[k]:
-        if ln[:2] not in ("E ", "R "):
+    for x in ERA[k]:
+        kind, eip = era(x)
+        if kind not in ("E", "R") or x.ic is None or x.sl is None:     # 要有 i / n / t 與 k / b / w
             continue
-        mt = _rx_er.match(ln)
-        if mt is None:
-            continue
-        eip, t = int(mt.group(3), 16), float(mt.group(6))
-        v = tuple(int(mt.group(x)) for x in (5, 7, 8, 9))
-        if mt.group(1) == "E" and eip in ISR:
+        t = x.ic[2]
+        v = (x.ic[1], *x.sl)                                           # (n, k, b, w)
+        if kind == "E" and eip in ISR:
             isr_t.append(t)
         if eip != DELAY_E:
             continue
-        if mt.group(1) == "E":
-            opens[mt.group(2)] = (t, v, int(_rx_s1.search(ln).group(1), 16))
-        elif mt.group(2) in opens:
-            t0, v0, a0 = opens.pop(mt.group(2))
+        if kind == "E":
+            opens[x.seq] = (t, v, x.stack[0])
+        elif x.seq in opens:
+            t0, v0, a0 = opens.pop(x.seq)
             if a0 == 2:
                 pairs.append((t0, t, v0, v))
     hw = [(q.n, q.num) for q in LOG[k].irqs if q.type == 0]
@@ -556,7 +558,6 @@ assert TIMING["lc171a_last_direct_ms"] < 3400 < 3700 < TIMING["lc171a_first_137c
 
 # ================= (F) P5:鍵盤 IRQ 與 START 那一下的 601 / 602 =================
 REENTRY = rt(0x3EBAD)
-_rx_era = re.compile(r"^([ERA]) (\d+) ([0-9a-f]{8}) .*? i=(\d+) n=(\d+) t=([0-9.]+)")
 
 
 def kb_costs(k: str) -> dict:
@@ -585,12 +586,7 @@ assert KB_GAME and set(KB_GAME) <= {532, 533, 534}, KB
 
 
 def reentry_post(k: str) -> tuple[collections.Counter, list[dict]]:
-    recs = []
-    for ln in TEXT[k]:
-        if ln[:2] in ("E ", "R ", "A "):
-            mt = _rx_era.match(ln)
-            if mt:
-                recs.append((mt.group(1), int(mt.group(3), 16), int(mt.group(4)), int(mt.group(5)), float(mt.group(6))))
+    recs = [(*era(x), *x.ic) for x in ERA[k] if x.ic is not None]      # (種類, 入口, i, n, t)
     c: collections.Counter = collections.Counter()
     odd = []
     for p, q in zip(recs, recs[1:]):

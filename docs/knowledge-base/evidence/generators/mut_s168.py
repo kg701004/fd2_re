@@ -33,6 +33,11 @@ MUTANTS = [
     ("Q4 逾時 0.1 秒", "RING_WAIT_S < 8.0,", "RING_WAIT_S < 0.1,"),
     ("Q5 方向反了", "\"Q5\": SAT[\"lc168a_after_up\"] >= SAT_SELECTED_MAX,", "\"Q5\": SAT[\"lc168a_after_up\"] < SAT_SELECTED_MAX,"),
     ("差額不是 8", "== len(NOPANEL_PRESSED) == 8", "== len(NOPANEL_PRESSED) == 9"),
+    # E 改由 calllog_segments 解析(續一百八十)
+    ('時間取 i', 'PA <= c.ic[2] < PB)', 'PA <= c.ic[0] < PB)'),
+    ('窗右端含等號', 'PA <= c.ic[2] < PB)', 'PA <= c.ic[2] <= PB + 1)'),
+    ('回合標記只收 E', 'if k in ("E", "R") and e in want', 'if k in ("E",) and e in want'),
+    ('回合標記的時間取 i', 'out.append((k, want[e], x.ic[2]))', 'out.append((k, want[e], x.ic[0]))'),
 ]
 
 if __name__ == "__main__":

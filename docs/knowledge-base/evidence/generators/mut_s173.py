@@ -54,6 +54,9 @@ MUTANTS = [
     ("結論的 0xd4 時刻拿 0xd0 的", "送 DSP 0xd4({TRIGGER['dsp_d4_ms']} ms", "送 DSP 0xd4({TRIGGER['previous_dsp'][1]} ms"),
     ("結論的通道拿放音那次", "DMA 通道 {SINGLE['init']['channel']} 計數暫存器 {SINGLE['init']['basecnt']}",
      "DMA 通道 {SINGLE['init']['channel']} 計數暫存器 {SINGLE['play']['basecnt']}"),
+    # 續一百七十九:E / R / A 改由 calllog_segments 解析
+    ("第二段從第一段起算", "_eb = [c for c in ERA.calls if _lj + 1 < c.line <= _lk]", "_eb = [c for c in ERA.calls if _li + 1 < c.line <= _lk]"),
+    ("E 的 i / n 對調", '("E", x.eip, *x.ic)', '("E", x.eip, x.ic[1], x.ic[0], x.ic[2])'),
 ]
 
 if __name__ == "__main__":

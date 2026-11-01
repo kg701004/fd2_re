@@ -249,6 +249,7 @@ RATE_SITES = callers(AIL["AIL_set_sample_playback_rate"])
 assert RATE_SITES == [0x41BFE, 0x41CF6, 0x41D54, 0x41E78, 0x459E5], RATE_SITES
 assert not {func_of(a) for a in RATE_SITES} & {int(t.split()[1], 16) for _, t in SFX_CALLS}
 import callgraph_le  # noqa: E402  (_exeops 已把 tools/ 加進 sys.path)
+import calllog_segments as cs  # noqa: E402
 _cg = callgraph_le.CG(str(GAME / "FD2.EXE"))
 _cg.build([0x25BF4])
 RATE_REACHED = [a for a in RATE_SITES if a in _cg.reached]
@@ -277,21 +278,25 @@ DELAY = 0x3E01D
 FIRST_E: dict[int, float] = {}
 _open: dict[str, tuple] = {}
 ROWS: list[dict] = []
-for ln in _lines:
-    t = ln.split()
-    if t[0] not in ("E", "R"):
-        continue
-    kv = dict(x.split("=", 1) for x in t if "=" in x)
-    i, n, tt = int(kv["i"]), int(kv["n"]), float(kv["t"])
-    eip = int(t[2], 16) - DELTA
-    if t[0] == "E":
+# E / R 由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位),依檔案次序走;A 不算(同原本)
+_LOG = cs._read(str(RAW / "lc159b_calllog_filtered.txt"), calls=True)
+assert not _LOG.tail_cut and len(_LOG.calls) == sum(ln.startswith("E ") for ln in _lines)
+assert sum(r.kind == "R" for r in _LOG.rets.values()) == sum(ln.startswith("R ") for ln in _lines)
+# 前提:delay 每次都以 R 正常返回(沒有以 A 離開框架);A 只出現在別的入口
+assert not any(r.kind == "A" and r.entry - DELTA == DELAY for r in _LOG.rets.values()) \
+    and any(r.kind == "A" for r in _LOG.rets.values())
+for _k, _ln, rc in sorted([("E", c.line, c) for c in _LOG.calls]
+                          + [("R", r.line, r) for r in _LOG.rets.values() if r.kind == "R"], key=lambda x: x[1]):
+    i, n, tt = rc.ic
+    eip = (rc.eip if _k == "E" else rc.entry) - DELTA
+    if _k == "E":
         FIRST_E.setdefault(eip, tt)
     if eip != DELAY:
         continue
-    if t[0] == "E":
-        _open[t[1]] = (int(kv["s"].split(",")[0], 16), i, n, tt, int(t[3], 16) - DELTA)
+    if _k == "E":
+        _open[rc.seq] = (rc.stack[0], i, n, tt, rc.ret - DELTA)
     else:
-        ms, i0, n0, t0, ret = _open.pop(t[1])
+        ms, i0, n0, t0, ret = _open.pop(rc.seq)
         it = (ms * CAL + 500) // 1000 or 1                          # 與 0x3e02b .. 0x3e046 相同
         ROWS.append({"ms": ms, "it": it, "di": i - i0, "dn": n - n0, "dt": tt - t0, "t0": t0, "ret": ret})
 assert not _open and len(ROWS) == 969

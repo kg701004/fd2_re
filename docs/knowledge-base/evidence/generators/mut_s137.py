@@ -19,8 +19,8 @@ MUTANTS = [
     ("main 呼叫戰後表的深度預期 8", "assert d_main == {0x25DBD: 12, 0x25E23: 12,", "assert d_main == {0x25DBD: 12, 0x25E23: 8,"),
     ("ESP 推算不算返回位址", "return -sum(d + 4 for d in chain)", "return -sum(d for d in chain)"),
     ("呼叫紀錄的位移錯一頁", "RELOC = 0x19C000 ", "RELOC = 0x19D000 "),
-    ("tick 取成 EBX", "tick = [(k, int(p[6], 16) & 0xFFFF)", "tick = [(k, int(p[7], 16) & 0xFFFF)"),
-    ("ESP 取成返回值欄", "esp = lambda p: int(p[4], 16)", "esp = lambda p: int(p[3], 16)"),
+    ("tick 取成 EBX", 'tick = [(k, p.regs["eax"] & 0xFFFF)', 'tick = [(k, p.regs["ebx"] & 0xFFFF)'),
+    ("ESP 取成返回值欄", "esp = lambda p: p.esp", "esp = lambda p: p.ret"),
     ("死亡演出用重畫的呼叫者判定", "if c is not None and func_of(c) == DEATH]", "if c is not None and func_of(c) == 0x11CAC]"),
     ("b、d 之後只容許 2 幀", 'assert LOG[n]["records_after_death"] <= 6 and', 'assert LOG[n]["records_after_death"] <= 2 and'),
     ("走位幀數預期 209", "and len(k_step) == 210 and", "and len(k_step) == 209 and"),
@@ -55,6 +55,9 @@ MUTANTS = [
      "        if mk.sum() < 600:\n            return False\n        a, b = px[mk]"),
     ("修補位置預期在程式碼物件", "assert obj_of_patch == [0x60000] and", "assert obj_of_patch == [0x10000] and"),
     ("修補位移錯成程式碼裡", "PATCH_OFF, PATCH_LEN = 502624, 252", "PATCH_OFF, PATCH_LEN = 0x7402A, 252"),
+    # E 紀錄改由 calllog_segments 解析(續一百八十)
+    ("呼叫者取暫存器", "    for v in p.stack:", "    for v in p.regs.values():"),
+    ("EIP 不減載入差", "eip = [p.eip - RELOC for p in rs]", "eip = [p.eip for p in rs]"),
 ]
 
 if __name__ == "__main__":

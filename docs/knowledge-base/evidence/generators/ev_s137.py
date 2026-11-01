@@ -33,6 +33,7 @@ from _evpaths import GAME, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
 import callgraph_le as cgm  # noqa: E402
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 import parse_field as pf  # noqa: E402
 
@@ -235,18 +236,17 @@ REL = {k: v - PRED["load_open1"] for k, v in PRED.items()}
 assert REL == {"load_open1": 0, "new_open0": -4, "victory_post1": 12, "victory_open2": 16}, REL
 
 
-def recs(name: str) -> list[list[str]]:
-    return [ln.split() for ln in (LOGS / name).read_text(encoding="utf-8").splitlines() if ln.startswith("E ")]
+def recs(name: str) -> list[cs.Call]:
+    """E 紀錄,由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位)。"""
+    log = cs._read(str(LOGS / name), calls=True)
+    n_e = sum(ln.startswith("E ") for ln in (LOGS / name).read_text(encoding="utf-8").splitlines())
+    assert len(log.calls) == n_e and not log.tail_cut, (name, len(log.calls), n_e)
+    return log.calls
 
 
-def stack(p: list[str]) -> list[int]:
-    s = next(x for x in p if x.startswith("s="))[2:]
-    return [int(w, 16) for w in s.split(",")]
-
-
-def caller_of(p: list[str]) -> int | None:
+def caller_of(p: cs.Call) -> int | None:
     """堆疊裡第一個落在程式碼裡的值(重畫 0x11cac 的直接呼叫者的返回位址)。"""
-    for v in stack(p):
+    for v in p.stack:
         if BASE <= v - RELOC < END:
             return v - RELOC
     return None
@@ -255,7 +255,7 @@ def caller_of(p: list[str]) -> int | None:
 R = {n: recs(f"{n}.txt") for n in ("lc131a", "lc131b", "lc131d")}
 LOG = {}
 for n, rs in R.items():
-    eip = [int(p[2], 16) - RELOC for p in rs]
+    eip = [p.eip - RELOC for p in rs]
     beam = [k for k, e in enumerate(eip) if e == BEAM]
     cal = [caller_of(p) for p in rs]
     death = [k for k, c in enumerate(cal) if c is not None and func_of(c) == DEATH]
@@ -278,7 +278,7 @@ for n in ("lc131b", "lc131d"):
 # a:BIOS tick(0x12117 那一站的 EAX = [0x46c] 低 16 位)在死亡演出後跳 216,接著建立場景 3 幀、走位 210 幀
 ra = R["lc131a"]
 ka = len(ra) - LOG["lc131a"]["records_after_death"]
-tick = [(k, int(p[6], 16) & 0xFFFF) for k, p in enumerate(ra) if int(p[2], 16) - RELOC == 0x12117]
+tick = [(k, p.regs["eax"] & 0xFFFF) for k, p in enumerate(ra) if p.eip - RELOC == 0x12117]
 assert insn(0x12114).op_str == "eax, word ptr [eax]" and insn(0x1210F).op_str == "eax, 0x46c"
 gaps = [((t2 - t1) & 0xFFFF, k1, k2) for (k1, t1), (k2, t2) in zip(tick, tick[1:])]
 big_after = [g for g in gaps if g[1] >= ka - 10 and g[0] > 20]
@@ -287,7 +287,7 @@ assert len(big_after) == 1 and TICK_GAP == 216, big_after
 k_ctor = [k for k in range(ka, len(ra)) if func_of(caller_of(ra[k])) == CTOR]
 k_step = [k for k in range(ka, len(ra)) if func_of(caller_of(ra[k])) == STEP]
 assert k_ctor == [big_after[0][2], big_after[0][2] + 1, big_after[0][2] + 2] and len(k_step) == 210 and min(k_step) > max(k_ctor)
-esp = lambda p: int(p[4], 16)  # noqa: E731
+esp = lambda p: p.esp  # noqa: E731
 ctor_start = [esp(ra[k]) for k in range(len(ra)) if k < 3]
 assert [func_of(caller_of(ra[k])) for k in range(3)] == [CTOR] * 3
 ctor_after = sorted({esp(ra[k]) for k in k_ctor})

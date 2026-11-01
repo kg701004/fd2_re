@@ -44,6 +44,10 @@ MUTANTS = [
     ("時段空檔 5000 ms", "assert _ts[_gap_i] - _ts[_gap_i - 1] > 3000", "assert _ts[_gap_i] - _ts[_gap_i - 1] > 5000"),
     ("校準比最小值", "CAL_ABOVE = round(NG_CAL[0] - PER_INT21_RANGE[1], 2)", "CAL_ABOVE = round(NG_CAL[0] - PER_INT21_RANGE[0], 2)"),
     ("tick 不加樣本", "round(_ex[0] * _x[1] / _nt + _tk)", "round(_ex[0] * _x[1] / _nt)"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('E 的返回位址取入口', 'r.update(ret=x.ret - DELTA, esp=x.esp', 'r.update(ret=e - DELTA, esp=x.esp'),
+    ('delay 的毫秒數取 s2', 'ss=x.ss, s0=x.stack[0])', 'ss=x.ss, s0=x.stack[1])'),
+    ('i / n 對調', '"i": x.ic[0], "n": x.ic[1], "t": x.ic[2]}', '"i": x.ic[1], "n": x.ic[0], "t": x.ic[2]}'),
 ]
 
 if __name__ == "__main__":

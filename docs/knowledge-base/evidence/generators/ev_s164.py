@@ -25,6 +25,7 @@ require_inputs(__file__)
 import _exeops as X  # noqa: E402
 from _exeops import insn  # noqa: E402
 import callgraph_le as cg  # noqa: E402
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 
 OUT = out_path("interrupt_off_sections_s164_20261029.json")
@@ -42,17 +43,14 @@ CALLLOG_MD5 = S163["run"]["calllog_md5"]
 assert META[0].split() == [CALLLOG_MD5, "CALLLOG.TXT"] and META[1].split() == [MD5, "FD2.EXE"], META
 _text = (RAW / "lc163a_CALLLOG.TXT").read_text(encoding="ascii")
 assert _text.count("\n") == int(META[2]) == S163["run"]["lines"]
+# E / R / A 依檔案次序,由 calllog_segments 解析(續一百八十起;最後一筆被 teardown 截斷的由 `_read` 丟掉,續一百六十三)
 REC: list[dict] = []
-for ln in _text.splitlines()[1:]:
-    p = ln.split()
-    if p[0] not in ("E", "R", "A"):
-        continue
-    kv = dict(x.split("=", 1) for x in p if "=" in x)
-    if "t" not in kv:                    # 最後一筆被 teardown 截斷(續一百六十三)
-        continue
-    REC.append({"k": p[0], "seq": int(p[1]), "eip": int(p[2], 16) - DELTA,
-                "at": int(p[3], 16) - DELTA if p[0] == "A" else None,
-                "i": int(kv["i"]), "n": int(kv["n"]), "t": float(kv["t"]), "s": kv.get("s")})
+_log = cs._read(str(RAW / "lc163a_CALLLOG.TXT"), calls=True)
+for x in sorted([*_log.calls, *_log.rets.values()], key=lambda x: x.line):
+    _k, _eip = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+    _i, _n, _t = x.ic
+    REC.append({"k": _k, "seq": x.seq, "eip": _eip - DELTA, "at": x.eip - DELTA if _k == "A" else None,
+                "i": _i, "n": _n, "t": _t})
 assert sum(1 for ln in _text.splitlines() if ln[:2] in ("E ", "R ", "A ")) == len(REC) + 1   # 只少截斷的那一筆
 
 
@@ -118,6 +116,7 @@ for p, q in zip(REC, REC[1:]):
         _tail[(q["at"], q["i"] - p["i"])] += 1
     if p["k"] == "R" and p["eip"] == MDI and q["k"] == "E" and q["eip"] == DIG:
         _m2d[q["i"] - p["i"]] += 1
+assert _tail and _m2d, (len(_tail), len(_m2d))                                 # 兩種相鄰配對都要看得到
 NORMAL_TAIL = {EPI: None, EPI_CHAIN: None}
 for (a, d), c in _tail.items():
     assert a in NORMAL_TAIL and NORMAL_TAIL[a] is None, _tail                                  # 每個結尾點只有一個值

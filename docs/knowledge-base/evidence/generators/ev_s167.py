@@ -16,9 +16,12 @@ from __future__ import annotations
 import collections
 import hashlib
 import json
+import sys
 
 from _evpaths import EVIDENCE, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
+sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 
 OUT = out_path("battle_turn_interrupt_loss_s167_20261029.json")
 MD5 = "33464c81e6a364fd0660141139aa8e6e"
@@ -43,18 +46,15 @@ LEAD_MS, TAIL_MS = 1000, 500           # 閒置窗:開頭扣 1 秒、結尾扣 0
 
 
 def load(path) -> list[dict]:
-    """E / R / A 記錄(最後一筆被 teardown 截斷、沒有 t 的不算)。"""
+    """E / R / A 記錄,依檔案次序;由 calllog_segments 解析(續一百八十起;最後一筆被 teardown 截斷的由 `_read` 丟掉)。"""
+    log = cs._read(str(path), calls=True)
     out = []
-    for ln in path.read_text(encoding="ascii").splitlines()[1:]:
-        p = ln.split()
-        if not p or p[0] not in ("E", "R", "A"):
-            continue
-        kv = dict(x.split("=", 1) for x in p if "=" in x)
-        if "t" not in kv:
-            continue
-        r = {"k": p[0], "seq": int(p[1]), "eip": int(p[2], 16) - DELTA, "i": int(kv["i"]), "t": float(kv["t"])}
-        if p[0] == "A":
-            r["at"] = int(p[3], 16) - DELTA
+    for x in sorted([*log.calls, *log.rets.values()], key=lambda x: x.line):
+        k, eip = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+        i, n, t = x.ic
+        r = {"k": k, "seq": x.seq, "eip": eip - DELTA, "i": i, "t": t}
+        if k == "A":
+            r["at"] = x.eip - DELTA
         out.append(r)
     return out
 

@@ -26,6 +26,7 @@ from collections import Counter, defaultdict
 from _evpaths import GAME, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 
 EXE_P = GAME / "FD2.EXE"
@@ -87,22 +88,16 @@ assert BIOS_US == 54925
 # 呼叫紀錄
 E_LAP, E_LAP_END, E_TERRAIN, E_UNITS, E_SPRITE = (a + DELTA for a in (0x152A0, 0x152BA, 0x11EEE, 0x127A9, 0x127E0))
 E_BLIT, E_GREY, E_REMAP, E_WAIT = (a + DELTA for a in (0x4E22A, 0x4E1A6, 0x4E016, 0x17AA9))
-_KV = re.compile(r" (?P<k>[int])=(?P<v>[0-9.]+)")
+def _int(ic: tuple[int, int, float] | None) -> dict[str, float]:
+    """i / n / t(沒有 FD2_CALLLOG_ICOUNT 時沒有);沿用原本的 float,輸出逐位元組不變。"""
+    return {} if ic is None else {k: float(v) for k, v in zip("int", ic)}
 
 
 def parse(path) -> tuple[list[dict], dict[int, dict]]:
-    """E 記錄(依序)與 R / A 記錄(以 seq 索引)。E 欄位:seq eip ret esp ss eax ebx ecx edx esi edi ebp s= c= m= i= n= t=。"""
-    E, R = [], {}
-    for line in open(path, encoding="ascii", errors="replace"):
-        t = line.split()
-        if not t:
-            continue
-        kv = {m["k"]: float(m["v"]) for m in _KV.finditer(line)}
-        if t[0] == "E":
-            s = [int(v, 16) for v in next(x for x in t if x.startswith("s="))[2:].split(",")]
-            E.append({"seq": int(t[1]), "eip": int(t[2], 16), "ebx": int(t[7], 16), "ebp": int(t[12], 16), "s": s, **kv})
-        elif t[0] in ("R", "A"):
-            R[int(t[1])] = {"kind": t[0], "eax": int(t[3], 16) if t[0] == "R" else None, **kv}
+    """E 記錄(依序)與 R / A 記錄(以 seq 索引),由 calllog_segments 解析(續一百七十九起;原本是本檔自寫的 regex)。"""
+    log = cs._read(str(path), calls=True)
+    E = [{"seq": c.seq, "eip": c.eip, "ebx": c.regs["ebx"], "ebp": c.regs["ebp"], "s": list(c.stack), **_int(c.ic)} for c in log.calls]
+    R = {r.seq: {"kind": r.kind, "eax": r.eax, **_int(r.ic)} for r in log.rets.values()}
     return E, R
 
 
@@ -232,6 +227,10 @@ def terrain_rows(nm: str) -> list[dict]:
         bl = [(e["eip"], e["ebx"], R[e["seq"]]["i"] - e["i"]) for e in lp
               if e["eip"] in (E_BLIT, E_REMAP) and i0 <= e["i"] <= i1]
         assert len(bl) == 104
+        # 取的是遊戲指令數 i(不含非遊戲指令):每次貼圖與整個地形層都不超過 n 的差,且至少一次嚴格小於
+        _pairs = [(R[e["seq"]]["i"] - e["i"], R[e["seq"]]["n"] - e["n"]) for e in lp
+                  if e["eip"] in (E_BLIT, E_REMAP) and i0 <= e["i"] <= i1] + [(i1 - i0, R[tr["seq"]]["n"] - tr["n"])]
+        assert all(a <= b for a, b in _pairs) and any(a < b for a, b in _pairs), (nm, _pairs[-1])
         rows.append({"terrain_insn": i1 - i0, "blits": bl})
     return rows
 

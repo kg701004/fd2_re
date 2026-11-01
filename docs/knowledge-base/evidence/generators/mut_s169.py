@@ -32,7 +32,8 @@ MUTANTS = [
     ("側別比對用舊判準", "SIDE = {\"new_correct\": sum(r[\"new\"] == r[\"label\"]", "SIDE = {\"new_correct\": sum(r[\"old\"] == r[\"label\"]"),
     # (C) 實機 lc169a
     ("預測檔原文改過", "\"差 ≤ 2000 ms\", \"平均 HSV 飽和度 ≤ 110\"", "\"差 ≤ 2000 ms\", \"平均 HSV 飽和度 ≤ 111\""),
-    ("標記不含狀態卡", "    if e in (LOOP, SELECT, STATUS_CARD):", "    if e in (LOOP, SELECT):\n        pass\n    if e in (LOOP, STATUS_CARD):"),
+    ("標記不含狀態卡", "    if e in (LOOP, SELECT, STATUS_CARD) and x.ic is not None:",
+     "    if e in (LOOP, SELECT):\n        pass\n    if e in (LOOP, STATUS_CARD) and x.ic is not None:"),
     ("送鍵時刻換算方向反了", "T_PRESS = round(T_AFTER - (H_AFTER - REP[\"t_host_press\"]) * 1000, 1)",
      "T_PRESS = round(T_AFTER + (H_AFTER - REP[\"t_host_press\"]) * 1000, 1)"),
     ("S4 門檻 111", "\"S4_sat_le_110\": \"PASS\" if SAT[\"sel_up\"] <= 110 else \"FAIL\"",
@@ -42,6 +43,9 @@ MUTANTS = [
     ("S1 不比送鍵時刻", "\"PASS\" if MKN.get(\"E 0x17aed\", 0) == 0 and T_SEL > T_PRESS else \"FAIL\"",
      "\"PASS\" if MKN.get(\"E 0x17aed\", 0) == 0 and T_SEL > T_LOOP - 1e6 and T_SEL < T_PRESS else \"FAIL\""),
     ("飽和度取整張", "convert(\"HSV\").crop((360, 215, 824, 520))).mean[1]", "convert(\"HSV\")).mean[1]"),
+    # (C) 的 E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('E 的入口取返回位址', '("E", x.eip - DELTA) if isinstance(x, cs.Call)', '("E", x.ret - DELTA) if isinstance(x, cs.Call)'),
+    ('時間取 i', 'MK.setdefault((k, e), []).append(x.ic[2])', 'MK.setdefault((k, e), []).append(x.ic[0])'),
 ]
 
 if __name__ == "__main__":

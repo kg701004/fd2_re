@@ -29,7 +29,6 @@ MUTANTS = [
     ("正常進入不扣重入", "if t >= ISR_T[W0]) - len(RE_T)", "if t >= ISR_T[W0])"),
     # (D) 校準
     ("計數改 dec", "\"inc esi\")", "\"dec esi\")"),
-    ("edx 取成 eax", "EDX = int(CAL_R[\"f\"][1], 16)", "EDX = int(CAL_R[\"f\"][0], 16)"),
     ("每 tick 10.98 cs", "CS_PER_TICK = 100 / (PIT_HZ / 65536)", "CS_PER_TICK = 200 / (PIT_HZ / 65536)"),
     ("上一秒的邊界 -99", "if u - CS_PER_TICK * (m + 1) < -100 <=", "if u - CS_PER_TICK * (m + 1) < -99 <="),
     ("一秒算 18 tick", "COUNT_MS = round(max(TICKS_IN_SECOND) * TICK_MS, 2)", "COUNT_MS = round(18 * TICK_MS, 2)"),
@@ -41,6 +40,10 @@ MUTANTS = [
     ("P3 替代假說門檻 0", "RE_PHASE.get(\"blink\", 0) > len(RE_T) / 2)", "RE_PHASE.get(\"blink\", 0) > 0)"),
     ("P2 門檻 0.95", "verdict(P2_SHARE >= 0.9)", "verdict(P2_SHARE >= 0.95)"),
     ("回呼三項全要求才 PARTIAL", "\"PARTIAL\" if any(_cb) else", "\"PARTIAL\" if all(_cb[:2]) and _cb[2] else"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('delay 的毫秒數取 s2', '        r["s0"] = x.stack[0]', '        r["s0"] = x.stack[1]'),
+    ('R 的 edx 取 eax', '        r["edx"] = x.edx', '        r["edx"] = x.eax'),
+    ('截斷的末行不接', 'REC.append({"k": "A", "seq": int(_tail[1])', 'None and REC.append({"k": "A", "seq": int(_tail[1])'),
 ]
 
 if __name__ == "__main__":

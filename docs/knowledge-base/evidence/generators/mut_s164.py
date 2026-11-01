@@ -41,6 +41,10 @@ MUTANTS = [
     ("0x37c30 有兩處參照", "assert _refs == [0x37E77]", "assert _refs == [0x37E77, 0x37E7B]"),
     ("驅動有設環境", "assert \"DOS_SET\" not in _drv", "assert \"DOS_SET\" in _drv"),
     ("AIL 後第一格 10 ms", "assert _bios[0] > 50", "assert _bios[0] < 10"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('A 的離開位址取入口', '"at": x.eip - DELTA if _k == "A" else None', '"at": _eip - DELTA if _k == "A" else None'),
+    ('記錄不依檔案次序(先 E 後 R / A)', 'key=lambda x: x.line)', 'key=lambda x: isinstance(x, cs.Ret))'),
+    ('i / n 對調', '    _i, _n, _t = x.ic\n', '    _n, _i, _t = x.ic\n'),
 ]
 
 if __name__ == "__main__":

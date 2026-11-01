@@ -122,6 +122,13 @@
    "excerpt": "doc12 §結論一「五處全部走 `0x51e63`」只對它列的五處成立;§`0x51e81` 改為敵方回合曲(續一百七十 lc167a 的驅動呼叫逐次對上 FDMUS_012)(STATIC ANALYSIS + DOSBox-X 呼叫紀",
    "verdict": "not_address_erratum",
    "note": "更正的是 0x51e81 表的語意(敵方回合曲)與 doc12 一句話的適用範圍,兩個表位址本身沒錯"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "63c3b71d5355b0fe5ba67ab3a3359d80fd0b69fe",
+   "excerpt": "doc36 UI 池 index 表:index 2 改為「確認:對話打字音」(`0x16546`)、新增 index 9「確認:腳步音」(`0x322c7`);續一百七十八那段加一句。",
+   "verdict": "not_address_erratum",
+   "note": "改的是 doc36 UI 池 index 表的語意標籤(待確認→確認),位址本身沒變"
   }
  ]
 }

@@ -21,7 +21,8 @@ import math
 
 from _evpaths import EVIDENCE, GEN_DIR, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
-from _exeops import insn, operand  # noqa: E402
+from _exeops import insn, operand  # noqa: E402  (_exeops 已把 tools/ 加進 sys.path)
+import calllog_segments as cs  # noqa: E402
 
 OUT = out_path("timer_interrupt_loss_s163_20261029.json")
 MD5 = "33464c81e6a364fd0660141139aa8e6e"
@@ -57,15 +58,22 @@ _text = (RAW / "lc163a_CALLLOG.TXT").read_text(encoding="ascii")
 assert _text.count("\n") == int(META[2]) and not _text.endswith("\n")
 _lines = _text.splitlines()
 assert _lines[0] == HDR
+# E / R / A 依檔案次序,由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位)。它丟掉寫到一半的末行,
+# 那一行(teardown 截斷的 A)只取種類 / 序號 / 入口 / i,接在最後
 REC: list[dict] = []
-for ln in _lines[1:]:
-    p = ln.split()
-    if p[0] not in ("E", "R", "A"):
-        continue
-    kv = dict(x.split("=", 1) for x in p if "=" in x)
-    REC.append({"k": p[0], "seq": int(p[1]), "eip": int(p[2], 16) - DELTA, "f": p[3:],
-                "t": float(kv["t"]) if "t" in kv else None, "i": int(kv["i"]) if "i" in kv else None,
-                "s": kv.get("s")})
+_log = cs.parse(_lines[:-1], calls=True)
+for x in sorted([*_log.calls, *_log.rets.values()], key=lambda x: x.line):
+    k, e = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+    r = {"k": k, "seq": x.seq, "eip": e - DELTA, "t": x.ic[2], "i": x.ic[0]}
+    if k == "E":
+        r["s0"] = x.stack[0]
+    elif k == "R":
+        r["edx"] = x.edx
+    REC.append(r)
+_tail = _lines[-1].split()
+_tkv = dict(x.split("=", 1) for x in _tail if "=" in x)
+assert _tail[0] == "A" and "t" not in _tkv, _lines[-1]
+REC.append({"k": "A", "seq": int(_tail[1]), "eip": int(_tail[2], 16) - DELTA, "t": None, "i": int(_tkv["i"])})
 UNTIMED = [r for r in REC if r["t"] is None]
 # 最後一筆 A 記錄被 teardown 截斷(沒有 t),只有這一筆
 assert len(UNTIMED) == 1 and UNTIMED[0] is REC[-1] and UNTIMED[0]["eip"] == ISR, UNTIMED
@@ -170,7 +178,7 @@ assert (insn(0x3DFF1), insn(0x3DFF3), insn(0x3E00F)) == ("mov ah, 0x2c", "int 0x
 assert insn(0x3E010) == "cmp bl, dh" and insn(0x3E012) == "je 0x3e00b"     # 秒數(DH)一變就停
 CAL_SLOT = operand(0x3E014, "mov dword ptr [", "], esi")
 assert CAL_SLOT == 0x41B0                                                     # fixup 後是 0x541b0
-EDX = int(CAL_R["f"][1], 16)                                                  # R seq entry eax edx esp
+EDX = CAL_R["edx"]                                                            # R seq entry eax edx esp
 DH, DL = EDX >> 8 & 0xFF, EDX & 0xFF
 CS_PER_TICK = 100 / (PIT_HZ / 65536)                                          # DOSBox-X dos.cpp 0x2c:time = 100/(PIT/65536) × ticks
 TICKS_IN_SECOND = set()
@@ -194,7 +202,7 @@ for q, e in _iE.items():
         continue
     di = _iR[q]["i"] - e["i"]
     assert (di - 3) % 6 == 0, di
-    it, ms = (di - 3) // 6, int(e["s"].split(",")[0], 16)
+    it, ms = (di - 3) // 6, e["s0"]
     CLEAN[(ms, it)] += 1
     C_LO = max(C_LO, math.ceil((1000 * it - 500) / ms))
     C_HI = min(C_HI, math.ceil((1000 * (it + 1) - 500) / ms) - 1)

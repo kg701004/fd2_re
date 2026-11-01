@@ -16,6 +16,7 @@ from pathlib import Path
 from _evpaths import GAME, ROOT, out_path, rel, require_inputs  # noqa: E402
 require_inputs(__file__)
 sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 
 EXE = GAME / "FD2.EXE"
@@ -45,8 +46,7 @@ def sha(p: Path) -> str:
 
 # ---- 讀紀錄 ----
 header = None
-recs: list[tuple[int, int, int, int, str]] = []     # (seq, eip, eax, ebx, code hex)
-periodic: list[int] = []                           # T 行的指令數
+periodic: list[int] = []                           # T 行的指令數(calllog_segments 不解 T)
 for ln in LOG.read_text(encoding="ascii").split("\n"):
     if ln.startswith("H "):
         header = ln
@@ -54,10 +54,11 @@ for ln in LOG.read_text(encoding="ascii").split("\n"):
         kind, n = ln.split(" ")[1:3]
         assert kind == "periodic", ln
         periodic.append(int(n))
-    elif ln.startswith("E "):
-        p = ln.split(" ")
-        code = next(x[2:] for x in p if x.startswith("c="))
-        recs.append((int(p[1]), int(p[2], 16), int(p[6], 16), int(p[7], 16), code))
+# E 紀錄由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位)
+_log = cs._read(str(LOG), calls=True)
+assert not _log.tail_cut and all(c.code is not None for c in _log.calls)
+recs: list[tuple[int, int, int, int, str]] = [   # (seq, eip, eax, ebx, code hex)
+    (c.seq, c.eip, c.regs["eax"], c.regs["ebx"], c.code.hex()) for c in _log.calls]
 assert header is not None and "entries=5 " in header and "dump=0 " in header, header
 assert [r[0] for r in recs] == list(range(1, len(recs) + 1)), "seq 不連續"
 assert {r[1] for r in recs} == {a + DELTA for a in SITES}, sorted({hex(r[1]) for r in recs})
@@ -115,6 +116,7 @@ for seq, eip, eax, ebx, _ in recs:
         cur["drawn"].append(eax)
     elif eip == E_END:
         cur["tick_after"], cur["k_after"] = eax & 0xFFFF, ebx
+        assert loops, f"seq {seq}:收尾之前沒有 k = 1 的圈開頭"
         loops[-1].append(cur)
         cur = None
 assert cur is None

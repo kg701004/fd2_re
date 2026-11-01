@@ -46,6 +46,10 @@ MUTANTS = [
     ("音效結束在第 5 次之後", "assert BLINK[3][\"t0\"] < SFX_END < BLINK[4][\"t0\"]",
      "assert BLINK[4][\"t0\"] < SFX_END < BLINK[5][\"t0\"]"),
     ("音效長度多算 10%", "SFX_END = CONF + SFX_S * 1000", "SFX_END = CONF + SFX_S * 1100"),
+    # E / R 改由 calllog_segments 解析(續一百八十)
+    ("delay 沒有 A 的前提反向", 'assert not any(r.kind == "A" and r.entry - DELTA == DELAY', 'assert any(r.kind == "A" and r.entry - DELTA == DELAY'),
+    ("delay 的 ms 取 s2", "_open[rc.seq] = (rc.stack[0], i, n, tt, rc.ret - DELTA)", "_open[rc.seq] = (rc.stack[1], i, n, tt, rc.ret - DELTA)"),
+    ("i / n 對調", "    i, n, tt = rc.ic\n", "    n, i, tt = rc.ic\n"),
 ]
 
 if __name__ == "__main__":

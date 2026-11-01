@@ -30,6 +30,7 @@ require_inputs(__file__)
 import _exeops as X  # noqa: E402
 from _exeops import insn  # noqa: E402
 import callgraph_le as cg  # noqa: E402
+import calllog_segments as cs  # noqa: E402
 import disasm_le as dl  # noqa: E402
 
 OUT = out_path("reentry_catchup_mdi_driver_s165_20261029.json")
@@ -48,19 +49,16 @@ CALLLOG_MD5 = S163["run"]["calllog_md5"]
 assert META[0].split() == [CALLLOG_MD5, "CALLLOG.TXT"] and META[1].split() == [MD5, "FD2.EXE"], META
 _text = (RAW / "lc163a_CALLLOG.TXT").read_text(encoding="ascii")
 assert _text.count("\n") == int(META[2]) == S163["run"]["lines"]
+# E / R / A 依檔案次序,由 calllog_segments 解析(續一百八十起;最後一筆被 teardown 截斷的由 `_read` 丟掉,續一百六十三)
 REC: list[dict] = []
-for ln in _text.splitlines()[1:]:
-    p = ln.split()
-    if p[0] not in ("E", "R", "A"):
-        continue
-    kv = dict(x.split("=", 1) for x in p if "=" in x)
-    if "t" not in kv:                    # 最後一筆被 teardown 截斷(續一百六十三)
-        continue
-    r = {"k": p[0], "seq": int(p[1]), "eip": int(p[2], 16) - DELTA, "i": int(kv["i"]), "n": int(kv["n"]), "t": float(kv["t"])}
-    if p[0] == "E":
-        r.update(ret=int(p[3], 16) - DELTA, esp=int(p[4], 16), ss=int(p[5], 16), s=kv["s"])
-    elif p[0] == "A":
-        r.update(at=int(p[3], 16) - DELTA)
+_log = cs._read(str(RAW / "lc163a_CALLLOG.TXT"), calls=True)
+for x in sorted([*_log.calls, *_log.rets.values()], key=lambda x: x.line):
+    k, e = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+    r = {"k": k, "seq": x.seq, "eip": e - DELTA, "i": x.ic[0], "n": x.ic[1], "t": x.ic[2]}
+    if k == "E":
+        r.update(ret=x.ret - DELTA, esp=x.esp, ss=x.ss, s0=x.stack[0])
+    elif k == "A":
+        r.update(at=x.eip - DELTA)
     REC.append(r)
 assert len(REC) == S164["source_run"]["records"]
 _isr_e = [r["t"] for r in REC if r["k"] == "E" and r["eip"] in (ISR, REENTRY)]
@@ -302,7 +300,7 @@ for r in REC:
     elif r["k"] == "R" and r["seq"] in _open:
         _pairs[r["seq"]] = (_open.pop(r["seq"]), r)
 _fixed = S164["calibration"]["delay_fixed_game_insns"] + 5 * 18
-_d2 = [(e, r) for e, r in _pairs.values() if int(e["s"].split(",")[0], 16) == 2]
+_d2 = [(e, r) for e, r in _pairs.values() if e["s0"] == 2]
 assert all(clean(e, r) == (r["i"] - e["i"] == _fixed) for e, r in _d2)       # 遇到中斷一定多遊戲指令(ISR 在遊戲 selector)
 _dc = sorted((e["t"], (r["n"] - e["n"]) - (r["i"] - e["i"]), r["t"] - e["t"]) for e, r in _d2 if clean(e, r))
 assert len(_dc) == S164["calibration"]["delay_clean_count"] == 243, len(_dc)

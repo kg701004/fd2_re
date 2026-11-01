@@ -24,6 +24,7 @@ from _evpaths import EVIDENCE, GEN_DIR, ROOT, out_path, rel, require_inputs  # n
 require_inputs(__file__)
 warnings.filterwarnings("ignore", category=DeprecationWarning)      # Pillow getdata 的棄用警告
 sys.path.insert(0, str(ROOT / "tools"))
+import calllog_segments as cs  # noqa: E402
 import fd2_chapter_sweep as sw  # noqa: E402
 from PIL import Image, ImageStat  # noqa: E402
 
@@ -46,14 +47,17 @@ def md5(p) -> str:
 
 
 def markers(path) -> list[tuple[str, str, float]]:
-    """CALLLOG 中五個回合標記的 E / R 記錄 (種類, 名稱, t);沒有 t 的截斷行不算。"""
-    want = {f"{a + DELTA:08x}": n for a, n in NAMES.items()}
+    """CALLLOG 中五個回合標記的 E / R 記錄 (種類, 名稱, t),依檔案次序;沒有 t 的截斷行不算。
+
+    由 calllog_segments 解析(續一百八十起;原本是本檔逐行切欄位)。
+    """
+    want = {a + DELTA: n for a, n in NAMES.items()}
+    lg = cs._read(str(path), calls=True)
     out = []
-    with path.open(encoding="ascii") as fh:
-        for ln in fh:
-            p = ln.split(" ", 3)
-            if len(p) > 3 and p[0] in ("E", "R") and p[2] in want and " t=" in ln:
-                out.append((p[0], want[p[2]], float(ln.rsplit(" t=", 1)[1])))
+    for x in sorted([*lg.calls, *lg.rets.values()], key=lambda x: x.line):
+        k, e = ("E", x.eip) if isinstance(x, cs.Call) else (x.kind, x.entry)
+        if k in ("E", "R") and e in want and x.ic is not None:
+            out.append((k, want[e], x.ic[2]))
     return out
 
 
@@ -161,11 +165,9 @@ assert SAT == {"lc167a_start": 133.5, "lc167a_after_up": 89.4, "lc168a_after_up"
 
 # ---------------------------------------------------------------- (D) CALLLOG 寫入落後
 PA, PB = RUN["marks"]["P_a"][1], RUN["marks"]["P_b"][1]
-N_E = 0
-with CALLLOG.open(encoding="ascii") as fh:
-    for ln in fh:
-        if ln.startswith("E ") and " t=" in ln and PA <= float(ln.rsplit(" t=", 1)[1]) < PB:
-            N_E += 1
+# E 紀錄由 calllog_segments 解析(續一百八十起;原本是本檔逐行比對 " t=")
+N_E = sum(1 for c in cs._read(str(CALLLOG), calls=True).calls if c.ic is not None and PA <= c.ic[2] < PB)
+assert N_E > 0, (PA, PB)
 E_PER_S = round(N_E / ((PB - PA) / 1000), 1)
 FLUSH_S = round(1024 / E_PER_S, 2)
 assert N_E == 16033 and E_PER_S == 532.6 and FLUSH_S == 1.92, (N_E, E_PER_S, FLUSH_S)

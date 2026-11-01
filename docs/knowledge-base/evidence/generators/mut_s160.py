@@ -50,6 +50,10 @@ MUTANTS = [
     ("11 不在淡出區間", "H_FADE[0] <= SHOT_T[11] <= H_FADE[1]", "H_FADE[0] <= SHOT_T[10] <= H_FADE[1]"),
     # 判定
     ("P1 任一條件成立就 PASS", "\"PASS\" if all(P1_OK.values()) else", "\"PASS\" if any(P1_OK.values()) else"),
+    # E / R / A 改由 calllog_segments 解析(續一百八十)
+    ('delay 的毫秒數取 s2', '"s0": x.stack[0], "t": x.ic[2]})', '"s0": x.stack[1], "t": x.ic[2]})'),
+    ('R 的 eax 取 esp', '"eax": x.eax, "t": x.ic[2]})', '"eax": x.esp, "t": x.ic[2]})'),
+    ('時間取 i', '"ret": x.ret - DELTA, "s0": x.stack[0], "t": x.ic[2]})', '"ret": x.ret - DELTA, "s0": x.stack[0], "t": x.ic[0]})'),
 ]
 
 if __name__ == "__main__":

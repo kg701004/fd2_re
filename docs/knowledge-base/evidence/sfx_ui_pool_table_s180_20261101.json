@@ -1,0 +1,725 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s180.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "upstream": {
+  "calllogs": "docs/knowledge-base/evidence/dig_word_order_sfx_s178_20261101.json",
+  "copy_protection": "docs/knowledge-base/evidence/sfx_triggers_irq_s179_20261101.json",
+  "names": "docs/data/function_names.json",
+  "doc": "docs/knowledge-base/36-sfx-audio-data.md"
+ },
+ "static": {
+  "play_sfx_a_calls": 111,
+  "play_sfx_b_calls": 11,
+  "paths": 133,
+  "pool_paths_by_table": {
+   "dword ptr [0x3eec]": 62,
+   "dword ptr [0x4153]": 26,
+   "dword ptr [0x3b13]": 22,
+   "dword ptr [esp + 0x5c]": 6,
+   "dword ptr [0x414b]": 6,
+   "dword ptr [esp + 0xc4]": 5,
+   "dword ptr [0x3b0f]": 2,
+   "dword ptr [esp + 0x14]": 2,
+   "dword ptr [esp + 0x10]": 1,
+   "dword ptr [esp + 8]": 1
+  },
+  "ui_pool_paths": 62,
+  "play_step_sfx_tail": [
+   [
+    "9",
+    "0x322c7",
+    "0x322c9"
+   ],
+   [
+    "0xa",
+    "0x32280",
+    "0x32282"
+   ],
+   [
+    "0xb",
+    "0x322ff",
+    null
+   ]
+  ],
+  "old_doc36_0xb_site": {
+   "addr": "0x2cac3",
+   "insn": "cmp dword ptr [ebx*4 + 0x40b0], 0"
+  }
+ },
+ "ui_pool": {
+  "0": {
+   "sites": [
+    {
+     "call": "0x117a1",
+     "handle": "A",
+     "idx_at": "0x11799",
+     "via": null,
+     "func": "target_cursor_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x11a33",
+     "handle": "A",
+     "idx_at": "0x11a2b",
+     "via": null,
+     "func": "battle_main_input_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x11a54",
+     "handle": "A",
+     "idx_at": "0x11a4c",
+     "via": null,
+     "func": "battle_main_input_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x11a75",
+     "handle": "A",
+     "idx_at": "0x11a6d",
+     "via": null,
+     "func": "battle_main_input_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x11a96",
+     "handle": "A",
+     "idx_at": "0x11a8e",
+     "via": null,
+     "func": "battle_main_input_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x1ba55",
+     "handle": "A",
+     "idx_at": "0x1ba4d",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1ba72",
+     "handle": "A",
+     "idx_at": "0x1ba6a",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1ba9d",
+     "handle": "A",
+     "idx_at": "0x1ba95",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1babe",
+     "handle": "A",
+     "idx_at": "0x1bab6",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1baee",
+     "handle": "A",
+     "idx_at": "0x1bae6",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1bb2a",
+     "handle": "A",
+     "idx_at": "0x1bb22",
+     "via": null,
+     "func": "item_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d58c",
+     "handle": "A",
+     "idx_at": "0x1d584",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d5a9",
+     "handle": "A",
+     "idx_at": "0x1d5a1",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d5d5",
+     "handle": "A",
+     "idx_at": "0x1d5cd",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d5f6",
+     "handle": "A",
+     "idx_at": "0x1d5ee",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d627",
+     "handle": "A",
+     "idx_at": "0x1d61f",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x1d65b",
+     "handle": "A",
+     "idx_at": "0x1d653",
+     "via": null,
+     "func": "command_grid_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x26504",
+     "handle": "A",
+     "idx_at": "0x264fc",
+     "via": null,
+     "func": "town_hub_main",
+     "unreachable": false
+    },
+    {
+     "call": "0x26536",
+     "handle": "A",
+     "idx_at": "0x2652e",
+     "via": null,
+     "func": "town_hub_main",
+     "unreachable": false
+    },
+    {
+     "call": "0x26e5e",
+     "handle": "A",
+     "idx_at": "0x26e56",
+     "via": null,
+     "func": "carousel_menu_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x26e90",
+     "handle": "A",
+     "idx_at": "0x26e88",
+     "via": null,
+     "func": "carousel_menu_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x27625",
+     "handle": "A",
+     "idx_at": "0x2761d",
+     "via": null,
+     "func": "item_list_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x2768b",
+     "handle": "A",
+     "idx_at": "0x27683",
+     "via": null,
+     "func": "item_list_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x276d0",
+     "handle": "A",
+     "idx_at": "0x276c8",
+     "via": null,
+     "func": "item_list_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x276fb",
+     "handle": "A",
+     "idx_at": "0x276f3",
+     "via": null,
+     "func": "item_list_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x27e3b",
+     "handle": "A",
+     "idx_at": "0x27e33",
+     "via": null,
+     "func": "choice_box_left_right",
+     "unreachable": false
+    },
+    {
+     "call": "0x27e99",
+     "handle": "A",
+     "idx_at": "0x27e91",
+     "via": null,
+     "func": "choice_box_left_right",
+     "unreachable": false
+    },
+    {
+     "call": "0x27ede",
+     "handle": "A",
+     "idx_at": "0x27ed6",
+     "via": null,
+     "func": "choice_box_left_right",
+     "unreachable": false
+    },
+    {
+     "call": "0x27f0e",
+     "handle": "A",
+     "idx_at": "0x27f06",
+     "via": null,
+     "func": "choice_box_left_right",
+     "unreachable": false
+    },
+    {
+     "call": "0x2805f",
+     "handle": "A",
+     "idx_at": "0x28057",
+     "via": null,
+     "func": "equip_compare_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x280bb",
+     "handle": "A",
+     "idx_at": "0x280b3",
+     "via": null,
+     "func": "equip_compare_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b106",
+     "handle": "A",
+     "idx_at": "0x2b0fe",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b12c",
+     "handle": "A",
+     "idx_at": "0x2b124",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b155",
+     "handle": "A",
+     "idx_at": "0x2b14d",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b17b",
+     "handle": "A",
+     "idx_at": "0x2b173",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x341e7",
+     "handle": "A",
+     "idx_at": "0x341df",
+     "via": null,
+     "func": "copy_protection_password_check",
+     "unreachable": true
+    }
+   ],
+   "cl_plays": 131,
+   "cl_plays_by_func": {
+    "sortie_member_select": 65,
+    "town_hub_main": 35,
+    "carousel_menu_select": 13,
+    "choice_box_left_right": 7,
+    "item_list_select": 4,
+    "battle_main_input_loop": 3,
+    "item_grid_select": 2,
+    "target_cursor_loop": 1,
+    "equip_compare_select": 1
+   }
+  },
+  "1": {
+   "sites": [
+    {
+     "call": "0x265a7",
+     "handle": "A",
+     "idx_at": "0x2659f",
+     "via": null,
+     "func": "town_hub_main",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 12,
+   "cl_plays_by_func": {
+    "town_hub_main": 12
+   }
+  },
+  "2": {
+   "sites": [
+    {
+     "call": "0x16546",
+     "handle": "A",
+     "idx_at": "0x1653e",
+     "via": null,
+     "func": "typewriter_tick",
+     "unreachable": false
+    },
+    {
+     "call": "0x34126",
+     "handle": "A",
+     "idx_at": "0x3411e",
+     "via": null,
+     "func": "copy_protection_password_check",
+     "unreachable": true
+    },
+    {
+     "call": "0x34162",
+     "handle": "A",
+     "idx_at": "0x3415a",
+     "via": null,
+     "func": "copy_protection_password_check",
+     "unreachable": true
+    }
+   ],
+   "cl_plays": 1846,
+   "cl_plays_by_func": {
+    "typewriter_tick": 1846
+   }
+  },
+  "3": {
+   "sites": [
+    {
+     "call": "0x1ddaa",
+     "handle": "A",
+     "idx_at": "0x1dda2",
+     "via": null,
+     "func": "unit_death_sweep",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 0,
+   "cl_plays_by_func": {}
+  },
+  "4": {
+   "sites": [
+    {
+     "call": "0x1403d",
+     "handle": "A",
+     "idx_at": "0x14035",
+     "via": null,
+     "func": "rest_hp_recover",
+     "unreachable": false
+    },
+    {
+     "call": "0x1a3df",
+     "handle": "A",
+     "idx_at": "0x1a3d7",
+     "via": null,
+     "func": "battle_phase_advance",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 0,
+   "cl_plays_by_func": {}
+  },
+  "5": {
+   "sites": [
+    {
+     "call": "0x17c56",
+     "handle": "A",
+     "idx_at": "0x17c4e",
+     "via": null,
+     "func": "unit_info_cards",
+     "unreachable": false
+    },
+    {
+     "call": "0x17ede",
+     "handle": "A",
+     "idx_at": "0x17ed6",
+     "via": null,
+     "func": "info_card_open_anim",
+     "unreachable": false
+    },
+    {
+     "call": "0x29c8a",
+     "handle": "A",
+     "idx_at": "0x29c82",
+     "via": null,
+     "func": "save_slot_selector",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b08a",
+     "handle": "A",
+     "idx_at": "0x2b082",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 31,
+   "cl_plays_by_func": {
+    "save_slot_selector": 13,
+    "info_card_open_anim": 10,
+    "unit_info_cards": 4,
+    "sortie_member_select": 4
+   }
+  },
+  "6": {
+   "sites": [
+    {
+     "call": "0x17b2e",
+     "handle": "A",
+     "idx_at": "0x17b26",
+     "via": null,
+     "func": "unit_info_cards",
+     "unreachable": false
+    },
+    {
+     "call": "0x17d26",
+     "handle": "A",
+     "idx_at": "0x17d1e",
+     "via": null,
+     "func": "unit_info_cards",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b1f1",
+     "handle": "A",
+     "idx_at": "0x2b1e9",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 16,
+   "cl_plays_by_func": {
+    "unit_info_cards": 12,
+    "sortie_member_select": 4
+   }
+  },
+  "7": {
+   "sites": [
+    {
+     "call": "0x1193a",
+     "handle": "A",
+     "idx_at": "0x11932",
+     "via": null,
+     "func": "battle_main_input_loop",
+     "unreachable": false
+    },
+    {
+     "call": "0x29d30",
+     "handle": "A",
+     "idx_at": "0x29d28",
+     "via": null,
+     "func": "save_slot_selector",
+     "unreachable": false
+    },
+    {
+     "call": "0x29d6c",
+     "handle": "A",
+     "idx_at": "0x29d64",
+     "via": null,
+     "func": "save_slot_selector",
+     "unreachable": false
+    },
+    {
+     "call": "0x2b0c7",
+     "handle": "B",
+     "idx_at": "0x2b0bf",
+     "via": null,
+     "func": "sortie_member_select",
+     "unreachable": false
+    },
+    {
+     "call": "0x3417e",
+     "handle": "A",
+     "idx_at": "0x34176",
+     "via": null,
+     "func": "copy_protection_password_check",
+     "unreachable": true
+    }
+   ],
+   "cl_plays": 37,
+   "cl_plays_by_func": {
+    "sortie_member_select": 36,
+    "battle_main_input_loop": 1
+   }
+  },
+  "8": {
+   "sites": [
+    {
+     "call": "0x17495",
+     "handle": "A",
+     "idx_at": "0x1748d",
+     "via": null,
+     "func": "action_ring_open",
+     "unreachable": false
+    },
+    {
+     "call": "0x176d3",
+     "handle": "A",
+     "idx_at": "0x176cb",
+     "via": null,
+     "func": "action_ring_close",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 4,
+   "cl_plays_by_func": {
+    "action_ring_open": 2,
+    "action_ring_close": 2
+   }
+  },
+  "9": {
+   "sites": [
+    {
+     "call": "0x32307",
+     "handle": "A",
+     "idx_at": "0x322c7",
+     "via": "0x322c9",
+     "func": "play_step_sfx",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 228,
+   "cl_plays_by_func": {
+    "play_step_sfx": 228
+   }
+  },
+  "0xa": {
+   "sites": [
+    {
+     "call": "0x32307",
+     "handle": "A",
+     "idx_at": "0x32280",
+     "via": "0x32282",
+     "func": "play_step_sfx",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 57,
+   "cl_plays_by_func": {
+    "play_step_sfx": 57
+   }
+  },
+  "0xb": {
+   "sites": [
+    {
+     "call": "0x32307",
+     "handle": "A",
+     "idx_at": "0x322ff",
+     "via": null,
+     "func": "play_step_sfx",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 0,
+   "cl_plays_by_func": {}
+  },
+  "0xc": {
+   "sites": [
+    {
+     "call": "0x13d13",
+     "handle": "B",
+     "idx_at": "0x13d0b",
+     "via": null,
+     "func": "ai_mode_dispatch",
+     "unreachable": false
+    },
+    {
+     "call": "0x191a9",
+     "handle": "B",
+     "idx_at": "0x191a1",
+     "via": null,
+     "func": "field_cell_treasure_check",
+     "unreachable": false
+    }
+   ],
+   "cl_plays": 0,
+   "cl_plays_by_func": {}
+  }
+ },
+ "doc36_rows": {
+  "0": [
+   "A 36 / B 0(防拷 1 處走不到)",
+   "`target_cursor_loop`、`battle_main_input_loop`、`item_grid_select`、`command_grid_select`、`town_hub_main`、`carousel_menu_select`、`item_list_select`、`choice_box_left_right`、`equip_compare_select`、`sortie_member_select`、`copy_protection_password_check`",
+   "131"
+  ],
+  "1": [
+   "A 1 / B 0",
+   "`town_hub_main`",
+   "12"
+  ],
+  "2": [
+   "A 3 / B 0(防拷 2 處走不到)",
+   "`typewriter_tick`、`copy_protection_password_check`",
+   "1846"
+  ],
+  "3": [
+   "A 1 / B 0",
+   "`unit_death_sweep`",
+   "0"
+  ],
+  "4": [
+   "A 2 / B 0",
+   "`rest_hp_recover`、`battle_phase_advance`",
+   "0"
+  ],
+  "5": [
+   "A 4 / B 0",
+   "`unit_info_cards`、`info_card_open_anim`、`save_slot_selector`、`sortie_member_select`",
+   "31"
+  ],
+  "6": [
+   "A 3 / B 0",
+   "`unit_info_cards`、`sortie_member_select`",
+   "16"
+  ],
+  "7": [
+   "A 4 / B 1(防拷 1 處走不到)",
+   "`battle_main_input_loop`、`save_slot_selector`、`sortie_member_select`、`copy_protection_password_check`",
+   "37"
+  ],
+  "8": [
+   "A 2 / B 0",
+   "`action_ring_open`、`action_ring_close`",
+   "4"
+  ],
+  "9": [
+   "A 1 / B 0",
+   "`play_step_sfx`",
+   "228"
+  ],
+  "0xa": [
+   "A 1 / B 0",
+   "`play_step_sfx`",
+   "57"
+  ],
+  "0xb": [
+   "A 1 / B 0",
+   "`play_step_sfx`",
+   "0"
+  ],
+  "0xc": [
+   "A 0 / B 2",
+   "`ai_mode_dispatch`、`field_cell_treasure_check`",
+   "0"
+  ]
+ },
+ "conclusion": "UI 池 [0x53eec] 共 62 條推 index 的路徑、13 個 index;doc36 表前四欄與此逐格相同。0xb 只由 play_step_sfx 的 0x322ff 推(舊表 0x2cac3 是 cmp);0x32307 共用尾端放 9 / 0xa / 0xb,cl1 .. cl14 實際看到 index 10 57 次。"
+}

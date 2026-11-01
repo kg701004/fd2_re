@@ -1,0 +1,483 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s179.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllogs": {
+  "cl1": {
+   "path": ".wsl_build/cl1_CALLLOG.TXT",
+   "md5": "8abf1cb92b0116ce1aa799df2c2e60aa"
+  },
+  "cl2": {
+   "path": ".wsl_build/cl2_CALLLOG.TXT",
+   "md5": "4e7c32f7f87bd445f6a7113af1f0ba7b"
+  },
+  "cl3": {
+   "path": ".wsl_build/cl3_CALLLOG.TXT",
+   "md5": "099f3908148b60a30fffc142163158d4"
+  },
+  "cl4": {
+   "path": ".wsl_build/cl4_CALLLOG.TXT",
+   "md5": "0146d00b11c60c2c4af4b3634830af42"
+  },
+  "cl5": {
+   "path": ".wsl_build/cl5_CALLLOG.TXT",
+   "md5": "5bbb99e2b0d9ceb51911aea81fe78136"
+  },
+  "cl6": {
+   "path": ".wsl_build/cl6_CALLLOG.TXT",
+   "md5": "ea9e81aa4498215f1d3d493d064a2501"
+  },
+  "cl7": {
+   "path": ".wsl_build/cl7_CALLLOG.TXT",
+   "md5": "47e61b1f95407a604b4d3497dfe4c4a5"
+  },
+  "cl9": {
+   "path": ".wsl_build/cl9_CALLLOG.TXT",
+   "md5": "85309696d4f62765a01d70585f9e6f07"
+  },
+  "cl11": {
+   "path": ".wsl_build/cl11_CALLLOG.TXT",
+   "md5": "20b89f9579c609a6298c2e8c2e954c01"
+  },
+  "cl12": {
+   "path": ".wsl_build/cl12_CALLLOG.TXT",
+   "md5": "ca706ebabe69b66d14f6ab233564a869"
+  },
+  "cl13": {
+   "path": ".wsl_build/cl13_CALLLOG.TXT",
+   "md5": "7bda602d49a41cd635553357752204ba"
+  },
+  "cl14": {
+   "path": ".wsl_build/cl14_CALLLOG.TXT",
+   "md5": "aa50b76a131b35cf8c719dd747ba6b5c"
+  },
+  "lc174a": {
+   "path": ".wsl_build/lc174_live/lc174a_CALLLOG.TXT",
+   "md5": "0aaee51798ec85a779a95aa78ed85cac"
+  },
+  "lc174b": {
+   "path": ".wsl_build/lc174_live/lc174b_CALLLOG.TXT",
+   "md5": "9be49f776cc0ed2fbbc3d7e962503b14"
+  },
+  "lc173a": {
+   "path": ".wsl_build/lc173_live/lc173a_CALLLOG.TXT",
+   "md5": "3a8bb8b852d99b3f6307a64306408efb"
+  },
+  "lc163a": {
+   "path": ".wsl_build/lc163_live/lc163a_CALLLOG.TXT",
+   "md5": "3bebd4f463c821dfc137cd267c5c6112"
+  }
+ },
+ "upstream": [
+  "docs/knowledge-base/evidence/audio_followups_s175_20261031.json",
+  "docs/knowledge-base/evidence/trig_capture_s174_20261031.json",
+  "docs/knowledge-base/evidence/dig_fill_lengths_s176_20261031.json",
+  "docs/knowledge-base/evidence/dig_word_order_sfx_s178_20261101.json"
+ ],
+ "static": {
+  "res_title": 77,
+  "idx_title": 3,
+  "idx_confirm": 1,
+  "res_ani": 78,
+  "res_pool": 31,
+  "idx_type": 2,
+  "idx_step": 9,
+  "play_call_sites": 122,
+  "pool_sites_by_idx": {
+   "2": [
+    {
+     "idx_push": "0x1653e",
+     "via_jmp": null,
+     "call": "0x16546",
+     "function": "typewriter_tick"
+    },
+    {
+     "idx_push": "0x3411e",
+     "via_jmp": null,
+     "call": "0x34126",
+     "function": "copy_protection_password_check"
+    },
+    {
+     "idx_push": "0x3415a",
+     "via_jmp": null,
+     "call": "0x34162",
+     "function": "copy_protection_password_check"
+    }
+   ],
+   "9": [
+    {
+     "idx_push": "0x322c7",
+     "via_jmp": "0x322c9",
+     "call": "0x32307",
+     "function": "play_step_sfx"
+    }
+   ]
+  },
+  "copy_protection_unreachable": {
+   "entry": "0x33faf",
+   "only_call": "0x118ac",
+   "jmp_before": "0x118aa jmp 0x118b3"
+  }
+ },
+ "cl_logs": {
+  "cl1": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 180,
+   "play_a_calls": 200
+  },
+  "cl2": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl3": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl4": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl5": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl6": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 229,
+   "play_a_calls": 200
+  },
+  "cl7": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl9": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl11": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": false,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 197,
+   "play_a_calls": 200
+  },
+  "cl12": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": true,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl13": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": true,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 195,
+   "play_a_calls": 200
+  },
+  "cl14": {
+   "title_ptr": "0x26b018",
+   "load_ret_seen": true,
+   "confirm_plays": 1,
+   "ani_plays": 1,
+   "pool": "0x208018",
+   "pool_plays": 196,
+   "play_a_calls": 200
+  }
+ },
+ "pool_callers": {
+  "2": {
+   "0x1654b": 1846
+  },
+  "9": {
+   "0x3230c": 228
+  }
+ },
+ "lc_order": {
+  "lc174a": {
+   "sounds_first3": [
+    [
+     [
+      "FDOTHER.DAT",
+      78,
+      0
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      49,
+      6
+     ],
+     [
+      "FDOTHER.DAT",
+      53,
+      2
+     ],
+     [
+      "FDOTHER.DAT",
+      77,
+      3
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      77,
+      1
+     ]
+    ]
+   ],
+   "starts_ms": [
+    8619.3,
+    9363.3,
+    10858.4
+   ],
+   "t_1fd7c": 9987.9,
+   "t_1fed3": 10854.4,
+   "confirm_first_fill_dt_ms": 4.037,
+   "min_fill_gap_ms": 84.11,
+   "t_new_game": 12447.2,
+   "pool_sounds": {
+    "#31/9": 32,
+    "#31/2": 9
+   }
+  },
+  "lc174b": {
+   "sounds_first3": [
+    [
+     [
+      "FDOTHER.DAT",
+      78,
+      0
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      49,
+      6
+     ],
+     [
+      "FDOTHER.DAT",
+      53,
+      2
+     ],
+     [
+      "FDOTHER.DAT",
+      77,
+      3
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      77,
+      1
+     ]
+    ]
+   ],
+   "starts_ms": [
+    8598.3,
+    9248.2,
+    10618.3
+   ],
+   "t_1fd7c": 9828.9,
+   "t_1fed3": 10617.4,
+   "confirm_first_fill_dt_ms": 0.977,
+   "min_fill_gap_ms": 89.17,
+   "t_new_game": 12212.7,
+   "pool_sounds": {
+    "#31/9": 32,
+    "#31/2": 9
+   }
+  },
+  "lc173a": {
+   "sounds_first3": [
+    [
+     [
+      "FDOTHER.DAT",
+      78,
+      0
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      49,
+      6
+     ],
+     [
+      "FDOTHER.DAT",
+      53,
+      2
+     ],
+     [
+      "FDOTHER.DAT",
+      77,
+      3
+     ]
+    ],
+    [
+     [
+      "FDOTHER.DAT",
+      77,
+      1
+     ]
+    ]
+   ],
+   "starts_ms": [
+    8627.4,
+    9372.2,
+    10792.2
+   ],
+   "t_1fd7c": 9951.0,
+   "t_1fed3": 10790.4,
+   "confirm_first_fill_dt_ms": 1.868,
+   "min_fill_gap_ms": 86.83,
+   "t_new_game": 12383.4,
+   "pool_sounds": {
+    "#31/9": 32,
+    "#31/2": 10
+   }
+  }
+ },
+ "reentry_nongame": {
+  "lc163a": {
+   "69": 60,
+   "70": 2,
+   "302": 14,
+   "375": 1,
+   "601": 1
+  },
+  "lc174a": {
+   "69": 59,
+   "70": 4,
+   "302": 17,
+   "303": 6,
+   "375": 1,
+   "601": 1
+  },
+  "lc174b": {
+   "69": 58,
+   "70": 2,
+   "302": 9,
+   "303": 1,
+   "601": 1
+  },
+  "lc173a": {
+   "69": 60,
+   "70": 2,
+   "302": 13,
+   "303": 6,
+   "602": 1
+  }
+ },
+ "ng375": {
+  "lc163a": {
+   "t": 21060.7,
+   "next_dig_dt_ms": 0.102,
+   "next_dig_fill": true
+  },
+  "lc174a_irq7": {
+   "t": 21843.6,
+   "next_dig_dt_ms": 0.102,
+   "next_dig_fill": true
+  }
+ },
+ "control_302_303": {
+  "n": 66,
+  "next_dig_fill": 1
+ },
+ "lc167a": {
+  "short": [
+   {
+    "t": 119237.6,
+    "nongame": 532,
+    "next_dig": {
+     "dt_ms": 0.235,
+     "fill": false
+    }
+   },
+   {
+    "t": 540499.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.242,
+     "fill": true
+    }
+   },
+   {
+    "t": 542774.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.242,
+     "fill": true
+    }
+   },
+   {
+    "t": 542959.0,
+    "nongame": 558,
+    "next_dig": {
+     "dt_ms": 0.244,
+     "fill": true
+    }
+   }
+  ],
+  "clock_rate": 0.9998001,
+  "up_window_ms": [
+   119228.8,
+   119577.8
+  ],
+  "last_key_ms": 518273.5956,
+  "gap_558_ms": 22225.4
+ },
+ "conclusion": {
+  "title": "6235 位元組那段由 FDOTHER #77 放:title_seq 0x1f8de 載入 #77、0x1fd24 play_digital_sample(指標, 3, 1);12 份 DOSBox-X 呼叫紀錄 cl1 .. cl14 的指標處 32 位元組都是 #77 的開頭(#49 / #53 開頭不同)。lc174a / lc174b / lc173a 的混音序列 #78 第 0 段 → #77 第 3 段 → #77 第 1 段,與 title_seq 的順序(0x1fd14 ani_player → 0x1fd24 → 0x1fedb)相同。",
+  "pool": "index 9(sfx_09)是 play_step_sfx 的走路聲:全 EXE 以 UI 音效池 [0x53eec](#31)放 index 9 的只有 0x322c7;index 2(sfx_02)是 typewriter_tick 的打字聲(另兩處在防拷問答,唯一呼叫點 0x118ac 前面是無條件 jmp,走不到)。cl1 .. cl14 實際:index 2 1846 次全來自 0x1654b、index 9 228 次全來自 0x3230c。",
+  "irq": "lc163a 的 ng 375(21060.7 ms)之後 0.102 ms 的 DIG 服務是填緩衝,與 lc174a 直接看到 IRQ 7 的那次(21843.6 ms,0.102 ms)同型;沒夾中斷的 302 / 303 型 66 次只有 1 次接著填。lc167a 532 那次在送 Up 鍵的窗內(119228.8 .. 119577.8 ms),558 那 3 次在最後一次送鍵之後 22.2 秒以上 —— 兩份都仍沒有 I 紀錄,這是獨立佐證,不是直接看到。"
+ }
+}

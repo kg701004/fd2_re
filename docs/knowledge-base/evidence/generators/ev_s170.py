@@ -31,6 +31,7 @@ from _exeops import _EXE, _META, dl, insn  # noqa: E402  (_exeops 已把 tools/ 
 import warnings  # noqa: E402
 import xmi2mid  # noqa: E402
 warnings.filterwarnings("ignore", category=DeprecationWarning)      # Pillow getdata 的棄用警告
+import calllog_segments as cs  # noqa: E402
 import fd2_chapter_sweep as sw  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -85,17 +86,15 @@ META = (RAW / "lc167a_meta.txt").read_text(encoding="utf-8").splitlines()
 _raw = (RAW / "lc167a_CALLLOG.TXT").read_bytes()
 CALLLOG_MD5 = hashlib.md5(_raw).hexdigest()
 assert META[0].split() == [CALLLOG_MD5, "CALLLOG.TXT"] and CALLLOG_MD5 == "ac9401da607102caa569be467c178b92"
+# E / R / A 依檔案次序,由 calllog_segments 解析(續一百八十起;原本是本檔自己切欄位;寫到一半的末行由 `_read` 丟掉)
 REC = []                                # (k, seq, eip, i, n, t, E 的返回位址 / A 的所在位址, E 的 edi)
-for ln in _raw.decode("ascii").splitlines()[1:]:
-    p = ln.split()
-    if not p or p[0] not in ("E", "R", "A"):
-        continue
-    kv = dict(x.split("=", 1) for x in p if "=" in x)
-    if "t" not in kv:
-        continue
-    e = p[0] == "E"
-    REC.append((p[0], p[1], int(p[2], 16) - DELTA, int(kv["i"]), int(kv["n"]), float(kv["t"]),
-                int(p[3].rstrip("?"), 16) - DELTA if p[0] in "EA" else None, int(p[11], 16) if e else None))
+_log = cs._read(str(RAW / "lc167a_CALLLOG.TXT"), calls=True)
+for x in sorted([*_log.calls, *_log.rets.values()], key=lambda x: x.line):
+    if isinstance(x, cs.Call):
+        REC.append(("E", str(x.seq), x.eip - DELTA, *x.ic, x.ret - DELTA, x.regs["edi"]))
+    else:
+        REC.append((x.kind, str(x.seq), x.entry - DELTA, *x.ic, x.eip - DELTA if x.kind == "A" else None, None))
+del _log
 del _raw
 WIN = {k: tuple(v) for k, v in S167["windows_ms"].items()}
 
