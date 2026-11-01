@@ -1,0 +1,1421 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s183.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "draw_unit_panel_name": {
+  "params": [
+   "dst",
+   "stride",
+   "unit"
+  ],
+  "unit_param": "unit",
+  "insns_0x18d73": [
+   "movzx eax, byte ptr [esi + 8]",
+   "inc eax",
+   "push eax",
+   "push dword ptr [0x3a7d]",
+   "call 0x15f84"
+  ],
+  "field": 8,
+  "add": 1
+ },
+ "plus8_source": {
+  "panel_callee_esi": {
+   "cl1": 59,
+   "cl12": 18,
+   "cl14": 100,
+   "cl4": 100,
+   "cl5": 98,
+   "cl7": 100
+  },
+  "latest_prior_dump": {
+   "cl14": 81,
+   "cl4": 19,
+   "cl7": 22
+  }
+ },
+ "pairs": [
+  {
+   "log": "cl1",
+   "unit_base": "0x2709e8",
+   "unit": 0,
+   "panel_name_calls": 59,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": [
+    0
+   ],
+   "fdfield": []
+  },
+  {
+   "log": "cl4",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "panel_name_calls": 95,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": [
+    0
+   ],
+   "fdfield": []
+  },
+  {
+   "log": "cl4",
+   "unit_base": "0x26bdc8",
+   "unit": 9,
+   "panel_name_calls": 17,
+   "s2": 135,
+   "plus8": 134,
+   "name": "男村民",
+   "string_kind": "兵種名",
+   "ev_s182_plus8": [
+    134
+   ],
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 4,
+     "b1": 134
+    }
+   ]
+  },
+  {
+   "log": "cl4",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "panel_name_calls": 2,
+   "s2": 97,
+   "plus8": 96,
+   "name": "盜賊",
+   "string_kind": "兵種名",
+   "ev_s182_plus8": [
+    96
+   ],
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6,
+     "b1": 96
+    }
+   ]
+  },
+  {
+   "log": "cl4",
+   "unit_base": "0x26bdc8",
+   "unit": 12,
+   "panel_name_calls": 5,
+   "s2": 97,
+   "plus8": 96,
+   "name": "盜賊",
+   "string_kind": "兵種名",
+   "ev_s182_plus8": null,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 7,
+     "b1": 96
+    }
+   ]
+  },
+  {
+   "log": "cl5",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "panel_name_calls": 33,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": [
+    0
+   ],
+   "fdfield": []
+  },
+  {
+   "log": "cl5",
+   "unit_base": "0x26bdc8",
+   "unit": 1,
+   "panel_name_calls": 58,
+   "s2": 10,
+   "plus8": 9,
+   "name": "悠妮",
+   "string_kind": "角色名",
+   "ev_s182_plus8": null,
+   "fdfield": []
+  },
+  {
+   "log": "cl5",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "panel_name_calls": 7,
+   "s2": 97,
+   "plus8": 96,
+   "name": "盜賊",
+   "string_kind": "兵種名",
+   "ev_s182_plus8": [
+    96
+   ],
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6,
+     "b1": 96
+    }
+   ]
+  },
+  {
+   "log": "cl7",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "panel_name_calls": 112,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": [
+    0
+   ],
+   "fdfield": []
+  },
+  {
+   "log": "cl7",
+   "unit_base": "0x26bdc8",
+   "unit": 1,
+   "panel_name_calls": 10,
+   "s2": 10,
+   "plus8": 9,
+   "name": "悠妮",
+   "string_kind": "角色名",
+   "ev_s182_plus8": null,
+   "fdfield": []
+  },
+  {
+   "log": "cl12",
+   "unit_base": "0x26ea0c",
+   "unit": 0,
+   "panel_name_calls": 18,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": [
+    0
+   ],
+   "fdfield": []
+  },
+  {
+   "log": "cl14",
+   "unit_base": "0x21f1b4",
+   "unit": 0,
+   "panel_name_calls": 181,
+   "s2": 1,
+   "plus8": 0,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "ev_s182_plus8": null,
+   "fdfield": []
+  }
+ ],
+ "fdfield_records_shown": [
+  {
+   "map": 1,
+   "record": 4,
+   "b1": 134
+  },
+  {
+   "map": 1,
+   "record": 6,
+   "b1": 96
+  },
+  {
+   "map": 1,
+   "record": 7,
+   "b1": 96
+  }
+ ],
+ "trailing_records_after_count": {
+  "0": 1,
+  "31": 1,
+  "32": 10
+ },
+ "b1_table": [
+  {
+   "b1": 0,
+   "string": 1,
+   "name": "索爾",
+   "string_kind": "角色名",
+   "records": 3,
+   "maps": [
+    31,
+    32
+   ]
+  },
+  {
+   "b1": 1,
+   "string": 2,
+   "name": "哈諾",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    0
+   ]
+  },
+  {
+   "b1": 2,
+   "string": 3,
+   "name": "鐵諾",
+   "string_kind": "角色名",
+   "records": 25,
+   "maps": [
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "b1": 3,
+   "string": 4,
+   "name": "哈瓦特",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    0,
+    12
+   ]
+  },
+  {
+   "b1": 4,
+   "string": 5,
+   "name": "亞雷斯",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    31,
+    32
+   ]
+  },
+  {
+   "b1": 5,
+   "string": 6,
+   "name": "洛娜",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    7
+   ]
+  },
+  {
+   "b1": 6,
+   "string": 7,
+   "name": "萊汀",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    9,
+    31
+   ]
+  },
+  {
+   "b1": 7,
+   "string": 8,
+   "name": "蘭斯洛特",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    17,
+    31
+   ]
+  },
+  {
+   "b1": 8,
+   "string": 9,
+   "name": "希莉亞",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    1
+   ]
+  },
+  {
+   "b1": 9,
+   "string": 10,
+   "name": "悠妮",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    31
+   ]
+  },
+  {
+   "b1": 10,
+   "string": 11,
+   "name": "瑪琳",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    4
+   ]
+  },
+  {
+   "b1": 11,
+   "string": 12,
+   "name": "索菲亞",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    9
+   ]
+  },
+  {
+   "b1": 12,
+   "string": 13,
+   "name": "凱麗",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    6
+   ]
+  },
+  {
+   "b1": 13,
+   "string": 14,
+   "name": "貝克威",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    5
+   ]
+  },
+  {
+   "b1": 14,
+   "string": 15,
+   "name": "珊",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    10
+   ]
+  },
+  {
+   "b1": 15,
+   "string": 16,
+   "name": "塞可邦勒",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    14
+   ]
+  },
+  {
+   "b1": 16,
+   "string": 17,
+   "name": "凱拉斯",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    16
+   ]
+  },
+  {
+   "b1": 17,
+   "string": 18,
+   "name": "米亞斯多德",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    11,
+    31
+   ]
+  },
+  {
+   "b1": 18,
+   "string": 19,
+   "name": "蜜蒂",
+   "string_kind": "角色名",
+   "records": 3,
+   "maps": [
+    15,
+    16,
+    31
+   ]
+  },
+  {
+   "b1": 19,
+   "string": 20,
+   "name": "羅德曼",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    22,
+    31
+   ]
+  },
+  {
+   "b1": 20,
+   "string": 21,
+   "name": "莎拉",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    21
+   ]
+  },
+  {
+   "b1": 21,
+   "string": 22,
+   "name": "約拿",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    17
+   ]
+  },
+  {
+   "b1": 22,
+   "string": 23,
+   "name": "卡里斯",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    22
+   ]
+  },
+  {
+   "b1": 23,
+   "string": 24,
+   "name": "羅蘭",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    20
+   ]
+  },
+  {
+   "b1": 24,
+   "string": 25,
+   "name": "希爾法",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    20
+   ]
+  },
+  {
+   "b1": 25,
+   "string": 26,
+   "name": "謝多",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    19
+   ]
+  },
+  {
+   "b1": 26,
+   "string": 27,
+   "name": "聖寇拉斯",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    24
+   ]
+  },
+  {
+   "b1": 27,
+   "string": 28,
+   "name": "巴拿羅西亞",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    18
+   ]
+  },
+  {
+   "b1": 28,
+   "string": 29,
+   "name": "達克塞",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    19
+   ]
+  },
+  {
+   "b1": 29,
+   "string": 30,
+   "name": "亞齊梅吉",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    24
+   ]
+  },
+  {
+   "b1": 30,
+   "string": 31,
+   "name": "蓋亞",
+   "string_kind": "角色名",
+   "records": 2,
+   "maps": [
+    30,
+    31
+   ]
+  },
+  {
+   "b1": 31,
+   "string": 32,
+   "name": "渥德",
+   "string_kind": "角色名",
+   "records": 1,
+   "maps": [
+    25
+   ]
+  },
+  {
+   "b1": 48,
+   "string": 49,
+   "name": "",
+   "string_kind": "空字串",
+   "records": 1,
+   "maps": [
+    32
+   ]
+  },
+  {
+   "b1": 66,
+   "string": 67,
+   "name": "",
+   "string_kind": "空字串",
+   "records": 1,
+   "maps": [
+    32
+   ]
+  },
+  {
+   "b1": 68,
+   "string": 69,
+   "name": "士兵",
+   "string_kind": "69 .. 75 段",
+   "records": 35,
+   "maps": [
+    0,
+    4,
+    15,
+    16,
+    31,
+    32
+   ]
+  },
+  {
+   "b1": 69,
+   "string": 70,
+   "name": "騎兵",
+   "string_kind": "69 .. 75 段",
+   "records": 22,
+   "maps": [
+    4,
+    9,
+    32
+   ]
+  },
+  {
+   "b1": 70,
+   "string": 71,
+   "name": "傭兵",
+   "string_kind": "69 .. 75 段",
+   "records": 4,
+   "maps": [
+    5
+   ]
+  },
+  {
+   "b1": 71,
+   "string": 72,
+   "name": "豹人",
+   "string_kind": "69 .. 75 段",
+   "records": 9,
+   "maps": [
+    14
+   ]
+  },
+  {
+   "b1": 72,
+   "string": 73,
+   "name": "精靈",
+   "string_kind": "69 .. 75 段",
+   "records": 28,
+   "maps": [
+    12,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 73,
+   "string": 74,
+   "name": "龍人",
+   "string_kind": "69 .. 75 段",
+   "records": 14,
+   "maps": [
+    24
+   ]
+  },
+  {
+   "b1": 75,
+   "string": 76,
+   "name": "",
+   "string_kind": "空字串",
+   "records": 1,
+   "maps": [
+    31
+   ]
+  },
+  {
+   "b1": 76,
+   "string": 77,
+   "name": "士兵",
+   "string_kind": "兵種名",
+   "records": 72,
+   "maps": [
+    0,
+    2,
+    5,
+    6,
+    8,
+    31
+   ]
+  },
+  {
+   "b1": 77,
+   "string": 78,
+   "name": "精英戰士",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    2,
+    5
+   ]
+  },
+  {
+   "b1": 78,
+   "string": 79,
+   "name": "鎧甲武士",
+   "string_kind": "兵種名",
+   "records": 29,
+   "maps": [
+    7,
+    8,
+    17
+   ]
+  },
+  {
+   "b1": 79,
+   "string": 80,
+   "name": "傭兵",
+   "string_kind": "兵種名",
+   "records": 14,
+   "maps": [
+    18
+   ]
+  },
+  {
+   "b1": 80,
+   "string": 81,
+   "name": "黑暗戰士",
+   "string_kind": "兵種名",
+   "records": 38,
+   "maps": [
+    9,
+    16,
+    21,
+    31
+   ]
+  },
+  {
+   "b1": 81,
+   "string": 82,
+   "name": "狂戰士",
+   "string_kind": "兵種名",
+   "records": 35,
+   "maps": [
+    14,
+    15,
+    18,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 82,
+   "string": 83,
+   "name": "騎兵",
+   "string_kind": "兵種名",
+   "records": 49,
+   "maps": [
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "b1": 83,
+   "string": 84,
+   "name": "突擊騎兵",
+   "string_kind": "兵種名",
+   "records": 42,
+   "maps": [
+    5,
+    6,
+    7,
+    8,
+    17,
+    18
+   ]
+  },
+  {
+   "b1": 84,
+   "string": 85,
+   "name": "地獄騎士",
+   "string_kind": "兵種名",
+   "records": 6,
+   "maps": [
+    24,
+    25
+   ]
+  },
+  {
+   "b1": 85,
+   "string": 86,
+   "name": "黑暗騎士",
+   "string_kind": "兵種名",
+   "records": 36,
+   "maps": [
+    16,
+    17,
+    19,
+    20,
+    21
+   ]
+  },
+  {
+   "b1": 86,
+   "string": 87,
+   "name": "龍騎士",
+   "string_kind": "兵種名",
+   "records": 24,
+   "maps": [
+    23,
+    24,
+    25,
+    31
+   ]
+  },
+  {
+   "b1": 87,
+   "string": 88,
+   "name": "弓箭手",
+   "string_kind": "兵種名",
+   "records": 16,
+   "maps": [
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "b1": 88,
+   "string": 89,
+   "name": "黑暗射手",
+   "string_kind": "兵種名",
+   "records": 48,
+   "maps": [
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    21
+   ]
+  },
+  {
+   "b1": 89,
+   "string": 90,
+   "name": "狙擊手",
+   "string_kind": "兵種名",
+   "records": 22,
+   "maps": [
+    17,
+    18,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 90,
+   "string": 91,
+   "name": "魔法師",
+   "string_kind": "兵種名",
+   "records": 26,
+   "maps": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "b1": 91,
+   "string": 92,
+   "name": "黑暗法師",
+   "string_kind": "兵種名",
+   "records": 44,
+   "maps": [
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    21,
+    31
+   ]
+  },
+  {
+   "b1": 92,
+   "string": 93,
+   "name": "巫師",
+   "string_kind": "兵種名",
+   "records": 20,
+   "maps": [
+    17,
+    18,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 93,
+   "string": 94,
+   "name": "僧侶",
+   "string_kind": "兵種名",
+   "records": 20,
+   "maps": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  {
+   "b1": 94,
+   "string": 95,
+   "name": "黑暗僧侶",
+   "string_kind": "兵種名",
+   "records": 21,
+   "maps": [
+    9,
+    13,
+    14,
+    15,
+    21
+   ]
+  },
+  {
+   "b1": 95,
+   "string": 96,
+   "name": "大祭師",
+   "string_kind": "兵種名",
+   "records": 14,
+   "maps": [
+    17,
+    18,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 96,
+   "string": 97,
+   "name": "盜賊",
+   "string_kind": "兵種名",
+   "records": 375,
+   "maps": [
+    0,
+    1,
+    3,
+    4,
+    6,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    23,
+    24,
+    25,
+    27,
+    28,
+    29,
+    32
+   ]
+  },
+  {
+   "b1": 97,
+   "string": 98,
+   "name": "盜賊頭目",
+   "string_kind": "兵種名",
+   "records": 5,
+   "maps": [
+    0,
+    3,
+    4
+   ]
+  },
+  {
+   "b1": 98,
+   "string": 99,
+   "name": "影之忍者",
+   "string_kind": "兵種名",
+   "records": 5,
+   "maps": [
+    15,
+    18
+   ]
+  },
+  {
+   "b1": 99,
+   "string": 100,
+   "name": "黑暗殺手",
+   "string_kind": "兵種名",
+   "records": 26,
+   "maps": [
+    19,
+    20,
+    21
+   ]
+  },
+  {
+   "b1": 100,
+   "string": 101,
+   "name": "武術家",
+   "string_kind": "兵種名",
+   "records": 26,
+   "maps": [
+    18,
+    19,
+    20
+   ]
+  },
+  {
+   "b1": 101,
+   "string": 102,
+   "name": "黑暗鬥士",
+   "string_kind": "兵種名",
+   "records": 9,
+   "maps": [
+    21
+   ]
+  },
+  {
+   "b1": 102,
+   "string": 103,
+   "name": "獸人",
+   "string_kind": "兵種名",
+   "records": 145,
+   "maps": [
+    3,
+    4,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ]
+  },
+  {
+   "b1": 103,
+   "string": 104,
+   "name": "獸人隊長",
+   "string_kind": "兵種名",
+   "records": 40,
+   "maps": [
+    0,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    31
+   ]
+  },
+  {
+   "b1": 104,
+   "string": 105,
+   "name": "火龍",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    24,
+    28
+   ]
+  },
+  {
+   "b1": 105,
+   "string": 106,
+   "name": "雷龍",
+   "string_kind": "兵種名",
+   "records": 1,
+   "maps": [
+    28
+   ]
+  },
+  {
+   "b1": 106,
+   "string": 107,
+   "name": "龍人戰士",
+   "string_kind": "兵種名",
+   "records": 56,
+   "maps": [
+    23,
+    24,
+    25
+   ]
+  },
+  {
+   "b1": 107,
+   "string": 108,
+   "name": "龍人法師",
+   "string_kind": "兵種名",
+   "records": 13,
+   "maps": [
+    23,
+    24,
+    25
+   ]
+  },
+  {
+   "b1": 108,
+   "string": 109,
+   "name": "魔鬼",
+   "string_kind": "兵種名",
+   "records": 37,
+   "maps": [
+    17,
+    20,
+    21,
+    31
+   ]
+  },
+  {
+   "b1": 109,
+   "string": 110,
+   "name": "惡魔",
+   "string_kind": "兵種名",
+   "records": 31,
+   "maps": [
+    23,
+    24,
+    25
+   ]
+  },
+  {
+   "b1": 110,
+   "string": 111,
+   "name": "大惡魔",
+   "string_kind": "兵種名",
+   "records": 12,
+   "maps": [
+    23,
+    24,
+    25
+   ]
+  },
+  {
+   "b1": 111,
+   "string": 112,
+   "name": "機甲兵",
+   "string_kind": "兵種名",
+   "records": 107,
+   "maps": [
+    22,
+    25,
+    26,
+    27,
+    28
+   ]
+  },
+  {
+   "b1": 112,
+   "string": 113,
+   "name": "機甲突擊兵",
+   "string_kind": "兵種名",
+   "records": 78,
+   "maps": [
+    22,
+    25,
+    26,
+    27,
+    28
+   ]
+  },
+  {
+   "b1": 113,
+   "string": 114,
+   "name": "光束砲座",
+   "string_kind": "兵種名",
+   "records": 22,
+   "maps": [
+    23,
+    26,
+    27,
+    28,
+    31
+   ]
+  },
+  {
+   "b1": 114,
+   "string": 115,
+   "name": "機甲射手",
+   "string_kind": "兵種名",
+   "records": 54,
+   "maps": [
+    22,
+    25,
+    26,
+    27,
+    28
+   ]
+  },
+  {
+   "b1": 115,
+   "string": 116,
+   "name": "機甲守衛",
+   "string_kind": "兵種名",
+   "records": 16,
+   "maps": [
+    22,
+    25,
+    26,
+    27,
+    28,
+    31
+   ]
+  },
+  {
+   "b1": 116,
+   "string": 117,
+   "name": "機甲隊長",
+   "string_kind": "兵種名",
+   "records": 20,
+   "maps": [
+    22,
+    25,
+    26,
+    27,
+    28,
+    29
+   ]
+  },
+  {
+   "b1": 117,
+   "string": 118,
+   "name": "卡特那",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    4,
+    31
+   ]
+  },
+  {
+   "b1": 118,
+   "string": 119,
+   "name": "萊汀",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    5,
+    8
+   ]
+  },
+  {
+   "b1": 119,
+   "string": 120,
+   "name": "薩卡",
+   "string_kind": "兵種名",
+   "records": 1,
+   "maps": [
+    14
+   ]
+  },
+  {
+   "b1": 120,
+   "string": 121,
+   "name": "瑪爾",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    20,
+    31
+   ]
+  },
+  {
+   "b1": 121,
+   "string": 122,
+   "name": "沼澤怪物",
+   "string_kind": "兵種名",
+   "records": 20,
+   "maps": [
+    19
+   ]
+  },
+  {
+   "b1": 122,
+   "string": 123,
+   "name": "地魔神",
+   "string_kind": "兵種名",
+   "records": 3,
+   "maps": [
+    9,
+    29,
+    31
+   ]
+  },
+  {
+   "b1": 123,
+   "string": 124,
+   "name": "水魔神",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    16,
+    29
+   ]
+  },
+  {
+   "b1": 124,
+   "string": 125,
+   "name": "風魔神",
+   "string_kind": "兵種名",
+   "records": 3,
+   "maps": [
+    21,
+    29,
+    31
+   ]
+  },
+  {
+   "b1": 125,
+   "string": 126,
+   "name": "火魔神",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    24,
+    29
+   ]
+  },
+  {
+   "b1": 126,
+   "string": 127,
+   "name": "空魔神",
+   "string_kind": "兵種名",
+   "records": 2,
+   "maps": [
+    28,
+    29
+   ]
+  },
+  {
+   "b1": 127,
+   "string": 128,
+   "name": "暗黑龍",
+   "string_kind": "兵種名",
+   "records": 1,
+   "maps": [
+    28
+   ]
+  },
+  {
+   "b1": 133,
+   "string": 134,
+   "name": "女村民",
+   "string_kind": "兵種名",
+   "records": 3,
+   "maps": [
+    1
+   ]
+  },
+  {
+   "b1": 134,
+   "string": 135,
+   "name": "男村民",
+   "string_kind": "兵種名",
+   "records": 3,
+   "maps": [
+    1
+   ]
+  },
+  {
+   "b1": 135,
+   "string": 136,
+   "name": "卡納恩三世",
+   "string_kind": "兵種名",
+   "records": 1,
+   "maps": [
+    9
+   ]
+  }
+ ],
+ "b1_kinds_by_record": {
+  "69 .. 75 段": 112,
+  "兵種名": 1705,
+  "空字串": 3,
+  "角色名": 67
+ },
+ "blank_name_b1": [
+  {
+   "b1": 48,
+   "records": 1,
+   "maps": [
+    32
+   ]
+  },
+  {
+   "b1": 66,
+   "records": 1,
+   "maps": [
+    32
+   ]
+  },
+  {
+   "b1": 75,
+   "records": 1,
+   "maps": [
+    31
+   ]
+  }
+ ],
+ "conclusion": "draw_unit_panel 的名字 = FDTXT_000 第 [記錄 + 8] + 1 句(靜態);cl1 .. cl14 的 597 次畫名字全部等於該單位 +8 + 1,與續一百八十二的 +8、FDFIELD b1 兩個獨立讀法都一致(LOG CONFIRMED)。所以 FDFIELD b1 經 +8 就是名字鍵:全部 1887 筆出場記錄依 b1 + 1 分成 {'69 .. 75 段': 112, '兵種名': 1705, '空字串': 3, '角色名': 67};b1 + 1 落在空字串的有 3 筆(含第 32 張圖的 48 / 66)。"
+}
