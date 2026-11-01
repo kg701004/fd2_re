@@ -284,6 +284,9 @@ index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui
   落在最後一次記到的 dialog 返回之後 —— 是紀錄上限,不是沒有對話。
 - index 9 / 0xa / 0xb 的單位:`play_step_sfx` 的第 1 個參數(單位索引)在 cl1 .. cl14 有 17 種,呼叫端是 `step_anim_left` / `step_anim_right` /
   `step_anim_down` / `end_player_phase_if_all_acted`。單位索引對到哪個角色要看當時的單位表,沒有對。
+  (續一百八十二,`ev_s182.py`:1626 次全部由紀錄本身的單位記錄傾印對到 —— 第 1 張圖 0 索爾、5 / 7 / 9 男村民、6 / 8 / 10 女村民、11 盜賊;
+  第 2 張圖 6 鐵諾、7 士兵;第 32 張圖 2 索爾;第 10 章 CONTINUE 0 索爾、13 .. 19 獸人 / 獸人隊長、38 珊。種族 4 / 5 的只放 0xa,其餘只放 9。
+  FDFIELD 建構單位的名稱是 INFERRED,見 doc98 續一百八十二。)
 
 續一百八十一(`ev_s180b.py` (C) 段、`ev_s181.py`;DOSBox-X 呼叫紀錄 cl1 .. cl14、FD2.EXE):
 - 打字音改用 `typewriter_tick` 自己的文字游標(第 4 個參數,每字 + 2;指標處 32 位元組 = 游標之後的 FDTXT 字碼)對 FDTXT 位元組:

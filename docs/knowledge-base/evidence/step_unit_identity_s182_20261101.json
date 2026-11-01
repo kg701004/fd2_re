@@ -1,0 +1,2249 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s182.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "class_step_sfx_table_0x52725": "0101020100000101010102010000030101010301000001010101010101",
+ "logs": {
+  "cl1": {
+   "calllog": ".wsl_build/cl1_CALLLOG.TXT",
+   "md5": "8abf1cb92b0116ce1aa799df2c2e60aa",
+   "unit_bases": [
+    "0x2709e8"
+   ],
+   "construction": [],
+   "step_units": {
+    "0": 6,
+    "13": 30,
+    "14": 30,
+    "15": 30,
+    "16": 30,
+    "17": 30,
+    "18": 30,
+    "19": 8,
+    "38": 6
+   }
+  },
+  "cl2": {
+   "calllog": ".wsl_build/cl2_CALLLOG.TXT",
+   "md5": "4e7c32f7f87bd445f6a7113af1f0ba7b",
+   "unit_bases": [
+    "0x239890",
+    "0x26c4e0"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x239890",
+     "own_deploy": 5,
+     "records": [
+      16,
+      17,
+      21
+     ],
+     "seq": [
+      38018,
+      38038
+     ]
+    },
+    {
+     "map": 1,
+     "unit_base": "0x26c4e0",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      25356,
+      27320
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 36,
+    "6": 18,
+    "7": 24,
+    "8": 24,
+    "9": 24,
+    "10": 14,
+    "11": 18
+   }
+  },
+  "cl3": {
+   "calllog": ".wsl_build/cl3_CALLLOG.TXT",
+   "md5": "099f3908148b60a30fffc142163158d4",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15,
+      16,
+      17,
+      21
+     ],
+     "seq": [
+      27158,
+      38776
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 36,
+    "6": 18,
+    "7": 24,
+    "8": 24,
+    "9": 24,
+    "10": 14,
+    "11": 18
+   }
+  },
+  "cl4": {
+   "calllog": ".wsl_build/cl4_CALLLOG.TXT",
+   "md5": "0146d00b11c60c2c4af4b3634830af42",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      18619,
+      22761
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 36,
+    "6": 18,
+    "7": 24,
+    "8": 24,
+    "9": 24,
+    "10": 14,
+    "11": 18
+   }
+  },
+  "cl5": {
+   "calllog": ".wsl_build/cl5_CALLLOG.TXT",
+   "md5": "5bbb99e2b0d9ceb51911aea81fe78136",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15,
+      16,
+      17,
+      21
+     ],
+     "seq": [
+      18989,
+      38478
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 36,
+    "6": 18,
+    "7": 24,
+    "8": 24,
+    "9": 24,
+    "10": 14,
+    "11": 18
+   }
+  },
+  "cl6": {
+   "calllog": ".wsl_build/cl6_CALLLOG.TXT",
+   "md5": "ea9e81aa4498215f1d3d493d064a2501",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      26374,
+      28594
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 12,
+    "11": 18
+   }
+  },
+  "cl7": {
+   "calllog": ".wsl_build/cl7_CALLLOG.TXT",
+   "md5": "47e61b1f95407a604b4d3497dfe4c4a5",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      19075,
+      22812
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 12,
+    "11": 18
+   }
+  },
+  "cl9": {
+   "calllog": ".wsl_build/cl9_CALLLOG.TXT",
+   "md5": "85309696d4f62765a01d70585f9e6f07",
+   "unit_bases": [
+    "0x26b018"
+   ],
+   "construction": [
+    {
+     "map": 2,
+     "unit_base": "0x26b018",
+     "own_deploy": 6,
+     "records": [
+      0,
+      3,
+      6
+     ],
+     "seq": [
+      16483,
+      16830
+     ]
+    }
+   ],
+   "step_units": {
+    "6": 36,
+    "7": 30
+   }
+  },
+  "cl11": {
+   "calllog": ".wsl_build/cl11_CALLLOG.TXT",
+   "md5": "20b89f9579c609a6298c2e8c2e954c01",
+   "unit_bases": [
+    "0x26bdc8"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      23822,
+      26709
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 12,
+    "11": 18
+   }
+  },
+  "cl12": {
+   "calllog": ".wsl_build/cl12_CALLLOG.TXT",
+   "md5": "ca706ebabe69b66d14f6ab233564a869",
+   "unit_bases": [
+    "0x26ea0c"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26ea0c",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      22961,
+      26185
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 12,
+    "11": 18
+   }
+  },
+  "cl13": {
+   "calllog": ".wsl_build/cl13_CALLLOG.TXT",
+   "md5": "7bda602d49a41cd635553357752204ba",
+   "unit_bases": [
+    "0x26ea0c"
+   ],
+   "construction": [
+    {
+     "map": 1,
+     "unit_base": "0x26ea0c",
+     "own_deploy": 5,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      14,
+      15
+     ],
+     "seq": [
+      27107,
+      29222
+     ]
+    }
+   ],
+   "step_units": {
+    "0": 42,
+    "5": 12,
+    "11": 18
+   }
+  },
+  "cl14": {
+   "calllog": ".wsl_build/cl14_CALLLOG.TXT",
+   "md5": "aa50b76a131b35cf8c719dd747ba6b5c",
+   "unit_bases": [
+    "0x21f1b4",
+    "0x22015c",
+    "0x26b018"
+   ],
+   "construction": [
+    {
+     "map": 0,
+     "unit_base": "0x21f1b4",
+     "own_deploy": 4,
+     "records": [
+      7
+     ],
+     "seq": [
+      29884,
+      29884
+     ]
+    },
+    {
+     "map": 31,
+     "unit_base": "0x22015c",
+     "own_deploy": 0,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "seq": [
+      28006,
+      28509
+     ]
+    },
+    {
+     "map": 32,
+     "unit_base": "0x26b018",
+     "own_deploy": 0,
+     "records": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      12,
+      20
+     ],
+     "seq": [
+      12080,
+      13064
+     ]
+    }
+   ],
+   "step_units": {
+    "2": 200
+   }
+  }
+ },
+ "rows": [
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 0,
+   "step_calls": 6,
+   "step_calls_by_phase": {
+    "battle": 6
+   },
+   "played": {
+    "0xa": 1
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 13,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 8
+   },
+   "plus7": 102,
+   "plus8": 102,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 14,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 7
+   },
+   "plus7": 102,
+   "plus8": 102,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 15,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 8
+   },
+   "plus7": 102,
+   "plus8": 102,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 16,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 7
+   },
+   "plus7": 103,
+   "plus8": 103,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人隊長",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 17,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 8
+   },
+   "plus7": 103,
+   "plus8": 103,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人隊長",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 18,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 7
+   },
+   "plus7": 102,
+   "plus8": 102,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 19,
+   "step_calls": 8,
+   "step_calls_by_phase": {
+    "battle": 8
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 102,
+   "plus8": 102,
+   "race": 8,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl1",
+   "scene": "continue",
+   "unit_base": "0x2709e8",
+   "unit": 38,
+   "step_calls": 6,
+   "step_calls_by_phase": {
+    "battle": 6
+   },
+   "played": {
+    "0x9": 1
+   },
+   "plus7": 14,
+   "plus8": 14,
+   "race": 2,
+   "dominant_share": 1.0,
+   "fdfield": [],
+   "name": "珊",
+   "name_basis": "character id",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9967,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 5,
+   "step_calls": 36,
+   "step_calls_by_phase": {
+    "battle": 36
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 6,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 1
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 7,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 2
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 8,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 3
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 9,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 4
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 10,
+   "step_calls": 14,
+   "step_calls_by_phase": {
+    "battle": 14
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 5
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl2",
+   "scene": "map1",
+   "unit_base": "0x26c4e0",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {},
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9967,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 36,
+   "step_calls_by_phase": {
+    "battle": 36
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 6,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 1
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 7,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 2
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 8,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 3
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 9,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 4
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 10,
+   "step_calls": 14,
+   "step_calls_by_phase": {
+    "battle": 14
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 5
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl3",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9972,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 36,
+   "step_calls_by_phase": {
+    "battle": 36
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 6,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 1
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 7,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 2
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 8,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 3
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 9,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 4
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 10,
+   "step_calls": 14,
+   "step_calls_by_phase": {
+    "battle": 14
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 5
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl4",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9967,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 36,
+   "step_calls_by_phase": {
+    "battle": 36
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 6,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 1
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 7,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 2
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 8,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 3
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 9,
+   "step_calls": 24,
+   "step_calls_by_phase": {
+    "battle": 24
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 4
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 10,
+   "step_calls": 14,
+   "step_calls_by_phase": {
+    "battle": 14
+   },
+   "played": {},
+   "plus7": 133,
+   "plus8": 133,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 5
+    }
+   ],
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl5",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl6",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9941,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl6",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 12,
+   "step_calls_by_phase": {
+    "battle": 12
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl6",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl7",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9971,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl7",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 12,
+   "step_calls_by_phase": {
+    "battle": 12
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl7",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl9",
+   "scene": "map2",
+   "unit_base": "0x26b018",
+   "unit": 6,
+   "step_calls": 36,
+   "step_calls_by_phase": {
+    "battle": 36
+   },
+   "played": {
+    "0x9": 9
+   },
+   "plus7": 2,
+   "plus8": 2,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 2,
+     "record": 0
+    }
+   ],
+   "name": "鐵諾",
+   "name_basis": "INFERRED(FDFIELD b1 當角色編號)",
+   "row19": false
+  },
+  {
+   "log": "cl9",
+   "scene": "map2",
+   "unit_base": "0x26b018",
+   "unit": 7,
+   "step_calls": 30,
+   "step_calls_by_phase": {
+    "battle": 30
+   },
+   "played": {
+    "0x9": 8
+   },
+   "plus7": 76,
+   "plus8": 76,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 2,
+     "record": 1
+    }
+   ],
+   "name": "士兵",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl11",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9941,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl11",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 5,
+   "step_calls": 12,
+   "step_calls_by_phase": {
+    "battle": 12
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl11",
+   "scene": "map1",
+   "unit_base": "0x26bdc8",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl12",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9961,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl12",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 5,
+   "step_calls": 12,
+   "step_calls_by_phase": {
+    "battle": 12
+   },
+   "played": {
+    "0x9": 3
+   },
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl12",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl13",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 0,
+   "step_calls": 42,
+   "step_calls_by_phase": {
+    "before_construction": 42
+   },
+   "played": {
+    "0xa": 7
+   },
+   "plus7": 32,
+   "plus8": 0,
+   "race": 5,
+   "dominant_share": 0.9968,
+   "fdfield": [],
+   "name": "索爾",
+   "name_basis": "character id",
+   "row19": true
+  },
+  {
+   "log": "cl13",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 5,
+   "step_calls": 12,
+   "step_calls_by_phase": {
+    "battle": 12
+   },
+   "played": {},
+   "plus7": 134,
+   "plus8": 134,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 0
+    }
+   ],
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl13",
+   "scene": "map1",
+   "unit_base": "0x26ea0c",
+   "unit": 11,
+   "step_calls": 18,
+   "step_calls_by_phase": {
+    "battle": 18
+   },
+   "played": {},
+   "plus7": 96,
+   "plus8": 96,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 1,
+     "record": 6
+    }
+   ],
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "row19": false
+  },
+  {
+   "log": "cl14",
+   "scene": "map32",
+   "unit_base": "0x26b018",
+   "unit": 2,
+   "step_calls": 200,
+   "step_calls_by_phase": {
+    "battle": 200
+   },
+   "played": {
+    "0x9": 51
+   },
+   "plus7": 0,
+   "plus8": 0,
+   "race": 1,
+   "dominant_share": 1.0,
+   "fdfield": [
+    {
+     "map": 32,
+     "record": 2
+    }
+   ],
+   "name": "索爾",
+   "name_basis": "INFERRED(FDFIELD b1 當角色編號)",
+   "row19": false
+  }
+ ],
+ "summary": [
+  {
+   "scene": "continue",
+   "unit": 0,
+   "plus8": 0,
+   "name": "索爾",
+   "name_basis": "character id",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 6
+  },
+  {
+   "scene": "continue",
+   "unit": 13,
+   "plus8": 102,
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 14,
+   "plus8": 102,
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 15,
+   "plus8": 102,
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 16,
+   "plus8": 103,
+   "name": "獸人隊長",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 17,
+   "plus8": 103,
+   "name": "獸人隊長",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 18,
+   "plus8": 102,
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "continue",
+   "unit": 19,
+   "plus8": 102,
+   "name": "獸人",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 8
+  },
+  {
+   "scene": "continue",
+   "unit": 38,
+   "plus8": 14,
+   "name": "珊",
+   "name_basis": "character id",
+   "logs": [
+    "cl1"
+   ],
+   "step_calls": 6
+  },
+  {
+   "scene": "map1",
+   "unit": 0,
+   "plus8": 0,
+   "name": "索爾",
+   "name_basis": "character id",
+   "logs": [
+    "cl11",
+    "cl12",
+    "cl13",
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5",
+    "cl6",
+    "cl7"
+   ],
+   "step_calls": 378
+  },
+  {
+   "scene": "map1",
+   "unit": 5,
+   "plus8": 134,
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl11",
+    "cl12",
+    "cl13",
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5",
+    "cl6",
+    "cl7"
+   ],
+   "step_calls": 204
+  },
+  {
+   "scene": "map1",
+   "unit": 6,
+   "plus8": 133,
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5"
+   ],
+   "step_calls": 72
+  },
+  {
+   "scene": "map1",
+   "unit": 7,
+   "plus8": 134,
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5"
+   ],
+   "step_calls": 96
+  },
+  {
+   "scene": "map1",
+   "unit": 8,
+   "plus8": 133,
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5"
+   ],
+   "step_calls": 96
+  },
+  {
+   "scene": "map1",
+   "unit": 9,
+   "plus8": 134,
+   "name": "男村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5"
+   ],
+   "step_calls": 96
+  },
+  {
+   "scene": "map1",
+   "unit": 10,
+   "plus8": 133,
+   "name": "女村民",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5"
+   ],
+   "step_calls": 56
+  },
+  {
+   "scene": "map1",
+   "unit": 11,
+   "plus8": 96,
+   "name": "盜賊",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl11",
+    "cl12",
+    "cl13",
+    "cl2",
+    "cl3",
+    "cl4",
+    "cl5",
+    "cl6",
+    "cl7"
+   ],
+   "step_calls": 162
+  },
+  {
+   "scene": "map2",
+   "unit": 6,
+   "plus8": 2,
+   "name": "鐵諾",
+   "name_basis": "INFERRED(FDFIELD b1 當角色編號)",
+   "logs": [
+    "cl9"
+   ],
+   "step_calls": 36
+  },
+  {
+   "scene": "map2",
+   "unit": 7,
+   "plus8": 76,
+   "name": "士兵",
+   "name_basis": "INFERRED(兵種名,同一規則)",
+   "logs": [
+    "cl9"
+   ],
+   "step_calls": 30
+  },
+  {
+   "scene": "map32",
+   "unit": 2,
+   "plus8": 0,
+   "name": "索爾",
+   "name_basis": "INFERRED(FDFIELD b1 當角色編號)",
+   "logs": [
+    "cl14"
+   ],
+   "step_calls": 200
+  }
+ ],
+ "live_tables_ch1": {
+  ".wsl_build/lc131a_moverange/D/units.bin": {
+   "md5": "89e30e61d1d644ad3e79075a8bbbf753",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  },
+  ".wsl_build/lc131a_moverange/E/units.bin": {
+   "md5": "89e30e61d1d644ad3e79075a8bbbf753",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  },
+  ".wsl_build/lc131a_moverange/F/units.bin": {
+   "md5": "89e30e61d1d644ad3e79075a8bbbf753",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  },
+  ".wsl_build/lc157_live/grey1_units.bin": {
+   "md5": "5a45a2a18cf012015452d7d605916e9a",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  },
+  ".wsl_build/lc157_live/grey2_units.bin": {
+   "md5": "97d04fa5976e4ef21e894e7740d9f0b2",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  },
+  ".wsl_build/dmg/units_before.bin": {
+   "md5": "f0869dcdcbd134a4754937584b48e831",
+   "plus8_0_20": [
+    0,
+    9,
+    4,
+    30,
+    1,
+    134,
+    133,
+    134,
+    133,
+    134,
+    133,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96,
+    96
+   ]
+  }
+ },
+ "conclusion": "cl1 .. cl14 的 1626 次 play_step_sfx 全部由紀錄本身的單位記錄傾印對到角色(20 個「場景 × 索引」),其中 189 次放音的 index 都符合 unit_uses_move_cost_row19 與職業表的預測;建構出來的單位 +7 = +8 = FDFIELD b1,第 1 章戰場另與 6 份實機單位表逐筆相同。續一百八十一「cl 紀錄裡沒有單位記錄指標」是只看腳步函式的錯誤。"
+}
