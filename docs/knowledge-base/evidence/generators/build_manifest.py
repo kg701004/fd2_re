@@ -102,7 +102,7 @@ GENERATORS = ["ev_s65", "ev_s65b", "ev_s66", "ev_s67", "ev_s68", "ev_s69", "ev_s
               # 2026-11-01(續一百七十九)
               "ev_s179",
               # 2026-11-01(續一百八十)
-              "ev_s180", "ev_s180b"]
+              "ev_s180", "ev_s180b", "ev_s181", "ev_s181b"]
 
 
 def _norm(p: str) -> str:

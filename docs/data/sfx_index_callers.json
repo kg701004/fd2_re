@@ -23,7 +23,9 @@
     "live_index": 9,
     "note": "A.4。2026-09-04 另有一筆行為觀察:在瀏覽層選取單位→方向鍵→確認(移動確認)會命中此呼叫點——**呼叫點本身已確認**,但其 index 取 live_index 9(單次觀察,未重現),不可取靜態的 11。"
    }
-  }
+  },
+  "_superseded_by": "docs/knowledge-base/evidence/sfx_ui_pool_table_s180_20261101.json",
+  "superseded_note": "2026-11-01 續一百八十一:完整的 UI 池 index → 呼叫端表改由 ev_s180.py 從 FD2.EXE 靜態列舉重算(play_sfx_a 111 / play_sfx_b 11、UI 池 62 條路徑、index 0 .. 0xc),並與 cl1 .. cl14 每一次播放的返回位址核對;本檔保留為 tools/fd2_sfx_static_reachability.py 稽核的對象,內容不改。本檔與新表逐筆的差異(舊表多出的呼叫點推的是別的表或根本不是 play_sfx 呼叫;舊表少的 index 9 / 0xa / 0xc 等)見該證據檔的 old_callers_table_diff。"
  },
  "index_to_callers": {
   "0": [

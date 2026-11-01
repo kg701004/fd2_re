@@ -21,6 +21,15 @@ MUTANTS = [
     # (U)
     ("單位索引取暫存器 eax", "STEPS[(func_of(c.ret - DELTA), c.stack[0])] += 1", 'STEPS[(func_of(c.ret - DELTA), c.regs["eax"])] += 1'),
     ("單位索引上限 8", "all(0 <= u < 0x40 for _f, u in STEPS)", "all(0 <= u < 8 for _f, u in STEPS)"),
+    # 續一百八十一:由文字游標歸屬
+    ("基底只取傾印不吻合的", "if len(h) == 1:\n            bases", "if len(h) == 0 and False:\n            bases"),
+    ("超出檔尾判準反向", "else cand[0][1] + len(dump) > len(BYT[cand[0][0]])", "else cand[0][1] + len(dump) <= len(BYT[cand[0][0]])"),
+    ("吻合處判準反向", "assert cand[0] in h if h else", "assert cand[0] not in h if h else"),
+    ("游標取第 3 個參數", "bases[h[0][0]].add(c.stack[3] - h[0][1])", "bases[h[0][0]].add(c.stack[2] - h[0][1])"),
+    ("基底對 dialog 第 2 個參數", "assert res not in base or base[res] == c.stack[0]", "assert res not in base or base[res] == c.stack[1]"),
+    ("位移換字串少減一", "return bisect.bisect_right(o, off) - 1", "return bisect.bisect_right(o, off)"),
+    ("候選比到傾印後半", "if dump.startswith(BYT[i][o:o + len(dump)])]", "if dump[2:].startswith(BYT[i][o:o + len(dump)])]"),
+    ("對照反向", "assert key == (res, d.stack[1]), (nm, c.line, key, res, d.stack[1])", "assert key != (res, d.stack[1]), (nm, c.line, key, res, d.stack[1])"),
 ]
 
 if __name__ == "__main__":

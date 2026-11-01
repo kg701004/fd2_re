@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 225 節、19 個主題。
+共 226 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 11946:2026-10-30 續一百七十一:工具新建 —— 呼叫紀錄看得到非遊戲段與中斷位置;校準多出的 int 21h 指令是 CF 分支加 rep 多記,MDI 型在驅動 iret 之後的第一條收中斷(DOSBox-X 呼叫紀錄 lc171a / lc171b) 〔來源:DOSBox-X、逐指令、FD2.EXE〕
 - 行 12008:2026-10-30 續一百七十二:仍留收口 —— DH = 0 那一秒走長路(預測成立)、delay 時段差 0.5% 是 DOSBox-X Sound Blaster 的 DMA_DAC_Event 切片、rep 多記是每 4 次重啟加片尾、137c 是 DIG 驅動 SB16.DIG、START 那一下的 601 / 602 夾了鍵盤 IRQ(DOSBox-X 呼叫紀錄 lc172a / lc172b) 〔來源:DOSBox-X、capstone、反組譯〕
 - 行 12093:2026-10-30 續一百七十三:工具新建與收口 —— AIL 3 驅動檔反組譯、呼叫紀錄加 I/O 與按鍵;SB16.DIG 初始化是單一樣本 DMA、START 放開鍵的 IRQ 1 晚 5.55 ms 是 DIG 服務關著中斷、每 8 次服務多叫是 MDI 音量漸變、敵方回合結束的 991 次是換曲淡出淡入(DOSBox-X 呼叫紀錄 lc173a / lc167a) 〔來源:DOSBox-X、disasm、FDMUS〕
 - 行 12183:2026-10-31 續一百七十四:工具 —— 呼叫紀錄加觸發式擷取(FD2_CALLLOG_TRIG):罕見、時刻不定的一段只在條數符合時寫出;實機兩次核對(DOSBox-X 呼叫紀錄 lc174a / lc174b) 〔來源:DOSBox-X、FD2.EXE〕
@@ -17,6 +16,7 @@
 - 行 12438:2026-11-01 續一百七十八:(D) 回傳字序 ax / bx / cx / dx 與 DS 基底 0 由舊紀錄直接看到;兩群各 3 筆的 m = 181 / 361;五型混音各是哪段音效(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc173a / lc174a / lc174b,FD2.EXE、SB16.DIG、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12503:2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
+- 行 12621:2026-11-01 續一百八十一:續一百八十仍留五項 —— 981 次打字音由文字游標全部歸到字串、index 5 / 6 是面板展開 / 收起(兩次實機不矛盾)、1 / 8 / 0xc 的呼叫情境、ev_s158 (C) ESCAPED 歸零、兩份舊 docs/data 表加取代標記;375 觸發擷取三次都沒出現(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc181a .. lc181c,FD2.EXE、FDTXT) 〔來源:DOSBox-X、斷點、反組譯〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -139,7 +139,7 @@
 - 行 2974:2026-09-06(續)：新工具`fd2_env_healthcheck.py`——直接回應本輪C.16調查裡三度重演的
 - 行 3000:2026-09-06(續二)：`dosbox_harness.sh debugger-cmd`的`-l text`+`-l $'\r'`組合在批次寫入場景下 〔來源:debugger〕
 
-## 原版實機執行軌跡與函式呼叫紀錄(27 節)
+## 原版實機執行軌跡與函式呼叫紀錄(28 節)
 
 - 行 245:Ground-truth 執行流程追蹤(`tools/dosbox_exec_trace.sh` + `tools/dosbox_exec_trace_analyze.py`,2026-08-25) 〔來源:dosbox-x、斷點、Ghidra〕
 - 行 7571:2026-10-07 續八十一:分母補兩類漏網入口 —— LE 進入點與死函式島(1313 -> 1358) 〔來源:反組譯、FD2.EXE〕
@@ -168,6 +168,7 @@
 - 行 12438:2026-11-01 續一百七十八:(D) 回傳字序 ax / bx / cx / dx 與 DS 基底 0 由舊紀錄直接看到;兩群各 3 筆的 m = 181 / 361;五型混音各是哪段音效(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc173a / lc174a / lc174b,FD2.EXE、SB16.DIG、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12503:2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
+- 行 12621:2026-11-01 續一百八十一:續一百八十仍留五項 —— 981 次打字音由文字游標全部歸到字串、index 5 / 6 是面板展開 / 收起(兩次實機不矛盾)、1 / 8 / 0xc 的呼叫情境、ev_s158 (C) ESCAPED 歸零、兩份舊 docs/data 表加取代標記;375 觸發擷取三次都沒出現(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc181a .. lc181c,FD2.EXE、FDTXT) 〔來源:DOSBox-X、斷點、反組譯〕
 
 ## 工具的自我驗證、突變測試與閘門(34 節)
 
@@ -281,7 +282,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(60 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(61 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -343,6 +344,7 @@
 - 行 12438:2026-11-01 續一百七十八:(D) 回傳字序 ax / bx / cx / dx 與 DS 基底 0 由舊紀錄直接看到;兩群各 3 筆的 m = 181 / 361;五型混音各是哪段音效(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc173a / lc174a / lc174b,FD2.EXE、SB16.DIG、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12503:2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
+- 行 12621:2026-11-01 續一百八十一:續一百八十仍留五項 —— 981 次打字音由文字游標全部歸到字串、index 5 / 6 是面板展開 / 收起(兩次實機不矛盾)、1 / 8 / 0xc 的呼叫情境、ev_s158 (C) ESCAPED 歸零、兩份舊 docs/data 表加取代標記;375 觸發擷取三次都沒出現(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc181a .. lc181c,FD2.EXE、FDTXT) 〔來源:DOSBox-X、斷點、反組譯〕
 
 ## dispatch 跳表與指令表(4 節)
 

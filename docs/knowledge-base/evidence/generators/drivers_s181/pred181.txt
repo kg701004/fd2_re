@@ -1,0 +1,20 @@
+續一百八十一 實機前預測(lc181a .. lc181c;跑完不改)
+
+目的:續一百八十仍留「lc163a / lc167a 兩項中斷號」。那兩次的個別事件無法重看(時刻不定、當時沒開 I 紀錄),
+能直接驗的是它們依賴的類別規則:「非遊戲段條數 375 = MDI 型重入(302)夾一次 IRQ 7(SB16.DIG 實模式處理 73 條)」。
+續一百七十五只有 lc174a #24 一次直接看到。本輪以觸發式擷取多收幾次,條數 375 是否只出現這一型。
+
+設定:開機 → 標題 → START → 等 120 秒(不按其他鍵);只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL -d Ubuntu;
+不改記憶體、不下斷點。dosbox-x 是 ~/fd2-dosbox-calllog4(sha256 8829251304...,同 lc174b);入口檔沿用 entries_3b.txt;
+CAP 100000000、DUMP 0、ICOUNT 1、SLICES 1、PICEV 1、KBD 1、DOS 時間 12:00:54;不設 SEGS / IO(Y 區塊自帶 YS / YI);
+FD2_CALLLOG_TRIG=ng:375,ng:302-303、TRIGCAP=40(TRIGRING / TRIGPRE 預設 131072 / 64)。
+
+P1 每個 ng 375 的 Y 區塊:第一條 p 0080:0ed6、結束在遊戲 0x3f1a4;區間內恰好一個硬體中斷(YI type 0),是 0f(IRQ 7)、在 r 0c5c:1fad 收;
+   區間內 cs 137c(SB16.DIG)恰好 73 條,0x682 .. 0x729,最後一條是 iret。—— 有任何一個 375 區塊不是這型,P1 就 FAIL
+   (lc163a / lc167a 由條數推中斷號的那條規則就不成立)。
+P2 每個 ng 302 / 303 的 Y 區塊,第一條 p 0080:0ed6、結束在 0x3f1a4 的那些:區間內沒有硬體中斷。
+P3 分母(不判成敗):每次的 375 符合數 / 寫出數、302 / 303 符合數(YC)、ng 區間總數(YN)照實記。
+   三次都沒有 375 時,P1 是 NOT TESTED(不是 PASS)。
+P4 工具:每個區塊都有 YE、`calllog_segments.trig_problems` 沒有問題;YC 寫出數 = 區塊數 ≤ 符合數。
+
+停止條件:任何一次 run 失敗(Runner 不 ok、沒有 CALLLOG、H 沒有 trig=)就停,不自動重跑。

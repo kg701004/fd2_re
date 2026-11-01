@@ -153,7 +153,7 @@
     "ticks": 69,
     "best_period_ms": 5.0,
     "best_resultant": 0.89,
-    "top6": [
+    "harmonic_top": [
      [
       0.89,
       5.0
@@ -179,6 +179,10 @@
       1.25
      ]
     ],
+    "first_non_harmonic": [
+     0.605,
+     4.6
+    ],
     "one_tick_gaps": 51,
     "one_tick_gap_periods": {
      "10": 4,
@@ -190,18 +194,19 @@
      -2.021,
      2.058
     ],
-    "ticks_within_0_6ms_of_grid": 62,
     "phase_offset_ms_min_max": [
      -2.039,
      0.909
     ],
-    "mean_ms_per_tick": 56.437
+    "mean_ms_per_tick": 56.437,
+    "phase_window_ms": 0.322,
+    "ticks_within_phase_window": 59
    },
    "lc157d": {
     "ticks": 67,
     "best_period_ms": 5.0,
     "best_resultant": 0.951,
-    "top6": [
+    "harmonic_top": [
      [
       0.951,
       5.0
@@ -227,6 +232,10 @@
       4.999
      ]
     ],
+    "first_non_harmonic": [
+     0.674,
+     4.594
+    ],
     "one_tick_gaps": 48,
     "one_tick_gap_periods": {
      "10": 1,
@@ -238,18 +247,19 @@
      -1.032,
      0.974
     ],
-    "ticks_within_0_6ms_of_grid": 63,
     "phase_offset_ms_min_max": [
      -1.376,
      0.911
     ],
-    "mean_ms_per_tick": 56.365
+    "mean_ms_per_tick": 56.365,
+    "phase_window_ms": 0.322,
+    "ticks_within_phase_window": 63
    },
    "lc157e": {
     "ticks": 65,
     "best_period_ms": 5.0,
     "best_resultant": 0.948,
-    "top6": [
+    "harmonic_top": [
      [
       0.948,
       5.0
@@ -275,6 +285,10 @@
       5.001
      ]
     ],
+    "first_non_harmonic": [
+     0.566,
+     2.396
+    ],
     "one_tick_gaps": 40,
     "one_tick_gap_periods": {
      "11": 23,
@@ -286,21 +300,23 @@
      -1.44,
      1.555
     ],
-    "ticks_within_0_6ms_of_grid": 63,
     "phase_offset_ms_min_max": [
      -0.21,
      1.792
     ],
-    "mean_ms_per_tick": 56.214
+    "mean_ms_per_tick": 56.214,
+    "phase_window_ms": 0.322,
+    "ticks_within_phase_window": 63
    }
   },
   "nominal_tick_ms": 54.925,
   "bios_channel_us": 54925,
   "divisor_for_5000us": 5966,
   "pit_period_ms_for_5000us": 5.0001,
+  "phase_window_rule": "每份 |相位偏移| 由小到大第 ⌈0.85 n⌉ 個(恰好 85% 落在內的最小視窗),三份取最大",
   "static": "0x3ed29 把 int 8 指到 0x3ea8e、通道 0x3c 週期 54925 µs;0x3ec2d 取啟用通道的最小週期當基底,0x3ebe4 / 0x3ebb4 寫 PIT;0x3ead3 每次中斷各通道累加器加基底週期;0x3ea8e 在上一次 ISR 還沒結束時只送 EOI 就返回",
   "not_determined": "基底 5 ms 是哪一個通道設的(執行期才登錄);掉的中斷是 0x3ea8e 的重入保護丟的,還是中斷關著時 IRQ 疊在一起,紀錄分不出來",
-  "conclusion": "BIOS tick 落在 5.000 ms 的格點上(PIT 被改成 200 Hz,BIOS tick 由軟體計時器每累積 54925 µs 鏈一次):正常間隔 11 格 = 55 ms,偶爾 10 格;12 .. 14 格與平均大於 54.925 ms 表示有計時器中斷沒算進去。八成五以上的 tick 離格點 0.6 ms 以內,少數偏到 2 ms。"
+  "conclusion": "BIOS tick 落在 5.000 ms 的格點上(PIT 被改成 200 Hz,BIOS tick 由軟體計時器每累積 54925 µs 鏈一次):正常間隔 11 格 = 55 ms,偶爾 10 格;12 .. 14 格與平均大於 54.925 ms 表示有計時器中斷沒算進去。三份都有八成五以上的 tick 離格點 0.32 ms 以內,最遠偏 2.0 ms。"
  },
  "item5_attempt4": {
   "result": "FAIL",

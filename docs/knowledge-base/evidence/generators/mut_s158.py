@@ -25,10 +25,16 @@ MUTANTS = [
      "assert abs(_other[\"lc157e\"] - _other[\"lc157c\"]) < 1, _other"),
     # (C) BIOS tick
     ("格點 4.999", "GRID_MS = 5.0", "GRID_MS = 4.999"),
-    ("掃描從 6 ms 起", "for k in range(1000, 20001)), reverse=True)", "for k in range(6000, 20001)), reverse=True)"),
+    ("掃描從 6 ms 起", "SCAN_LO, SCAN_HI = 1000, 20000", "SCAN_LO, SCAN_HI = 6000, 20000"),
     ("平均判準反向", "assert per_tick > TICK_MS + 0.3, (nm, per_tick)", "assert per_tick < TICK_MS + 0.3, (nm, per_tick)"),
     ("格點數只容許 10 .. 12", "assert set(m) <= {10, 11, 12, 13, 14}, (nm, Counter(m))", "assert set(m) <= {10, 11, 12}, (nm, Counter(m))"),
-    ("相位視窗 0.1 ms", "near = sum(abs(x) <= 0.6 for x in off)", "near = sum(abs(x) <= 0.1 for x in off)"),
+    ("相位視窗取第 ⌈0.85 n⌉ − 1 個", "* len(OFFS[nm])) - 1] for nm in RUNS}", "* len(OFFS[nm])) - 2] for nm in RUNS}"),
+    ("相位視窗三份取最小", "PHASE_WIN = max(_kth.values())", "PHASE_WIN = min(_kth.values())"),
+    ("最小視窗前提用 ≤", "assert sum(abs(x) < PHASE_WIN for x in OFFS[nm])", "assert sum(abs(x) <= PHASE_WIN for x in OFFS[nm])"),
+    ("非諧波判斷反向", "if not any(abs(p - h) < 1e-9 for h in HARMONICS)", "if any(abs(p - h) < 1e-9 for h in HARMONICS)"),
+    ("諧波段長度 + 1", "and top == len(HARMONICS), (nm", "and top == len(HARMONICS) + 1, (nm"),
+    ("第一個非諧波取諧波段最後一個", "nh_r, nh_p = scan[top]", "nh_r, nh_p = scan[top - 1]"),
+    ("最遠偏移上限 1/4 格", "assert _far < GRID_MS / 2, _far", "assert _far < GRID_MS / 4, _far"),
     ("µs 換算常數 8381", "f7e1f7f350e8a5ffffff83c4045f5e5bc9c3", "f7e1f7f350e8a5ffffff83c4045f5e5bc9c4"),
     ("ISR 重入保護改 jb", "2e833de62b0000000f8711010000", "2e833de62b0000000f8211010000"),
     # (D) 第 5 項第 4 次

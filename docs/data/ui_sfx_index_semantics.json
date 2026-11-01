@@ -277,5 +277,13 @@
   "method_now_proven": "三次獨立命中(5、6、2)全部 `matches_doc36: True`,證明『呼叫端斷點 + 讀取推入的 frame』這條路在本 build 可用,不受先前 VGA 層 BPPM 不可信問題影響(那是記憶體寫入斷點,這是執行斷點)。",
   "bonus_finding": "狀態卡本身順帶獨立證實了 item 248 的職業名表:索爾顯示為「**魔族 劍聖**」,而其 record `+0x20`(職業)=9,經 `class + 0x96` 得 FDTXT_000 索引 159 = 劍聖;「魔族」則落在本輪新解出的 141..150 種族段(145)。**由遊戲自己的 UI 交叉驗證,不是自說自話。**",
   "tool_bug_fixed": "`tools/fd2_sfx_probe.py` 的子行程輸出原本沿用系統預設編碼(本機 cp950),一遇到中文或非法位元組就以 `UnicodeDecodeError` 崩潰,且崩在校準階段、訊息誤導成「delta calibration failed」。已改為 `encoding='utf-8', errors='replace'`,並補上 stderr 的 utf-8 設定。"
+ },
+ "_superseded_by": "docs/knowledge-base/evidence/sfx_ui_pool_table_s180_20261101.json",
+ "_corrections_2026_11_01": {
+  "index_2": "本檔 indices.2 的「per-frame UI animation tick」與 2026-09-08 的「重繪驅動」都不對:0x16546 在 typewriter_tick(函式登錄表 2026-09-19、doc14),對話 / 訊息逐字顯示時每字一次;cl1 .. cl14 有 1846 次,其中 1258 次歸得到 15 句 FDTXT 字串(docs/knowledge-base/evidence/sfx_dialogue_step_s180b_20261101.json)。",
+  "index_10": "_live_confirmation_round2 的 RETRACTION(「0x32307 放 index 10 不成立,只有 9 和 11」)本身是錯的:0x32307 是 play_step_sfx 的共用尾端,0x32280 push 0xa 經 0x32282 jmp 進來;cl1 .. cl14 看得到 index 10 共 57 次,全部來自這個尾端(docs/knowledge-base/evidence/sfx_ui_pool_table_s180_20261101.json 的 static.play_step_sfx_tail)。",
+  "index_11": "indices.11 的 0x2cac3 是 cmp,不是呼叫端;0xb 只由 0x322ff 推(本檔 _live_confirmation_round2 已發現,ev_s180 以反組譯鎖住)。",
+  "index_5_6": "indices.5 / 6 的語意判讀見 doc36 UI 池 index 表與續一百八十一節;本檔 2026-09-08 一節的「5 = 開、6 = 關」是當時實機命中的紀錄,原文不改。",
+  "rule": "本檔是 2026-09-07 / 09-08 的實機紀錄,各節原文保留;呼叫端與 index 的對應以 _superseded_by 的證據檔為準,ev_s180.py 會檢查本欄存在。"
  }
 }

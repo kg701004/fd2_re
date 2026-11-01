@@ -99,6 +99,84 @@ DIALOGUE = [{"fdtxt": res, "string_index": idx, "typewriter_calls": n, **text_of
             for (res, idx), n in sorted(TW.items(), key=lambda kv: (-kv[1], kv[0]))]
 assert all(d["first_line"] for d in DIALOGUE)
 
+# ================= (C) 打字音 → 字串:由 typewriter_tick 自己的文字游標(續一百八十一) =================
+# typewriter_tick 第 4 個參數是文字游標(每字 + 2),指標處 32 位元組 = 游標之後的字碼,直接取自載入的 FDTXT 資源。
+# 1. 傾印在全部 FDTXT 裡只有一處(偶數位移)的那些,得到「指標 − 位移」= 該資源這次的載入基底;每份紀錄每個資源只能有一個基底。
+# 2. 每一次都用基底換回位移:恰好一個資源落在範圍內且位元組相符(傾印超出檔尾時比到檔尾),再由位移表找出字串。
+# 3. 包得住的那 1258 次,游標歸屬必須與 dialog 參數歸屬完全相同(對照);dialog 記滿後的那些由此歸到字串。
+BYT = {i: p.read_bytes() for i, p in RES.items()}
+# 位移表:開頭的 word 是第一個字串的位移 = 表長(decode_text.parse_strings 同一讀法)
+OFFS = {i: [int.from_bytes(b[k:k + 2], "little") for k in range(0, int.from_bytes(b[:2], "little") if len(b) >= 2 else 0, 2)]
+        for i, b in BYT.items()}
+
+
+def str_at(res: int, off: int) -> int:
+    o = OFFS[res]
+    assert o and o == sorted(o) and o[0] <= off < len(BYT[res]), (res, off)
+    return bisect.bisect_right(o, off) - 1
+
+
+def hits_of(dump: bytes) -> list[tuple[int, int]]:
+    out = []
+    for i, b in BYT.items():
+        j = b.find(dump)
+        while j >= 0:
+            out += [(i, j)] * (j % 2 == 0)
+            j = b.find(dump, j + 1)
+    return out
+
+
+CUR = collections.Counter()              # (FDTXT 資源, 字串索引) → 次數(全部的打字音)
+CUR_LOG: dict[str, dict] = {}
+for nm, (p, _m5) in CL.items():
+    lg = cs._read(str(p), calls=True)
+    dlg = [c for c in lg.calls if c.eip - DELTA == DIALOG]
+    spans = [(c.line, lg.rets[c.seq].line, c) for c in dlg]
+    tws = [c for c in lg.calls if c.eip - DELTA == TYPE]
+    bases = collections.defaultdict(set)
+    for c in tws:
+        h = hits_of(c.mem_prefix["s4"])
+        if len(h) == 1:
+            bases[h[0][0]].add(c.stack[3] - h[0][1])
+    assert bases and all(len(v) == 1 for v in bases.values()), (nm, bases)
+    base = {i: next(iter(v)) for i, v in bases.items()}
+    # 基底與 dialog 第 1 個參數(文字表指標)相同:兩條獨立的路指到同一個載入位址
+    for c in dlg:
+        (res,) = [i for i, b in BYT.items() if b[:len(c.mem_prefix["s1"])] == c.mem_prefix["s1"]]
+        assert res not in base or base[res] == c.stack[0], (nm, res, hex(c.stack[0]))
+    n_same = n_new = n_amb = n_end = 0
+    for c in tws:
+        dump = c.mem_prefix["s4"]
+        cand = [(i, c.stack[3] - b) for i, b in base.items() if 0 <= c.stack[3] - b < len(BYT[i])]
+        cand = [(i, o) for i, o in cand if dump.startswith(BYT[i][o:o + len(dump)])]
+        assert len(cand) == 1, (nm, c.line, cand)
+        # 基底換回的位置必須是傾印吻合處之一;一處都不吻合的,只能是傾印超出資源檔尾
+        h = hits_of(dump)
+        assert cand[0] in h if h else cand[0][1] + len(dump) > len(BYT[cand[0][0]]), (nm, c.line, cand, h[:3])
+        n_amb += len(h) > 1
+        n_end += not h
+        key = (cand[0][0], str_at(*cand[0]))
+        CUR[key] += 1
+        enc = [s for s in spans if s[0] < c.line < s[1]]
+        if enc:
+            d = enc[0][2]
+            (res,) = [i for i, b in BYT.items() if b[:len(d.mem_prefix["s1"])] == d.mem_prefix["s1"]]
+            assert key == (res, d.stack[1]), (nm, c.line, key, res, d.stack[1])
+            n_same += 1
+        else:
+            n_new += 1
+    assert n_same == TW_LOG[nm]["attributed"] and n_same + n_new == len(tws), nm
+    CUR_LOG[nm] = {"bases": {f"FDTXT_{i:03d}": hex(b) for i, b in sorted(base.items())}, "same_as_dialog": n_same, "after_dialog_cap": n_new,
+                   "ambiguous_dump": n_amb, "dump_past_resource_end": n_end}
+assert sum(CUR.values()) == N_TW and all(CUR[k] >= n for k, n in TW.items())
+CURSOR = [{"fdtxt": res, "string_index": idx, "typewriter_calls": n, "via_dialog_args": TW.get((res, idx), 0), **text_of(res, idx)}
+          for (res, idx), n in sorted(CUR.items(), key=lambda kv: (-kv[1], kv[0]))]
+assert all(d["first_line"] for d in CURSOR)
+# 經 dialog 參數歸到的次數合計 = (W) 的歸屬數;排序是次數遞減、再依 (資源, 索引)
+assert sum(d["via_dialog_args"] for d in CURSOR) == N_ATT
+assert all((-a["typewriter_calls"], a["fdtxt"], a["string_index"]) < (-b["typewriter_calls"], b["fdtxt"], b["string_index"])
+           for a, b in zip(CURSOR, CURSOR[1:]))
+
 # ================= (U) 腳步音 → 單位 =================
 STEPS = collections.Counter()            # (呼叫端函式, 單位索引) → 次數
 _st_hits, _ = dl.find_rel_callers(_MD, _CODE, _CBASE, STEP)
@@ -124,9 +202,12 @@ OUT.write_text(json.dumps({
     "generator": rel(GEN_DIR / "ev_s180b.py"), "exe_md5": MD5,
     "upstream": {"calllogs": rel(EVIDENCE / "dig_word_order_sfx_s178_20261101.json"), "fdtxt": rel(FDTXT), "names": rel(NAMES)},
     "typewriter": {"per_log": TW_LOG, "calls": N_TW, "attributed": N_ATT, "dialogue": DIALOGUE},
+    "typewriter_cursor": {"method": "typewriter_tick 第 4 個參數(文字游標)處 32 位元組對 FDTXT 位元組;每份紀錄每個資源一個載入基底,等於 dialog 的文字表指標",
+                          "per_log": CUR_LOG, "calls": sum(CUR.values()), "strings": CURSOR},
     "step": {"rows": STEP_ROWS, "units": STEP_UNITS, "callers": STEP_CALLERS},
     "conclusion": f"cl1 .. cl14 的 {N_TW} 次打字音(index 2)有 {N_ATT} 次歸到確切的字串,共 {len(DIALOGUE)} 句;其餘都在 dialog 記滿 "
-                  f"{CAP} 次之後。腳步音(index 9 / 0xa / 0xb)來自 {len(STEP_CALLERS)} 個呼叫端函式、{len(STEP_UNITS)} 個單位索引;"
+                  f"{CAP} 次之後;改用 typewriter_tick 自己的文字游標,{sum(CUR.values())} 次全部歸到字串,共 {len(CURSOR)} 句"
+                  f"(包得住的 {N_ATT} 次與 dialog 參數歸屬逐次相同)。腳步音(index 9 / 0xa / 0xb)來自 {len(STEP_CALLERS)} 個呼叫端函式、{len(STEP_UNITS)} 個單位索引;"
                   "單位索引對到哪個角色要看當時的單位表,本證據沒有對。",
 }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
 print(OUT)

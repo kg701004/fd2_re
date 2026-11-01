@@ -721,5 +721,77 @@
    "0"
   ]
  },
+ "old_callers_table_diff": {
+  "file": "docs/data/sfx_index_callers.json",
+  "by_index": {
+   "0": {
+    "only_old": {
+     "0x1d6e2": "dword ptr [0x3b13]",
+     "0x31015": "dword ptr [0x4153]"
+    },
+    "only_new": [
+     "0x341e7"
+    ]
+   },
+   "1": {
+    "only_old": {
+     "0x1c309": "dword ptr [0x3b13]",
+     "0x2db80": "dword ptr [0x4153]",
+     "0x2dc85": "dword ptr [0x4153]"
+    },
+    "only_new": []
+   },
+   "2": {
+    "only_old": {},
+    "only_new": [
+     "0x34126",
+     "0x34162"
+    ]
+   },
+   "4": {
+    "only_old": {
+     "0x1ea20": "dword ptr [0x3b0f]"
+    },
+    "only_new": []
+   },
+   "7": {
+    "only_old": {},
+    "only_new": [
+     "0x2b0c7",
+     "0x3417e"
+    ]
+   },
+   "9": {
+    "only_old": {},
+    "only_new": [
+     "0x32307"
+    ]
+   },
+   "0xa": {
+    "only_old": {},
+    "only_new": [
+     "0x32307"
+    ]
+   },
+   "0xc": {
+    "only_old": {},
+    "only_new": [
+     "0x13d13",
+     "0x191a9"
+    ]
+   },
+   "0xff": {
+    "only_old": {
+     "0x1d50a": "dword ptr [0x3b13]",
+     "0x2d770": "dword ptr [0x414b]",
+     "0x2dd9e": "dword ptr [0x4153]",
+     "0x2e284": "dword ptr [0x414b]",
+     "0x2e918": "dword ptr [0x414b]",
+     "0x30d1b": "dword ptr [0x4153]"
+    },
+    "only_new": []
+   }
+  }
+ },
  "conclusion": "UI 池 [0x53eec] 共 62 條推 index 的路徑、13 個 index;doc36 表前四欄與此逐格相同。0xb 只由 play_step_sfx 的 0x322ff 推(舊表 0x2cac3 是 cmp);0x32307 共用尾端放 9 / 0xa / 0xb,cl1 .. cl14 實際看到 index 10 57 次。"
 }

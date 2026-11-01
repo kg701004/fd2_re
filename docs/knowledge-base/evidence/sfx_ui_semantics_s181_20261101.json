@@ -1,0 +1,116 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s181.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "upstream": {
+  "calllogs": "docs/knowledge-base/evidence/dig_word_order_sfx_s178_20261101.json",
+  "ui_pool": "docs/knowledge-base/evidence/sfx_ui_pool_table_s180_20261101.json",
+  "names": "docs/data/function_names.json"
+ },
+ "panel": {
+  "open_frames": [
+   5,
+   11
+  ],
+  "close_frames": [
+   0,
+   7
+  ],
+  "sites": {
+   "open": "0x17ede",
+   "swap_to_spells": "0x17b2e",
+   "spell_list_open": "0x17c56",
+   "close": "0x17d26",
+   "sortie_open": "0x2b08a",
+   "sortie_close": "0x2b1f1",
+   "save_slot_open": "0x29c8a"
+  },
+  "unit_info_cards_order": [
+   "info_card_open_anim",
+   "wait_key_with_marker",
+   "unit_list_bits_1a",
+   "play 6",
+   "draw_command_list",
+   "play 5",
+   "wait_key_with_marker",
+   "info_card_present_frame",
+   "play 6"
+  ],
+  "cl_unit_info_cards": {
+   "has_spells/6": 4
+  },
+  "cl_unit_info_cards_past_play_cap": {
+   "cl5": 4,
+   "cl7": 2
+  }
+ },
+ "context": {
+  "1": [
+   {
+    "call": "0x265a7",
+    "func": "town_hub_main",
+    "handle": "A",
+    "cmp_before": [
+     "cmp eax, 0x1c",
+     "cmp eax, 0x20",
+     "cmp dword ptr [0x3f4a], 2"
+    ],
+    "calls_before": [],
+    "next_call": "town_hub_select"
+   }
+  ],
+  "8": [
+   {
+    "call": "0x17495",
+    "func": "action_ring_open",
+    "handle": "A",
+    "cmp_before": [],
+    "calls_before": [],
+    "next_call": "tick_anim_counters"
+   },
+   {
+    "call": "0x176d3",
+    "func": "action_ring_close",
+    "handle": "A",
+    "cmp_before": [],
+    "calls_before": [],
+    "next_call": "unit_at_cursor"
+   }
+  ],
+  "0xc": [
+   {
+    "call": "0x13d13",
+    "func": "ai_mode_dispatch",
+    "handle": "B",
+    "cmp_before": [],
+    "calls_before": [
+     "unit_add_item"
+    ],
+    "next_call": "map_count_flagged_event_cells"
+   },
+   {
+    "call": "0x191a9",
+    "func": "field_cell_treasure_check",
+    "handle": "B",
+    "cmp_before": [
+     "cmp ebx, 1",
+     "cmp dword ptr [0x3c57], 0"
+    ],
+    "calls_before": [
+     "draw_dialog_cell",
+     "yes_no_prompt",
+     "slide_in_choice_icons"
+    ],
+    "next_call": "unit_add_item"
+   }
+  ]
+ },
+ "semantics": {
+  "1": "城鎮選單確認(town_hub_main 按鍵 0x1c / 0x20 → town_hub_select)",
+  "5": "面板展開(資訊卡、法術列表、出擊選人、存檔欄)",
+  "6": "面板收起(資訊卡換到法術列表前、資訊卡與出擊選人關閉)",
+  "8": "行動環開啟 / 收起(同一個音)",
+  "0xc": "取得道具(寶箱 yes / no 回答「是」、unit_add_item 之後;handle B 與 handle A 疊播)"
+ },
+ "verification": "STATIC ANALYSIS(反組譯)+ LOG CONFIRMED(cl1 .. cl14 每一次 unit_info_cards 的播放順序與靜態預測相同);語意名稱取自呼叫情境與登錄函式名,是 INFERRED",
+ "conclusion": "5 = 面板展開、6 = 面板收起:展開迴圈在第 [5, 11] 格放 5、收起迴圈在第 [0, 7] 格放 6,資訊卡與出擊選人用同一套;cl1 .. cl14 的 4 次 unit_info_cards 播放順序全部與預測相同。2026-09-04 與 09-08 兩次實機各看到其中一段,不矛盾。1 = 城鎮選單確認、8 = 行動環開 / 收、0xc = 取得道具。"
+}

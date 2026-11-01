@@ -300,39 +300,62 @@ def resultant(ts: list[float], p: float) -> float:
 
 
 GRID_MS = 5.0
-C_RUNS = {}
+SCAN_LO, SCAN_HI = 1000, 20000      # 掃描 1 .. 20 ms,每 0.001 ms
+# 格點的諧波:掃描範圍內 5 ms 的整數分之一(1.666.. 這類不落在 0.001 格上的不算)與 5 ms 的 ±0.001 鄰居
+HARMONICS = {GRID_MS / q for q in range(1, 21) if SCAN_LO <= round(GRID_MS / q * 1000, 9) <= SCAN_HI
+             and abs(GRID_MS / q * 1000 - round(GRID_MS / q * 1000)) < 1e-9} | {GRID_MS - 0.001, GRID_MS + 0.001}
+assert HARMONICS == {5.0, 2.5, 1.25, 1.0, 4.999, 5.001}, HARMONICS
+PHASE_FRAC = 0.85                   # 「八成五以上」
+C_RUNS, OFFS = {}, {}
 for nm in RUNS:
     tk = tick_times(nm)
     ts = [t for _, t in tk]
-    scan = sorted(((resultant(ts, k / 1000), k / 1000) for k in range(1000, 20001)), reverse=True)
-    best_r, best_p = scan[0]
-    # 最佳格點 5.000 ms;次佳只有它的約數(2.5、1.25、1.0)與 ±0.001 的鄰居
+    scan = sorted(((resultant(ts, k / 1000), k / 1000) for k in range(SCAN_LO, SCAN_HI + 1)), reverse=True)
+    (best_r, best_p), *_rest = scan
+    # 最佳格點 5.000 ms;排在前面的連續一段全是諧波,第一個非諧波之前的每個諧波都要出現(取到第一個非諧波為止,不寫死長度)
     assert best_p == GRID_MS and best_r >= 0.85, (nm, scan[:3])
-    assert all(abs(GRID_MS / p - round(GRID_MS / p)) < 1e-9 or abs(p - GRID_MS) <= 0.0011 for _, p in scan[:6]), (nm, scan[:6])
+    top = next(i for i, (_, p) in enumerate(scan) if not any(abs(p - h) < 1e-9 for h in HARMONICS))
+    assert {p for _, p in scan[:top]} == HARMONICS and top == len(HARMONICS), (nm, scan[:top + 1])
+    nh_r, nh_p = scan[top]
+    assert nh_p not in HARMONICS and nh_r <= min(r for r, _ in scan[:top]), (nm, scan[top])
     pairs = [(b[0] - a[0], b[1] - a[1]) for a, b in zip(tk, tk[1:])]
     one = [dt for k, dt in pairs if k == 1]
     m = [round(dt / GRID_MS) for dt in one]
     resid = [dt - GRID_MS * q for dt, q in zip(one, m)]
     assert set(m) <= {10, 11, 12, 13, 14}, (nm, Counter(m))
-    # 每個 tick 對格點的相位偏移(以圓形平均當 0):八成五以上在 ±0.6 ms 內
+    # 每個 tick 對格點的相位偏移(以圓形平均當 0)
     _c = sum(math.cos(2 * math.pi * t / GRID_MS) for t in ts)
     _s = sum(math.sin(2 * math.pi * t / GRID_MS) for t in ts)
     _mu = math.atan2(_s, _c) / (2 * math.pi) * GRID_MS
     off = [((t - _mu + GRID_MS / 2) % GRID_MS) - GRID_MS / 2 for t in ts]
-    near = sum(abs(x) <= 0.6 for x in off)
     # 偏移的圓形平均必須是 0(原點取對了)
     assert abs(math.atan2(sum(math.sin(2 * math.pi * x / GRID_MS) for x in off),
                           sum(math.cos(2 * math.pi * x / GRID_MS) for x in off))) < 1e-6, nm
-    assert near / len(off) >= 0.85, (nm, near, len(off))
     per_tick = sum(dt for _, dt in pairs) / sum(k for k, _ in pairs)
     # 沒掉中斷時,累加器分頻的長期平均就是 54.925 ms;實測較長 → 有中斷沒算進去
     assert per_tick > TICK_MS + 0.3, (nm, per_tick)
-    C_RUNS[nm] = {"ticks": len(tk), "best_period_ms": best_p, "best_resultant": round(best_r, 3),
-                  "top6": [[round(r, 3), p] for r, p in scan[:6]], "one_tick_gaps": len(one),
+    OFFS[nm] = off
+    C_RUNS[nm] = {"ticks": len(tk), "best_period_ms": best_p, "best_resultant": round(best_r, ndigits=3),
+                  "harmonic_top": [[round(r, ndigits=3), p] for r, p in scan[:top]],
+                  "first_non_harmonic": [round(nh_r, ndigits=3), nh_p], "one_tick_gaps": len(one),
                   "one_tick_gap_periods": dict(sorted(Counter(m).items())),
-                  "one_tick_gap_resid_ms": [round(min(resid), 3), round(max(resid), 3)],
-                  "ticks_within_0_6ms_of_grid": near, "phase_offset_ms_min_max": [round(min(off), 3), round(max(off), 3)],
-                  "mean_ms_per_tick": round(per_tick, 3)}
+                  "one_tick_gap_resid_ms": [round(min(resid), ndigits=3), round(max(resid), ndigits=3)],
+                  "phase_offset_ms_min_max": [round(min(off), ndigits=3), round(max(off), ndigits=3)],
+                  "mean_ms_per_tick": round(per_tick, ndigits=3)}
+# 相位視窗:每份取「|偏移| 由小到大第 ⌈0.85 n⌉ 個」(恰好八成五落在內的最小視窗),三份取最大 —— 由門檻與資料決定,沒有格距
+_kth = {nm: sorted(abs(x) for x in OFFS[nm])[math.ceil(PHASE_FRAC * len(OFFS[nm])) - 1] for nm in RUNS}
+PHASE_WIN = max(_kth.values())
+for nm in RUNS:
+    _in = sum(abs(x) <= PHASE_WIN for x in OFFS[nm])
+    # 每份都達到八成五;決定視窗的那一份縮一點就不到(最小值確實是門檻決定的)
+    assert _in >= PHASE_FRAC * len(OFFS[nm]), (nm, _in)
+    if _kth[nm] == PHASE_WIN:
+        assert sum(abs(x) < PHASE_WIN for x in OFFS[nm]) < PHASE_FRAC * len(OFFS[nm]), nm
+    C_RUNS[nm]["phase_window_ms"] = round(PHASE_WIN, ndigits=3)
+    C_RUNS[nm]["ticks_within_phase_window"] = _in
+# 最大偏移都在半格(2.5 ms)內
+_far = max(max(abs(x) for x in OFFS[nm]) for nm in RUNS)
+assert _far < GRID_MS / 2, _far
 # µs → 除數的換算(0x3ebe4:mov ebx, 8380;mov ecx, 10000;mul ecx;div ebx),常數從程式碼讀
 _c3ebe4 = code(0x3EBE4, 0x3EC17 - 0x3EBE4)
 _mul = struct.unpack_from("<I", _c3ebe4, _c3ebe4.index(bytes([0xB9])) + 1)[0]      # mov ecx, imm32
@@ -342,14 +365,15 @@ _div5 = round(GRID_MS * 1000) * _mul // _dvs
 _pit_ms = 1000 * _div5 / 1193182
 assert abs(_pit_ms - GRID_MS) < 0.001
 C = {"method": "wait_ticks R 記錄(eax 低 16 位 = [0x46c]、t = PIC_FullIndex ms);每個 tick 值取第一次返回的時間;1 .. 20 ms 每 0.001 ms 求相位集中度",
-     "runs": C_RUNS, "nominal_tick_ms": round(TICK_MS, 3), "bios_channel_us": BIOS_US,
-     "divisor_for_5000us": _div5, "pit_period_ms_for_5000us": round(_pit_ms, 4),
+     "runs": C_RUNS, "nominal_tick_ms": round(TICK_MS, ndigits=3), "bios_channel_us": BIOS_US,
+     "divisor_for_5000us": _div5, "pit_period_ms_for_5000us": round(_pit_ms, ndigits=4),
+     "phase_window_rule": f"每份 |相位偏移| 由小到大第 ⌈{PHASE_FRAC} n⌉ 個(恰好 {PHASE_FRAC:.0%} 落在內的最小視窗),三份取最大",
      "static": "0x3ed29 把 int 8 指到 0x3ea8e、通道 0x3c 週期 54925 µs;0x3ec2d 取啟用通道的最小週期當基底,0x3ebe4 / 0x3ebb4 寫 PIT;"
                "0x3ead3 每次中斷各通道累加器加基底週期;0x3ea8e 在上一次 ISR 還沒結束時只送 EOI 就返回",
      "not_determined": "基底 5 ms 是哪一個通道設的(執行期才登錄);掉的中斷是 0x3ea8e 的重入保護丟的,還是中斷關著時 IRQ 疊在一起,紀錄分不出來",
      "conclusion": "BIOS tick 落在 5.000 ms 的格點上(PIT 被改成 200 Hz,BIOS tick 由軟體計時器每累積 54925 µs 鏈一次):"
                    "正常間隔 11 格 = 55 ms,偶爾 10 格;12 .. 14 格與平均大於 54.925 ms 表示有計時器中斷沒算進去。"
-                   "八成五以上的 tick 離格點 0.6 ms 以內,少數偏到 2 ms。"}
+                   f"三份都有八成五以上的 tick 離格點 {PHASE_WIN:.2f} ms 以內,最遠偏 {_far:.1f} ms。"}
 
 # ---------------------------------------------------------------------------------------------------------------
 # (D) 第 5 項第 4 次:FAIL

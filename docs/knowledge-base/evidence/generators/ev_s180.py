@@ -33,6 +33,8 @@ S179 = json.loads((EVIDENCE / "sfx_triggers_irq_s179_20261101.json").read_text(e
 CL = {nm: (ROOT / v["path"], v["md5"]) for nm, v in S178["calllogs"].items()}
 NAMES = ROOT / "docs/data/function_names.json"
 DOC36 = ROOT / "docs/knowledge-base/36-sfx-audio-data.md"
+OLD_CALLERS = ROOT / "docs/data/sfx_index_callers.json"
+OLD_SEMANTICS = ROOT / "docs/data/ui_sfx_index_semantics.json"
 LOAD, PLAY_A, PLAY_B = 0x111BA, 0x25A96, 0x25B45
 POOL_PUSH = "push dword ptr [0x3eec]"   # [0x53eec]:obj2 的位移 0x3eec 經 fixup 指到 0x53eec
 RET_POOL_LOAD = 0x25C75                 # game_main 0x25c70 load_res(FDOTHER #31) 的返回位址(續一百七十九)
@@ -154,6 +156,37 @@ assert _tot == [(str(N_CALLS[PLAY_A]), str(N_CALLS[PLAY_B]))], _tot
 
 POOLS = collections.Counter(s["buf"] for s in SITES)
 assert POOLS["dword ptr [0x3eec]"] == len(POOL)
+
+# ================= (O) 兩份舊 docs/data 表:逐筆比對並要求標明已被本檔取代 =================
+# sfx_index_callers.json(2026-09-04 從 call 往回貪婪解析 push)仍是 fd2_sfx_static_reachability 稽核的對象,不改內容;
+# 差異逐筆歸類:舊表多出的呼叫點要嘛推的是別的表(不是 UI 池),要嘛根本不是 play_sfx 的呼叫;舊表少的就是貪婪解析沒解到的。
+_OLD = json.loads(OLD_CALLERS.read_text(encoding="utf-8"))
+_old = {int(k): {int(x, 16) for x in v} for k, v in _OLD["index_to_callers"].items()}
+_new = {k: {s["call"] for s in v} for k, v in BY_IDX.items()}
+_by_call = collections.defaultdict(set)
+for s in SITES:
+    _by_call[s["call"]].add(s["buf"])
+OLD_DIFF = {}
+for k in sorted(set(_old) | set(_new)):
+    extra, miss = _old.get(k, set()) - _new.get(k, set()), _new.get(k, set()) - _old.get(k, set())
+    if not (extra or miss):
+        continue
+    why = {}
+    for a in sorted(extra):
+        bufs = _by_call.get(a, set())
+        # 舊表多出的每一筆都是 play_sfx 的呼叫、推的是別的表(貪婪解析把別的表的 index 當成 UI 池)
+        assert bufs and POOL_PUSH[len("push "):] not in bufs, (k, hex(a), bufs)
+        why[hex(a)] = "、".join(sorted(bufs))
+    OLD_DIFF[idx_s(k)] = {"only_old": why, "only_new": [hex(a) for a in sorted(miss)]}
+assert OLD_DIFF and all(set(v["only_new"]).isdisjoint(v["only_old"]) for v in OLD_DIFF.values()), OLD_DIFF
+# 由舊表套用差異必須恰好還原新表(差異沒有漏記或多記)
+for k in set(_old) | set(_new):
+    _d = OLD_DIFF.get(idx_s(k), {"only_old": {}, "only_new": []})
+    assert (_old.get(k, set()) - {int(a, 16) for a in _d["only_old"]}) | {int(a, 16) for a in _d["only_new"]} == _new.get(k, set()), k
+for _p in (OLD_CALLERS, OLD_SEMANTICS):
+    _j = json.loads(_p.read_text(encoding="utf-8"))
+    _sup = _j.get("_meta", _j).get("_superseded_by")
+    assert _sup == rel(EVIDENCE / OUT.name), (_p.name, _sup)
 OUT.write_text(json.dumps({
     "generator": rel(GEN_DIR / "ev_s180.py"), "exe_md5": MD5,
     "upstream": {"calllogs": rel(EVIDENCE / "dig_word_order_sfx_s178_20261101.json"),
@@ -168,6 +201,7 @@ OUT.write_text(json.dumps({
                            "cl_plays": CL_N[k], "cl_plays_by_func": dict(CL_BY_FUNC[k].most_common())}
                 for k, v in sorted(BY_IDX.items())},
     "doc36_rows": ROWS,
+    "old_callers_table_diff": {"file": rel(OLD_CALLERS), "by_index": OLD_DIFF},
     "conclusion": f"UI 池 [0x53eec] 共 {len(POOL)} 條推 index 的路徑、{len(BY_IDX)} 個 index;doc36 表前四欄與此逐格相同。"
                   f"0xb 只由 play_step_sfx 的 0x322ff 推(舊表 0x2cac3 是 cmp);0x32307 共用尾端放 9 / 0xa / 0xb,"
                   f"cl1 .. cl14 實際看到 index 10 {N10} 次。",

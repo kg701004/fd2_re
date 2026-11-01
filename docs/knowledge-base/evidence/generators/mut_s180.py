@@ -30,6 +30,12 @@ MUTANTS = [
     ("表頭第二欄改名", '"index", "靜態呼叫端", "呼叫端函式(登錄名)"', '"index", "呼叫端數量", "呼叫端函式(登錄名)"'),
     ("表格讀到下一張表", "    elif _tbl:\n        break", "    elif _tbl and False:\n        break"),
     ("總數句用舊的 107", "[(str(N_CALLS[PLAY_A]), str(N_CALLS[PLAY_B]))]", "[(str(N_CALLS[PLAY_A] - 4), str(N_CALLS[PLAY_B]))]"),
+    # 續一百八十一:舊 sfx_index_callers.json 的逐筆差異與取代標記
+    ("舊表多出的也可以是 UI 池", 'assert bufs and POOL_PUSH[len("push "):] not in bufs', 'assert bufs and POOL_PUSH[len("push "):] in bufs'),
+    ("差異只記舊表多出的", "if not (extra or miss):", "if not extra:"),
+    ("舊表 index 讀成十六進位", '_old = {int(k): {int(x, 16)', '_old = {int(k, 16): {int(x, 16)'),
+    ("取代標記檔名反向", "assert _sup == rel(EVIDENCE / OUT.name)", "assert _sup != rel(EVIDENCE / OUT.name)"),
+    ("取代標記不進 _meta", '_sup = _j.get("_meta", _j).get("_superseded_by")', '_sup = _j.get("_superseded_by")'),
 ]
 
 if __name__ == "__main__":

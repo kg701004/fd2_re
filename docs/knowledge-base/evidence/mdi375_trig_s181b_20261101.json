@@ -1,0 +1,92 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s181b.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s181/pred181.txt",
+ "driver": "docs/knowledge-base/evidence/generators/drivers_s181/lc181.py",
+ "approval": "使用者 2026-11-01「全部依照你的建議自動進行處理」;計畫三次、失敗即停(三次都正常結束)",
+ "trig": "ng:375,ng:302-303",
+ "runs": {
+  "lc181a": {
+   "calllog": ".wsl_build/lc181_live/lc181a_CALLLOG.TXT",
+   "md5": "0dcee91e57df141a188fb805b407d469",
+   "tail_cut": true,
+   "yc": {
+    "ng_375": {
+     "matched": 0,
+     "written": 0
+    },
+    "ng_302_303": {
+     "matched": 185,
+     "written": 40
+    }
+   },
+   "yn": {
+    "if": 694233,
+    "ng": 95104
+   },
+   "blocks_302_303": {
+    "mdi 302 hw_irq=0": 28,
+    "mdi 303 hw_irq=0": 12
+   },
+   "yi_records_in_302_303_blocks": 0,
+   "p1_blocks": 0
+  },
+  "lc181b": {
+   "calllog": ".wsl_build/lc181_live/lc181b_CALLLOG.TXT",
+   "md5": "c676d94a047c56b78e275d1e6732f17d",
+   "tail_cut": true,
+   "yc": {
+    "ng_375": {
+     "matched": 0,
+     "written": 0
+    },
+    "ng_302_303": {
+     "matched": 170,
+     "written": 40
+    }
+   },
+   "yn": {
+    "if": 694248,
+    "ng": 92265
+   },
+   "blocks_302_303": {
+    "mdi 302 hw_irq=0": 31,
+    "mdi 303 hw_irq=0": 9
+   },
+   "yi_records_in_302_303_blocks": 0,
+   "p1_blocks": 0
+  },
+  "lc181c": {
+   "calllog": ".wsl_build/lc181_live/lc181c_CALLLOG.TXT",
+   "md5": "b429596b086c214778fd95e39c6fe6b5",
+   "tail_cut": true,
+   "yc": {
+    "ng_375": {
+     "matched": 0,
+     "written": 0
+    },
+    "ng_302_303": {
+     "matched": 168,
+     "written": 40
+    }
+   },
+   "yn": {
+    "if": 720891,
+    "ng": 91630
+   },
+   "blocks_302_303": {
+    "mdi 302 hw_irq=0": 34,
+    "mdi 303 hw_irq=0": 6
+   },
+   "yi_records_in_302_303_blocks": 0,
+   "p1_blocks": 0
+  }
+ },
+ "verdict": {
+  "P1": "NOT TESTED",
+  "P2": "PASS",
+  "P3": "記錄",
+  "P4": "PASS"
+ },
+ "conclusion": "三次共 278999 個非遊戲區間,ng 375 符合 0 次:P1 NOT TESTED,「375 = MDI 型重入夾一次 IRQ 7」的直接觀察仍只有 lc174a #24 一次。MDI 型 302 / 303 區塊 120 個都沒有硬體中斷(P2 PASS)。lc163a / lc167a 兩項維持 INFERRED + 獨立佐證;這個場景(標題 → START → 靜置)裡這型太少,再加次數也很難改變分母。"
+}

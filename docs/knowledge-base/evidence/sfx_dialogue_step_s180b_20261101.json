@@ -206,6 +206,545 @@
    }
   ]
  },
+ "typewriter_cursor": {
+  "method": "typewriter_tick 第 4 個參數(文字游標)處 32 位元組對 FDTXT 位元組;每份紀錄每個資源一個載入基底,等於 dialog 的文字表指標",
+  "per_log": {
+   "cl1": {
+    "bases": {
+     "FDTXT_000": "0x234018"
+    },
+    "same_as_dialog": 39,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl2": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x23a7e8"
+    },
+    "same_as_dialog": 6,
+    "after_dialog_cap": 194,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 7
+   },
+   "cl3": {
+    "bases": {
+     "FDTXT_000": "0x234018"
+    },
+    "same_as_dialog": 6,
+    "after_dialog_cap": 194,
+    "ambiguous_dump": 1,
+    "dump_past_resource_end": 0
+   },
+   "cl4": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x26b018"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl5": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x26b018"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl6": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x26b018"
+    },
+    "same_as_dialog": 0,
+    "after_dialog_cap": 200,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl7": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x26b018"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl9": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_003": "0x21934c"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl11": {
+    "bases": {
+     "FDTXT_000": "0x234018",
+     "FDTXT_002": "0x26b018"
+    },
+    "same_as_dialog": 7,
+    "after_dialog_cap": 193,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl12": {
+    "bases": {
+     "FDTXT_000": "0x21b784",
+     "FDTXT_002": "0x21fa28"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl13": {
+    "bases": {
+     "FDTXT_000": "0x21b784",
+     "FDTXT_002": "0x21fa28"
+    },
+    "same_as_dialog": 0,
+    "after_dialog_cap": 200,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   },
+   "cl14": {
+    "bases": {
+     "FDTXT_033": "0x1fe3cc"
+    },
+    "same_as_dialog": 200,
+    "after_dialog_cap": 0,
+    "ambiguous_dump": 0,
+    "dump_past_resource_end": 0
+   }
+  },
+  "calls": 2239,
+  "strings": [
+   {
+    "fdtxt": 2,
+    "string_index": 2,
+    "typewriter_calls": 548,
+    "via_dialog_args": 417,
+    "boxes": 6,
+    "first_speaker": "unit#5(執行期決定)",
+    "first_line": "啊！強盜來了！快逃啊！"
+   },
+   {
+    "fdtxt": 2,
+    "string_index": 0,
+    "typewriter_calls": 417,
+    "via_dialog_args": 197,
+    "boxes": 1,
+    "first_speaker": "亞雷斯",
+    "first_line": "我們已經抵達羅德鎮了。"
+   },
+   {
+    "fdtxt": 2,
+    "string_index": 1,
+    "typewriter_calls": 338,
+    "via_dialog_args": 158,
+    "boxes": 3,
+    "first_speaker": "索爾",
+    "first_line": "亞雷斯，我看你的情報有誤"
+   },
+   {
+    "fdtxt": 33,
+    "string_index": 1,
+    "typewriter_calls": 140,
+    "via_dialog_args": 140,
+    "boxes": 13,
+    "first_speaker": "unit#0(執行期決定)",
+    "first_line": "索爾，時間過得真快，你已"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 2,
+    "typewriter_calls": 88,
+    "via_dialog_args": 88,
+    "boxes": 4,
+    "first_speaker": "unit#7(執行期決定)",
+    "first_line": "鐵諾，總算追上你了吧！"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 513,
+    "typewriter_calls": 63,
+    "via_dialog_args": 42,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要進入戰場嗎？"
+   },
+   {
+    "fdtxt": 33,
+    "string_index": 0,
+    "typewriter_calls": 60,
+    "via_dialog_args": 60,
+    "boxes": 6,
+    "first_speaker": "索爾",
+    "first_line": "兒臣索爾，晉見父王陛下。"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 3,
+    "typewriter_calls": 47,
+    "via_dialog_args": 47,
+    "boxes": 7,
+    "first_speaker": "希莉亞",
+    "first_line": "唉呀！看，橋上有人準備要"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 503,
+    "typewriter_calls": 42,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "還要什麼嗎？"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 0,
+    "typewriter_calls": 41,
+    "via_dialog_args": 41,
+    "boxes": 2,
+    "first_speaker": "希莉亞",
+    "first_line": "過了這座橋，就快到以醫術"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 508,
+    "typewriter_calls": 40,
+    "via_dialog_args": 0,
+    "boxes": 3,
+    "first_speaker": null,
+    "first_line": "這個"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 586,
+    "typewriter_calls": 40,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "還有事嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 502,
+    "typewriter_calls": 38,
+    "via_dialog_args": 0,
+    "boxes": 3,
+    "first_speaker": null,
+    "first_line": "這個"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 585,
+    "typewriter_calls": 30,
+    "via_dialog_args": 12,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "有什麼事嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 512,
+    "typewriter_calls": 24,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "誰的東西呢？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 501,
+    "typewriter_calls": 21,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "呃，買東西嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 507,
+    "typewriter_calls": 21,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要裝備上去嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 658,
+    "typewriter_calls": 18,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "確定要進入戰場嗎？"
+   },
+   {
+    "fdtxt": 3,
+    "string_index": 1,
+    "typewriter_calls": 17,
+    "via_dialog_args": 17,
+    "boxes": 1,
+    "first_speaker": "鐵諾",
+    "first_line": "‥呼，這回大概是追不上了"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 420,
+    "typewriter_calls": 14,
+    "via_dialog_args": 14,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "好的，"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 439,
+    "typewriter_calls": 12,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "要"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 589,
+    "typewriter_calls": 12,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "誰要復活呢？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 590,
+    "typewriter_calls": 12,
+    "via_dialog_args": 0,
+    "boxes": 3,
+    "first_speaker": null,
+    "first_line": "復活"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 592,
+    "typewriter_calls": 12,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "誰要轉職呢？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 419,
+    "typewriter_calls": 11,
+    "via_dialog_args": 11,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要結束本回合的行動嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 440,
+    "typewriter_calls": 11,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "歡迎光臨，需要什麼嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 588,
+    "typewriter_calls": 11,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "隊伍中沒有須要復活的！"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 510,
+    "typewriter_calls": 10,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要給誰呢？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 493,
+    "typewriter_calls": 9,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "MHP上升"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 490,
+    "typewriter_calls": 8,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "力量上升"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 596,
+    "typewriter_calls": 8,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "移動力增加"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 415,
+    "typewriter_calls": 7,
+    "via_dialog_args": 7,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要離開戰場嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 416,
+    "typewriter_calls": 7,
+    "via_dialog_args": 7,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "那麼請休息吧！"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 478,
+    "typewriter_calls": 7,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "記錄讀取完畢！"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 491,
+    "typewriter_calls": 7,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "耐力上升"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 492,
+    "typewriter_calls": 7,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "速度上升"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 660,
+    "typewriter_calls": 7,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "記錄儲存完畢！"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 313,
+    "typewriter_calls": 6,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "皮甲"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 594,
+    "typewriter_calls": 5,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "要轉職嗎？"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 595,
+    "typewriter_calls": 5,
+    "via_dialog_args": 0,
+    "boxes": 2,
+    "first_speaker": null,
+    "first_line": "職業轉成"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 309,
+    "typewriter_calls": 4,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "布衣"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 373,
+    "typewriter_calls": 4,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "藥草"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 9,
+    "typewriter_calls": 3,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "希莉亞"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 212,
+    "typewriter_calls": 3,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "巨神戟"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 13,
+    "typewriter_calls": 2,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "凱麗"
+   },
+   {
+    "fdtxt": 0,
+    "string_index": 174,
+    "typewriter_calls": 2,
+    "via_dialog_args": 0,
+    "boxes": 1,
+    "first_speaker": null,
+    "first_line": "武聖"
+   }
+  ]
+ },
  "step": {
   "rows": [
    {
@@ -375,5 +914,5 @@
    "step_anim_right"
   ]
  },
- "conclusion": "cl1 .. cl14 的 2239 次打字音(index 2)有 1258 次歸到確切的字串,共 15 句;其餘都在 dialog 記滿 200 次之後。腳步音(index 9 / 0xa / 0xb)來自 4 個呼叫端函式、17 個單位索引;單位索引對到哪個角色要看當時的單位表,本證據沒有對。"
+ "conclusion": "cl1 .. cl14 的 2239 次打字音(index 2)有 1258 次歸到確切的字串,共 15 句;其餘都在 dialog 記滿 200 次之後;改用 typewriter_tick 自己的文字游標,2239 次全部歸到字串,共 46 句(包得住的 1258 次與 dialog 參數歸屬逐次相同)。腳步音(index 9 / 0xa / 0xb)來自 4 個呼叫端函式、17 個單位索引;單位索引對到哪個角色要看當時的單位表,本證據沒有對。"
 }

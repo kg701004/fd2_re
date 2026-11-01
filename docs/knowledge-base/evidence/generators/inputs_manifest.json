@@ -32543,10 +32543,6 @@
      24308762,
      "cb419b283cc749be37c9dca374fb6dae0374b72712fcfb1ae16fbcc5601c713d"
     ],
-    "docs/knowledge-base/evidence/sfx_triggers_irq_s179_20261101.json": [
-     9565,
-     "ffeb954f2fc03cd8e67ffc1805bc8bae2d6216a9e20ea4927a46c71bbece5e6f"
-    ],
     "{GAME}/FD2.EXE": [
      509158,
      "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
@@ -32745,6 +32741,88 @@
     "extracted/raw/FDTXT/FDTXT_034.bin": [
      0,
      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
+  "ev_s181": {
+   "outputs": [
+    "sfx_ui_semantics_s181_20261101.json"
+   ],
+   "inputs": {
+    ".wsl_build/cl11_CALLLOG.TXT": [
+     26220530,
+     "8fc538732752ab83aec20fa6db05c0e356f4d8a25365e6d14dbfda270aefee12"
+    ],
+    ".wsl_build/cl12_CALLLOG.TXT": [
+     27643521,
+     "6cd6c4e34c9ac211e9a8e95cf72f815dce333f62286376db6bbd8a8364f02df4"
+    ],
+    ".wsl_build/cl13_CALLLOG.TXT": [
+     30523634,
+     "9a632a6cd7c47fdd7a99f380e639793e0c03a9eaaa0db69d174440ce90ada42f"
+    ],
+    ".wsl_build/cl14_CALLLOG.TXT": [
+     31741843,
+     "0e6405ab2c151c569b3d8982f6e594225e3323c3ff4716ce4fa40fd4008bca90"
+    ],
+    ".wsl_build/cl1_CALLLOG.TXT": [
+     28577045,
+     "f79922cb3a6055f98da61dcbc141e480e942c9988957acf2f579fdd4826bea14"
+    ],
+    ".wsl_build/cl2_CALLLOG.TXT": [
+     37166651,
+     "0996afe72f0af3c20686ac0c3721ca34729af60739c37ecd731cef883eac13c9"
+    ],
+    ".wsl_build/cl3_CALLLOG.TXT": [
+     37821438,
+     "177bc70909898a697fc4e470eaf23aeae71fd7e0656ae809e1885c3c9cdefd9f"
+    ],
+    ".wsl_build/cl4_CALLLOG.TXT": [
+     30728401,
+     "34bdbc1696417692764b59848e05f41404b4c2323881edcbb17b59052ccee05f"
+    ],
+    ".wsl_build/cl5_CALLLOG.TXT": [
+     37508385,
+     "b1737ec66a733a5e829409024645431071bf7e8db39aacf969e6d2cb2772c999"
+    ],
+    ".wsl_build/cl6_CALLLOG.TXT": [
+     28570710,
+     "21f33c497373b408266bad044e0fc02bec6ec77bd2fcb2809055026c78e80195"
+    ],
+    ".wsl_build/cl7_CALLLOG.TXT": [
+     30105252,
+     "510a39f04fae20e160549994eaf5a88b6a1169bcfd1997e84f706e0d400d92d9"
+    ],
+    ".wsl_build/cl9_CALLLOG.TXT": [
+     24308762,
+     "cb419b283cc749be37c9dca374fb6dae0374b72712fcfb1ae16fbcc5601c713d"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
+  "ev_s181b": {
+   "outputs": [
+    "mdi375_trig_s181b_20261101.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc181_live/lc181a_CALLLOG.TXT": [
+     30040967,
+     "7fa4b57f28b03fd6d1fa35c8df56a0b575da9da6a2800ab94f18325382de55de"
+    ],
+    ".wsl_build/lc181_live/lc181b_CALLLOG.TXT": [
+     28681540,
+     "5c0aa9cb34b9b6570f26a2064839d814984a8cbce74690b2f010ea2b29f36d78"
+    ],
+    ".wsl_build/lc181_live/lc181c_CALLLOG.TXT": [
+     28658948,
+     "574e3ddadfccf5ec4f0a9ee19ac45f7eedf37221ddc3e7baa44858c257f82b1a"
     ],
     "{GAME}/FD2.EXE": [
      509158,
