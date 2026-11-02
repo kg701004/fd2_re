@@ -1,0 +1,33 @@
+續一百八十六 實機前預測(lc186a;跑完不改)
+
+目的:續一百八十五仍留 —— 第 10 張圖(第 11 章)盜賊搶寶箱時 ai_mode_dispatch 那處放 0xc,使用者 2026-11-02「請進行實機確認」。
+只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL -d Ubuntu;不改記憶體、不下斷點(讀記憶體會暫停模擬器)。
+dosbox-x 同 lc184(~/fd2-dosbox-calllog4);入口檔同 lc184(~/fd2-calllog-s184/entries_all.txt,全部 1356 個),
+CAP 3000、DUMP 32、ICOUNT 1、SLICES 1、PICEV 1、KBD 1、DOS 時間 12:00:54;不開觸發擷取。按鍵逐次截圖,時間軸記在 cl/<NAME>_keys.jsonl。
+
+lc186a:測試存檔 slot 0 章節改 10 → LOAD → (城鎮就選出口)→ 戰前對話 → 第 10 張圖戰場;我方不動,連續結束回合,
+每個敵方回合之後讀單位表與 [0x53ad5] 指向的開箱旗標。
+
+位址(native;執行期 = native + 0x19c000):ai_mode_dispatch 0x13a9f、find_event_cell 0x15df3、move_unit_toward_point 0x14b78、
+ai_choose_action 0x14ef0、unit_add_item 0x1bb8c、handle B 播放 0x25b45、0xc 返回 0x13d18、玩家開寶箱的 0xc 返回 0x191ae。
+
+Q1 ai_mode_dispatch 那處 0xc 會不會出現
+  P1a 敵方回合裡出現 handle B 播放 index 0xc、返回位址 0x13d18,而且外層正在跑 ai_mode_dispatch(E 0x13a9f 還沒 R)。
+  P1b 同一個 ai_mode_dispatch 呼叫裡,0xc 之前有 ai_choose_action 回 0、find_event_cell 回 0、move_unit_toward_point。
+  P1c 全程沒有返回 0x191ae 的 0xc(我方沒開寶箱)。
+  沒有任何 0x13d18 的 0xc → P1a FAIL 或 NOT TESTED(回合數不夠就記 NOT TESTED,另寫回合數與盜賊位置)。
+
+Q2 搶到之後的狀態(每次 0xc 之後的那次記憶體讀出)
+  P2a 放 0xc 的那個單位:+6 == 0、+0x34 & 0xf == 7(整個 byte 寫成 7)、+0x3d = 事件號 ev、座標 = 第 10 張圖 slot ev 那格
+      (ev_s185 表,盜賊指定的只有 slot 0 .. 7:0 (18,37)、1 (17,37)、2 (19,37)、3 (32,33)、4 (0,31)、5 (7,20)、6 (27,20)、7 (24,24);
+      可見的 slot 8 (19,25)、9 (3,8) 沒有盜賊指定)。
+  P2b [0x53ad5] 指向的開箱旗標,第 ev 個 byte 不為 0;沒被搶的可見寶箱為 0。
+  P2c 隱藏格 slot 10 (16,15)、slot 11 (33,11) 與沒人指定的 slot 8 / 9 不會被盜賊搶(旗標維持 0)。
+  P2d 寶箱列種類 < 2 時該單位 +0x31 / +0x32 抄寶物列,種類 0(物品;slot 0 / 2 / 3 / 4 / 5 / 6)另有 unit_add_item;
+      金錢(種類 1;slot 1 = 15000、slot 7 = 10000)也放 0xc。
+
+Q3 誰先搶(INFERRED,只記錄,不判 PASS / FAIL)
+  靜態推測最近的是記錄 25(28,30)→ slot 7 (24,24),曼哈頓 10 格;實際順序受移動力與地形影響。
+
+停止條件:run 失敗(Runner 不 ok、沒有 CALLLOG)就停,不自動重跑;遊戲回到標題、卡住、或我方單位被選中無法退出也停。
+結束回合用 send_end_turn_keys(不進除錯器);任何一步回 ok False 就停。

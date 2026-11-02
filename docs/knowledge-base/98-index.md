@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 230 節、19 個主題。
+共 231 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 12338:2026-10-31 續一百七十六:DIG 填緩衝的長度 —— 15191 是這次沒有樣本在放、15305 是連續第 3 次沒樣本要驅動停播、43928 是一個樣本混滿整個緩衝;[drv+0x34] 指向 SB16.DIG 的 cs:0504(DOSBox-X 呼叫紀錄 lc174a / lc174b / lc173a、FD2.EXE、SB16.DIG) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12394:2026-10-31 續一百七十七:工具 —— 呼叫紀錄的 E / R / A 與 m= 傾印改由 calllog_segments 解析(附加欄位也收);ail_driver_disasm 加單條指令文字與直線條數(`tools/calllog_segments.py`、`tools/ail_driver_disasm.py`、`ev_s176.py`) 〔來源:DOSBox-X、反組譯〕
 - 行 12438:2026-11-01 續一百七十八:(D) 回傳字序 ax / bx / cx / dx 與 DS 基底 0 由舊紀錄直接看到;兩群各 3 筆的 m = 181 / 361;五型混音各是哪段音效(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc173a / lc174a / lc174b,FD2.EXE、SB16.DIG、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12503:2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
@@ -17,6 +16,7 @@
 - 行 12735:2026-11-01 續一百八十三:續一百八十二仍留 —— FDFIELD b1 經 +8 就是單位面板顯示名字的鍵(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 - 行 12770:2026-11-02 續一百八十四:續一百八十一 .. 一百八十三仍留三項實機 —— 空白名字的單位只在開場劇情、面板從沒畫過;375 再看到 4 次都是 MDI 型夾一次 IRQ 7;index 1 / 8 / 5 / 6 / 0xc 的畫面(DOSBox-X 呼叫紀錄 lc184a / lc184b,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、斷點、FDFIELD〕
 - 行 12814:2026-11-02 續一百八十五:ai_mode_dispatch 那處 0xc = AI 模式 5 搶寶箱(靜態;FD2.EXE 反組譯、FDFIELD / FDSHAP);續一百八十一 .. 一百八十四兩項結案 〔來源:DOSBox-X、反組譯、FDFIELD〕
+- 行 12858:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -139,7 +139,7 @@
 - 行 2974:2026-09-06(續)：新工具`fd2_env_healthcheck.py`——直接回應本輪C.16調查裡三度重演的
 - 行 3000:2026-09-06(續二)：`dosbox_harness.sh debugger-cmd`的`-l text`+`-l $'\r'`組合在批次寫入場景下 〔來源:debugger〕
 
-## 原版實機執行軌跡與函式呼叫紀錄(31 節)
+## 原版實機執行軌跡與函式呼叫紀錄(32 節)
 
 - 行 245:Ground-truth 執行流程追蹤(`tools/dosbox_exec_trace.sh` + `tools/dosbox_exec_trace_analyze.py`,2026-08-25) 〔來源:dosbox-x、斷點、Ghidra〕
 - 行 7571:2026-10-07 續八十一:分母補兩類漏網入口 —— LE 進入點與死函式島(1313 -> 1358) 〔來源:反組譯、FD2.EXE〕
@@ -172,6 +172,7 @@
 - 行 12689:2026-11-01 續一百八十二:續一百八十一仍留 —— 1626 次腳步音全部由呼叫紀錄裡的單位記錄傾印對到角色(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 12735:2026-11-01 續一百八十三:續一百八十二仍留 —— FDFIELD b1 經 +8 就是單位面板顯示名字的鍵(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 - 行 12770:2026-11-02 續一百八十四:續一百八十一 .. 一百八十三仍留三項實機 —— 空白名字的單位只在開場劇情、面板從沒畫過;375 再看到 4 次都是 MDI 型夾一次 IRQ 7;index 1 / 8 / 5 / 6 / 0xc 的畫面(DOSBox-X 呼叫紀錄 lc184a / lc184b,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、斷點、FDFIELD〕
+- 行 12858:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
 ## 工具的自我驗證、突變測試與閘門(34 節)
 
@@ -285,7 +286,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(65 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(66 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -352,14 +353,16 @@
 - 行 12735:2026-11-01 續一百八十三:續一百八十二仍留 —— FDFIELD b1 經 +8 就是單位面板顯示名字的鍵(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 - 行 12770:2026-11-02 續一百八十四:續一百八十一 .. 一百八十三仍留三項實機 —— 空白名字的單位只在開場劇情、面板從沒畫過;375 再看到 4 次都是 MDI 型夾一次 IRQ 7;index 1 / 8 / 5 / 6 / 0xc 的畫面(DOSBox-X 呼叫紀錄 lc184a / lc184b,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、斷點、FDFIELD〕
 - 行 12814:2026-11-02 續一百八十五:ai_mode_dispatch 那處 0xc = AI 模式 5 搶寶箱(靜態;FD2.EXE 反組譯、FDFIELD / FDSHAP);續一百八十一 .. 一百八十四兩項結案 〔來源:DOSBox-X、反組譯、FDFIELD〕
+- 行 12858:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
-## dispatch 跳表與指令表(5 節)
+## dispatch 跳表與指令表(6 節)
 
 - 行 5586:2026-09-28 續三十四:名稱登錄表接受「跳表第 N 項」證據 —— 事件與指令 handler 167 筆 〔來源:反組譯〕
 - 行 7797:2026-10-07 續九十一:呼叫端確認補上跳表 case 種子 —— 浮點模擬器 11 個 weak 升 strong,剩下 8 個 weak 全在死函式後面(FD2.EXE 反組譯) 〔來源:反組譯、FD2.EXE〕
 - 行 9754:2026-10-15 續一百二十八:`0x1541f` / `0x1d479` 兩處 dispatch 的索引上限;`verify_event_dispatch_table.py` 由 dispatch 指令切出表內分段 〔來源:斷點、capstone、反組譯〕
 - 行 9792:2026-10-16 續一百二十九:指令表第 0..9 格的實機覆蓋(更正續一百二十八);`lut_circle_ramp_at_unit` 在 cycles 2500 / 10000 的時間 〔來源:DOSBox-X、斷點、capstone〕
 - 行 12814:2026-11-02 續一百八十五:ai_mode_dispatch 那處 0xc = AI 模式 5 搶寶箱(靜態;FD2.EXE 反組譯、FDFIELD / FDSHAP);續一百八十一 .. 一百八十四兩項結案 〔來源:DOSBox-X、反組譯、FDFIELD〕
+- 行 12858:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、FD2.EXE〕
 
 ## 音訊與曲號(2 節)
 

@@ -1,0 +1,225 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s186.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s186/pred186.txt",
+ "driver": "docs/knowledge-base/evidence/generators/drivers_s186/lc186.py",
+ "approval": "使用者 2026-11-02「請進行實機確認」;一次實機,正常結束",
+ "run": {
+  "calllog": ".wsl_build/lc186_live/lc186a_CALLLOG.TXT",
+  "md5": "86f4fa18d310c54d6146b9ece5a573dd",
+  "tail_cut": true,
+  "keys": 168,
+  "enemy_turns": 4,
+  "dumps_md5": {
+   "m00_globals": "cf4bc9775745acd4fdc5eea6a4ee3e0f",
+   "m04_globals": "9adfe9840e6e7206d35eee95f67491a8",
+   "f01_flags": "70bc8f4b72a86921468bf8e8441dce51",
+   "f02_flags": "0bfa0a11aa2b7a1801f7bab0bf2d3df3",
+   "f03_flags": "0bfa0a11aa2b7a1801f7bab0bf2d3df3",
+   "f04_flags": "6626c1204cc18dd736629eb55d08f693",
+   "u02_units": "6fb0d01da55aeb8b128357eb5560b787",
+   "u04_units": "d7a75d4f3846da1fdff58cff51abb77b"
+  }
+ },
+ "globals": {
+  "unit_base": "0x26c8bc",
+  "opened_flags_ptr": "0x1f6c5c",
+  "units": 39,
+  "chapter": 10
+ },
+ "table": {
+  "own_deploy": 13,
+  "thieves": "單位 13 .. 37 = 記錄 1 .. 25",
+  "record0_unit": 38,
+  "record0_first_seen": {
+   "seq": 116915,
+   "func": "mark_units_blocking",
+   "ret_in": "field_unit_construct"
+  },
+  "s185_unit_field_offset": 1
+ },
+ "find_event_cell_per_turn": [
+  25,
+  25,
+  22,
+  19
+ ],
+ "mode5_checks": 91,
+ "grabs": [
+  {
+   "enemy_turn": 2,
+   "unit": 37,
+   "record": 25,
+   "event_id": 7,
+   "cell": [
+    24,
+    24
+   ],
+   "chest_kind": 1,
+   "chest_value": 10000,
+   "seq": 242894,
+   "ret": "0x13d18",
+   "unit_add_item": false
+  },
+  {
+   "enemy_turn": 4,
+   "unit": 25,
+   "record": 13,
+   "event_id": 3,
+   "cell": [
+    32,
+    33
+   ],
+   "chest_kind": 0,
+   "chest_value": 48,
+   "seq": 286146,
+   "ret": "0x13d18",
+   "unit_add_item": true
+  },
+  {
+   "enemy_turn": 4,
+   "unit": 27,
+   "record": 15,
+   "event_id": 4,
+   "cell": [
+    0,
+    31
+   ],
+   "chest_kind": 0,
+   "chest_value": 73,
+   "seq": 286757,
+   "ret": "0x13d18",
+   "unit_add_item": true
+  },
+  {
+   "enemy_turn": 4,
+   "unit": 30,
+   "record": 18,
+   "event_id": 5,
+   "cell": [
+    7,
+    20
+   ],
+   "chest_kind": 0,
+   "chest_value": 179,
+   "seq": 287654,
+   "ret": "0x13d18",
+   "unit_add_item": true
+  },
+  {
+   "enemy_turn": 4,
+   "unit": 33,
+   "record": 21,
+   "event_id": 6,
+   "cell": [
+    27,
+    20
+   ],
+   "chest_kind": 0,
+   "chest_value": 198,
+   "seq": 288634,
+   "ret": "0x13d18",
+   "unit_add_item": true
+  }
+ ],
+ "after_grab": {
+  "u02_units/unit37": {
+   "xy": [
+    24,
+    24
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    1,
+    16
+   ],
+   "on_chest": true
+  },
+  "u04_units/unit25": {
+   "xy": [
+    32,
+    33
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    0,
+    48
+   ],
+   "on_chest": true
+  },
+  "u04_units/unit27": {
+   "xy": [
+    0,
+    31
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    0,
+    73
+   ],
+   "on_chest": true
+  },
+  "u04_units/unit30": {
+   "xy": [
+    7,
+    20
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    0,
+    179
+   ],
+   "on_chest": true
+  },
+  "u04_units/unit33": {
+   "xy": [
+    27,
+    20
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    0,
+    198
+   ],
+   "on_chest": true
+  },
+  "u04_units/unit37": {
+   "xy": [
+    24,
+    25
+   ],
+   "plus34": 7,
+   "plus31_32": [
+    1,
+    16
+   ],
+   "on_chest": false
+  }
+ },
+ "flags": {
+  "f01_flags": "0000000000000000000000000000000000000000000000000000000000000000",
+  "f02_flags": "0000000000000001000000000000000000000000000000000000000000000000",
+  "f03_flags": "0000000000000001000000000000000000000000000000000000000000000000",
+  "f04_flags": "0000000101010101000000000000000000000000000000000000000000000000"
+ },
+ "not_targeted_slots": [
+  8,
+  9,
+  10,
+  11
+ ],
+ "hidden_slots": [
+  10,
+  11
+ ],
+ "verdict": {
+  "P1a": "PASS",
+  "P1b": "PASS",
+  "P1c": "PASS",
+  "P2a": "PASS",
+  "P2b": "PASS",
+  "P2c": "PASS",
+  "P2d": "PASS"
+ },
+ "conclusion": "第 10 張圖我方不動 4 個回合:敵方回合裡 ai_mode_dispatch 放 0xc 5 次(返回 0x13d18),每次都是 ai_choose_action 0 → find_event_cell 0 → move_unit_toward_point →(物品才有 unit_add_item)→ handle B 0xc;那個盜賊之後 +0x34 == 7、站在寶箱格、+0x31 / +0x32 = 寶物列前兩個 byte,開箱旗標該槽 = 1。第一個是記錄 25(續一百八十五預測的最近一個)。[0x53ad5] 的值就是線性位址。"
+}

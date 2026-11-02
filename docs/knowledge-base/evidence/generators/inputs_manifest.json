@@ -33886,6 +33886,69 @@
     ]
    }
   },
+  "ev_s186": {
+   "outputs": [
+    "ai_chest_grab_live_s186_20261102.json"
+   ],
+   "inputs": {
+    ".wsl_build/chapter_sweep_ch11chest/real_open5.py": [
+     13569,
+     "622ba5dde789fcf21ec63487a89f967199a4fef187265f0a4935c224194628d7"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/f01_flags.bin": [
+     32,
+     "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/f02_flags.bin": [
+     32,
+     "e13fcb8f649438f18530ec00daa36a110fc641a226c3dde990f82c4b561da4db"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/f03_flags.bin": [
+     32,
+     "e13fcb8f649438f18530ec00daa36a110fc641a226c3dde990f82c4b561da4db"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/f04_flags.bin": [
+     32,
+     "0715dfd90067332a8bf7991a54f1a4a3426bd4996fb7c9779a55b1b68bb713a6"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/m00_globals.bin": [
+     512,
+     "2c373136472d53f7ba35dbe2a9c27780bd82c304a2863d643702ee39d2cc176b"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/m04_globals.bin": [
+     512,
+     "46d703363bd3611f826821aab3cbc7096ce5faf519e4ff4261abefd7aeea1551"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/u02_units.bin": [
+     3040,
+     "646f5f115be5f7cae52c335d9ff76916b2f3dc9b0c5116c529464e6491c2a830"
+    ],
+    ".wsl_build/lc186_live/cl/lc186a/u04_units.bin": [
+     3040,
+     "827ce508cfa17f8df3a6b3f43af3f80bcab91fa8e6e728084b4646ce4f4e25a0"
+    ],
+    ".wsl_build/lc186_live/lc186a_CALLLOG.TXT": [
+     308523582,
+     "28c708a823822c9da657b3344dee5b83746462b825c97f783468aafdbaebe619"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_030.bin": [
+     6304,
+     "17eefab0de27f111d7c083e16000f45b060e6f5dcfef87afdf70392b7c61eb03"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_031.bin": [
+     1171,
+     "5daf4d645211ae870b51713bdb730a2098d45ca1cd31e3f4ae02c4684b44bc8e"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_032.bin": [
+     320,
+     "8a5623bce4e85dc837cfa6bbbefe71b155fba2ab1a8584c00bef45c10b8e0fa7"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

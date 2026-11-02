@@ -270,7 +270,7 @@ call 0x25a96         ; (或 0x25b45 = handle B,允許與 handle A 疊播)
 | 9 | A 1 / B 0 | `play_step_sfx` | 228 | `0x322c7`:步態 0 每 6 步、1 每 4 步(doc35 §16.4),經 `0x322c9` jmp 到 `0x32301` 的共用尾端 | **確認:腳步音** |
 | 0xa | A 1 / B 0 | `play_step_sfx` | 57 | `0x32280`:`0x1f183` 回傳非 0 時每 6 步,經 `0x32282` jmp 到同一尾端 | **確認:腳步音** |
 | 0xb | A 1 / B 0 | `play_step_sfx` | 0 | `0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS) |
-| 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13`(AI 模式 5 走到 `+0x3d` 指定的可見寶箱格、開走之後;金錢寶箱也放)/ `0x191a9`(寶箱 `yes_no_prompt` 回答「是」之後),用 handle B 與 handle A 疊播 | **確認:寶箱打開**(續一百八十四實機,`field_cell_treasure_check` 那處;`ai_mode_dispatch` 那處未見實機,續一百八十五靜態:敵方模式 5 搶寶箱,第 10 張圖 25 個盜賊,見 doc98 該節) |
+| 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13`(AI 模式 5 走到 `+0x3d` 指定的可見寶箱格、開走之後;金錢寶箱也放)/ `0x191a9`(寶箱 `yes_no_prompt` 回答「是」之後),用 handle B 與 handle A 疊播 | **確認:寶箱打開**(續一百八十四實機,`field_cell_treasure_check` 那處;`ai_mode_dispatch` 那處續一百八十五靜態:敵方模式 5 搶寶箱;續一百八十六實機:第 10 張圖盜賊搶寶箱 5 次都放 0xc,見 doc98 該節) |
 
 續一百八十的更正:舊表 0xb 列寫的 `0x2cac3` 不是呼叫端(該處是 `cmp`,2026-09-07 實機已發現);舊表沒有 index 1 / 0xa;
 index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui_sfx_index_semantics.json` 撤回的「`0x32307` 放 index 10」
