@@ -1,0 +1,1336 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s185.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-11-02「先做第 1 項的靜態分析」;沒有實機",
+ "upstream": {
+  "ui_semantics": "docs/knowledge-base/evidence/sfx_ui_semantics_s181_20261101.json",
+  "names": "docs/data/function_names.json"
+ },
+ "plays_0xc": [
+  {
+   "call": "0x13d13",
+   "func": "ai_mode_dispatch",
+   "handle": "B"
+  },
+  {
+   "call": "0x191a9",
+   "func": "field_cell_treasure_check",
+   "handle": "B"
+  }
+ ],
+ "mode5_gates": [
+  {
+   "addr": "0x13ad4",
+   "insn": "mov al, byte ptr [ebx + 0x34]",
+   "note": "+0x34"
+  },
+  {
+   "addr": "0x13ad7",
+   "insn": "and al, 0xf",
+   "note": "低四位 = 模式"
+  },
+  {
+   "addr": "0x13aeb",
+   "insn": "movzx ebp, byte ptr [ebx + 0x3d]",
+   "note": "事件號 = +0x3d"
+  },
+  {
+   "addr": "0x13c19",
+   "insn": "cmp eax, 5",
+   "note": "模式 5"
+  },
+  {
+   "addr": "0x13c1c",
+   "insn": "jne 0x13d29",
+   "note": "不是 5 就跳過整段"
+  },
+  {
+   "addr": "0x13c24",
+   "insn": "call 0x14ef0",
+   "note": "ai_choose_action"
+  },
+  {
+   "addr": "0x13c2e",
+   "insn": "jne 0x13e5a",
+   "note": "有攻擊 / 法術動作就不搶"
+  },
+  {
+   "addr": "0x13c42",
+   "insn": "mov eax, dword ptr [0x3ad5]",
+   "note": "已開旗標表"
+  },
+  {
+   "addr": "0x13c47",
+   "insn": "movzx eax, byte ptr [eax + ebp]",
+   "note": ""
+  },
+  {
+   "addr": "0x13c4d",
+   "insn": "jne 0x13b05",
+   "note": "已開 -> 模式 1 的備援"
+  },
+  {
+   "addr": "0x13c59",
+   "insn": "call 0x15df3",
+   "note": "find_event_cell(事件號, &格)"
+  },
+  {
+   "addr": "0x13c63",
+   "insn": "jne 0x13b05",
+   "note": "找不到 -> 備援"
+  },
+  {
+   "addr": "0x13c77",
+   "insn": "call 0x14b78",
+   "note": "move_unit_toward_point"
+  },
+  {
+   "addr": "0x13ca6",
+   "insn": "cmp edx, eax",
+   "note": "移動後 x == 格 x"
+  },
+  {
+   "addr": "0x13ca8",
+   "insn": "jne 0x13e5a",
+   "note": ""
+  },
+  {
+   "addr": "0x13cb7",
+   "insn": "cmp eax, edi",
+   "note": "移動後 y == 格 y"
+  },
+  {
+   "addr": "0x13cb9",
+   "insn": "jne 0x13e5a",
+   "note": ""
+  },
+  {
+   "addr": "0x13cce",
+   "insn": "movzx edx, byte ptr [eax + 0x53]",
+   "note": "寶箱列種類"
+  },
+  {
+   "addr": "0x13cf8",
+   "insn": "call 0x1bb8c",
+   "note": "種類 0 -> unit_add_item"
+  },
+  {
+   "addr": "0x13d05",
+   "insn": "mov byte ptr [eax + ebp], 1",
+   "note": "標記已開"
+  },
+  {
+   "addr": "0x13d0b",
+   "insn": "push 0xc",
+   "note": "index 0xc"
+  },
+  {
+   "addr": "0x13d0d",
+   "insn": "push dword ptr [0x3eec]",
+   "note": "UI 池"
+  },
+  {
+   "addr": "0x13d13",
+   "insn": "call 0x25b45",
+   "note": "handle B"
+  },
+  {
+   "addr": "0x13d20",
+   "insn": "mov byte ptr [ebx + 0x34], 7",
+   "note": "之後整個 +0x34 = 7"
+  },
+  {
+   "addr": "0x13d29",
+   "insn": "cmp eax, 7",
+   "note": "下一個模式"
+  }
+ ],
+ "dispatch_callers": [
+  {
+   "call": "0x1d876",
+   "func": "friendly_phase_dispatch",
+   "camp_check": "cmp edx, 1",
+   "plus6": 1
+  },
+  {
+   "call": "0x1d942",
+   "func": "enemy_phase_dispatch",
+   "camp_check": "test edx, edx",
+   "plus6": 0
+  },
+  {
+   "call": "0x1d9d2",
+   "func": "enemy_phase_dispatch",
+   "camp_check": "test edx, edx",
+   "plus6": 0
+  }
+ ],
+ "find_event_cell": [
+  {
+   "addr": "0x15e1d",
+   "insn": "cmp eax, dword ptr [0x3ac5]",
+   "note": "外圈 = 高"
+  },
+  {
+   "addr": "0x15e2a",
+   "insn": "cmp ebx, dword ptr [0x3ac1]",
+   "note": "內圈 = 寬"
+  },
+  {
+   "addr": "0x15e3a",
+   "insn": "call 0x12e38",
+   "note": "map_cell_info(x, y, &out)"
+  },
+  {
+   "addr": "0x15e42",
+   "insn": "movzx eax, word ptr [esp + 2]",
+   "note": "out+2 = 槽號"
+  },
+  {
+   "addr": "0x15e47",
+   "insn": "mov dl, byte ptr [esp + 4]",
+   "note": "out+4 = 地形 byte 0"
+  },
+  {
+   "addr": "0x15e4b",
+   "insn": "and dl, 0x60",
+   "note": ""
+  },
+  {
+   "addr": "0x15e4e",
+   "insn": "cmp dl, 0x20",
+   "note": "只有 0x20(不含 0x40 隱藏)"
+  },
+  {
+   "addr": "0x15e53",
+   "insn": "cmp eax, esi",
+   "note": "槽號 == 事件號"
+  },
+  {
+   "addr": "0x15e57",
+   "insn": "mov byte ptr [edi], bl",
+   "note": "第一格就寫回"
+  },
+  {
+   "addr": "0x12e4e",
+   "insn": "imul eax, dword ptr [0x3ac1]",
+   "note": "y * 寬"
+  },
+  {
+   "addr": "0x12e59",
+   "insn": "shl eax, 2",
+   "note": "每格 4 位元組"
+  },
+  {
+   "addr": "0x12e64",
+   "insn": "add eax, 4",
+   "note": "跳過寬高"
+  },
+  {
+   "addr": "0x12e6a",
+   "insn": "and bh, 3",
+   "note": "tile = word0 & 0x3ff"
+  },
+  {
+   "addr": "0x12e6d",
+   "insn": "mov al, byte ptr [eax + 2]",
+   "note": ""
+  },
+  {
+   "addr": "0x12e70",
+   "insn": "and al, 0x1f",
+   "note": "槽號 = byte 2 & 0x1f"
+  },
+  {
+   "addr": "0x12e80",
+   "insn": "shl eax, 2",
+   "note": "地形表每列 4 位元組"
+  },
+  {
+   "addr": "0x12e86",
+   "insn": "mov eax, dword ptr [0x3a69]",
+   "note": "地形表"
+  }
+ ],
+ "mode5_records": [
+  {
+   "map": 9,
+   "record": 41,
+   "unit": 52,
+   "plus6": 2,
+   "b1": 6,
+   "lv": 18,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    15,
+    40
+   ],
+   "target": [
+    17,
+    2
+   ],
+   "manhattan": 40,
+   "chest": {
+    "native_type": 1,
+    "value": 10000
+   },
+   "reaches_dispatch": false
+  },
+  {
+   "map": 10,
+   "record": 1,
+   "unit": 14,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    0,
+    38
+   ],
+   "target": [
+    18,
+    37
+   ],
+   "manhattan": 19,
+   "chest": {
+    "native_type": 0,
+    "value": 210
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 2,
+   "unit": 15,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    6,
+    43
+   ],
+   "target": [
+    18,
+    37
+   ],
+   "manhattan": 18,
+   "chest": {
+    "native_type": 0,
+    "value": 210
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 3,
+   "unit": 16,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    29,
+    40
+   ],
+   "target": [
+    18,
+    37
+   ],
+   "manhattan": 14,
+   "chest": {
+    "native_type": 0,
+    "value": 210
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 4,
+   "unit": 17,
+   "plus6": 0,
+   "b1": 103,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    31,
+    36
+   ],
+   "target": [
+    18,
+    37
+   ],
+   "manhattan": 14,
+   "chest": {
+    "native_type": 0,
+    "value": 210
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 5,
+   "unit": 18,
+   "plus6": 0,
+   "b1": 103,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    29,
+    27
+   ],
+   "target": [
+    17,
+    37
+   ],
+   "manhattan": 22,
+   "chest": {
+    "native_type": 1,
+    "value": 15000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 6,
+   "unit": 19,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    34,
+    38
+   ],
+   "target": [
+    17,
+    37
+   ],
+   "manhattan": 18,
+   "chest": {
+    "native_type": 1,
+    "value": 15000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 7,
+   "unit": 20,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    5,
+    27
+   ],
+   "target": [
+    17,
+    37
+   ],
+   "manhattan": 22,
+   "chest": {
+    "native_type": 1,
+    "value": 15000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 8,
+   "unit": 21,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    7,
+    26
+   ],
+   "target": [
+    19,
+    37
+   ],
+   "manhattan": 23,
+   "chest": {
+    "native_type": 0,
+    "value": 205
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 9,
+   "unit": 22,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    9,
+    41
+   ],
+   "target": [
+    19,
+    37
+   ],
+   "manhattan": 14,
+   "chest": {
+    "native_type": 0,
+    "value": 205
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 10,
+   "unit": 23,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    0,
+    33
+   ],
+   "target": [
+    19,
+    37
+   ],
+   "manhattan": 23,
+   "chest": {
+    "native_type": 0,
+    "value": 205
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 11,
+   "unit": 24,
+   "plus6": 0,
+   "b1": 103,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 3,
+   "spawn": [
+    13,
+    43
+   ],
+   "target": [
+    32,
+    33
+   ],
+   "manhattan": 29,
+   "chest": {
+    "native_type": 0,
+    "value": 48
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 12,
+   "unit": 25,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 3,
+   "spawn": [
+    19,
+    44
+   ],
+   "target": [
+    32,
+    33
+   ],
+   "manhattan": 24,
+   "chest": {
+    "native_type": 0,
+    "value": 48
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 13,
+   "unit": 26,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 3,
+   "spawn": [
+    22,
+    25
+   ],
+   "target": [
+    32,
+    33
+   ],
+   "manhattan": 18,
+   "chest": {
+    "native_type": 0,
+    "value": 48
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 14,
+   "unit": 27,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 4,
+   "spawn": [
+    15,
+    40
+   ],
+   "target": [
+    0,
+    31
+   ],
+   "manhattan": 24,
+   "chest": {
+    "native_type": 0,
+    "value": 73
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 15,
+   "unit": 28,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 4,
+   "spawn": [
+    11,
+    29
+   ],
+   "target": [
+    0,
+    31
+   ],
+   "manhattan": 13,
+   "chest": {
+    "native_type": 0,
+    "value": 73
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 16,
+   "unit": 29,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 4,
+   "spawn": [
+    15,
+    25
+   ],
+   "target": [
+    0,
+    31
+   ],
+   "manhattan": 21,
+   "chest": {
+    "native_type": 0,
+    "value": 73
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 17,
+   "unit": 30,
+   "plus6": 0,
+   "b1": 103,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 5,
+   "spawn": [
+    11,
+    38
+   ],
+   "target": [
+    7,
+    20
+   ],
+   "manhattan": 22,
+   "chest": {
+    "native_type": 0,
+    "value": 179
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 18,
+   "unit": 31,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 5,
+   "spawn": [
+    4,
+    36
+   ],
+   "target": [
+    7,
+    20
+   ],
+   "manhattan": 19,
+   "chest": {
+    "native_type": 0,
+    "value": 179
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 19,
+   "unit": 32,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 5,
+   "spawn": [
+    20,
+    28
+   ],
+   "target": [
+    7,
+    20
+   ],
+   "manhattan": 21,
+   "chest": {
+    "native_type": 0,
+    "value": 179
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 20,
+   "unit": 33,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 6,
+   "spawn": [
+    22,
+    33
+   ],
+   "target": [
+    27,
+    20
+   ],
+   "manhattan": 18,
+   "chest": {
+    "native_type": 0,
+    "value": 198
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 21,
+   "unit": 34,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 6,
+   "spawn": [
+    30,
+    34
+   ],
+   "target": [
+    27,
+    20
+   ],
+   "manhattan": 17,
+   "chest": {
+    "native_type": 0,
+    "value": 198
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 22,
+   "unit": 35,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 6,
+   "spawn": [
+    17,
+    27
+   ],
+   "target": [
+    27,
+    20
+   ],
+   "manhattan": 17,
+   "chest": {
+    "native_type": 0,
+    "value": 198
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 23,
+   "unit": 36,
+   "plus6": 0,
+   "b1": 103,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 7,
+   "spawn": [
+    27,
+    41
+   ],
+   "target": [
+    24,
+    24
+   ],
+   "manhattan": 20,
+   "chest": {
+    "native_type": 1,
+    "value": 10000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 24,
+   "unit": 37,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 7,
+   "spawn": [
+    4,
+    31
+   ],
+   "target": [
+    24,
+    24
+   ],
+   "manhattan": 27,
+   "chest": {
+    "native_type": 1,
+    "value": 10000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 10,
+   "record": 25,
+   "unit": 38,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 14,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 7,
+   "spawn": [
+    28,
+    30
+   ],
+   "target": [
+    24,
+    24
+   ],
+   "manhattan": 10,
+   "chest": {
+    "native_type": 1,
+    "value": 10000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 12,
+   "unit": 27,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    9,
+    2
+   ],
+   "target": [
+    5,
+    3
+   ],
+   "manhattan": 5,
+   "chest": {
+    "native_type": 0,
+    "value": 92
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 13,
+   "unit": 28,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    20,
+    24
+   ],
+   "target": [
+    15,
+    14
+   ],
+   "manhattan": 15,
+   "chest": {
+    "native_type": 1,
+    "value": 30000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 14,
+   "unit": 29,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    30,
+    23
+   ],
+   "target": [
+    16,
+    24
+   ],
+   "manhattan": 15,
+   "chest": {
+    "native_type": 0,
+    "value": 73
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 15,
+   "unit": 30,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 3,
+   "spawn": [
+    36,
+    12
+   ],
+   "target": [
+    19,
+    2
+   ],
+   "manhattan": 27,
+   "chest": {
+    "native_type": 1,
+    "value": 20000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 16,
+   "unit": 31,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 4,
+   "spawn": [
+    32,
+    6
+   ],
+   "target": [
+    22,
+    13
+   ],
+   "manhattan": 17,
+   "chest": {
+    "native_type": 0,
+    "value": 193
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 17,
+   "unit": 32,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 5,
+   "spawn": [
+    35,
+    16
+   ],
+   "target": [
+    29,
+    5
+   ],
+   "manhattan": 17,
+   "chest": {
+    "native_type": 0,
+    "value": 205
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 18,
+   "unit": 33,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 6,
+   "spawn": [
+    28,
+    18
+   ],
+   "target": [
+    32,
+    11
+   ],
+   "manhattan": 11,
+   "chest": {
+    "native_type": 0,
+    "value": 179
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 19,
+   "unit": 34,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 7,
+   "spawn": [
+    33,
+    11
+   ],
+   "target": [
+    32,
+    24
+   ],
+   "manhattan": 14,
+   "chest": {
+    "native_type": 0,
+    "value": 48
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 20,
+   "unit": 35,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 8,
+   "spawn": [
+    33,
+    0
+   ],
+   "target": [
+    38,
+    18
+   ],
+   "manhattan": 23,
+   "chest": {
+    "native_type": 0,
+    "value": 214
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 12,
+   "record": 21,
+   "unit": 36,
+   "plus6": 0,
+   "b1": 102,
+   "lv": 16,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 9,
+   "spawn": [
+    36,
+    6
+   ],
+   "target": [
+    21,
+    15
+   ],
+   "manhattan": 24,
+   "chest": {
+    "native_type": 0,
+    "value": 96
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 15,
+   "record": 58,
+   "unit": 74,
+   "plus6": 0,
+   "b1": 98,
+   "lv": 3,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 3,
+   "spawn": [
+    31,
+    5
+   ],
+   "target": [
+    30,
+    28
+   ],
+   "manhattan": 24,
+   "chest": {
+    "native_type": 0,
+    "value": 91
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 15,
+   "record": 59,
+   "unit": 75,
+   "plus6": 0,
+   "b1": 98,
+   "lv": 3,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    4,
+    23
+   ],
+   "target": [
+    17,
+    36
+   ],
+   "manhattan": 26,
+   "chest": {
+    "native_type": 0,
+    "value": 140
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 18,
+   "record": 45,
+   "unit": 61,
+   "plus6": 0,
+   "b1": 98,
+   "lv": 8,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 0,
+   "spawn": [
+    10,
+    19
+   ],
+   "target": [
+    10,
+    26
+   ],
+   "manhattan": 7,
+   "chest": {
+    "native_type": 1,
+    "value": 10000
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 18,
+   "record": 46,
+   "unit": 62,
+   "plus6": 0,
+   "b1": 98,
+   "lv": 8,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 1,
+   "spawn": [
+    9,
+    17
+   ],
+   "target": [
+    0,
+    11
+   ],
+   "manhattan": 15,
+   "chest": {
+    "native_type": 0,
+    "value": 198
+   },
+   "reaches_dispatch": true
+  },
+  {
+   "map": 18,
+   "record": 47,
+   "unit": 63,
+   "plus6": 0,
+   "b1": 98,
+   "lv": 8,
+   "group": 0,
+   "plus34": 5,
+   "event_id": 2,
+   "spawn": [
+    11,
+    17
+   ],
+   "target": [
+    21,
+    23
+   ],
+   "manhattan": 16,
+   "chest": {
+    "native_type": 0,
+    "value": 94
+   },
+   "reaches_dispatch": true
+  }
+ ],
+ "reaching_by_map": {
+  "10": 25,
+  "12": 10,
+  "15": 2,
+  "18": 3
+ },
+ "anchors": {
+  "map10_star_eye": {
+   "cell": [
+    18,
+    37
+   ],
+   "tile": 166,
+   "slot": 0,
+   "chest": [
+    0,
+    210
+   ]
+  },
+  "map10_hidden": [
+   {
+    "slot": 10,
+    "cell": [
+     16,
+     15
+    ],
+    "flags": 64,
+    "find_event_cell": null
+   },
+   {
+    "slot": 11,
+    "cell": [
+     33,
+     11
+    ],
+    "flags": 64,
+    "find_event_cell": null
+   }
+  ]
+ },
+ "map10_nearest": {
+  "record": 25,
+  "spawn": [
+   28,
+   30
+  ],
+  "target": [
+   24,
+   24
+  ],
+  "manhattan": 10
+ },
+ "verification": "STATIC ANALYSIS(反組譯 + FDFIELD / FDSHAP);星之眼錨點來自 doc50",
+ "conclusion": "ai_mode_dispatch 那處 0xc = AI 模式 5 的單位(友軍或敵方)走到 +0x3d 指定的可見寶箱格、開走寶箱之後;33 張圖走得到的模式 5 單位 40 個:第 10 張圖 25、第 12 張圖 10、第 15 張圖 2、第 18 張圖 3,全是敵方、開場就出場。第 10 張圖 8 個可見寶箱各有 3 / 4 個盜賊,最近的一個(記錄 25)離寶箱 10 格(曼哈頓)。"
+}
