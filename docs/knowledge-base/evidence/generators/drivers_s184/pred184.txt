@@ -1,0 +1,30 @@
+續一百八十四 實機前預測(lc184a、lc184b;跑完不改)
+
+目的:續一百八十一 / 一百八十二 / 一百八十三的三項仍留,使用者 2026-11-02「請全部實機執行進行確認」。
+只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL -d Ubuntu;不改記憶體、不下斷點(讀記憶體會暫停模擬器)。
+dosbox-x 同 lc181(~/fd2-dosbox-calllog4);入口檔改為全部 1356 個(verify_names_by_calllog.py --write-entries,
+~/fd2-calllog-s184/entries_all.txt),CAP 3000、DUMP 32、ICOUNT 1、SLICES 1、PICEV 1、KBD 1、DOS 時間 12:00:54;
+FD2_CALLLOG_TRIG=ng:375,ng:302-303、TRIGCAP 40。按鍵逐次截圖,時間軸記在 cl/<NAME>_keys.jsonl。
+
+lc184a:開新遊戲(標題 START)→ 開場劇情逐鍵推進,經第 32 張圖、第 31 張圖,到第 0 張圖可操作為止。
+lc184b:測試存檔 slot 0 章節改 1 → LOAD → 城鎮 → 出口 → 第 1 張圖戰場。
+
+Q1 b1 48 / 66 / 75 的單位在面板上是不是空白名字
+  P1a 第 32 張圖單位 0 / 1(記錄 0 / 1,b1 48 / 66)、第 31 張圖單位 2(記錄 2,b1 75)的 +8 = 48 / 66 / 75(建構函式抄 b1)。
+  P1b 若這三個單位出現 draw_unit_panel(第 3 個參數 = 該索引),畫名字的 0x15f84 第 2 個參數 = 49 / 67 / 76,
+      截圖上名字欄沒有字(FDTXT_000 該三句是空字串)。
+  P1c 若整段開場都沒有任何 draw_unit_panel 畫這三個索引(劇情圖沒有游標),記「不會被顯示」,P1b 為 NOT TESTED,不是 PASS。
+
+Q2 375 在 IRQ 7 較多的場景(逐字對話的打字音)
+  P2 同 pred181 P1:每個 ng 375 的 Y 區塊第一條 p 0080:0ed6、結束在遊戲 0x3f1a4,區間內恰好一個硬體中斷 0f(IRQ 7),
+     cs 137c 恰好 73 條、最後一條 iret。任何一個不是這型 → FAIL。沒有 375 → NOT TESTED。
+  P2' 302 / 303 的 MDI 型區塊內沒有硬體中斷(同 pred181 P2)。
+
+Q3 index 5 / 6 沒有法術那一支、index 1 / 8 / 0xc 的畫面
+  P3a index 1:城鎮按 Return 後(K 紀錄之後)第一個 UI 池播放是 index 1,返回位址在 town_hub_main;截圖是進入選到的設施。
+  P3b index 8:己方單位行動環開啟時放 8(action_ring_open)、Escape 收起時放 8(action_ring_close);截圖分別是環出現 / 消失。
+  P3c index 5 / 6:對非己方單位按 Return 開 unit_info_cards,unit_list_bits_1a 回 0 時播放點順序 =
+      展開 0x17ede ×2(5)→ 收起 0x17d26 ×2(6),沒有 0x17b2e(6)與 0x17c56(5)。
+  P3d index 0xc:索爾停在寶物格選休息 → yes_no_prompt 回 1 → field_cell_treasure_check 裡放 0xc(handle B);截圖是取得道具的訊息。
+
+停止條件:任何一次 run 失敗(Runner 不 ok、沒有 CALLLOG、H 沒有 trig=)就停,不自動重跑;遊戲回到標題或卡住也停。

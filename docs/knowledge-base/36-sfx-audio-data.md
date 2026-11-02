@@ -259,18 +259,18 @@ call 0x25a96         ; (或 0x25b45 = handle B,允許與 handle A 疊播)
 | index | 靜態呼叫端 | 呼叫端函式(登錄名) | cl1 .. cl14 次數 | 觸發情境 | 信心 |
 |---|---|---|---|---|---|
 | 0 | A 36 / B 0(防拷 1 處走不到) | `target_cursor_loop`、`battle_main_input_loop`、`item_grid_select`、`command_grid_select`、`town_hub_main`、`carousel_menu_select`、`item_list_select`、`choice_box_left_right`、`equip_compare_select`、`sortie_member_select`、`copy_protection_password_check` | 131 | 各種選單 / 游標的方向鍵分支(`cmp eax,0x48/0x50/0x4b/0x4d`,如 `0x117a1`/`0x11a33`/`0x11a54`/`0x11a75`/`0x11a96`);2026-09-07 實機在其中 4 處命中且與所按方向對應 | **確認:游標移動音** |
-| 1 | A 1 / B 0 | `town_hub_main` | 12 | `0x265a7`:按鍵 0x1c / 0x20(`[0x53f4a]` ≠ 2)時放,接著進 `town_hub_select`(續一百八十一 `ev_s181.py`) | 城鎮選單確認(STATIC ANALYSIS) |
+| 1 | A 1 / B 0 | `town_hub_main` | 12 | `0x265a7`:按鍵 0x1c / 0x20(`[0x53f4a]` ≠ 2)時放,接著進 `town_hub_select`(續一百八十一 `ev_s181.py`) | **確認:城鎮選設施**(續一百八十四實機:選酒店按 Return → 進酒店) |
 | 2 | A 3 / B 0(防拷 2 處走不到) | `typewriter_tick`、`copy_protection_password_check` | 1846 | `0x16546`:對話 / 訊息逐字顯示時每字一次(doc14);2026-09-08 實機在按鍵開訊息時命中這裡 | **確認:對話打字音** |
 | 3 | A 1 / B 0 | `unit_death_sweep` | 0 | `0x1ddaa`:掃出 HP 0 且未標記死亡的單位、跑動畫後標記;2026-09-07 實機以 HP 0 / 上限 0 的存檔觸發命中 | **確認:陣亡音** |
 | 4 | A 2 / B 0 | `rest_hp_recover`、`battle_phase_advance` | 0 | `0x1a3df`:回合開始時只有我方有人受傷才播,接著 HP += 上限 / 5(2026-09-07 實機正反對照);`0x1403d` 在 `rest_hp_recover` | **確認:回血音** |
 | 5 | A 4 / B 0 | `unit_info_cards`、`info_card_open_anim`、`save_slot_selector`、`sortie_member_select` | 31 | 面板展開迴圈(由 0xb 往下數)在第 0xb / 5 格放:`info_card_open_anim` `0x17ede`、`sortie_member_select` `0x2b08a`;法術列表畫完 `0x17c56`、存檔欄畫完 `0x29c8a`。cl1 .. cl14 每一次 `unit_info_cards` 的播放順序都與靜態預測相同(續一百八十一 `ev_s181.py`) | **確認:面板展開**(2026-09-04 / 09-08 兩次實機各看到一段,不矛盾) |
 | 6 | A 3 / B 0 | `unit_info_cards`、`sortie_member_select` | 16 | 面板收起迴圈(由 0 往上數)在第 0 / 7 格放:`unit_info_cards` `0x17d26`、`sortie_member_select` `0x2b1f1`;`0x17b2e` 只在已習得法術數非 0 時、裝備卡收走換法術列表時放 | **確認:面板收起**(同上) |
 | 7 | A 4 / B 1(防拷 1 處走不到) | `battle_main_input_loop`、`save_slot_selector`、`sortie_member_select`、`copy_protection_password_check` | 37 | `0x1193a`:游標下沒有可行動的我方單位時按確認;2026-09-07 實機兩次命中 | **確認:無效選取音** |
-| 8 | A 2 / B 0 | `action_ring_open`、`action_ring_close` | 4 | `0x17495`(`action_ring_open`)/ `0x176d3`(`action_ring_close`) | 行動環開 / 收(STATIC ANALYSIS) |
+| 8 | A 2 / B 0 | `action_ring_open`、`action_ring_close` | 4 | `0x17495`(`action_ring_open`)/ `0x176d3`(`action_ring_close`) | **確認:行動環開 / 收**(續一百八十四實機) |
 | 9 | A 1 / B 0 | `play_step_sfx` | 228 | `0x322c7`:步態 0 每 6 步、1 每 4 步(doc35 §16.4),經 `0x322c9` jmp 到 `0x32301` 的共用尾端 | **確認:腳步音** |
 | 0xa | A 1 / B 0 | `play_step_sfx` | 57 | `0x32280`:`0x1f183` 回傳非 0 時每 6 步,經 `0x32282` jmp 到同一尾端 | **確認:腳步音** |
 | 0xb | A 1 / B 0 | `play_step_sfx` | 0 | `0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS) |
-| 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13`(`unit_add_item` 之後)/ `0x191a9`(寶箱 `yes_no_prompt` 回答「是」之後),用 handle B 與 handle A 疊播 | 取得道具(STATIC ANALYSIS) |
+| 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13`(`unit_add_item` 之後)/ `0x191a9`(寶箱 `yes_no_prompt` 回答「是」之後),用 handle B 與 handle A 疊播 | **確認:寶箱打開**(續一百八十四實機,`field_cell_treasure_check` 那處;`ai_mode_dispatch` 那處未見) |
 
 續一百八十的更正:舊表 0xb 列寫的 `0x2cac3` 不是呼叫端(該處是 `cmp`,2026-09-07 實機已發現);舊表沒有 index 1 / 0xa;
 index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui_sfx_index_semantics.json` 撤回的「`0x32307` 放 index 10」
@@ -292,8 +292,8 @@ index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui
 - 打字音改用 `typewriter_tick` 自己的文字游標(第 4 個參數,每字 + 2;指標處 32 位元組 = 游標之後的 FDTXT 字碼)對 FDTXT 位元組:
   2239 次全部歸到字串,共 46 句;包得住的 1258 次與 dialog 參數歸屬逐次相同,上面「其餘 981 次」也都對到了(多是 FDTXT_000 的系統句)。
   「每句打字音次數 = 字數」不成立(按鍵一次跳過,同一句 26 .. 76 次)。
-- index 5 / 6:展開 / 收起迴圈放音的格數與 `unit_info_cards` 的順序見上表;cl1 .. cl14 沒有出現「沒有已習得法術」那一支。
-- index 1 / 8 / 0xc 的語意由呼叫情境與登錄名推(INFERRED),沒有畫面。
+- index 5 / 6:展開 / 收起迴圈放音的格數與 `unit_info_cards` 的順序見上表;cl1 .. cl14 沒有出現「沒有已習得法術」那一支。(續一百八十四實機:盜賊的資訊卡 `unit_list_bits_1a` 回 0,播放 5, 5, 6, 6,一鍵收起)
+- index 1 / 8 / 0xc 的語意由呼叫情境與登錄名推(INFERRED),沒有畫面。(續一百八十四:實機看到,見上表與 doc98 該節)
 
 ### 戰鬥音效(`[0x5411f]`/`[0x54117]`/`[0x53b13]`)與本篇 UI 池的關係澄清
 

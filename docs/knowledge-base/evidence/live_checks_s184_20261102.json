@@ -1,0 +1,298 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s184.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "prediction": "docs/knowledge-base/evidence/generators/drivers_s184/pred184.txt",
+ "driver": "docs/knowledge-base/evidence/generators/drivers_s184/lc184.py",
+ "approval": "使用者 2026-11-02「請全部實機執行進行確認」;兩次實機都正常結束",
+ "trig": "ng:375,ng:302-303",
+ "runs": {
+  "lc184a": {
+   "calllog": ".wsl_build/lc184_live/lc184a_CALLLOG.TXT",
+   "md5": "dcbf7cf1a6f579616cb5a709493019f6",
+   "tail_cut": true,
+   "keys": 338,
+   "yc": {
+    "ng_375": {
+     "matched": 3,
+     "written": 3
+    },
+    "ng_302_303": {
+     "matched": 372,
+     "written": 40
+    }
+   },
+   "yn": {
+    "if": 1323744,
+    "ng": 542430
+   },
+   "blocks_375": [
+    {
+     "t_ms": 131356.4,
+     "mdi_irq7_73": true
+    },
+    {
+     "t_ms": 142497.0,
+     "mdi_irq7_73": true
+    },
+    {
+     "t_ms": 173310.9,
+     "mdi_irq7_73": true
+    }
+   ],
+   "blocks_302_303": {
+    "mdi 302 hw_irq=0": 29,
+    "mdi 303 hw_irq=0": 11
+   }
+  },
+  "lc184b": {
+   "calllog": ".wsl_build/lc184_live/lc184b_CALLLOG.TXT",
+   "md5": "2fa8a9e680dfc234af04af430f181213",
+   "tail_cut": true,
+   "keys": 196,
+   "yc": {
+    "ng_375": {
+     "matched": 1,
+     "written": 1
+    },
+    "ng_302_303": {
+     "matched": 313,
+     "written": 40
+    }
+   },
+   "yn": {
+    "if": 991856,
+    "ng": 293528
+   },
+   "blocks_375": [
+    {
+     "t_ms": 90543.3,
+     "mdi_irq7_73": true
+    }
+   ],
+   "blocks_302_303": {
+    "mdi 302 hw_irq=0": 32,
+    "mdi 303 hw_irq=0": 8
+   }
+  }
+ },
+ "live_tables": {
+  "lc184a/map32": {
+   "unit_base": "0x26b018",
+   "units": 21,
+   "own_deploy": 0
+  },
+  "lc184a/map31": {
+   "unit_base": "0x2389f0",
+   "units": 4,
+   "own_deploy": 0
+  },
+  "lc184a/map0": {
+   "unit_base": "0x237a48",
+   "units": 12,
+   "own_deploy": 4
+  },
+  "lc184b/map1": {
+   "unit_base": "0x26bdc8",
+   "units": 21,
+   "own_deploy": 5
+  }
+ },
+ "blank_name_units": [
+  {
+   "b1": 48,
+   "map": 32,
+   "unit": 0,
+   "side_plus6": 2,
+   "unit_base": "0x26b018",
+   "name_string": 49
+  },
+  {
+   "b1": 66,
+   "map": 32,
+   "unit": 1,
+   "side_plus6": 2,
+   "unit_base": "0x26b018",
+   "name_string": 67
+  },
+  {
+   "b1": 75,
+   "map": 31,
+   "unit": 2,
+   "side_plus6": 1,
+   "unit_base": "0x2389f0",
+   "name_string": 76
+  }
+ ],
+ "panels": {
+  "lc184a": {
+   "draw_unit_panel_calls": 150,
+   "panel_name_calls": 150,
+   "by_base_unit_string": {
+    "0x237a48 單位 0 字串 1": 150
+   },
+   "fdtxt000_string_calls": 164,
+   "blank_string_calls": 0
+  },
+  "lc184b": {
+   "draw_unit_panel_calls": 80,
+   "panel_name_calls": 80,
+   "by_base_unit_string": {
+    "0x26bdc8 單位 0 字串 1": 80
+   },
+   "fdtxt000_string_calls": 248,
+   "blank_string_calls": 0
+  }
+ },
+ "q3": {
+  "8": [
+   {
+    "log": "lc184a",
+    "func": "action_ring_open",
+    "seq": 230567,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_open",
+    "seq": 234851,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_open",
+    "seq": 239661,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_open",
+    "seq": 265744,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_open",
+    "seq": 277586,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_close",
+    "seq": 234689,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_close",
+    "seq": 238823,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_close",
+    "seq": 265642,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_close",
+    "seq": 267386,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184a",
+    "func": "action_ring_close",
+    "seq": 278990,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_open",
+    "seq": 164601,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_open",
+    "seq": 224336,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_open",
+    "seq": 227554,
+    "ret": "0x1749a"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_close",
+    "seq": 168070,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_close",
+    "seq": 225323,
+    "ret": "0x176d8"
+   },
+   {
+    "log": "lc184b",
+    "func": "action_ring_close",
+    "seq": 231398,
+    "ret": "0x176d8"
+   }
+  ],
+  "5/6": [
+   {
+    "log": "lc184a",
+    "unit": 11,
+    "unit_list_bits_1a": 0,
+    "plays": [
+     "0x17ee3",
+     "0x17ee3",
+     "0x17d2b",
+     "0x17d2b"
+    ]
+   }
+  ],
+  "1": [
+   {
+    "log": "lc184b",
+    "seq": 62031,
+    "key_before": "0x1c",
+    "then": "town_hub_select"
+   }
+  ],
+  "0xc": [
+   {
+    "log": "lc184b",
+    "seq": 231472,
+    "yes_no_prompt": 1,
+    "ret": "0x191ae"
+   }
+  ]
+ },
+ "screenshots_md5": {
+  "lc184a/a01_start": "335c7f327744e72cac5913c35e18645a",
+  "lc184a/d01_ring_open": "95d76b9eb8216d1b49b6375b5dc346df",
+  "lc184a/d02_ring_close": "957d951de6e40ba61e175ef1f4ebde38",
+  "lc184a/e02_card_open": "76915ecb30a7d94a758f904b5d8d3ea8",
+  "lc184a/e03_card_key": "91ead557f4dfb3558967bccea6b10094",
+  "lc184b/g01_town_ret": "d30e43802167160f758a7c974dde6a80",
+  "lc184b/g03_wait": "0b87f5a49bb4f7588ab8a5c5b1e8ac8a",
+  "lc184b/n02_rest": "e3d720f8e79fa3fc8c39ee7282df2b20",
+  "lc184b/n03_yes": "2a78a39ec6b0378145cc3d8a1ef44296"
+ },
+ "verdict": {
+  "Q1_P1a": "PASS",
+  "Q1_P1b": "NOT TESTED",
+  "Q1_P1c": "PASS",
+  "Q2_P2": "PASS",
+  "Q2_P2prime": "PASS",
+  "Q3_P3a": "PASS",
+  "Q3_P3b": "PASS",
+  "Q3_P3c": "PASS",
+  "Q3_P3d": "PASS"
+ },
+ "conclusion": "b1 48 / 66 / 75 的單位當下在表上(第 32 張圖單位 0 / 1、第 31 張圖單位 2,+8 = b1),但兩張圖都是開場劇情,draw_unit_panel 只畫過可操作戰場的單位、FDTXT_000 第 49 / 67 / 76 句一次都沒畫(記錄沒記滿):空白名字不會被顯示,面板上空白與否無從看到(P1b NOT TESTED)。375 區塊 4 個全是 MDI 型夾一次 IRQ 7(P2 PASS)。index 1 = 城鎮按 Return 選設施、8 = 行動環開 / 收、5 / 6 沒有法術那一支 = 5, 5, 6, 6、0xc = 寶箱 YES 之後,都在預測的函式與按鍵之後。"
+}
