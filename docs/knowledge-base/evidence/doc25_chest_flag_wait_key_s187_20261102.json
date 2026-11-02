@@ -1,0 +1,367 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s187.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "approval": "使用者 2026-11-02「先將能處理的部分 依據你的建議逐項進行處理」;沒有新實機",
+ "upstream": {
+  "s185": "docs/knowledge-base/evidence/ai_chest_grab_0xc_s185_20261102.json",
+  "s186": "docs/knowledge-base/evidence/ai_chest_grab_live_s186_20261102.json",
+  "names": "docs/data/function_names.json",
+  "story": "docs/data/story_script.json"
+ },
+ "treasure_check": {
+  "func": "0x190ac",
+  "common": [
+   {
+    "addr": "0x190d8",
+    "insn": "movsx edi, word ptr [esp + 2]",
+    "note": "edi = 槽號(map_cell_info out+2)"
+   },
+   {
+    "addr": "0x190e6",
+    "insn": "test byte ptr [esp + 0x10], 0x60",
+    "note": "可見或隱藏寶箱格才進來"
+   },
+   {
+    "addr": "0x190f1",
+    "insn": "mov eax, dword ptr [0x3ad5]",
+    "note": ""
+   },
+   {
+    "addr": "0x190f6",
+    "insn": "movzx eax, byte ptr [edi + eax]",
+    "note": "旗標[槽號]"
+   },
+   {
+    "addr": "0x190fc",
+    "insn": "jne 0x1951b",
+    "note": "已開就離開"
+   },
+   {
+    "addr": "0x19125",
+    "insn": "test byte ptr [esp + 0x10], 0x20",
+    "note": "可見 / 隱藏選不同字串"
+   },
+   {
+    "addr": "0x19143",
+    "insn": "push 0x1a5",
+    "note": "可見:問句"
+   },
+   {
+    "addr": "0x19161",
+    "insn": "push 0x1ac",
+    "note": "隱藏:問句"
+   },
+   {
+    "addr": "0x1917e",
+    "insn": "call 0x19953",
+    "note": "yes_no_prompt"
+   },
+   {
+    "addr": "0x191d0",
+    "insn": "movzx eax, byte ptr [edx + eax + 0x53]",
+    "note": "寶物列種類"
+   },
+   {
+    "addr": "0x191d7",
+    "insn": "jne 0x19429",
+    "note": "種類不是 0(道具)就往金錢 / 其他"
+   }
+  ],
+  "item": [
+   {
+    "addr": "0x19239",
+    "insn": "call 0x1bb8c",
+    "note": "unit_add_item"
+   },
+   {
+    "addr": "0x1924b",
+    "insn": "mov byte ptr [edi + eax], 1",
+    "note": "寫旗標"
+   },
+   {
+    "addr": "0x1925b",
+    "insn": "call 0x16c57",
+    "note": "之後才等鍵"
+   }
+  ],
+  "gold": [
+   {
+    "addr": "0x19429",
+    "insn": "cmp eax, 1",
+    "note": "種類 1 = 金錢"
+   },
+   {
+    "addr": "0x19477",
+    "insn": "mov dword ptr [0x3ae1], ebx",
+    "note": "金額"
+   },
+   {
+    "addr": "0x1949a",
+    "insn": "push 0x1aa",
+    "note": "可見:發現 N 元"
+   },
+   {
+    "addr": "0x194b7",
+    "insn": "push 0x1ae",
+    "note": "隱藏:發現 N 元"
+   },
+   {
+    "addr": "0x194c2",
+    "insn": "call 0x15f84",
+    "note": "顯示"
+   },
+   {
+    "addr": "0x194d6",
+    "insn": "call 0x16c57",
+    "note": "等鍵"
+   },
+   {
+    "addr": "0x194e8",
+    "insn": "add dword ptr [0x3bf3], eax",
+    "note": "之後才加錢"
+   },
+   {
+    "addr": "0x194ee",
+    "insn": "mov eax, dword ptr [0x3ad5]",
+    "note": ""
+   },
+   {
+    "addr": "0x194f3",
+    "insn": "mov byte ptr [edi + eax], 1",
+    "note": "最後寫旗標"
+   }
+  ]
+ },
+ "strings_fdtxt000": {
+  "0x1a5": "發現寶箱，要打開嗎？",
+  "0x1ac": "發現寶藏，要挖掘嗎？",
+  "0x1aa": "打開寶箱，發現元！",
+  "0x1ae": "挖掘寶藏，發現元！"
+ },
+ "map10": {
+  "opened_gold": 5000,
+  "opened_slot": 9,
+  "opened_cell": [
+   3,
+   8
+  ],
+  "doc25_slot": 10,
+  "doc25_cell": [
+   16,
+   15
+  ],
+  "doc25_slot_value": 3000,
+  "flag_window": 12
+ },
+ "screens": {
+  "ask": {
+   "file": "53_final.png",
+   "md5": "99b9c9648c532fa7585d489a5d9cf4a8"
+  },
+  "after_yes": {
+   "files": [
+    "60_after_yes.png",
+    "61_poll_0.png",
+    "61_poll_1.png",
+    "61_poll_2.png",
+    "61_poll_3.png",
+    "61_poll_4.png",
+    "61_poll_5.png",
+    "62_final.png",
+    "99_recovery.png"
+   ],
+   "md5": "9465da5870c95bd9a847ac5b9096bf9b"
+  },
+  "visual": "目視:53 = 「發現寶箱，要打開嗎？」+ YES / NO;60 .. 62、99 = 同一句 + 「打開寶箱，發現5000元！」(字串 0x1a5 + 0x1aa,可見寶箱)"
+ },
+ "stdout": {
+  "extracted_by": "docs/knowledge-base/evidence/generators/drivers_s187/extract_stdout.py",
+  "source_name": "agent-a0ed81dcbf368b62d.jsonl",
+  "source_sha256": "4c2ace7c1f20cab79d8aa446bfb651b518f47779b022a8b09550c5a16a8adcd9",
+  "reads": [
+   {
+    "script": "recover_state.py",
+    "label": "state",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "script": "continue_from_ring.py",
+    "label": "before wait",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "script": "continue_from_ring.py",
+    "label": "after wait",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "script": "confirm_open_chest.py",
+    "label": "before YES",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "script": "confirm_open_chest.py",
+    "label": "after YES",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "script": "recover_state.py",
+    "label": "state",
+    "ptr": "0x1f6c5c",
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ]
+ },
+ "real_open": {
+  "result_1_4": {
+   "1": {
+    "target_xy": [
+     3,
+     8
+    ],
+    "reached_target": null,
+    "ally_after": [
+     2,
+     10
+    ],
+    "ally_on_target": false
+   },
+   "2": {
+    "target_xy": [
+     3,
+     8
+    ],
+    "reached_target": true,
+    "ally_after": [
+     2,
+     10
+    ],
+    "ally_on_target": false
+   },
+   "3": {
+    "target_xy": [
+     16,
+     15
+    ],
+    "reached_target": false,
+    "ally_after": [
+     16,
+     13
+    ],
+    "ally_on_target": false
+   },
+   "4": {
+    "target_xy": null,
+    "reached_target": false,
+    "ally_after": null,
+    "ally_on_target": false
+   }
+  },
+  "real_open5_tracebacks": {
+   "real_open5b.log": {
+    "main_line": 137,
+    "error": "FileNotFoundError"
+   },
+   "real_open5c.log": {
+    "main_line": 297,
+    "error": "TypeError"
+   }
+  },
+  "real_open5_lines": {
+   "camp_exit": 137,
+   "after_flags_read": 279,
+   "crash_5c": 297,
+   "result_write": 300
+  }
+ },
+ "doc25_claims": [
+  "**一個**寶箱(map10 slot10,座標(16,15),hidden=true,開出5000元",
+  "slot10(對應這次真正打開的寶箱)沒有變成1",
+  "已超出round4/round7讀的12格窗口"
+ ],
+ "verification": "STATIC ANALYSIS(反組譯、FDFIELD / FDSHAP、FDTXT_000)+ 2026-08-28 原始結果檔 / 截圖雜湊 / stdout 讀值;截圖文字為目視",
+ "conclusion": "doc25 §3.2.4 開箱後旗標全 0 的讀值是真的、讀法也對,但 YES 之後的 2 次讀之前都沒有再按鍵:金錢箱在 0x194d6 等鍵,0x194f3 才寫旗標,所以讀到 0 是遊戲還停在「發現 5000 元」;不是旗標區塊語意錯、也不是索引超出窗口。開到的是 slot 9 (3, 8)(可見、5000 元),不是 slot 10 (16, 15)(隱藏、3000 元)。"
+}

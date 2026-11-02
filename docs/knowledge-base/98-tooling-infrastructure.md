@@ -12849,6 +12849,7 @@ FDFIELD 寶箱列 slot 10 是 3000 元、slot 9 才是 5000 元(可見,(3,8));�
 那次開的較可能是 slot 9 (3,8)(INFERRED;座標當時取自跳動的游標讀值)。同節「`[0x53AD5]` 開箱後全 0」:當時的
 `.wsl_build/chapter_sweep_ch11chest/real_open5.py` 把讀到的指標值直接當線性位址讀(沒加 0x19c000,CODE CONFIRMED),
 所以那個全 0 不能當「旗標沒寫」的證據。兩點都沒改 doc25。(續一百八十六:第二點錯了 —— [0x53ad5] 的值本身就是線性位址,`real_open5.py` 直接讀是對的,見該節)
+(續一百八十七:第一點確認 —— 開的是 slot 9 (3,8);全 0 是金錢箱 0x194d6 等鍵、0x194f3 才寫旗標,讀在按鍵之前;doc25 已加更正,見該節)
 
 **驗證**:見提交訊息。
 
@@ -12890,11 +12891,52 @@ FDFIELD 寶箱列 slot 10 是 3000 元、slot 9 才是 5000 元(可見,(3,8));�
 - 任務外發現第二點錯了:[0x53ad5] 的值(0x1f6c5c)本身就是執行期線性位址。遊戲在 0x13c42 / 0x13c47 直接拿它當位址,播放當下的 eax 也是它;
   單位表指標 0x26c8bc 同樣直接可讀。所以 `real_open5.py` 直接讀那個值是對的(CODE CONFIRMED + LOG CONFIRMED)。
   本輪驅動第一版多加了 0x19c000,讀到 0x392c5c 全 0,已作廢。doc25 §3.2.4「開箱後全 0」的原因仍不明(INFERRED:那次可能沒有真的開到寶箱);doc25 沒改。
+  (續一百八十七:這個 INFERRED 不成立 —— 有開到,是金錢箱等鍵之後才寫旗標、讀在按鍵之前;FD2.EXE 反組譯,見該節)
 - 續一百八十五證據 JSON 的 "unit" 欄(己方出場數 + 記錄序號)在第 10 張圖差 1。記錄 0(+6 == 1、group 1)不在建構時出場,
   而是在第一次進我方輸入迴圈之前由 `field_unit_construct` 加到表尾(單位 38;第一次出現在它呼叫的 `mark_units_blocking`)。
   盜賊是單位 13 .. 37 = 記錄 1 .. 25。續一百八十五的結論文字只用記錄序號,不受影響;ev_s185 沒改。
+  (續一百八十七:ev_s185 已改由 spawn_group(0) 的 group 0 名次算,第 10 張圖差 0;FD2.EXE 反組譯,見該節)
 - doc25 §3.2 第 11 章即時章節值 `[0x53c03]` == 10:本輪直接讀到(原本是 INFERRED)。
 
 **驗證**:見提交訊息。
 
 **仍留**:無(第 10 張圖的 0xc 已實機確認,DOSBox-X 呼叫紀錄 lc186a;模式 7 之後的移動不在本題)。
+
+## 2026-11-02 續一百八十七:doc25 §3.2.4「開箱後旗標全 0」是金錢箱還在等鍵 —— 0x194d6 等鍵、0x194f3 才寫旗標;開到的是 slot 9 (3,8);ev_s185 "unit" 欄改由 spawn_group(0) 名次算(FD2.EXE 反組譯、FDFIELD / FDSHAP、FDTXT_000)
+
+起因:使用者「還有哪些問題?」→「先將能處理的部分 依據你的建議逐項進行處理」(續一百八十六更正裡留下的兩項:doc25 §3.2.4 全 0 原因不明、
+ev_s185 "unit" 欄第 10 張圖差 1)。沒有新實機。
+證據 `evidence/doc25_chest_flag_wait_key_s187_20261102.json`(`ev_s187.py`,`mut_s187.py` 25 個);`ev_s185.py` 改 "unit" 欄(`mut_s185.py` 加 6 個,共 26 個)。
+
+**(A) 玩家開寶箱的順序**(STATIC ANALYSIS;FD2.EXE 反組譯 `field_cell_treasure_check` 0x190ac):
+- 進來先看 [[0x53ad5] + 槽號](槽號 = `map_cell_info` out+2,0x190d8),已開就離開(0x190fc);`yes_no_prompt` 選 YES 之後放 0xc(0x191a9)。
+- 道具(種類 0):`unit_add_item`(0x19239)→ 0x1924b 寫旗標 → 0x1925b `wait_key_with_marker` 等鍵。
+- 金錢(種類 1):0x194c2 顯示「打開寶箱,發現 N 元!」→ 0x194d6 `wait_key_with_marker` 等鍵 → 0x194e8 加錢 → 0x194f3 才寫旗標;
+  0x194d6 .. 0x194f3 中間沒有跳躍。也就是金錢箱在玩家按鍵關掉訊息之前,錢沒加、旗標也是 0。
+- 可見 / 隱藏格用不同字串(FDTXT_000):0x1a5「發現寶箱,要打開嗎?」/ 0x1ac「發現寶藏,要挖掘嗎?」;金錢 0x1aa「打開寶箱,發現…元!」/ 0x1ae「挖掘寶藏,發現…元!」。
+
+**(B) 2026-08-28 那一輪實際讀到什麼**(LOG CONFIRMED;原版 FD2.EXE 的 DOSBox-X 除錯器讀值,`.wsl_build/chapter_sweep_ch11chest` 結果檔、截圖雜湊、stdout):
+- 讀旗標 6 次:`recover_state.py`、`continue_from_ring.py` 待機前後、`confirm_open_chest.py` YES 前後、YES 後再一次 `recover_state.py`。
+  指標都是 0x1f6c5c、12 格全 0;讀法是指標值直接讀(續一百八十六已確認正確)。
+- 這幾支只印 stdout、沒有存檔;輸出只留在當時子代理的對話轉錄(不在 repo),由 `drivers_s187/extract_stdout.py` 抽到
+  `.wsl_build/chapter_sweep_ch11chest/stdout_s187.json`(記轉錄 sha256),ev_s187 讀這份。
+- YES 之後只有 2 次讀,中間沒有再送任何鍵(`confirm_open_chest.py` 只送一次 Return、`recover_state.py` 不送鍵)。
+  YES 後 1.5 秒到約 31 秒的 9 張截圖(60、61 × 6、62、99)位元組完全相同,目視是「發現寶箱,要打開嗎?」加「打開寶箱,發現5000元!」。
+  所以全 0 是遊戲停在 0x194d6 等鍵、還沒走到 0x194f3,不是旗標沒寫。
+- 開到的寶箱:第 10 張圖 5000 元只有 slot 9,在 (3,8)、可見;畫面是可見寶箱的字串。doc25 記的 slot 10 (16,15) 是隱藏格、3000 元,兩點都不合。
+- `real_open1` .. `4` 的結果檔旗標前後都 0,但都沒有單位站上目標格(`real_open2` 的 reached_target 是 True,單位讀回卻在 (2,10)、目標 (3,8))。
+  `real_open5` 沒有結果檔:5b 在 `attempt_camp_exit`(第 137 行)FileNotFoundError,5c 在第 297 行 TypeError(開箱後讀旗標在第 279 行、寫結果檔在第 300 行),
+  `real_open5.log` 0 byte。
+
+**(C) ev_s185 "unit" 欄**(STATIC ANALYSIS;FD2.EXE 反組譯):
+戰鬥初始化在己方之後 0x10b3c / 0x10b3e 呼叫 spawn_group(0);0x10b4e 依記錄序 0 .. [0x53be3) - 1 比 b21(group)== 參數就 `field_unit_construct`(k),
+0x10c50 寫在單位表 [0x53a45] + [0x53beb] × 0x50(表尾)。所以 group 0 的記錄 k = 單位「己方出場數 + k 在 group 0 記錄裡的名次」,
+其他 group 要等事件 spawn(JSON 記 null;這 41 筆都是 group 0)。改完只有第 10 張圖 25 筆各減 1(單位 13 .. 37 = 記錄 1 .. 25,
+與續一百八十六實機一致,ev_s186 的對照差值改成 0);第 9 / 12 / 15 / 18 張圖不變(實機只看過第 10 張圖)。
+
+**本檔更正**:續一百八十五任務外發現與續一百八十六更正兩處各加一句指向本節;續一百八十六「原因仍不明(INFERRED:那次可能沒有真的開到寶箱)」不成立 ——
+有開到(YES、5000 元畫面),是金錢箱等鍵才寫旗標。doc25 §3.2.4 三處加更正註記(slot10 / (16,15) → slot 9 / (3,8);全 0 的原因;「超出 12 格窗口」不成立)。
+
+**驗證**:見提交訊息。
+
+**仍留**:按鍵關掉訊息之後旗標才變 1,只由 FD2.EXE 反組譯推得、沒有實機看過(要看需另行核准實機);截圖上的文字是目視,不是程式判讀。

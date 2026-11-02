@@ -111,9 +111,10 @@ for i in range(OWN, N_UNITS - 1):
     assert (u[6], u[7], u[0x3D]) == (rec["native_record_byte6"], rec["raw_unit_key"], rec["native_record_byte3d"]), (i, r)
     REC_OF[i] = r
 assert all(unit(UNITS["u02_units"], i)[6] == 2 for i in range(OWN))
-# 續一百八十五 JSON 的 "unit" 欄(己方出場數 + 記錄序號)在第 10 張圖差 1:實際是 +記錄序號 − 1
+# 續一百八十五 JSON 的 "unit" 欄原本(己方出場數 + 記錄序號)在第 10 張圖差 1;續一百八十七改由 spawn_group(0) 的
+# group 0 名次算,與當下表上一致(差 0)
 S185_UNIT = {r["record"]: r["unit"] for r in S185["mode5_records"] if r["map"] == MAP}
-S185_OFF = 1
+S185_OFF = 0
 assert all(S185_UNIT[r] == i + S185_OFF for i, r in REC_OF.items())
 EV = {i: unit(UNITS["u02_units"], i)[0x3D] for i in REC_OF}
 

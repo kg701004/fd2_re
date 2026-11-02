@@ -252,6 +252,84 @@
    "note": "地形表"
   }
  ],
+ "spawn_order": [
+  {
+   "addr": "0x10b3c",
+   "insn": "push 0",
+   "note": "開場 spawn_group(0)"
+  },
+  {
+   "addr": "0x10b3e",
+   "insn": "call 0x10b4e",
+   "note": ""
+  },
+  {
+   "addr": "0x10b5b",
+   "insn": "mov edi, dword ptr [esp + 0x10]",
+   "note": "edi = group 參數"
+  },
+  {
+   "addr": "0x10bcc",
+   "insn": "cmp ebx, dword ptr [0x3be3]",
+   "note": "記錄序 0 .. 記錄數 - 1"
+  },
+  {
+   "addr": "0x10bd4",
+   "insn": "imul eax, ebx, 0x1a",
+   "note": "每筆 26 位元組"
+  },
+  {
+   "addr": "0x10bdf",
+   "insn": "add eax, 0x83",
+   "note": "控制段單位陣列起點"
+  },
+  {
+   "addr": "0x10be4",
+   "insn": "movzx eax, byte ptr [eax + 0x15]",
+   "note": "b21 = group"
+  },
+  {
+   "addr": "0x10be8",
+   "insn": "cmp eax, edi",
+   "note": ""
+  },
+  {
+   "addr": "0x10bed",
+   "insn": "push ebx",
+   "note": "參數 1 = 記錄序號"
+  },
+  {
+   "addr": "0x10bee",
+   "insn": "call 0x10c50",
+   "note": "field_unit_construct"
+  },
+  {
+   "addr": "0x10c69",
+   "insn": "mov ebx, dword ptr [0x3beb]",
+   "note": "目前單位數"
+  },
+  {
+   "addr": "0x10c71",
+   "insn": "shl eax, 2",
+   "note": ""
+  },
+  {
+   "addr": "0x10c74",
+   "insn": "add eax, ebx",
+   "note": ""
+  },
+  {
+   "addr": "0x10c76",
+   "insn": "shl eax, 4",
+   "note": "× 0x50"
+  },
+  {
+   "addr": "0x10c79",
+   "insn": "mov ebx, dword ptr [0x3a45]",
+   "note": "單位表"
+  }
+ ],
+ "unit_rule": "group 0 的記錄 k = 單位 己方出場數 + k 在 group 0 記錄裡的名次(開場 spawn_group(0) 依記錄序加到表尾);非 group 0 為 null(續一百八十七更正;原本是己方出場數 + 記錄序號,第 10 張圖差 1,見續一百八十六)",
  "mode5_records": [
   {
    "map": 9,
@@ -281,7 +359,7 @@
   {
    "map": 10,
    "record": 1,
-   "unit": 14,
+   "unit": 13,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -306,7 +384,7 @@
   {
    "map": 10,
    "record": 2,
-   "unit": 15,
+   "unit": 14,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -331,7 +409,7 @@
   {
    "map": 10,
    "record": 3,
-   "unit": 16,
+   "unit": 15,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -356,7 +434,7 @@
   {
    "map": 10,
    "record": 4,
-   "unit": 17,
+   "unit": 16,
    "plus6": 0,
    "b1": 103,
    "lv": 14,
@@ -381,7 +459,7 @@
   {
    "map": 10,
    "record": 5,
-   "unit": 18,
+   "unit": 17,
    "plus6": 0,
    "b1": 103,
    "lv": 14,
@@ -406,7 +484,7 @@
   {
    "map": 10,
    "record": 6,
-   "unit": 19,
+   "unit": 18,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -431,7 +509,7 @@
   {
    "map": 10,
    "record": 7,
-   "unit": 20,
+   "unit": 19,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -456,7 +534,7 @@
   {
    "map": 10,
    "record": 8,
-   "unit": 21,
+   "unit": 20,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -481,7 +559,7 @@
   {
    "map": 10,
    "record": 9,
-   "unit": 22,
+   "unit": 21,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -506,7 +584,7 @@
   {
    "map": 10,
    "record": 10,
-   "unit": 23,
+   "unit": 22,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -531,7 +609,7 @@
   {
    "map": 10,
    "record": 11,
-   "unit": 24,
+   "unit": 23,
    "plus6": 0,
    "b1": 103,
    "lv": 14,
@@ -556,7 +634,7 @@
   {
    "map": 10,
    "record": 12,
-   "unit": 25,
+   "unit": 24,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -581,7 +659,7 @@
   {
    "map": 10,
    "record": 13,
-   "unit": 26,
+   "unit": 25,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -606,7 +684,7 @@
   {
    "map": 10,
    "record": 14,
-   "unit": 27,
+   "unit": 26,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -631,7 +709,7 @@
   {
    "map": 10,
    "record": 15,
-   "unit": 28,
+   "unit": 27,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -656,7 +734,7 @@
   {
    "map": 10,
    "record": 16,
-   "unit": 29,
+   "unit": 28,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -681,7 +759,7 @@
   {
    "map": 10,
    "record": 17,
-   "unit": 30,
+   "unit": 29,
    "plus6": 0,
    "b1": 103,
    "lv": 14,
@@ -706,7 +784,7 @@
   {
    "map": 10,
    "record": 18,
-   "unit": 31,
+   "unit": 30,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -731,7 +809,7 @@
   {
    "map": 10,
    "record": 19,
-   "unit": 32,
+   "unit": 31,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -756,7 +834,7 @@
   {
    "map": 10,
    "record": 20,
-   "unit": 33,
+   "unit": 32,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -781,7 +859,7 @@
   {
    "map": 10,
    "record": 21,
-   "unit": 34,
+   "unit": 33,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -806,7 +884,7 @@
   {
    "map": 10,
    "record": 22,
-   "unit": 35,
+   "unit": 34,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -831,7 +909,7 @@
   {
    "map": 10,
    "record": 23,
-   "unit": 36,
+   "unit": 35,
    "plus6": 0,
    "b1": 103,
    "lv": 14,
@@ -856,7 +934,7 @@
   {
    "map": 10,
    "record": 24,
-   "unit": 37,
+   "unit": 36,
    "plus6": 0,
    "b1": 102,
    "lv": 14,
@@ -881,7 +959,7 @@
   {
    "map": 10,
    "record": 25,
-   "unit": 38,
+   "unit": 37,
    "plus6": 0,
    "b1": 102,
    "lv": 14,

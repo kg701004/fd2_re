@@ -175,6 +175,32 @@ def find_event_cell(cl: list, ev: int) -> tuple[int, int] | None:
     return next(((x, y) for x, y, _, s, f in cl if f == CHEST_VISIBLE and s == ev), None)
 
 
+# ================= 開場單位表的順序(續一百八十七補;原本 "unit" = 己方出場數 + 記錄序號,第 10 張圖差 1) =================
+# 戰鬥初始化在己方之後呼叫 spawn_group(0);0x10b4e 依記錄序 0 .. [0x53be3) - 1 讀 [0x53a55] + 0x83 + k * 0x1a 的 +0x15
+# (FDFIELD b21 = group),等於參數就 field_unit_construct(k);0x10c50 寫在單位表 [0x53a45] + [0x53beb] * 0x50(表尾)。
+# 所以 group 0 的記錄 k = 單位「己方出場數 + k 在 group 0 記錄裡的名次」;其他 group 要等事件 spawn,單位號不能靜態定。
+SPAWN_ORDER = [
+    (0x10B3C, "push 0", "開場 spawn_group(0)"),
+    (0x10B3E, "call 0x10b4e", ""),
+    (0x10B5B, "mov edi, dword ptr [esp + 0x10]", "edi = group 參數"),
+    (0x10BCC, "cmp ebx, dword ptr [0x3be3]", "記錄序 0 .. 記錄數 - 1"),
+    (0x10BD4, "imul eax, ebx, 0x1a", "每筆 26 位元組"),
+    (0x10BDF, "add eax, 0x83", "控制段單位陣列起點"),
+    (0x10BE4, "movzx eax, byte ptr [eax + 0x15]", "b21 = group"),
+    (0x10BE8, "cmp eax, edi", ""),
+    (0x10BED, "push ebx", "參數 1 = 記錄序號"),
+    (0x10BEE, "call 0x10c50", "field_unit_construct"),
+    (0x10C69, "mov ebx, dword ptr [0x3beb]", "目前單位數"),
+    (0x10C71, "shl eax, 2", ""),
+    (0x10C74, "add eax, ebx", ""),
+    (0x10C76, "shl eax, 4", "× 0x50"),
+    (0x10C79, "mov ebx, dword ptr [0x3a45]", "單位表"),
+]
+for a, want, _ in SPAWN_ORDER:
+    assert insn(a) == want, (hex(a), insn(a), want)
+assert _NM[0x10C50] == "field_unit_construct"
+
+
 # ================= (D) 33 張圖的模式 5 記錄 =================
 ROWS, CAMP_RAW = [], collections.Counter()
 for m in range(33):
@@ -183,6 +209,7 @@ for m in range(33):
     assert (w, h) == (info["w"], info["h"]), m
     chests = {c["slot"]: c for c in info["chests"]}
     pos = info["positions"]
+    g0 = [k for k, u in enumerate(info["units"]) if u["group"] == 0]
     for k, u in enumerate(info["units"]):
         # 出場位置段第 k 筆的第 3 個值 = 記錄 b1(對齊的獨立檢查)
         assert pos[k][2] == u["raw_unit_key"], (m, k)
@@ -195,7 +222,7 @@ for m in range(33):
         assert sum(1 for _, _, _, s, f in cl if f == CHEST_VISIBLE and s == ev) == 1, (m, k, ev)
         sx, sy = pos[k][0], pos[k][1]
         CAMP_RAW[b0] += 1
-        ROWS.append({"map": m, "record": k, "unit": info["own_deploy"] + k, "plus6": b0, "b1": u["raw_unit_key"],
+        ROWS.append({"map": m, "record": k, "unit": info["own_deploy"] + g0.index(k) if u["group"] == 0 else None, "plus6": b0, "b1": u["raw_unit_key"],
                      "lv": u["lv"], "group": u["group"], "plus34": u["native_record_byte34"], "event_id": ev,
                      "spawn": [sx, sy], "target": list(tgt), "manhattan": abs(sx - tgt[0]) + abs(sy - tgt[1]),
                      "chest": {"native_type": chests[ev]["native_type"], "value": chests[ev]["value"]},
@@ -227,6 +254,9 @@ MAP10 = [r for r in REACH if r["map"] == 10]
 NEAREST = min(MAP10, key=lambda r: (r["manhattan"], r["record"]))
 assert (NEAREST["record"], NEAREST["manhattan"], NEAREST["target"]) == (25, 10, [24, 24])
 assert sorted({r["event_id"] for r in MAP10}) == list(range(8))
+# 第 10 張圖記錄 0 是 group 1(開場不建),所以盜賊記錄 k = 單位 己方出場數 + k - 1
+_INFO10 = parse_field.parse_map(str(RAW), 10)
+assert _INFO10["units"][0]["group"] == 1 and all(r["unit"] == _INFO10["own_deploy"] + r["record"] - 1 for r in MAP10)
 
 OUT.write_text(json.dumps({
     "generator": rel(GEN_DIR / "ev_s185.py"), "exe_md5": MD5,
@@ -237,6 +267,9 @@ OUT.write_text(json.dumps({
     "dispatch_callers": [{"call": hex(a), "func": f, "camp_check": insn(CALLER_GATE[a][0]), "plus6": CALLER_CAMP[a]}
                          for a, f in CALLERS],
     "find_event_cell": [{"addr": hex(a), "insn": s, "note": n} for a, s, n in CELL_CODE],
+    "spawn_order": [{"addr": hex(a), "insn": s, "note": n} for a, s, n in SPAWN_ORDER],
+    "unit_rule": "group 0 的記錄 k = 單位 己方出場數 + k 在 group 0 記錄裡的名次(開場 spawn_group(0) 依記錄序加到表尾);"
+                 "非 group 0 為 null(續一百八十七更正;原本是己方出場數 + 記錄序號,第 10 張圖差 1,見續一百八十六)",
     "mode5_records": ROWS, "reaching_by_map": {str(k): v for k, v in BY_MAP.items()},
     "anchors": {"map10_star_eye": {"cell": [STAR_X, STAR_Y], "tile": STAR_TILE, "slot": STAR_SLOT,
                                    "chest": [_ch10[STAR_SLOT]["native_type"], _ch10[STAR_SLOT]["value"]]},

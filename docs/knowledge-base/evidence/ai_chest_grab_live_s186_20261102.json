@@ -36,7 +36,7 @@
    "func": "mark_units_blocking",
    "ret_in": "field_unit_construct"
   },
-  "s185_unit_field_offset": 1
+  "s185_unit_field_offset": 0
  },
  "find_event_cell_per_turn": [
   25,

@@ -33,6 +33,13 @@ MUTANTS = [
     ("出場格不對齊記錄", "sx, sy = pos[k][0], pos[k][1]", "sx, sy = pos[k + 1][0], pos[k + 1][1]"),
     ("己方也算走得到", '"reaches_dispatch": b0 in DISPATCH_CAMPS', '"reaches_dispatch": True'),
     ("星之眼 tile 記成 164", "assert _star == (18, 37, 166, 0, CHEST_VISIBLE)", "assert _star == (18, 37, 164, 0, CHEST_VISIBLE)"),
+    # 開場單位表順序(續一百八十七)
+    ("開場 spawn group 1", '(0x10B3C, "push 0",', '(0x10B3C, "push 1",'),
+    ("group 讀 +0x14", '"movzx eax, byte ptr [eax + 0x15]"', '"movzx eax, byte ptr [eax + 0x14]"'),
+    ("單位表每筆 0x28", '(0x10C76, "shl eax, 4", "× 0x50")', '(0x10C76, "shl eax, 3", "× 0x50")'),
+    ("單位號用記錄序號", '"unit": info["own_deploy"] + g0.index(k)', '"unit": info["own_deploy"] + k'),
+    ("名次含所有記錄", 'g0 = [k for k, u in enumerate(info["units"]) if u["group"] == 0]', 'g0 = list(range(len(info["units"])))'),
+    ("記錄 0 記成 group 0", '_INFO10["units"][0]["group"] == 1', '_INFO10["units"][0]["group"] == 0'),
 ]
 
 if __name__ == "__main__":

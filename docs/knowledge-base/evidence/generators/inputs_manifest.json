@@ -33949,6 +33949,117 @@
     ]
    }
   },
+  "ev_s187": {
+   "outputs": [
+    "doc25_chest_flag_wait_key_s187_20261102.json"
+   ],
+   "inputs": {
+    ".wsl_build/chapter_sweep_ch11chest/confirm_open_chest.py": [
+     1503,
+     "af06af83d5a58c32b8eb226ba42b6a785794e89fb77117ca1d3204bb5e90764b"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/continue_from_ring.py": [
+     1899,
+     "db98a22feabbc05136376ca04087e3e3536147334a52f4d85c60defbefd274e8"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open1/result.json": [
+     2728,
+     "a220d1b73f4c0b13e19442645699fe1c2b0c814c41bba60e920558a9af3efb88"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open2/result.json": [
+     10812,
+     "c9b36e4314f43755edd9f1335bd45a82134004498b1464458afbde1b1eab077e"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open3/result.json": [
+     8312,
+     "22061c6fdef2cb0440f0f789eec897195ba8942c0adbc30a12cb3dc7f1c42ef0"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open4/result.json": [
+     4936,
+     "d175329d62bce1759194adee4d126dfa1676f5041079a83d9b1795b248863ee9"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5.py": [
+     13569,
+     "622ba5dde789fcf21ec63487a89f967199a4fef187265f0a4935c224194628d7"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/53_final.png": [
+     19421,
+     "36d0457e73233357346e953b911722dbed6f865899aa219920021312089f6e6f"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/60_after_yes.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_0.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_1.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_2.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_3.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_4.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_5.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/62_final.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/99_recovery.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5b.log": [
+     1243,
+     "0c839b5f2416796378aaed47c64e1955acabec965209ccaf648229af8250a8a7"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5c.log": [
+     500,
+     "65d9becd4e78a480e9e2d21443272fae8091b27009150ec0ea4b46531665d66f"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/recover_state.py": [
+     1617,
+     "6247799f02420eefa8569993a73810605df34534f8bbe037eab415d8418b8492"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/stdout_s187.json": [
+     1504,
+     "0cb82d7ec9789e17263d4125235f436544a1fe99e6689d73c9a4c44f3e71acc5"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_030.bin": [
+     6304,
+     "17eefab0de27f111d7c083e16000f45b060e6f5dcfef87afdf70392b7c61eb03"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_031.bin": [
+     1171,
+     "5daf4d645211ae870b51713bdb730a2098d45ca1cd31e3f4ae02c4684b44bc8e"
+    ],
+    "extracted/raw/FDFIELD/FDFIELD_032.bin": [
+     320,
+     "8a5623bce4e85dc837cfa6bbbefe71b155fba2ab1a8584c00bef45c10b8e0fa7"
+    ],
+    "extracted/raw/FDSHAP/FDSHAP_021.bin": [
+     1200,
+     "175a463a3e94e9376d2f67da500d24edf07d12ae8b65486f07fdddbbb70055b6"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
