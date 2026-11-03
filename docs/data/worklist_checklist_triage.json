@@ -1,0 +1,1774 @@
+{
+ "_doc": "91-worklist.md 勾選框([ ] / [~])逐項人工分類;由 tools/worklist_checklist.py --check 把關(每個未勾項目恰有一筆、closed 的引文必須逐字在依據檔、duplicate 指向非 duplicate、open_* 有 next)。key = 標題行去註記後的 sha1 前 10 碼。2026-11-03 續一百八十九建立。",
+ "items": [
+  {
+   "key": "c501999350",
+   "title": "**UI-VIS-TOWN**：`0x2cd16/0x2cf71/0x11eb0",
+   "disposition": "open_live",
+   "reason": "三個 variant 的原版選項循環與紅框 bug 已收斂;secret gate 2026-09-03 說「已解決」,其後發現只是 ch02 專屬鍵。逐章實測 8/8 成立,但 ch03(Ctrl+F2)、ch06(Ctrl+F5)仍不觸發,也還分不出是 Ctrl 鍵沒送進 guest 還是另有前置條件。",
+   "next": "先離線確認 FUN_00026152 的 secret gate 比較([0x53a8e]==record+2 且 record+1==[0x53f4a])沒有包在其他條件分支裡,再看 menu_read_key / INT16h AH=0x10 讀鍵路徑會不會濾掉 0x5F / 0x62;接著在 DOSBox-X 的 ch03 sel1(及 ch06 sel4)送 Ctrl+F2 / Ctrl+F5,用除錯器讀 [0x53a8e],分辨是鍵沒送到還是 gate 另有前置條件。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
+     "quote": "**因此 ch03／ch06 仍未解**"
+    },
+    {
+     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
+     "quote": "ch03 的 `Ctrl+F2` 在**全部 5 個 selection** 逐一測過，全無反應。"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "因此剩餘假說收斂為「另有前置條件」，不是表格資料本身"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "但「Ctrl 是否送得進 guest」**仍未分離**"
+    }
+   ]
+  },
+  {
+   "key": "f041f7a490",
+   "title": "**UI-VIS-SHOP**：四個callee與secret selectio",
+   "disposition": "closed",
+   "reason": "原版側剩下的 no-recipient / recipient-full 兩條分支已有靜態結論:沒有合格收件者顯示 FDTXT 505/437,收件者八格全滿顯示 506 後退回商品清單、不加物品也不扣款。live 沒能自然重現只影響 remake 對照,remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/56-fd2-remake-sdd.md",
+     "quote": "`{1,504,1,438,1,438}`, no eligible recipient"
+    },
+    {
+     "path": "docs/knowledge-base/56-fd2-remake-sdd.md",
+     "quote": "one, and closes back to the product loop without inserting or debiting."
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake pixel diff 那一半因 remake 移除已無對象"
+    }
+   ]
+  },
+  {
+   "key": "760c347d88",
+   "title": "**UI-SHOP-RECIPIENT-INPUT-E2**：原版已實測裝備收件",
+   "disposition": "closed",
+   "reason": "selection0↔1、四人以上捲動(ch06→ch07 的 9 人,與 2026-09-07 ch27 的 13 人兩欄×3列視窗)都已在原版 live 閉合;no-recipient / full 兩種邊界的原版行為已有靜態結論(doc56)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "2026-09-07 本項閉合（live 原版側，instance `ebatch`）"
+    },
+    {
+     "path": "docs/knowledge-base/56-fd2-remake-sdd.md",
+     "quote": "one, and closes back to the product loop without inserting or debiting."
+    }
+   ]
+  },
+  {
+   "key": "951a53aa9a",
+   "title": "**UI-VIS-PREPARATION**：`0x318ad..0x321c8",
+   "disposition": "closed",
+   "reason": "原版選人流程已閉合:cap=19(26 人合成名冊)與 cap=15(ch23)兩臂都已 live;目前 build 的選人函式為 sortie_member_select 0x2af28、roster_reorder_selected_first 0x2b777、sortie_required_member_check 0x2b439;「要記錄戰況嗎?」Yes 分支走 0x2968d 已升級確認。剩下的同狀態像素差分只屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "cap=15 臂確認**：畫面左上直接顯示「出戰人數 ×15」"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "「要記錄戰況嗎？」分支語意（原本 `0x2968d` 歸因信心較低）已可升級"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "| sortie | 選滿 15 人、「確定要進入戰場嗎?」按 YES | 30 |"
+    }
+   ]
+  },
+  {
+   "key": "be7e11b4dd",
+   "title": "**UI-VIS-LOAD**：合法 IDA 9.4 證實 `0x25F48` ",
+   "disposition": "closed",
+   "reason": "原版 restore、roster ABI、無刪除功能、camp-exit 與酒店存檔 writer、確認文字的章節 gate 都已在條目內閉合;酒店第 4 個 icon 的語意由續一百零八的呼叫紀錄釐清(狀態 / 存檔 / 讀檔 0x2986f load_game_menu / 回 DOS)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "結論(信心高，本項視為完全關閉)"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "酒店選單有存檔 / 讀檔 / 回 DOS"
+    }
+   ]
+  },
+  {
+   "key": "5b394e1c2f",
+   "title": "**ENGINE-REPOSITORY-EXTRACTION-GATE**：待 ",
+   "disposition": "obsolete_remake",
+   "reason": "抽離獨立引擎倉庫,純屬 remake 建置,沒有原版側命題;remake/ 已移除,隨之失效。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "28acfcebde",
+   "title": "專題 RE 文件仍保留各自證據與歷史修正；不直接合併成單一長文，避免丟失 add",
+   "disposition": "not_a_task",
+   "reason": "文件組織政策(不合併專題文件、衝突時以 56/42/91 為準),不是工作項目。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "不直接合併成單一長文，避免丟失 address-level provenance"
+    }
+   ]
+  },
+  {
+   "key": "ca82dc5973",
+   "title": "**敵人/NPC 戰場 AI** 反組譯文件：舊 `0x15140/0x1535",
+   "disposition": "closed",
+   "reason": "候選格順序、turn/camp、runtime execution 與 0x14818 LOS 已閉合;唯一殘留的 0x1728C 四個旗標後續各自找到 consumer:[0x51e61] 調音樂音量、[0x51e62] 音效守衛、[0x53af9] 決定 AI 攻擊是否播場景(實機)、[0x51aab] 地圖 HUD 顯示,即設定選單的四個開關。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "L145兩個尾巴缺口不再是開放問題"
+    },
+    {
+     "path": "docs/knowledge-base/11-enemy-ai.md",
+     "quote": "所以它是「AI 攻擊要不要播戰鬥場景」的開關"
+    },
+    {
+     "path": "docs/data/function_names.json",
+     "quote": "AIL_set_sequence_volume 調整音樂音量"
+    },
+    {
+     "path": "docs/data/function_names.json",
+     "quote": "旗標 [0x51aab] 決定是否顯示"
+    },
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "`[0x53ef1] != 0`、`[0x51e62] != 0`、`[0x54133] == 0`"
+    }
+   ]
+  },
+  {
+   "key": "f22e8530fd",
+   "title": "**RE-BATTLE-AI-SPECIAL-TOPIC**：已把 `0x1A4",
+   "disposition": "closed",
+   "reason": "殘留的「實機驗證選中的 command / 目標與畫面順序」已由 doc98 續五十一 / 五十七完成:8 個敵人的行動分支斷點全部符合;AI 攻擊依 [0x53af9] 分流為地圖或場景呈現。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "8 筆全部符合(DOSBox-X 斷點與記憶體讀值"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "AI 攻擊依 `[0x53af9]` 選地圖或場景呈現"
+    }
+   ]
+  },
+  {
+   "key": "d1a9a9cfb2",
+   "title": "**REMAKE-AI-MODE-RUNTIME**：模式 2/11 raw p",
+   "disposition": "closed",
+   "reason": "各模式可觀察流程已列在 doc11 表內(mode 8 不行動、mode 5 搶寶箱已實機),回合 orchestration 與 event82 已閉合;「模式命名」是刻意 fail-closed 的政策,NextAIPlan 接線屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/11-enemy-ai.md",
+     "quote": "這是本專案刻意的 fail-closed 立場"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "ai_mode_dispatch 那處 0xc = AI 模式 5 搶寶箱"
+    }
+   ]
+  },
+  {
+   "key": "1136c480ef",
+   "title": "**REMAKE-GLOBAL-EVENT-DISPATCH**：全域 `0x5",
+   "disposition": "open_static",
+   "reason": "doc25 §19 證實 58..89 的 32 格都是函式入口(舊的 artifact 分類作廢),但也明說語意尚未以正確入口重新反編譯;舊描述從函式中段起讀,可能缺開頭。",
+   "next": "以 docs/data/function_names.json 的正確入口(event_handler_58=0x35854 … event_handler_85=0x3642e)逐一反編譯 58..85 的 handler,取代 §10.1 / §10.2 從中段起讀的舊描述;再補齊各 dispatcher(turn 0x1a813、field 0x13a44、treasure kind2)的 selector 生產路徑。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/25-battle-event-system.md",
+     "quote": "要真正確立每格語意,仍須以正確入口重跑一次反編譯"
+    }
+   ]
+  },
+  {
+   "key": "c00d9da625",
+   "title": "反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證——大部",
+   "disposition": "closed",
+   "reason": "最後的經驗值等級因子歧義已實機解決:攻擊經驗守方等級只乘一次;恢復經驗的「÷施法者等級」在 0x18d8c。法術命中率逐 ID 核對也已完成。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "守方等級只乘一次,doc27 第 13 項的歧義是攻略文字的問題,不是反組譯漏項"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "所以攻略的「÷ 施法者等級」存在,只是不在 `heal_hp_apply` 裡"
+    }
+   ]
+  },
+  {
+   "key": "ed16741800",
+   "title": "**物品系統反組譯**(M1 用)→ `32`:已確認物品表23B結構、rost",
+   "disposition": "closed",
+   "reason": "剩餘的 type3 下游 consumer 已實機查明(71 號魔龍爪多打一下);+0x25 / +0x26 狀態已由指令名(毒擊 / 解毒等)命名。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+     "quote": "在武器列 +9 == 3(只有 71 號魔龍爪)或 rand%100 < 3 時打 2 下"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "20=解毒術、21=社麻術"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "26=毒擊術(`+0x25`施加)"
+    }
+   ]
+  },
+  {
+   "key": "4d359888ee",
+   "title": "**轉職系統反組譯**(M4):轉職觸發(教會/道具)、職業數值替換、能力繼承、",
+   "disposition": "closed",
+   "reason": "portrait 11-13 輪轉錯位已定案為本專案建表錯誤;新版 EXE 的轉職鏈(0x2ac7d 等)已由資料表反查重新定位,與 §6 行為逐條吻合。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/32-item-combat-stats-re.md",
+     "quote": "「portrait 11/12/13 輪轉錯位」定案——是本專案的建表錯誤，不是原版設計"
+    },
+    {
+     "path": "docs/knowledge-base/32-item-combat-stats-re.md",
+     "quote": "§6 記載的每一項行為逐條吻合"
+    }
+   ]
+  },
+  {
+   "key": "7321536f4b",
+   "title": "**角色名對應**:補全 portrait→角色名 → `49`。核實後「12 ",
+   "disposition": "closed",
+   "reason": "2026-09-07 直接解了 FDTXT resource 0 名字表:id 32..67 在遊戲中本來就沒有名字,其餘落在已轉錄的單位類型 / 首領段;「97 組未知」已被取代。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/49-character-id-name-table.md",
+     "quote": "所以「97 組」裡有 36 組(id 32..67)在遊戲裡根本沒有名字,其餘落在已轉錄的單位類型/首領段"
+    }
+   ]
+  },
+  {
+   "key": "369f553131",
+   "title": "`FD2.SAV` 存檔：Docker static trace 已固定 `rb",
+   "disposition": "open_static",
+   "reason": "CONTINUE(回到記錄戰況)、LOAD 選槽、戰中記錄戰況區塊已有實機證據;但 slot metadata +10..+39 有無其他 consumer、原版有無刪除槽功能仍未回答。",
+   "next": "全 image 掃描讀寫 slot record 的指令(buffer +0x312b+i*0xa28 的 0x59cb 區;reader 0x2602c、writer 0x30012、load_game_menu 0x2986f、save_game_menu),判定 metadata +10..+39 是否有任何 consumer;另反組譯 0x30550 選槽,確認是否存在刪除槽分支。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "尚缺一般玩家有效槽 E2、metadata `+10..+39` 其他可能 consumer、delete/overwrite 及 current-battle restore"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "回到記錄戰況時的戰場,色彩正常"
+    }
+   ]
+  },
+  {
+   "key": "d149430e42",
+   "title": "SoundFont/MT-32 → 見 `16`(MT-32 已渲染);Soun",
+   "disposition": "closed",
+   "reason": "TIMB→逐曲配器表已建立(docs/data/fdmus_timb_instrumentation.json);SoundFont 試聽是美學選擇,沒有可證偽的判準。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "可識別、可證偽的那一半(TIMB→逐曲配器表)已於本日完成"
+    }
+   ]
+  },
+  {
+   "key": "c121dd6e51",
+   "title": "敵方 AI 回合：normalized flood-fill/評分與 raw e",
+   "disposition": "closed",
+   "reason": "三分數選擇規則與兩趟掃描都已實機驗證(第一趟只讓法術 / 道具分數 >= 6 的單位先動,第二趟全部);turn / camp 順序由 0x1A30B 閉合。原版側已無待答問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "第 1 趟只對法術或道具分數 ≥ 6 的單位呼叫分派(返回 0x1d947),第 2 趟全部呼叫(返回 0x1d9d7)"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "8 筆全部符合(DOSBox-X 斷點與記憶體讀值"
+    }
+   ]
+  },
+  {
+   "key": "6d9488bf01",
+   "title": "敵方 AI 雙預選 bridge：`BuildNativeAIPhaseDiag",
+   "disposition": "closed",
+   "reason": "缺的「同一原版 runtime 動態 trace」已由 doc98 續五十六 / 六十六補上:門檻兩側(6 施法、3 不施法)與兩趟順序都實機測到;bridge 本身是 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "門檻的兩邊都測到:最佳 6 會施法,最佳 3 不施法"
+    }
+   ]
+  },
+  {
+   "key": "fdabfadd69",
+   "title": "DATO 頭像接入：已新增 `internal/dato.MouthState`",
+   "disposition": "obsolete_remake",
+   "reason": "原版嘴型 cadence 已閉合;殘留的 frame / grid、speaker layout 與 runtime dialogue parity 是 remake 對話接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "完整 DATO frame/grid、speaker layout 與 runtime dialogue parity 仍未閉合"
+    }
+   ]
+  },
+  {
+   "key": "8e55506a89",
+   "title": "戰後 town/整備流程：campaign_full 的 postbattle→",
+   "disposition": "obsolete_remake",
+   "reason": "原版數值對照已由實機 trial 解決;剩下的是 remake indexed renderer 的像素 parity。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "indexed renderer畫面像素級parity 仍保持open"
+    }
+   ]
+  },
+  {
+   "key": "3a79f83597",
+   "title": "戰後 town/整備流程：preparation 與 church select",
+   "disposition": "closed",
+   "reason": "本項後段已標已解:用真實存檔在原版跑轉職全流程 5 次,數值吻合;剩下的 17-19 接線不是 RE 缺口。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "5次完整跑過church→轉職→悠妮→Yes全流程並讀取原版自己顯示的AP/DP/DX/MHP/MMP/MV數值"
+    }
+   ]
+  },
+  {
+   "key": "4346308d83",
+   "title": "class-change church：已鎖定 `0x3151a..0x3152",
+   "disposition": "closed",
+   "reason": "race / multiplier 敘述已勘誤,實機回歸已由 doc58 續八十二完成(本項後段自述)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "剩下的「實機回歸」已解(doc58續八十二,2026-08-31)"
+    }
+   ]
+  },
+  {
+   "key": "344d2f88eb",
+   "title": "class-change church：`class_change_target",
+   "disposition": "closed",
+   "reason": "本項描述 portrait→target 資料分層;可疑的 portrait 11-13 對應已由 doc32 定案為建表錯誤,原版機制已確認。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/32-item-combat-stats-re.md",
+     "quote": "「portrait 11/12/13 輪轉錯位」定案——是本專案的建表錯誤，不是原版設計"
+    }
+   ]
+  },
+  {
+   "key": "7cf1aff7b1",
+   "title": "campaign town/shop 外部交叉盤點：攻略頁明列第4、7、9、14",
+   "disposition": "not_a_task",
+   "reason": "攻略頁盤點結果與測試規則(不可把勝利直接串成下一戰),沒有待辦。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "後續測試不得把勝利直接串成下一戰"
+    }
+   ]
+  },
+  {
+   "key": "381a5f1a8d",
+   "title": "class-change data/UI bridge：`LoadClassCh",
+   "disposition": "obsolete_remake",
+   "reason": "原版 HIT / EV / DX 欄位與趨勢已實機確認;剩下的是 remake raw service0 renderer 的像素比對。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "raw service0 status/command renderer 畫面像素級parity 仍保持open"
+    }
+   ]
+  },
+  {
+   "key": "4fa50b4444",
+   "title": "class-change synthesis：`0x31602` 五組 `0x1",
+   "disposition": "closed",
+   "reason": "轉職合成函式已在新版 EXE 重新定位為 0x2ac7d,5 次 growth 累加、MV、0x1b750 重算等行為逐條吻合;Lv 寫 1 也已查明。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/32-item-combat-stats-re.md",
+     "quote": "§6 記載的每一項行為逐條吻合"
+    }
+   ]
+  },
+  {
+   "key": "b2ef927e1a",
+   "title": "分支與敗北路線（2026-08-30 靜態逐關核對，回應審計#409）：**結論",
+   "disposition": "obsolete_remake",
+   "reason": "(a)(b) 是 remake 的 protect schema 與資料化;原版側的 retreat 問題已在 (c) 回答:原版沒有撤退重打機制。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "(c) retreat 語意已閉合，不需再開項目"
+    }
+   ]
+  },
+  {
+   "key": "58c1a928d5",
+   "title": "protect schema 升級(2026-08-30，回應上一條 (a)/(",
+   "disposition": "obsolete_remake",
+   "reason": "schema 升級與 mapN_units.json 名字補值都是 remake 資產工作;陣營全滅已由後續 [x] 項以 camp+portrait 解決。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "真正卡住 doc28 18 章護衛資料化的是**上游資產缺口**"
+    }
+   ]
+  },
+  {
+   "key": "c0d9bd5725",
+   "title": "protect_guards 資料化(2026-08-30 續輪,回應上一條的上",
+   "disposition": "closed",
+   "reason": "唯一的原版側疑問(ch10 卡納恩三世是哪個 id)已由 FDTXT 名字表解出:索引 136(= id135+1)就是卡納恩三世;原版也確認沒有強制出戰機制,其餘是 remake 工作。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/49-character-id-name-table.md",
+     "quote": "女村民/男村民/卡納恩三世"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "原版有沒有對應機制?沒有——確認過,不是沒查"
+    }
+   ]
+  },
+  {
+   "key": "5634e4b263",
+   "title": "**轉職成長的獨立取樣（2026-09-03，部分完成）**——**隨機性已確認",
+   "disposition": "closed",
+   "reason": "轉職同樣呼叫 apply_stat_growth 0x1e529,其取值式「下限 + rand % (上限 − 下限)」已用受控記錄實機驗證,範圍由表列決定,不必再做大樣本統計。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "成長量 = 下限 + rand % (上限 − 下限),兩者相等時不取亂數"
+    },
+    {
+     "path": "docs/knowledge-base/32-item-combat-stats-re.md",
+     "quote": "5 次 `FUN_0001e529` 成長累加"
+    }
+   ]
+  },
+  {
+   "key": "0ba8423c2a",
+   "title": "桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app",
+   "disposition": "obsolete_remake",
+   "reason": "remake 打包,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "28abfbc98e",
+   "title": "WASM 上網頁(資產載入 + `index.html` 完整化)",
+   "disposition": "obsolete_remake",
+   "reason": "remake 網頁版建置,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "3e13ffa0c7",
+   "title": "Android:`ebitenmobile bind` → `.aar` → G",
+   "disposition": "obsolete_remake",
+   "reason": "remake Android 打包,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "fe9a2e6dc7",
+   "title": "玩家向 README(圖文並茂,突顯貢獻)+ 工程文件分離",
+   "disposition": "obsolete_remake",
+   "reason": "remake 產品文件,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "6cc7bbcbb9",
+   "title": "實作 EventSystem(ConditionRegistry/ActionR",
+   "disposition": "obsolete_remake",
+   "reason": "remake 事件系統實作,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "95d3a19e6a",
+   "title": "自創戰場 + 自訂劇本(用 `19`+`29` 系統)",
+   "disposition": "obsolete_remake",
+   "reason": "remake 擴充內容,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "ddd4cae081",
+   "title": "多分支劇情線 / 多結局",
+   "disposition": "obsolete_remake",
+   "reason": "remake 擴充內容,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "f44984b379",
+   "title": "編碼器回寫中文(`encode_text.py`)做在地化/二創",
+   "disposition": "obsolete_remake",
+   "reason": "在地化 / 二創工具,已標為 remake 建置項,沒有原版側命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "remake 專案建置項目，無原版側命題"
+    }
+   ]
+  },
+  {
+   "key": "28b9d3a8f7",
+   "title": "**主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓",
+   "disposition": "closed",
+   "reason": "原版 CONTINUE 與 LOAD 選槽已實機驗證(CONTINUE 回到記錄戰況時的戰場);pending-group / Game handoff 是 remake 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "回到記錄戰況時的戰場,色彩正常"
+    }
+   ]
+  },
+  {
+   "key": "a094561570",
+   "title": "**handler raw-byte5 runtime bridge**：`0x",
+   "disposition": "obsolete_remake",
+   "reason": "殘留的 LOADCH 分支與 strict binding fail-closed 都是 remake runtime 接線;原版 raw bit0 語意已閉合。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "需補 zero-HP 初始 record／所有 LOADCH 分支並讓 strict binding 缺 raw 時 fail-closed"
+    }
+   ]
+  },
+  {
+   "key": "10062a4339",
+   "title": "**persistent raw-byte5 bridge**：`syncPar",
+   "disposition": "obsolete_remake",
+   "reason": "殘留是 remake 的 LOADCH raw record materialization 與移除 fallback。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "需完成 LOADCH raw record materialization 才能移除 fallback"
+    }
+   ]
+  },
+  {
+   "key": "47d6fec12e",
+   "title": "**REMAKE-FIELD-EVENT61-SELECTOR1**：event",
+   "disposition": "obsolete_remake",
+   "reason": "event61 handler 與 selector1 時機已解碼;剩下的門檻是 remake 與原版的 E2 比對。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "剩餘門檻是同 roster/event/tick 的未修改 DOSBox 一般玩家比較；production 已達 E1，未達 E2"
+    }
+   ]
+  },
+  {
+   "key": "631384624b",
+   "title": "單位 0x50B 結構：`+5` raw bit0/bit7 predicate",
+   "disposition": "open_static",
+   "reason": "0x50 單位 record 的完整逐欄佈局仍未完成:doc03 2026-09-11 只把部分舊標記偏移訂正,+0x02..+0x04、+0x07、+0x08 名稱仍未證實,可由 constructor 與 consumer 靜態補齊。",
+   "next": "以 constructor 0x10c50 逐欄寫入加上各已命名 consumer(function_names.json),列出 +0x00..+0x4f 全欄位表,每欄附 writer / reader 位址;未證實者標待證,不沿用舊標記。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/03-exe-and-data-structures.md",
+     "quote": "但只有「寬度與位置吻合」這層證據,名稱仍是未經證實的舊標記"
+    }
+   ]
+  },
+  {
+   "key": "75dd1722b6",
+   "title": "**魔法系統** (第7-8輪完成資料與部分 runtime,commit 3c",
+   "disposition": "closed",
+   "reason": "本項 2026-09-06 複核自述:0x2ff01 已完整 decompile,「完整native演出」的 RE 面已閉合,只剩 remake 呈現接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "「完整native演出」子句的RE面已閉合，剩餘僅remake端UI/法術特效呈現接線"
+    }
+   ]
+  },
+  {
+   "key": "b072eb2bdb",
+   "title": "**native action overlay／現行四向 approximati",
+   "disposition": "obsolete_remake",
+   "reason": "原版 overlay 的 ABI、72×72 備份機制、+0x27 封咒命名都已在文件中;殘留的 backup / restore、visual diff、攻防預覽等是 remake 接線與比對。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/57-ui-evidence-matrix.md",
+     "quote": "在開啟前備份 72×72 bytes（`0x1440`）到 private buffer"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "22=封咒術(`+0x27`綁定確認，無對應清除指令)"
+    }
+   ]
+  },
+  {
+   "key": "57eaf8fd40",
+   "title": "**native command IDs13..16 healing route",
+   "disposition": "obsolete_remake",
+   "reason": "原版 heal 數值路徑已閉合;殘留是 remake 的 animation / UI / SFX / message 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "專用 indexed animation、UI、SFX、message 未接，禁止誤用 IDs0..9 damage executor"
+    }
+   ]
+  },
+  {
+   "key": "5cd6c5f678",
+   "title": "**native command ID24 player special rou",
+   "disposition": "obsolete_remake",
+   "reason": "ID24 宿主函式(0x2CF30)、倍率 15 與名稱(破龍擊)已解;殘留是 remake multi-hit / UI 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "multi-hit／presentation/SFX/UI 未接"
+    }
+   ]
+  },
+  {
+   "key": "c73db8f4c8",
+   "title": "**native commands28/29/31 derived-strike",
+   "disposition": "obsolete_remake",
+   "reason": "倍率、宿主函式 0x2CF30 與名稱已解;殘留是 remake cursor / renderer 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "cursor lifecycle／multi-hit／SFX／indexed renderer 仍待"
+    }
+   ]
+  },
+  {
+   "key": "9aa7399e9c",
+   "title": "**native commands 20..21 flag-clear/rest",
+   "disposition": "obsolete_remake",
+   "reason": "名稱(解毒 / 祛麻)、wrapper 與 EXP 係數已解;殘留是 remake UI / engine 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "UI/engine integration仍未接"
+    }
+   ]
+  },
+  {
+   "key": "dcf95fd3b8",
+   "title": "**native command 22 application route**：",
+   "disposition": "obsolete_remake",
+   "reason": "封咒術名稱、共用核心與 EXP 已解,tick 由 0x1A866 閉合;殘留是 remake 整合。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "status name/tick、UI、expiry recompute integration 未閉合"
+    }
+   ]
+  },
+  {
+   "key": "cb2f7e3a1f",
+   "title": "**transient command duration lifecycle**",
+   "disposition": "obsolete_remake",
+   "reason": "原版 0x1A866 的 selector 就是 phase 呼叫點傳入的 camp 碼,到期呼叫 0x1B750 重算也已閉合;「仍未接」是 remake 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "selector→campaign phase、expiry equipment recompute、UI/status icon 或 native command executor 仍未接"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "0x1A813(1)→0x1A866(1)→0x1A7BD→0x1D80B→0x1A7F1"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "固定 raw camp code 敵0／友1／己2"
+    }
+   ]
+  },
+  {
+   "key": "d927c1a204",
+   "title": "**native command 23 special relocation**",
+   "disposition": "obsolete_remake",
+   "reason": "傳送術機制、mode6 合法性與 EXP 已三重印證;殘留是 remake camera / render / UI。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "legality/camera/render/UI 仍未接"
+    }
+   ]
+  },
+  {
+   "key": "6cebaf0803",
+   "title": "**native commands 25..27 closure**：ID25 ",
+   "disposition": "obsolete_remake",
+   "reason": "25 / 26 / 27 名稱、RNG 順序與 EXP 寫入點已解;殘留是 remake UI / engine 整合。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "UI/status labels 與其餘 engine integration 待"
+    }
+   ]
+  },
+  {
+   "key": "6a2d9da722",
+   "title": "**native command IDs10..12 compositor fa",
+   "disposition": "closed",
+   "reason": "殘留的原版 0x2189A / 0x219AD scroll / composite 與專用演出已解:0x2189a 是圓形查表換色(doc35 §18),0x219ad 是圓內逐列重映射,0x21548 是地震術演出(含音效)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "以單位為圓心、半徑逐幀變化的圓形查表換色,不是 sprite walk-on"
+    },
+    {
+     "path": "docs/data/function_names.json",
+     "quote": "地震術演出(唯一呼叫端 command_handler_10)"
+    }
+   ]
+  },
+  {
+   "key": "939ac47482",
+   "title": "**魔法系統**（資料表與基礎 Cast 已接，native command/e",
+   "disposition": "closed",
+   "reason": "命中率已逐 ID 核對 36/36、AoE 已閉合、輔助系效果已由 doc13 閉合、SFX 有靜態全表、0x2ff01 演出 RE 已閉合;剩下的是 remake 整合。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "唯一未觸碰的子項(法術/道具命中率逐ID核對)這輪已完成"
+    },
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "index → 呼叫端 → 函式:靜態全表(2026-09-04)"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "「完整native演出」子句的RE面已閉合，剩餘僅remake端UI/法術特效呈現接線"
+    }
+   ]
+  },
+  {
+   "key": "6f1f59fbea",
+   "title": "**商店+祕密商店**: 69個shop節點已用`native_hub_vari",
+   "disposition": "obsolete_remake",
+   "reason": "剩餘項目是 remake 商店 owner/adapter 的 E2 逐章接線與 sell/equip/transfer 實作，沒有獨立待答的原版行為命題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "剩餘為purchase後續、sell/equip/transfer、town variant1/2及其他章節"
+    }
+   ]
+  },
+  {
+   "key": "6e3ad626ef",
+   "title": "**法術 FIGANI 手勢邊界**：`0x28784` 不讀 spell id",
+   "disposition": "duplicate",
+   "reason": "0x2a6bd 已證為誤記位址(真 dispatcher 是 0x2ff01),分支與命中率已解;原版側只剩 FDOTHER 48-53 葉節點(子樣本)語意,與第 3481 行戰鬥音效池逐招對照的殘留同一件事。",
+   "of": "11c17c69a5",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+     "quote": "leaf-level 語意，應該從「解碼資源 48-53 的子項格式」切入"
+    }
+   ]
+  },
+  {
+   "key": "a186bc6e7e",
+   "title": "**歷史 legacy magic snapshot（不可作 native co",
+   "disposition": "obsolete_remake",
+   "reason": "歷史快照，殘留只剩 remake 的 presentation/SFX 演出迴圈接線；風妖精固定 800 傷害等原版疑點已在 doc27 §6.5 解出。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "presentation/SFX 演出迴圈仍未接，非本輪範圍"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "id33風妖精→清`+0x25..+0x27`後固定800傷害經`0x211a4`"
+    }
+   ]
+  },
+  {
+   "key": "11c17c69a5",
+   "title": "戰鬥音效池([0x5411f] 動態子容器)導出+逐招對照——本輪(2026-0",
+   "disposition": "open_static",
+   "reason": "id≥0x20 index 來源(91-94)與 12-27 表缺口已解或撤回，但池內 sub-index 觸發時機與 action_id 2/8 名稱不吻合仍未解。",
+   "next": "以 Ghidra headless 逐一反組譯 action 函式 0x2bb33/0x2bd6c/0x2bfd9/0x2c217/0x2c441/0x2c67d/0x2cafc/0x2ccf4/0x2ce1a 內 play_sfx 呼叫與其 sub-index 參數，並解碼 FDOTHER #48-53 巢狀容器子項格式，定出揮空/命中/爆擊各用哪個子樣本與 action_id 2/8 的名稱。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "仍未解:id 0-9 對應的玩家可讀招式名稱;池內子樣本個別觸發時機"
+    }
+   ]
+  },
+  {
+   "key": "e28f0863a1",
+   "title": "UI 音效 index 2-0xb 語意畫面實測",
+   "disposition": "open_static",
+   "reason": "index 2..0xa 都已有實機或呼叫紀錄確認，只有 0xb(步態 2/3 腳步音)仍標 STATIC ANALYSIS、cl1..cl14 0 次；初步 grep 發現既有 lc184a 呼叫紀錄的 play_step_sfx 尾端有 6 次 0xb，可離線補證。",
+   "next": "用 calllog_segments 解析 .wsl_build/lc184_live/lc184a_CALLLOG.TXT 中返回 0x3230c 的 play_sfx_a 呼叫(初步 grep 堆疊值 0xb 共 6 次)，對到當時單位記錄的職業(步態表 0x52725 值 2/3)，再把 doc36 0xb 列由 STATIC ANALYSIS 升級。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "`0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS)"
+    }
+   ]
+  },
+  {
+   "key": "4aab855113",
+   "title": "戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12",
+   "disposition": "closed",
+   "reason": "戰鬥曲為每章查表 0x51e63 且 ch01 實機讀 [0x51a11]=19；勝利曲已以靜態四證加實測確認不存在；剩下的只有曲名命名，不是原版行為問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/12-music-playback-and-scene.md",
+     "quote": "全碼 5 處 `play_bgm` 走 `[0x53c03]`(章節)索引 `0x51e63` 表"
+    },
+    {
+     "path": "docs/knowledge-base/12-music-playback-and-scene.md",
+     "quote": "**因此:一般戰鬥沒有專屬的勝利曲。** 戰鬥結束後是停曲"
+    }
+   ]
+  },
+  {
+   "key": "fedfce4e2a",
+   "title": "戰鬥 SFX:index 陣列填值上游、#48-64 逐招對照、remake 接",
+   "disposition": "duplicate",
+   "reason": "填值上游已解(0x0526bc 與 0x1d51d→0x1c269)、remake 接入已失效；剩下的逐招對照與 L3481 同一件事。",
+   "of": "11c17c69a5",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "`local_20`/`[esp+0xd0+counter]`的填值機制**在語意層級已經找到並可信**"
+    }
+   ]
+  },
+  {
+   "key": "e28f0863a1-2",
+   "title": "UI 音效 index 2-0xb 語意畫面實測",
+   "disposition": "duplicate",
+   "reason": "與 L4085 是同一條文字、同一件事。",
+   "of": "e28f0863a1",
+   "evidence": []
+  },
+  {
+   "key": "62e6a43556",
+   "title": "戰鬥曲/勝利曲聽辨(使用者)",
+   "disposition": "closed",
+   "reason": "ch01 戰鬥曲已實機讀到 track 19、各章查表已靜態定出；勝利曲以 postbattle handler 無 play_bgm 呼叫與實測停曲確認不存在。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/12-music-playback-and-scene.md",
+     "quote": "**因此:一般戰鬥沒有專屬的勝利曲。** 戰鬥結束後是停曲"
+    },
+    {
+     "path": "docs/knowledge-base/12-music-playback-and-scene.md",
+     "quote": "補測:**ch01 戰鬥曲 = track 19**(原版實機讀 `[0x51a11]`)"
+    }
+   ]
+  },
+  {
+   "key": "009a97aab8",
+   "title": "+0xd0 陣列填值(逐招音效對照,低優先)——本輪(2026-08-19第12",
+   "disposition": "closed",
+   "reason": "+0xd0 填值來源已查明是 0x1d51d 確認鍵分支以 0x1c269 即時寫入的堆疊暫存；剩下的逐招對照由 L3481 追蹤。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/36-sfx-audio-data.md",
+     "quote": "`local_20`/`[esp+0xd0+counter]`的填值機制**在語意層級已經找到並可信**"
+    }
+   ]
+  },
+  {
+   "key": "3909145d59",
+   "title": "**戰場編輯器 MVP**:網頁單檔 HTML/JS,tile 繪製+單位擺放+",
+   "disposition": "obsolete_remake",
+   "reason": "remake 編輯器建置項目，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "**remake 專案建置項目，無原版側命題**"
+    }
+   ]
+  },
+  {
+   "key": "4ac7e6747d",
+   "title": "劇情編輯器:對白+事件表單+商店(下拉=event.go 現行能力,`38` §",
+   "disposition": "obsolete_remake",
+   "reason": "remake 編輯器建置項目，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "**remake 專案建置項目，無原版側命題**"
+    }
+   ]
+  },
+  {
+   "key": "0e34e2ef93",
+   "title": "編輯器能力清單同步:Go --dump-registry",
+   "disposition": "obsolete_remake",
+   "reason": "remake Go 工具鏈項目，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "**remake 專案建置項目，無原版側命題**"
+    }
+   ]
+  },
+  {
+   "key": "251ef9b6da",
+   "title": "campaign 節點圖編輯器(拖線/旗標/敗北路線可視化)",
+   "disposition": "obsolete_remake",
+   "reason": "remake campaign 編輯器項目，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "**remake 專案建置項目，無原版側命題**"
+    }
+   ]
+  },
+  {
+   "key": "befdf772c2",
+   "title": "ch04-33 劇情文本精校(30 章,PNG 人眼轉錄;對白已可入庫)",
+   "disposition": "closed",
+   "reason": "glyph→Unicode 對照 1824/1824 全覆蓋後，全 35 章已由 decode_story_text.py 程式化解碼，不再需要 PNG 人眼轉錄。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/09-story-and-dialogue.md",
+     "quote": "**全 35 章劇情轉錄完成**:`tools/decode_story_text.py --all` 自動解碼成含說話者名的 UTF-8"
+    }
+   ]
+  },
+  {
+   "key": "824740bb37",
+   "title": "開場配樂曲號實聽驗證(容器 nosound 無法驗;使用者聽辨)",
+   "disposition": "closed",
+   "reason": "標題畫面已實機讀 [0x51a11]=18，與 boot 唯一呼叫點的靜態結論一致。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/12-music-playback-and-scene.md",
+     "quote": "標題讀出 18，與本文件早已用「反組譯 boot 唯一呼叫 ＋ 使用者實聽」"
+    }
+   ]
+  },
+  {
+   "key": "84cfc726be",
+   "title": "ch02-33 全章 story 節點接 script(gen_campaign",
+   "disposition": "obsolete_remake",
+   "reason": "remake gen_campaign 接線項目，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "**remake 專案建置項目，無原版側命題**"
+    }
+   ]
+  },
+  {
+   "key": "546f82f2cd",
+   "title": "ch02-33 全章 story fallback：runtime 對精確 `s",
+   "disposition": "obsolete_remake",
+   "reason": "內容全是 remake runtime 的 story fallback、ch01 開場節點與走位實作，沒有原版待答問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "ch02/03 handler 仍待逐段 beats 接線"
+    }
+   ]
+  },
+  {
+   "key": "32471c6350",
+   "title": "**D8:戰前 UI**(doc46 附帶發現):Docker/Capstone",
+   "disposition": "closed",
+   "reason": "MAP/TURN/ENEMY/FRIEND/NPC 已實機確認是系統環「上→上」的戰況選單，YES/NO 行軍確認是系統環左邊的另一分支；剩下的 shell/截圖屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/57-ui-evidence-matrix.md",
+     "quote": "MAP/TURN/ENEMY/FRIEND/NPC全數live截圖確認，791正式關閉"
+    },
+    {
+     "path": "docs/knowledge-base/57-ui-evidence-matrix.md",
+     "quote": "同一輪也確認頂層系統環左邊圖示是「決定要行軍嗎?YES/NO」"
+    }
+   ]
+  },
+  {
+   "key": "4e1df42e98",
+   "title": "**playtest 8 項修正**(playfix agent 執行中,#7=",
+   "disposition": "obsolete_remake",
+   "reason": "remake 遊玩測試修正清單，remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "→ **batch1 已 commit(0f32d25)**;#7 非 bug(kill 誤殺)"
+    }
+   ]
+  },
+  {
+   "key": "08661b2251",
+   "title": "**#9 法術特效時序**(待使用者釐清):playfix 靜態審查=攻擊系法術",
+   "disposition": "closed",
+   "reason": "治療咒 IDs13..16 走 handler 不走全螢幕場景，演出是地圖層 0x1C4CC/0x1C2DA 疊繪加 0x1E0DB 數字；remake 誤認 bug 已隨 remake 失效。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md",
+     "quote": "它對 generic final target array 先跑專用 indexed presentation `0x1C4CC/0x1C2DA`"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "法術 < 9、== 0x18 或 > 0x1b 走場景,其餘走 handler"
+    }
+   ]
+  },
+  {
+   "key": "d9006f3948",
+   "title": "**社群行為 oracle 對照**：逐項把 FD2.EXE 修改表中的入隊、隨",
+   "disposition": "obsolete_remake",
+   "reason": "存檔、寶箱、入隊 constructor、等級上限的原版機制都已閉合；逐章 join 表依項目本身不另立追蹤，剩下的是 remake 規則與 regression 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "class→cap對應本身已完全閉合；仍缺remake端的執行接線"
+    }
+   ]
+  },
+  {
+   "key": "fe347ddcf3",
+   "title": "**ch22_pre control-flow**：固定 16-slot dea",
+   "disposition": "obsolete_remake",
+   "reason": "殘留是 remake handler binding 與 story_ch23 接線，沒有原版待答問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "不能僅因 renderer 存在就接 `story_ch23`"
+    }
+   ]
+  },
+  {
+   "key": "6afc134410",
+   "title": "**ch23 post mapping boundary**：Docker Ca",
+   "disposition": "obsolete_remake",
+   "reason": "0x24d22/0x11d40 原版語意已純靜態解出，剩下的是 remake postbattle binding。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
+     "quote": "能否純靜態解掉——結論：完全解掉，不再需要live capture"
+    }
+   ]
+  },
+  {
+   "key": "b881df165a",
+   "title": "**ch24/ch25 pre-handler**：`0x24b4d` 四段 t",
+   "disposition": "obsolete_remake",
+   "reason": "殘留是 remake 的 indexed double-buffer visual adapter，沒有原版待答問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "尚待 indexed double-buffer visual adapter"
+    }
+   ]
+  },
+  {
+   "key": "4dd3700ec6",
+   "title": "**ch25/ch26 pre-handler**：FDTXT_026 stri",
+   "disposition": "obsolete_remake",
+   "reason": "內容是 remake binding 的文字索引對齊；殘留「是否證明每個分支」是 remake binding 的覆蓋問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "這只關閉文字索引，不自動證明每個條件分支或 event61 玩家路徑"
+    }
+   ]
+  },
+  {
+   "key": "2f31456c8f",
+   "title": "**ch26/ch27 pre-handler**：FDTXT_027 idx0",
+   "disposition": "obsolete_remake",
+   "reason": "殘留是 remake 與原版同狀態的 E2 對照及 item 分支的 remake 視覺接線，remake 移除後失去對象。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "仍缺未修改一般玩家／CONTINUE 的同狀態 E2"
+    }
+   ]
+  },
+  {
+   "key": "515bcdf2c6",
+   "title": "**ch26 post item-gate branch**：`0x25186→",
+   "disposition": "obsolete_remake",
+   "reason": "0x24b14(0x64) 的原版語意已閉合，殘留是把視覺呼叫與缺匙分支資料化給 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "仍需把 visual/effect calls 與缺匙 editable branch 資料化"
+    }
+   ]
+  },
+  {
+   "key": "a15eac82ca",
+   "title": "**ch29 post staged mapping**：四組對白已精確接到 c",
+   "disposition": "obsolete_remake",
+   "reason": "0x2bce5 已確認是不可達的誤記位址，結局背景由 0x524c6 carousel 引擎畫出；殘留只差 remake adapter 與 terminal 接線(立繪部分由 L4463 追蹤)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "50f9bf7a1a",
+   "title": "**ch29 post focus lowering**：`0x12cea` 已",
+   "disposition": "obsolete_remake",
+   "reason": "remake lowering 項目，等待的 ending renderer 在原版側已有答案。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "75ae39a540",
+   "title": "**ch29 post persistent cleanup**：`0x2508",
+   "disposition": "obsolete_remake",
+   "reason": "remake lowering 項目，等待的 ending renderer 在原版側已有答案。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "b1bcf37752",
+   "title": "**ch29 post tick wait**：`0x17aa9(1)` 已 l",
+   "disposition": "obsolete_remake",
+   "reason": "remake lowering 項目，等待的 ending renderer 在原版側已有答案。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "e02c7691f7",
+   "title": "**ch29 post dynamic palette loop**：`0x11",
+   "disposition": "obsolete_remake",
+   "reason": "remake lowering 項目，等待的 ending renderer 在原版側已有答案。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "48848f7ad2",
+   "title": "**ch29 post terminal handler**：`0x25870 ",
+   "disposition": "obsolete_remake",
+   "reason": "0x25870/0x1088d 與 0x25970→0x31529 已釐清，0x2bce5 是誤記；殘留是 remake handler fail-closed 的接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "只差 dedicated indexed adapter/campaign terminal 接線"
+    }
+   ]
+  },
+  {
+   "key": "ea11fb230d",
+   "title": "**ch29 pre native unit presentation**：舊「",
+   "disposition": "obsolete_remake",
+   "reason": "0x22253 原版函式身分與 11+6+10 鏈已解，殘留是 remake runtime fail-closed 與 Ebiten job driver。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "doc50/91 記的「0x22253 choreography 尚未實作」是 remake 側的狀態,本批只補原版側的函式身分"
+    }
+   ]
+  },
+  {
+   "key": "1a8f65665f",
+   "title": "**ch29 post BIOS tick wait**：`0x17aa9` 已",
+   "disposition": "obsolete_remake",
+   "reason": "原版 0x17aa9 讀 BIOS tick 已證實，殘留是 remake runtime 時脈 adapter。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "若要逐毫秒重現，需在 runtime 加 BIOS-tick clock adapter"
+    }
+   ]
+  },
+  {
+   "key": "3590c54996",
+   "title": "**native `0x22253` renderer adapter**：已釘",
+   "disposition": "obsolete_remake",
+   "reason": "0x22253/0x22046/0x219ad 原版鏈已解(圓形 LUT 重映射)，殘留是 remake descriptor/buffer/Ebiten adapter。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "doc50/91 記的「0x22253 choreography 尚未實作」是 remake 側的狀態,本批只補原版側的函式身分"
+    }
+   ]
+  },
+  {
+   "key": "d18dd85e75",
+   "title": "**chapter ending renderer (`0x2bce5`)**：",
+   "disposition": "open_static",
+   "reason": "背景圖 renderer 已由 live BPPM 解出，但結局 montage 的 FIGANI 立繪本體與 portrait 框的繪製機制仍未查清(只有 FUN_0002fb2c 候選)。",
+   "next": "靜態反組譯 FUN_0002fb2c(9 輪迴圈加額外呼叫)的被呼叫端與傳給 FUN_000111ba 的資源索引，確認立繪幀來源；再找畫 portrait 框的呼叫，可對照 doc98 L7951 所述既有結局 montage 執行軌跡。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "`FUN_000111ba()`的資源索引語意、`FUN_0002fb2c`額外呼叫的內容仍需驗證、portrait框完全未觸及"
+    }
+   ]
+  },
+  {
+   "key": "f939f06a9c",
+   "title": "battle selector bridge：`battle_fig`→`Uni",
+   "disposition": "obsolete_remake",
+   "reason": "原版 constructor b1→unit+7 已閉合，其餘是 remake Unit/loader 橋接。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "constructor `0x10d7f..0x10efc` 已閉合 FDFIELD `b1→unit+7`"
+    }
+   ]
+  },
+  {
+   "key": "4aecea9558",
+   "title": "map selector provenance audit：`0x10c50→0",
+   "disposition": "obsolete_remake",
+   "reason": "原版 FDICON key cache 與 b0 來源已釘死，下一步只剩 remake indexed composition。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "下一步是 native indexed buffer/palette/layer composition"
+    }
+   ]
+  },
+  {
+   "key": "887741364f",
+   "title": "**native terrain/unit map HUD (`0x1acf3`",
+   "disposition": "closed",
+   "reason": "逐章初值已證為共用 reset 全 0；唯一殘留的原版 HUD 像素 oracle 已由 DOSBox-X 傾印逐像素對上 FDICON 圖示加 HP 數字格。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "圖示框 = FDICON sprite 再蓋 HP 數字「823」"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "殘留缺口收斂為僅剩「DOSBox 320×200 HUD pixel oracle」這個純live驗證項目"
+    }
+   ]
+  },
+  {
+   "key": "54d796372f",
+   "title": "**indexed ending compositor core**：`inte",
+   "disposition": "duplicate",
+   "reason": "remake compositor 部分已失效；原版側殘留(FIGANI 立繪、portrait 框、montage 資產索引)與 L4463 相同。",
+   "of": "d18dd85e75",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "FIGANI\n  立繪本體、portrait框、`native_2c548.json`描述的細部資產索引(FDOTHER#56/TAI#3/DATO)本輪\n  **未逐項查證**"
+    }
+   ]
+  },
+  {
+   "key": "7336259a74",
+   "title": "**ending compositor asset preflight**：正確",
+   "disposition": "obsolete_remake",
+   "reason": "內容是 remake internal/fdother/afm 的資產 preflight；剩下的 montage gate 由 L4463 追蹤。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "schedule/branch adapter與phase0 preview均已接"
+    }
+   ]
+  },
+  {
+   "key": "10abaa275b",
+   "title": "**ending `#0x36` frame decoder contract*",
+   "disposition": "obsolete_remake",
+   "reason": "#0x36 frame decoder 原版 ABI 已釘死，殘留 montage gate 由 L4463 追蹤，其餘是 remake runtime。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "舊「文字args尚無語意／缺完整prefix bridge」斷言已撤回；剩餘gate是`0x2c548` montage"
+    }
+   ]
+  },
+  {
+   "key": "ac6a82745b",
+   "title": "**editable ending prefix timeline**：新增 `",
+   "disposition": "obsolete_remake",
+   "reason": "內容是 remake 可編輯 ending IR 與 internal/ending gate；原版參數語意已定案。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "`internal/ending` 仍只接受 `recovered_prefix_only_fail_closed`"
+    }
+   ]
+  },
+  {
+   "key": "8970141175",
+   "title": "**⬜ 自動結束回合**(使用者要求 2026-07-05,不急)：目前 rem",
+   "disposition": "closed",
+   "reason": "自動結束回合本身是 remake 功能;原版側殘留只有 0x1728C 四個旗標的語意,已由反組譯讀出:options_ring 以 [0x51e61] / [0x51e62] / [0x53af9] / [0x51aab] 選環圖示格(0x12..0x19 是傳給 0x1741c 的圖示索引,不是字串),選中後各自切換;四個旗標的使用端分別是音樂音量、音效守衛、AI 攻擊是否播場景(實機)、地圖 HUD,即設定選單的四個開關(CODE CONFIRMED)。",
+   "evidence": [
+    {
+     "path": "docs/data/function_names.json",
+     "quote": "指令環的子選單:4 個環項目依 [0x51e61] / [0x51e62] / [0x53af9] / [0x51aab] 四個旗標決定是否反白"
+    },
+    {
+     "path": "docs/knowledge-base/11-enemy-ai.md",
+     "quote": "所以它是「AI 攻擊要不要播戰鬥場景」的開關"
+    },
+    {
+     "path": "docs/data/function_names.json",
+     "quote": "旗標 [0x51aab] 決定是否顯示"
+    }
+   ]
+  },
+  {
+   "key": "fbb523f748",
+   "title": "**handler 後半段 beats 解碼**(sonnet subagent",
+   "disposition": "open_static",
+   "reason": "remake 排程重寫已失效，但 ch1-forest.md 依 doc50 規則推算的密林段走位座標從未對原版執行期資料核對。",
+   "next": "用既有 DOSBox-X 呼叫紀錄 lc184a(開場逐鍵推進含第 31 張圖森林段，單位表基底 0x2389f0)裡的單位記錄傾印，核對 scene-decode/ch1-forest.md 推算的 acting 0x5a..0x62 走位座標與 slot 對照。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "座標推算僅套用doc50既有規則，\n      沒有dosbox斷點交叉驗證(non-live)"
+    }
+   ]
+  },
+  {
+   "key": "fa4809ba7b",
+   "title": "**SDD-1 UI evidence matrix**：以 Ghidra/ID",
+   "disposition": "not_a_task",
+   "reason": "這是 remake SDD 的持續稽核說明，項目自述非單輪可關閉；具體缺口由各 UI-xx 項目分別追蹤。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "此項本身是持續性靜態IDA/Capstone稽核工作，非單輪可關閉項目"
+    }
+   ]
+  },
+  {
+   "key": "f94830d563",
+   "title": "**UI-03 native command ABI**：Docker Caps",
+   "disposition": "closed",
+   "reason": "指令環四格對應(攻擊/法術/道具/待機)與 disable 條件已完整反組譯，+0x27 已定為封咒；剩下的 resource anchor 與畫面 oracle 是 remake renderer 需求。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/13-battle-menu-system.md",
+     "quote": "四個 slot 做以下判定(`param_2`=`enableFlags`,`param_2[0..3]` 依序對應 上/左/右/下即"
+    },
+    {
+     "path": "docs/knowledge-base/13-battle-menu-system.md",
+     "quote": "`command22=+0x27`(封咒)"
+    }
+   ]
+  },
+  {
+   "key": "64842536df",
+   "title": "**UI-03 native target/effect state dispa",
+   "disposition": "obsolete_remake",
+   "reason": "內容是 remake main.go target cursor 與白名單 executor 接線，沒有原版待答問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "這接通 state/UI boundary，不宣稱 indexed effect renderer"
+    }
+   ]
+  },
+  {
+   "key": "3eece34fa0",
+   "title": "**UI-04 range geometry**：Docker/Capstone",
+   "disposition": "open_static",
+   "reason": "LOS 已證明不存在、AOE 已由第二段 collect_targets_in_range(range=+4)解出；只剩「不可用目標灰化」原版是否有、怎麼畫還沒查。",
+   "next": "反組譯 target_cursor_loop 與 0x1ceed command grid renderer 的 disabled 分支，確認原版有沒有把不可選目標或格子畫成灰色、用哪個 palette/資源；沒有就記為不存在。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/11-enemy-ai.md",
+     "quote": "**`0x14818` 視線判定缺口：視為已閉合**"
+    },
+    {
+     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
+     "quote": "選定落點後再以落點為原點(range = `+4`)取實際目標"
+    }
+   ]
+  },
+  {
+   "key": "37193d8149",
+   "title": "**UI-03 battle selector input**：Docker/C",
+   "disposition": "closed",
+   "reason": "END 選項就是 0x16F55 selector3：Yes/No 對話確認後直接呼叫 0x1A30B 回合結算，doc11 已反組譯並核對 FDTXT。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/11-enemy-ai.md",
+     "quote": "`0x196CB`(收尾動畫) → **直接**呼叫 `0x1A30B()`"
+    }
+   ]
+  },
+  {
+   "key": "e0e5944948",
+   "title": "**SDD-2 campaign transition matrix**：已從 ",
+   "disposition": "closed",
+   "reason": "原版側殘留(逐章 handler E0)已有直接從 EXE 取得的逐章 handler 對應表,chapter_beats 也已完整抽取;save/reload regression 與 authored graph 屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "逐章 handler 對應表已直接從 EXE 取得"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "所以本行的 RE 側沒有剩餘缺口"
+    }
+   ]
+  },
+  {
+   "key": "4c2e4b2b2b",
+   "title": "**UI-11 原版整備選人主畫面**：Docker Capstone 重讀",
+   "disposition": "closed",
+   "reason": "剩下的「跨畫面行程全域初始相位」與合法晚期存檔,原版側都已在 2026-09-07 解出並存檔;差分的另一端 remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "剩下的「跨戰場／城鎮的行程全域初始相位」已解出，本項閉合"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "原版側兩半（合法晚期存檔 + 初始相位）至此都已完成"
+    }
+   ]
+  },
+  {
+   "key": "3c26ca815a",
+   "title": "**SDD-3 UI shell vertical slice**：已新增 `T",
+   "disposition": "closed",
+   "reason": "battle field / action / dialog 三類原版畫面已用一般玩家路徑實機擷取;pixel differential 的 remake 端已不存在。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "battle field / action / dialog 三類畫面均已在原版側取得實機擷取"
+    }
+   ]
+  },
+  {
+   "key": "bf3856038d",
+   "title": "**SDD-4 native renderer re-audit**：完成 re",
+   "disposition": "obsolete_remake",
+   "reason": "本項是 remake renderer 的防呆宣告;resource provenance 與 indexed buffer contract 已由後續 RE 項閉合,剩下是 remake 組裝。原版結局 montage 已實機觸發並觀察。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "防呆性宣告，其要求的resource provenance與indexed buffer contract實質已由後續`[x]`項閉合，剩下是組裝成完整renderer的工程整合"
+    },
+    {
+     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
+     "quote": "已經證實這段內容經由「47 格死亡 signature + End Turn 確認」可以真正觸發戰鬥勝利、深入結局"
+    }
+   ]
+  },
+  {
+   "key": "91fa64d6a7",
+   "title": "**下一個 ending gate**：依`native_2c548.json`",
+   "disposition": "obsolete_remake",
+   "reason": "剩下的是 remake 的 dedicated indexed adapter 與 campaign terminal route;原版 montage 的渲染鏈已由 live BPPM 定位(FUN_0002ff01→0x2eb9f→0x4e98d、FUN_0002aa00 家族),montage RE 已關閉。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "與1183同一缺口具體化版本，FDOTHER#56/FIGANI/DATO/fade皆已由後續項目個別RE並`[x]`關閉，剩純組裝工程"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "ch29/ch30結局流程「接起來」這件事在RE(反組譯理解)層面已無殘餘缺口"
+    }
+   ]
+  },
+  {
+   "key": "7566c54594",
+   "title": "**RUNTIME-NATIVE-MAP-CLOCK-AND-FRAME-INP",
+   "disposition": "obsolete_remake",
+   "reason": "原版 0x11eee / 0x1297d 時鐘語意已閉合;未完成的是 Ebiten 七拍 movement 與 range-mode writers 的 remake runtime 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "七拍movement仍由Ebiten Update驅動"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "項目自陳七拍movement已知但尚未materialize進runtime loop，屬工程接線而非新RE"
+    }
+   ]
+  },
+  {
+   "key": "de0c692653",
+   "title": "**CH29-POST-FLOW-WIRING 勘誤**：撤回 `postbat",
+   "disposition": "closed",
+   "reason": "EXE 逐章 handler 表已確定第 29 戰由 raw ch28_post 處理,結局流程 RE 已閉合;剩下的 campaign_full binding 屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "ch29/ch30結局流程「接起來」這件事在RE(反組譯理解)層面已無殘餘缺口"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "`ch28_post`(=ch29,`0x2548c`)41 beats"
+    }
+   ]
+  },
+  {
+   "key": "afbff29452",
+   "title": "**RE-ITEM-EFFECT-DISPATCH**：Docker Capst",
+   "disposition": "obsolete_remake",
+   "reason": "0x20c6f 的 type→callee 全 map 與 effect closures 已閉合;剩下的 item selector UI、indexed presentation、engine integration 都是 remake 工程。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "item selector UI、indexed presentations 與 normalized engine"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "項目自陳剩餘缺口是item selector UI/indexed presentations/engine integration，`0x20c6f`本身RE已關閉"
+    }
+   ]
+  },
+  {
+   "key": "61b42f70f1",
+   "title": "**SYNC-PARTY-RAW-IDENTITY-GATE**：`PartyM",
+   "disposition": "obsolete_remake",
+   "reason": "raw identity byte(+0x08)已由 0x24bde 項閉合;剩下的是 remake 的全 roster / save / export raw record 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "仍未完成全 roster/save/export 的 raw record 接線"
+    }
+   ]
+  },
+  {
+   "key": "3832f4acbf",
+   "title": "**RE-RAW-BUFFER-LATCH-24D22**：Docker Cap",
+   "disposition": "closed",
+   "reason": "0x24d22 全部 4 個 caller 的參數已靜態窮舉:參數 2..14 只走 setter,參數 0 才走 copy 分支;0x24c1e 是戰果調色盤淡出,不需 live。剩下的 renderer adapter 屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "這些參數是編譯期迴圈邊界，不依賴任何戰鬥執行期狀態"
+    },
+    {
+     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
+     "quote": "能否純靜態解掉——結論：完全解掉，不再需要live capture"
+    }
+   ]
+  },
+  {
+   "key": "6f06b72368",
+   "title": "**RE-CHAPTER-CALLER-24838**：Docker Capst",
+   "disposition": "closed",
+   "reason": "0x24bde(0x12) 已定名 roster_has(角色 id 18),0x24b14(100) 已定為 inventory_has;剩下的 runtime campaign binding 屬 remake。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "所以這支就是「隊伍名冊裡有沒有角色id X」的查詢"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "全部改為`op:inventory_has`並附引用note"
+    }
+   ]
+  },
+  {
+   "key": "f503818a0b",
+   "title": "**RE-INVENTORY-ITEM-GATE-24B14**：Docker ",
+   "disposition": "obsolete_remake",
+   "reason": "原版 0x24b14→0x31860→0x1b8a6/0x1b722 鏈路已閉合;保留 [~] 只是為了核對 remake 程式碼,remake 已移除。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "原版RE鏈路(`0x24b14→0x31860→0x1b8a6/0x1b722`)本身早已閉合"
+    }
+   ]
+  },
+  {
+   "key": "61e140b9c7",
+   "title": "**UI-SHOP-PURCHASE-SUCCESS/DEBIT**：`0x2f",
+   "disposition": "obsolete_remake",
+   "reason": "成功與扣款動畫的原版行為已在 DOSBox 閉合;剩下的是把其他子面板接進 remake 的 campaign / save 生產路徑。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE"
+    }
+   ]
+  },
+  {
+   "key": "fc0a4c98c5",
+   "title": "**NATIVE-CURRENT-SNAPSHOT-ROSTER**：合法 ID",
+   "disposition": "obsolete_remake",
+   "reason": "0x10010 current snapshot 版面已閉合;剩下的 battle.State→Game / controller handoff 與 pending-group binding 都在 remake Go 側。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "本項的 blocker 逐字是 `battle.State`→`Game`/controller 的原子 handoff 與 pending-group binding"
+    }
+   ]
+  },
+  {
+   "key": "80abae6f42",
+   "title": "**NATIVE-CONTINUE-RUNTIME-PREFLIGHT**：合法",
+   "disposition": "obsolete_remake",
+   "reason": "CONTINUE selector rebuild 與 presentation 的原版語意已閉合;ReadyForContinue 與 controller handoff 是 remake 重構。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "與 1604 同一 blocker 家族（`ReadyForContinue=false`、controller handoff 重構），同屬 remake（Go）側工作"
+    }
+   ]
+  },
+  {
+   "key": "1935578011",
+   "title": "**CONTINUE pending groups 靜態排程切片**：IDA/C",
+   "disposition": "obsolete_remake",
+   "reason": "selector0/1/2 的掃描時序已閉合,動態 event27/54/57 與 47/49 的 group 公式也已在 doc25 解出;剩下的是把這些資料化進 remake 資產與 owner。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/25-battle-event-system.md",
+     "quote": "event47/49 是 `group=turn÷2`——同樣的「回合數驅動遞增 group」設計母題"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "子項仍`[~]`，同樣卡在controller handoff重構"
+    }
+   ]
+  },
+  {
+   "key": "a2243fcedf",
+   "title": "**CONTINUE future group constructor inpu",
+   "disposition": "obsolete_remake",
+   "reason": "0x10B4E..0x11018 constructor、[0x53AFA] gate 與 0x32999 都已閉合;剩下的 CONTINUE owner、0x50-byte identity、E2 diff 都是 remake 的 fail-closed 邊界。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "完整 0x50-byte identity 與 DOSBox E2 仍維持 fail-closed"
+    },
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "子項仍`[~]`，同樣卡在controller handoff重構"
+    }
+   ]
+  },
+  {
+   "key": "7fac4fe112",
+   "title": "**NATIVE-PERSISTENT-PARTY-MATERIALIZATIO",
+   "disposition": "closed",
+   "reason": "唯一的原版側殘留「一般玩家有效槽」已在 2026-09-07 以原版實機 LOAD 四個有效槽確認;其餘是 remake current battle runtime 接線。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "有效槽語意在原版側已確認；E2 對照半因 remake 移除已無對象"
+    }
+   ]
+  },
+  {
+   "key": "7a1ff93d8c",
+   "title": "**MAP26-EVENT63-E2-PLAYER-PATH**：從未修改 ch",
+   "disposition": "open_live",
+   "reason": "event62→event63 增援的靜態語意已閉合,但在原版未修改的玩家路徑下,event63(兩次白閃 + group1/2 增援)從未實機觀察;2026-09-07 只擷取到 ch27 進場起始狀態。",
+   "next": "DOSBox-X 載入未修改的 ch27 存檔,一般輸入讓 selector0 單位依 event62 條件向左一步後結束回合;在敵方 AI 之前下斷點(現行 EXE 的 event63 handler 是 0x35c1d,不是舊位址 0x358c7),逐幀擷取兩次全 DAC 白閃與 group1@(3,27)、group2@(15,27) 出場,對照 doc56 的靜態時序(pan→constructor→300ms→白閃→200ms→restore)。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "原版側的 camera/roster/tick 起始狀態已由本輪擷取固定下來"
+    },
+    {
+     "path": "docs/data/known_address_errata.json",
+     "quote": "\"correct_address\": \"0x35c1d\""
+    }
+   ]
+  },
+  {
+   "key": "f0d8c7bce2",
+   "title": "**REAL-UI-MOVE-CONFIRM-ENTER-SPACE-INTER",
+   "disposition": "closed",
+   "reason": "2026-09-04 用項目自己的判準(BP 0x11719)在同一份 ch27 存檔量化重測 94/94 零失敗,判定現行環境不可重現並找出三個偽陽性成因;這本來就不是原版 EXE 的行為問題。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/48-dosbox-x-debugger-build.md",
+     "quote": "狀態與量測都正確之後合計 94/94,零失敗。"
+    },
+    {
+     "path": "docs/knowledge-base/48-dosbox-x-debugger-build.md",
+     "quote": "建議把此項由「未解的間歇性輸入丟失」改列為「**現行環境不可重現**"
+    }
+   ]
+  },
+  {
+   "key": "15b4876e83",
+   "title": "**ch10 卡納恩三世再查(2026-08-30 續輪,回應上兩條「portr",
+   "disposition": "closed",
+   "reason": "本項要求的 ch10 勝負 handler 反組譯已在同日 ch10disasm 輪完成:0x20707 保護 record[50] 與 record[51],用消去法定出 record[50] 就是卡納恩三世;portrait135 的 DATO 歸屬是刻意繞過的旁支。",
+   "evidence": [
+    {
+     "path": "docs/knowledge-base/91-worklist.md",
+     "quote": "ch10 卡納恩三世反組譯定案(2026-08-30「ch10disasm」輪"
+    },
+    {
+     "path": "docs/knowledge-base/99-chapter-sweep-results.md",
+     "quote": "record[51]=索菲亞(已定案)，record[50]=portrait135候選"
+    }
+   ]
+  }
+ ]
+}

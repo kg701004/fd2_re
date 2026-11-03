@@ -12981,3 +12981,48 @@ finish.log「battle HUD recovered after 1 clear-Return(s)」、只有 70_clear0 
 **驗證**:見提交訊息。
 
 **仍留**:無(續一百八十七兩項都已處理)。隱藏寶箱(0x1ae、挖掘)走同一段程式,沒有另外實機。
+(續一百八十九:隱藏格與可見格只差推的字串、0x194C2 起同一段,不另跑實機,見該節 (E))
+
+## 2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000)
+
+起因:使用者「還有哪些問題」→「請針對尚未解決的問題 新建工具 加速處理問題」。上一輪只能 grep 數 `[ ]`(30 行),說不出哪些是真的。沒有新實機。
+
+**(A) 新工具 `tools/worklist_checklist.py`**:
+- 解析 `91-worklist.md` 全部勾選框(746 個:`[x]` 617、`[~]` 103、`[ ]` 26);續行 = 縮排比標題深、非空、不是另一個勾選框。
+  key = 標題行去 `→【…】` 註記、壓縮空白後的 sha1 前 10 碼(同文字第二次加 `-2`),勾成 `[x]` 或補註記 key 不變。
+- `--check`:每個未勾項目在登錄表恰有一筆;已勾 / 已改寫的項目登錄即過期;分類只能是 closed / obsolete_remake / duplicate /
+  not_a_task / open_static / open_live;closed 必須附依據且引文(≥ 8 字)逐字出現在依據檔;duplicate 指向非 duplicate;open_* 必須寫 next。
+- `--suggest` / `--skeleton`:項目位址(依數值)與 `docs/knowledge-base` 其他文件各節求交集,列可能結案的章節,只是加速閱讀、不做判斷。
+- 不走關鍵字判斷開放 / 已解(`worklist_status.py` 實測那條路約六成假陽性);判斷存在登錄表,工具只驗覆蓋與依據。
+- `--selftest` 用合成清單驗解析、各類錯誤各觸發一次與乾淨控制;真實檔用另一種寫法數未勾行對照、登錄表要求零錯。
+
+**(B) 分類結果**(129 項,登錄表):closed 44、obsolete_remake 68、duplicate 4、not_a_task 3、open_static 8、open_live 2。
+- 由 4 個唯讀子代理分段讀條目與後續章節判定,每筆 closed / obsolete_remake 附逐字引文;`--check` 零錯(引文全部找到)。
+  引文存在是機器驗的,判斷本身是閱讀結論;抽驗 5 筆 closed(經驗值等級因子、劇情轉錄、移動確認掉鍵、開場曲號、整備初始相位)依據都相符。
+- 子代理之間兩處不一致,改由反組譯定:
+  - 第 4638 行「自動結束回合」的原版側殘留 = 0x1728C 四個旗標:`options_ring` 以 [0x51e61] / [0x51e62] / [0x53af9] / [0x51aab]
+    選環的圖示格(0x172d3 .. 0x17315 的 0x12 .. 0x19 是傳給 0x1741c 的圖示索引,不是字串),選中後各自切換(0x17364 .. 0x173db);
+    使用端是音樂音量(0x17386 呼叫 0x3b124)、音效守衛、AI 攻擊是否播場景(實機)、地圖 HUD —— 設定選單的四個開關,記 closed(CODE CONFIRMED)。
+  - 第 3462 行的 duplicate 改指第 3481 行(戰鬥音效池子樣本,仍 open_static),不指已 closed 的第 3412 行。
+- 檢查本身有效:在記憶體裡改一筆引文、刪一筆分類、清一筆 next,`check()` 對真實檔報出對應的 3 筆錯誤。
+
+**(C) 酒店 icon index 勘誤**(CODE CONFIRMED;FD2.EXE 反組譯 `0x29300` .. `0x294cd`、FDTXT_000):
+- 0x293f2 index0 → 0x29620(狀態);0x29405 index1 → 0x2968d(存檔);0x2941b index2 → 0x29424 呼叫 0x2986f;其他 → 0x2942e。
+- 0x2986f 是讀檔:fopen 參數是資料區的 "FD2.SAV" / "rb",讀 0x59cb bytes、解密(0x4df28 `save_xor_crypt`)、選槽(0x29bcb `save_slot_selector`)、名冊 0xa00 bytes 拷回 [0x53bf7];
+  不能讀的章節顯示 0x1df「本章不能由商店內讀取！」。
+- 0x2942e 那一支顯示 0x19f「要離開戰場嗎？」,YES 後 0x1a0「那麼請休息吧！」再結束。
+- 所以 doc25(呼叫者鏈那段)「`index2→0x2986f`(離開)」與 91-worklist tavernE2 輪「index2 = 離開 / index3 未解」都錯一格:
+  四格 = 狀態 / 存檔 / 讀檔 / 離開,與續一百零八呼叫紀錄的「存檔 / 讀檔 / 回 DOS」一致。兩處加更正註記,原文不改。
+
+**(D)** doc25 §3.2.4 兩處續一百八十七更正註記補指向續一百八十八實機(按一次 Return 後旗標[9] = 1、錢 + 5000)。
+
+**(E) 隱藏寶箱**(STATIC ANALYSIS):可見 / 隱藏只差推哪個字串(問句 0x19143 / 0x19161、金額 0x1949A / 0x194B7),之後同從 0x194C2 進等鍵、加錢、寫旗標;
+可見那一路已實機(續一百八十八),隱藏格另跑實機多知道的很少,不跑。
+
+**驗證**:見提交訊息。
+
+**仍留**(登錄表的 open_static 8 / open_live 2,`python tools/worklist_checklist.py --summary` 列 next):
+- open_static:第 2801 行全域事件 58 .. 85 以正確入口重反編譯;第 2885 行存檔 metadata +10 .. +39 有無其他讀者、有無刪槽;
+  第 3309 行單位 0x50 記錄逐欄表;第 3481 行戰鬥音效池子樣本與 action_id 2 / 8 名稱;第 4085 行 UI 音效 0xb(lc184a 呼叫紀錄可能已有 6 次);
+  第 4463 行結局 montage 立繪與 portrait 框;第 4647 行開場森林段推算座標對呼叫紀錄;第 4752 行不可選目標是否灰化。
+- open_live:第 1918 行 ch03 / ch06 祕密商店鍵不觸發;第 5486 行 ch27 event63 一般玩家路徑。

@@ -34896,6 +34896,38 @@
    "excerpt": "**同輪修正:`verify_address_citations.py --selftest` 第 (11b) 題在 HEAD 上一直 FAIL**(在 `29295e6d` 的乾淨 worktree 重跑確認,與本輪修改無關)。",
    "verdict": "benign",
    "note": "工具 selftest 的狀態(verify_address_citations (11b) 在 HEAD 失敗),不是遊戲事實主張;依據是 git 歷史與 selftest 輸出"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 12994,
+   "excerpt_sha1": "ab492026921cee84863297bf671e37154e442ea0",
+   "excerpt": "not_a_task / open_static / open_live;closed 必須附依據且引文(≥ 8 字)逐字出現在依據檔;duplicate 指向非 duplicate;open_* 必須寫 next。",
+   "verdict": "benign",
+   "note": "續一百八十九:描述 tools/worklist_checklist.py 的檢查規則與分類流程(逐字引文比對、子代理分類、抽驗),是工具自我描述,不是原版事實的驗證主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 12996,
+   "excerpt_sha1": "96ae4e46684fd1d0c4ac83993d5b2ddc5700073d",
+   "excerpt": "- 不走關鍵字判斷開放 / 已解(`worklist_status.py` 實測那條路約六成假陽性);判斷存在登錄表,工具只驗覆蓋與依據。",
+   "verdict": "benign",
+   "note": "續一百八十九:描述 tools/worklist_checklist.py 的檢查規則與分類流程(逐字引文比對、子代理分類、抽驗),是工具自我描述,不是原版事實的驗證主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 13000,
+   "excerpt_sha1": "e1543a92718b9caa5fd122d9b1bfa0af80994fce",
+   "excerpt": "- 由 4 個唯讀子代理分段讀條目與後續章節判定,每筆 closed / obsolete_remake 附逐字引文;`--check` 零錯(引文全部找到)。",
+   "verdict": "benign",
+   "note": "續一百八十九:描述 tools/worklist_checklist.py 的檢查規則與分類流程(逐字引文比對、子代理分類、抽驗),是工具自我描述,不是原版事實的驗證主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 13001,
+   "excerpt_sha1": "729f6f88b2f0834c24b621f157ae3d57a9142604",
+   "excerpt": "引文存在是機器驗的,判斷本身是閱讀結論;抽驗 5 筆 closed(經驗值等級因子、劇情轉錄、移動確認掉鍵、開場曲號、整備初始相位)依據都相符。",
+   "verdict": "benign",
+   "note": "續一百八十九:描述 tools/worklist_checklist.py 的檢查規則與分類流程(逐字引文比對、子代理分類、抽驗),是工具自我描述,不是原版事實的驗證主張"
   }
  ]
 }

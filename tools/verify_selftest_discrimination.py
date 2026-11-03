@@ -228,6 +228,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "ail_driver_disasm.py":       (["--selftest"], "offline"),
     # 續一百八十八:截圖文字的字模全等判讀;selftest 用手算點陣與合成畫面,有 extracted/raw 時再用真字型合成。
     "fd2_screen_text.py":         (["--selftest"], "offline"),
+    # 續一百八十九:91-worklist 勾選框逐項分類的覆蓋 / 依據檢查;selftest 用合成清單,真實檔只驗計數與登錄表零錯。
+    "worklist_checklist.py":      (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

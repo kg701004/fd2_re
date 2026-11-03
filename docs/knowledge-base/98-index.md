@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 233 節、19 個主題。
+共 234 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 12503:2026-11-01 續一百七十九:index 9 / 2 是腳步音 / 對話打字音;6235 那段由標題從 #77 放;lc163a / lc167a 中斷號的獨立佐證;ev_s158 / ev_s173 改用 calllog_segments(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc163a / lc173a / lc174a / lc174b,lc167a 截圖時刻與驅動腳本,FD2.EXE、FDOTHER.DAT) 〔來源:DOSBox-X、反組譯、FDOTHER〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 - 行 12621:2026-11-01 續一百八十一:續一百八十仍留五項 —— 981 次打字音由文字游標全部歸到字串、index 5 / 6 是面板展開 / 收起(兩次實機不矛盾)、1 / 8 / 0xc 的呼叫情境、ev_s158 (C) ESCAPED 歸零、兩份舊 docs/data 表加取代標記;375 觸發擷取三次都沒出現(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc181a .. lc181c,FD2.EXE、FDTXT) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12689:2026-11-01 續一百八十二:續一百八十一仍留 —— 1626 次腳步音全部由呼叫紀錄裡的單位記錄傾印對到角色(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、反組譯、FDFIELD〕
@@ -17,6 +16,7 @@
 - 行 12859:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12905:2026-11-02 續一百八十七:doc25 §3.2.4「開箱後旗標全 0」是金錢箱還在等鍵 —— 0x194d6 等鍵、0x194f3 才寫旗標;開到的是 slot 9 (3,8);ev_s185 "unit" 欄改由 spawn_group(0) 名次算(FD2.EXE 反組譯、FDFIELD / FDSHAP、FDTXT_000) 〔來源:DOSBox-X、反組譯、FDTXT_000〕
 - 行 12945:2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000 〔來源:DOSBox-X、斷點、FDOTHER〕
+- 行 12986:2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000) 〔來源:反組譯、FDTXT_000、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -286,7 +286,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(68 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(69 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -356,6 +356,7 @@
 - 行 12859:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12905:2026-11-02 續一百八十七:doc25 §3.2.4「開箱後旗標全 0」是金錢箱還在等鍵 —— 0x194d6 等鍵、0x194f3 才寫旗標;開到的是 slot 9 (3,8);ev_s185 "unit" 欄改由 spawn_group(0) 名次算(FD2.EXE 反組譯、FDFIELD / FDSHAP、FDTXT_000) 〔來源:DOSBox-X、反組譯、FDTXT_000〕
 - 行 12945:2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000 〔來源:DOSBox-X、斷點、FDOTHER〕
+- 行 12986:2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000) 〔來源:反組譯、FDTXT_000、FD2.EXE〕
 
 ## dispatch 跳表與指令表(6 節)
 
