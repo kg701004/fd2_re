@@ -1,0 +1,308 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s190.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "static": {
+  "periods": {
+   "row19_0xa": 6,
+   "class_tab_0_index9": 6,
+   "class_tab_1_index9": 4,
+   "class_tab_2_3_index0xb": 9
+  },
+  "class_step_sfx_table_0x52725": "0101020100000101010102010000030101010301000001010101010101",
+  "period9_classes": {
+   "3": "騎士",
+   "11": "聖騎士",
+   "15": "龍劍士",
+   "19": "龍騎士"
+  },
+  "counter": {
+   "addr": "0x54132",
+   "fixup_sites": [
+    "0x32261",
+    "0x322ac",
+    "0x322d3",
+    "0x322e4",
+    "0x32311"
+   ],
+   "zero_fill_tail_of_obj": "0x50000",
+   "boot_value": 0
+  }
+ },
+ "logs": {
+  "lc184a": {
+   "calllog": ".wsl_build/lc184_live/lc184a_CALLLOG.TXT",
+   "md5": "dcbf7cf1a6f579616cb5a709493019f6",
+   "cap": 3000,
+   "step_calls": 636,
+   "step_calls_before_first_construction": 0,
+   "plays": {
+    "0x9": 145,
+    "0xb": 6
+   },
+   "start_values_fitting": [
+    0
+   ],
+   "n_start_values_fitting": 1,
+   "nulls_mismatches_at_c0": {
+    "no_class_table": 19,
+    "period9_plays_9": 6,
+    "per_unit_counter": 55
+   },
+   "units": [
+    {
+     "map": 0,
+     "unit_base": "0x237a48",
+     "unit": 4,
+     "plus7": 96,
+     "plus8": 96,
+     "race_plus1f": 1,
+     "class_plus20": 7,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 6,
+     "0x9": 2
+    },
+    {
+     "map": 0,
+     "unit_base": "0x237a48",
+     "unit": 8,
+     "plus7": 96,
+     "plus8": 96,
+     "race_plus1f": 1,
+     "class_plus20": 7,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 30,
+     "0x9": 7
+    },
+    {
+     "map": 0,
+     "unit_base": "0x237a48",
+     "unit": 9,
+     "plus7": 96,
+     "plus8": 96,
+     "race_plus1f": 1,
+     "class_plus20": 7,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 24,
+     "0x9": 6
+    },
+    {
+     "map": 31,
+     "unit_base": "0x2389f0",
+     "unit": 0,
+     "plus7": 0,
+     "plus8": 0,
+     "race_plus1f": 1,
+     "class_plus20": 1,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 204,
+     "0x9": 51
+    },
+    {
+     "map": 31,
+     "unit_base": "0x2389f0",
+     "unit": 1,
+     "plus7": 4,
+     "plus8": 4,
+     "race_plus1f": 1,
+     "class_plus20": 3,
+     "class_tab": 2,
+     "row19": false,
+     "steps": 12,
+     "0xb": 1
+    },
+    {
+     "map": 32,
+     "unit_base": "0x26b018",
+     "unit": 2,
+     "plus7": 0,
+     "plus8": 0,
+     "race_plus1f": 1,
+     "class_plus20": 1,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 264,
+     "0x9": 66
+    },
+    {
+     "map": 32,
+     "unit_base": "0x26b018",
+     "unit": 3,
+     "plus7": 0,
+     "plus8": 0,
+     "race_plus1f": 1,
+     "class_plus20": 1,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 54,
+     "0x9": 13
+    },
+    {
+     "map": 32,
+     "unit_base": "0x26b018",
+     "unit": 4,
+     "plus7": 4,
+     "plus8": 4,
+     "race_plus1f": 1,
+     "class_plus20": 3,
+     "class_tab": 2,
+     "row19": false,
+     "steps": 42,
+     "0xb": 5
+    }
+   ],
+   "tables": {
+    "0x26b018": {
+     "map": 32,
+     "units": 21,
+     "first_recalc_seq": 42316
+    },
+    "0x2389f0": {
+     "map": 31,
+     "units": 4,
+     "first_recalc_seq": 163349
+    },
+    "0x237a48": {
+     "map": 0,
+     "units": 12,
+     "first_recalc_seq": 207274
+    }
+   }
+  },
+  "lc184b": {
+   "calllog": ".wsl_build/lc184_live/lc184b_CALLLOG.TXT",
+   "md5": "2fa8a9e680dfc234af04af430f181213",
+   "cap": 3000,
+   "step_calls": 90,
+   "step_calls_before_first_construction": 42,
+   "plays": {
+    "0x9": 7,
+    "0xa": 10
+   },
+   "start_values_fitting": [
+    0,
+    12,
+    24,
+    36,
+    48,
+    60,
+    72,
+    84,
+    96,
+    108,
+    120,
+    132,
+    144,
+    156
+   ],
+   "n_start_values_fitting": 14,
+   "nulls_mismatches_at_c0": {
+    "no_class_table": 0,
+    "period9_plays_9": 0,
+    "per_unit_counter": 15
+   },
+   "units": [
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "unit": 0,
+     "plus7": 32,
+     "plus8": 0,
+     "race_plus1f": 5,
+     "class_plus20": 9,
+     "class_tab": 1,
+     "row19": true,
+     "steps": 60,
+     "0xa": 10
+    },
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "unit": 5,
+     "plus7": 134,
+     "plus8": 134,
+     "race_plus1f": 1,
+     "class_plus20": 27,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 12,
+     "0x9": 3
+    },
+    {
+     "map": 1,
+     "unit_base": "0x26bdc8",
+     "unit": 11,
+     "plus7": 96,
+     "plus8": 96,
+     "race_plus1f": 1,
+     "class_plus20": 7,
+     "class_tab": 1,
+     "row19": false,
+     "steps": 18,
+     "0x9": 4
+    }
+   ],
+   "tables": {
+    "0x26bdc8": {
+     "map": 1,
+     "units": 21,
+     "first_recalc_seq": 98742
+    }
+   }
+  }
+ },
+ "plays_0xb": [
+  {
+   "log": "lc184a",
+   "seq": 138053,
+   "map": 32,
+   "unit": 4,
+   "plus8": 4,
+   "class_plus20": 3
+  },
+  {
+   "log": "lc184a",
+   "seq": 138207,
+   "map": 32,
+   "unit": 4,
+   "plus8": 4,
+   "class_plus20": 3
+  },
+  {
+   "log": "lc184a",
+   "seq": 143060,
+   "map": 32,
+   "unit": 4,
+   "plus8": 4,
+   "class_plus20": 3
+  },
+  {
+   "log": "lc184a",
+   "seq": 143191,
+   "map": 32,
+   "unit": 4,
+   "plus8": 4,
+   "class_plus20": 3
+  },
+  {
+   "log": "lc184a",
+   "seq": 143317,
+   "map": 32,
+   "unit": 4,
+   "plus8": 4,
+   "class_plus20": 3
+  },
+  {
+   "log": "lc184a",
+   "seq": 191927,
+   "map": 31,
+   "unit": 1,
+   "plus8": 4,
+   "class_plus20": 3
+  }
+ ],
+ "conclusion": "lc184a 的 636 次 play_step_sfx 以當時單位表逐次預測全中(起始值只有 0 成立,與 zero-fill 一致),6 次 0xb 全是亞雷斯(騎士)在第 32 / 31 張圖走路;0xb = 職業 3 / 11 / 15 / 19(騎士 / 聖騎士 / 龍劍士 / 龍騎士)每 9 步的腳步音。lc184b 的 90 次也相容。"
+}

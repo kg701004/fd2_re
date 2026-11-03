@@ -269,7 +269,7 @@ call 0x25a96         ; (或 0x25b45 = handle B,允許與 handle A 疊播)
 | 8 | A 2 / B 0 | `action_ring_open`、`action_ring_close` | 4 | `0x17495`(`action_ring_open`)/ `0x176d3`(`action_ring_close`) | **確認:行動環開 / 收**(續一百八十四實機) |
 | 9 | A 1 / B 0 | `play_step_sfx` | 228 | `0x322c7`:步態 0 每 6 步、1 每 4 步(doc35 §16.4),經 `0x322c9` jmp 到 `0x32301` 的共用尾端 | **確認:腳步音** |
 | 0xa | A 1 / B 0 | `play_step_sfx` | 57 | `0x32280`:`0x1f183` 回傳非 0 時每 6 步,經 `0x32282` jmp 到同一尾端 | **確認:腳步音** |
-| 0xb | A 1 / B 0 | `play_step_sfx` | 0 | `0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS) |
+| 0xb | A 1 / B 0 | `play_step_sfx` | 0 | `0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端;步態 2 / 3 = 職業 3 / 11 / 15 / 19(騎士 / 聖騎士 / 龍劍士 / 龍騎士)。cl1 .. cl14 沒有這些職業走路 | **確認:腳步音(這四個職業)**(續一百九十,lc184a 呼叫紀錄:6 次全是亞雷斯(騎士)走路,636 次 `play_step_sfx` 逐次預測全中;「騎乘」是由職業名推的,INFERRED) |
 | 0xc | A 0 / B 2 | `ai_mode_dispatch`、`field_cell_treasure_check` | 0 | `0x13d13`(AI 模式 5 走到 `+0x3d` 指定的可見寶箱格、開走之後;金錢寶箱也放)/ `0x191a9`(寶箱 `yes_no_prompt` 回答「是」之後),用 handle B 與 handle A 疊播 | **確認:寶箱打開**(續一百八十四實機,`field_cell_treasure_check` 那處;`ai_mode_dispatch` 那處續一百八十五靜態:敵方模式 5 搶寶箱;續一百八十六實機:第 10 張圖盜賊搶寶箱 5 次都放 0xc,見 doc98 該節) |
 
 續一百八十的更正:舊表 0xb 列寫的 `0x2cac3` 不是呼叫端(該處是 `cmp`,2026-09-07 實機已發現);舊表沒有 index 1 / 0xa;
@@ -287,6 +287,9 @@ index 8 / 0xc 各有 2 處、index 4 多一處 `rest_hp_recover`。`docs/data/ui
   (續一百八十二,`ev_s182.py`:1626 次全部由紀錄本身的單位記錄傾印對到 —— 第 1 張圖 0 索爾、5 / 7 / 9 男村民、6 / 8 / 10 女村民、11 盜賊;
   第 2 張圖 6 鐵諾、7 士兵;第 32 張圖 2 索爾;第 10 章 CONTINUE 0 索爾、13 .. 19 獸人 / 獸人隊長、38 珊。種族 4 / 5 的只放 0xa,其餘只放 9。
   FDFIELD 建構單位的名稱是 INFERRED,見 doc98 續一百八十二。)
+  (續一百九十,`ev_s190.py`:cl1 .. cl14 沒有 0xb 是因為走路的單位沒有職業 3 / 11 / 15 / 19。續一百八十四 lc184a 開場有 6 次 0xb,
+  全是亞雷斯(角色 4、職業 3 騎士);用當時 debugger 讀出的單位表與全域計數器 `[0x54132]`(開機 0、只有 `play_step_sfx` 讀寫)逐次模擬,
+  636 次放 / 不放與 index 全中,其他起始值與三個對照模型都不符。職業表值 0(週期 6)那支仍沒有走路資料。)
 
 續一百八十一(`ev_s180b.py` (C) 段、`ev_s181.py`;DOSBox-X 呼叫紀錄 cl1 .. cl14、FD2.EXE):
 - 打字音改用 `typewriter_tick` 自己的文字游標(第 4 個參數,每字 + 2;指標處 32 位元組 = 游標之後的 FDTXT 字碼)對 FDTXT 位元組:

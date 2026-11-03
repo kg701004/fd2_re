@@ -848,19 +848,6 @@
    ]
   },
   {
-   "key": "e28f0863a1",
-   "title": "UI 音效 index 2-0xb 語意畫面實測",
-   "disposition": "open_static",
-   "reason": "index 2..0xa 都已有實機或呼叫紀錄確認，只有 0xb(步態 2/3 腳步音)仍標 STATIC ANALYSIS、cl1..cl14 0 次；初步 grep 發現既有 lc184a 呼叫紀錄的 play_step_sfx 尾端有 6 次 0xb，可離線補證。",
-   "next": "用 calllog_segments 解析 .wsl_build/lc184_live/lc184a_CALLLOG.TXT 中返回 0x3230c 的 play_sfx_a 呼叫(初步 grep 堆疊值 0xb 共 6 次)，對到當時單位記錄的職業(步態表 0x52725 值 2/3)，再把 doc36 0xb 列由 STATIC ANALYSIS 升級。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/36-sfx-audio-data.md",
-     "quote": "`0x322ff`:步態 2 / 3 每 9 步,直落到同一尾端 | 腳步音(STATIC ANALYSIS)"
-    }
-   ]
-  },
-  {
    "key": "4aab855113",
    "title": "戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12",
    "disposition": "closed",
@@ -888,14 +875,6 @@
      "quote": "`local_20`/`[esp+0xd0+counter]`的填值機制**在語意層級已經找到並可信**"
     }
    ]
-  },
-  {
-   "key": "e28f0863a1-2",
-   "title": "UI 音效 index 2-0xb 語意畫面實測",
-   "disposition": "duplicate",
-   "reason": "與 L4085 是同一條文字、同一件事。",
-   "of": "e28f0863a1",
-   "evidence": []
   },
   {
    "key": "62e6a43556",

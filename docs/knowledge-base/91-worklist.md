@@ -4085,7 +4085,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
   結論4。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
-- [ ] UI 音效 index 2-0xb 語意畫面實測
+- [x] UI 音效 index 2-0xb 語意畫面實測 →【2026-11-04 doc98 續一百九十:0xb = 職業 3 / 11 / 15 / 19(騎士等)每 9 步的腳步音;原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a 6 次全是亞雷斯(騎士)走路,636 次 play_step_sfx 逐次預測全中(呼叫紀錄 + 當下單位表,不是畫面)】
 
 ## 第 10 輪（歷史快照；不代表目前 parity）
 - [x] **全 30 章 campaign 生成器**(sonnet):gen_campaign.py→campaign_full.json(183 節點,
@@ -4107,7 +4107,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
   見上一行)；`#48-64`候選池(第10輪PCM特徵掃描)與本輪動態追出的真實家族`#82-90`是兩個不同、相鄰的
   資源家族，僅`#88`重疊，`#48-64`維持「候選、未證實載入點」狀態不因本輪升級。remake接入仍未做——
   atkAnim現有hook用的是候選池，非本輪驗證過的真實家族。
-- [ ] UI 音效 index 2-0xb 語意畫面實測
+- [x] UI 音效 index 2-0xb 語意畫面實測 →【同第 9 輪那一條,2026-11-04 doc98 續一百九十結案(原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a)】
 
 ## 第 11 輪（歷史快照；「全 30 章一條龍」斷言已由後續誠實揭露降級）
 - [x] **ch2-30 scenario stub**(sonnet):29 個 chNN.json(party 4 人/deploy=own_deploy 真資料

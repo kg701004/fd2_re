@@ -34427,6 +34427,57 @@
     ]
    }
   },
+  "ev_s190": {
+   "outputs": [
+    "step_sfx_0xb_s190_20261104.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc184_live/cl/lc184a/m01_globals.bin": [
+     512,
+     "82ad7e170068843814c61df2bf4604a99459900d676dc7f4ba83f6fd1ed1c3ae"
+    ],
+    ".wsl_build/lc184_live/cl/lc184a/m02_units.bin": [
+     2560,
+     "e903cb5473a23bb182a5d56a1c5aab5bc399d54734d39f8a4f442770aeff567d"
+    ],
+    ".wsl_build/lc184_live/cl/lc184a/m05_globals.bin": [
+     512,
+     "56c8d0264e2cb26f531fc60b40a71aba9842b530b704b5be21e18038485d6dde"
+    ],
+    ".wsl_build/lc184_live/cl/lc184a/m06_units.bin": [
+     2560,
+     "7f1face552ab54433aca6c690f55403492d6014059cdd0f5839f270c30f43918"
+    ],
+    ".wsl_build/lc184_live/cl/lc184a/m07_globals.bin": [
+     512,
+     "cec406a60165e22e2a34221dfed78fbba2a2f5255da59f9bba4b5a5ae4e12ba3"
+    ],
+    ".wsl_build/lc184_live/cl/lc184a/m08_units.bin": [
+     1024,
+     "3c5b1a2f02abda8cd0fafd7639458f57070468d55726a4e47a03b705572419eb"
+    ],
+    ".wsl_build/lc184_live/cl/lc184b/m01_globals.bin": [
+     512,
+     "080778ad14209255079cb533f962171ac3a10a24649933c0353a1c3fd5a5562e"
+    ],
+    ".wsl_build/lc184_live/cl/lc184b/m02_units.bin": [
+     1792,
+     "b7da05c1918dd4f87128d055c8e44785fb4101a05befb4cc2ffa0bff15c6dfe6"
+    ],
+    ".wsl_build/lc184_live/lc184a_CALLLOG.TXT": [
+     311656271,
+     "efa97cdf4bf8ee40a3941158f73d517d89846b082f5228f036e4356416187ef5"
+    ],
+    ".wsl_build/lc184_live/lc184b_CALLLOG.TXT": [
+     247764366,
+     "7b3dea7e3847c1c205e6725e1e43bcc126bbc99afee51bc411499620ff8f08fa"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",
