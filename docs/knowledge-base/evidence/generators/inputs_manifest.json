@@ -34060,6 +34060,373 @@
     ]
    }
   },
+  "ev_s188": {
+   "outputs": [
+    "chest_screen_text_s188_20261103.json"
+   ],
+   "inputs": {
+    ".wsl_build/chapter_sweep_ch11bp/test_ch11/patched.SAV": [
+     22987,
+     "ec72fbea29b396353d4ad69573fec295ec1c3ab6049f1ab19e45b2a2f9009b92"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/finish.log": [
+     3407,
+     "6828e89fd5d047eb13005af378817a9905a54f5f2d91cacafd2827e0f694846a"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/finish_final.SAV": [
+     22987,
+     "ec72fbea29b396353d4ad69573fec295ec1c3ab6049f1ab19e45b2a2f9009b92"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/finish_massKill.py": [
+     5490,
+     "1d85b17404ebf24237e1ed4894100eec2e7edcbfa44b84d9d9236026e70e15a3"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5.py": [
+     13569,
+     "622ba5dde789fcf21ec63487a89f967199a4fef187265f0a4935c224194628d7"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/40_selected.png": [
+     27020,
+     "a64cc00524641a7a23d48bee545a2fc7e8709191dab1bbc9c36efecad9ab3059"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/41_at_target_or_stuck.png": [
+     23747,
+     "063d4fbcbe7f359e0a61a1ada4df17e722ea9ba12bb366e1e78684d94ee57afb"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/42_after_confirm.png": [
+     27243,
+     "a177665ce4bc8475608d53ba36f653c58734c720069bf6e92c241052d6ec4e99"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_0.png": [
+     27275,
+     "d2d6b4b7c1e779b402b193dafcee6b8732d1a3ec1099299a042b750a34dc895e"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_1.png": [
+     28054,
+     "840b69b53bd606015356705b0b39599ce18d4db01bf14c34ee5903f9dcc553a2"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_2.png": [
+     28054,
+     "840b69b53bd606015356705b0b39599ce18d4db01bf14c34ee5903f9dcc553a2"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_3.png": [
+     28029,
+     "5ecd3a04835cca13a74eaa57bc828cc30ecbb2bdc62a9e2eb0381f8611d32631"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_4.png": [
+     27998,
+     "9b3a5cda7224beda804019401d62a9cfd5e6948e31db65b347411f71aab8298e"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/43_poll_5.png": [
+     28014,
+     "d849bc22c05e6a28a93a8613ec6a950cce4418da49fe27066365731cd47f8887"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/44_final_clean.png": [
+     28034,
+     "c186ca053f0743f1033c64cd4c52cd802eba296a59c496a30523f9105434fab1"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/50_ring_down.png": [
+     28014,
+     "ee408890174e6dc87ad8906289a229ce9f4a67a5bb98103b0f43cede69c8e827"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/51_wait_confirmed.png": [
+     19421,
+     "36d0457e73233357346e953b911722dbed6f865899aa219920021312089f6e6f"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/52_poll_0.png": [
+     19400,
+     "c8e57cd3d3c70797581105ea4b093a233361eef0d525248c7ed6a873a6a187db"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/52_poll_1.png": [
+     19400,
+     "c8e57cd3d3c70797581105ea4b093a233361eef0d525248c7ed6a873a6a187db"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/52_poll_2.png": [
+     19484,
+     "666f055a106df465d438d595e81261c080d637a60e8380973d519574ce5d314e"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/52_poll_3.png": [
+     19484,
+     "666f055a106df465d438d595e81261c080d637a60e8380973d519574ce5d314e"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/52_poll_4.png": [
+     19463,
+     "725d238237b57b545fc5aebc062caabd1e20d872cbdf45c31eb7275c3846ed06"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/53_final.png": [
+     19421,
+     "36d0457e73233357346e953b911722dbed6f865899aa219920021312089f6e6f"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/60_after_yes.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_0.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_1.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_2.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_3.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_4.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/61_poll_5.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/62_final.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/70_clear0.png": [
+     27653,
+     "da3058ba2da8ab0d8d5f13830702b40f1c13635b8f7639ce2ca89b50456fbbde"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/80_pre_end_turn.png": [
+     27262,
+     "09b0d77e772745013d48b246bf1d4139a5df98dc763a154ff0a9855b1276a94a"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/real_open5/shots/99_recovery.png": [
+     20046,
+     "edc5bf9aa49e4f292807abb4bdadeee1fb1cdbb8a3778b7263fd2c3d13df5dda"
+    ],
+    ".wsl_build/chapter_sweep_ch11chest/recover_state.py": [
+     1617,
+     "6247799f02420eefa8569993a73810605df34534f8bbe037eab415d8418b8492"
+    ],
+    ".wsl_build/lc131a_endturn/after_end3.png": [
+     7930,
+     "19b1931f199adb75d8e471849b3066b1c2770623bf0f492f4097de577a136b2e"
+    ],
+    ".wsl_build/lc131a_endturn/post_end_turn.png": [
+     7930,
+     "19b1931f199adb75d8e471849b3066b1c2770623bf0f492f4097de577a136b2e"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/k08_ring_confirm.png": [
+     19878,
+     "6bfcd0dcfd7c73f46b6d9f5a712482b3e412a3961d6f1bc3f92e4abc3effc268"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/k08_ring_confirm.text.json": [
+     908,
+     "365518dc9b7972eb6b955e1cbd83deec8941f895d30cb9e26bfa8705fd198bd7"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/s00.json": [
+     1114,
+     "6323bfd6c8e1c7ae7d01760b35a0d5894286b91239295cba6243ab9b2276e6a7"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/s01.json": [
+     1111,
+     "01928380e6b83046bf839bfedd7e78d5e0f45af832d35b7d8acc0559034cda36"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/s02.json": [
+     1114,
+     "d8bc77189bbf15da5d42de602dfd0e0759d4ecd35d604eb50279e0d06dd02aee"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/s03.json": [
+     1114,
+     "a6585609d0a4971ba5d7b7a4aa770649ee2c113eeccee6824a439c4a4222c853"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/s0r.json": [
+     1111,
+     "45106819bc10f1d47f283496d6afe8fc1471b3995b6359a582a5a416f39f7cbf"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t02.png": [
+     20424,
+     "d0ec082ab488d7350c1815042cb40cbe7ee1bce546282bba97ed3a41418f9948"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t02.text.json": [
+     3041,
+     "1a25fb36543fbab9ea65d2ebd28beeb6b1de1d3d7a9697cca6a3d9432eafb311"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t02b.png": [
+     20424,
+     "d0ec082ab488d7350c1815042cb40cbe7ee1bce546282bba97ed3a41418f9948"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t02b.text.json": [
+     3042,
+     "fa77156febc5b17c6186f8f0c992e40b78ae469d77dfccc8f4d38a266871e13f"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t03.png": [
+     27428,
+     "6f85e008e0fc13c82cb455346158afb46647991608be408fd403d5edb232a9d6"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a/t03.text.json": [
+     159,
+     "38aa7b3998832a141eb35f0e089d9e477561d2d9bfb27382efe4abcfa04529da"
+    ],
+    ".wsl_build/lc188_live/cl/lc188a_keys.jsonl": [
+     8113,
+     "3c80dfa9979314e86e6f10acbff57b25ddaaae94e951d457c683e904981f042a"
+    ],
+    ".wsl_build/lc188_live/lc188a_CALLLOG.TXT": [
+     198224982,
+     "32ec41b8ae92a75223f6a95482cc55fc682d9f3e8bed22152b8d5bcea4f1bd2d"
+    ],
+    ".wsl_build/lc188_live/lc188a_fingerprint.txt": [
+     95,
+     "ed74ee19f7c54a21c716514ce87a24464b168d923e3c07dce15fcffac5cc77e2"
+    ],
+    "extracted/raw/FDOTHER/FDOTHER_004.bin": [
+     58368,
+     "3d9493f204254c58600f2b08beb47e372d2aa950d686a97f7ed73aa1f709c871"
+    ],
+    "extracted/raw/FDTXT/FDTXT_000.bin": [
+     7636,
+     "7014ada401b9f493ca8773bb68ed90d8dafd583fb1230494001f0a5d48b64ebe"
+    ],
+    "extracted/raw/FDTXT/FDTXT_001.bin": [
+     4360,
+     "057c67c9c3860832da7dbc10434a2b91c419d1a596d12e177190ced58d80d984"
+    ],
+    "extracted/raw/FDTXT/FDTXT_002.bin": [
+     3498,
+     "922a58438c15996fa04d27f2fcb48cc7803cb523b5b3bdecfb6bfe5bce780088"
+    ],
+    "extracted/raw/FDTXT/FDTXT_003.bin": [
+     2458,
+     "fcc713f90843aecd410464ee8ea1c5710259e5dd317a57f008b47f8a3089899c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_004.bin": [
+     864,
+     "e983e547cc4c65ffcdf9c3e29a313f7540dd80daa2f68fd44fcd73f6b2fb64d7"
+    ],
+    "extracted/raw/FDTXT/FDTXT_005.bin": [
+     3106,
+     "fe6c29216563b8ac47b484804bac7cfbc7b3c9c7bcd8a44b7f9efd3f3bd033b0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_006.bin": [
+     3208,
+     "65c3b435d22315dfc114735c089094172aa6e4250ec2ae62380fb5a8a1a644c9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_007.bin": [
+     2022,
+     "da217a473a637bc3a2b286476d34b4288f7c93accd2355fe9f51661278422971"
+    ],
+    "extracted/raw/FDTXT/FDTXT_008.bin": [
+     1896,
+     "24e392c3e8dd697a5650b15ac99512de690444c3af92f5a7251c9be25267ae5d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_009.bin": [
+     2412,
+     "503d6e6ed48ada118a56cd2c7ec1d50d0ea15eda619cd9f8ce946716c9a4e256"
+    ],
+    "extracted/raw/FDTXT/FDTXT_010.bin": [
+     4494,
+     "b276204f255760ae4e2a4e195d2c3882332de8b24aafd160e05c9e8a9c65c376"
+    ],
+    "extracted/raw/FDTXT/FDTXT_011.bin": [
+     2448,
+     "bab2f3531d2b00e6f452ce87e5c7b9a3c9584798eb0065448bc75b68368d74f9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_012.bin": [
+     1550,
+     "bdc85a888f1cf44080cbeba65a1a18dff89783edbb27efb805da28f0d76cc1be"
+    ],
+    "extracted/raw/FDTXT/FDTXT_013.bin": [
+     2360,
+     "3423dbe32308691ea449eb57b79cd5cc48c252b0f22e996b02b9d8b72f937724"
+    ],
+    "extracted/raw/FDTXT/FDTXT_014.bin": [
+     1866,
+     "c592d13d828e3fa318d9f6108cf1b844e944b10d2012b49cc2e99a53b0ab3022"
+    ],
+    "extracted/raw/FDTXT/FDTXT_015.bin": [
+     4774,
+     "b4263a1940befb84d2abdd108f15319baf484499d1aab9fd4b4fb6bab332e53d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_016.bin": [
+     3258,
+     "4f0c05492290ec10a5ab6e70a3fad1d6e4e304f3de6561142908584a5268a66c"
+    ],
+    "extracted/raw/FDTXT/FDTXT_017.bin": [
+     4434,
+     "c5b5b79040415085df55ca85f42065c73de30d38b17b7afd6653d9897d456c23"
+    ],
+    "extracted/raw/FDTXT/FDTXT_018.bin": [
+     4094,
+     "9f949d365c8459a912281ba64476aac4377db87f7091c57ddfffcb433cdc4e92"
+    ],
+    "extracted/raw/FDTXT/FDTXT_019.bin": [
+     1910,
+     "c5fdbe9345bb444bc156cd60282b6bb88f28bbe214660fc9cf8adf4527c42a6d"
+    ],
+    "extracted/raw/FDTXT/FDTXT_020.bin": [
+     3836,
+     "d91efccabfdea4c79e07a590c713fffaa8f8bcdf9e7fd9a0e0cb1cfd28cdd6fb"
+    ],
+    "extracted/raw/FDTXT/FDTXT_021.bin": [
+     4660,
+     "6c099c2b4adb727bb026820b83ca9121810a914b16f99fea549a92df623fe2b8"
+    ],
+    "extracted/raw/FDTXT/FDTXT_022.bin": [
+     2742,
+     "10714540d6f7d207b6bbfcb25f3459819339d7b4153b12c65dc492e15941107a"
+    ],
+    "extracted/raw/FDTXT/FDTXT_023.bin": [
+     7168,
+     "c3ffb67922647a21a31d6164d5b68aa7bc011b4d9e3e57cbe7052eb3b9e55add"
+    ],
+    "extracted/raw/FDTXT/FDTXT_024.bin": [
+     1722,
+     "516876a704aa3179b377522f3a9e250f7dcc3efb0e5c5e86eed91d38c767f4d9"
+    ],
+    "extracted/raw/FDTXT/FDTXT_025.bin": [
+     3350,
+     "82f6ef402619fd0299a136a1023aa92d9dc8cf93cc706132f8025c06a692b8b2"
+    ],
+    "extracted/raw/FDTXT/FDTXT_026.bin": [
+     5004,
+     "6a8a5c5e61227ccf58aa35a1731e2d2ce831f7f307c8e77dead639c5bc971a55"
+    ],
+    "extracted/raw/FDTXT/FDTXT_027.bin": [
+     5064,
+     "dc8d9472a7e10ee6536c0432b91707c487cc50ced748433ed397f58d6ace5790"
+    ],
+    "extracted/raw/FDTXT/FDTXT_028.bin": [
+     1628,
+     "18b4d4fb982cbfd7fa714fbae4b8109218d8ee7ce37b2b9fd67f9da5fb54cdf0"
+    ],
+    "extracted/raw/FDTXT/FDTXT_029.bin": [
+     4792,
+     "6a89e3bdd5410d7ff5a6660221be27e2f49997f6475b0df952cd28f62230b430"
+    ],
+    "extracted/raw/FDTXT/FDTXT_030.bin": [
+     5762,
+     "dcbd0ae731b4a9283edd3d069d1580585cbf774a11c1e4fa623c976d871fbebc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_031.bin": [
+     6756,
+     "9473d6b21fbb7d3402d81f20fdc9455c3081b454522ab131e34d6995e2e9e4bc"
+    ],
+    "extracted/raw/FDTXT/FDTXT_032.bin": [
+     2204,
+     "bd250484a25938d1ed3161cdc153a056ad5d66c64bcce2b0f9ad87c219f0b098"
+    ],
+    "extracted/raw/FDTXT/FDTXT_033.bin": [
+     3020,
+     "1e9ac41631b72e276331c438675ad2a27538a1af524016951b88b5aa44f60885"
+    ],
+    "extracted/raw/FDTXT/FDTXT_034.bin": [
+     0,
+     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tools/fd2_screen_text.py": [
+     35351,
+     "537e214258667299806ed15ffc91250cb248cba69031c3d7c42c44d0cfe20cd2"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

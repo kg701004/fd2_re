@@ -12940,3 +12940,44 @@ ev_s185 "unit" 欄第 10 張圖差 1)。沒有新實機。
 **驗證**:見提交訊息。
 
 **仍留**:按鍵關掉訊息之後旗標才變 1,只由 FD2.EXE 反組譯推得、沒有實機看過(要看需另行核准實機);截圖上的文字是目視,不是程式判讀。
+(續一百八十八:兩項都已處理 —— 截圖文字改由 `tools/fd2_screen_text.py` 程式判讀,目視成立;實機 lc188a 按一次 Return 後旗標[9] = 1、錢 + 5000,見該節)
+
+## 2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000
+
+起因:使用者「仍留與風險的部分 請新建或優化完善工具 進行處裡」(續一百八十七仍留兩項:截圖文字是目視;按鍵後旗標變 1 沒有實機)。
+實機一次 lc188a(使用者問「是否核准用 lc188.py 跑一次實機」答「永遠核准」)。
+證據 `evidence/chest_screen_text_s188_20261103.json`(`ev_s188.py`,`mut_s188.py` 43 個)。
+
+**(A) 新工具 `tools/fd2_screen_text.py`**(CODE CONFIRMED;讀原版 FD2.EXE 的 DOSBox-X 截圖、FDOTHER #4 字型、FDTXT;selftest + `verify_selftest_discrimination --exhaustive --tool fd2_screen_text.py` 95 / 95 歸零,已登錄 INVOKE):
+- `frame()`:1024 × 768 截圖(2 倍、原點 (192, 201))還原 320 × 200;2 × 2 區塊不同色就拒絕(讀不了另列,不算沒字)。
+- `scan()`:每個位置、每個顏色都試;16 × 16 窗口裡等於該色的點陣與某字模完全相同才算(ev_s138 `glyph_at` 同一判準,改成整張掃描)。
+  以「窗口點數 = 字模點數」先篩位置加速;226 張與未加速版逐張相同,5 分 21 秒 → 約 1 分 30 秒。
+- `lines()` / `match_lines()` / `match_boxes()`:同列同色、間距 16 連成行;對到 FDTXT 原生行(0xFFFE / 0xFFFD / 開框碼 + operand 是行界,
+  0xFFFA 讀出數字,0xFFFB / 0xFFFC 任意長度);連續行對到同一字串的連續原生行才算完整框。
+- 突變測試四輪:第一輪 22 個逃掉 → 補參考實作對照(四角)、單色小畫面、一位數 / 非數字、任意插入回溯、prefix、框的起點 / 接續、
+  整列 / 整欄不同色(調色盤掃描途中改變的實際樣子)、左上取點;刪掉三處多餘條件(`0 <` 兩處、尺寸守門)與兩處 `sys.path.insert`。
+
+**(B) 真截圖對照**(LOG CONFIRMED;原版 FD2.EXE 的 DOSBox-X 截圖,程式判讀):ev_s138 以固定座標比對的新遊戲開場對白(lc131a_endturn 兩張),
+工具整張掃描得到同一串字模、同一列(多抓到行首的『,x 95);逐行只對上 FDTXT_033 字串 0 第 4 行;整張圖 7 個 hit 全在這一行。
+
+**(C) ch11chest 開箱序列**(LOG CONFIRMED;原版 FD2.EXE 的 DOSBox-X 截圖,程式判讀):real_open5/shots 以數字開頭的 29 張(相同位元組只讀一次,17 種):
+- 讀不了 1 張(40_selected,DOSBox-X 截圖 2 × 2 不一致);問句 0x1a5 從 51_wait_confirmed 起(51、52 × 5、53);
+  0x1a5 + 0x1aa、numbers [5000] 正是續一百八十七那 9 張(位元組相同,算 1 張);其餘 12 張沒有字。
+- 「發現5000元!」那一行可見 / 隱藏兩句共用(0x1aa / 0x1ae 第 1 行),分得開的是「打開寶箱,」只對上 0x1aa;0x1ae 沒有完整框。
+  畫面上 23 個 hit 全在這 3 行。續一百八十七的目視判讀成立。
+
+**(D) 按鍵之後**(LOG CONFIRMED + NOT CONFIRMED;原版 FD2.EXE 的 DOSBox-X 截圖與驅動紀錄):99_recovery 之後第一個鍵是 `finish_massKill.py` 的一次 Return(`recover_state.py` 沒有 send_keys;
+finish.log「battle HUD recovered after 1 clear-Return(s)」、只有 70_clear0 一張),70_clear0 畫面上沒有字 —— 一個鍵訊息就關了。
+但之後沒有讀旗標或金錢,`finish_final.SAV` 與開場存檔位元組相同(遊戲沒存檔),所以「按鍵後旗標變 1、錢加 5000」離線沒有讀值 → 實機 (E)。
+
+**(E) 實機 lc188a**(LOG CONFIRMED;原版 FD2.EXE(md5 33464c81…)的 DOSBox-X 除錯器讀值 + 呼叫紀錄;不改記憶體、不下斷點;`drivers_s188/lc188.py`、預測 `pred188.txt` 寫在跑之前):
+- 讀檔進第十一章(LOAD slot 0、章節改 10)→ 戰前對話 29 次 Return → 索菲亞(單位 11)從 (2,10) 走到 (3,8)、指令環 ↓ → 畫面 0x1a5(程式判讀)。
+- s01(問句)→ Return(YES)→ 畫面 0x1a5 + 0x1aa、5000 → s02:旗標 12 格全 0、錢 10070183 不變、金額 [0x53ae1] 4 → 5000。
+- 再按一次 Return → 畫面沒有字 → s03:旗標[9] = 1、其他 11 格不變、錢 10075183(+ 5000)。兩次讀之間各只送一個鍵(`lc188a_keys.jsonl`)。
+- 呼叫紀錄:`wait_key_with_marker` 從回返位址 0x194db(= 0x194d6 + 5)進來一次,ebx = 0x1388(5000,0x19477 存金額的暫存器)、edi = 9(0x190d8 的槽號,0x194f3 以它寫旗標);進出之間只有除錯器的 Alt 與
+  Return 的按下碼 0x1c,回傳 0x1c —— s02 那次讀值時遊戲正停在這個等鍵裡。pred188.txt 的 Q1 .. Q3 全部成立。
+- CALLLOG md5 2908f21531128deb5900a435460ccd9f(381714 行;teardown 時最後一筆寫到一半)。
+
+**驗證**:見提交訊息。
+
+**仍留**:無(續一百八十七兩項都已處理)。隱藏寶箱(0x1ae、挖掘)走同一段程式,沒有另外實機。

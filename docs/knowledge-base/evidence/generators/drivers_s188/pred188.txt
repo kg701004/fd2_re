@@ -1,0 +1,15 @@
+續一百八十八 實機前的預測(寫於 2026-11-03,跑之前;跑完不改)
+依據:FD2.EXE 反組譯 field_cell_treasure_check(ev_s187 GOLD_PATH):0x19477 存金額 [0x53ae1] → 0x194c2 顯示 0x1aa
+→ 0x194d6 wait_key_with_marker 等鍵 → 0x194e8 加錢 [0x53bf3] → 0x194f3 寫 [[0x53ad5] + 9] = 1;中間沒有跳躍。
+地圖 10 slot 9 = 5000 元、(3,8)、可見(ev_s187)。
+
+步驟(每步一個指令,結果不合就停,不重試):
+  s00 開場 state → 單位走到 (3,8)、指令環 ↓ → 「發現寶箱,要打開嗎?」
+  s01 state(提示在畫面上)→ Return(YES)→ t02 畫面 → s02 state → Return(一次)→ t03 畫面 → s03 state
+
+Q1(按 YES 之後、按鍵之前):t02 畫面完整的框有 FDTXT_000 0x1a5 與 0x1aa(numbers [5000]);
+    s02 flags[9] == 0、money == s01 money、amount == 5000。
+Q2(再按一次 Return 之後):t03 畫面沒有 0x1aa;s03 flags[9] == 1,flags 其他 11 格 == s02;money == s02 money + 5000。
+Q3(對照):s01 → s02 只有 amount 可能變,flags 與 money 不變。
+
+不成立的讀法:Q1 若 flags[9] 已是 1 或錢已加 → 反組譯的順序錯;Q2 若 flags[9] 仍 0 → 等鍵之後還有別的條件。

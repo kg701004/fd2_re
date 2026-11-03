@@ -1,0 +1,364 @@
+{
+ "note": "續一百八十八:截圖文字改由 tools/fd2_screen_text.py 程式判讀(字模全等比對,不是 OCR 猜測)。",
+ "tool": {
+  "path": "tools/fd2_screen_text.py",
+  "criterion": "16 × 16 窗口裡等於某色的點陣與字模完全相同(字模的 1 全是該色、0 沒有該色)",
+  "line_rule": "同列同色、x 間距 16 的倍數、空白 ≤ 2 格"
+ },
+ "A_control_s138_dialogue": {
+  "post_end_turn.png": {
+   "md5": "c87c20f19d3c7c34829681eb84310ce2",
+   "line_xy": [
+    95,
+    119
+   ],
+   "text": "『多謝父王。』",
+   "s138_offset_cells": 1,
+   "full_matches": [
+    [
+     "FDTXT_033.bin",
+     0,
+     4
+    ]
+   ],
+   "hits": 7
+  },
+  "after_end3.png": {
+   "md5": "c87c20f19d3c7c34829681eb84310ce2",
+   "line_xy": [
+    95,
+    119
+   ],
+   "text": "『多謝父王。』",
+   "s138_offset_cells": 1,
+   "full_matches": [
+    [
+     "FDTXT_033.bin",
+     0,
+     4
+    ]
+   ],
+   "hits": 7
+  }
+ },
+ "B_chest_sequence": {
+  "shots": ".wsl_build/chapter_sweep_ch11chest/real_open5/shots",
+  "n_files": 29,
+  "n_distinct": 17,
+  "unreadable": [
+   "40_selected.png"
+  ],
+  "ask_only": [
+   "51_wait_confirmed.png",
+   "52_poll_0.png",
+   "52_poll_1.png",
+   "52_poll_2.png",
+   "52_poll_3.png",
+   "52_poll_4.png",
+   "53_final.png"
+  ],
+  "ask_and_gold": [
+   "60_after_yes.png",
+   "61_poll_0.png",
+   "61_poll_1.png",
+   "61_poll_2.png",
+   "61_poll_3.png",
+   "61_poll_4.png",
+   "61_poll_5.png",
+   "62_final.png",
+   "99_recovery.png"
+  ],
+  "no_text": [
+   "41_at_target_or_stuck.png",
+   "42_after_confirm.png",
+   "43_poll_0.png",
+   "43_poll_1.png",
+   "43_poll_2.png",
+   "43_poll_3.png",
+   "43_poll_4.png",
+   "43_poll_5.png",
+   "44_final_clean.png",
+   "50_ring_down.png",
+   "70_clear0.png",
+   "80_pre_end_turn.png"
+  ],
+  "gold_lines": [
+   {
+    "xy": [
+     99,
+     127
+    ],
+    "text": "發現寶箱，要打開嗎？",
+    "full": [
+     [
+      "FDTXT_000.bin",
+      "0x1a5",
+      0,
+      []
+     ]
+    ]
+   },
+   {
+    "xy": [
+     99,
+     146
+    ],
+    "text": "打開寶箱，",
+    "full": [
+     [
+      "FDTXT_000.bin",
+      "0x1aa",
+      0,
+      []
+     ]
+    ]
+   },
+   {
+    "xy": [
+     99,
+     165
+    ],
+    "text": "發現5000元！",
+    "full": [
+     [
+      "FDTXT_000.bin",
+      "0x1aa",
+      1,
+      [
+       5000
+      ]
+     ],
+     [
+      "FDTXT_000.bin",
+      "0x1ae",
+      1,
+      [
+       5000
+      ]
+     ]
+    ]
+   }
+  ],
+  "gold_hits": 23
+ },
+ "C_after_key": {
+  "first_key_after_gold": "finish_massKill.py 第一次 Return(之前的 recover_state.py 沒有 send_keys)",
+  "after_key_shot": "70_clear0.png",
+  "after_key_hits": 0,
+  "mtime_order": [
+   "99_recovery.png",
+   "70_clear0.png",
+   "80_pre_end_turn.png"
+  ],
+  "flag_or_money_read_after_key": false,
+  "save_md5_start": "a8271b328d3a34784cad3863da3240d0",
+  "save_md5_final": "a8271b328d3a34784cad3863da3240d0"
+ },
+ "E_live_lc188a": {
+  "approval": "使用者 2026-11-03「永遠核准」(問「是否核准用 lc188.py 跑一次實機」)",
+  "instance": "lc188a",
+  "fingerprint": {
+   "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+   "calllog_md5": "2908f21531128deb5900a435460ccd9f",
+   "calllog_lines": 381714
+  },
+  "states": {
+   "s00": {
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "money": 10070183,
+    "amount": 4,
+    "unit11_xy": [
+     2,
+     10
+    ]
+   },
+   "s0r": {
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "money": 10070183,
+    "amount": 4,
+    "unit11_xy": [
+     3,
+     8
+    ]
+   },
+   "s01": {
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "money": 10070183,
+    "amount": 4,
+    "unit11_xy": [
+     3,
+     8
+    ]
+   },
+   "s02": {
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "money": 10070183,
+    "amount": 5000,
+    "unit11_xy": [
+     3,
+     8
+    ]
+   },
+   "s03": {
+    "flags": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0
+    ],
+    "money": 10075183,
+    "amount": 5000,
+    "unit11_xy": [
+     3,
+     8
+    ]
+   }
+  },
+  "keys_between": {
+   "s00->s0r": [
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Left",
+    "Return",
+    "Right",
+    "Up",
+    "Up",
+    "Return"
+   ],
+   "s0r->s01": [
+    "Down",
+    "Return"
+   ],
+   "s01->s02": [
+    "Return"
+   ],
+   "s02->s03": [
+    "Return"
+   ]
+  },
+  "screens": {
+   "k08_ring_confirm": [
+    [
+     "FDTXT_000.bin",
+     421,
+     []
+    ]
+   ],
+   "t02": [
+    [
+     "FDTXT_000.bin",
+     421,
+     []
+    ],
+    [
+     "FDTXT_000.bin",
+     426,
+     [
+      5000
+     ]
+    ]
+   ],
+   "t02b": [
+    [
+     "FDTXT_000.bin",
+     421,
+     []
+    ],
+    [
+     "FDTXT_000.bin",
+     426,
+     [
+      5000
+     ]
+    ]
+   ],
+   "t03": []
+  },
+  "wait_key_call": {
+   "caller_ret": "0x194db",
+   "call_id": 181450,
+   "makes_between": [
+    "0x38",
+    "0x1c"
+   ],
+   "returned": "0x1c",
+   "ebx": "0x1388",
+   "edi": "0x9"
+  },
+  "money_delta": 5000
+ },
+ "conclusion": "LOG CONFIRMED(DOSBox-X 截圖,程式判讀):YES 之後畫面是 FDTXT_000 0x1a5 + 0x1aa、金額 5000(可見寶箱;0x1ae 隱藏寶箱不完整);續一百八十七的目視判讀成立。之後第一次 Return 訊息就關了(70_clear0 沒有字)。2026-08-28 那輪按鍵之後沒有讀值;續一百八十八實機 lc188a(LOG CONFIRMED,原版 FD2.EXE、DOSBox-X 除錯器讀值 + 呼叫紀錄):YES 後旗標[9] 0、錢不變、[0x53ae1] = 5000,遊戲停在 0x194d6 的等鍵;按一次 Return 之後旗標[9] = 1、錢 + 5000。pred188.txt 的 Q1 .. Q3 全部成立。"
+}
