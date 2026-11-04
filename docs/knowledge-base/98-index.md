@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 235 節、19 個主題。
+共 236 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 12621:2026-11-01 續一百八十一:續一百八十仍留五項 —— 981 次打字音由文字游標全部歸到字串、index 5 / 6 是面板展開 / 收起(兩次實機不矛盾)、1 / 8 / 0xc 的呼叫情境、ev_s158 (C) ESCAPED 歸零、兩份舊 docs/data 表加取代標記;375 觸發擷取三次都沒出現(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc181a .. lc181c,FD2.EXE、FDTXT) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12689:2026-11-01 續一百八十二:續一百八十一仍留 —— 1626 次腳步音全部由呼叫紀錄裡的單位記錄傾印對到角色(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 12735:2026-11-01 續一百八十三:續一百八十二仍留 —— FDFIELD b1 經 +8 就是單位面板顯示名字的鍵(DOSBox-X 呼叫紀錄 cl1 .. cl14,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 - 行 12770:2026-11-02 續一百八十四:續一百八十一 .. 一百八十三仍留三項實機 —— 空白名字的單位只在開場劇情、面板從沒畫過;375 再看到 4 次都是 MDI 型夾一次 IRQ 7;index 1 / 8 / 5 / 6 / 0xc 的畫面(DOSBox-X 呼叫紀錄 lc184a / lc184b,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、斷點、FDFIELD〕
@@ -17,6 +16,7 @@
 - 行 12945:2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000 〔來源:DOSBox-X、斷點、FDOTHER〕
 - 行 12986:2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000) 〔來源:反組譯、FDTXT_000、FD2.EXE〕
 - 行 13030:2026-11-04 續一百九十:UI 音效 0xb = 職業 3 / 11 / 15 / 19(騎士等)的腳步音(原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a 6 次全是亞雷斯(騎士)走路;636 次 play_step_sfx 逐次預測全中)—— 91-worklist「UI 音效 index 2-0xb 語意畫面實測」結案 〔來源:DOSBox-X、debugger、反組譯〕
+- 行 13061:2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯) 〔來源:DOSBox-X、斷點、FUN_0002fb2c〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -287,7 +287,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(70 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(71 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -359,6 +359,7 @@
 - 行 12945:2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000 〔來源:DOSBox-X、斷點、FDOTHER〕
 - 行 12986:2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000) 〔來源:反組譯、FDTXT_000、FD2.EXE〕
 - 行 13030:2026-11-04 續一百九十:UI 音效 0xb = 職業 3 / 11 / 15 / 19(騎士等)的腳步音(原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a 6 次全是亞雷斯(騎士)走路;636 次 play_step_sfx 逐次預測全中)—— 91-worklist「UI 音效 index 2-0xb 語意畫面實測」結案 〔來源:DOSBox-X、debugger、反組譯〕
+- 行 13061:2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯) 〔來源:DOSBox-X、斷點、FUN_0002fb2c〕
 
 ## dispatch 跳表與指令表(6 節)
 

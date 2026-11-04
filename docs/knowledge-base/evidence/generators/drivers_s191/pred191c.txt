@@ -1,0 +1,39 @@
+續一百九十一 town secret gate 實機前預測(2026-11-04,跑之前寫,跑完不改)
+對象:原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;instance lc191b;FD2.SAV 槽 0 章節 byte 以既有 patch_chapter 改成 2(第三章)。
+不改遊戲記憶體、不下斷點;debugger 只讀 [0x53c03](章節 byte)、[0x53a8d..0x53a8e](union REGS AL / AH)、[0x53f4a](selection)。
+鍵由 xdotool 送(fd2_dosbox_live_helper send_keys);call log 開 KBD,K 紀錄 = guest 鍵盤控制器收到的 scan code(make / break|0x80)。
+
+靜態依據(s191_H):town_hub_main 0x26152 讀鍵 = INT 16h AH=10h(0x2648d 寫 AH=0x10;0x4698a int 0x16),結果 AH 留在 [0x53a8e];
+過濾 0xE0/0x52/0x22/0x4D/0x4B 之外的鍵都到 0x26559:record+2 == AH 且 record+1 == [0x53f4a] → [0x53f4a] = 5。
+表 0x6238d + 0x1f*([0x53c03]−1):ch03 (sel 1, scan 0x5F = Ctrl+F2);ch06 (sel 4, 0x62 = Ctrl+F5);ch02 (sel 0, 0x54 = Shift+F1)。
+
+T1 LOAD 後 hub 的 [0x53c03] = 2。
+T2 正對照:在 sel ≠ 1 送 Ctrl+F1:K 紀錄有 0x1d、0x3b make;之後 [0x53a8e] = 0x5E;[0x53f4a] 不變(不揭示)。
+T3 移到 sel 1 送 Ctrl+F2:K 有 0x1d、0x3c;[0x53a8e] = 0x5F;[0x53f4a] = 5;標籤變成秘密店(不是 酒店/武器店/出口/道具店/教會)。
+   若 K 沒有 0x1d → 判定 Ctrl 沒送進 guest(c);若 K 有 0x1d 0x3c 但 AH ≠ 0x5F → 判定 DOSBox-X BIOS 換算問題;
+   若 AH = 0x5F 且 sel = 1 卻沒變 5 → 靜態結論錯,停。
+T4(若 T3 成立)新 instance 不必;同一 instance 回標題不做。ch06 另以同法:章節 byte 5、sel 4、Ctrl+F5 → AH 0x62、sel 5。
+
+補(2026-11-04,T3 之後、改送法之前寫):T3 實測 window 模式送 ctrl+F2,K 紀錄只有 01d / 09d,沒有 03c;AH 仍是 0x4B、sel 1 → 判定 (c) 的變形:F2 沒送進 guest(Ctrl 有)。
+T5 改 FD2_HARNESS_KEY_MODE=xtest(xdotool key --clearmodifiers,XTEST)在 sel 1 送 ctrl+F2:若 K 有 01d 03c,則 AH = 0x5F、sel = 5、標籤變秘密店;
+   若 K 仍沒有 03c → 兩種送法都送不進 F2+Ctrl,遊戲側仍無法實測(記 BLOCKED,原因在 host 輸入層)。
+補 2(T5 之後寫):T5 xtest 也只有 01d / 09d、沒有 03c,AH 0x4B、sel 1 不變。
+T6 window 模式單送 F2(不加 Ctrl):預期 K 有 03c / 0bc、AH = 0x3C、sel 1 不變(0x3C 不是 ch03 的 0x5F)。若成立 → F2 本身送得進,Ctrl+F2 是 host 端(Xvfb / DOSBox-X)攔下的組合。
+T7 window 模式送 ctrl+F5(ch06 的鍵;此處 ch03 不會揭示):記錄 K 有無 03f。
+補 3(T6 / T7 之後寫):T6 單送 F2:K 03c / 0bc、AH 0x3C、sel 1 → F2 本身送得進。T7 ctrl+F5:K 完全沒有新紀錄(連 01d 都沒有)。
+DOSBox-X 原始碼(~/fd2-dosbox-calllog4/dosbox-x/src/gui/sdlmain.cpp):3999 MAPPER_AddHandler(CopyAllClipboard, MK_f5, MMOD1, "copyall")、
+4010 MAPPER_AddHandler(&FormFeed, MK_f2, MMOD1, "ejectpage");mapper 事件名 = "hand_" + eventname(sdl_mapper.cpp 4764)。
+既有 tools/dosbox/passthrough.map 沒有這兩個(只有 cap_video / cap_audio / cap_opl / cap_mtaudio / hand_capmouse)。
+T8 新 instance lc191c(同章節 byte 2),FD2_HARNESS_MAPPER 指向 passthrough + hand_copyall + hand_ejectpage 無綁定的 mapper:
+   sel 1 送 ctrl+F2 → K 01d 03c、AH 0x5F、sel 5、標籤變秘密店。
+T9 同 instance 回不了別章;另開 lc191d 章節 byte 5(第六章)sel 4 送 ctrl+F5 → K 01d 03f、AH 0x62、sel 5。
+補 4(T8 之後寫):T8 lc191c 帶 mapper 檔後 K 紀錄完全沒有(LOAD 的 Down / Return 也沒有),debugger(Alt+Pause)也開不了:
+DOSBox-X sdl_mapper.cpp 5694 `if (!MAPPER_LoadBinds()) CreateDefaultBinds();` —— 讀得到 mapper 檔就不建預設綁定,只列 7 個事件的檔 = 所有鍵都沒綁。
+(2026-09-03 passthrough.map 2×2「四格都沒反應」同一原因:那時連一般鍵都送不進,不能當 gate 的反證。)T8 / T9 作廢。
+T10 新 instance lc191d(不帶 mapper,同章節 byte 2):到 sel 1 後進 debugger,讀 BDA head [0x41a] / tail [0x41c](selector 0170 線性 = 實體,低 1 MB),
+    在 tail 位置寫 word 0x5F00(= BIOS 對 Ctrl+F2 放進緩衝的值)、tail += 2(0x3e 之後回 0x1e),讀回確認,resume。
+    預期:[0x53a8e] = 0x5F、[0x53f4a] = 5、標籤變秘密店(不是 酒店/武器店/出口/道具店/教會)。
+T11 同一 instance 再注入 0x6200(Ctrl+F5)在 sel ≠ 4 / 非第六章:AH = 0x62、sel 不變(對照:鍵到了但不是本章的鍵)。
+補 5(T10 / T11 之後寫):T10 成立(AH 0x5F、sel 5、標籤「？？？」FDTXT 0x1f4);T11 成立(AH 0x62、sel 5 不變)。
+T12 新 instance lc191e 章節 byte 5(第六章):先確認 [0x53c03] = 5;到 sel 4 注入 0x6200 → AH 0x62、sel 5、標籤「？？？」。
+    對照:同 instance 先在 sel 0 注入 0x6200 → sel 0 不變。

@@ -1046,6 +1046,8 @@ handler 內硬編碼給 `0x1AA1D` 的單列亦全為 kind 0
 這把 event 82 收窄成「目前無已知資料生產端」，但在所有 runtime writer
 閉合前仍不宣稱程式碼不可達。
 
+> **2026-11-04 勘誤(doc98 續一百九十一)**:event 82 有資料生產端 —— map29 控制段回合列 0 是休眠的 `(0xff, 82, camp 0)`,event 81 在 `0x362e4` 把它的回合設成下一回合,下一回合由 `0x1a85a` dispatch 82。`turn_events.json` 丟掉了休眠列,所以這裡的掃描看不到(STATIC ANALYSIS,未實機觀察)。
+
 #### 2026-08-19 補記：runtime `+0x31..+0x33` 全 EXE writer 稽核（回應 worklist RE-EVENT82-REACHABILITY）[驗]
 
 方法：不依賴既有 handler 清單，改用 Ghidra headless 對 `FD2.EXE` 全部
@@ -1200,6 +1202,8 @@ selector1 的 event61 接入正式戰鬥路徑：event61 會在成功行動後�
 重製 `stepBattleWalk` 已在相同提交點執行 event59/60；向右反例測試固定
 不得觸發。selector1 仍橫跨 `0x13A9F` 與 `0x18890` 的多個行動成功臂，
 event61 presentation 完成前不接線。
+
+> **2026-11-04 勘誤(doc98 續一百九十一)**:上段「selector0 只在向左步」錯。四個方向的步函式都跳到同一段尾端 `0x13167 .. 0x13175` 呼叫 `0x13a44(x, y, 0)`(下 `0x13008 jmp 0x13167`、上 `0x13310 jmp 0x12ff0`、右 `0x1345b jmp 0x1314f`);原版 DOSBox-X lc191a 亞雷斯向上 16 步、向右 12 步,28 步都以 selector 0 呼叫、返回位址都是 `0x1317a`。selector 0 = 每一格步驟提交後,不分方向;寫進 `[0x51a8f]` 後由輸入迴圈 `0x1199c` 在行動結束時 dispatch。
 
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
@@ -2157,6 +2161,8 @@ mechanism 本身均已有反組譯佐證**，殘留缺口分別是「逐章 join
 非獨立任務)與「class→cap 完整對應表 + remake 執行接線」(doc27 已追蹤，非本節新開)。
 
 ## 10. 2026-08-20：全域事件表 58..89 剩餘 handler 高階語意初步稽核（回應 worklist L212）
+
+> **2026-11-04(doc98 續一百九十一)**:本節、§10.4.2 與 §11 的舊描述多數掛錯 event id 且從函式中段起讀(§19)。以正確入口重讀:§10.1「67」`0x35a2f` / 「69」`0x35ab8` 都屬 event 61(「無條件版」不存在);「76」`0x35d60` 是 event 66 的尾段;「84」`0x360c0` 屬 event 76(回合事件,常數單位 1、寫 row1 `+6`、結尾迴圈 4 次);§10.2「74」屬 event 63,缺第一輪 `0x35b78(3,27,1)`;§11.3 `0x35b78` 的參數是 `(x, y, group)`,「27 號 item」「給予 item」都是 y 座標。逐個 handler 見 doc98 續一百九十一 (3)。
 
 > worklist 91 稽核索引第212行：「REMAKE-GLOBAL-EVENT-DISPATCH 的 58..89 handler 高階語意
 > 仍待逐一靜態反組譯」。§6.1 已證實全域事件表 `0x51b91` 共 90 entries（0..89），§6.4／

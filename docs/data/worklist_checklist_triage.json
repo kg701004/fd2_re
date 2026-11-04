@@ -2,31 +2,6 @@
  "_doc": "91-worklist.md 勾選框([ ] / [~])逐項人工分類;由 tools/worklist_checklist.py --check 把關(每個未勾項目恰有一筆、closed 的引文必須逐字在依據檔、duplicate 指向非 duplicate、open_* 有 next)。key = 標題行去註記後的 sha1 前 10 碼。2026-11-03 續一百八十九建立。",
  "items": [
   {
-   "key": "c501999350",
-   "title": "**UI-VIS-TOWN**：`0x2cd16/0x2cf71/0x11eb0",
-   "disposition": "open_live",
-   "reason": "三個 variant 的原版選項循環與紅框 bug 已收斂;secret gate 2026-09-03 說「已解決」,其後發現只是 ch02 專屬鍵。逐章實測 8/8 成立,但 ch03(Ctrl+F2)、ch06(Ctrl+F5)仍不觸發,也還分不出是 Ctrl 鍵沒送進 guest 還是另有前置條件。",
-   "next": "先離線確認 FUN_00026152 的 secret gate 比較([0x53a8e]==record+2 且 record+1==[0x53f4a])沒有包在其他條件分支裡,再看 menu_read_key / INT16h AH=0x10 讀鍵路徑會不會濾掉 0x5F / 0x62;接著在 DOSBox-X 的 ch03 sel1(及 ch06 sel4)送 Ctrl+F2 / Ctrl+F5,用除錯器讀 [0x53a8e],分辨是鍵沒送到還是 gate 另有前置條件。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
-     "quote": "**因此 ch03／ch06 仍未解**"
-    },
-    {
-     "path": "docs/knowledge-base/58-remake-live-verification-log.md",
-     "quote": "ch03 的 `Ctrl+F2` 在**全部 5 個 selection** 逐一測過，全無反應。"
-    },
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "因此剩餘假說收斂為「另有前置條件」，不是表格資料本身"
-    },
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "但「Ctrl 是否送得進 guest」**仍未分離**"
-    }
-   ]
-  },
-  {
    "key": "f041f7a490",
    "title": "**UI-VIS-SHOP**：四個callee與secret selectio",
    "disposition": "closed",
@@ -183,19 +158,6 @@
    ]
   },
   {
-   "key": "1136c480ef",
-   "title": "**REMAKE-GLOBAL-EVENT-DISPATCH**：全域 `0x5",
-   "disposition": "open_static",
-   "reason": "doc25 §19 證實 58..89 的 32 格都是函式入口(舊的 artifact 分類作廢),但也明說語意尚未以正確入口重新反編譯;舊描述從函式中段起讀,可能缺開頭。",
-   "next": "以 docs/data/function_names.json 的正確入口(event_handler_58=0x35854 … event_handler_85=0x3642e)逐一反編譯 58..85 的 handler,取代 §10.1 / §10.2 從中段起讀的舊描述;再補齊各 dispatcher(turn 0x1a813、field 0x13a44、treasure kind2)的 selector 生產路徑。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/25-battle-event-system.md",
-     "quote": "要真正確立每格語意,仍須以正確入口重跑一次反編譯"
-    }
-   ]
-  },
-  {
    "key": "c00d9da625",
    "title": "反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證——大部",
    "disposition": "closed",
@@ -256,23 +218,6 @@
     {
      "path": "docs/knowledge-base/49-character-id-name-table.md",
      "quote": "所以「97 組」裡有 36 組(id 32..67)在遊戲裡根本沒有名字,其餘落在已轉錄的單位類型/首領段"
-    }
-   ]
-  },
-  {
-   "key": "369f553131",
-   "title": "`FD2.SAV` 存檔：Docker static trace 已固定 `rb",
-   "disposition": "open_static",
-   "reason": "CONTINUE(回到記錄戰況)、LOAD 選槽、戰中記錄戰況區塊已有實機證據;但 slot metadata +10..+39 有無其他 consumer、原版有無刪除槽功能仍未回答。",
-   "next": "全 image 掃描讀寫 slot record 的指令(buffer +0x312b+i*0xa28 的 0x59cb 區;reader 0x2602c、writer 0x30012、load_game_menu 0x2986f、save_game_menu),判定 metadata +10..+39 是否有任何 consumer;另反組譯 0x30550 選槽,確認是否存在刪除槽分支。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "尚缺一般玩家有效槽 E2、metadata `+10..+39` 其他可能 consumer、delete/overwrite 及 current-battle restore"
-    },
-    {
-     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
-     "quote": "回到記錄戰況時的戰場,色彩正常"
     }
    ]
   },
@@ -613,19 +558,6 @@
    ]
   },
   {
-   "key": "631384624b",
-   "title": "單位 0x50B 結構：`+5` raw bit0/bit7 predicate",
-   "disposition": "open_static",
-   "reason": "0x50 單位 record 的完整逐欄佈局仍未完成:doc03 2026-09-11 只把部分舊標記偏移訂正,+0x02..+0x04、+0x07、+0x08 名稱仍未證實,可由 constructor 與 consumer 靜態補齊。",
-   "next": "以 constructor 0x10c50 逐欄寫入加上各已命名 consumer(function_names.json),列出 +0x00..+0x4f 全欄位表,每欄附 writer / reader 位址;未證實者標待證,不沿用舊標記。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/03-exe-and-data-structures.md",
-     "quote": "但只有「寬度與位置吻合」這層證據,名稱仍是未經證實的舊標記"
-    }
-   ]
-  },
-  {
    "key": "75dd1722b6",
    "title": "**魔法系統** (第7-8輪完成資料與部分 runtime,commit 3c",
    "disposition": "closed",
@@ -806,19 +738,6 @@
    ]
   },
   {
-   "key": "6e3ad626ef",
-   "title": "**法術 FIGANI 手勢邊界**：`0x28784` 不讀 spell id",
-   "disposition": "duplicate",
-   "reason": "0x2a6bd 已證為誤記位址(真 dispatcher 是 0x2ff01),分支與命中率已解;原版側只剩 FDOTHER 48-53 葉節點(子樣本)語意,與第 3481 行戰鬥音效池逐招對照的殘留同一件事。",
-   "of": "11c17c69a5",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
-     "quote": "leaf-level 語意，應該從「解碼資源 48-53 的子項格式」切入"
-    }
-   ]
-  },
-  {
    "key": "a186bc6e7e",
    "title": "**歷史 legacy magic snapshot（不可作 native co",
    "disposition": "obsolete_remake",
@@ -835,19 +754,6 @@
    ]
   },
   {
-   "key": "11c17c69a5",
-   "title": "戰鬥音效池([0x5411f] 動態子容器)導出+逐招對照——本輪(2026-0",
-   "disposition": "open_static",
-   "reason": "id≥0x20 index 來源(91-94)與 12-27 表缺口已解或撤回，但池內 sub-index 觸發時機與 action_id 2/8 名稱不吻合仍未解。",
-   "next": "以 Ghidra headless 逐一反組譯 action 函式 0x2bb33/0x2bd6c/0x2bfd9/0x2c217/0x2c441/0x2c67d/0x2cafc/0x2ccf4/0x2ce1a 內 play_sfx 呼叫與其 sub-index 參數，並解碼 FDOTHER #48-53 巢狀容器子項格式，定出揮空/命中/爆擊各用哪個子樣本與 action_id 2/8 的名稱。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/36-sfx-audio-data.md",
-     "quote": "仍未解:id 0-9 對應的玩家可讀招式名稱;池內子樣本個別觸發時機"
-    }
-   ]
-  },
-  {
    "key": "4aab855113",
    "title": "戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12",
    "disposition": "closed",
@@ -860,19 +766,6 @@
     {
      "path": "docs/knowledge-base/12-music-playback-and-scene.md",
      "quote": "**因此:一般戰鬥沒有專屬的勝利曲。** 戰鬥結束後是停曲"
-    }
-   ]
-  },
-  {
-   "key": "fedfce4e2a",
-   "title": "戰鬥 SFX:index 陣列填值上游、#48-64 逐招對照、remake 接",
-   "disposition": "duplicate",
-   "reason": "填值上游已解(0x0526bc 與 0x1d51d→0x1c269)、remake 接入已失效；剩下的逐招對照與 L3481 同一件事。",
-   "of": "11c17c69a5",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/36-sfx-audio-data.md",
-     "quote": "`local_20`/`[esp+0xd0+counter]`的填值機制**在語意層級已經找到並可信**"
     }
    ]
   },
@@ -1237,19 +1130,6 @@
    ]
   },
   {
-   "key": "d18dd85e75",
-   "title": "**chapter ending renderer (`0x2bce5`)**：",
-   "disposition": "open_static",
-   "reason": "背景圖 renderer 已由 live BPPM 解出，但結局 montage 的 FIGANI 立繪本體與 portrait 框的繪製機制仍未查清(只有 FUN_0002fb2c 候選)。",
-   "next": "靜態反組譯 FUN_0002fb2c(9 輪迴圈加額外呼叫)的被呼叫端與傳給 FUN_000111ba 的資源索引，確認立繪幀來源；再找畫 portrait 框的呼叫，可對照 doc98 L7951 所述既有結局 montage 執行軌跡。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/35-battle-animation-rendering.md",
-     "quote": "`FUN_000111ba()`的資源索引語意、`FUN_0002fb2c`額外呼叫的內容仍需驗證、portrait框完全未觸及"
-    }
-   ]
-  },
-  {
    "key": "f939f06a9c",
    "title": "battle selector bridge：`battle_fig`→`Uni",
    "disposition": "obsolete_remake",
@@ -1286,19 +1166,6 @@
     {
      "path": "docs/knowledge-base/91-worklist.md",
      "quote": "殘留缺口收斂為僅剩「DOSBox 320×200 HUD pixel oracle」這個純live驗證項目"
-    }
-   ]
-  },
-  {
-   "key": "54d796372f",
-   "title": "**indexed ending compositor core**：`inte",
-   "disposition": "duplicate",
-   "reason": "remake compositor 部分已失效；原版側殘留(FIGANI 立繪、portrait 框、montage 資產索引)與 L4463 相同。",
-   "of": "d18dd85e75",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "FIGANI\n  立繪本體、portrait框、`native_2c548.json`描述的細部資產索引(FDOTHER#56/TAI#3/DATO)本輪\n  **未逐項查證**"
     }
    ]
   },
@@ -1359,19 +1226,6 @@
    ]
   },
   {
-   "key": "fbb523f748",
-   "title": "**handler 後半段 beats 解碼**(sonnet subagent",
-   "disposition": "open_static",
-   "reason": "remake 排程重寫已失效，但 ch1-forest.md 依 doc50 規則推算的密林段走位座標從未對原版執行期資料核對。",
-   "next": "用既有 DOSBox-X 呼叫紀錄 lc184a(開場逐鍵推進含第 31 張圖森林段，單位表基底 0x2389f0)裡的單位記錄傾印，核對 scene-decode/ch1-forest.md 推算的 acting 0x5a..0x62 走位座標與 slot 對照。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "座標推算僅套用doc50既有規則，\n      沒有dosbox斷點交叉驗證(non-live)"
-    }
-   ]
-  },
-  {
    "key": "fa4809ba7b",
    "title": "**SDD-1 UI evidence matrix**：以 Ghidra/ID",
    "disposition": "not_a_task",
@@ -1408,23 +1262,6 @@
     {
      "path": "docs/knowledge-base/91-worklist.md",
      "quote": "這接通 state/UI boundary，不宣稱 indexed effect renderer"
-    }
-   ]
-  },
-  {
-   "key": "3eece34fa0",
-   "title": "**UI-04 range geometry**：Docker/Capstone",
-   "disposition": "open_static",
-   "reason": "LOS 已證明不存在、AOE 已由第二段 collect_targets_in_range(range=+4)解出；只剩「不可用目標灰化」原版是否有、怎麼畫還沒查。",
-   "next": "反組譯 target_cursor_loop 與 0x1ceed command grid renderer 的 disabled 分支，確認原版有沒有把不可選目標或格子畫成灰色、用哪個 palette/資源；沒有就記為不存在。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/11-enemy-ai.md",
-     "quote": "**`0x14818` 視線判定缺口：視為已閉合**"
-    },
-    {
-     "path": "docs/knowledge-base/98-tooling-infrastructure.md",
-     "quote": "選定落點後再以落點為原點(range = `+4`)取實際目標"
     }
    ]
   },
@@ -1697,23 +1534,6 @@
     {
      "path": "docs/knowledge-base/91-worklist.md",
      "quote": "有效槽語意在原版側已確認；E2 對照半因 remake 移除已無對象"
-    }
-   ]
-  },
-  {
-   "key": "7a1ff93d8c",
-   "title": "**MAP26-EVENT63-E2-PLAYER-PATH**：從未修改 ch",
-   "disposition": "open_live",
-   "reason": "event62→event63 增援的靜態語意已閉合,但在原版未修改的玩家路徑下,event63(兩次白閃 + group1/2 增援)從未實機觀察;2026-09-07 只擷取到 ch27 進場起始狀態。",
-   "next": "DOSBox-X 載入未修改的 ch27 存檔,一般輸入讓 selector0 單位依 event62 條件向左一步後結束回合;在敵方 AI 之前下斷點(現行 EXE 的 event63 handler 是 0x35c1d,不是舊位址 0x358c7),逐幀擷取兩次全 DAC 白閃與 group1@(3,27)、group2@(15,27) 出場,對照 doc56 的靜態時序(pan→constructor→300ms→白閃→200ms→restore)。",
-   "evidence": [
-    {
-     "path": "docs/knowledge-base/91-worklist.md",
-     "quote": "原版側的 camera/roster/tick 起始狀態已由本輪擷取固定下來"
-    },
-    {
-     "path": "docs/data/known_address_errata.json",
-     "quote": "\"correct_address\": \"0x35c1d\""
     }
    ]
   },

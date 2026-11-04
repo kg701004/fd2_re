@@ -1,0 +1,270 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s191b.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "A_event_dispatch": {
+  "handlers_58_89": {
+   "58": "0x35854",
+   "59": "0x35997",
+   "60": "0x359cb",
+   "61": "0x35a0d",
+   "62": "0x35bee",
+   "63": "0x35c1d",
+   "64": "0x35c40",
+   "65": "0x35cf1",
+   "66": "0x35d1e",
+   "67": "0x35d85",
+   "68": "0x35d9e",
+   "69": "0x35e0e",
+   "70": "0x35e5b",
+   "71": "0x35ec1",
+   "72": "0x35f48",
+   "73": "0x35f79",
+   "74": "0x35f88",
+   "75": "0x35fcf",
+   "76": "0x360b6",
+   "77": "0x36214",
+   "78": "0x36228",
+   "79": "0x3623c",
+   "80": "0x362b0",
+   "81": "0x362c5",
+   "82": "0x362e8",
+   "83": "0x363de",
+   "84": "0x36416",
+   "85": "0x3642e",
+   "86": "0x36439",
+   "87": "0x36440",
+   "88": "0x36447",
+   "89": "0x3644e"
+  },
+  "table_call_sites": [
+   "0x1199c",
+   "0x1712d",
+   "0x19511",
+   "0x1a85a",
+   "0x1ac1a",
+   "0x1d890",
+   "0x1d95c",
+   "0x1d9ec"
+  ],
+  "per_map_ids_ge_58": {
+   "25": {
+    "field": [
+     59,
+     60,
+     61
+    ],
+    "turn": [],
+    "treasure": [
+     58
+    ],
+    "turn_row0": [
+     2,
+     57,
+     0
+    ],
+    "field_cells": {
+     "59": 31,
+     "60": 31,
+     "61": 1
+    }
+   },
+   "26": {
+    "field": [
+     62,
+     84
+    ],
+    "turn": [
+     63,
+     65
+    ],
+    "treasure": [],
+    "turn_row0": [
+     255,
+     63,
+     0
+    ],
+    "field_cells": {
+     "62": 31,
+     "84": 130
+    }
+   },
+   "27": {
+    "field": [
+     65,
+     69
+    ],
+    "turn": [
+     66,
+     68,
+     70
+    ],
+    "treasure": [],
+    "turn_row0": [
+     255,
+     66,
+     0
+    ],
+    "field_cells": {
+     "65": 3,
+     "69": 7
+    }
+   },
+   "28": {
+    "field": [
+     75
+    ],
+    "turn": [
+     74,
+     76,
+     79
+    ],
+    "treasure": [],
+    "turn_row0": [
+     255,
+     74,
+     0
+    ],
+    "field_cells": {
+     "75": 1
+    }
+   },
+   "29": {
+    "field": [
+     80
+    ],
+    "turn": [
+     82
+    ],
+    "treasure": [],
+    "turn_row0": [
+     255,
+     82,
+     0
+    ],
+    "field_cells": {
+     "80": 164
+    }
+   }
+  },
+  "field_ids": [
+   59,
+   60,
+   61,
+   62,
+   65,
+   69,
+   75,
+   80,
+   84
+  ],
+  "turn_ids": [
+   63,
+   65,
+   66,
+   68,
+   70,
+   74,
+   76,
+   79,
+   82
+  ],
+  "treasure_ids": [
+   58
+  ],
+  "empty_handlers": [
+   85,
+   86,
+   87,
+   88,
+   89
+  ]
+ },
+ "B_save": {
+  "slot_end": "0x59cb",
+  "checksum": "0x59c7",
+  "meta_tail_abs_hits": {
+   "0x455d": [
+    "0x180e6"
+   ],
+   "0x59c7": [
+    "0x100b5",
+    "0x1a102",
+    "0x1fdec",
+    "0x297b6"
+   ]
+  },
+  "delete_key_becomes_esc": "0x29d0a mov byte ptr [0x3a8e], 1"
+ },
+ "C_unit_record": {
+  "live_units_checked": 63,
+  "violations": 0,
+  "null_violations": {
+   "xy_swapped": 34,
+   "p9_is_p8": 59
+  },
+  "hp_mhp_swapped_violations_degenerate": 0
+ },
+ "D_spell_sfx": {
+  "phase_handlers": [
+   "0x2b996",
+   "0x2bb33",
+   "0x2bd6c",
+   "0x2bfd9",
+   "0x2c217",
+   "0x2c441",
+   "0x2c67d",
+   "0x2cafc",
+   "0x2ccf4",
+   "0x2ce1a"
+  ],
+  "spell_pool_fdother": [
+   82,
+   82,
+   83,
+   84,
+   85,
+   86,
+   87,
+   88,
+   89,
+   90
+  ],
+  "pool_fixups": {
+   "0x5411f": 0,
+   "0x54117": 0,
+   "0x54153": 32,
+   "0x5414b": 16,
+   "0x5414f": 5
+  },
+  "attack_pools_fdother": [
+   48,
+   49,
+   50,
+   51,
+   52,
+   53
+  ],
+  "attack_pool_sub0_md5": "96dc7e3018ecc8c3d0e7d64e2680f70f",
+  "attack_pool_sub1_distinct": 6
+ },
+ "E_ending": {
+  "callers": {
+   "0x2bce5": [],
+   "0x31529": [
+    "0x2545d",
+    "0x25970"
+   ],
+   "0x2fb2c": [
+    "0x2abcc"
+   ],
+   "0x2aa00": [
+    "0x29f48"
+   ]
+  },
+  "load_res_calls": 132
+ },
+ "G_target_ui": {
+  "redraw_only_in_target_loop": true
+ },
+ "conclusion": "六個 open_static 的關鍵指令與可計算表在原版 FD2.EXE 上全部成立;詳細推論見 doc98 續一百九十一。"
+}

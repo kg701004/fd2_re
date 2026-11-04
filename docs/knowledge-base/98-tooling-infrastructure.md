@@ -13057,3 +13057,136 @@ cl1 .. cl14 沒有一次 0xb(續一百八十二:那些紀錄裡走路的單位�
 **驗證**:見提交訊息。
 
 **仍留**(`python tools/worklist_checklist.py --summary`):open_static 7(第 2804 / 2888 / 3312 / 3484 / 4466 / 4650 / 4755 行)、open_live 2(第 1918 / 5489 行)。
+
+## 2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯)
+
+起因:使用者「open_static 7 項、open_live 2 項 請完整進行驗證及處理」。原版 FD2.EXE 的靜態分析由 9 個子代理平行做(各自的 facts / check 全過,只寫
+scratchpad),主代理把每項結論所依據的關鍵指令與可計算的表重寫成產生器:`evidence/generators/ev_s191.py`(實機)、`ev_s191b.py`(靜態)、
+`ev_s191f.py`(lc184a 森林段);證據 `evidence/live_s191_event63_town_gate_20261104.json`、`static_s191_open_items_20261104.json`、
+`forest_beats_s191_20261104.json`。實機只對原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL `-d Ubuntu`,驅動與預測在
+`evidence/generators/drivers_s191/`(pred191 / pred191b / pred191c 都在跑之前寫)。
+
+### (1) MAP26-EVENT63-E2-PLAYER-PATH(第 5489 行):原版 FD2.EXE 的 DOSBox-X 實機 lc191a,LOG CONFIRMED
+
+- 存檔:`~/fd2-run/FD2.SAV`(md5 e6d9a35756cddfc2519969b10f039181,槽 0「第二十七章 命運的交會點」),LOAD → 營地出口 → 戰場,
+  不改記憶體、不下斷點,debugger 只讀。call log 入口是本輪的 25 個(上限 2000000,0x3790a 等熱函式整場沒記滿)。
+- **map26 的 event62 觸發格**:FDFIELD 第 79 個資源(map26 控制段)field row0 = (62, selector 0);構成檔 word1 低 5 位 = 1 且地形
+  byte0 & 0x60 == 0 的格子恰是 **y = 39 整列 31 格**((15,47) 也是 slot 1,但地形 0x20 = 寶箱路徑,`0x13a64` 擋掉)。回合列 row0 = (0xff, 63, 0) 休眠。
+- **doc25 §6.2「selector0 精確代表每個向左格步驟提交後」錯**:亞雷斯 (14,55) → (26,39) 一次移動 28 步(上 16、右 12、左 0),
+  `0x13a44(新 x, 新 y, 0)` 被呼叫 28 次、返回位址全是 `0x1317a`。靜態補看:下 `0x12fea` inc y → `0x12ff0` → `0x13008 jmp 0x13167`;
+  上 `0x1330a` dec y → `0x13310 jmp 0x12ff0`;右 `0x13455` inc x → `0x1345b jmp 0x1314f`;左 `0x13149` dec x 直接落下 —— 四個方向都到
+  `0x13175 call 0x13a44`。當初只看到 `0x1300d` 這一支有 `call`,沒追另外三支的尾跳。pred191.txt Q1(「只以向上步進入 y = 39 不觸發」)因此 FAIL,
+  在行動結束前寫了 pred191b 取代。
+- `0x13a44` 只把 event id 寫進 `[0x51a8f]`(`0x13a95`);player 路徑在輸入迴圈 `0x1198a .. 0x1199c` 行動結束後 dispatch(選取時 `0x188bd`
+  清成 0xff)。休息(指令環 ↓)後 **`0x35bee` 被呼叫一次,返回 `0x119a3`、參數 = 單位 2**;live 回合列 row0 回合 byte 255 → 2(= 回合 1 + 1)、
+  evstate `[0x53ad5]+0x11` 0 → 1(R1)。行動結束時 `0x18890` 內 `0x18b0c` 另以 selector 1 呼叫 `0x13a44(26,39,1)` 一次(那格沒有 selector 1 列)。
+- 第 1 回合敵方階段:`0x1a554` 呼叫的 `0x1a813(0)` 不 dispatch event63(R2)。第 2 回合敵方階段:同一呼叫內、敵軍 AI `0x1a58f call 0x1d8ba`
+  之前,**`0x35c1d` 由 `0x1a85a` 呼叫一次(返回 `0x1a861`、參數 0)**(R3)。
+- event63 內(R4):`0x35b78(3,27,1)` → `0x135dd(3,27)` → `0x10b4e(1)` → `0x3790a(300)` → `0x11df2(0,255,255)` → `0x3790a(200)` →
+  `0x11df2(0,255,0)` → `0x11cac(0)` → `0x3790a(400)`(`0x35722`,pred191b 沒寫到這一條);再一輪 (15,27,2)。模擬時間:delay(300) 314 / 311 ms、
+  白閃到恢復 206 / 207 ms、尾端 409 / 409 ms(容許 ±60 ms)。
+- 單位表 63 → 75 筆(R5 的筆數部分);新增 12 人的出場位置 = 第一輪 (7..10, 29..32) 六人、第二輪 (20..23, 29..32) 六人(debugger 讀的 s06 與
+  每人第一次移動回推的起點 12/12 相同)。**pred191b R5「出現在 (3,27)、(15,27) 附近」FAIL**:那兩組是 `0x135dd` 的鏡頭座標,
+  出場位置來自各單位自己的 FDFIELD 資料。
+- R6(第二次站上 y = 39、確認 event63 不重複):NOT TESTED。第 3 回合 `goto` 以 DOSBox-X debugger 讀游標時 CPU 停在 real mode、讀取失敗,後面串接的鍵已盲送;
+  紀錄在那之後沒有新的 `0x13488` / `0x35bee`,依「第一個失敗就停」結束。靜態上 `0x35bfd` 的 state[0x11] 檢查保證不重複(CODE CONFIRMED)。
+
+### (2) UI-VIS-TOWN secret gate(第 1918 行):原版 FD2.EXE 的 DOSBox-X 實機 lc191b .. lc191e,LOG CONFIRMED
+
+- 靜態(子代理 H):gate 在 `town_hub_main` `0x26152` 的 idle 迴圈,讀鍵 = BIOS INT 16h AH=10h(`0x2648d mov byte ptr [0x3a8e], 0x10`,
+  `0x4698a int 0x16`;整個 code 沒有 `in al, 0x60`),結果 AH 留在 `[0x53a8e]`(Watcom `union REGS` h.ah)。過濾 0xE0 / 0x52 / 0x22 / 0x4D / 0x4B 之外的鍵
+  都到 `0x26559`:`record+2 == AH` 且 `record+1 == [0x53f4a]` → `0x26572 mov dword ptr [0x3f4a], 5`;**沒有任何章節 / 旗標 / selection 前置條件**。
+  表 `0x6238d + 0x1f × ([0x53c03] − 1)`:ch03 (sel 1, 0x5F = Ctrl+F2)、ch06 (sel 4, 0x62 = Ctrl+F5),與規律(sel 0→4、Shift→Ctrl→Alt、F 鍵逐章 +1)一致。
+- lc191b(ch03 hub,K 紀錄 = guest 鍵盤控制器收到的 scan code):xdotool 送 `ctrl+F1` → K 01d 03b、AH 0x5E(正對照,Ctrl 族進得去);
+  sel 1 送 `ctrl+F2`(window 與 `FD2_HARNESS_KEY_MODE=xtest` 兩種)→ **K 只有 01d、沒有 03c**,AH 不變;單送 `F2` → K 03c、AH 0x3C;
+  `ctrl+F5` → K 只有 01d、沒有 03f。
+- 原因:DOSBox-X `src/gui/sdlmain.cpp` 3999 `MAPPER_AddHandler(CopyAllClipboard, MK_f5, MMOD1, "copyall")`、4010
+  `MAPPER_AddHandler(&FormFeed, MK_f2, MMOD1, "ejectpage")` —— Ctrl+F5 / Ctrl+F2 是 host 動作,F 鍵被 mapper 吃掉(Ctrl 先送出,所以 K 有 01d)。
+- lc191c:帶只列 7 個事件(原 `tools/dosbox/passthrough.map` 的 5 個 + `hand_copyall` / `hand_ejectpage`)的 mapper 檔 → **整場沒有任何 K**,
+  連 Alt+Pause 都失效:`sdl_mapper.cpp` 5694 `if (!MAPPER_LoadBinds()) CreateDefaultBinds();` —— 讀得到 mapper 檔就不建預設綁定。
+  `dosbox_harness.sh` 2026-09-03 那段「passthrough.map 2×2 四格都沒反應,所以不是 DOSBox-X 吃鍵」的結論不成立:那時一般鍵也送不進去。
+- lc191d / lc191e:以 debugger 在 BIOS 鍵盤緩衝(BDA head `0x41a` = tail `0x41c` 的空緩衝,寫 tail 位置一個 word、tail + 2,讀回確認)放
+  0x5F00 / 0x6200 —— INT 16h 讀到的值與真按鍵相同,只動 BDA、不動遊戲記憶體。**ch03 sel 1 放 0x5F00 → AH 0x5F、sel 5、標籤 FDTXT_000 0x1f4「？？？」**;
+  再放 0x6200 → AH 0x62、sel 不變(對照)。**ch06 sel 4 放 0x6200 → sel 5、「？？？」**;sel 0 放 0x6200 → sel 不變(對照)。
+- 結論:ch03 / ch06 的秘密店 gate 在遊戲端正常;之前的「不觸發」是 host 輸入層。要在這個 harness 真按 Ctrl+F2 / Ctrl+F5,mapper 檔必須是
+  「完整預設綁定減去這兩個」,目前的 `passthrough.map` 會讓所有鍵失效(本輪沒改 tools/,只記錄)。
+
+### (3) REMAKE-GLOBAL-EVENT-DISPATCH(第 2804 行):58 .. 89 以正確入口重讀(原版 FD2.EXE 反組譯、FDFIELD / FDSHAP),CODE CONFIRMED / STATIC ANALYSIS
+
+- `0x51b91` 90 格由 fixup 讀出,58 .. 89 = `event_handler_58 .. 89`(58 = `0x35854` … 85 = `0x3642e` … 89 = `0x3644e`)。引用表的 code 只有 8 處、
+  4 個 dispatcher:回合 `0x1a85a`(控制列 +3k+4;turn == `[0x53bef]` 且 camp == 呼叫參數:`0x1a4c5` 1 / `0x1a552` 0 / `0x1a78b` 2)、
+  格子(`[0x51a8f]` 唯一寫入 `0x13a95`;selector 0 唯一呼叫站 `0x13175`;selector 1 `0x13e77`、`0x18aef` / `0x18b0c` / `0x18b66`;
+  消費 `0x1199c` / `0x1712d` / `0x1d890` / `0x1d95c` / `0x1d9ec`)、寶箱 `0x19511`(控制 +0x53 + 3 × slot 的 type 不是 0 / 1 時 dispatch u16)、
+  獎勵列 kind 2 `0x1ac1a`。85 .. 89 是空的(`push 4` / `call 0x3702f` / `ret`,86 .. 89 `jmp 0x36433`)。
+- 每圖(全部 33 張圖掃 FDFIELD / FDSHAP):格子 59 / 60 / 61(map25)、62 / 84(map26)、65 / 69(map27)、75(map28)、80(map29);
+  回合列含休眠 63 / 65(map26)、66 / 68 / 70(map27)、74 / 76 / 79(map28)、**82(map29 row0 = (0xff, 82, camp 0))**;寶箱 58(map25)。
+  85 .. 89 沒有生產端。
+- **event 82 有生產端**:event 81(map29 擊殺單位 1 .. 4 的 kind 2 獎勵)在 `0x362e4` 把 row0 回合設成下一回合 → 82 下一回合 dispatch。
+  doc25 §6.3「event 82 目前無已知資料生產端」錯:`turn_events.json` 丟掉了休眠列(STATIC ANALYSIS;實機未觀察)。
+- 逐個 handler 的語意與 doc25 §10.1 / §10.2 / §11.3 / §10.4.2 的逐條比對(多數舊描述掛錯 event id、從中段讀起;§11.3 `0x35b78` 的參數是
+  `(x, y, group)`,「給予 item 27」其實是 y 座標;§10.1「84」實屬 event 76,常數單位 1、寫 row1(+6)、迴圈 4 次)見 doc25 本次加的勘誤節。
+
+### (4) FD2.SAV(第 2888 行):metadata +10 .. +39 沒有 consumer、沒有刪除槽(原版 FD2.EXE 反組譯),CODE CONFIRMED
+
+- 每槽 `0x312b + i × 0xa28` = roster 0xa00 在前、metadata 0x28 在 `+0xa00`;四槽結尾 `0x312b + 4 × 0xa28 = 0x59cb` = 檔長,所以
+  **slot3 metadata +36 .. +39 就是整檔 checksum dword(`0x59c7`)**:寫 `0x297b6` / `0x1a102`,讀 `0x100b5`(CONTINUE)/ `0x1fdec`(title_seq)。
+  doc23「四段精確覆蓋至 checksum offset 0x59c7」不對(覆蓋到 0x59cb,與 checksum 重疊 4 bytes)。
+- 整個 code 以絕對位移碰到四槽 metadata +10 .. +39 的只有上面 4 處 checksum,另 1 處 `0x180e6 lea eax, [edi + 0x455d]` 是畫面緩衝位移(前一條
+  `push 0x140`)。record 相對的讀寫只有 +0 .. +9(寫 `0x29762 .. 0x29791`;讀 `0x26064 .. 0x26095`、`0x2998e .. 0x299bf`)—— 這一層是子代理 B 的
+  函式內資料流(STATIC ANALYSIS),產生器只驗絕對位移那層。
+- 選槽 `0x29bcb`(舊文件的 0x30550 / 0x30012 是舊版位址):Delete(0x53)在 `0x29d0a` 改寫成 Esc(取消);Down / Up 不循環;沒有刪除槽、
+  沒有覆寫確認。一般存檔 `0x2968d` 檔不存在時 `memset(buf, 0xff, 0x59cb)`(`0x296f3` / `0x296f9`);戰況存檔 `0x19df7`(文件漏列的第三個整檔 writer)
+  檔不存在時只把四槽 +0 寫 0xff(`0x19fcd ..`)。
+
+### (5) 單位 0x50 record(第 3312 行):全欄位歸屬(原版 FD2.EXE 反組譯、DOSBox-X 單位表傾印),CODE CONFIRMED
+
+- doc03 §A 主表大多是「整段 +8」錯位(往前移 8 後名稱全對得上):XX,YY → +0 / +1、FA → +7、NN → +8、IT → +0x0a、狀態 → +0x22 .. +0x27、
+  RA / CL / LV → +0x1f .. +0x21、MT → +0x37;行動狀態 → +0x05(bit0 不在場、bit7 已行動);EX → +0x3c(`0x1e309`;非己方 ctor 寫 0xff `0x10fdd`);
+  `initial_command_mask(4)` → +0x1a .. +0x1e 共 40 bit 已學法術(`0x1c29e cmp dword ptr [esp], 5`;ctor 只搬 4 bytes `0x10f7f push 4`,`0x10f99` 清 +0x1e)。
+- +0x02 sprite set(`0x1291e imul edi, edi, 0xc`)、+0x03 朝向 0 下 1 左 2 上 3 右(`0x12893 / 0x1289f / 0x128ab / 0x128b2`)、+0x04 格內步數
+  (`0x128e2`)、+0x07 圖示 id(`0x10a92`,轉職改 +7)、+0x08 角色 id(`0x18d73 movzx eax, byte ptr [esi + 8]` → +1 = 名字字串)。
+  doc03 2026-09-11「+8 沒有任何一處索引名字表」撤回。+0x09 只被兩個 ctor 寫 0、沒有讀者;+0x28 .. +0x30 沒有讀寫。
+- lc191a 63 筆單位的值域檢查(座標在 31 × 57 內、+3 ≤ 3、+6 ≤ 2、+9 = 0、HP ≤ MaxHP、MP ≤ MaxMP)全過;x / y 對調、+9 改讀 +8 兩個對照都違反。
+  (HP / MaxHP 對調不能當對照:開戰時全員滿血。)
+
+### (6) 戰鬥音效池(第 3484 行)
+
+- **物理攻擊**(`scene_attack_sequence` `0x2ebe1` 的主幀迴圈,唯一的 `0x2f004 call 0x25a96`;子代理 I,CODE CONFIRMED):幀標頭 `+4` = 命中幀旗標、
+  `+5` = sfx sub-index(0 = 不放)。命中幀:命中放 `+5`(`0x2efdd`)、**未命中放 sub 0**(`0x2efec push 0`);一般幀(揮動、腳步)不分命中都放 `+5`(`0x2eff8`)。
+  命中旗標 = 結果[0](`0x2f7d3` 預設 1,`0x2f9ac` 命中清 0,由 `0x2ed0c call 0x2f7b6` 在幀迴圈之前算好;動畫在那之前已載,三種結果都用同一段動畫)。
+  **會心存在**(結果[4] `0x2f9da`,DP 減半),但唯一的使用端 `0x2f16e` 接到閃白,不進 sfx idx —— **會心沒有專屬音效**。
+  池 = FDOTHER #48 .. #53(表 `0x526e3`,依動畫標頭 `+4`;攻方 `[0x5414b]`、反擊 `[0x5414f]`);**六個池的 sub 0 是同一段 4182 bytes**(揮空音),sub 1 各池不同。
+  122 段出招動畫最後一個命中幀的 sub 分布見子代理表(STATIC ANALYSIS)。實機播放序列 BLOCKED:cl2 .. cl4 的 `play_sfx` 都在攻擊場景前就記滿 200 筆。
+  doc36 第 410 .. 412 行「sub0 疑為通用揮擊 / 命中聲」→ sub 0 是揮空音。
+- 題目那 10 個函式是法術場景 `0x2ff01` 的 phase handler(表 `0x524c6`,法術 id 0 .. 9:`0x2b996` / `0x2bb33` / … / `0x2ce1a`),依事件碼與幀計數選
+  sub-index,不讀命中結果;`spell_damage_resolve` 只有命中判定(`0x1c7fe`),沒有爆擊。法術池 = FDOTHER #82, 82, 83 .. 90(表 `0x526d9`,存 `[0x54153]`);
+  `[0x5411f]` / `[0x54117]` 現行 EXE 0 處引用。action_id 2 / 8 = 炎龍術 / 聖光彈(FDTXT_000 `0x1b9 + id`)。
+
+### (7) chapter ending renderer(第 4466 行)
+
+- `0x2bce5` 在現行 EXE 不是入口(法術 1 phase handler `0x2bb33` 內的 `jge`,0 個呼叫端)。結局角色卡的特徵都在 **`0x31529`**(呼叫端 `0x2545d` /
+  `0x25970`):`0x315c3` load_res(FDOTHER #0x36)、`0x3167b` 2000 ms、`0x31688 cmp dword ptr [0x3c03], 0x1a`。
+- **portrait 框存在**:`0x31c49` 的 `0x3200b call 0x168b6`(格框,5 × 5 格 16 px)、`0x3205f` 畫 DATO[record+7] 80 × 80 頭像(亂數眨眼)。
+- `FUN_0002fb2c` 是**教會轉職儀式**(唯一呼叫端 `0x2abcc`,在轉職服務 `0x2aa00` 內),不是結局 montage;doc35 §9.25.5 用的 delta 0x1A0000 錯
+  (應 0x19C000),§9.25 .. §9.26 那條推論鏈不成立。`0x111ba` = load_res(檔名, 舊緩衝, idx),132 個呼叫點。
+
+### (8) handler 後半段 beats(第 4650 行):ch1-forest.md 對原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a,LOG CONFIRMED
+
+- 第 31 張圖段 handler 的 26 個可觀察呼叫 == ch1-forest.md §1;每個 acting 的 play_step_sfx 次數 = 6 × normal beats(36 / 12 / 6 / 48 / 6 / 6 / 0 / 12 / 54);
+  視窗內 6371 筆單位記錄傾印全落在 doc50 規則的可接受狀態裡、0 筆不一致;對照(索爾起點 X+1、蓋亞起點 Y+1、slot0↔slot1、左右互換)
+  各 4517 / 246 / 5558 / 6288 筆不一致。
+- 唯一的文件錯:§2 第 137 行 0x62 亞雷斯起點 `(9,44)` 應為 `(8,45)`(0x61 → 0x62 之間 slot 1 的傾印全是 (8,45));已改。
+
+### (9) UI-04 不可選目標灰化(第 4755 行):不存在(原版 FD2.EXE 反組譯),CODE CONFIRMED
+
+- 選目標迴圈 `target_cursor_loop` `0x115b6` 的等待點 `0x117a9 call 0x12dac` 每 tick 只 `redraw(0)`(地形 / 游標外框 / 單位 / HUD 四層,都拿不到目標清單);
+  確認時 `0x1173f` 範圍、`0x1175f` 找目標,不合法 `0x11709` 直接回讀鍵(無聲無畫)。範圍格逐格只比 `0xff`(`0x121fe`),有沒有目標都同一張變亮 LUT;
+  單位層唯一換色是已行動(`0x12945`)。法術清單 `0x1ceed` 只有 0xcd / 0xc9 兩色,沒有 disabled 分支。
+- 唯一的「不可用」畫法在指令環:格號 = 3 × 項目 + 2 × 可用旗標 + 閃爍相位(`0x17a85`),FDOTHER #2 每項 3 幀(+2 = 紅色停用幀);攻擊在
+  「沒裝武器或射程內 0 目標」時停用。doc57 / doc56 / 91-worklist 寫的 `3*availabilityWord + 2*directionState` 乘數相反。
+
+**改了**:91-worklist 9 項勾成 `[x]`(附結案註記),另 3 個指向它們的同件項目(第 3465 / 4105 / 4600 行)一併勾選,登錄表刪掉 12 筆;doc25 / doc03 / doc23 / doc35 / doc36 / ch1-forest.md 加勘誤;本節;98-index 重產。
+
+**驗證**:見提交訊息。
+
+**仍留**:R6(event63 不重複)只有靜態;物理攻擊音見 (6);DOSBox-X 完整 mapper 檔(真按 Ctrl+F2 / Ctrl+F5)未做;event 82 未實機觀察。

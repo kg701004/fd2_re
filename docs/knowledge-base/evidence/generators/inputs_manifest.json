@@ -34478,6 +34478,203 @@
     ]
    }
   },
+  "ev_s191": {
+   "outputs": [
+    "live_s191_event63_town_gate_20261104.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc191_live/cl/lc191a/s00.json": [
+     6501,
+     "b782a20fcd62195caa9a69e41765ac40c5ca549db2fb01f7355a6d90182a4b6a"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s01_evstate.bin": [
+     32,
+     "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s01_round.bin": [
+     4,
+     "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s01_rows.bin": [
+     51,
+     "70592365d78906d11a1e44dde16fe0f816312266a350c59c111c58656c87b207"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s02_evstate.bin": [
+     32,
+     "ffd4927e8c35afd614a39aec5654a8cef3cfb47b737bcd55342bfda0b9d81e53"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s02_round.bin": [
+     4,
+     "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s02_rows.bin": [
+     51,
+     "f565744cd87be313cbc806488becf76bef24b6200a891277748eb988b4711f28"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s04.json": [
+     6499,
+     "4b6ecaf701cd0897722afe748237df6fcc0992b0fb8ac683886338b4d898335d"
+    ],
+    ".wsl_build/lc191_live/cl/lc191a/s06.json": [
+     7682,
+     "3e3daeb77aa1d31ec858d8617f119ff5da2fc8d5a1d9dbb68ec899a3d7cfe6a0"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/b05_ctrlf2.text.json": [
+     698,
+     "bc101c11d04bfb0970e1ce592e44639516801d1ce5c85c5dfdef91447d8a7557"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts00.json": [
+     67,
+     "ccb6bfc884a4e798fd90c8d045e0eed6d2f692442111bf7c6095f4c30387b74a"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts01.json": [
+     66,
+     "db4eed75a1f34a57e24301ccbaf1d7bdcecd410fc822695cb595e811bc0b7e25"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts02.json": [
+     68,
+     "df45486ce5fc312ff5ec726f32fdd9dce987767b652f0f243fe3654f553634c2"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts03.json": [
+     68,
+     "4cf0a9235ebd5c262563463cda2b88967bbd1aa9738584f64c35755c17a81bd9"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts04.json": [
+     68,
+     "389d6cf73a3cb39b6cfae2c76364c9a684ef881b6d2ab4c03875675441ed9b93"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts05.json": [
+     66,
+     "5f834212b5e9d26ceb466ef3584f103c6440ae0e0f72e7fb90bdaf15781034f8"
+    ],
+    ".wsl_build/lc191_live/cl/lc191b/ts06.json": [
+     66,
+     "76505d9eb070f508900522f702f1306cbd38259c1364ba86759338d692680f24"
+    ],
+    ".wsl_build/lc191_live/cl/lc191d/d04_after_inject.text.json": [
+     1358,
+     "479984c693b5b00ca4fb8f83338a4a8ecdb91799bd3456ab2ccdeb6f109f107a"
+    ],
+    ".wsl_build/lc191_live/cl/lc191d/td00.json": [
+     68,
+     "114b97440d864d557a4f0e599c88e7e44bb442da6ccb21196141380be626cf00"
+    ],
+    ".wsl_build/lc191_live/cl/lc191d/td01.json": [
+     66,
+     "897679760afd77b50028f5d1ec1bfa765b1b75442393e1c300e0b77fec8beff2"
+    ],
+    ".wsl_build/lc191_live/cl/lc191d/td02.json": [
+     66,
+     "088b0bac03861787f529dac520a8e59bb222ab9585db933a8032ae25b145b03b"
+    ],
+    ".wsl_build/lc191_live/cl/lc191d_keys.jsonl": [
+     2168,
+     "da147da45b0ff481ec215fa879017629eb3923706d62dda003d8e69c29c34bb3"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/e03_right.text.json": [
+     682,
+     "91937d4c0298b9fc6454f6e800cf87c538f97d238364ecae6783e22d16b1d765"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/e04_after.text.json": [
+     1351,
+     "85b631dd292944965fd082d08b35c3e0662782b6453539ef7277aae5e93639cf"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/te00.json": [
+     67,
+     "222dc1f2068adeb25e31e7228e0f49cf9893518791d0c7d58c5b6f3bf2b63273"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/te01.json": [
+     66,
+     "eb0f98a1a60b831c116b10d519ee9ed65a5ad60c6a56704b82d88b2e808a95a0"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/te02.json": [
+     68,
+     "ba71b036777d1645878c9c629afb6d6c66d3fa3a06dbfd40cf4df863a8d393fb"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e/te03.json": [
+     66,
+     "8907e8de735de26c9300ab2486a4803455ad5d104b9f30b8c0abaa49e7e58fbc"
+    ],
+    ".wsl_build/lc191_live/cl/lc191e_keys.jsonl": [
+     1900,
+     "eccd93a4f6b25021dcd9c3ab445ffd4fe7d478bb412e3e78d7713ada92c55e68"
+    ],
+    ".wsl_build/lc191_live/lc191a_CALLLOG.TXT": [
+     6129035,
+     "eb21d015edb39dc06546e700bc7a04226c0debed24fb79e9320ab307c94b3c59"
+    ],
+    ".wsl_build/lc191_live/lc191b_CALLLOG.TXT": [
+     874639,
+     "ae83a0355acefacf23c3afb135a7d76a640aae6360dadee71e862ff453c28c25"
+    ],
+    ".wsl_build/lc191_live/lc191c_CALLLOG.TXT": [
+     2737782,
+     "5b07c71335bec597dcc98efa88f609726cee038ad09de5bd8ba8613b67f11dd5"
+    ],
+    ".wsl_build/lc191_live/lc191d_CALLLOG.TXT": [
+     1262527,
+     "a95ac29a6d971e988f75743093db6b6944fc0348bd472f1a27e0ceb247d0ff98"
+    ],
+    ".wsl_build/lc191_live/lc191e_CALLLOG.TXT": [
+     733463,
+     "f9c1268caeac09477695ed6815599809c5ba3875795dabac767cf7f4804db437"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDFIELD.DAT": [
+     243169,
+     "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513"
+    ],
+    "{GAME}/FDSHAP.DAT": [
+     3557794,
+     "901b70ea82d5d977192759fad510921ffe16a0ab6af6ab7c32757de03e30aa3c"
+    ]
+   }
+  },
+  "ev_s191b": {
+   "outputs": [
+    "static_s191_open_items_20261104.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc191_live/cl/lc191a/s00_units.bin": [
+     5120,
+     "a4e55d3b0b3ff2af5b9a41c5ebb86bf99eca3f111ba733e96ee258189bda6537"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ],
+    "{GAME}/FDFIELD.DAT": [
+     243169,
+     "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513"
+    ],
+    "{GAME}/FDOTHER.DAT": [
+     3382481,
+     "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667"
+    ],
+    "{GAME}/FDSHAP.DAT": [
+     3557794,
+     "901b70ea82d5d977192759fad510921ffe16a0ab6af6ab7c32757de03e30aa3c"
+    ]
+   }
+  },
+  "ev_s191f": {
+   "outputs": [
+    "forest_beats_s191_20261104.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc184_live/lc184a_CALLLOG.TXT": [
+     311656271,
+     "efa97cdf4bf8ee40a3941158f73d517d89846b082f5228f036e4356416187ef5"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

@@ -1,0 +1,68 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s191f.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllog": ".wsl_build/lc184_live/lc184a_CALLLOG.TXT",
+ "calllog_md5": "dcbf7cf1a6f579616cb5a709493019f6",
+ "window_seq": [
+  162055,
+  200515
+ ],
+ "handler_calls": 26,
+ "step_counts": {
+  "0x5a": 36,
+  "0x5b": 12,
+  "0x5c": 6,
+  "0x5d": 48,
+  "0x5e": 6,
+  "0x5f": 6,
+  "0x60": 0,
+  "0x61": 12,
+  "0x62": 54
+ },
+ "normal_beats": {
+  "0x5a": 6,
+  "0x5b": 2,
+  "0x5c": 1,
+  "0x5d": 8,
+  "0x5e": 1,
+  "0x5f": 1,
+  "0x60": 0,
+  "0x61": 2,
+  "0x62": 9
+ },
+ "dump_verdicts": {
+  "skip_unspawned": 30,
+  "skip_spawning": 72,
+  "match": 6371
+ },
+ "matches_by_slot": {
+  "0": 4517,
+  "1": 1131,
+  "3": 246,
+  "4": 477
+ },
+ "nulls_mismatches": {
+  "sol_start_x_plus1": 4517,
+  "gaia_start_y_plus1": 246,
+  "slot0_slot1_swapped": 5558,
+  "left_right_mirrored": 6288
+ },
+ "doc_vs_model": [
+  {
+   "act": "0x62",
+   "slot": 1,
+   "field": "start",
+   "doc": [
+    9,
+    44
+   ],
+   "model": [
+    8,
+    45
+   ]
+  }
+ ],
+ "slot1_dumps_between_0x61_0x62": 326,
+ "resource_delta": "0x192000",
+ "conclusion": "ch1-forest.md 的 §1 呼叫序列、doc50 走位規則與 slot 對照都與 lc184a 一致(傾印 0 不一致,四個對照都不一致);§2 唯一的字面錯是 0x62 亞雷斯起點,應為 (8,45)(文件寫 (9,44))。"
+}
