@@ -1,0 +1,31 @@
+續一百九十二 mapper 實機前預測(2026-11-04,跑之前寫,跑完不改;之後的補記另起一段並寫在該步驟之前)
+對象:原版 FD2.EXE md5 33464c81e6a364fd0660141139aa8e6e;FD2.SAV 槽 0 章節 byte 以既有 patch_chapter 改寫。
+mapper = tools/dosbox/passthrough.map(make_passthrough_map.py generate:DOSBox-X 自己寫出的 226 個事件預設綁定,
+拿掉 hand_ejectpage Ctrl+F2、hand_copyall Ctrl+F5、hand_paste Ctrl+F6、hand_shutdown Ctrl+F9、hand_capmouse Ctrl+F10)。
+鍵由 xdotool 送(window 模式);K 紀錄 = guest 鍵盤控制器收到的 scan code。不改遊戲記憶體、不注入 BDA、不下斷點。
+
+靜態依據(續一百九十一 s191_H、ev_s191 (C)):town gate 0x26559 —— record+2 == INT 16h AH 且 record+1 == [0x53f4a] → 0x26572 寫 sel 5。
+表 0x6238d + 0x1f × (章節 byte − 1):章節 byte 2 (sel 1, 0x5F Ctrl+F2)、5 (sel 4, 0x62 Ctrl+F5)、19 (sel 4, 0x67 Ctrl+F10)、25 (sel 0, 0x63 Ctrl+F6)。
+
+M1 lc192c(章節 byte 2,帶 mapper):poll_title 到標題選單(一般鍵進得去 —— 舊 5 行 passthrough.map 時這一步就失敗,lc191c);K 紀錄非空。
+M2 LOAD(Down Return Return)→ town hub;tstate 讀得到(Alt+Pause 進 debugger 有效):章節 byte 2、sel 0。
+M3 對照:sel 0 送 ctrl+F2 → K 有 01d、03c make;AH 0x5F;sel 仍 0(鍵到了但不是這一格);E 0x26572 筆數 0。
+M4 Left → sel 1;送 ctrl+F2 → K 01d 03c;AH 0x5F;sel 5;E 0x26572 1 筆;標籤「？？？」(FDTXT_000 0x1f4)。
+M5 lc192d(章節 byte 5,帶 mapper):LOAD → Right → sel 4;送 ctrl+F5 → K 01d 03f;AH 0x62;sel 5;E 0x26572 1 筆;「？？？」。
+M6 lc192e(章節 byte 19,帶 mapper):LOAD 若到 town hub(tstate 章節 byte 19)→ Right → sel 4;送 ctrl+F10 → K 01d 044;AH 0x67;sel 5。
+   LOAD 後不是 town hub(截圖文字沒有 town 標籤)就停,M6 記 NOT TESTED。
+M7 lc192f(章節 byte 25,帶 mapper):同上;sel 0 送 ctrl+F6 → K 01d 040;AH 0x63;sel 5。
+任何一步不符就停在那一步(不再送鍵),記錄後 down。
+
+補 1(M6 之後、改測之前寫):M6 FAIL —— 不是遊戲端:K 有 01d 044(Ctrl+F10 進了 guest)、AH 0x67,但 sel 4 不變。
+上面「靜態依據」的列號寫錯一位:表列 = 0x6238d + 0x1f × (章節 byte − 1),章節 byte 19 那一列是 (01 03 5c) = sel 3、0x5C Shift+F9;
+(sel 4, 0x67 Ctrl+F10)是章節 byte 20 那一列,(sel 0, 0x63 Ctrl+F6)是章節 byte 26 那一列(章節 byte 25 是 sel 4、0x58 Shift+F5)。
+M6 的觀察(錯的鍵 → 不揭示)與正確的表一致,本身是一個對照。
+M6b 同 instance lc192e(章節 byte 19):Left → sel 3;送 shift+F9 → K 有 02a(或 036)、043 make;AH 0x5C;sel 5;「？？？」。
+M7 改:lc192f 章節 byte 20:LOAD → Right → sel 4;送 ctrl+F10 → K 01d 044;AH 0x67;sel 5;「？？？」。
+M8 lc192g 章節 byte 26:LOAD;sel 0 送 ctrl+F6 → K 01d 040;AH 0x63;sel 5;「？？？」(LOAD 後不是 town hub 就停,記 NOT TESTED)。
+
+補 2(M6b 之後寫):M6b 在移動那一步就不符 —— sel 4 按 Left 到 sel 0(不是 3);選單方向是 Left = +1、Right = −1(5 格循環,
+ch03 sel 0 → Left → 1、ch06 sel 0 → Right → 4 也一致)。我沒有先核對 sel 就送了 shift+F9(送在 sel 0:K 02a 043、AH 0x5C、sel 0 不變,
+與表一致,無害)。之後每個組合鍵之前都以 `tstate NAME LABEL 期望sel` 核對,不符就停(&& 串接)。
+M6c 同 instance:Right → sel 4、Right → sel 3(核對 3)→ 送 shift+F9 → AH 0x5C、sel 5、「？？？」。

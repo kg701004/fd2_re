@@ -25,3 +25,8 @@ remake/assets/maps/native_turn_event_controls.json -text
 # 才會動。Python 直譯器本身吃 CRLF 沒問題,壞的是 shebang 那一行。
 # 這個 repo 的工具是給 WSL 跑的,所以一律 LF checkout。
 *.py text eol=lf
+
+# 2026-11-04(doc98 續一百九十二 (4)):tools/dosbox/*.map 是 DOSBox-X MAPPER_SaveBinds 原樣寫出的 mapper 檔
+# (每個事件 / 綁定後面都接一個空白)。tools/dosbox/make_passthrough_map.py check 與 ev_s192 以位元組比對,
+# DOSBox-X 在 WSL 端直接讀這個檔:不做 EOL 轉換、不做行尾空白檢查。
+tools/dosbox/*.map -text -whitespace

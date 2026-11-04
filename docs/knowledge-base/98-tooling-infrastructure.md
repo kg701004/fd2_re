@@ -13190,3 +13190,68 @@ scratchpad),主代理把每項結論所依據的關鍵指令與可計算的表�
 **驗證**:見提交訊息。
 
 **仍留**:R6(event63 不重複)只有靜態;物理攻擊音見 (6);DOSBox-X 完整 mapper 檔(真按 Ctrl+F2 / Ctrl+F5)未做;event 82 未實機觀察。
+
+## 2026-11-04 續一百九十二:續一百九十一「仍留」四項以新工具逐項實機關閉 —— event63 不重複(lc192a)、物理攻擊每一輪音效與會心(lc192a / lc192b)、event 82 由擊殺魔神派送(lc192b)、完整 DOSBox-X pass-through mapper 讓真按的 Ctrl / Shift + F 鍵進得了 guest(tools/dosbox/make_passthrough_map.py,lc192c .. lc192g)
+
+起因:使用者「仍未解決 請新建工具 對應處理每個未解決項目」。原版 FD2.EXE(md5 33464c81e6a364fd0660141139aa8e6e)、WSL `-d Ubuntu`、DOSBox-X。
+新工具:`tools/dosbox/make_passthrough_map.py`(mapper 產生 / 檢查)、`evidence/generators/drivers_s192/lc192.py`(lc191 的驅動加上 real mode 重讀、
+`tstate` 期望值、`poke`、`bpreg`、`wait`)、`evidence/generators/ev_s192.py`(96 assert)與 `mut_s192.py`(42 個變異)。證據
+`evidence/live_s192_open_remainder_20261104.json`。預測都在跑之前寫(`drivers_s192/pred192m.txt`、`pred192a.txt`、`pred192b.txt`),
+每一段補記寫在該步驟之前。
+
+### (1) R6:event63 不重複觸發(原版 FD2.EXE 的 DOSBox-X 實機 lc192a,LOG CONFIRMED)
+
+- lc191a 停在第 3 回合的原因是 debugger 讀游標時 CPU 在 real mode。`lc192.py` 的讀取改成失敗就 resume、等 0.4 s、重進 debugger 重讀(最多 6 次),
+  全部失敗才不送鍵;本輪 7 次 real mode 讀取失敗(lc192a 5、lc192b 1、lc192c 1)都在第 2 次讀到。
+- 未修改的 ch27 槽 0 照 lc191a 路徑:第 1 回合休息後 event62(`0x35bee`)1 次、evstate `[0x53ad5]+0x11` = 1、row0 = (2, 63, 0)(A1);第 2 回合
+  敵方階段 event63 1 次、單位 63 → 75(A2)。第 3 回合亞雷斯 (26,39) → (25,39) 休息:`0x35bee` 第 2 次被呼叫,evstate[0x11] 仍 1、row0 仍
+  (2, 63, 0)(A3);之後到第 7 回合的每一次 state 讀數 row0 / evstate 都不變,event63 始終 1 次、`0x35b78` 2 次、單位 75(A4)。
+- **新觀察**:event62 之後又被呼叫 12 次 —— 玩家路徑 2 次(返回 `0x119a3`)、敵軍 10 次(返回 `0x1d9f3`,敵方格子事件消費端 `0x1d9ec`,
+  單位 63 .. 70、73、74 = event63 增援的那批)。`0x13a44` 只在有事件的格子寫 `[0x51a8f]`(`0x13a95`),沒有清除分支,所以**路過 y = 39、
+  終點不在 y = 39 也會在行動結束 dispatch**:亞雷斯第 4 回合 (25,39) → (23,38)、單位 63 (11,38) → (11,39) → (11,40) 等 9 次。
+
+### (2) 物理攻擊音效實機序列(原版 FD2.EXE 的 DOSBox-X 實機 lc192a / lc192b,LOG CONFIRMED)
+
+- 探針(fd2_calllog_patch 比對每條指令的 EIP,非函式入口也記 E):`0x2ed11`(`0x2f7b6(攻, 守, &結果)` 返回後,s2 = 結果結構)、`0x2efdb`
+  (命中幀 + 命中)、`0x2efea`(命中幀 + 未命中)、`0x2eff6`(一般幀)、`0x2f179`(會心閃白分支)、`0x25a96`(放音效,返回 `0x2f009`)。
+- 35 個場景、36 輪攻擊(28 命中、8 未命中、2 會心)、187 次幀音效,每一次都符合:一般幀放幀 +5(+4 = 0)、命中幀命中放 +5、命中幀未命中放 sub 0
+  (26 次,等於未命中探針總數);命中探針只在結果 +0 = 0 的輪、未命中探針只在結果 +0 = 1 的輪;會心探針只在結果 +4 = 1 的輪。
+  結果結構 +0 = 未命中旗標、+4 = 會心、+0x14 = 傷害;6 組 state 讀數之間守方 HP 後 = max(0, HP 前 − 期間命中傷害總和)(未命中不扣)。
+- pred192a P1(「場景內 0x2f7b6 恰 1 次」)FAIL:lc192b 單位 10 → 25 一個場景兩輪,每一輪各 1 次 `0x2f7b6` + `0x2ed11`、各自接幀迴圈。
+- **會心沒有專屬音效**:亞雷斯的 9 個命中輪(含 2 個會心)的 (探針, 幀 +4, +5, sub) 全是「一個命中幀、sub 2」;會心輪只多兩筆 `0x2f179`、
+  傷害 705 / 608 大於非會心的 461 .. 484(DP 減半)。
+- 會心門檻 = 表 `0x524a8[攻方職業 − 1]`(`0x2f853 movzx eax, [ebp + 0x20]` 之後 `0x2f857 dec eax`)+ 物品加成;敵軍職業 25 → 表值 0。
+  lc192a 先把 [11] 改 100(pred192a 補 2,讀前值 0x0c):亞雷斯(職業 11)命中仍非會心 → C1 FAIL,補 3 寫明是索引少看了 `dec eax`;
+  再把 [10](讀前值 0x03)改 100:他在敵方階段的反擊會心(C1' / C2' PASS),兩次都寫回並讀回。lc192b 的會心發生在沒改表的 instance(自然 3%)。
+
+### (3) event 82(原版 FD2.EXE 的 DOSBox-X 實機 lc192b,LOG CONFIRMED;兩處改狀態,理由寫在 pred192b)
+
+- ch27 槽 0 以 patch_chapter 改章節 byte 29(第三十章 map29)。LOAD 後「要記錄戰況嗎？」→ 出擊選人「出戰人數 ×19」。`sortie_member_select`
+  `0x2af5b mov ebp, 0x13`(章節 byte > 0x1a)、`0x2b0e3 cmp eax, ebp` —— 目標人數寫死,不取名冊人數的較小值;12 個可選角色結構上到不了 19
+  (doc99 卡點 A 的這一章)。介入 1:選好 11 人後在 `0x2b0e3` 下斷點、選第 12 人停住(EAX = 0xc、EBP = 0x13),`SR EBP 0xc` → 「確定要進入戰場嗎？」
+  (FDTXT_000 0x292)→ 戰場。
+- 戰場單位表 +7(原鍵)20 .. 24 = 0x7e .. 0x7a,對上 FDFIELD map29 單位 0 .. 4(擊殺獎勵 kind 2:0 = 0x53、1 .. 4 = 0x51 = event 81)。介入 2:
+  只把索引 24(原鍵 0x7a、lv 30)的 HP 4500 改成 1。亞雷斯 (22,19) 攻擊 24 擊殺(這一擊自然會心)。
+- 第 1 回合玩家階段:獎勵 dispatch 探針 `0x1ac0a` → event 81(返回 `0x1ac21`)→ evstate[0x10] = 1、row0 = (2, 82, 0)(E2);第 1 回合敵方階段沒有 event 82(E3)。
+- 第 2 回合敵方階段:`0x1a813(0)` 之內、該階段敵軍 AI 之前,`0x1a85a` 呼叫 event 82(返回 `0x1a861`)→ 對話 `0x15f84`(參數 3 = evstate[0x10] + 2,
+  畫面「水魔神領命」一段)→ `0x10b4e(1)` 增援(返回 `0x36377`),單位 27 → 29(E4)。第 3 回合敵方階段結束仍只 1 次(E5)。
+- 續一百九十一 (3) 的「event 81(`0x362c5`)啟用 event 82(`0x362e8`)」由原版 FD2.EXE 實機成立;doc25 已有的靜態勘誤改記 LOG CONFIRMED。
+
+### (4) DOSBox-X 完整 pass-through mapper(tools/dosbox/make_passthrough_map.py,LOG CONFIRMED)
+
+- 不從原始碼猜綁定格式:在私有 Xvfb(:2399,harness 埠範圍 199 .. 1999 之外)以 `-startmapper` 開 mapper 編輯器、點 Save 鈕(`CreateLayout`
+  的 `CBindButton(PX(15), PY(20), …)`),由 `MAPPER_SaveBinds` 寫出 `tools/dosbox/default_sdl2.map`(226 事件;兩次獨立產生 md5 相同)。
+  `strip` 拿掉 hand_* 事件裡「F1 .. F10 加 無 / Ctrl / Alt / Shift、沒有 host 旗標」的綁定:hand_ejectpage Ctrl+F2、hand_copyall Ctrl+F5、
+  hand_paste Ctrl+F6、hand_shutdown Ctrl+F9、hand_capmouse Ctrl+F10 → `tools/dosbox/passthrough.map`(取代舊的 5 行檔)。`check` 驗事件一個不少、
+  key_f1 .. f10 / mod_1 .. 3 / Alt+Pause 都在;`--selftest` 11 組對照,`verify_selftest_discrimination --exhaustive` 19/19。
+- 城鎮秘密店表(第 1 .. 26 章)用到的組合鍵裡,預設被 host 吃掉的是 Ctrl+F2(ch03)、Ctrl+F5(ch06)、Ctrl+F6(章節 byte 26)、Ctrl+F10(章節 byte 20)。
+- lc192c .. lc192g 帶新 mapper:poll_title、LOAD、Alt+Pause 都正常(舊 5 行檔時全部失效);xdotool 真按 ch03 Ctrl+F2、ch06 Ctrl+F5、章節 byte 19
+  Shift+F9、章節 byte 20 Ctrl+F10、章節 byte 26 Ctrl+F6 → K 紀錄有 Ctrl / Shift 與 F 鍵的 make code、INT 16h AH = 表值、sel 5、標籤「？？？」
+  (FDTXT_000 0x1f4)、`0x26572` 1 次。對照 3 次(錯 selection / 錯章的鍵)鍵到了但 sel 不變。
+- pred192m M6 FAIL:我把表的列號錯一位(章節 byte 19 是 sel 3 + Shift+F9,不是 sel 4 + Ctrl+F10);M6b FAIL:選單方向寫反(Left = +1)。
+  都在 lc192e 改測前補記,之後的組合鍵前一律以 `tstate … 期望sel` 核對。
+- `tools/dosbox_harness.sh` 的 FD2_HARNESS_MAPPER 註解改寫(舊註解「2×2 測過、不是 DOSBox-X 吃鍵」的結論不成立)。
+
+**驗證**:mut_s192 42/42 killed(未變異對照以原版 FD2.EXE 與 DOSBox-X 呼叫紀錄重算,與已提交檔相同);assert_census ev_s192 96/96;其餘見提交訊息。
+
+**仍留**:無(四項都有實機紀錄)。附帶發現另記:event62 路過即觸發、敵軍也觸發;出擊目標人數寫死 15 / 19。

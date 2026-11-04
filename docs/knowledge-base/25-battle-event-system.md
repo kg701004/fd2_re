@@ -1047,6 +1047,7 @@ handler 內硬編碼給 `0x1AA1D` 的單列亦全為 kind 0
 閉合前仍不宣稱程式碼不可達。
 
 > **2026-11-04 勘誤(doc98 續一百九十一)**:event 82 有資料生產端 —— map29 控制段回合列 0 是休眠的 `(0xff, 82, camp 0)`,event 81 在 `0x362e4` 把它的回合設成下一回合,下一回合由 `0x1a85a` dispatch 82。`turn_events.json` 丟掉了休眠列,所以這裡的掃描看不到(STATIC ANALYSIS,未實機觀察)。
+> **2026-11-04 實機(doc98 續一百九十二 (3))**:LOG CONFIRMED —— lc192b 擊殺 map29 單位 4(原鍵 0x7a)後 event 81 於擊殺那次行動內呼叫(返回 `0x1ac21`),evstate[0x10] = 1、row0 = (2, 82, 0);第 2 回合敵方階段 `0x1a85a` 呼叫 event 82(返回 `0x1a861`,敵軍 AI 之前),對話參數 3、增援 `0x10b4e(1)`;第 1 / 3 回合不呼叫。另:event62 的格子事件路過即觸發(`0x13a44` 只寫不清),敵軍經 `0x1d9ec` 也會觸發(lc192a 10 次)。
 
 #### 2026-08-19 補記：runtime `+0x31..+0x33` 全 EXE writer 稽核（回應 worklist RE-EVENT82-REACHABILITY）[驗]
 

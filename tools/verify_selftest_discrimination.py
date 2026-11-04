@@ -224,6 +224,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "calllog_segments.py":        (["--selftest"], "offline"),
     # 同輪:DOSBox-X 呼叫紀錄修補的文字修補(錨點、重複修補、升級);C++ 本身要建置後實機核對,不在這裡。
     "dosbox/fd2_calllog_patch.py": (["--selftest"], "offline"),
+    "dosbox/make_passthrough_map.py": (["--selftest"], "offline"),
     # 續一百七十三:AIL 3 驅動檔(.DIG / .MDI)反組譯;selftest 用手組的合成驅動檔,不讀遊戲檔。
     "ail_driver_disasm.py":       (["--selftest"], "offline"),
     # 續一百八十八:截圖文字的字模全等判讀;selftest 用手算點陣與合成畫面,有 extracted/raw 時再用真字型合成。

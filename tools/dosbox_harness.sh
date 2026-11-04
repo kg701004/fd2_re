@@ -250,17 +250,19 @@ cmd_launch() {
     # needing a start/stop key to land at the right moment.
     # Optional pass-through mapper (FD2_HARNESS_MAPPER=<path>).
     #
-    # DOSBox-X binds some Ctrl+Fn chords to its own capture actions, and a chord the
-    # host mapper consumes never reaches the DOS program. That matters here because the
-    # game's secret-shop gates require specific BIOS scan codes: Ctrl+F1 (ch12) works,
-    # while Ctrl+F2 (ch03) and Ctrl+F5 (ch06) do not fire -- and Ctrl+F5 is exactly the
-    # kind of chord DOSBox reserves. tools/dosbox/passthrough.map lists those actions
-    # with no binds, freeing the chords for the guest.
+    # DOSBox-X binds some Ctrl+Fn chords to its own actions (default map: Ctrl+F2
+    # hand_ejectpage, Ctrl+F5 hand_copyall, Ctrl+F6 hand_paste, Ctrl+F9 hand_shutdown,
+    # Ctrl+F10 hand_capmouse), and a chord the host mapper consumes never reaches the
+    # DOS program: only the Ctrl make code does (K records, doc98 s191 lc191b). The
+    # game's town secret-shop gates need Shift/Ctrl/Alt + F1..F10 BIOS scan codes
+    # (ch03 Ctrl+F2, ch06 Ctrl+F5, ch20 Ctrl+F10, ch26 Ctrl+F6 among them).
     #
-    # TESTED 2026-09-03 AND IT DID NOT FIX THAT: a 2x2 (mapper on/off x key mode
-    # window/xtest) on ch06's town at selection 4 left all four cells with no response,
-    # so DOSBox-X consuming the chord is NOT the explanation. Kept because freeing the
-    # host bindings is a legitimate capability, but do not cite it as the gate fix.
+    # A mapper file REPLACES all default binds (sdl_mapper.cpp: if (!MAPPER_LoadBinds())
+    # CreateDefaultBinds();), so it must be the full default set minus those binds.
+    # tools/dosbox/passthrough.map is exactly that, written by DOSBox-X itself and
+    # stripped by tools/dosbox/make_passthrough_map.py (check: `... check`). The old
+    # 5-line passthrough.map left every key unbound -- that, not the game, is why the
+    # 2026-09-03 2x2 test saw no response in any cell (doc98 s191 lc191c).
     local mapper_arg=()
     if [[ -n "${FD2_HARNESS_MAPPER:-}" ]]; then
         mapper_arg=(-set "sdl mapperfile=${FD2_HARNESS_MAPPER}")
