@@ -32,7 +32,7 @@
 
 **進行中**:無。
 
-**延後**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake,只有恢復 remake 才需要重開。
+**不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 
 ## 2. 假設(影響結論的前提)
 
@@ -51,7 +51,7 @@
 | debugger 在 real mode 讀不到 selector 0170 | 讀取失敗 | `drivers_s192/lc192.py` 的 `halted()`:resume、等 0.4 s、重讀(續一百九十二 7 次都第 2 次成功) |
 | CALLLOG 以 4 KiB 區塊寫出 | 執行中讀到的尾端會落後 | teardown 之後再算 md5 / 結論(續一百六十九、一百七十) |
 | Git Bash 會改寫 `/home/...` 參數 | 傳給 WSL 的路徑變成 `C:/Program Files/Git/home/...` | 指令前加 `MSYS_NO_PATHCONV=1` |
-| `~/fd2-run-harness-mt1`(WSL) | 續一百九十三第一版 mapper 測試的變異真的啟動過一次留下的工作目錄(假 binary、沒有遊戲) | 依規則不自動刪除 `~/fd2-run-harness-*`;要不要刪由人決定 |
+| `~/fd2-run-harness-mt1`(WSL) | 續一百九十三第一版 mapper 測試的變異真的啟動過一次留下的工作目錄(假 binary、沒有遊戲) | 已處理:使用者 2026-11-05 要求刪除;刪前確認是空目錄(0 個檔案、非 symlink、無程序使用),以 `rmdir` 刪除 |
 
 ## 4. 主要決策(為什麼這樣做)
 
@@ -79,6 +79,6 @@
 
 ## 7. 需要人決定
 
-1. 是否恢復 remake(決定 obsolete_remake 68 項要不要重開)。
-2. `~/fd2-run-harness-mt1` 是否刪除。
+1. ~~是否恢復 remake~~ —— 已決定(2026-11-05):不恢復;obsolete_remake 68 項維持關閉。
+2. ~~`~/fd2-run-harness-mt1` 是否刪除~~ —— 已決定(2026-11-05):刪除,已完成(空目錄,`rmdir`)。
 3. 下一個研究目標:worklist 已歸零,沒有使用者指定的新方向。
