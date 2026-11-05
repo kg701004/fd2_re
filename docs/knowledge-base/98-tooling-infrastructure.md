@@ -13345,3 +13345,35 @@ scratchpad),主代理把每項結論所依據的關鍵指令與可計算的表�
 ### (4) 下一步
 
 依 `--gaps globals` 由引用最多的位址開始登錄資料區段;資源先為每種格式補 probe(各附會失敗的負向對照),再逐容器登錄。
+
+## 2026-11-06 續一百九十五:資料區段第一筆 `0x53a45`,`re_coverage --check` 加上指令層存取寬度與 `fields` 兩條大小核對
+
+起因:使用者要求「從用到最多的位址 0x53a45 開始登錄資料區段」。原本的核對只看證據,不看大小 —— 登錄成幾 byte 都會過。
+
+### (1) 指令層存取(大小的機器核對)
+
+- obj1 每個 fixup 用 capstone(detail)對回所在指令:fixup 位置等於記憶體運算元 displacement 起點 → `mem`(寬度、讀寫、有沒有 base / index),
+  等於立即數起點或在 `lea` 裡 → `addr`。依據是原版 FD2.EXE 反組譯:7536 個 obj1 fixup 中,指向資料區的全部對得上指令(0 筆對不上)。
+- 第二條解碼路徑:從 `function_inventory` 每個入口各自反組譯到 `span_upper`,線性掃描的指令起點要在裡面才採信。
+  對不上的只有 AIL 區 5 條(`0x40102` / `0x40112` / `0x42112` / `0x4211d` / `0x45672`),指向資料區的 3 條都只是取址,不帶寬度。
+- 規則:直接定址的存取 [目標, 目標+寬度) 碰到區段就必須整段落在那一段內;索引定址(目標是陣列基底)不核對。
+- `fields` 規則:區段內除了起點,每個被程式碼引用的位址都要在 `fields`({"0x偏移": "名稱"})命名。
+  起因是負向對照:`0x53a45` 登錄成 8 byte(吞進下一個 dword `0x53a49`)在只有寬度規則時照樣通過 —— 一段吞掉整個資料區也會過。
+- 原版上的對照(selftest (6l)):`0x53a45` 登錄 3 / 5 byte 被寬度規則抓、8 byte 被 `fields` 抓、4 byte 成立。
+- `--show-data` 加印存取分布、寫入指令,樣板的 size 取直接存取的最大寬度;摘要加一行存取筆數。
+
+### (2) `0x53a45` = active_unit_array
+
+FD2.EXE 反組譯:262 筆存取全是 4 byte 直接定址(讀 252、寫 10)。寫入點:`0x10010` / `0x1088d` free 後 `malloc(0x1e00)`(96 筆)、
+title_seq `0x1f894` `malloc(0xa0)`(2 筆)、town_hub_main / town_hub_select 在 `call 0x2af28`(sortie_member_select)前暫時寫入名冊 `[0x53bf7]`、之後寫 0。
+細節在 doc03 新節。覆蓋率:遊戲函式 474 → 506 / 1202、全域位址 1 / 900、資料 4 / 35714 bytes。
+
+### (3) 驗證
+
+- `re_coverage --selftest` PASS(新增 (6j)(6j2)(6k)(6l)(7a)–(7h)(8a)–(8g));`--check` PASS。
+- `verify_selftest_discrimination --exhaustive --tool re_coverage.py`:第一輪 85 / 87,逃掉的兩個是 `fields` 偏移 1 的邊界與「錨點不成立的指令不進核對」沒有被釘住,補題後 87 / 87 歸零。
+- 未跑:verify_all_tools、run_all。
+
+### (4) 下一步
+
+`--gaps globals` 下一批 `0x54153..0x5417c`(AIL 3.02 內部狀態:巢狀深度 `[0x54178]`、除錯旗標 `[0x54170]` / `[0x54174]`),全是 4 byte 直接存取。

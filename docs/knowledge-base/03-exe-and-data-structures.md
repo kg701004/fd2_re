@@ -384,3 +384,24 @@ HP `+0x40/+0x42`、MP `+0x46`、AP `+0x48`)都是由 `0x10c50` constructor 或�
 那條閘門就是「限定某一名角色、且 max MP ≥ 20 才能用」。**但 `+8` 的唯一消費端只把它跟 `0x18`
 相比,沒有任何一處以它去索引名字表或肖像表**,所以本輪不命名,只把證據與推測分開記下,
 留給下一輪去找那個索引用的消費端。
+
+## 2026-11-05:`[0x53a45]` 是「目前作用中」的單位 record 陣列指標(資料區段登錄第一筆,`docs/data/data_map.json`)
+
+指令層存取(`python tools/re_coverage.py --show-data 0x53a45`,由原版 FD2.EXE 反組譯逐條對回 fixup):
+**262 筆全部是 4 byte 直接定址,讀 252、寫 10**,沒有任何 byte / word 存取,也沒有以它為基底的索引定址。
+所以 `0x53a45..0x53a48` 是一個 dword 指標,陣列本身在 heap;緊鄰的 `0x53a44` 是另一個 byte 全域(它的存取都是 1 byte),
+`0x53a49` 是下一個 dword。
+
+10 個寫入點分屬 5 個函式(對齊反組譯逐條讀過):
+
+- `0x102c3`(save_load_restore `0x10010`)與 `0x109db`(章節 loader `0x1088d`):先 `push [0x53a45]; call 0x3776e`(heap free),
+  再 `push 0x1e00; call 0x3706e`(malloc)寫回;配置失敗時寫 `[0x53a8d] = 3`。`0x1e00 / 0x50` = 96 筆。
+- `0x1fa80`(title_seq `0x1f894`):舊值非 0 先 free,再 `malloc(0xa0)` 寫回;`0xa0 / 0x50` = 2 筆。
+- `0x2634c`(town_hub_main `0x26152`)與 `0x267e1`(town_hub_select `0x2670e`):`mov eax,[0x53bf7]; mov [0x53a45],eax`
+  (指向我方名冊,32 × 0x50),緊接 `call 0x2af28`(sortie_member_select),回來後 `0x26356` / `0x267eb` 立刻寫 0。
+  `0x26810`(town_hub_select)同樣寫入 `[0x53bf7]`,同函式在 `0x26985` 寫 0。
+- `0x26196`(town_hub_main):`cmp [0x53a45],0` 非 0 就 free,再寫 0。
+
+結論:`[0x53a45]` 是目前作用中的 0x50-byte 單位 record 陣列基底。戰場上是自己配置的 96 筆陣列;
+城鎮出擊選人期間暫時借用我方名冊 `[0x53bf7]`,用完歸零(不 free,因為那塊屬於名冊)。
+舊文件稱它「戰場單位陣列」只描述了戰場那一種情況;各處 `[0x53a45] + idx*0x50` 的公式不受影響。

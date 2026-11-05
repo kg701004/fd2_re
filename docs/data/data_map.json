@@ -1,9 +1,46 @@
 {
-  "schema": "FD2.EXE LE obj2 / obj3 資料區段登錄。每段 start(0x 小寫)、size(bytes)、name、type、meaning、evidence;不得重疊、不得跨出物件。核對與覆蓋率:python tools/re_coverage.py --check。",
+  "schema": "FD2.EXE LE obj2 / obj3 資料區段登錄。每段 start(0x 小寫)、size(bytes)、name、type、meaning、evidence,可選 fields({\"0x偏移\": \"名稱\"},區段內除了起點的每個被引用位址都要列);不得重疊、不得跨出物件,直接定址的指令存取不得跨出區段邊界。核對與覆蓋率:python tools/re_coverage.py --check。",
   "evidence_kinds": {
     "func": "{\"func\": \"0x....\", \"ref\": \"0x....\"} 函式在 function_inventory 且實際引用該位址;省略 ref 時要引用區段內位址",
     "doc": "{\"doc\": \"倉庫內相對路徑\", \"quote\": \"逐字出現在該檔的文字\"}",
     "no_refs": "{\"no_refs\": true} 沒有任何函式引用、也沒有 fixup 指向區段內"
   },
-  "regions": []
+  "regions": [
+    {
+      "start": "0x53a45",
+      "size": 4,
+      "name": "active_unit_array",
+      "type": "dword 指標 → 0x50-byte 單位 record 陣列",
+      "meaning": "目前作用中的單位 record 陣列基底(每筆 0x50 bytes,公式 [0x53a45] + idx*0x50)。戰場:save_load_restore / 章節 loader 0x1088d 先 free 再 malloc(0x1e00) = 96 筆;title_seq malloc(0xa0) = 2 筆;城鎮出擊選人(sortie_member_select)期間暫時指向我方名冊 [0x53bf7],之後寫 0。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x1f894"
+        },
+        {
+          "func": "0x26152"
+        },
+        {
+          "func": "0x2670e"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "**262 筆全部是 4 byte 直接定址,讀 252、寫 10**"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "城鎮出擊選人期間暫時借用我方名冊 `[0x53bf7]`,用完歸零"
+        },
+        {
+          "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+          "quote": "malloc `0x1e00` = **96 槽** × 0x50B"
+        }
+      ]
+    }
+  ]
 }

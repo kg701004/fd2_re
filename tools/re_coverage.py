@@ -26,6 +26,14 @@
 * `{"doc": "相對路徑", "quote": "..."}`   檔案必須在倉庫內且逐字含有 quote。
 * `{"no_refs": true}`                     只用於資料區段:沒有任何函式引用、也沒有任何 fixup 指向區段內(例如對齊填充)。
 
+資料區段的大小也會被核對(不是只看證據)
+----------------------------------------
+* 指令層存取:obj1 每個 fixup 對回所在指令的運算元(capstone),得到寬度與讀寫;線性掃描得到的指令起點
+  還要在「從每個函式入口各自反組譯」的結果裡出現才採信。直接定址的存取 [目標, 目標+寬度) 碰到區段就必須
+  整段落在那一段內 —— 大小登錄錯(3 byte 的 dword、吞進下一個 dword 的一半)會被抓。
+* fields:區段內除了起點,每個被程式碼引用的位址都要在 `fields`({"0x偏移": "名稱"})有名稱 ——
+  一段吞掉好幾個變數卻不說明會被抓。
+
 格式 probe(只收「會說不」的檢查;沒有 probe 的格式只算「已宣稱」,不算已驗)
 ----------------------------------------------------------------------------
 * `container`  巢狀 LLLLLL 容器,`unpack_dat.parse_directory` 必須接受。
@@ -124,13 +132,86 @@ def probe_ok(fmt: str, b: bytes, probes: dict[str, Callable[[bytes], bool]]) -> 
 # ---------------------------------------------------------------- 證據核對
 
 class Ctx:
-    """核對時需要的外部事實:函式 -> 引用的全域位址、fixup 目標、讀文件。"""
+    """核對時需要的外部事實:函式 -> 引用的全域位址、fixup 目標、讀文件、指令層存取。"""
 
     def __init__(self, funcs: dict[int, set[int]], fixup_targets: set[int],
-                 read_doc: Callable[[str], str | None]) -> None:
+                 read_doc: Callable[[str], str | None], accesses: tuple[Access, ...] = ()) -> None:
         self.funcs = funcs
         self.fixup_targets = fixup_targets
         self.read_doc = read_doc
+        self.accesses = accesses
+
+
+# ---------------------------------------------------------------- 指令層存取(區段大小的機器核對)
+
+# (指令位址, 目標位址, 寬度 bytes, 讀寫 "r" / "w" / "rw" / "", 種類 "mem" / "addr", 有沒有 base / index 暫存器)
+# "addr" = 只取位址(立即數、lea),沒有寬度。
+Access = tuple[int, int, int, str, str, bool]
+
+
+def decode_accesses(code: bytes, base: int, fx: dict[int, int],
+                    anchors: set[int] | None = None) -> tuple[list[Access], list[int], list[int]]:
+    """把 obj1 每個 fixup 對回它所在指令的運算元,得到存取寬度與讀寫。
+
+    fixup 位置必須正好是記憶體運算元的 displacement(→ "mem")或立即數(→ "addr")的起點才算對上;
+    對不上的(線性掃描錯位、跳表)放進 unresolved。anchors 是另一條解碼路徑(從每個函式入口反組譯)
+    得到的指令起點:線性掃描得到、但 anchors 裡沒有的指令放進 unanchored,不參與大小核對。
+
+    Returns:
+        (accesses, unresolved fixup 位置, unanchored 指令位址)
+    """
+    from capstone import CS_AC_READ, CS_AC_WRITE, CS_ARCH_X86, CS_MODE_32, Cs
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM
+    import disasm_le
+
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    md.detail = True
+    out: list[Access] = []
+    seen: set[int] = set()
+    loose: list[int] = []
+    for x in disasm_le.sweep_range(md, code, base, base, base + len(code)):
+        if isinstance(x, tuple):
+            continue
+        for site in range(x.address, x.address + x.size):
+            if site not in fx:
+                continue
+            off = site - x.address
+            for op in x.operands:
+                if op.type == X86_OP_MEM and x.disp_offset == off:
+                    if x.mnemonic == "lea":
+                        acc: Access = (x.address, fx[site], 0, "", "addr", False)
+                    else:
+                        rw = ("r" if op.access & CS_AC_READ else "") + ("w" if op.access & CS_AC_WRITE else "")
+                        acc = (x.address, fx[site], op.size, rw, "mem", bool(op.mem.base or op.mem.index))
+                elif op.type == X86_OP_IMM and x.imm_offset == off:
+                    acc = (x.address, fx[site], 0, "", "addr", False)
+                else:
+                    continue
+                out.append(acc)
+                seen.add(site)
+                if anchors is not None and x.address not in anchors:
+                    loose.append(x.address)
+                break
+    return out, sorted(set(fx) - seen), sorted(set(loose))
+
+
+def access_errors(spans: list[list], accesses: tuple[Access, ...] | list[Access]) -> list[str]:
+    """直接定址(沒有 base / index)的存取 [目標, 目標+寬度) 碰到任何區段,就必須整段落在那一個區段內。
+
+    違反的區段在 spans 裡標成不成立(spans 元素是 [start, end, 原紀錄, ok])。索引定址的目標是陣列基底,
+    實際讀寫的 byte 由暫存器決定,這裡不核對。
+    """
+    errs: list[str] = []
+    for ins, t, width, _rw, kind, indexed in accesses:
+        if kind != "mem" or indexed:
+            continue
+        lo, hi = t, t + width
+        for sp in spans:
+            if lo < sp[1] and sp[0] < hi and not (sp[0] <= lo and hi <= sp[1]):
+                errs.append(f"region {hex(sp[0])}..{hex(sp[1])}: {hex(ins)} 的 {width} byte 存取 "
+                            f"{hex(lo)}..{hex(hi)} 跨出區段邊界")
+                sp[3] = False
+    return errs
 
 
 def evidence_errors(ev: object, ctx: Ctx, where: str, region: tuple[int, int] | None = None) -> list[str]:
@@ -185,6 +266,34 @@ def evidence_errors(ev: object, ctx: Ctx, where: str, region: tuple[int, int] | 
 
 # ---------------------------------------------------------------- 資料區
 
+def field_errors(r: dict, start: int, end: int, refs: set[int], where: str) -> list[str]:
+    """區段內除了起點,每個被程式碼引用的位址都要在 fields 有名稱(防止一段吞掉好幾個變數卻不說明)。
+
+    fields = {"0x偏移": "名稱"};偏移必須在 (0, size) 內、名稱非空。沒人引用的偏移也可以列。
+    """
+    f = r.get("fields", {})
+    if not isinstance(f, dict):
+        return [f"{where}: fields 不是物件"]
+    errs: list[str] = []
+    offs: set[int] = set()
+    for k, v in f.items():
+        try:
+            o = parse_addr(k)
+        except ValueError as x:
+            errs.append(f"{where}: fields {x}")
+            continue
+        if not 0 < o < end - start:
+            errs.append(f"{where}: fields 偏移 {k} 不在 (0, size) 內")
+        elif not nonempty_str(v):
+            errs.append(f"{where}: fields {k} 缺名稱")
+        else:
+            offs.add(o)
+    for a in sorted(a for a in refs if start < a < end):
+        if a - start not in offs:
+            errs.append(f"{where}: 區段內被引用的 {hex(a)}(+{hex(a - start)})沒有列在 fields")
+    return errs
+
+
 def check_regions(regions: object, objects: list[tuple[int, int]], ctx: Ctx
                   ) -> tuple[list[tuple[int, int, dict]], list[str]]:
     """核對 data_map 的 regions。回傳(成立的區段 [(start, end, 原紀錄)],錯誤)。
@@ -196,6 +305,7 @@ def check_regions(regions: object, objects: list[tuple[int, int]], ctx: Ctx
         return [], ["data_map.regions 不是清單"]
     errs: list[str] = []
     spans: list[list] = []
+    refs: set[int] = set().union(*ctx.funcs.values())
     for i, r in enumerate(regions):
         where = f"region#{i}"
         if not isinstance(r, dict):
@@ -220,7 +330,7 @@ def check_regions(regions: object, objects: list[tuple[int, int]], ctx: Ctx
             if not nonempty_str(r.get(k)):
                 errs.append(f"{where}: 缺 {k}")
                 ok = False
-        e = evidence_errors(r.get("evidence"), ctx, where, (start, end))
+        e = evidence_errors(r.get("evidence"), ctx, where, (start, end)) + field_errors(r, start, end, refs, where)
         errs += e
         spans.append([start, end, r, ok and not e])
     spans.sort(key=lambda t: t[0])
@@ -228,6 +338,7 @@ def check_regions(regions: object, objects: list[tuple[int, int]], ctx: Ctx
         if b[0] < a[1]:
             errs.append(f"region {hex(b[0])}..{hex(b[1])}: 與 {hex(a[0])}..{hex(a[1])} 重疊")
             a[3] = b[3] = False
+    errs += access_errors(spans, ctx.accesses)
     return [(s, e, r) for s, e, r, ok in spans if ok], errs
 
 
@@ -403,6 +514,19 @@ def load_world() -> dict:
 
     inv = json.loads(INVENTORY.read_text(encoding="utf-8"))["entries"]
     funcs = {int(e["addr"], 16): {int(g, 16) for g in e["globals"]} for e in inv}
+
+    # 指令層存取:線性掃描 + 從每個函式入口各自反組譯(第二條路徑)當錨點
+    import disasm_le
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    code, cbase = disasm_le.load_code(exe, meta)
+    fx1 = disasm_le.build_fixups(exe, meta, {1})
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    anchors = {x.address for e in inv
+               for x in disasm_le.sweep_range(md, code, cbase, int(e["addr"], 16), int(e["addr"], 16) + e["span_upper"])
+               if not isinstance(x, tuple)}
+    accesses, unresolved, unanchored = decode_accesses(code, cbase, fx1, anchors)
+    in_data = [s for s in unresolved if any(b <= fx1[s] < b + n for b, n in objects)]
+    loose = set(unanchored)
     # 遊戲函式 = 有人讀過命名的入口:function_names.json(附摘要)、chapter_beats / event_handler 的 PRIM、
     # DOC_OP_NAMES。只有 AIL / Watcom 比對名稱的算函式庫(errata / verified_addresses 只記位址,不給名稱)。
     game = {int(n["addr"], 16) for n in FI.load_function_names() if nonempty_str(n.get("summary"))}
@@ -426,8 +550,13 @@ def load_world() -> dict:
             return None
         return p.read_text(encoding="utf-8", errors="replace")
 
+    # 錨點不成立的指令不參與大小核對(可能是錯位解碼),另行列出
+    trusted = tuple(a for a in accesses if a[0] not in loose)
+    # 錨點不成立、又指向資料區的存取種類(若有 "mem" 就代表大小核對漏看了真的存取)
+    loose_kinds = {a[4] for a in accesses if a[0] in loose and any(b <= a[1] < b + n for b, n in objects)}
     return {"objects": objects, "funcs": funcs, "game": game, "library": library, "live": live,
-            "present": present, "ctx": Ctx(funcs, fixups, read_doc)}
+            "present": present, "ctx": Ctx(funcs, fixups, read_doc, trusted),
+            "unresolved_data": in_data, "unanchored": sorted(loose), "unanchored_kinds": loose_kinds}
 
 
 def load_maps() -> tuple[dict, dict]:
@@ -439,7 +568,9 @@ def evaluate(w: dict, dm: dict, rm: dict) -> dict:
     good, derr = check_regions(dm.get("regions"), w["objects"], w["ctx"])
     status, rerr = check_resources(rm.get("resources"), w["live"], w["ctx"], PROBES)
     fok, ferr = check_files(rm.get("files"), w["present"], w["ctx"])
-    return {"good": good, "errors": derr + rerr + ferr, "status": status, "files_ok": fok,
+    # 對不上指令的資料 fixup 代表大小核對看不到那次存取:不能當沒事
+    uerr = [f"資料 fixup {hex(s)} 對不上任何指令運算元,大小核對不完整" for s in w["unresolved_data"]]
+    return {"good": good, "errors": derr + rerr + ferr + uerr, "status": status, "files_ok": fok,
             "data": data_coverage(good, w["objects"], w["funcs"]),
             "code": code_coverage(w["funcs"], w["game"], w["library"], good)}
 
@@ -458,6 +589,8 @@ def print_summary(w: dict, r: dict) -> None:
     print(f"          沒有名稱也不是函式庫                  {len(c['unnamed'])}")
     print(f"  資料區  obj2+obj3 bytes                       {pct(d['bytes_covered'], d['bytes_total'])}")
     print(f"          被程式碼引用的全域位址                {pct(d['globals_covered'], d['globals_total'])}")
+    print(f"          指令層存取(大小核對用)              {len(w['ctx'].accesses)} 筆;對不上指令的資料 fixup "
+          f"{len(w['unresolved_data'])}、錨點不成立的指令 {len(w['unanchored'])}")
     print(f"  資源    原版檔案(用途已登錄)                {pct(len(r['files_ok']), len(w['present']))}")
     print(f"          .DAT 資源 格式已驗                    {pct(vals.count('format') + vals.count('complete'), nres)}")
     print(f"          .DAT 資源 完成(格式已驗 + 用途)       {pct(vals.count('complete'), nres)}")
@@ -495,7 +628,16 @@ def show_data(w: dict, addr: int) -> None:
     near = sorted({a for g in w["funcs"].values() for a in g if abs(a - addr) <= 0x40})
     print(f"  直接引用它的函式 {[hex(f) for f in users]}")
     print(f"  ±0x40 內被引用的位址 {[hex(a) for a in near]}")
-    stub = {"start": hex(addr), "size": 1, "name": "", "type": "", "meaning": "",
+    acc = [a for a in w["ctx"].accesses if a[1] == addr]
+    kinds: dict[tuple, int] = {}
+    for _i, _t, width, rw, kind, indexed in acc:
+        k = (kind, width, rw, "索引" if indexed else "直接")
+        kinds[k] = kinds.get(k, 0) + 1
+    print(f"  指令層存取 {len(acc)} 筆:{sorted(kinds.items())}")
+    writers = sorted(a[0] for a in acc if "w" in a[3])
+    print(f"  寫入指令 {[hex(x) for x in writers]}")
+    direct = [a[2] for a in acc if a[4] == "mem" and not a[5]]
+    stub = {"start": hex(addr), "size": max(direct, default=1), "name": "", "type": "", "meaning": "",
             "evidence": [{"func": hex(users[0])}] if users else []}
     print(json.dumps(stub, ensure_ascii=False))
 
@@ -655,6 +797,66 @@ def selftest() -> int:
     check("(5c) pct", (pct(1, 4), pct(0, 0)) == ("1/4 (25.0%)", "0/0"))
     check("(5d) covered 是半開區間", (covered(0x5001f, good), covered(0x50020, good)) == (True, False))
 
+    # (7) 指令層存取:合成機器碼逐條核對寬度 / 讀寫 / 索引 / 取址,錯位的 fixup 與錨點不成立的指令要分出來
+    try:
+        import capstone  # noqa: F401
+        have_cs = True
+    except ImportError:
+        have_cs = False
+    if have_cs:
+        z4 = b"\0\0\0\0"
+        code = (b"\xa1" + z4                 # 0x10000 mov eax, [abs]           disp @0x10001
+                + b"\xc6\x05" + z4 + b"\x01"  # 0x10005 mov byte [abs], 1        disp @0x10007
+                + b"\x8b\x04\x85" + z4       # 0x1000c mov eax, [eax*4 + abs]   disp @0x1000f
+                + b"\x68" + z4               # 0x10013 push abs                 imm  @0x10014
+                + b"\xff\x05" + z4           # 0x10018 inc dword [abs]          disp @0x1001a
+                + b"\x8d\x05" + z4           # 0x1001e lea eax, [abs]           disp @0x10020
+                + b"\xb8" + z4               # 0x10024 mov eax, imm             fixup 錯位 @0x10026
+                + b"\x66\x89\x05" + z4)      # 0x10029 mov word [abs], ax       disp @0x1002c
+        fx = {0x10001: 0x50010, 0x10007: 0x50020, 0x1000f: 0x50030, 0x10014: 0x50040,
+              0x1001a: 0x50050, 0x10020: 0x50060, 0x10026: 0x50070, 0x1002c: 0x50080}
+        starts = {0x10000, 0x10005, 0x1000c, 0x10013, 0x1001e, 0x10024, 0x10029}   # 故意缺 0x10018
+        acc, unres, loose = decode_accesses(code, 0x10000, fx, starts)
+        check("(7a) 每一種運算元的寬度 / 讀寫 / 索引 / 種類", acc == [
+            (0x10000, 0x50010, 4, "r", "mem", False), (0x10005, 0x50020, 1, "w", "mem", False),
+            (0x1000c, 0x50030, 4, "r", "mem", True), (0x10013, 0x50040, 0, "", "addr", False),
+            (0x10018, 0x50050, 4, "rw", "mem", False), (0x1001e, 0x50060, 0, "", "addr", False),
+            (0x10029, 0x50080, 2, "w", "mem", False)])
+        check("(7b) 錯位的 fixup 列為 unresolved", unres == [0x10026])
+        check("(7c) 錨點裡沒有的指令列為 unanchored", loose == [0x10018])
+        check("(7d) 不給錨點就不判 unanchored", decode_accesses(code, 0x10000, fx)[2] == [])
+    else:
+        print("SKIP (7) 沒有 capstone")
+
+    # (8) fields:區段內被引用的位址(起點除外)都要有名稱
+    fr = {**r, "start": "0x500e0", "size": 0x20}
+    check("(8a) 區段內被引用的位址沒列在 fields 被抓,訊息逐字",
+          regions_with(fr) == ["region 0x500e0..0x50100: 區段內被引用的 0x500f0(+0x10)沒有列在 fields"])
+    check("(8b) 列進 fields 就成立", regions_with({**fr, "fields": {"0x10": "y"}}) == [])
+    check("(8c) fields 偏移 0 與 size 被抓、1 與 size-1 合法",
+          has(regions_with({**fr, "fields": {"0x10": "y", "0x0": "z"}}), "偏移 0x0 不在")
+          and has(regions_with({**fr, "fields": {"0x10": "y", "0x20": "z"}}), "偏移 0x20 不在")
+          and regions_with({**fr, "fields": {"0x10": "y", "0x1f": "z", "0x1": "w"}}) == [])
+    check("(8d) fields 名稱空白被抓", has(regions_with({**fr, "fields": {"0x10": " "}}), "0x10 缺名稱"))
+    check("(8e) fields 不是物件被抓", has(regions_with({**fr, "fields": ["0x10"]}), "fields 不是物件"))
+    check("(8f) fields 偏移格式錯被抓", has(regions_with({**fr, "fields": {"16": "y"}}), "位址格式"))
+    check("(8g) fields 不成立的區段不算覆蓋", [s_ for s_, _, _ in check_regions([fr], objects, ctx)[0]] == [])
+
+    def acc_errs(*accs: Access) -> tuple[list, list[str]]:
+        return check_regions(base, objects, Ctx(funcs, set(), docs.get, accs))
+
+    ok_acc = acc_errs((0x10000, 0x50012, 4, "r", "mem", False), (0x10001, 0x5000c, 4, "w", "mem", False),
+                      (0x10002, 0x50020, 4, "r", "mem", False), (0x10003, 0x5001e, 4, "r", "mem", True),
+                      (0x10004, 0x5001f, 0, "", "addr", False))
+    check("(7e) 區段內、緊鄰兩側、索引定址、取址都不算跨界", ok_acc[1] == [] and len(ok_acc[0]) == 2)
+    tail = acc_errs((0x10000, 0x5001e, 4, "w", "mem", False))
+    check("(7f) 尾端跨界被抓,訊息逐字,該段不算覆蓋",
+          tail[1] == ["region 0x50010..0x50020: 0x10000 的 4 byte 存取 0x5001e..0x50022 跨出區段邊界"]
+          and [s for s, _, _ in tail[0]] == [0x60000])
+    check("(7g) 頭端跨界被抓", has(acc_errs((0x10000, 0x5000e, 4, "r", "mem", False))[1], "0x5000e..0x50012"))
+    check("(7h) 包住整段的大存取被抓",
+          has(acc_errs((0x10000, 0x5fffe, 8, "r", "mem", False))[1], "region 0x60000..0x60004"))
+
     # (6) 原版檔案(有遊戲目錄時):分母由原版現算,數字要與已知事實相同;倉庫登錄必須 0 錯誤
     if (game_dir() / "FD2.EXE").is_file():
         w = load_world()
@@ -676,6 +878,26 @@ def selftest() -> int:
         check("(6h) 倉庫的 data_map / resource_map 0 錯誤", r["errors"] == [])
         check("(6i) 函式庫與遊戲函式加總 = 1356",
               r["code"]["game_total"] + r["code"]["library_total"] == 1356 and r["code"]["unnamed"] == [])
+        check("(6j) 資料 fixup 全部對得上指令;錨點不成立的只有 AIL 區 5 條,指向資料區的都只是取址(不含寬度)",
+              w["unresolved_data"] == [] and w["unanchored"] == [0x40102, 0x40112, 0x42112, 0x4211D, 0x45672]
+              and w["unanchored_kinds"] == {"addr"})
+        check("(6j2) 錨點不成立的指令不進大小核對",
+              not {a[0] for a in w["ctx"].accesses} & set(w["unanchored"]))
+        a45 = [a for a in w["ctx"].accesses if a[1] == 0x53A45]
+        check("(6k) [0x53a45] 262 筆全是 4 byte 直接定址,10 筆寫入的位置已知",
+              len(a45) == 262 and {(a[2], a[4], a[5]) for a in a45} == {(4, "mem", False)}
+              and sorted(a[0] for a in a45 if "w" in a[3])
+              == [0x102C3, 0x109DB, 0x1FA80, 0x26196, 0x2634C, 0x26356, 0x267E1, 0x267EB, 0x26810, 0x26985])
+        # 原版上的負向對照:把 0x53a45 登錄成錯的大小,三種錯法各被一條規則抓到
+        # (不讀倉庫登錄,自己組一段,倉庫怎麼改都不影響這題)
+        reg = {"start": "0x53a45", "name": "x", "type": "t", "meaning": "m", "evidence": [{"func": "0x10010"}]}
+
+        def sized(n: int) -> list[str]:
+            return evaluate(w, {"regions": [{**reg, "size": n}]}, {"resources": [], "files": []})["errors"]
+
+        check("(6l) 0x53a45 登錄 3 / 5 / 8 byte 都被抓;4 byte 成立",
+              has(sized(3), "0x53a45..0x53a49 跨出區段邊界") and has(sized(5), "0x53a49..0x53a4d 跨出區段邊界")
+              and has(sized(8), "0x53a49(+0x4)沒有列在 fields") and sized(4) == [])
     else:
         print("SKIP (6) 找不到遊戲目錄")
 
