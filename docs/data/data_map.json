@@ -41,6 +41,215 @@
           "quote": "malloc `0x1e00` = **96 槽** × 0x50B"
         }
       ]
+    },
+    {
+      "start": "0x54153",
+      "size": 4,
+      "name": "battle_anim_sfx_bank",
+      "type": "dword 指標 → FDOTHER.DAT 載入的音效 bank",
+      "meaning": "目前這段戰鬥演出的音效 bank:0x2d80d / 法術場景 0x2ff01 開頭先寫 0,再寫入 0x111ba(\"FDOTHER.DAT\", 0, idx) 的結果;26 次當 play_sfx(0x25a96 / 0x25b45)的 bank 引數;演出結束 free(0x3776e)。",
+      "evidence": [
+        {
+          "func": "0x2d80d"
+        },
+        {
+          "func": "0x2ff01"
+        },
+        {
+          "func": "0x2b996"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**26 筆 `push dword ptr [0x54153]` 接 `call 0x25a96`(19)或 `call 0x25b45`(7)**"
+        }
+      ]
+    },
+    {
+      "start": "0x54158",
+      "size": 4,
+      "name": "ail_dbg_clock_timer",
+      "type": "dword AIL 計時器 handle",
+      "meaning": "AIL_DEBUG 開啟時 AIL_startup 登錄的 100 Hz 時鐘計時器 handle(回呼 0x37c30);AIL_DEBUG 未設時保持 0。",
+      "evidence": [
+        {
+          "func": "0x37d3e"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "`0x3f236(0x37c30)` 登錄計時器回呼、結果寫 `[0x54158]`(`0x37e83`)"
+        }
+      ]
+    },
+    {
+      "start": "0x5415c",
+      "size": 4,
+      "name": "ail_dbg_clock_centisec",
+      "type": "dword 0..99",
+      "meaning": "AIL_DEBUG 追蹤時間戳的百分秒;100 Hz 回呼 0x37c30 每次 +1,到 100 歸 0 進位到 [0x54160]。",
+      "evidence": [
+        {
+          "func": "0x37c30"
+        },
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "所以 `0x5415c` / `0x54160` / `0x5416c` / `0x54168` = 百分秒 / 秒 / 分 / 時"
+        }
+      ]
+    },
+    {
+      "start": "0x54160",
+      "size": 4,
+      "name": "ail_dbg_clock_sec",
+      "type": "dword 0..59",
+      "meaning": "AIL_DEBUG 追蹤時間戳的秒;到 60 歸 0 進位到 [0x5416c]。",
+      "evidence": [
+        {
+          "func": "0x37c30"
+        },
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "所以 `0x5415c` / `0x54160` / `0x5416c` / `0x54168` = 百分秒 / 秒 / 分 / 時"
+        }
+      ]
+    },
+    {
+      "start": "0x54164",
+      "size": 4,
+      "name": "ail_dbg_log_file",
+      "type": "dword FILE*",
+      "meaning": "AIL_DEBUG 追蹤檔:AIL_startup 以 fopen(getenv(\"AIL_DEBUG\"), \"w+t\") 開啟(唯一寫入 0x37d9d),每個 AIL 進入點的追蹤輸出 0x3f46b 的第一個引數,AIL_shutdown 關檔。",
+      "evidence": [
+        {
+          "func": "0x37d3e"
+        },
+        {
+          "func": "0x37ed8"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`[0x54164]` = 追蹤檔 FILE\\***"
+        }
+      ]
+    },
+    {
+      "start": "0x54168",
+      "size": 4,
+      "name": "ail_dbg_clock_hour",
+      "type": "dword 0..99",
+      "meaning": "AIL_DEBUG 追蹤時間戳的時;時鐘在 99:59:59.99 停住。",
+      "evidence": [
+        {
+          "func": "0x37c30"
+        },
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "進入時若已是 99:59:59.99 就不再走(上限)"
+        }
+      ]
+    },
+    {
+      "start": "0x5416c",
+      "size": 4,
+      "name": "ail_dbg_clock_min",
+      "type": "dword 0..59",
+      "meaning": "AIL_DEBUG 追蹤時間戳的分;到 60 歸 0 進位到 [0x54168]。",
+      "evidence": [
+        {
+          "func": "0x37c30"
+        },
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "所以 `0x5415c` / `0x54160` / `0x5416c` / `0x54168` = 百分秒 / 秒 / 分 / 時"
+        }
+      ]
+    },
+    {
+      "start": "0x54170",
+      "size": 4,
+      "name": "ail_dbg_sys_debug",
+      "type": "dword 旗標 0/1",
+      "meaning": "環境變數 AIL_SYS_DEBUG 有設時為 1:巢狀深度 > 1 的 AIL 內部呼叫也寫入追蹤。",
+      "evidence": [
+        {
+          "func": "0x37d3e"
+        },
+        {
+          "func": "0x37ed8"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`[0x54170]` = AIL_SYS_DEBUG**"
+        }
+      ]
+    },
+    {
+      "start": "0x54174",
+      "size": 4,
+      "name": "ail_dbg_log_active",
+      "type": "dword 旗標 0/1",
+      "meaning": "AIL_DEBUG 追蹤已開啟:AIL_startup 開頭寫 0、追蹤檔與時鐘就緒後寫 1;每個 AIL 進入點只在它非 0 時輸出。",
+      "evidence": [
+        {
+          "func": "0x37d3e"
+        },
+        {
+          "func": "0x37ed8"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`[0x54174]` = 追蹤已開啟**"
+        }
+      ]
+    },
+    {
+      "start": "0x54178",
+      "size": 4,
+      "name": "ail_api_nesting_depth",
+      "type": "dword 計數",
+      "meaning": "AIL API 呼叫巢狀深度:每個進入點進入 +1、離開 −1;深度 1 印時間戳,更深則縮排(且只有 AIL_SYS_DEBUG 時才記錄)。",
+      "evidence": [
+        {
+          "func": "0x37ed8"
+        },
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "因此:**`[0x54178]` = AIL API 呼叫巢狀深度**"
+        }
+      ]
+    },
+    {
+      "start": "0x5417c",
+      "size": 26,
+      "name": "ail_dbg_start_time",
+      "type": "char[26] asctime 字串",
+      "meaning": "AIL_DEBUG 追蹤表頭的開始時間:strcpy(asctime(localtime(time()))),再把第 24 byte 的 '\\n' 改成 NUL(0x54194),印成 \"Start time: %s\"。",
+      "evidence": [
+        {
+          "func": "0x37d3e"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "asctime 的結果是 26 byte(24 字 + `\\n` + NUL),第 24 byte 的 `\\n` 被改成 NUL"
+        }
+      ],
+      "fields": {
+        "0x18": "newline_cleared_to_nul"
+      }
     }
   ]
 }
