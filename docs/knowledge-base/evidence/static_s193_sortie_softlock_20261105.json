@@ -1,0 +1,185 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s193.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "calllog": {
+  "lc192b": "25244d521dec6935e46e09964e4de388"
+ },
+ "select_exits": {
+  "accept": {
+   "edi": 1,
+   "at": "0x2b0e7",
+   "returns": 1
+  },
+  "cancel": {
+   "edi": -1,
+   "at": "0x2b0b3",
+   "keys": [
+    "Esc 0x01",
+    "Del 0x53 → 0x01(0x2b736)"
+   ],
+   "returns": 0
+  }
+ },
+ "callers": {
+  "0x26351": {
+   "function": "town_hub_main",
+   "gate": "章節旗標 0x523e7[章節 byte] ≠ 0,不比名冊人數",
+   "on_cancel": "je 0x26347(再叫一次選人)"
+  },
+  "0x267e6": {
+   "function": "town_hub_select",
+   "gate": "[0x53bfb] > 0x10(章節 byte > 0x1a 時 > 0x14),不足就略過選人",
+   "on_cancel": "je 0x29867(離開設施)"
+  }
+ },
+ "flagged_chapter_bytes": [
+  22,
+  23,
+  24,
+  27,
+  28,
+  29
+ ],
+ "roster_count_writes": [
+  [
+   "0x1041e",
+   "mov dword ptr [0x3bfb], eax"
+  ],
+  [
+   "0x1144c",
+   "inc dword ptr [0x3bfb]"
+  ],
+  [
+   "0x25efa",
+   "mov dword ptr [0x3bfb], 0"
+  ],
+  [
+   "0x26070",
+   "mov dword ptr [0x3bfb], eax"
+  ],
+  [
+   "0x2999a",
+   "mov dword ptr [0x3bfb], eax"
+  ]
+ ],
+ "join_call_sites": 28,
+ "roster_bounds": {
+  "22": {
+   "plain": 22,
+   "conservative": 19,
+   "target": 15,
+   "selectable_margin": [
+    6,
+    3
+   ]
+  },
+  "23": {
+   "plain": 24,
+   "conservative": 19,
+   "target": 15,
+   "selectable_margin": [
+    8,
+    3
+   ]
+  },
+  "24": {
+   "plain": 24,
+   "conservative": 19,
+   "target": 15,
+   "selectable_margin": [
+    8,
+    3
+   ]
+  },
+  "27": {
+   "plain": 26,
+   "conservative": 21,
+   "target": 19,
+   "selectable_margin": [
+    6,
+    1
+   ]
+  },
+  "28": {
+   "plain": 26,
+   "conservative": 21,
+   "target": 19,
+   "selectable_margin": [
+    6,
+    1
+   ]
+  },
+  "29": {
+   "plain": 26,
+   "conservative": 21,
+   "target": 19,
+   "selectable_margin": [
+    6,
+    1
+   ]
+  }
+ },
+ "lc192b_sequence": [
+  [
+   "ask",
+   "0x262d5",
+   0,
+   0
+  ],
+  [
+   "in",
+   5,
+   0,
+   19
+  ],
+  [
+   "in",
+   5,
+   0,
+   19
+  ],
+  [
+   "esc",
+   0,
+   0,
+   0
+  ],
+  [
+   "out",
+   6,
+   4294967295,
+   19
+  ],
+  [
+   "out",
+   6,
+   4294967295,
+   19
+  ],
+  [
+   "in",
+   5,
+   0,
+   19
+  ],
+  [
+   "in",
+   5,
+   0,
+   19
+  ],
+  [
+   "out",
+   6,
+   1,
+   12
+  ],
+  [
+   "out",
+   6,
+   1,
+   12
+  ]
+ ],
+ "conclusion": "旗標章節(byte 22 / 23 / 24 / 27 / 28 / 29)由 town_hub_main 直接進選人,沒有名冊人數門檻,取消後立刻再進:[0x53bfb] − 1 < 目標時無出口(lc192b 的 12 人存檔在 byte 29 即是,只能重開)。名冊人數只增不減,正常劇情到這些章節的保守下界都達到門檻,所以只有非正常進度的存檔(改章節 byte、早期合成存檔)會遇到。"
+}

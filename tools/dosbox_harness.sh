@@ -40,7 +40,8 @@
 # The display-port allocator has an offline regression test:
 #   bash tools/test_dosbox_harness_ports.sh
 # It uses a throwaway registry and an unused display range, so it is safe to
-# run even while real instances are live.
+# run even while real instances are live. The FD2_HARNESS_MAPPER guard
+# (mapper_guard) has its own: bash tools/test_dosbox_harness_mapper.sh
 
 set -uo pipefail
 
@@ -67,6 +68,26 @@ PORT_LOCK_TIMEOUT_S="${FD2_HARNESS_PORT_LOCK_TIMEOUT:-60}"
 PORT_RESERVE_DELAY="${FD2_HARNESS_PORT_RESERVE_DELAY:-0}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+# mapper_guard MAPPER BIN: print nothing and return 0 when MAPPER may be used with BIN, else print the
+# reason and return 1. A mapper file replaces ALL default binds, so passthrough.map is only valid for a
+# dosbox-x whose own default map is byte-identical to tools/dosbox/default_sdl2.map; the sidecar
+# "<MAPPER>.binmd5" lists the binary md5s attested for it (make_passthrough_map.py generate / attest,
+# doc98 s193). FD2_HARNESS_MAPPER_UNCHECKED=1 skips the md5 check for a deliberate experiment.
+mapper_guard() {
+    local mapper=$1 bin=$2 sidecar="$1.binmd5" md5
+    [[ -r "$mapper" ]] || { echo "mapper file not readable: $mapper"; return 1; }
+    [[ "${FD2_HARNESS_MAPPER_UNCHECKED:-0}" != "0" ]] && return 0
+    [[ -r "$sidecar" ]] || {
+        echo "mapper $mapper has no $sidecar (copy tools/dosbox/passthrough.map.binmd5 next to it, or set FD2_HARNESS_MAPPER_UNCHECKED=1 for a deliberate experiment)"
+        return 1
+    }
+    md5=$(md5sum "$bin" | cut -d' ' -f1) || { echo "cannot md5sum $bin"; return 1; }
+    grep -qx "$md5" "$sidecar" || {
+        echo "mapper $mapper is not attested for $bin (md5 $md5); run: python tools/dosbox/make_passthrough_map.py attest --bin $bin"
+        return 1
+    }
+}
 
 validate_name() {
     local name=$1
@@ -206,6 +227,10 @@ cmd_launch() {
     # not leave reservation stubs behind.
     [[ -d "$SOURCE_GAME_DIR" ]] || die "canonical game dir not found: $SOURCE_GAME_DIR"
     [[ -x "$DOSBOX_BIN" ]] || die "dosbox-x binary not found/executable: $DOSBOX_BIN"
+    if [[ -n "${FD2_HARNESS_MAPPER:-}" ]]; then
+        local mapper_err
+        mapper_err=$(mapper_guard "$FD2_HARNESS_MAPPER" "$DOSBOX_BIN") || die "$mapper_err"
+    fi
 
     reserve_display_port "$name"
     # Drop the reservation if setup dies before Xvfb exists, so a failed launch
@@ -263,6 +288,8 @@ cmd_launch() {
     # stripped by tools/dosbox/make_passthrough_map.py (check: `... check`). The old
     # 5-line passthrough.map left every key unbound -- that, not the game, is why the
     # 2026-09-03 2x2 test saw no response in any cell (doc98 s191 lc191c).
+    # The map is only valid for a dosbox-x whose defaults equal default_sdl2.map:
+    # cmd_launch runs mapper_guard before reserving a port (doc98 s193).
     local mapper_arg=()
     if [[ -n "${FD2_HARNESS_MAPPER:-}" ]]; then
         mapper_arg=(-set "sdl mapperfile=${FD2_HARNESS_MAPPER}")

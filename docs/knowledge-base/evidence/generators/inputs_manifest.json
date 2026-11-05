@@ -34926,6 +34926,21 @@
     ]
    }
   },
+  "ev_s193": {
+   "outputs": [
+    "static_s193_sortie_softlock_20261105.json"
+   ],
+   "inputs": {
+    ".wsl_build/lc192_live/lc192b_CALLLOG.TXT": [
+     14837023,
+     "40d5dc1b538fff2ecbab2af82ef0947485cf4ca8cdd689ab9b827a7a19e9f545"
+    ],
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

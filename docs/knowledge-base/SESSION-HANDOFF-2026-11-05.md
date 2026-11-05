@@ -1,0 +1,84 @@
+# SESSION-HANDOFF 2026-11-05
+
+> 依 `AI_Development_Standard/00_Global/Project_Continuity.md` 撰寫:分開已完成 / 進行中 / 延後 / 需人決定,每一項標驗證等級(依據是原版 FD2.EXE 反組譯與
+> 原版在 DOSBox-X 上的呼叫紀錄),不把未驗證的寫成已驗證。前一份:[`SESSION-HANDOFF-2026-10-07.md`](SESSION-HANDOFF-2026-10-07.md)(只交接函式清單那一條線)。
+
+## 0. 範圍
+
+- 涵蓋 2026-10-07 之後的全部工作:commit `29295e6d` .. `538eb6df`(97 個,都已推送到 `fork remaster-local`)加上續一百九十三那一個 commit。
+  逐步紀錄在 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 續九十九 .. 續一百九十三;依主題的目錄是 [`98-index.md`](98-index.md)
+  (由 `tools/doc98_index.py --write` 產生,不要手改)。
+- 研究對象只有原版 `FD2.EXE`(md5 `33464c81e6a364fd0660141139aa8e6e`)。remake 已移除(歷史紀錄見 98-index「remake 時期的工具」)。
+
+## 1. 現況
+
+**已完成(都有證據產生器或工具 selftest 看守)**
+
+| 主題 | 結果 | 驗證等級 | 節次 |
+|---|---|---|---|
+| 函式清單 | 1356 個入口全部有登錄名稱;`function_inventory.py --selftest` 看守 | CODE CONFIRMED(FD2.EXE 反組譯) | 續八十一 .. 九十五 |
+| 函式摘要與參數 | 續一百一十九時具名參數 1525:機器比過 1176、人工讀過 349、都沒有 0 | CODE CONFIRMED(FD2.EXE 反組譯);有 DOSBox-X 呼叫紀錄的部分 LOG CONFIRMED | 續一百零九 .. 一百二十一 |
+| 原版實機呼叫紀錄 | 修補的 DOSBox-X(`tools/dosbox/fd2_calllog_patch.py`)記入口參數 / 回傳 / I/O / 按鍵 / 觸發擷取;解析器 `tools/calllog_segments.py` | LOG CONFIRMED(DOSBox-X,非真硬體) | 續一百零七、一百七十一 .. 一百七十七 |
+| 畫面 / 換色 / RLE / HUD / LUT | 72 節;四模式 RLE 解碼再編回逐 byte 相同 | CODE + LOG CONFIRMED(FD2.EXE 反組譯、DOSBox-X 實拍) | 續一百二十二 .. 一百五十八 |
+| AIL 音訊與計時 | 5 ms 基底 = DIG 服務計時器 0x404c0;重入、關中斷、掉中斷率都有實機量測 | LOG CONFIRMED | 續一百六十一 .. 一百七十六 |
+| UI 音效對應 | 打字音、腳步音(依職業)、面板展開 / 收起等 index 全部對到場景 | LOG CONFIRMED(DOSBox-X 呼叫紀錄) | 續一百七十九 .. 一百九十 |
+| 事件系統收尾 | event63 不重複、event 81 → 82 派送、物理攻擊每輪音效與會心 | LOG CONFIRMED(DOSBox-X 呼叫紀錄 lc192a / lc192b) | 續一百九十一 .. 一百九十二 |
+| 城鎮秘密店 F 鍵 | 完整 pass-through mapper 讓真按的 Ctrl / Shift + F 鍵進 guest | LOG CONFIRMED(DOSBox-X K 紀錄 lc192c .. g) | 續一百九十二 |
+| 出擊選人 | 旗標章節名冊不足時無出口;正常劇情碰不到 | CODE CONFIRMED(FD2.EXE 反組譯)+ LOG CONFIRMED(DOSBox-X lc192b)+ STATIC ANALYSIS(名冊下界) | 續一百九十三 |
+
+- worklist(`python tools/worklist_checklist.py --summary`,2026-11-05):勾選框 746 —— `[x]` 631、`[~]` 92、`[ ]` 23;
+  分類 closed 44、obsolete_remake 68、not_a_task 3、**open_static 0、open_live 0**。
+- 證據產生器:`docs/knowledge-base/evidence/generators/run_all.py` 全部 IDENTICAL(續一百九十二時 90 個;續一百九十三加 `ev_s193`)。
+
+**進行中**:無。
+
+**延後**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake,只有恢復 remake 才需要重開。
+
+## 2. 假設(影響結論的前提)
+
+| 假設 | 依據 / 狀態 |
+|---|---|
+| DOSBox-X 的行為代表原版在 DOS 上的行為 | 所有「實機」都是 DOSBox-X 模擬,**沒有一項是真硬體驗證**;計時類結論(例如 delay 差 0.5%)已註明是 DOSBox-X Sound Blaster 的切片 |
+| `docs/data/chapter_beats/chNN` 的 NN = 章節 byte `[0x53c03]` | ev_s193 的名冊下界刻意算到「錯一位也成立」;未逐檔核對 |
+| `chapter_beats` 最外層的入隊 op 是無條件的 | ev_s193 另算「整個處理常式有任何條件 op 就不算」的保守下界 |
+
+## 3. 已知問題
+
+| 問題 | 現象 / 影響 | 處理 |
+|---|---|---|
+| 旗標章節(byte 22 / 23 / 24 / 27 / 28 / 29)選人無出口 | 名冊 − 1 < 目標(15 / 19)時 Esc 立刻再進選人;只有改過章節 byte 的存檔會遇到(lc192b、doc99 新卡點 A) | 原版行為,不改;測非正常存檔前先補名冊,或在 `0x2b0e3` 改 EBP(續一百九十二的做法) |
+| pass-through mapper 綁 DOSBox-X binary | 預設綁定不同的 binary 用這個 map 會缺鍵 | harness 的 `mapper_guard` 只接受 `tools/dosbox/passthrough.map.binmd5` 列的 binary(現有兩支:491af5d1…、b3084f20…);新 binary 先 `make_passthrough_map.py attest --bin …`。`drivers_s191/lc191.py` 的部分 mapper 實驗沒有 sidecar,重跑會被擋(要刻意重做時設 `FD2_HARNESS_MAPPER_UNCHECKED=1`) |
+| debugger 在 real mode 讀不到 selector 0170 | 讀取失敗 | `drivers_s192/lc192.py` 的 `halted()`:resume、等 0.4 s、重讀(續一百九十二 7 次都第 2 次成功) |
+| CALLLOG 以 4 KiB 區塊寫出 | 執行中讀到的尾端會落後 | teardown 之後再算 md5 / 結論(續一百六十九、一百七十) |
+| Git Bash 會改寫 `/home/...` 參數 | 傳給 WSL 的路徑變成 `C:/Program Files/Git/home/...` | 指令前加 `MSYS_NO_PATHCONV=1` |
+| `~/fd2-run-harness-mt1`(WSL) | 續一百九十三第一版 mapper 測試的變異真的啟動過一次留下的工作目錄(假 binary、沒有遊戲) | 依規則不自動刪除 `~/fd2-run-harness-*`;要不要刪由人決定 |
+
+## 4. 主要決策(為什麼這樣做)
+
+- 只用原版 EXE 當證據;remake 的輸出不算證據(98-index「證據來源判準」)。
+- 每個結論都由 `evidence/generators/ev_*.py` 從原始輸入重算,assert 數由 `assert_census.py` 看守,每個產生器配 `mut_*.py` 變異測試(未變異對照必須與已提交檔相同)。
+- 實機前先寫預測檔、一步一個呼叫(或 `&&`)、每個讀取都要有期望值會失敗;必要的記憶體修改先在預測檔寫理由(續一百九十二)。
+
+## 5. 外部相依
+
+- WSL `Ubuntu`:Xvfb、xdotool、tmux、python3;DOSBox-X 兩支 build —— `~/fd2-dosbox-calllog4/dosbox-x/src/dosbox-x`(呼叫紀錄修補版,md5 491af5d1…)
+  與 `~/fd2-dosbox-build/dosbox-x/src/dosbox-x`(harness 預設,md5 b3084f20…)。
+- Windows:Python 3.13、capstone 5.0.7。遊戲檔在 `FD2_GAME_DIR`(不進倉庫)。
+
+## 6. 入口與例行檢查
+
+| 用途 | 指令 |
+|---|---|
+| 待辦總數 | `python tools/worklist_checklist.py --summary`(另有 `--check`、`--selftest`) |
+| 證據全部重算 | `python docs/knowledge-base/evidence/generators/run_all.py` |
+| assert 數量 | `python docs/knowledge-base/evidence/generators/assert_census.py`(`--executed` 動態) |
+| 改過的工具 | `python tools/verify_selftest_discrimination.py --exhaustive --tool NAME.py`(不要用 `--precommit`) |
+| 提交前閘門 | `verify_tool_hygiene.py`、`audit_evidence_provenance.py --gate` / `--diff`、`verify_address_citations.py --diff`、`verify_address_claim_coverage.py`、`doc98_index.py --check`、`git diff --check` |
+| harness 離線測試(WSL) | `bash tools/test_dosbox_harness_ports.sh`、`bash tools/test_dosbox_harness_mapper.sh` |
+| mapper | `python tools/dosbox/make_passthrough_map.py check` / `attest [--bin B]` / `--selftest` |
+
+## 7. 需要人決定
+
+1. 是否恢復 remake(決定 obsolete_remake 68 項要不要重開)。
+2. `~/fd2-run-harness-mt1` 是否刪除。
+3. 下一個研究目標:worklist 已歸零,沒有使用者指定的新方向。

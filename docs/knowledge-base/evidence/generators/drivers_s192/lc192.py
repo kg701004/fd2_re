@@ -137,7 +137,9 @@ def main(argv: list[str]) -> int:
         os.environ["FD2_HARNESS_CALLLOG_KBD"] = "1"
         if use_mapper:
             src = MAPPER_SRC.as_posix().replace("C:/", "/mnt/c/")
-            print(wsl(f"cp '{src}' {MAPPER} && md5sum '{src}' {MAPPER} && wc -l {MAPPER}"))
+            # 續一百九十三:harness 的 mapper_guard 要求 "<mapper>.binmd5" 列有 DOSBOX_BIN 的 md5,一起複製
+            print(wsl(f"cp '{src}' {MAPPER} && cp '{src}.binmd5' {MAPPER}.binmd5 && md5sum '{src}' {MAPPER} "
+                      f"&& wc -l {MAPPER} && grep -x \"$(md5sum {DOSBOX_BIN} | cut -d' ' -f1)\" {MAPPER}.binmd5"))
             os.environ["FD2_HARNESS_MAPPER"] = MAPPER
         else:
             os.environ.pop("FD2_HARNESS_MAPPER", None)

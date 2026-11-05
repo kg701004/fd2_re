@@ -13255,3 +13255,59 @@ scratchpad),主代理把每項結論所依據的關鍵指令與可計算的表�
 **驗證**:mut_s192 42/42 killed(未變異對照以原版 FD2.EXE 與 DOSBox-X 呼叫紀錄重算,與已提交檔相同);assert_census ev_s192 96/96;其餘見提交訊息。
 
 **仍留**:無(四項都有實機紀錄)。附帶發現另記:event62 路過即觸發、敵軍也觸發;出擊目標人數寫死 15 / 19。
+
+## 2026-11-05 續一百九十三:出擊人數寫死的後果 —— 旗標章節名冊不足時選人畫面無出口(Esc 立刻再進),正常劇情的名冊下界都達門檻(原版 FD2.EXE 反組譯、DOSBox-X 呼叫紀錄 lc192b);pass-through mapper 綁定已核過的 DOSBox-X binary(attest、mapper_guard)
+
+起因:使用者「依照你的建議自動進行處理」;續一百九十二附帶發現「出擊目標人數寫死 15 / 19」,名冊不足時會不會卡住沒有查。
+新工具:`evidence/generators/ev_s193.py`(靜態 + 既有呼叫紀錄 lc192b)與 `mut_s193.py`(28 個變異)。證據 `evidence/static_s193_sortie_softlock_20261105.json`。
+另有 `make_passthrough_map.py attest`、harness 的 `mapper_guard` 與 `tools/test_dosbox_harness_mapper.sh`(見 (4))。
+不跑遊戲實機:需要的實機序列已在 lc192b 的 DOSBox-X 呼叫紀錄裡(md5 25244d52…,續一百九十二);(4) 只在私有 Xvfb 開 DOSBox-X 的 mapper 編輯器。
+
+### (1) 選人畫面的出口(原版 FD2.EXE 反組譯,CODE CONFIRMED)
+
+- `sortie_member_select`(`0x2af28`)的迴圈只有兩處寫 EDI:`0x2b0b3 mov edi, -1`(`0x2b67f` 回傳 1 = Esc;Del 0x53 也在 `0x2b736` 改成 1)與
+  `0x2b0e7 mov edi, 1`(`0x2b0e3` 人數 == 目標)。`0x2b34f` EDI ≠ 1 → `0x2b42d` 回傳 0;進入時 `0x2af4a` 先把 0x1e bytes 選取旗標清零。
+- 兩個呼叫端(原版 FD2.EXE 反組譯):
+  - `town_hub_main` `0x26351`:章節旗標表 `0x523e7[章節 byte]` ≠ 0(`0x26272`)→ 0x19a 詢問(`0x262d0`)→ 選人;`0x26362 je 0x26347`
+    —— 回傳 0 就**再叫一次選人**。`0x2626d .. 0x26364` 沒有任何 `[0x53bfb]` 比較。旗標表 = 章節 byte 22、23、24、27、28、29。
+  - `town_hub_select` `0x267e6`:先比名冊人數(`0x267c1` `[0x53bfb] > 0x10`,章節 byte > 0x1a 時 `0x267d3` `> 0x14`),不足就略過選人;
+    回傳 0 → `0x29867` 離開設施。
+- ⇒ 旗標章節裡可選人數 `[0x53bfb] − 1`(`0x2b765 dec edx`)小於目標(15;byte 27 .. 29 為 19)時,Enter 永遠湊不到相等、Esc 又立刻回到同一畫面:
+  **沒有出口,只能重開**。另一條路徑(town_hub_select)有門檻,不會卡。
+
+### (2) 名冊人數只增不減;正常劇情到旗標章節的下界(原版 FD2.EXE 反組譯 + chapter_beats,STATIC ANALYSIS)
+
+- `[0x53bfb]` 的 fixup 引用共 46 處,寫入只有 5 條(原版 FD2.EXE):`0x1144c inc`(入隊 `0x112a5`)、`0x25efa mov …, 0`(新遊戲)、
+  `0x1041e` / `0x26070` / `0x2999a`(讀檔,從存檔緩衝取 byte)。沒有 dec / sub;`0x112a5` 的呼叫點 28 個。
+- `docs/data/chapter_beats` 的入隊 op:處理常式最外層 26 個、`if` 分支內 2 個(ch02 / ch06)。進章節 byte ch 的城鎮時:
+  | 章節 byte | 目標 | 最外層入隊全算 | 保守下界(只算 < ch − 1 且整個處理常式無條件 op) | 保守可選 − 目標 |
+  |---|---|---|---|---|
+  | 22 | 15 | 22 | 19 | +3 |
+  | 23 / 24 | 15 | 24 | 19 | +3 |
+  | 27 / 28 / 29 | 19 | 26 | 21 | +1 |
+  保守下界連章節對應錯一位也成立;戰鬥事件裡另有入隊(`0x3453e`、`0x3545f`、`0x355e3`、`0x35b46`)只會更多。
+  ⇒ 正常照劇情推進的存檔不會遇到 (1) 的無出口;會遇到的是改過章節 byte 或早期合成的存檔(lc192b 的 ch27 隊伍 13 人在 byte 29;
+  doc99 新卡點 A 的 sweep ch21 / 22 / 26 勝利後進 byte 22 / 23 / 27,也都是旗標章節 —— INFERRED,sweep 沒記章節 byte)。
+
+### (3) 既有實機紀錄(原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc192b,LOG CONFIRMED)
+
+- 以 `0x2af28` 內的音效呼叫當進出記號(`0x25a96` 返回 `0x2b08f` = 進入、sub 5;返回 `0x2b1f6` = 離開、sub 6),依紀錄行序:
+  0x19a 詢問(`0x15f84` 返回 `0x262d5` = town_hub_main)→ 進入(EBP 0x13)→ Esc(K 01)→ 離開(EDI = −1)→ **沒有詢問就再進入** → 斷點改 EBP 後
+  離開(EDI = 1、EBP = 0xc)。續一百九十二 pred192b 記的「Esc 清空選取」就是這次再進入時 `0x2af4a` 的清零。
+
+### (4) pass-through mapper 綁 DOSBox-X binary(tools/dosbox/make_passthrough_map.py attest、tools/dosbox_harness.sh mapper_guard)
+
+- mapper 檔會取代全部預設綁定(續一百九十二),所以 `passthrough.map` 只適用於「自己寫出的預設檔與 `default_sdl2.map` 逐字相同」的 DOSBox-X。
+  續一百九十二只用 calllog4 那支產生;harness 的預設 binary(`~/fd2-dosbox-build`,md5 b3084f20…)是另一支,先前沒核過。
+- 新增 `tools/dosbox/passthrough.map.binmd5`(已核過的 binary md5,一行一個)與 `make_passthrough_map.py attest [--bin B]`:讓 B 在私有 Xvfb 寫出預設檔,
+  與 `default_sdl2.map` 逐字相同才把 md5 加進去(`generate` 也會更新:預設檔沒變就併入,變了就只剩新 binary)。實跑(DOSBox-X,不載遊戲):
+  calllog4(491af5d1…)與 fd2-dosbox-build(b3084f20…)兩支都 attest PASS —— 預設綁定相同,這個 map 兩支都能用。
+- `tools/dosbox_harness.sh`:`cmd_launch` 在保留顯示埠之前呼叫 `mapper_guard`;`<mapper>.binmd5` 不存在或沒有目前 binary 的 md5 就拒絕啟動
+  (`FD2_HARNESS_MAPPER_UNCHECKED=1` 可刻意略過,例如重做 lc191c 的部分 mapper 實驗)。`drivers_s192/lc192.py` 複製 mapper 時一起複製 sidecar 並核對。
+- 新離線測試 `tools/test_dosbox_harness_mapper.sh` 10 項(含「已核 binary 通過 guard」對照;launch 一律在私有 HOME、Xvfb / tmux / xdotool stub、
+  未用顯示埠下跑)。故障注入 3 種(拿掉 md5 比對、整行比對改子字串、launch 不呼叫 guard)都被抓到。第一版測試沒有 stub,
+  「launch 不呼叫 guard」那個變異真的往下啟動過一次(假 binary、沒有遊戲;留下 `~/fd2-run-harness-mt1`,依規則未刪),之後才加上隔離。
+
+**驗證**:ev_s193 全部 assert 通過;mut_s193 28/28 killed(未變異對照以原版 FD2.EXE 與 DOSBox-X 呼叫紀錄重算,與已提交檔相同);make_passthrough_map --selftest(新增 binmd5 / attest 對照)、test_dosbox_harness_mapper.sh 10/10。
+
+**仍留**:無。這是原版的設計缺口(旗標章節沒有名冊門檻),正常進度碰不到;非正常存檔(章節 byte 改過)要先補足名冊人數。

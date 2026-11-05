@@ -17,6 +17,9 @@ Save 鈕,`MAPPER_SaveBinds` 寫出全部事件),再把 hand_* 事件裡「F1 .. 
   python tools/dosbox/make_passthrough_map.py check [RAW FINAL]
         # 離線檢查:FINAL 必須等於 strip(RAW),事件一個都不少,guest F 鍵族沒有任何 host 綁定,
         # key_f1 .. key_f10 / mod_1 .. mod_3 / hand_debugger 綁定都在
+  python tools/dosbox/make_passthrough_map.py attest [--bin DOSBOX_BIN] [--port N]
+        # 另一支 DOSBox-X:讓它寫出預設檔,與 default_sdl2.map 逐字相同才把它的 md5 加進 passthrough.map.binmd5
+        # (harness 帶 FD2_HARNESS_MAPPER 時只接受 "<mapper>.binmd5" 列出的 binary;generate 也會更新這個檔)
   python tools/dosbox/make_passthrough_map.py --selftest
 
 只在 WSL 端開 Xvfb + DOSBox-X(不載遊戲、不碰 harness 的 instance 與顯示埠範圍 199 .. 1999);產出檔是 DOSBox-X 的設定檔,
@@ -32,6 +35,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 RAW_PATH = HERE / "default_sdl2.map"
 FINAL_PATH = HERE / "passthrough.map"
+# 續一百九十三:passthrough.map 只對「預設綁定與 default_sdl2.map 逐字相同」的 DOSBox-X 成立。這個檔列出已核過的
+# binary md5(一行一個);tools/dosbox_harness.sh 帶 FD2_HARNESS_MAPPER 時要求 "<mapper>.binmd5" 列有目前 binary 的 md5。
+BINMD5_PATH = HERE / "passthrough.map.binmd5"
+HEX = set("0123456789abcdef")
 DEFAULT_BIN = "/home/kg701004/fd2-dosbox-calllog4/dosbox-x/src/dosbox-x"
 DEFAULT_PORT = 2399          # harness 用 199 + 100k(到 1999),這裡刻意在範圍外
 SECTION = "[SDL2]"
@@ -149,6 +156,47 @@ def check(raw: str, final: str) -> list[str]:
     return errs
 
 
+def parse_binmd5(text: str) -> list[str]:
+    """解析 .binmd5:每行一個 32 位小寫 hex md5,LF 結尾、不可空、不可重複。
+
+    Raises:
+        ValueError: 格式不符。
+    """
+    if not text.endswith("\n") or "\r" in text:
+        raise ValueError("要以 LF 結尾、不含 CR")
+    md5s = text[:-1].split("\n")
+    for m in md5s:
+        if len(m) != 32 or not set(m) <= HEX:
+            raise ValueError(f"不是 md5:{m!r}")
+    if len(set(md5s)) != len(md5s):
+        raise ValueError("md5 重複")
+    return md5s
+
+
+def render_binmd5(md5s: list[str]) -> str:
+    """parse_binmd5 的反函式(排序、去重)。"""
+    return "".join(f"{m}\n" for m in sorted(set(md5s)))
+
+
+def attest_errors(raw_now: str, raw_committed: str, md5: str) -> list[str]:
+    """這支 binary(md5)自己寫出的預設檔 raw_now 必須與已提交的 default_sdl2.map 逐字相同,passthrough.map 才適用。"""
+    errs = []
+    if len(md5) != 32 or not set(md5) <= HEX:
+        errs.append(f"binary md5 格式不符:{md5!r}")
+    if raw_now != raw_committed:
+        a, b = dict(parse_map(raw_now)[0]), dict(parse_map(raw_committed)[0])
+        diff = sorted(n for n in set(a) | set(b) if a.get(n) != b.get(n))
+        errs.append(f"這支 DOSBox-X 的預設綁定與 default_sdl2.map 不同({len(diff)} 個事件,例如 {diff[:5]});"
+                    "passthrough.map 不適用,要另外 generate")
+    return errs
+
+
+def next_binmd5(old_text: str | None, old_raw: str | None, new_raw: str, md5: str) -> str:
+    """generate 之後的 .binmd5:預設檔沒變就併入原有清單,變了就只剩這支 binary。"""
+    keep = parse_binmd5(old_text) if old_text is not None and old_raw == new_raw else []
+    return render_binmd5(keep + [md5])
+
+
 GEN_SCRIPT = r"""
 set -u
 BIN="$1"; PORT="$2"
@@ -262,6 +310,28 @@ def selftest() -> int:
     g = guest_binds()
     expect(len(g) == 40 and g["key 58 mod3"] == "Shift+F1" and g["key 67 mod2"] == "Alt+F10" and "key 68 mod1" not in g,
            "F 鍵族")
+    # 對照 12 .. 16:.binmd5 與 attest(續一百九十三)
+    m1, m2 = "0" * 31 + "1", "a" * 32
+    expect(parse_binmd5(f"{m2}\n{m1}\n") == [m2, m1] and render_binmd5([m2, m1, m1]) == f"{m1}\n{m2}\n", "binmd5 往返")
+    for bad in (f"{m1}", f"{m1}\r\n", f"{m1[:-1]}\n", f"{m2.upper()}\n", f"{m1}\n{m1}\n", "\n"):
+        try:
+            parse_binmd5(bad)
+            fails.append(f"binmd5 壞格式要 ValueError:{bad!r}")
+        except ValueError:
+            pass
+    expect(attest_errors(raw, raw, m1) == [], "attest 正例")
+    expect(any("不同(1 個事件" in e and "hand_two" in e for e in attest_errors(raw.replace('"key 4" ', '"key 5" '), raw, m1)),
+           "預設綁定不同要 FAIL 並指出事件")
+    raw6 = raw
+    for n in range(1, 7):
+        raw6 = raw6.replace(f'key_f{n} "key {57 + n}" ', f'key_f{n} "key {157 + n}" ')
+    e6 = attest_errors(raw6, raw, m1)
+    expect(len(e6) == 1 and "不同(6 個事件" in e6[0] and "key_f5" in e6[0] and "key_f6" not in e6[0],
+           f"6 個事件不同:只列前 5 個 {e6}")
+    expect(any("md5 格式" in e for e in attest_errors(raw, raw, m1[:-1])), "md5 格式錯要 FAIL")
+    expect(next_binmd5(f"{m2}\n", raw, raw, m1) == f"{m1}\n{m2}\n", "預設檔沒變:併入")
+    expect(next_binmd5(f"{m2}\n", raw_f1, raw, m1) == f"{m1}\n", "預設檔變了:只剩新 binary")
+    expect(next_binmd5(None, None, raw, m1) == f"{m1}\n", "第一次 generate")
     for f in fails:
         print("FAIL", f)
     print("selftest", "PASS" if not fails else f"FAIL ({len(fails)})")
@@ -289,8 +359,11 @@ def main(argv: list[str]) -> int:
         if errs:
             print("\n".join(errs))
             return 1
+        old_raw = RAW_PATH.read_bytes().decode("ascii") if RAW_PATH.exists() else None
+        old_md5s = BINMD5_PATH.read_bytes().decode("ascii") if BINMD5_PATH.exists() else None
         RAW_PATH.write_bytes(raw.encode("ascii"))
         FINAL_PATH.write_bytes(final.encode("ascii"))
+        BINMD5_PATH.write_bytes(next_binmd5(old_md5s, old_raw, raw, md5).encode("ascii"))
         print(f"dosbox-x md5 {md5};事件 {len(ents)} 個;拿掉 {len(removed)} 個綁定:")
         for n, b, d in removed:
             print(f"  {n} \"{b}\" ({d})")
@@ -302,6 +375,23 @@ def main(argv: list[str]) -> int:
         errs = check(raw_p.read_bytes().decode("ascii"), fin_p.read_bytes().decode("ascii"))
         print("\n".join(errs) if errs else f"check PASS({fin_p.name} = strip({raw_p.name}))")
         return 1 if errs else 0
+    if argv[0] == "attest":
+        bin_path, port = DEFAULT_BIN, DEFAULT_PORT
+        if "--bin" in argv:
+            bin_path = argv[argv.index("--bin") + 1]
+        if "--port" in argv:
+            port = int(argv[argv.index("--port") + 1])
+        committed = RAW_PATH.read_bytes().decode("ascii")
+        errs = check(committed, FINAL_PATH.read_bytes().decode("ascii"))
+        raw, md5 = generate(bin_path, port)
+        errs += attest_errors(raw, committed, md5)
+        if errs:
+            print("\n".join(errs))
+            return 1
+        old = parse_binmd5(BINMD5_PATH.read_bytes().decode("ascii")) if BINMD5_PATH.exists() else []
+        BINMD5_PATH.write_bytes(render_binmd5(old + [md5]).encode("ascii"))
+        print(f"attest PASS:{bin_path}(md5 {md5})的預設綁定與 {RAW_PATH.name} 相同 → 已列入 {BINMD5_PATH.name}")
+        return 0
     print(__doc__)
     return 2
 

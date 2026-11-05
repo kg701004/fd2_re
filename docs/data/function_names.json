@@ -27171,7 +27171,7 @@
   {
    "addr": "0x2af28",
    "name": "sortie_member_select",
-   "summary": "出擊選人主迴圈:目標人數 ebp 預設 15(章節 > 26 時 19),以 draw_roster_pick_grid 畫名冊格,Enter 以 xor 切換 32 bytes 選取陣列,人數(0x2b749)等於目標才離開;有 yes_no_prompt 與 info_card_present_frame(FD2.EXE 反組譯)。town_hub_main 與 town_hub_select 呼叫(doc58 / doc99)。",
+   "summary": "出擊選人主迴圈:目標人數 ebp 預設 15(章節 > 26 時 19),以 draw_roster_pick_grid 畫名冊格,Enter 以 xor 切換 32 bytes 選取陣列,人數(0x2b749)等於目標時回傳 1、Esc / Del 回傳 0(續一百九十三;town_hub_main 的旗標章節路徑取消後立刻再叫本函式);有 yes_no_prompt 與 info_card_present_frame(FD2.EXE 反組譯)。town_hub_main 與 town_hub_select 呼叫(doc58 / doc99)。",
    "confidence": "static_re",
    "date": "2026-10-07",
    "evidence": [
