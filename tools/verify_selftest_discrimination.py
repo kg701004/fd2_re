@@ -231,6 +231,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_screen_text.py":         (["--selftest"], "offline"),
     # 續一百八十九:91-worklist 勾選框逐項分類的覆蓋 / 依據檢查;selftest 用合成清單,真實檔只驗計數與登錄表零錯。
     "worklist_checklist.py":      (["--selftest"], "offline"),
+    # 2026-11-05:規格層逆向覆蓋率(程式碼 / 資料區 / 資源三層分母);selftest 只用合成登錄與合成位元組。
+    "re_coverage.py":             (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

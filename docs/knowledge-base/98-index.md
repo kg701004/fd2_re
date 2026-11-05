@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 238 節、19 個主題。
+共 239 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 12770:2026-11-02 續一百八十四:續一百八十一 .. 一百八十三仍留三項實機 —— 空白名字的單位只在開場劇情、面板從沒畫過;375 再看到 4 次都是 MDI 型夾一次 IRQ 7;index 1 / 8 / 5 / 6 / 0xc 的畫面(DOSBox-X 呼叫紀錄 lc184a / lc184b,FD2.EXE、FDFIELD、FDTXT) 〔來源:DOSBox-X、斷點、FDFIELD〕
 - 行 12814:2026-11-02 續一百八十五:ai_mode_dispatch 那處 0xc = AI 模式 5 搶寶箱(靜態;FD2.EXE 反組譯、FDFIELD / FDSHAP);續一百八十一 .. 一百八十四兩項結案 〔來源:DOSBox-X、反組譯、FDFIELD〕
 - 行 12859:2026-11-02 續一百八十六:第 10 張圖盜賊搶寶箱的 0xc 實機看到 5 次 —— ai_mode_dispatch 過三道關才放;[0x53ad5] 的值就是線性位址(DOSBox-X 呼叫紀錄 lc186a,FD2.EXE、FDFIELD) 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12905:2026-11-02 續一百八十七:doc25 §3.2.4「開箱後旗標全 0」是金錢箱還在等鍵 —— 0x194d6 等鍵、0x194f3 才寫旗標;開到的是 slot 9 (3,8);ev_s185 "unit" 欄改由 spawn_group(0) 名次算(FD2.EXE 反組譯、FDFIELD / FDSHAP、FDTXT_000) 〔來源:DOSBox-X、反組譯、FDTXT_000〕
@@ -17,6 +16,7 @@
 - 行 13061:2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯) 〔來源:DOSBox-X、斷點、FUN_0002fb2c〕
 - 行 13194:2026-11-04 續一百九十二:續一百九十一「仍留」四項以新工具逐項實機關閉 —— event63 不重複(lc192a)、物理攻擊每一輪音效與會心(lc192a / lc192b)、event 82 由擊殺魔神派送(lc192b)、完整 DOSBox-X pass-through mapper 讓真按的 Ctrl / Shift + F 鍵進得了 guest(tools/dosbox/make_passthrough_map.py,lc192c .. lc192g) 〔來源:DOSBox-X、debugger、FDTXT_000〕
 - 行 13259:2026-11-05 續一百九十三:出擊人數寫死的後果 —— 旗標章節名冊不足時選人畫面無出口(Esc 立刻再進),正常劇情的名冊下界都達門檻(原版 FD2.EXE 反組譯、DOSBox-X 呼叫紀錄 lc192b);pass-through mapper 綁定已核過的 DOSBox-X binary(attest、mapper_guard) 〔來源:DOSBox-X、斷點、反組譯〕
+- 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -44,7 +44,7 @@
 - 行 8878:2026-10-12 續一百一十六:續一百一十五「仍留的」不是做不到 —— 篩選工具補三個缺口、加 `param_unread` 與參數名登錄、新增 `param_dossier.py`;改正 8 筆參數列 〔來源:DOSBox-X、反組譯〕
 - 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
-## 函式清單(1356 個入口)、命名與名稱登錄表(59 節)
+## 函式清單(1356 個入口)、命名與名稱登錄表(60 節)
 
 - 行 3498:2026-09-08 最終：兩支新工具補上最大缺口 + 單一入口的多輪自檢 〔來源:Ghidra、org_game、ANI.DAT〕
 - 行 4139:2026-09-11 — `tools/verify_address_claim_coverage.py`:第十二軸,補上 `findings` 從來沒有的分母 〔來源:capstone、反組譯〕
@@ -105,6 +105,7 @@
 - 行 11615:2026-10-29 續一百六十四:重入時關中斷的是 DIG 整段與 MDI 的真實模式驅動呼叫;`0x37c30` 只在 `AIL_DEBUG` 登錄;校準每圈慢的 1% 拆不完 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 12093:2026-10-30 續一百七十三:工具新建與收口 —— AIL 3 驅動檔反組譯、呼叫紀錄加 I/O 與按鍵;SB16.DIG 初始化是單一樣本 DMA、START 放開鍵的 IRQ 1 晚 5.55 ms 是 DIG 服務關著中斷、每 8 次服務多叫是 MDI 音量漸變、敵方回合結束的 991 次是換曲淡出淡入(DOSBox-X 呼叫紀錄 lc173a / lc167a) 〔來源:DOSBox-X、disasm、FDMUS〕
 - 行 12241:2026-10-31 續一百七十五:仍留逐項收口 —— ng 375 是 MDI 型重入夾一次 IRQ 7、0070 關中斷是 DOS/4GW 寫 FD2.TMP 的轉送拷貝、DIG 長服務是填緩衝、短驅動呼叫是硬體中斷、敵方回合結束停一次是 AIL 忙碌計數(DOSBox-X 呼叫紀錄 lc174a / lc174b / lc173a / lc167a、FD2.EXE) 〔來源:DOSBox-X、反組譯、FD2.EXE〕
+- 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 
 ## 函式摘要與參數篩選(續一百零九 ~ 一百二十一)(14 節)
 
@@ -288,7 +289,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(73 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(74 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -363,6 +364,7 @@
 - 行 13061:2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯) 〔來源:DOSBox-X、斷點、FUN_0002fb2c〕
 - 行 13194:2026-11-04 續一百九十二:續一百九十一「仍留」四項以新工具逐項實機關閉 —— event63 不重複(lc192a)、物理攻擊每一輪音效與會心(lc192a / lc192b)、event 82 由擊殺魔神派送(lc192b)、完整 DOSBox-X pass-through mapper 讓真按的 Ctrl / Shift + F 鍵進得了 guest(tools/dosbox/make_passthrough_map.py,lc192c .. lc192g) 〔來源:DOSBox-X、debugger、FDTXT_000〕
 - 行 13259:2026-11-05 續一百九十三:出擊人數寫死的後果 —— 旗標章節名冊不足時選人畫面無出口(Esc 立刻再進),正常劇情的名冊下界都達門檻(原版 FD2.EXE 反組譯、DOSBox-X 呼叫紀錄 lc192b);pass-through mapper 綁定已核過的 DOSBox-X binary(attest、mapper_guard) 〔來源:DOSBox-X、斷點、反組譯〕
+- 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 
 ## dispatch 跳表與指令表(6 節)
 

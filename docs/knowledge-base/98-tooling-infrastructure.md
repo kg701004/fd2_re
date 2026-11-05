@@ -13311,3 +13311,37 @@ scratchpad),主代理把每項結論所依據的關鍵指令與可計算的表�
 **驗證**:ev_s193 全部 assert 通過;mut_s193 28/28 killed(未變異對照以原版 FD2.EXE 與 DOSBox-X 呼叫紀錄重算,與已提交檔相同);make_passthrough_map --selftest(新增 binmd5 / attest 對照)、test_dosbox_harness_mapper.sh 10/10。
 
 **仍留**:無。這是原版的設計缺口(旗標章節沒有名冊門檻),正常進度碰不到;非正常存檔(章節 byte 改過)要先補足名冊人數。
+
+## 2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005
+
+起因:使用者把目標定為「100% 逆向完成」,選「先規格層,再看要不要做可重編譯原始碼」,要求「新建工具,讓要執行的任務能完整完成」。
+先前量得出來的只有函式清單;資料區只能用「位址字面上出現在文件」估(435 / 900,結構內欄位會被算成沒寫到),資源檔沒有逐筆紀錄。
+
+### (1) 三層分母(全部由原版檔案現算)
+
+- 程式碼:`function_inventory.json` 1356 個入口。遊戲函式 1202(`function_names.json` 1149 個附摘要,另有 PRIM / DOC_OP_NAMES 命名的 53 個)、
+  只靠 AIL / Watcom 比對辨識的函式庫 154、沒有名稱 0。遊戲函式「完成」= 它引用的每個全域位址都落在已登錄的資料區段;函式庫辨識出來就算完成。
+  第一次實作只認 `function_names.json`,算出 52 個「沒有名稱」—— 查來源全是 PRIM / DOC_OP_NAMES(`0x111ba` load_res、`0x112a5` join 等),已改正。
+- 資料區:FD2.EXE LE obj2(0x50000,0x56b0 bytes)與 obj3(0x60000,0x34d2 bytes)每一個 byte,共 35714;另計程式碼引用的 900 個全域位址。
+- 資源:遊戲目錄的原版檔案 49 個(大寫 8.3 檔名;目錄裡分析留下的 png / md / py 不算)與 11 個 `.DAT` 容器的 1005 筆資源。
+  FD2.EXE 與 `.DAT` 的 md5 必須與 `fd2-reference-files.json` 相同,否則拒絕計算。
+
+### (2) 登錄與核對(`python tools/re_coverage.py --check`)
+
+- `docs/data/data_map.json` 的 regions:不得重疊(重疊的兩段都不算覆蓋)、不得跨出物件,每段要有 name / type / meaning 與至少一筆證據。
+- `docs/data/resource_map.json`:files(md5、role、證據;FD2.SAV / FD2.TMP 不釘 md5)與 resources(sha1 釘原版位元組、format、meaning、證據)。
+  format 必須通過工具內的 probe 才算「格式已驗」,沒有 probe 只算「已宣稱」;目前 probe 只有 `container`(巢狀 LLLLLL)與 `empty`。
+- 證據會被核對(依據是原版 FD2.EXE 反組譯得出的 function_inventory 與 LE fixup):`func` 必須在 inventory 且真的引用該位址(區段外基底用 `ref` 指明)、`doc` 的 quote 必須逐字出現、`no_refs` 必須沒有任何函式引用或 fixup 指向。
+- 找下一步:`--gaps globals`(未登錄的被引用位址,依引用函式數排序;第一名 `0x53a45`,183 個函式)、`--gaps code | data | resources | files`、
+  `--show-data ADDR`、`--show-resource DAT IDX`(印出登錄樣板)。
+
+### (3) 驗證
+
+- `--selftest`:合成登錄的正負向對照(重疊、緊鄰、跨出物件、各種證據不成立、sha1、probe 說不、檔名判準)+ 有遊戲目錄時對原版檔案核對分母與倉庫登錄零錯。
+- `verify_selftest_discrimination --exhaustive --tool re_coverage.py`:第一輪 37 / 47,逃掉的 10 個裡有一個是真 bug —— 重疊的兩段仍都算覆蓋
+  (同一批 byte 算兩次),已修並補題;其餘是不影響輸出的排序鍵與佔位值,已改寫成沒有突變點的形式。最終 56 / 56、歸零。
+- `verify_tool_hygiene`:兩份登錄登錄為 no_generator(工具只讀不寫)。
+
+### (4) 下一步
+
+依 `--gaps globals` 由引用最多的位址開始登錄資料區段;資源先為每種格式補 probe(各附會失敗的負向對照),再逐容器登錄。

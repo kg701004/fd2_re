@@ -30,7 +30,9 @@
   分類 closed 44、obsolete_remake 68、not_a_task 3、**open_static 0、open_live 0**。
 - 證據產生器:`docs/knowledge-base/evidence/generators/run_all.py` 全部 IDENTICAL(續一百九十二時 90 個;續一百九十三加 `ev_s193`)。
 
-**進行中**:無。
+**進行中**:規格層 100% 逆向(使用者 2026-11-05 定的目標;之後再決定要不要做可重編譯原始碼)。分母與核對由 `tools/re_coverage.py` 提供(續一百九十四)。
+基準(2026-11-05):遊戲函式 474 / 1202(引用的全域位址全部已登錄)、函式庫 154 / 154、資料區 0 / 35714 bytes、被引用全域位址 0 / 900、
+原版檔案 0 / 49、`.DAT` 資源 0 / 1005。登錄在 `docs/data/data_map.json`、`docs/data/resource_map.json`(目前是空的)。
 
 **不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 
@@ -70,10 +72,11 @@
 | 用途 | 指令 |
 |---|---|
 | 待辦總數 | `python tools/worklist_checklist.py --summary`(另有 `--check`、`--selftest`) |
+| 規格層覆蓋率 | `python tools/re_coverage.py`(摘要)、`--check`、`--gaps globals \| code \| data \| resources \| files`、`--show-data ADDR`、`--show-resource DAT IDX` |
 | 證據全部重算 | `python docs/knowledge-base/evidence/generators/run_all.py` |
 | assert 數量 | `python docs/knowledge-base/evidence/generators/assert_census.py`(`--executed` 動態) |
 | 改過的工具 | `python tools/verify_selftest_discrimination.py --exhaustive --tool NAME.py`(不要用 `--precommit`) |
-| 提交前閘門 | `verify_tool_hygiene.py`、`audit_evidence_provenance.py --gate` / `--diff`、`verify_address_citations.py --diff`、`verify_address_claim_coverage.py`、`doc98_index.py --check`、`git diff --check` |
+| 提交前閘門 | `re_coverage.py --check`、`verify_tool_hygiene.py`、`audit_evidence_provenance.py --gate` / `--diff`、`verify_address_citations.py --diff`、`verify_address_claim_coverage.py`、`doc98_index.py --check`、`git diff --check` |
 | harness 離線測試(WSL) | `bash tools/test_dosbox_harness_ports.sh`、`bash tools/test_dosbox_harness_mapper.sh` |
 | mapper | `python tools/dosbox/make_passthrough_map.py check` / `attest [--bin B]` / `--selftest` |
 
@@ -81,4 +84,4 @@
 
 1. ~~是否恢復 remake~~ —— 已決定(2026-11-05):不恢復;obsolete_remake 68 項維持關閉。
 2. ~~`~/fd2-run-harness-mt1` 是否刪除~~ —— 已決定(2026-11-05):刪除,已完成(空目錄,`rmdir`)。
-3. 下一個研究目標:worklist 已歸零,沒有使用者指定的新方向。
+3. ~~下一個研究目標~~ —— 已決定(2026-11-05):規格層 100% 逆向,見 §1「進行中」。

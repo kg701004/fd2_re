@@ -1,0 +1,9 @@
+{
+  "schema": "FD2.EXE LE obj2 / obj3 資料區段登錄。每段 start(0x 小寫)、size(bytes)、name、type、meaning、evidence;不得重疊、不得跨出物件。核對與覆蓋率:python tools/re_coverage.py --check。",
+  "evidence_kinds": {
+    "func": "{\"func\": \"0x....\", \"ref\": \"0x....\"} 函式在 function_inventory 且實際引用該位址;省略 ref 時要引用區段內位址",
+    "doc": "{\"doc\": \"倉庫內相對路徑\", \"quote\": \"逐字出現在該檔的文字\"}",
+    "no_refs": "{\"no_refs\": true} 沒有任何函式引用、也沒有 fixup 指向區段內"
+  },
+  "regions": []
+}

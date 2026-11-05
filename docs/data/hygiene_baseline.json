@@ -384,6 +384,18 @@
    "rule": "regenerable",
    "reason": "91-worklist 勾選框的人工分類登錄(續一百八十九),手動維護(tools/worklist_checklist.py 只讀不寫)。內容是「讀過條目與後續章節,判定已解 / remake 已無對象 / 仍開放」的人工結論,機器上沒有來源可以重生;正確性改由 `worklist_checklist.py --check` 把關(每個未勾項目恰有一筆、已勾或已改寫的項目登錄即過期、closed 的引文必須逐字出現在依據檔、duplicate 指向非 duplicate、open_* 必須有 next),--selftest 對真實檔要求零錯。與 summary_screen_review.json 同類。**永久豁免**。",
    "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/data_map.json",
+   "rule": "regenerable",
+   "reason": "人工登錄(2026-11-05,規格層逆向覆蓋率),手動維護(tools/re_coverage.py 只讀不寫)。內容是讀過反組譯 / 原版資料後對每一段資料區或每一筆資源的結論與證據,機器上沒有來源可以重生;正確性改由 `re_coverage.py --check` 把關(位址在資料物件內、不重疊、資源 sha1 與原版位元組相同、格式要通過 probe、func 證據必須真的引用該位址、doc 證據必須逐字出現),--selftest 對真實檔要求零錯。與 worklist_checklist 的登錄同類。**永久豁免**。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/resource_map.json",
+   "rule": "regenerable",
+   "reason": "人工登錄(2026-11-05,規格層逆向覆蓋率),手動維護(tools/re_coverage.py 只讀不寫)。內容是讀過反組譯 / 原版資料後對每一段資料區或每一筆資源的結論與證據,機器上沒有來源可以重生;正確性改由 `re_coverage.py --check` 把關(位址在資料物件內、不重疊、資源 sha1 與原版位元組相同、格式要通過 probe、func 證據必須真的引用該位址、doc 證據必須逐字出現),--selftest 對真實檔要求零錯。與 worklist_checklist 的登錄同類。**永久豁免**。",
+   "permanent": "no_generator"
   }
  ]
 }

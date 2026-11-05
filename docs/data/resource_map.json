@@ -1,0 +1,5 @@
+{
+  "schema": "原版資源登錄。files:遊戲目錄每個原版檔案(大寫 8.3 檔名)的 md5(FD2.SAV / FD2.TMP 給 null)、role、evidence。resources:11 個 .DAT 容器每筆資源的 dat、idx、sha1、format、meaning(未知給 null)、evidence(meaning 非 null 時必填)。format 要有 re_coverage.py 的 probe 才算已驗。核對與覆蓋率:python tools/re_coverage.py --check。",
+  "files": [],
+  "resources": []
+}
