@@ -219,6 +219,64 @@
       ]
     },
     {
+      "start": "0x53aa9",
+      "size": 4,
+      "name": "camera_x",
+      "type": "dword(格,0 .. 地圖寬 [0x53ac1] − 13)",
+      "meaning": "戰場鏡頭原點 X:draw_terrain_layer 0x11eee 的第 5 個引數(28 筆 push 全是);cursor_step_right 0x11bfa 在畫面內游標 > 10 時與游標一起 +1,cursor_step_left 非 0 才 −1;0x135dd 平移、step_anim_left / right 跟著捲;存檔第 [+3] byte(0x19df7 存、0x10010 讀回)。",
+      "evidence": [
+        {
+          "func": "0x11bfa"
+        },
+        {
+          "func": "0x11c59"
+        },
+        {
+          "func": "0x135dd"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**28 筆全部是 `draw_terrain_layer` `0x11eee` 的第 5 / 第 6 個引數**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以 `[0x53aa9]` 值域 0 .. 寬 − 13、`[0x53aad]` 值域 0 .. 高 − 8,`[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`。"
+        }
+      ]
+    },
+    {
+      "start": "0x53aad",
+      "size": 4,
+      "name": "camera_y",
+      "type": "dword(格,0 .. 地圖高 [0x53ac5] − 8)",
+      "meaning": "戰場鏡頭原點 Y:draw_terrain_layer 0x11eee 的第 6 個引數(28 筆 push 全是);cursor_step_down 0x11b9b 在畫面內游標 > 5 時與游標一起 +1,cursor_step_up 非 0 才 −1;0x135dd 平移、step_anim_down / 0x13185 跟著捲;存檔第 [+4] byte(0x19df7 存、0x10010 讀回)。",
+      "evidence": [
+        {
+          "func": "0x11b9b"
+        },
+        {
+          "func": "0x11b48"
+        },
+        {
+          "func": "0x135dd"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**28 筆全部是 `draw_terrain_layer` `0x11eee` 的第 5 / 第 6 個引數**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以 `[0x53aa9]` 值域 0 .. 寬 − 13、`[0x53aad]` 值域 0 .. 高 − 8,`[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`。"
+        }
+      ]
+    },
+    {
       "start": "0x54153",
       "size": 4,
       "name": "battle_anim_sfx_bank",

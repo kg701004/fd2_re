@@ -5513,3 +5513,29 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - `player_spell_select` `0x1cff0`:`0x1d366` 讀出減 2(還原成記錄 byte),`0x1d36e` 寫回 1,減完的值當 `0x14818` 的第 3 個引數。
 
 所以同一個 dword 同時是「畫哪種範圍框」(1 .. 6)與「目標判定半徑」(記錄 byte + 2);0 = 不畫框、游標移動不重畫,大於 6 時框不畫但半徑仍有效。
+
+## 2026-11-06:`[0x53aa9]` / `[0x53aad]` = 戰場鏡頭原點 X / Y(以格為單位;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`:`0x53aa9` 92 筆(讀 80、寫 6、讀改寫 6)、`0x53aad` 95 筆(讀 83、寫 6、讀改寫 6),
+各分布在 48 個函式;除了下面 2 筆 1 byte 讀取以外都是 4 byte 直接定址。EXE 內初值 0。
+
+**畫面大小 13 × 8 格**:讀取裡各有 28 筆 `push`,**28 筆全部是 `draw_terrain_layer` `0x11eee` 的第 5 / 第 6 個引數**(26 筆之後直接 call,2 筆 `0x12fcb` / `0x13435` 跳到共用尾段 `0x12fa6` / `0x13412` 再 call)。
+沿 jmp 追到 call、逐一核對引數,共 29 次呼叫:27 次兩個都 push,寬 × 高 = 13 × 8 有 23 次、13 × 9 有 3 次、14 × 8 有 1 次(`step_anim_right` `0x1342f`);
+另 2 次多畫一欄 / 一列:`step_anim_left` `0x130c0` 傳 `[0x53aa9]` − 1、寬 14、目的 `+0x8070`(左移 24 像素),`0x13185` `0x132bd` 傳 `[0x53aad]` − 1、高 9、目的 `+0x55c8`(上移 24 列)。
+游標換頁的邊界也是 13 × 8:
+- `cursor_step_right` `0x11bfa`:畫面內游標 `[0x53ab9]` > 10 且 `[0x53aa9]` ≠ 地圖寬 `[0x53ac1]` − 13 時,`[0x53ab1]` 與 **`[0x53aa9]` 一起 +1**(捲動);否則只動游標。
+- `cursor_step_down` `0x11b9b`:`[0x53abd]` > 5 且 `[0x53aad]` ≠ 地圖高 `[0x53ac5]` − 8 時,`[0x53ab5]` 與 `[0x53aad]` 一起 +1。
+- `cursor_step_left` `0x11c59` / `cursor_step_up` `0x11b48`:鏡頭不是 0 才 −1。
+所以 `[0x53aa9]` 值域 0 .. 寬 − 13、`[0x53aad]` 值域 0 .. 高 − 8,`[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`。
+
+**12 個寫入點(兩個位址各 12,形狀成對)**:
+- 立即值:`0x205da` 清 0(`0x20619` / `0x20623`);`command_handler_67` `0x235f9` 設 (9, 34)、`command_handler_77` `0x23e74` 設 (26, 31)、`command_handler_87` `0x25757` 設 (11, 5)。
+- `save_load_restore` `0x10010`:`0x103e8` / `0x103f1` 從存檔記錄 `movzx [esi + 3]` / `[esi + 4]` 讀回;
+  存的那一邊是 `battle_system_submenu` `0x19df7` 的 `0x1a074` / `0x1a07d`(**這 2 筆就是唯一的 1 byte 讀取**),`mov dl, byte ptr [0x53aa9]` 寫到記錄 `[eax + 3]`、`[0x53aad]` 寫到 `[eax + 4]`。
+- `0x233c6`(layout_units):`0x23469` / `0x23472` 寫入堆疊引數 `[esp + 0x38]` / `[esp + 0x3c]`。
+- 游標換頁:上面 4 個 `cursor_step_*` 各 1 筆 `inc` / `dec`。
+- `0x135dd`(鏡頭平移):`0x1360c` / `0x1361a`、`0x13645` / `0x13653` 先欄後列逐格 `dec` / `inc` 到目標。
+- 單位逐格移動時跟著捲:`step_anim_left` `0x1300d` `0x13143`、`step_anim_right` `0x13315` `0x1344f` 對 `[0x53aa9]` `add eax`;
+  `step_anim_down` `0x12eaa` `0x12fe4`、`0x13185` `0x13304` 對 `[0x53aad]` `add eax`。
+
+其餘讀取多是 `sub 暫存器, [0x53aa9]` / `[0x53aad]`(各 19 筆)把地圖格座標換成畫面格座標(例:本檔 `0x218c4` 那段 `cx = (記錄[0] - [0x53aa9]) * 24 + 12`)。

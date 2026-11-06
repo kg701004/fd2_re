@@ -13494,3 +13494,26 @@ title_seq `0x1f894` `malloc(0xa0)`(2 筆)、town_hub_main / town_hub_select 在 
 ### (3) 下一步
 
 `--gaps globals` 下一批:`0x53aa9` / `0x53aad`(48)、`0x53c03`(47)、`0x53c57`(43)、`0x53beb`(40)。
+
+## 2026-11-06 續二百零一:資料區段 `0x53aa9` / `0x53aad`(戰場鏡頭原點 X / Y)
+
+起因:使用者要求「登錄 0x53aa9 / 0x53aad」。事實寫進 doc35 新節(2026-11-06),`docs/data/data_map.json` 登錄 2 段。
+
+### (1) 內容
+
+`[0x53aa9]` / `[0x53aad]` = 戰場鏡頭(捲動)原點,以格為單位;畫面 13 × 8 格。28 筆 `push` 全是 `draw_terrain_layer` 的第 5 / 6 個引數;
+游標換頁(4 個 `cursor_step_*`)、`0x135dd` 平移、4 個逐格移動函式、`layout_units`、3 個章節腳本指令與存檔讀回(`0x10010` ← `0x19df7` 存 byte)是 12 個寫入點。
+doc10 / doc25 / doc47 舊稱的「鏡頭 / camX / camY」與此一致。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是對原版 FD2.EXE 的登錄錯誤筆數):
+  `0x53aa9` 5 byte → 96(吞進 `0x53aad`:fields + 重疊 + 跨出)、3 byte → 91、1 byte → 91(91 筆 4 byte 存取全部跨出;2 筆 1 byte 讀取不算);
+  `0x53aad` 5 byte → 95(吞進 `0x53ab1`)、3 byte → 94;未改 → 0。
+- 覆蓋率:遊戲函式 587 → 591 / 1202、全域位址 20 → 22 / 900、資料 94 → 102 / 35714 bytes。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 下一步
+
+`--gaps globals` 下一批:`0x53c03`(47)、`0x53c57`(43)、`0x53beb`(40)、`0x53a7d`(39)。
