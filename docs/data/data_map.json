@@ -7,6 +7,52 @@
   },
   "regions": [
     {
+      "start": "0x5030f",
+      "size": 2,
+      "name": "ail_debug_indent_space",
+      "type": "C 字串 \" \"(20 00)",
+      "meaning": "AIL_DEBUG 記錄的縮排空白:60 處 push 0x5030f 當 fprintf([0x54164], ...) 的格式字串,每處迴圈 14 次(與時間戳 \"[%.02u:%.02u:%.02u.%.02u] \" 等寬)。1 處在 ail_debug_trace_prefix 0x37c9c,59 處在另外 53 個函式。",
+      "evidence": [
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "func": "0x37f70"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "否則印 14 個空白(`0x5030f` 印 14 次)再印 `[0x54178] − 1` 個 `0xFA`(`0x50311`)當縮排。"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**120 個推入點逐一檢查:60 個 `0x5030f` 都是 `cmp 計數, 0xe` + `jb` 回推入點、前面 `xor` 清 0;60 個 `0x50311` 都是 `cmp 計數, [0x54178]` + `jb`、前面 `mov 計數, 1`。**"
+        }
+      ]
+    },
+    {
+      "start": "0x50311",
+      "size": 2,
+      "name": "ail_debug_indent_mark",
+      "type": "C 字串 \"\\xFA\"(fa 00)",
+      "meaning": "AIL_DEBUG 記錄的巢狀深度記號:60 處 push 0x50311 當 fprintf([0x54164], ...) 的格式字串,計數從 1 跑到 [0x54178](AIL 呼叫巢狀深度),即印深度 − 1 個 0xFA。緊接在 0x5030f 的 14 個空白之後。",
+      "evidence": [
+        {
+          "func": "0x37c9c"
+        },
+        {
+          "func": "0x37f70"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "否則印 14 個空白(`0x5030f` 印 14 次)再印 `[0x54178] − 1` 個 `0xFA`(`0x50311`)當縮排。"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**120 個推入點逐一檢查:60 個 `0x5030f` 都是 `cmp 計數, 0xe` + `jb` 回推入點、前面 `xor` 清 0;60 個 `0x50311` 都是 `cmp 計數, [0x54178]` + `jb`、前面 `mov 計數, 1`。**"
+        }
+      ]
+    },
+    {
       "start": "0x51a83",
       "size": 4,
       "name": "target_range_selector",

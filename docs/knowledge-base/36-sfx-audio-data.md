@@ -1630,3 +1630,17 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 `ail_mix_samples` 各一筆:常式返回後 `0x497dc` / `0x497e0` 把 esi − 起點寫回 `[S + 0x18 + b*4]`,
 `0x497e4` esi 未到 `[0x538a8]` 就結束這一輪(來源還有剩,是建構緩衝滿了),到了才處理迴圈次數 / 換緩衝;`0x49813` edi 未到 `[0x538b0]` 就回 `0x49783` 用下一個緩衝繼續填。
 72 個累加常式裡 36 個另外讀 `[0x538b4]` / `[0x538b8]`(`0x49733` / `0x4975b` 寫入的重取樣步進),這兩個位址本輪不登錄。
+
+## 2026-11-06:`0x5030f` / `0x50311` = AIL_DEBUG 記錄的縮排字串 `" "` / `"\xFA"`(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`:兩個位址各 **60 筆,全是 `push` 取位址(沒有讀寫內容)**,在同樣的 54 個函式裡。
+內容:`0x5030f` = `20 00`(`" "`),`0x50311` = `fa 00`(`"\xFA"`),後面 `0x50313` 是 `"AIL_DEBUG"`;前面 `0x5030e` 是 `0x502f4` 時間戳格式字串的結尾 NUL。
+
+**60 處全是同一個形狀**(以 `0x3801b` 為例):
+`xor ebx, ebx; jmp` → `push 0x5030f; push dword ptr [0x54164]; call 0x3f46b`(fprintf)`; inc ebx; cmp ebx, 0xe; jb` ——
+接著 `mov ebx, 1; jmp` → `push 0x50311; push dword ptr [0x54164]; call 0x3f46b; inc ebx; cmp ebx, dword ptr [0x54178]; jb`。
+**120 個推入點逐一檢查:60 個 `0x5030f` 都是 `cmp 計數, 0xe` + `jb` 回推入點、前面 `xor` 清 0;60 個 `0x50311` 都是 `cmp 計數, [0x54178]` + `jb`、前面 `mov 計數, 1`。**
+所以每處印 14 個空白再印(巢狀深度 − 1)個 `0xFA`,寫到 AIL_DEBUG 記錄檔 `[0x54164]`。
+
+分布:1 處在 `ail_debug_trace_prefix` `0x37c9c`(深度不是 1 時取代時間戳,即上面「否則印 14 個空白」那一支);其餘 59 處在另外 53 個函式裡(`0x37f70` .. `0x3c8b4` 的 AIL 程式碼,`0x3846a` 有 7 處),
+縮排之後接著 fprintf 一行記錄(例 `0x38017` 這一處,後面是 `push esi; push 0x50468`(`"Result = %d\n"`))。14 個空白與時間戳 `"[%.02u:%.02u:%.02u.%.02u] "` 的 14 字等寬。

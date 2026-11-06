@@ -13472,3 +13472,25 @@ title_seq `0x1f894` `malloc(0xa0)`(2 筆)、town_hub_main / town_hub_select 在 
 ### (3) 下一步
 
 `--gaps globals` 下一批:`0x5030f` / `0x50311`(54)、`0x53aa9` / `0x53aad`(48)、`0x53c03`(47)、`0x53c57`(43)。
+
+## 2026-11-06 續二百:資料區段 `0x5030f` / `0x50311`(AIL_DEBUG 縮排字串)
+
+起因:使用者要求「登錄 0x5030f / 0x50311」。事實寫進 doc36 新節(2026-11-06),`docs/data/data_map.json` 登錄 2 段(各 2 byte,含 NUL)。
+
+### (1) 內容
+
+`0x5030f` = `" "`、`0x50311` = `"\xFA"`;各 60 筆全是 `push` 取位址當 fprintf(`0x3f46b`)的格式字串,每處都是「14 次空白 + (`[0x54178]` − 1)次 `0xFA`」兩個迴圈。
+1 處在 `ail_debug_trace_prefix` `0x37c9c`,59 處在另外 53 個函式。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是對原版 FD2.EXE 的登錄錯誤筆數):
+  `0x5030f` 3 byte → 2(吞進 `0x50311`:fields + 重疊)、`0x50311` 3 byte → 1(吞進 `0x50313` `"AIL_DEBUG"`);未改 → 0。
+  **兩段改成 1 byte(漏掉 NUL)都是 0 筆**:取位址存取寬度 0,`--check` 不檢查字串長度,2 byte 是依 EXE 位元組 `20 00` / `fa 00` 決定的,工具沒有驗到。
+- 覆蓋率:遊戲函式 587 → 587 / 1202(54 個函式都還有其他未登錄的全域)、全域位址 18 → 20 / 900、資料 90 → 94 / 35714 bytes。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 下一步
+
+`--gaps globals` 下一批:`0x53aa9` / `0x53aad`(48)、`0x53c03`(47)、`0x53c57`(43)、`0x53beb`(40)。
