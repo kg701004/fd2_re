@@ -207,3 +207,19 @@ slice」bullet(`native_map_hud_inherited`)本身就已經用同一條 loader 路
   的逐章初值來源盤點,已核對 ch01/ch26/ch27 三章(沿用既有 `native_map_hud_inherited`),
   其餘 27 章的初值來源尚未逐一確認,但不再需要逐章反組譯新的 code path。
 - 原版 DOSBox 320×200 HUD pixel oracle 仍缺,不受本輪影響,維持 open。
+
+## 2026-11-07:`[0x53beb]` = 戰場單位數(單位陣列 `[0x53a45]` 的筆數;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取次數來自 `python tools/re_coverage.py --show-data 0x53beb`:
+**57 筆,讀 54(其中 2 筆 1 byte)、寫 2、讀改寫 1**,分布在 40 個函式。EXE 內初值 0。
+
+**3 個寫入點**:
+- 章節 loader `0x1088d`:`0x1099a` 寫入 FDFIELD 條目標頭 `movzx edx, byte ptr [[0x53a55] + 1]`(同一個值也寫進 `[0x53be7]`)—— 開戰時的單位數。
+- `save_load_restore` `0x10010`:`0x1029a` 從戰場存檔記錄 `movzx [esi + 1]` 讀回;存的那一邊是 `battle_system_submenu` `0x19df7` 的 `0x1a062` `mov dl, byte ptr [0x53beb]` 寫到記錄 `[eax + 1]`(兩筆 1 byte 讀取之一)。
+- `field_unit_construct` `0x10c50`:`0x10c69` 讀出單位數,`× 5` 再 `shl 4`(每單位 0x50 byte)加 `[0x53a45]` 當新單位的位址,填完欄位後 `push [0x53beb]; call recalc_equipped_stats 0x1b750`,**`0x1100b` `inc dword ptr [0x53beb]`** —— 加入一個單位。
+
+**54 筆讀取**:
+- **45 筆 `cmp 暫存器, [0x53beb]`,後面接 `jge` 39 筆、`jl` 4 筆、`jne` 2 筆**(15 筆是往回跳的迴圈條件)—— 走訪單位陣列時的「index < 單位數」上界。
+- 單位數 × 5(× 0x50 byte):`0x102f3`(`save_load_restore`)、`0x10c69`、`0x1a017`(`battle_system_submenu`,存檔時算陣列長度)。
+- 單位數 − 1 = 最後一個單位:`command_handler_86` `0x2552d`(`push` 給 `0x22253`)、`event_handler_84` `0x36422`。
+- 其他:`spawn_intro` `0x32999` 的 `0x329f8` 存到 edi 當迴圈上界;`event_handler_76` `0x3612c` 讀 1 byte 減 3 寫到 `[[0x53ad5] + 0x15]`(第二筆 1 byte 讀取);`0x10ffd` `push` 給 `0x1b750`。

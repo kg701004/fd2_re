@@ -277,6 +277,32 @@
       ]
     },
     {
+      "start": "0x53beb",
+      "size": 4,
+      "name": "field_unit_count",
+      "type": "dword(單位陣列 [0x53a45] 的筆數,每筆 0x50 byte)",
+      "meaning": "戰場單位數:章節 loader 0x1088d 從 FDFIELD 標頭 [+1] 設定、save_load_restore 0x10010 從戰場存檔 [+1] 讀回、field_unit_construct 0x10c50 加入單位時 inc;45 筆 cmp 暫存器, [0x53beb] 是走訪單位陣列的上界。",
+      "evidence": [
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x10c50"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "**45 筆 `cmp 暫存器, [0x53beb]`,後面接 `jge` 39 筆、`jl` 4 筆、`jne` 2 筆**"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "**`0x1100b` `inc dword ptr [0x53beb]`** —— 加入一個單位。"
+        }
+      ]
+    },
+    {
       "start": "0x53c03",
       "size": 4,
       "name": "current_chapter",

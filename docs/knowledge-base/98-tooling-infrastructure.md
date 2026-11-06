@@ -13560,3 +13560,25 @@ doc10 / doc25 / doc47 舊稱的「鏡頭 / camX / camY」與此一致。
 ### (3) 下一步
 
 `--gaps globals` 下一批:`0x53beb`(40)、`0x53a7d`(39)、`0x538b4` / `0x538b8`(37,AIL 重取樣步進)、`0x53ad5`(34)。
+
+## 2026-11-07 續二百零四:資料區段 `0x53beb`(戰場單位數)
+
+起因:使用者要求「登錄 0x53beb」。事實寫進 doc10 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53beb]` = 單位陣列 `[0x53a45]` 的筆數。3 個寫入:章節 loader `0x1088d` 從 FDFIELD 標頭 `[+1]` 設定、`save_load_restore` 從戰場存檔 `[+1]` 讀回、`field_unit_construct` `0x10c50` 加入單位時 `inc`。
+54 個讀取裡 45 筆是 `cmp 暫存器, [0x53beb]` + `jge` / `jl` / `jne` 的走訪上界。doc10 既有的「count=`[0x53beb]`」與 doc12 / doc13 實機讀到的 `[0x53beb]` = 12(我方 4 + 敵方 8)與此一致。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是對原版 FD2.EXE 的登錄錯誤筆數,位址 `0x53beb`):
+  5 byte → 23(`0x53bef` 沒列在 fields + 22 筆 `0x53bef` 的 4 byte 存取跨出)、3 byte → 55(4 byte 存取全部跨出;2 筆 1 byte 讀取不算);未改 → 0。
+- 覆蓋率:遊戲函式 598 → 612 / 1202、全域位址 24 → 25 / 900、資料 110 → 114 / 35714 bytes。
+- doc10 工作複本是純 CRLF,新節以 CRLF 行附加;staged blob 0 CR。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 下一步
+
+`--gaps globals` 下一批:`0x53a7d`(39)、`0x538b4` / `0x538b8`(37,AIL 重取樣步進)、`0x53ad5`(34)、`0x53a51`(33)。
