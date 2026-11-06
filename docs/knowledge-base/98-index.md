@@ -3,12 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 241 節、19 個主題。
+共 243 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 12905:2026-11-02 續一百八十七:doc25 §3.2.4「開箱後旗標全 0」是金錢箱還在等鍵 —— 0x194d6 等鍵、0x194f3 才寫旗標;開到的是 slot 9 (3,8);ev_s185 "unit" 欄改由 spawn_group(0) 名次算(FD2.EXE 反組譯、FDFIELD / FDSHAP、FDTXT_000) 〔來源:DOSBox-X、反組譯、FDTXT_000〕
-- 行 12945:2026-11-03 續一百八十八:截圖文字改由程式判讀(新工具 `tools/fd2_screen_text.py`,字模全等比對);開箱畫面 = FDTXT_000 0x1a5 + 0x1aa、5000 元,續一百八十七目視成立;實機 lc188a:按 YES 後旗標 0、錢不變,按一次 Return 後旗標[9] = 1、錢 + 5000 〔來源:DOSBox-X、斷點、FDOTHER〕
 - 行 12986:2026-11-03 續一百八十九:91-worklist 勾選框逐項分類(新工具 `tools/worklist_checklist.py` + 登錄表 `docs/data/worklist_checklist_triage.json`)—— 129 個未勾項目真正仍開放的是 10 個;酒店 icon index2 是讀檔、離開是 index3(FD2.EXE 反組譯、FDTXT_000) 〔來源:反組譯、FDTXT_000、FD2.EXE〕
 - 行 13030:2026-11-04 續一百九十:UI 音效 0xb = 職業 3 / 11 / 15 / 19(騎士等)的腳步音(原版 FD2.EXE 的 DOSBox-X 呼叫紀錄 lc184a 6 次全是亞雷斯(騎士)走路;636 次 play_step_sfx 逐次預測全中)—— 91-worklist「UI 音效 index 2-0xb 語意畫面實測」結案 〔來源:DOSBox-X、debugger、反組譯〕
 - 行 13061:2026-11-04 續一百九十一:91-worklist 的 7 個 open_static 與 2 個 open_live 逐項結案 —— ch27 event62 → event63 在原版未修改玩家路徑完整發生(DOSBox-X 實機 lc191a);城鎮秘密店 ch03 / ch06 遊戲端正常,之前不觸發是 DOSBox-X 把 Ctrl+F2 / Ctrl+F5 綁成 host 動作(實機 lc191b .. lc191e);全域事件 58 .. 89、FD2.SAV metadata、單位 0x50 record、法術 / 物理攻擊音效、結局角色卡、密林段走位、選目標灰化(FD2.EXE 反組譯) 〔來源:DOSBox-X、斷點、FUN_0002fb2c〕
@@ -17,6 +15,8 @@
 - 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 - 行 13349:2026-11-06 續一百九十五:資料區段第一筆 `0x53a45`,`re_coverage --check` 加上指令層存取寬度與 `fields` 兩條大小核對 〔來源:capstone、反組譯、FD2.EXE〕
 - 行 13381:2026-11-06 續一百九十六:資料區段 `0x54153..0x54195` 11 段(戰鬥演出音效 bank + AIL_DEBUG 追蹤狀態) 〔來源:反組譯、FDOTHER〕
+- 行 13410:2026-11-06 續一百九十七:資料區段 `0x53a79`(目前章節對白表) 〔來源:FDTXT〕
+- 行 13431:2026-11-06 續一百九十八:資料區段 `0x538a8` / `0x538b0`(AIL 混音結束位址)與 `0x53a49`(戰場離屏畫布) 〔來源:FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -44,7 +44,7 @@
 - 行 8878:2026-10-12 續一百一十六:續一百一十五「仍留的」不是做不到 —— 篩選工具補三個缺口、加 `param_unread` 與參數名登錄、新增 `param_dossier.py`;改正 8 筆參數列 〔來源:DOSBox-X、反組譯〕
 - 行 10644:2026-10-21 續一百四十六:續一百四十五「仍留」—— `ev_s141` 的 sweep 逃逸改判準(實拍改主機列解析度)、三個舊位址登勘誤 〔來源:FDOTHER〕
 
-## 函式清單(1356 個入口)、命名與名稱登錄表(61 節)
+## 函式清單(1356 個入口)、命名與名稱登錄表(62 節)
 
 - 行 3498:2026-09-08 最終：兩支新工具補上最大缺口 + 單一入口的多輪自檢 〔來源:Ghidra、org_game、ANI.DAT〕
 - 行 4139:2026-09-11 — `tools/verify_address_claim_coverage.py`:第十二軸,補上 `findings` 從來沒有的分母 〔來源:capstone、反組譯〕
@@ -107,6 +107,7 @@
 - 行 12241:2026-10-31 續一百七十五:仍留逐項收口 —— ng 375 是 MDI 型重入夾一次 IRQ 7、0070 關中斷是 DOS/4GW 寫 FD2.TMP 的轉送拷貝、DIG 長服務是填緩衝、短驅動呼叫是硬體中斷、敵方回合結束停一次是 AIL 忙碌計數(DOSBox-X 呼叫紀錄 lc174a / lc174b / lc173a / lc167a、FD2.EXE) 〔來源:DOSBox-X、反組譯、FD2.EXE〕
 - 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 - 行 13381:2026-11-06 續一百九十六:資料區段 `0x54153..0x54195` 11 段(戰鬥演出音效 bank + AIL_DEBUG 追蹤狀態) 〔來源:反組譯、FDOTHER〕
+- 行 13431:2026-11-06 續一百九十八:資料區段 `0x538a8` / `0x538b0`(AIL 混音結束位址)與 `0x53a49`(戰場離屏畫布) 〔來源:FD2.EXE〕
 
 ## 函式摘要與參數篩選(續一百零九 ~ 一百二十一)(14 節)
 
@@ -290,7 +291,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(76 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(78 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -368,6 +369,8 @@
 - 行 13315:2026-11-05 續一百九十四:規格層逆向覆蓋率的固定分母 —— `tools/re_coverage.py` 與兩份登錄(`data_map.json`、`resource_map.json`);基準:遊戲函式 474 / 1202、資料區 0 / 35714 bytes、資源 0 / 1005 〔來源:反組譯、FD2.EXE〕
 - 行 13349:2026-11-06 續一百九十五:資料區段第一筆 `0x53a45`,`re_coverage --check` 加上指令層存取寬度與 `fields` 兩條大小核對 〔來源:capstone、反組譯、FD2.EXE〕
 - 行 13381:2026-11-06 續一百九十六:資料區段 `0x54153..0x54195` 11 段(戰鬥演出音效 bank + AIL_DEBUG 追蹤狀態) 〔來源:反組譯、FDOTHER〕
+- 行 13410:2026-11-06 續一百九十七:資料區段 `0x53a79`(目前章節對白表) 〔來源:FDTXT〕
+- 行 13431:2026-11-06 續一百九十八:資料區段 `0x538a8` / `0x538b0`(AIL 混音結束位址)與 `0x53a49`(戰場離屏畫布) 〔來源:FD2.EXE〕
 
 ## dispatch 跳表與指令表(6 節)
 

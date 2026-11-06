@@ -5473,3 +5473,22 @@ cycles 由 WSL 包裝腳本只換 harness 的 `cycles=5000`(執行中的 dosbox-
   淡出另有 293 ms 的調色盤工作),但「最後一張靜止選單的下一張 = 確認的送鍵」這條規則在 lc159b 成立(DOSBox-X 第 11 張截圖落在呼叫紀錄算出的淡出區間)。
 - 續一百六十一:delay 變長的來源(lc159b 呼叫紀錄拆解,DOSBox-X):校準 `0x3dfef` 在 main 之前、AIL 之前跑,沒有計時中斷;遊戲中沒遇到中斷的 delay 每秒 8767.8 圈,閃爍前 4 次每圈多 74.6 .. 76.9 條中斷處理指令、後 3 次 36.3 .. 39.1 條,分界落在確認音效(FDOTHER #77 第 1 段,0.388 s)播完的那一次(推論:DIG 混音)。細節見 `98-tooling-infrastructure.md` 續一百六十一。
 - 證據:`evidence/item5_title_return_s160_20261028.json`,產生器 `evidence/generators/ev_s160.py`(變異測試 `mut_s160.py`,33 個全部抓到)。
+
+## 2026-11-06:`[0x53a49]` = 戰場離屏畫布(456 × 336,`0x25680` bytes;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a49`:**208 筆全是 4 byte 直接定址,讀 192、寫 16**,分布在 68 個函式。
+
+**大小與列距**:讀取之後的第一個 call 有 41 筆是 `copy_rect` `0x11eb0`、22 筆是 `draw_terrain_layer` `0x11eee`,**這 63 次呼叫全部 push 列距 `0x1c8`(456)**;
+57 筆讀取之後加 `0x8088`(= 72 × 456 + 72,第 72 列第 72 行)才當目的位址。配置大小 `0x25680` = 456 × 336。另 53 筆讀取接 `0x3771c`(memmove,複製或還原整張畫布)。
+
+**16 個寫入點**:
+- `game_main` `0x25bf4`:`0x25d4f` 寫入 `malloc(0x25680)`(開機配置一次)。
+- 5 個戰鬥演出(`derived_strike_scene` `0x2cf30`、`spell_scene_effects` `0x2d80d`、`ai_item_scene` `0x2dfc8`、`attack_scene_orchestrator` `0x2e2b0`、`spell_cast_scene` `0x2ff01`):
+  先 `push dword ptr [0x53a49]; call 0x3776e` 釋放(`0x2cfa7` / `0x2d842` / `0x2dffd` / `0x2e341` / `0x3008c`),
+  後面再 `malloc(0x25680)` 寫回(`0x2d79c` / `0x2dcea` / `0x2e224` / `0x2e8b4` / `0x30dba`)—— 演出期間把畫布的記憶體讓出來,演出完重配。這 5 筆就是全部的 free。
+- 暫時改指、事後還原(4 個函式,10 個寫入點):
+  - `act` `0x1366a`:`0x1370b` 存原值到 edi,選中的單位 `0x13736` 寫 edi − `0x1560`(上移 12 列)後 `draw_unit_sprite` `0x127e0`,`0x13753` 寫回 edi。
+  - `unit_death_sweep` `0x1db65`:`0x1dd52` 另配一張 `0x25680` 畫好地形,`0x1dd8f` 指向它、`call 0x127a9`(draw_unit_layer)、`0x1dd9a` 寫回原值。
+  - `earthquake_spell_effect` `0x21548`:`0x215fb` 原值存 `[esp]`,`0x21675` / `0x2170c` 在 3 張緩衝間輪替,`0x217e0` 寫回 `[esp]` 並釋放暫用緩衝。
+  - `spawn_intro` `0x32999`:索引 < edi 的單位照常畫,其餘(到 `[0x53beb]`)在畫布上移後畫 `draw_unit_sprite`。一般路徑 `0x32b45` − `0xe40`(8 列)、`0x32b81` + `0xe40` 寫回;
+    `0x32c07` 計數 == 7 的路徑改用 `0x32c6f` − `0x8e8`(5 列),`0x32ca6` + `0x8e8` 後跳到 `0x32b81` 寫回。兩條路各自還原,位移不累加。

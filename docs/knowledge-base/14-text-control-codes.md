@@ -177,3 +177,17 @@ FDOTHER.DAT 確實供應框、字型與多組地圖 UI sprite；但舊版把
 新版 `0x4ea2a` 落在 `0x4e98d` 函式中段,dialog 本體沒有任何 `call 0x4ea2a`。同一批還訂正了 doc35 的五個原語位址,見 doc35 對應段落的註記。
 
 新版位址的函式名稱與位元組證據在 `docs/data/function_names.json`(`draw_glyph16`、`typewriter_tick` 等),由 `function_inventory.py --check-names` 驗證。
+
+## 2026-11-06:`[0x53a79]` = 目前章節的對白表(FDTXT.DAT 第 章節+1 條;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a79`:**210 筆全是 4 byte 直接定址,讀 208、寫 2**,分布在 92 個函式。
+
+寫入只有兩處,形狀相同:`push 章節+1; push dword ptr [0x53a79]; push 0x51a43 ("FDTXT.DAT"); call 0x111ba`,結果寫回 `[0x53a79]`。
+- `0x101f6`(save_load_restore `0x10010`):索引 = `[0x53c03]`(目前章節)+ 1。
+- `0x108c4`(章節 loader `0x1088d`):索引 = 第一個引數(章節)+ 1。
+
+`0x111ba` 的第二個引數非 0 時先 `call 0x3776e` 釋放它(`0x111cb` `test ebx, ebx` / `0x111d0`),再 fopen 並跳到目錄第 index 項(`index*4 + 6`)。
+所以舊章節的對白表在換章時由載入器自己釋放,`[0x53a79]` 沒有獨立的 free。
+
+讀取:**208 筆全部是 `push dword ptr [0x53a79]`,之後的第一個 call 有 206 筆是 `0x15f84`(dialog,文字表引數)、2 筆是 `0x111ba`(上面的舊緩衝引數)**。
+206 與本檔 2026-09-19 節「文字表 `[0x53a79]` 206」由位元組掃描 `call 0x15f84` 得到的數字相同;dialog 用法分布在 `0x10010` / `0x1088d` 以外的 90 個函式。

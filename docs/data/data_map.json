@@ -7,6 +7,52 @@
   },
   "regions": [
     {
+      "start": "0x538a8",
+      "size": 4,
+      "name": "ail_mix_src_end",
+      "type": "dword 指標(AIL 混音一輪的來源取樣緩衝結束位址)",
+      "meaning": "ail_mix_samples 0x49690 在 0x4979b 寫入 [S+8+b*4] + [S+0x10+b*4](b = [S+0x28],目前取樣緩衝的起點 + 長度);73 筆讀全是 cmp esi, [0x538a8]:72 個 mix_merge_* 累加常式與 ail_mix_samples 的迴圈終點。",
+      "evidence": [
+        {
+          "func": "0x49690"
+        },
+        {
+          "func": "0x489c6"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`[0x538a8] = [S + 8 + b*4] + [S + 0x10 + b*4]`** —— 目前取樣緩衝的起點加長度 = 結束位址"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**73 筆 `[0x538a8]` 全是 `cmp esi, dword ptr [0x538a8]`、73 筆 `[0x538b0]` 全是 `cmp edi, dword ptr [0x538b0]`**"
+        }
+      ]
+    },
+    {
+      "start": "0x538b0",
+      "size": 4,
+      "name": "ail_mix_build_end",
+      "type": "dword 指標(AIL 混音建構緩衝結束位址)",
+      "meaning": "ail_mix_samples 0x49690 在 0x49778 寫入 [D+0x50] + [D+0x4c](驅動的建構緩衝起點 + 長度,D = [S+0]);73 筆讀全是 cmp edi, [0x538b0]:累加常式與 ail_mix_samples 的迴圈終點。",
+      "evidence": [
+        {
+          "func": "0x49690"
+        },
+        {
+          "func": "0x489c6"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`[0x538b0] = [D + 0x50] + [D + 0x4c]`** —— 建構緩衝的起點加長度 = 結束位址"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**73 筆 `[0x538a8]` 全是 `cmp esi, dword ptr [0x538a8]`、73 筆 `[0x538b0]` 全是 `cmp edi, dword ptr [0x538b0]`**"
+        }
+      ]
+    },
+    {
       "start": "0x53a45",
       "size": 4,
       "name": "active_unit_array",
@@ -39,6 +85,61 @@
         {
           "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
           "quote": "malloc `0x1e00` = **96 槽** × 0x50B"
+        }
+      ]
+    },
+    {
+      "start": "0x53a49",
+      "size": 4,
+      "name": "field_canvas",
+      "type": "dword 指標 → 456 × 336(0x25680 bytes)的戰場離屏畫布",
+      "meaning": "戰場離屏畫布,列距 0x1c8(456),地圖視窗原點在 +0x8088(第 72 列第 72 行)。game_main 開機 malloc(0x25680);5 個戰鬥演出先 free 再 malloc(0x25680) 寫回;act / unit_death_sweep / earthquake_spell_effect / spawn_intro 暫時改指後還原。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x1366a"
+        },
+        {
+          "func": "0x1db65"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**這 63 次呼叫全部 push 列距 `0x1c8`(456)**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "這 5 筆就是全部的 free。"
+        }
+      ]
+    },
+    {
+      "start": "0x53a79",
+      "size": 4,
+      "name": "chapter_dialog_table",
+      "type": "dword 指標 → FDTXT.DAT 載入的對白表(word offset 表 + 字碼)",
+      "meaning": "目前章節的對白表:save_load_restore 0x10010 / 章節 loader 0x1088d 以 0x111ba(\"FDTXT.DAT\", [0x53a79], 章節+1) 載入(載入器先釋放舊緩衝);208 筆讀全是 push,206 筆當 dialog 0x15f84 的文字表引數。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x250cc"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "**208 筆全部是 `push dword ptr [0x53a79]`,之後的第一個 call 有 206 筆是 `0x15f84`(dialog,文字表引數)、2 筆是 `0x111ba`(上面的舊緩衝引數)**"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "| 1 | 文字表 | `[0x53a79]` 206、`[0x53a7d]` 90 |"
         }
       ]
     },
