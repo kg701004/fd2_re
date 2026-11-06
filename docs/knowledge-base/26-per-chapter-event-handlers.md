@@ -404,3 +404,28 @@ pre/post handler 的機械抽取結果,每個 `join` beat 都帶著呼叫端位�
 beat,代表那些章的 pre/post handler 裡沒有這個呼叫,不代表遊戲中那幾章沒有人入隊(例如靠對話
 分支或別的機制的情況,本輪未查)。
 
+
+## 2026-11-06:`[0x53c03]` = 目前章節(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53c03`:**115 筆,讀 90(其中 2 筆 1 byte)、寫 9、讀改寫 16**,分布在 47 個函式。EXE 內初值 0。
+
+**25 個寫入點**:
+- 新遊戲 / 腳本設定(立即值 6 筆):`title_menu_dispatch` `0x25ed6` 設 0;`command_handler_58` `0x22f2c` 設 1、`command_handler_59` `0x230e6` 設 2;
+  序章 handler `0x3231b`(章節 0 的 `[0x51d71]` 項)`0x32326` 設 0x20 後 `call 0x205da`、`0x3252e` 設 0x1f 後 `call 0x205da`,`0x327eb` 設回 0 —— 序章借用章節 0x20 / 0x1f 的戰場資料。
+- 過章:**16 筆 `inc dword ptr [0x53c03]`,全在 `command_handler_61` .. `command_handler_87`**(61 / 62 / 64 / 67 / 71 / 73 / 74 / 75 / 77 / 78 / 80 / 81 / 83 / 84 / 86 / 87 各一筆)。
+- 存檔讀回 3 筆,與 2 筆 1 byte 讀取成對:
+  - 戰場存檔:`battle_system_submenu` `0x1a06b` `mov dl, byte ptr [0x53c03]` 存到記錄 `[eax + 2]`;`save_load_restore` `0x10147` 從 `movzx [esi + 2]` 讀回。
+  - FD2.SAV:`save_game_menu` `0x2975d` `mov al, byte ptr [0x53c03]` 存到 `[ebx]`(下一 byte 存 `[0x53bfb]`);
+    `title_menu_dispatch` `0x26067` 與 `load_game_menu` `0x29991` 在名冊 `0xa00` byte 拷回之後從 `movzx [ebx]`(名冊之後第一 byte)讀回,下一 byte 讀回 `[0x53bfb]`。
+    `0x2609d` 讀回後若等於 0xff 就把 esi 清 0 再 `call 0x26996`。
+
+**90 筆讀取**:
+- **章節跳表**:`call dword ptr [eax*4 + 0x51b19]` 5 筆(`battle_main_input_loop` `0x11975`、`turn_status_tick` `0x1a946`、`friendly_phase_dispatch` `0x1d89a`、`enemy_phase_dispatch` `0x1d966` / `0x1d9f6`);
+  `[eax*4 + 0x51d71]` 3 筆(`game_main` `0x25e35`、`title_menu_dispatch` `0x25f0b` / `0x260f0`)、`[eax*4 + 0x51de9]` 1 筆(`game_main` `0x25e1e`)。
+- **以章節為索引的 byte 表**(15 筆):`[0x51e63 + 章節]` 8 筆(章節曲表;其中 `battle_phase_advance` 2 筆同時讀 `[0x51e81 + 章節]`)、`[0x51e81 + 章節]` 單獨 1 筆、
+  `[0x523e7 + 章節]` 2 筆(`town_hub_main` / `save_game_menu` 判斷是否非 0)、`[0x52470 + 章節]` 4 筆(`attack_scene_orchestrator` 2、`spell_cast_scene`、`units_cell_terrain_scan`)。
+- **FDFIELD.DAT 條目**:`save_load_restore` `0x101fb` 以章節 × 3 呼叫 `0x111ba("FDFIELD.DAT", [0x53a51], 章節 × 3)`,`0x10b4e` 的 `0x10b9e` 以章節 × 3 + 2(`[0x53a59]`);
+  `draw_battle_situation_panel` `0x1b578` 以章節 × 2 + 0x255 當 dialog `0x15f84` 的條目(文字表 `[0x53a7d]`)。
+- 傳給函式:`push dword ptr [0x53c03]` 9 筆 —— 2 筆給章節 loader `0x1088d`(`0x205da` 的 `0x205f9`、`command_handler_87` 的 `0x2586a`)、7 筆給 `0x4e809`(城鎮 / 商店 / 酒館 / 教堂 / 讀檔畫面);
+  `save_load_restore` `0x101dc` 與 `draw_battle_situation_panel` `0x1b4b8` 用章節 + 1(前者是 FDTXT.DAT 的條目,見 doc14)。
+- **50 筆 `cmp dword ptr [0x53c03], 常數`**:常數 9 ×2、16 ×2、17 ×5、18 ×1、19 ×2、20 ×2、21 ×5、22 ×5、23 ×2、24 ×3、25 ×6、26 ×5、27 ×5、28 ×2、29 ×2、0xff ×1(上面 `0x2609d`),都是特定章節的特例分支。

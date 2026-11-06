@@ -277,6 +277,35 @@
       ]
     },
     {
+      "start": "0x53c03",
+      "size": 4,
+      "name": "current_chapter",
+      "type": "dword(章節編號;序章暫借 0x1f / 0x20)",
+      "meaning": "目前章節:章節跳表 [0x51b19] / [0x51d71] / [0x51de9] 的索引、[0x51e63] 曲表 / [0x51e81] / [0x523e7] / [0x52470] byte 表的索引、0x1088d 章節 loader 與 FDTXT.DAT(章節 + 1)的引數。title_menu_dispatch 新遊戲設 0,command_handler_61..87 過章 inc,戰場存檔 [+2] 與 FD2.SAV 存讀。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x25ebb"
+        },
+        {
+          "func": "0x3231b"
+        },
+        {
+          "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+          "quote": "**16 筆 `inc dword ptr [0x53c03]`,全在 `command_handler_61` .. `command_handler_87`**"
+        },
+        {
+          "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+          "quote": "**章節跳表**:`call dword ptr [eax*4 + 0x51b19]` 5 筆"
+        }
+      ]
+    },
+    {
       "start": "0x54153",
       "size": 4,
       "name": "battle_anim_sfx_bank",
