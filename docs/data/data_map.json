@@ -128,6 +128,58 @@
       ]
     },
     {
+      "start": "0x538b4",
+      "size": 4,
+      "name": "ail_resample_frac_step",
+      "type": "dword(AIL 重取樣步進比的分數部分,放在高 16 位元)",
+      "meaning": "ail_mix_samples 0x49690 在 0x49733 寫入 (步進比 [S+0x3c]×0x10000/[D+0x14]) << 16,只在 |比 − 1.0| > [0x54324] 時寫;36 個重取樣累加常式各以 add ecx, [0x538b4] 累加分數,進位 = 來源多走 1 個取樣。",
+      "evidence": [
+        {
+          "func": "0x49690"
+        },
+        {
+          "func": "0x48d7a"
+        },
+        {
+          "func": "0x48dd5"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**36 筆 `[0x538b4]` 全是 `add ecx, dword ptr [0x538b4]`**,每個重取樣常式一筆"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`0x49733` `[0x538b4]` = eax << 16**(只留分數部分,放在高 16 位元)"
+        }
+      ]
+    },
+    {
+      "start": "0x538b8",
+      "size": 4,
+      "name": "ail_resample_int_step",
+      "type": "dword(AIL 重取樣每個輸出取樣的來源整數步進,byte 數)",
+      "meaning": "ail_mix_samples 0x49690 在 0x4975b 寫入步進比整數部分(來源雙聲道 / 16 位元各 ×2);下一格 [0x538bc] 是整數 + 1。6 個 8 位元單聲道重取樣常式用 adc esi, [0x538b8],30 個用 [ebp*4 + 0x538b8](ebp = 分數進位)在兩格之間挑。",
+      "evidence": [
+        {
+          "func": "0x49690"
+        },
+        {
+          "func": "0x48d7a"
+        },
+        {
+          "func": "0x48dd5"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**6 筆 `adc esi, dword ptr [0x538b8]`**(直接定址)"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**30 筆 `xor ebp, ebp; add ecx, [0x538b4]; adc ebp, ebp; add esi, dword ptr [ebp*4 + 0x538b8]`**(索引)"
+        }
+      ]
+    },
+    {
       "start": "0x53a45",
       "size": 4,
       "name": "active_unit_array",
@@ -193,6 +245,35 @@
       ]
     },
     {
+      "start": "0x53a51",
+      "size": 4,
+      "name": "field_map_cells",
+      "type": "dword 指標 → FDFIELD.DAT 第 章節×3 條(表頭 word 寬 / 高 + 每格 4 byte);城鎮側 0 / 1 當旗標",
+      "meaning": "戰場地圖格緩衝:save_load_restore / 章節 loader 0x1088d / command_handler_80 以 0x111ba(\"FDFIELD.DAT\", [0x53a51], 章節×3) 載入,格子 = 緩衝 + 4 + (y×[0x53ac1] + x)×4,+4 word / +6 旗標 / +7 範圍標記(0x4df4c 重置成 0xff);town_hub_main free 後寫 0,城鎮側在提示前後暫寫 1 / 0,yes_no_prompt 等以 cmp 0 / 1 判斷。",
+      "evidence": [
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x12e38"
+        },
+        {
+          "func": "0x26152"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**push 47 筆**:`0x4df4c` 32 筆(本檔 §15:每格 `+3` 設 0xff、`+2` &= 0x1f、`+1` &= 3)"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**比較 8 筆**(把值當「有沒有戰場」):`cmp [0x53a51], 1; jbe` 4 筆"
+        }
+      ]
+    },
+    {
       "start": "0x53a79",
       "size": 4,
       "name": "chapter_dialog_table",
@@ -215,6 +296,32 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "| 1 | 文字表 | `[0x53a79]` 206、`[0x53a7d]` 90 |"
+        }
+      ]
+    },
+    {
+      "start": "0x53a7d",
+      "size": 4,
+      "name": "resident_text_table",
+      "type": "dword 指標 → FDTXT.DAT 第 0 條載入的文字表(word offset 表 + 字碼)",
+      "meaning": "常駐文字表(FDTXT_000,661 條):game_main 0x25bf4 開機時以 0x111ba(\"FDTXT.DAT\", [0x53a7d], 0) 載入,整個行程只寫這一次;91 筆讀取全是 push,90 筆是 dialog 0x15f84 的文字表引數(名字 / 職業 / 道具 / 指令名與固定訊息)。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x1ceed"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "**91 筆全部是 `push dword ptr [0x53a7d]`,之後的第一個 call 有 90 筆是 `0x15f84`(dialog,文字表引數)、1 筆是 `0x111ba`(上面 `0x25d01` 的舊緩衝引數)**"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "索引固定是 0,所以這張表整個行程只載入一次,換章不重載"
         }
       ]
     },
@@ -273,6 +380,35 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "所以 `[0x53aa9]` 值域 0 .. 寬 − 13、`[0x53aad]` 值域 0 .. 高 − 8,`[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`。"
+        }
+      ]
+    },
+    {
+      "start": "0x53ad5",
+      "size": 4,
+      "name": "battle_event_state_table",
+      "type": "dword 指標 → malloc(0x20) 的 32 byte 戰鬥事件狀態表(每格 1 byte)",
+      "meaning": "戰鬥事件狀態表:game_main 0x25bf4 開機時 malloc(0x20) 寫入,之後只讀指標;save_load_restore / battle_system_submenu 以存檔 +0x30a3 整塊 0x20 byte 讀回 / 存,0x205da 換章後清 0;field_cell_treasure_check / map_count_flagged_event_cells / ai_mode_dispatch 以格子槽號索引,event handler 用 +0..+0x15 的固定格。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x190ac"
+        },
+        {
+          "func": "0x362e8"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "寫入只有一處:`game_main` `0x25bf4` 開機初始化 `push 0x20; call malloc 0x3706e`,`0x25d3d` 寫回 `[0x53ad5]`。"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "**固定偏移 50 筆**(讀出後第一個用到的位置):`+0` 2、`+0xc` 4、`+0x10` 25、`+0x11` 10、`+0x12` 2、`+0x13` 3、`+0x14` 1、`+0x15` 3。"
         }
       ]
     },

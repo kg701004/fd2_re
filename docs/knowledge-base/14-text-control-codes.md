@@ -191,3 +191,18 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 
 讀取:**208 筆全部是 `push dword ptr [0x53a79]`,之後的第一個 call 有 206 筆是 `0x15f84`(dialog,文字表引數)、2 筆是 `0x111ba`(上面的舊緩衝引數)**。
 206 與本檔 2026-09-19 節「文字表 `[0x53a79]` 206」由位元組掃描 `call 0x15f84` 得到的數字相同;dialog 用法分布在 `0x10010` / `0x1088d` 以外的 90 個函式。
+
+## 2026-11-07:`[0x53a7d]` = 常駐文字表(FDTXT.DAT 第 0 條;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a7d`:**92 筆全是 4 byte 直接定址,讀 91、寫 1**,分布在 39 個函式。EXE 內初值 0。
+
+寫入只有一處:`game_main` `0x25bf4` 開機初始化的 `push 0; push dword ptr [0x53a7d]; push 0x51a43 ("FDTXT.DAT"); call 0x111ba`,`0x25d14` 寫回 `[0x53a7d]`。
+索引固定是 0,所以這張表整個行程只載入一次,換章不重載(對照上一節 `[0x53a79]` 每章載入第 章節+1 條)。
+
+讀取:**91 筆全部是 `push dword ptr [0x53a7d]`,之後的第一個 call 有 90 筆是 `0x15f84`(dialog,文字表引數)、1 筆是 `0x111ba`(上面 `0x25d01` 的舊緩衝引數)**。
+90 與本檔 2026-09-19 節「`[0x53a7d]` 90」相同。dialog 的字串索引(`push [0x53a7d]` 前一個 push)分成:
+- **立即值 56 筆**(49 種,`0x19a`..`0x294` = 410..660):戰場指令環、寶箱、系統選單、商店 / 酒館 / 教會 / 存讀檔等固定訊息。660 是 FDTXT_000 661 條裡的最後一條。
+- **依資料算出 25 筆**:角色名 `byte [+8] + 1` 7 筆;`byte [+0x1f] + 0x8c` 2 筆;職業名 `byte [+0x20] + 0x96` 5 筆;道具名 `+ 0xb5` 2 筆(`draw_item_panel` `0x18581`、`draw_item_list_two_column` `0x2739c`);指令名 `+ 0x1b9` 1 筆(`draw_command_list` `0x1cf44`);商店的 word 索引表 8 筆(`shop_buy` 5、`shop_sell_service` 2、`item_storage_service` 1)。基底與本 repo doc49 的 FDTXT_000 區塊表一致。
+- **其他 9 筆**:`0x15f84` 自己在 `0x1606d` 遞迴印 `[0x53ad9]`(控制碼 −4 的名字);`draw_save_slot_list` `0x29b96` `+ 0x202`;`turn_status_tick` `0x1a9ed` `lea [edi + 0x1e1]`;`town_hub_redraw` `0x2666e` `0x1ef + [0x53f4a]`;`draw_battle_situation_panel` `0x1b41d` 2 筆(edi,本 repo doc26 記為章節 × 2 + 0x255);`shop_menu` `0x279bc` 2 筆(esi);`apply_stat_growth` `0x1e59d` 1 筆(堆疊引數)。
+
+56 + 25 + 9 = 90。

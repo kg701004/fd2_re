@@ -5539,3 +5539,24 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `step_anim_down` `0x12eaa` `0x12fe4`、`0x13185` `0x13304` 對 `[0x53aad]` `add eax`。
 
 其餘讀取多是 `sub 暫存器, [0x53aa9]` / `[0x53aad]`(各 19 筆)把地圖格座標換成畫面格座標(例:本檔 `0x218c4` 那段 `cx = (記錄[0] - [0x53aa9]) * 24 + 12`)。
+
+## 2026-11-07:`[0x53a51]` = 戰場地圖格緩衝(FDFIELD.DAT 第 章節 × 3 條;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a51`:**83 筆全是 4 byte 直接定址,讀 71、寫 12**,分布在 33 個函式。EXE 內初值 0。
+
+**12 個寫入點**:
+- 載入 3 處,形狀都是 `push 索引; push dword ptr [0x53a51]; push 0x51a59 ("FDFIELD.DAT"); call 0x111ba`,結果寫回:`save_load_restore` `0x1021c`(索引 `[0x53c03]` × 3)、
+  章節 loader `0x1088d` 的 `0x10920`(索引 ebx = 引數 × 3)、`command_handler_80` `0x24754` 的 `0x24a53`(索引 0x45 = 23 × 3)。前兩處接著把表頭 `word [+0]` / `word [+2]` 存到 `[0x53ac1]` / `[0x53ac5]`(寬 / 高)。
+- `town_hub_main` `0x26152`:`0x261e2` 非 0 就 `free`(`0x3776e`),`0x261f9` 寫 0。
+- 城鎮側 4 組「先寫 1、後寫 0」:`town_hub_main`(`0x262e2` / `0x262f3`)、`town_hub_select` `0x2670e`(`0x26780` / `0x2679f`,寫回的 ebp 在入口 `xor ebp, ebp`)、
+  `sortie_member_select` `0x2af28`(`0x2b3f5` / `0x2b40b`)、`sortie_required_member_check` `0x2b439`(`0x2b4cf` / `0x2b4e3`),中間呼叫 `yes_no_prompt` `0x19953` / `slide_in_choice_icons` `0x197e5` / `wait_key_with_marker` `0x16c57`。
+
+**71 筆讀取**:
+- **push 47 筆**:`0x4df4c` 32 筆(本檔 §15:每格 `+3` 設 0xff、`+2` &= 0x1f、`+1` &= 3)、`0x4e4f6` 5、`0x4e390` 5、`0x111ba` 3(上面的舊緩衝引數)、`0x4e8a5` 1、`free` 1(`0x261eb`)。
+- **取格子 16 筆**(格子 = 緩衝 + 4 + (y × `[0x53ac1]` + x) × 4):`+4` word 4 筆(`draw_terrain_layer` `0x11eee`、`map_count_flagged_event_cells` `0x12263` `inc word`、`redraw_map_cell` `0x12ac6`、`map_cell_info` `0x12e38`);
+  `+6` byte 3 筆(`field_unit_construct` `0x10c50` 測 0x40、`mark_unit_cell_blocking` `0x14625` or 0x40、`map_cell_set_bit7` `0x146a7` or 0x80);
+  `+7` byte 9 筆(`target_cursor_loop` `0x115b6` 與 `move_unit_toward_point` `0x14b78` 比 0xff、`draw_move_range_overlay` `0x122dc` 與 `collect_targets_in_range` `0x14818` 寫 0、`map_block_cells_of_side` `0x146d1`、`map_collect_cells_byte3_set` `0x14b16` 等)。
+- **比較 8 筆**(把值當「有沒有戰場」):`cmp [0x53a51], 1; jbe` 4 筆(`slide_in_choice_icons` 1、`yes_no_prompt` 3;其中 3 筆 ≤ 1 就跳過 `tick_anim_counters` `0x1297d`,`yes_no_prompt` 的 `0x19c4b` 跳過的是另一段迴圈);
+  `cmp [0x53a51], 0` 4 筆(`yes_no_prompt` 2、`wait_key_with_marker` 1、`town_hub_main` 的 free 前檢查 1)。所以城鎮側寫 1 時,這些提示走「非 0」的畫法但跳過戰場動畫計數。
+
+47 + 16 + 8 = 71。
