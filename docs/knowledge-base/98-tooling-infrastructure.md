@@ -13450,3 +13450,25 @@ title_seq `0x1f894` `malloc(0xa0)`(2 筆)、town_hub_main / town_hub_select 在 
 ### (3) 下一步
 
 `--gaps globals` 下一批:`0x51a83`(65 個函式引用)、`0x5030f` / `0x50311`(54,AIL_DEBUG 縮排用的字串)、`0x53aa9` / `0x53aad`(48,疑為鏡頭座標,未查)、`0x53c03`(47,目前章節)。
+
+## 2026-11-06 續一百九十九:資料區段 `0x51a83`(目標範圍選擇模式)
+
+起因:使用者要求「登錄 0x51a83」。事實寫進 doc35 新節(2026-11-06),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x51a83]`:151 筆寫入 = 0 ×120(立即值 115 + 暫存器 5)、1 ×26、6 ×1、記錄 byte + 2 ×4(`0x15140` / `0x153b1` / `0x1bd14` / `0x1d188`)。
+16 筆讀取:`draw_move_range_overlay` `0x122dc` 依 1 .. 6 畫框(6 只清 cell byte)、4 個 `cursor_step_*` 與 `0x12cea` 以 0 / 6 決定是否重畫或等待、
+`target_cursor_loop` `0x115b6` 與 `player_spell_select` `0x1cff0` 拿它當目標半徑。與 doc56 / 91-worklist 已記的 full-domain 訂正一致。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是對原版 FD2.EXE 的登錄錯誤筆數,位址 `0x51a83`):
+  5 byte → 16(`0x51a87` 沒列在 fields + 15 筆 `0x51a87` 的 4 byte 存取跨出)、3 byte → 167(全部存取跨出)、8 byte → 1(`0x51a87` fields);未改 → 0。
+- 覆蓋率:遊戲函式 575 → 587 / 1202、全域位址 17 → 18 / 900、資料 86 → 90 / 35714 bytes。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 下一步
+
+`--gaps globals` 下一批:`0x5030f` / `0x50311`(54)、`0x53aa9` / `0x53aad`(48)、`0x53c03`(47)、`0x53c57`(43)。

@@ -5492,3 +5492,24 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   - `earthquake_spell_effect` `0x21548`:`0x215fb` 原值存 `[esp]`,`0x21675` / `0x2170c` 在 3 張緩衝間輪替,`0x217e0` 寫回 `[esp]` 並釋放暫用緩衝。
   - `spawn_intro` `0x32999`:索引 < edi 的單位照常畫,其餘(到 `[0x53beb]`)在畫布上移後畫 `draw_unit_sprite`。一般路徑 `0x32b45` − `0xe40`(8 列)、`0x32b81` + `0xe40` 寫回;
     `0x32c07` 計數 == 7 的路徑改用 `0x32c6f` − `0x8e8`(5 列),`0x32ca6` + `0x8e8` 後跳到 `0x32b81` 寫回。兩條路各自還原,位移不累加。
+
+## 2026-11-06:`[0x51a83]` = 目標範圍選擇模式(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x51a83`:**167 筆全是 4 byte 直接定址,讀 16、寫 151**,分布在 65 個函式(寫 58 個、讀 8 個,`player_spell_select` 兩者都有)。EXE 內初值 1。
+
+**151 筆寫入的值**:立即值 0 有 115 筆、1 有 26 筆、6 有 1 筆;另 9 筆寫暫存器:
+- 5 筆實際寫 0:`0x13c34` / `0x13df8`(`ai_mode_dispatch`,`call 0x14ef0` 後 `test eax, eax; jne` 落下)、`0x14018`(`rest_hp_recover`,`0x14010` `je` 進來時 eax = 0)、
+  `0x1a9aa`(`turn_status_tick`,`dec byte ptr [eax + 0x22]` 後 `jne` 落下)、`0x24c54`(`command_handler_81`,`xor esi, esi` 後寫 esi)。這 5 處除了列出的 `je` 以外沒有其他跳轉進入點(全 EXE 掃描 jmp / jcc / call 目標)。
+- 4 筆寫「記錄 byte + 2」:`0x15140`(`ai_item_action`,`movzx eax, byte ptr [esi + 0x12]; add eax, 2`)、`0x153b1`(`ai_spell_execute`,`[esi + 4]`)、
+  `0x1bd14`(`player_item_action`,`[eax + 0x12]`)、`0x1d188`(`player_spell_select`,`[eax + 4]`)。值域 2 .. 0x101。
+- 寫 6 只有 `0x151dd`(`ai_item_action`,`0x11df2` 迴圈 65 次之後)。寫 1 的 26 筆分布在 19 個函式,常見形狀是先寫 0、呼叫移動或演出、再寫 1(例 `turn_status_tick` `0x1a9aa` 寫 0 → `call 0x12d7b` → `0x1a9b8` 寫 1)。
+
+**16 筆讀取(8 個函式)**:
+- `draw_move_range_overlay` `0x122dc`:6 筆 `cmp [0x51a83], 1 .. 6`。1 / 2 / 3 / 4 / 5 各畫 1 / 1 / 5 / 13 / 21 次 `0x126f7`(游標周圍的格子,與 doc56 記載的次數相同);
+  **6 不畫,只做 `mov byte ptr [edx + eax*4 + 7], 0`**(edx = `[0x53a51]`,eax = 游標 y × `[0x53ac1]` + x);其他值什麼都不做就 ret。
+- `cursor_step_up` / `down` / `right` / `left`(`0x11b48` / `0x11b9b` / `0x11bfa` / `0x11c59`):各 1 筆 `cmp [0x51a83], 0`,不是 0 才 `0x11cac(0)` 重畫戰場。
+- `0x12cea`(游標逐格移到 (x, y)):4 筆,值不是 0 也不是 6 時每走一格多 `0x17aa9(1)` 等一下。
+- `target_cursor_loop` `0x115b6`:`0x115dc` 讀出存 `[esp + 8]`,大於 1 才減 1,當 `0x14742` 的半徑。
+- `player_spell_select` `0x1cff0`:`0x1d366` 讀出減 2(還原成記錄 byte),`0x1d36e` 寫回 1,減完的值當 `0x14818` 的第 3 個引數。
+
+所以同一個 dword 同時是「畫哪種範圍框」(1 .. 6)與「目標判定半徑」(記錄 byte + 2);0 = 不畫框、游標移動不重畫,大於 6 時框不畫但半徑仍有效。

@@ -7,6 +7,35 @@
   },
   "regions": [
     {
+      "start": "0x51a83",
+      "size": 4,
+      "name": "target_range_selector",
+      "type": "dword(範圍框模式 0 .. 6,或記錄 byte + 2 的目標半徑)",
+      "meaning": "目標範圍選擇模式。draw_move_range_overlay 0x122dc 依 1..5 畫 1/1/5/13/21 格框、6 只清游標格的 cell byte;cursor_step_* 與 0x12cea 在 0 時不重畫、0 或 6 時不等待;target_cursor_loop 0x115b6 以它(>1 減 1)當 0x14742 半徑。寫入:0 ×120、1 ×26、6 ×1(0x151dd)、記錄 byte + 2 ×4(0x15140 / 0x153b1 / 0x1bd14 / 0x1d188)。EXE 初值 1。",
+      "evidence": [
+        {
+          "func": "0x122dc"
+        },
+        {
+          "func": "0x115b6"
+        },
+        {
+          "func": "0x15055"
+        },
+        {
+          "func": "0x1cff0"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**6 不畫,只做 `mov byte ptr [edx + eax*4 + 7], 0`**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以同一個 dword 同時是「畫哪種範圍框」(1 .. 6)與「目標判定半徑」(記錄 byte + 2)"
+        }
+      ]
+    },
+    {
       "start": "0x538a8",
       "size": 4,
       "name": "ail_mix_src_end",
