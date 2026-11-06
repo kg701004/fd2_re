@@ -306,6 +306,35 @@
       ]
     },
     {
+      "start": "0x53c57",
+      "size": 4,
+      "name": "menu_cursor_index",
+      "type": "dword(目前反白項的 index)",
+      "meaning": "所有選單共用的游標 index:16 個函式寫 0(共 17 筆,6 筆是開啟時重設),action_ring_select 0x177fc 以 ↑↓←→ 寫 0 / 3 / 1 / 2,其他選單以 inc / dec、±2 / ±4(兩欄換列)移動;33 筆 push 當選項 index 傳給 unit_item_id 0x1b722、清單繪製函式等。43 個函式引用。",
+      "evidence": [
+        {
+          "func": "0x177fc"
+        },
+        {
+          "func": "0x1b9de"
+        },
+        {
+          "func": "0x19953"
+        },
+        {
+          "func": "0x275e6"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "**0 有 17 筆,分在 16 個函式(`yes_no_prompt` 2 筆,其餘各 1)**"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "**209 筆全是 4 byte 直接定址,讀 149、寫 33、讀改寫 27**"
+        }
+      ]
+    },
+    {
       "start": "0x54153",
       "size": 4,
       "name": "battle_anim_sfx_bank",

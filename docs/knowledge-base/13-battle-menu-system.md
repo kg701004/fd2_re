@@ -2968,3 +2968,23 @@ live驗證**這個特定修法,留給下一輪。
 - DOSBox-X:10 次呼叫(mode 0 ×8、mode 1、mode 2)的回傳值、outBuf、整張地圖都和重算 0 差異。
 - 玩家確認落點的 0xff 只能人為製造(目標格設 0x40)。這時 0x18890 回 1,不開指令環、不釋放路徑緩衝。
 - 詳見 doc98 續六十七與 `evidence/path_search_hits_friendly_mode8_20261001.json`。
+
+## 2026-11-07:`[0x53c57]` = 選單游標 index(所有選單共用;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取次數來自 `python tools/re_coverage.py --show-data 0x53c57`:
+**209 筆全是 4 byte 直接定址,讀 149、寫 33、讀改寫 27**,分布在 43 個函式(寫入的 27 個)。EXE 內初值 0。與本檔 2026-08-22 §3「writer 普查」的 209 筆相同,這次把每一筆分類完。
+
+**60 個寫入點**:
+- 立即值 22 筆:**0 有 17 筆,分在 16 個函式(`yes_no_prompt` 2 筆,其餘各 1)**。其中 6 筆在函式入口 0x30 byte 內(`field_command_ring` `0x16f83`、`options_ring` `0x172ba`、
+  `ring_select_first_enabled` `0x173f5`、`yes_no_prompt` `0x19972`、`item_panel_session` `0x1b950`、`equip_menu` `0x1c018`),是開啟時重設;`action_ring_select` `0x1783f` 是 ↑ 鍵;其餘 10 筆在函式中段,本輪沒有逐一判讀用途。
+  1 / 2 / 3 只出現在 `action_ring_select` `0x177fc`(0 / 3 / 1 / 2 各一筆,即上節 ↑↓←→ 四個寫入點)、`yes_no_prompt` `0x19953` 的 1、`carousel_menu_select` `0x26e38` 的 3。
+- 移動 ±1:`inc` 10 筆、`dec` 9 筆。
+- 移動一列(兩欄格子):`add` / `sub 4` 各 2 筆(`item_grid_select` `0x1b9de`、`command_grid_select` `0x1d51d`)、`add` / `sub 2` 各 2 筆(`item_list_select` `0x275e6`、`choice_box_left_right` `0x27d33`)。
+- 暫存器 11 筆(例 `ai_item_action` `0x1508b` 寫 `unit_item_id` `0x1b722` 的回傳值、`item_grid_select` `0x1ba5d` 寫 edi)。
+
+**149 筆讀取**:
+- `push` 33 筆,當選項 index 傳給函式:`unit_item_id` `0x1b722` 7、`0x1b8e7` 5、`draw_party_roster_two_column` `0x2810b` 3,`draw_item_list_two_column` / `draw_equip_compare_rows` / `draw_save_slot_list` / `draw_revive_candidate_rows` / `draw_class_change_options` 各 2,其餘 7 個函式各 1。
+- `cmp [0x53c57], 常數` 57 筆:0 ×32、1 ×6、2 ×10、3 ×6、4 ×3。
+- `cmp 暫存器, [0x53c57]` 17 筆、`mov 暫存器, [0x53c57]` 42 筆。
+
+所以 `[0x53c57]` 不屬於某一個選單:戰場指令環、道具 / 法術 / 裝備格子、城鎮商店 / 酒館 / 教堂 / 存讀檔 / 轉職 / 復活 / 出擊選單都用同一個 dword 當「目前反白項」。
