@@ -5560,3 +5560,47 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `cmp [0x53a51], 0` 4 筆(`yes_no_prompt` 2、`wait_key_with_marker` 1、`town_hub_main` 的 free 前檢查 1)。所以城鎮側寫 1 時,這些提示走「非 0」的畫法但跳過戰場動畫計數。
 
 47 + 16 + 8 = 71。
+
+## 2026-11-07:`[0x53ab5]` = 戰場游標 Y(地圖格座標 = 鏡頭 Y `[0x53aad]` + 畫面內游標 Y `[0x53abd]`;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ab5`:**96 筆,讀 79(其中 1 筆 1 byte)、寫 8、讀改寫 9**,分布在 28 個函式。EXE 內初值 0。
+
+**17 個寫入點**(8 寫 + 9 讀改寫):
+- 立即值 / 引數,都和鏡頭 `[0x53aad]` 同值、畫面內游標清 0:`0x205da` `0x20637` 寫 0;`command_handler_67` `0x236ce` 寫 0x22、`command_handler_77` `0x23f49` 寫 0x1f、`command_handler_87` `0x25896` 寫 5;`0x233c6` `0x23484` 寫堆疊引數 `[esp + 0x3c]`(同一個值也寫進 `[0x53aad]`)。
+- `save_load_restore` `0x10010` `0x10403` 從存檔頭 `movzx [esi + 6]` 讀回(`[esi + 4]` 是 `[0x53aad]`、`[esi + 8]` 是 `[0x53abd]`);存的那一邊是 `battle_system_submenu` `0x19df7` 的 `0x1a08f` `mov dl, byte ptr [0x53ab5]` 寫到 `[eax + 6]`(唯一的 1 byte 讀取)。
+- `cursor_step_up` `0x11b48`:`[0x53ab5]` == 0 就不動;`[0x53abd]` < 2 且 `[0x53aad]` ≠ 0 時 `0x11b6d` 與 `[0x53aad]` 一起 −1,否則 `0x11b7b` 與 `[0x53abd]` 一起 −1。
+- `cursor_step_down` `0x11b9b`:`[0x53ab5]` == 地圖高 `[0x53ac5]` − 1 就不動;`[0x53abd]` > 5 且 `[0x53aad]` ≠ 高 − 8 時 `0x11bcc` 與 `[0x53aad]` 一起 +1,否則 `0x11bda` 與 `[0x53abd]` 一起 +1。
+- `step_anim_down` `0x12eaa` `0x12fea` +1、`0x13185` `0x1330a` −1:單位走一格時游標跟著走,同時 `[0x53aad]` 加上 `[esp + 8]`(0 或 1,有沒有捲動)。
+- `0x135dd`(鏡頭平移到引數格)`0x1363f` / `0x1364d`:與 `[0x53aad]` 一起 ∓1 / ±1。
+- `build_target_candidates` `0x149f8`:`0x14a78` 先存舊值再寫引數、`0x14a9a` 每步加 dy、`0x14b0a` 寫回舊值 —— 拿游標當暫時的探測座標,結束時還原。
+
+所以除了 `build_target_candidates` 的暫時借用,**`[0x53ab5]` = `[0x53aad]` + `[0x53abd]` 在每個寫入點都成立**(與本檔 2026-11-06 鏡頭節的 `[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]` 成對)。
+
+**79 筆讀取**:`mov` 39、`push` 34、`cmp` 5、1 byte 存檔 1。依函式:`draw_move_range_overlay` `0x122dc` 40 筆(各模式的格子以游標 Y 加減偏移交給 `draw_map_overlay_cell` `0x126f7`)、`player_spell_select` `0x1cff0` 8、`player_item_action` `0x1bbdc` 6、`target_cursor_loop` `0x115b6` 4、`player_action_ring` `0x18d8c` 3、`0x18890` 3,其餘 15 筆分在 13 個函式。
+`cmp` 5 筆:`unit_at_cursor` `0x12c0d` `0x12c3e` 與 `target_cursor_loop` `0x11679`(和單位 `+1` 比,相等才查 `0x34894`)、`cursor_step_up` / `cursor_step_down` 的邊界、`0x12cea` `0x12d42`(和目標 y 比,決定呼叫 `cursor_step_up` 或 `cursor_step_down`)。
+
+## 2026-11-07:`[0x53ab1]` / `[0x53ab9]` = 戰場游標 X(地圖格座標)/ 畫面內游標 X(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`:`0x53ab1` **95 筆,讀 78(其中 1 筆 1 byte)、寫 8、讀改寫 9**,27 個函式;
+`0x53ab9` **35 筆,讀 25(其中 1 筆 1 byte)、寫 6、讀改寫 4**,27 個函式。EXE 內初值都是 0。
+
+**`[0x53ab1]` 的 17 個寫入點**和上一節 `[0x53ab5]` 一一對應(X 換成 Y):`0x205da` 寫 0、`command_handler_67` / `_77` / `_87` 寫 9 / 0x1a / 0xb、`0x233c6` 寫堆疊引數 `[esp + 0x38]`、
+`save_load_restore` `0x103fa` 從存檔頭 `[esi + 5]` 讀回(存的那一邊 `0x1a086` 1 byte 寫到 `[eax + 5]`)、`cursor_step_right` `0x11bfa` / `cursor_step_left` `0x11c59` 各 2、
+`step_anim_left` `0x1300d` `0x13149` −1、`step_anim_right` `0x13315` `0x13455` +1、`0x135dd` 2、`build_target_candidates` `0x149f8` 暫借 3。
+讀取的函式分布也和 `[0x53ab5]` 相同,只差 `cursor_step_up` / `_down` 換成 `cursor_step_left` / `_right`、`draw_move_range_overlay` `0x122dc` 是 39 筆(`[0x53ab5]` 40 筆)。
+
+**`[0x53ab9]` 的 10 個寫入點**:
+- 和鏡頭 / 游標一起清 0:`0x205da` `0x20641`、`0x233c6` `0x23489`、`command_handler_67` `0x236d8`、`command_handler_77` `0x23f53`、`command_handler_87` `0x258a0`;`save_load_restore` `0x1040c` 從存檔頭 `[esi + 7]` 讀回。
+- `cursor_step_right` `0x11c3f` +1、`cursor_step_left` `0x11c92` −1:只在不捲動鏡頭時(否則改的是 `[0x53aa9]`)。
+- `step_anim_left` `0x13076` −1、`step_anim_right` `0x13385` +1:單位走一格且鏡頭不捲動時。
+所以每個寫入點都維持本檔 2026-11-06 鏡頭節的 `[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`;`[0x53ab9]` 的值域是 0 .. 12(畫面 13 格寬)。
+
+**`[0x53ab9]` 的 25 筆讀取**:
+- **× 0x18(每格 24 像素)當畫面座標 9 筆**:`dialog_box_open_anim` `0x165ac`、`dialog_box_close_anim` `0x16b43`、`action_ring_open` `0x1741c`、`action_ring_close` `0x176b4`、`action_ring_draw` `0x179d5`、
+  `lut_circle_burst_at_cursor` `0x21eb1`、`0x22253` 各 1;`map_save_72px_block` `0x175a9` / `map_restore_72px_block` `0x17643` 各 1(先 −1,72 像素 = 3 格,以游標為中心)。
+- **`0x24618` 的引數 8 筆**:`command_handler_79` / `_84` / `_87` 與 `command_handler_54` 2 筆直接 push,`command_handler_50` / `_55`(+ 6)、`command_handler_54`(+ 2)各 1。
+- **常數比較 5 筆**:`cursor_step_right` `0x11c12`(> 10 才捲動)、`cursor_step_left` `0x11c6c`(< 2 才捲動)、`battle_idle_redraw_tick` `0x18b84` `0x18b96`(< 7)、
+  `draw_map_hud` `0x1acf3` `0x1ad33`(< 3)/ `0x1ad51`(> 9):這兩筆是 doc91「native HUD persistent anchor branch」的分支,寫的是 `[0x51a0c]`(0xf2 / 1),不是 `[0x53ab9]`。
+- `dialog_box_open_anim` / `dialog_box_close_anim` 各 1 筆 `[0x53ab9] + [0x53abd]` 是否為 0;`battle_system_submenu` `0x1a098` 1 byte 寫到存檔頭 `[eax + 7]`。
+
+9 + 8 + 5 + 2 + 1 = 25。

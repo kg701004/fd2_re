@@ -384,6 +384,90 @@
       ]
     },
     {
+      "start": "0x53ab1",
+      "size": 4,
+      "name": "cursor_cell_x",
+      "type": "dword(戰場游標 X,地圖格座標)",
+      "meaning": "戰場游標 X = 鏡頭 X [0x53aa9] + 畫面內游標 X [0x53ab9]:cursor_step_left / cursor_step_right、step_anim_left / step_anim_right、鏡頭平移 0x135dd 都與鏡頭或畫面內游標成對改,save_load_restore 從存檔頭 +5 讀回;build_target_candidates 暫借後還原。draw_move_range_overlay 以它加減偏移畫範圍格。",
+      "evidence": [
+        {
+          "func": "0x11bfa"
+        },
+        {
+          "func": "0x11c59"
+        },
+        {
+          "func": "0x122dc"
+        },
+        {
+          "func": "0x12c0d"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**`[0x53ab1]` 的 17 個寫入點**和上一節 `[0x53ab5]` 一一對應(X 換成 Y)"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以每個寫入點都維持本檔 2026-11-06 鏡頭節的 `[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`"
+        }
+      ]
+    },
+    {
+      "start": "0x53ab5",
+      "size": 4,
+      "name": "cursor_cell_y",
+      "type": "dword(戰場游標 Y,地圖格座標)",
+      "meaning": "戰場游標 Y = 鏡頭 Y [0x53aad] + 畫面內游標 Y [0x53abd]:cursor_step_up / cursor_step_down、單位移動演出、鏡頭平移 0x135dd 都與鏡頭或畫面內游標成對改,save_load_restore 從存檔頭 +6 讀回;build_target_candidates 暫借當探測座標後還原。draw_move_range_overlay 以它加減偏移畫範圍格。",
+      "evidence": [
+        {
+          "func": "0x11b48"
+        },
+        {
+          "func": "0x11b9b"
+        },
+        {
+          "func": "0x122dc"
+        },
+        {
+          "func": "0x12c0d"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**`[0x53ab5]` = `[0x53aad]` + `[0x53abd]` 在每個寫入點都成立**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`build_target_candidates` `0x149f8`:`0x14a78` 先存舊值再寫引數、`0x14a9a` 每步加 dy、`0x14b0a` 寫回舊值"
+        }
+      ]
+    },
+    {
+      "start": "0x53ab9",
+      "size": 4,
+      "name": "cursor_screen_x",
+      "type": "dword(畫面內游標 X,0 .. 12 格)",
+      "meaning": "畫面內游標 X:cursor_step_left / cursor_step_right 與 step_anim_left / step_anim_right 在鏡頭不捲動時 ±1,開場 / 換章清 0,save_load_restore 從存檔頭 +7 讀回;讀取 × 0x18 當對話框 / 行動環 / 特效的畫面座標,cursor_step_* 以 > 10 / < 2 決定捲動,draw_map_hud 以 < 3 / > 9 改 HUD 錨點 [0x51a0c]。",
+      "evidence": [
+        {
+          "func": "0x11bfa"
+        },
+        {
+          "func": "0x1741c"
+        },
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**× 0x18(每格 24 像素)當畫面座標 9 筆**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`cursor_step_right` `0x11c3f` +1、`cursor_step_left` `0x11c92` −1:只在不捲動鏡頭時(否則改的是 `[0x53aa9]`)。"
+        }
+      ]
+    },
+    {
       "start": "0x53ad5",
       "size": 4,
       "name": "battle_event_state_table",
@@ -435,6 +519,64 @@
         {
           "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
           "quote": "**`0x1100b` `inc dword ptr [0x53beb]`** —— 加入一個單位。"
+        }
+      ]
+    },
+    {
+      "start": "0x53bef",
+      "size": 4,
+      "name": "turn_number",
+      "type": "dword(戰場回合數,開戰 = 1)",
+      "meaning": "回合數:0x205da 開戰寫 1、battle_phase_advance 0x1a30b inc、save_load_restore 從存檔頭 +0 讀回;turn_event_dispatch 0x1a813 比對 [0x53a55] 回合事件列的回合格,事件 handler 把它(+0 / +1 / +2)寫進回合格排定下一個事件,也當 0x10b4e 的群組號與常數比較的回合門檻。",
+      "evidence": [
+        {
+          "func": "0x1a30b"
+        },
+        {
+          "func": "0x205da"
+        },
+        {
+          "func": "0x1a813"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "`0x1a844` 列的 `+0`(回合)== `[0x53bef]` 且 `+2` == 引數(陣營)時,以 `+1` 為事件號呼叫 `[0x51b91 + 事件號 × 4]`"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "**3 個寫入點**:`0x205da` `0x2066e` 開戰寫 1;`battle_phase_advance` `0x1a30b` `0x1a5b9` `inc`"
+        }
+      ]
+    },
+    {
+      "start": "0x53bfb",
+      "size": 4,
+      "name": "roster_count",
+      "type": "dword(常駐名冊 [0x53bf7] 的人數,每人 0x50 byte)",
+      "meaning": "我方名冊人數:title_menu_dispatch 新遊戲寫 0、讀檔從存檔槽 +0xa01 讀回,save_load_restore 從存檔頭 +9 讀回,JOIN constructor 0x112a5 加人時 inc;17 筆 cmp 暫存器, [0x53bfb] 是走訪名冊的上界,town_hub_select 以 0x10 / 0x14 判斷是否要先選出擊成員。",
+      "evidence": [
+        {
+          "func": "0x112a5"
+        },
+        {
+          "func": "0x25ebb"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x2670e"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "**`0x1144c` `inc dword ptr [0x53bfb]`**"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "**`cmp 暫存器, [0x53bfb]` 17 筆** —— 走訪名冊的上界"
         }
       ]
     },

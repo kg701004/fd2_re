@@ -3352,3 +3352,24 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `command_handler_64` `0x232e8`(`+0x11 == 1`)、`command_handler_83` `0x24e80`(`+0xc` + 5 / + 8 當字串索引)。`+0xc` 的寫入只有 `event_handler_61` `0x35a0d` 的 `0x35b2c`(寫 1)。
 
 3 + 7 + 50 = 60。同一張表既有以格子槽號索引的旗標,也有事件 handler 各自用的固定格,所以本節只記存取形式,不替各格命名(與 doc91「撤回 opened-treasure 斷言」同一立場)。
+
+## 22. `[0x53bef]` = 回合數(2026-11-07,資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53bef`:**38 筆,讀 35(其中 16 筆 1 byte)、寫 2、讀改寫 1**,分布在 28 個函式。EXE 內初值 0。
+
+**3 個寫入點**:`0x205da` `0x2066e` 開戰寫 1;`battle_phase_advance` `0x1a30b` `0x1a5b9` `inc`;`save_load_restore` `0x10010` `0x103df` 從存檔頭 `movzx [esi + 0]` 讀回
+(存的那一邊是 `battle_system_submenu` `0x19df7` `0x1a05a` `mov dl, byte ptr [0x53bef]` 寫到 `[eax + 0]`)。
+
+**回合事件列**:`turn_event_dispatch` `0x1a813` 走訪 `[0x53a55]` + 3 + 列 × 3 的 16 列,`0x1a844` 列的 `+0`(回合)== `[0x53bef]` 且 `+2` == 引數(陣營)時,以 `+1` 為事件號呼叫 `[0x51b91 + 事件號 × 4]`。
+事件 handler 有 **13 筆 1 byte 讀取**把回合數(+0、+1 或 +2)寫進第 0 / 1 / 2 列的回合格 `[[0x53a55] + 3 / 6 / 9]`,也就是排定下一個回合事件:
+`event_handler_30` `0x34dd0`(+1 → +3、+2 → +6)、`event_handler_62` `0x35bee`、`event_handler_65` `0x35cf1`、`event_handler_67` `0x35d85`、`event_handler_69` `0x35e0e`、`event_handler_74` `0x35f88`、
+`event_handler_75` `0x35fcf` 2 筆、`event_handler_76` `0x360b6` 2 筆、`event_handler_79` `0x3623c`、`event_handler_81` `0x362c5`。
+
+**其餘讀取**:
+- 1 byte 另 2 筆:`event_handler_52` `0x35638` 以 (回合 − 0xe) × 2 與 × 2 + 1 當引數(`0x35642` / `0x3565b`);加上面存檔 1 筆、事件列 13 筆,共 16 筆 1 byte。
+- `push` 8 筆:`draw_number` `0x187d6` 2(`0x104e9` / `0x1a668`,回合顯示)、`0x1055a` / `0x1a6d9` 各 1(之後 `push 0x1c8` 與畫布位址)、`draw_battle_situation_panel` `0x1b4d8` 1、`0x10b4e` 3(`event_handler_27` / `_54` / `_57`,回合數當群組號;doc98 記 `0x10b4e` 為 spawn_group)。
+- 常數比較 8 筆:`battle_result_check_12` `0x20765`(> 5)、`battle_result_check_18` `0x20926`(> 6)、`command_handler_73` `0x23a0a`(> 0x12)、`command_handler_77` `0x23e74`(> 0xf)、`command_handler_80` `0x24754`(≥ 0xf)、
+  `event_handler_23` `0x34b9a`(≥ 0xf)、`event_handler_47` `0x35468`(== 2)、`event_handler_49` `0x3553f`(== 3)。
+- `turn_event_dispatch` 的 `cmp edx, [0x53bef]` 1 筆;`event_handler_47` / `_49` 各 1 筆 `mov eax` 後做有號 ÷ 2(本檔 §6.1「回合數 DIV 2 當群組號」)。
+
+16 + 8 + 8 + 1 + 2 = 35。

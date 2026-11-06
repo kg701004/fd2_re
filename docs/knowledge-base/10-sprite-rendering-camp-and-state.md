@@ -223,3 +223,25 @@ FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取
 - 單位數 × 5(× 0x50 byte):`0x102f3`(`save_load_restore`)、`0x10c69`、`0x1a017`(`battle_system_submenu`,存檔時算陣列長度)。
 - 單位數 − 1 = 最後一個單位:`command_handler_86` `0x2552d`(`push` 給 `0x22253`)、`event_handler_84` `0x36422`。
 - 其他:`spawn_intro` `0x32999` 的 `0x329f8` 存到 edi 當迴圈上界;`event_handler_76` `0x3612c` 讀 1 byte 減 3 寫到 `[[0x53ad5] + 0x15]`(第二筆 1 byte 讀取);`0x10ffd` `push` 給 `0x1b750`。
+
+## 2026-11-07:`[0x53bfb]` = 我方名冊人數(常駐名冊 `[0x53bf7]` 的筆數;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53bfb`:
+**44 筆,讀 39(其中 2 筆 1 byte)、寫 4、讀改寫 1**,分布在 30 個函式。EXE 內初值 0。
+
+**5 個寫入點**:
+- `title_menu_dispatch` `0x25ebb`:`0x25efa` 新遊戲寫 0;`0x26070` 讀檔時從存檔槽 `+0xa00 + 1` 讀回(同一處 `+0xa00` 是章節 `[0x53c03]`、`+0xa02` 是 `[0x53bf3]`)。
+- `load_game_menu` `0x2986f`:`0x2999a`,形狀與 `0x26070` 相同。
+- `save_load_restore` `0x10010`:`0x1041e` 從目前戰鬥的存檔頭 `[esi + 9]` 讀回。
+- JOIN constructor `0x112a5`(本 repo doc25 已記):`0x112b6` 讀人數 × 0x50 當新成員在 `[0x53bf7]` 的位置,填完後 `push [0x53bfb]; call roster_recalc_equipped_stats 0x1145a`,**`0x1144c` `inc dword ptr [0x53bfb]`**。
+
+存的那一邊是兩筆 1 byte 讀取:`battle_system_submenu` `0x19df7` 的 `0x1a0aa` 寫到存檔頭 `[eax + 9]`、`save_game_menu` `0x2968d` 的 `0x29764` 寫到存檔槽 `[ebx + 1]`(`ebx` = `+0xa00`)。
+
+**39 筆讀取**:
+- **`cmp 暫存器, [0x53bfb]` 17 筆** —— 走訪名冊的上界(`find_unit_by_char_id` `0x12c60`、`0x33499`、`collect_inactive_units` `0x2a07a`、`shop_buy` `0x2872b`、`roster_move_member_to_slot1` `0x2b843` 3 筆、存讀檔 / 轉職後逐人重算的迴圈等)。
+- **人數 − 1 / − 2 / − 0xb 10 筆**:`choice_box_left_right` `0x27d33` 2 筆(− 1、− 2,和游標 `[0x53c57]` 比)、`sortie_member_select` `0x2af28` 3 筆(− 2、− 1、− 0xb)、`draw_roster_pick_grid` `0x2b4fb`、`count_nonzero_roster_flags` `0x2b749`、`roster_reorder_selected_first` `0x2b777` 2 筆、`scene_charcard_text_stage` `0x31c49` 各 − 1。
+- **存到 `[0x53f5e]` 再呼叫 `choice_box_left_right` 5 筆**:`shop_buy`、`shop_sell_service` `0x28cbd`、`town_equip_service` `0x28efe`、`item_storage_service` `0x28f65`、`status_service` `0x29620`。
+- **常數比較 2 筆**:`town_hub_select` `0x2670e` —— 章節 `[0x53c03]` < 0x1b 時人數 > 0x10、否則人數 > 0x14,才先進 `sortie_member_select`(出擊上限 16 / 20 人)。
+- 其他 5 筆:上面 2 筆 1 byte 存檔、`0x112b6` × 0x50、`0x1143e` push、`draw_party_roster_two_column` `0x2810b` `0x28130` 和 6 比(一頁的列數)。
+
+17 + 10 + 5 + 2 + 5 = 39。

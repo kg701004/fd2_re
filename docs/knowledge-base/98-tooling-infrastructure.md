@@ -13661,3 +13661,85 @@ doc10 / doc25 / doc47 舊稱的「鏡頭 / camX / camY」與此一致。
 
 續二百零五 .. 二百零八 共登錄 5 段(`0x53a7d`、`0x538b4`、`0x538b8`、`0x53ad5`、`0x53a51`):遊戲函式 612 → 659 / 1202、全域位址 25 → 30 / 900、資料 114 → 134 / 35714 bytes。
 仍未登錄的鄰居:`0x538bc`(見續二百零六)、`0x538a4` / `0x538ac`、`0x53a55`、`0x53ad9`、`0x53ac1` / `0x53ac5`。`--gaps globals` 下一批:`0x53bfb`(30)、`0x53ab5`(28)、`0x53bef`(28)、`0x53ab1` / `0x53ab9`(27)。
+
+## 2026-11-07 續二百零九:資料區段 `0x53bfb`(我方名冊人數)
+
+起因:使用者要求「逐項登錄 0x53bfb、0x53ab5、0x53bef、0x53ab1 / 0x53ab9」,本節是第 1 項。事實寫進 doc10 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53bfb]` = 常駐名冊 `[0x53bf7]`(stride 0x50)的人數。寫入 5:新遊戲寫 0、兩處讀檔從存檔槽 `+0xa01` 讀回、`save_load_restore` 從存檔頭 `+9` 讀回、JOIN constructor `0x112a5` `inc`。
+讀取 39:走訪上界 17、人數 − 1 / − 2 / − 0xb 10、交給 `choice_box_left_right` 5、`town_hub_select` 出擊上限比較 2(章節 < 0x1b 時 16 人,之後 20 人)、其他 5。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數,位址 `0x53bfb`):
+  5 byte → 5(`0x53bff` 沒列在 fields + 4 筆 `0x53bff` 的 4 byte 存取跨出)、3 byte → 42(4 byte 存取全部跨出;2 筆 1 byte 讀取不算);未改 → 0。
+- 覆蓋率:遊戲函式 659 → 661 / 1202、全域位址 30 → 31 / 900、資料 134 → 138 / 35714 bytes。
+- doc10 工作複本是純 CRLF,新節以 CRLF 行附加;staged blob 須 0 CR。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十:資料區段 `0x53ab5`(戰場游標 Y)
+
+起因:同一個要求的第 2 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53ab5]` = 游標 Y(地圖格座標)。17 個寫入點(立即值 / 引數 6、存檔讀回 1、`cursor_step_up` / `cursor_step_down` 4、單位移動演出 2、鏡頭平移 2、`build_target_candidates` 暫借 3)除了暫借以外都維持 `[0x53ab5]` = `[0x53aad]` + `[0x53abd]`。
+79 筆讀取裡 40 筆在 `draw_move_range_overlay`。
+
+差異:doc10「`[0x53ab1]`/`[0x53ab5]` 身分澄清」一段說畫面內游標 `[0x53ab9]` / `[0x53abd]`「只由 `0x1ad2a..0x1ad5f` 的兩條 branch 改寫」。但本輪看到 `cursor_step_up` `0x11b81` `dec [0x53abd]`、`cursor_step_down` `0x11be0` `inc [0x53abd]`,`--show-data 0x53ab9` 列出的 10 個寫入點也不含 `0x1ad2a..0x1ad5f`。那句說法不成立,doc10 原文沒改。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數,位址 `0x53ab5`):
+  5 byte → 35(`0x53ab9` 沒列在 fields + 34 筆 `0x53ab9` 的 4 byte 存取跨出)、3 byte → 95(4 byte 存取全部跨出;1 筆 1 byte 讀取不算);未改 → 0。
+- 覆蓋率:遊戲函式 661 → 661 / 1202、全域位址 31 → 32 / 900、資料 138 → 142 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十一:資料區段 `0x53bef`(回合數)
+
+起因:同一個要求的第 3 項。事實寫進 doc25 新節 §22(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53bef]` = 回合數:開戰 `0x2066e` 寫 1、`battle_phase_advance` `0x1a5b9` `inc`、`save_load_restore` 從存檔頭 `+0` 讀回。`turn_event_dispatch` 以它比對 `[0x53a55]` 的 16 列回合事件;
+13 個事件 handler 讀它(+0 / +1 / +2)寫進第 0..2 列的回合格,排定下一個事件。其餘:`draw_number` 顯示、`0x10b4e` 群組號 3、常數比較 8、÷ 2 2。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數,位址 `0x53bef`):
+  5 byte → 23(`0x53bf3` 沒列在 fields + 22 筆 `0x53bf3` 的 4 byte 存取跨出)、3 byte → 22(22 筆 4 byte 存取跨出;16 筆 1 byte 讀取不算);未改 → 0。
+- 覆蓋率:遊戲函式 661 → 668 / 1202、全域位址 32 → 33 / 900、資料 142 → 146 / 35714 bytes。
+- doc25 是混合 EOL(HEAD blob 3246 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十二:資料區段 `0x53ab1` / `0x53ab9`(戰場游標 X、畫面內游標 X)
+
+起因:同一個要求的第 4 項(最後一項)。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 2 段。
+
+### (1) 內容
+
+`[0x53ab1]` = 游標 X(地圖格座標),17 個寫入點與 `[0x53ab5]` 一一對應。`[0x53ab9]` = 畫面內游標 X(0 .. 12):10 個寫入點(清 0 / 存檔讀回 6、游標左右移動 2、單位移動演出 2),
+都維持 `[0x53ab1]` = `[0x53aa9]` + `[0x53ab9]`。`[0x53ab9]` 的 25 筆讀取:× 0x18 畫面座標 9、`0x24618` 引數 8、常數比較 5、其他 3。
+
+續二百一十那段差異的原因:doc91 記的 `0x1ad2a..0x1ad5f` 是 `draw_map_hud` **讀** `[0x53ab9]` / `[0x53abd]` 後寫 `[0x51a0c]`(HUD 錨點),doc10 那句把錨點 `[0x51a0c]` 和畫面內游標 `[0x53ab9]` / `[0x53abd]` 混成同一個東西。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53ab1` 5 byte → 97(`0x53ab5` 沒列在 fields + 與 `0x53ab5` 段重疊 + 95 筆 `0x53ab5` 的 4 byte 存取跨出)、3 byte → 94(4 byte 存取全部跨出;1 筆 1 byte 不算);
+  `0x53ab9` 5 byte → 34(`0x53abd` 沒列在 fields + 33 筆 `0x53abd` 的 4 byte 存取跨出)、3 byte → 34(4 byte 存取全部跨出;1 筆 1 byte 不算);未改 → 0。
+- 覆蓋率:遊戲函式 668 → 673 / 1202、全域位址 33 → 35 / 900、資料 146 → 154 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 本批小結與下一步
+
+續二百零九 .. 二百一十二 共登錄 5 段(`0x53bfb`、`0x53ab5`、`0x53bef`、`0x53ab1`、`0x53ab9`):遊戲函式 659 → 673 / 1202、全域位址 30 → 35 / 900、資料 134 → 154 / 35714 bytes。
+`--gaps globals` 下一批:`0x53abd`(26)、`0x51a4d` / `0x53a61` / `0x53a81`(26)、`0x53a55`(25)。
