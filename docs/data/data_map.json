@@ -53,6 +53,25 @@
       ]
     },
     {
+      "start": "0x51a4d",
+      "size": 12,
+      "name": "fdother_dat_filename",
+      "type": "C 字串 \"FDOTHER.DAT\"(12 bytes 含 NUL)",
+      "meaning": "FDOTHER.DAT 的檔名:60 處 push 0x51a4d 都緊接 call 0x111ba,當 load_res(檔名, 舊緩衝, 資源號)的第 1 個引數,分布在 26 個函式(game_main 的 UI 資源、標題序列、城鎮選單、戰鬥演出等)。後面緊接 0x51a59 \"FDFIELD.DAT\"。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x1f894"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "每一筆都是 `push 0x51a4d`,下一條就是 `call 0x111ba`,也就是 `0x111ba`(檔名, 舊緩衝, 資源號)的第 1 個引數"
+        }
+      ]
+    },
+    {
       "start": "0x51a83",
       "size": 4,
       "name": "target_range_selector",
@@ -274,6 +293,61 @@
       ]
     },
     {
+      "start": "0x53a55",
+      "size": 4,
+      "name": "field_control_block",
+      "type": "dword 指標(FDFIELD 控制段,0x8a3 bytes)",
+      "meaning": "FDFIELD.DAT 第 章節×3+1 條:章節 loader 0x1088d 以 load_res 載入,save_load_restore malloc(0x8a3) 後從存檔區塊 memmove 回來,town_hub_main free 後清 0。配置:+0 地形圖組號、+1 開戰單位數、+2 單位記錄數、+3 起 16 列回合事件 × 3、+0x33 起 16 格事件表 × 2、+0x53 起 16 列寶箱 × 3、+0x83 起 80 筆單位記錄 × 0x1a。",
+      "evidence": [
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x1a813"
+        },
+        {
+          "func": "0x10b4e"
+        },
+        {
+          "func": "0x13a44"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "3 + 16 × 3 + 16 × 2 + 16 × 3 + 80 × 0x1a = 0x8a3,和 malloc 的大小相同"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "章節 loader `0x1088d` `0x10907`:`0x111ba(\"FDFIELD.DAT\"(0x51a59), [0x53a55], 章節 × 3 + 1)`"
+        }
+      ]
+    },
+    {
+      "start": "0x53a61",
+      "size": 4,
+      "name": "fdicon_cache_buffer",
+      "type": "dword 指標(FDICON 圖示快取,malloc 0x32a00)",
+      "meaning": "FDICON 圖示快取:前 0x780 bytes 是每槽 12 個 cell 位移,之後是圖示資料。fdicon_cache_load 第一次([0x53bdf] == 0)配置,load_fd2_tmp 在戰鬥演出結束時重新配置並從 FD2.TMP 讀回;spawn_group 與 save_load_restore 把它整塊寫進 FD2.TMP。draw_unit_sprite、town_hub_redraw 等 13 處以基底 + dword[基底 + 號×4] 取影格。",
+      "evidence": [
+        {
+          "func": "0x11019"
+        },
+        {
+          "func": "0x2e95b"
+        },
+        {
+          "func": "0x127e0"
+        },
+        {
+          "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
+          "quote": "緩衝前 0x780 bytes(40 槽 × 12 dword)是 cell 位移表,位移從緩衝開頭算"
+        },
+        {
+          "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
+          "quote": "這 3 個戰鬥演出進場時 free 快取,結束時從 FD2.TMP 讀回"
+        }
+      ]
+    },
+    {
       "start": "0x53a79",
       "size": 4,
       "name": "chapter_dialog_table",
@@ -322,6 +396,32 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "索引固定是 0,所以這張表整個行程只載入一次,換章不重載"
+        }
+      ]
+    },
+    {
+      "start": "0x53a81",
+      "size": 4,
+      "name": "fdother_ui_container",
+      "type": "dword 指標(FDOTHER 第 5 號資源,UI 素材容器)",
+      "meaning": "game_main 0x25cfa 以 load_res(\"FDOTHER.DAT\", [0x53a81], 5) 載入後不再改。cell = 基底 + dword[基底 + 6 + 號×4]:對話框框格、HP 條、數字、面板底圖(第 22 號)、狀態卡(第 20 / 21 號)等;讀取端是 blit_raw_cell 43、blit_res_cell_sprite 9、draw_res_image_frame 10、自己算 cell 13。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x168b6"
+        },
+        {
+          "func": "0x18c6d"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "唯一的寫入點是 `game_main` `0x25cfa`:`0x111ba(\"FDOTHER.DAT\", [0x53a81], 5)` 的回傳值"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "52 + 10 + 13 + 1 = 76。"
         }
       ]
     },
@@ -464,6 +564,35 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "`cursor_step_right` `0x11c3f` +1、`cursor_step_left` `0x11c92` −1:只在不捲動鏡頭時(否則改的是 `[0x53aa9]`)。"
+        }
+      ]
+    },
+    {
+      "start": "0x53abd",
+      "size": 4,
+      "name": "cursor_screen_y",
+      "type": "dword(畫面內游標 Y,0 .. 7 格)",
+      "meaning": "畫面內游標 Y:cursor_step_up / cursor_step_down 與 step_anim_down / 0x13185 在鏡頭不捲動時 ±1,開場 / 換章清 0,save_load_restore 從存檔頭 +8 讀回;維持 [0x53ab5] = [0x53aad] + [0x53abd]。讀取 × 0x18 / × 0x2ac0 當對話框 / 行動環 / 特效的畫面座標,cursor_step_* 以 < 2 / > 5 決定捲動,draw_map_hud 以 > 5 改 HUD 錨點 [0x51a0c]。",
+      "evidence": [
+        {
+          "func": "0x11b48"
+        },
+        {
+          "func": "0x11b9b"
+        },
+        {
+          "func": "0x1741c"
+        },
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以每個寫入點都維持上一節的 `[0x53ab5]` = `[0x53aad]` + `[0x53abd]`。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "9 + 8 + 4 + 2 + 1 = 24。"
         }
       ]
     },

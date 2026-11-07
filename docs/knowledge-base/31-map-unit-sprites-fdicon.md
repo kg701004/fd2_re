@@ -379,3 +379,21 @@ routine 刻意支援「離場」與「進場/就地」兩種語意的共用機�
 「文件記載的參數個數必須與呼叫端推導相符」,`0x33f78` 因為 5≠3 被擋下,才回頭查出本節。
 同一條規則先前也抓到 doc58 把 `0x2aedb` 簡寫成 `(index)`(實為 2 引數)。
 
+
+## 11. `[0x53a61]` = FDICON 圖示快取緩衝(0x32a00 bytes)的指標(2026-11-07,資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a61`:**36 筆,讀 34、寫 2**,26 個函式。EXE 內初值 0。
+
+**2 個寫入點,都是 `malloc(0x32a00)` 的回傳值**:
+- `fdicon_cache_load` `0x11019` `0x110b0`:快取槽數 `[0x53bdf]` == 0 時配置。緩衝前 0x780 bytes(40 槽 × 12 dword)是 cell 位移表,位移從緩衝開頭算;圖示資料從 +0x780 起依序接上,`[0x539ec]` 是下一段的寫入位置;各槽的 raw key 記在 `[0x53b17 + 槽 × 4]`,key 已在快取就直接回傳舊槽號。
+- `load_fd2_tmp` `0x2e95b` `0x2e987`:`fopen("FD2.TMP", "rb")` 後配置,`fread` 整整 0x32a00 bytes 回來。呼叫者是 `derived_strike_scene` `0x2d7cb`、`attack_scene_orchestrator` `0x2e8dc`、`spell_cast_scene` `0x30de3`(E8 rel32 位元組掃描)—— 這 3 個戰鬥演出進場時 free 快取,結束時從 FD2.TMP 讀回。
+
+**34 筆讀取**:
+- **free 15 筆**:先比 0 再 free 5 組 10 筆(`save_load_restore` `0x10330` / `0x10339`、`0x1088d` `0x109a0` / `0x109a9`、`town_hub_main` `0x26203` / `0x2620c`、`load_game_menu` `0x299c7` / `0x299d0`、`class_change_service` `0x2abf8` / `0x2ac01`);
+  直接 free 5 筆(`sortie_member_select` `0x2b252`、`roster_move_member_to_slot1` `0x2b92f`、`derived_strike_scene` `0x2cf99`、`attack_scene_orchestrator` `0x2e333`、`spell_cast_scene` `0x3007e`)。只有上面 2 個寫入點,所以 free 之後 `[0x53a61]` 都不會清 0。
+- **寫進 FD2.TMP 2 筆**:`fopen("FD2.TMP", "wb")` 後 `fwrite([0x53a61], 1, 0x32a00, fp)`:`0x10b4e` `0x10c35`(spawn_group 結尾)、`save_load_restore` `0x103c5`。
+- **`fdicon_cache_load` 建表 4 筆**:`0x110d1` / `0x1115a` 算 `fread` 的目的位址(基底 + 0x780 / 基底 + `[0x539ec]`),`0x110f0` / `0x11189` 把 12 個位移寫進表(第 0 槽 / 第 `[0x53bdf]` 槽)。
+- **取影格 13 筆**(基底 + dword[基底 + 號 × 4]):`draw_unit_sprite` `0x1292c`、`draw_map_hud` `0x1ae65`、`0x1c2da` `0x1c342`、`draw_units_with_list_overlay` `0x1ccfa`、`flash_listed_units_band_cycle` `0x1cdc8`、`draw_single_unit_sprite` `0x1daed`、`town_hub_redraw` `0x2668b`、
+  `menu_tick_redraw` `0x27292`、`draw_party_roster_two_column` `0x281fb`、`draw_equip_compare_rows` `0x2830b`、`draw_revive_candidate_rows` `0x2a246`、`draw_class_change_options` `0x2a7f9`、`draw_roster_pick_grid` `0x2b63e`。
+
+15 + 2 + 4 + 13 = 34。

@@ -13743,3 +13743,72 @@ doc10 / doc25 / doc47 舊稱的「鏡頭 / camX / camY」與此一致。
 
 續二百零九 .. 二百一十二 共登錄 5 段(`0x53bfb`、`0x53ab5`、`0x53bef`、`0x53ab1`、`0x53ab9`):遊戲函式 659 → 673 / 1202、全域位址 30 → 35 / 900、資料 134 → 154 / 35714 bytes。
 `--gaps globals` 下一批:`0x53abd`(26)、`0x51a4d` / `0x53a61` / `0x53a81`(26)、`0x53a55`(25)。
+
+## 2026-11-07 續二百一十三:資料區段 `0x53abd`(畫面內游標 Y)
+
+起因:使用者要求逐項登錄 `0x53abd`、`0x51a4d` / `0x53a61` / `0x53a81`、`0x53a55`,這是第 1 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53abd]` = 畫面內游標 Y(0 .. 7):10 個寫入點(清 0 / 存檔讀回 6、游標上下移動 2、單位移動演出 2)與 `[0x53ab9]` 一一對應,都維持 `[0x53ab5]` = `[0x53aad]` + `[0x53abd]`。
+24 筆讀取:畫面座標 9(× 0x18 5、× 0x2ac0 4)、`0x24618` 的 Y 引數 8、常數比較 4、其他 3。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53abd` 5 byte → 35(`0x53ac1` 沒列在 fields + 34 筆 `0x53ac1` 的 4 byte 存取跨出)、3 byte → 33(33 筆 4 byte 存取跨出;1 筆 1 byte 不算);未改 → 0。
+- 覆蓋率:遊戲函式 673 → 678 / 1202、全域位址 35 → 36 / 900、資料 154 → 158 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十四:資料區段 `0x51a4d`、`0x53a61`、`0x53a81`(FDOTHER.DAT 字串、FDICON 圖示快取、FDOTHER 第 5 號資源)
+
+起因:同一個要求的第 2 項。事實寫進 doc35 新節(`0x51a4d`、`0x53a81`)與 doc31 §11(`0x53a61`),`docs/data/data_map.json` 登錄 3 段。
+
+### (1) 內容
+
+- `0x51a4d`:`"FDOTHER.DAT\0"`(12 bytes);60 筆位址引用都是 `push 0x51a4d` 緊接 `call 0x111ba`(檔名引數)。
+- `[0x53a81]`:`game_main` `0x25cfa` 寫入 FDOTHER 第 5 號資源,之後不再改;76 筆讀取 = cell 繪製函式 52、`draw_res_image_frame` 10、自己算 cell 13、載入時的舊緩衝 1。
+- `[0x53a61]`:`malloc(0x32a00)` 的 FDICON 圖示快取,寫入點 `fdicon_cache_load`(第一次)與 `load_fd2_tmp`(戰鬥演出結束後從 FD2.TMP 讀回);34 筆讀取 = free 15、寫 FD2.TMP 2、建表 4、取影格 13。
+
+### (2) 差異(只記在這裡,原文沒改)
+
+- doc56 那段 selector-icon 勘誤說「the buffer is allocated once and `[0x53a61]` itself never changes」:就 `town_hub_main` 這一輪成立,但整個程式不成立 —— `derived_strike_scene`、`attack_scene_orchestrator`、`spell_cast_scene` 進場就 free `[0x53a61]`,結束時 `load_fd2_tmp` 重新 `malloc(0x32a00)` 並從 FD2.TMP 讀回,指標可能換位址。
+- doc35 §9.7 記 `0x111ba` 的 descriptor 指向 `0x51a4d` 的有 48 處(當時 976 個函式的 CALL flow + PUSH 回溯);以 `re_coverage` 的位址引用計是 60 處、26 個函式,每處的下一條都是 `call 0x111ba`。
+
+### (3) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51a4d` 13 byte → 1(`0x51a59` 沒列在 fields)、11 byte → 0:位址引用沒有寬度,工具查不出字串長度;12 bytes 是由 EXE 位元組確認的(+11 是 NUL、+12 起是下一個字串 `"FDFIELD.DAT"`)。
+  `0x53a61` 5 byte → 40(`0x53a65` 沒列在 fields + 39 筆 `0x53a65` 的 4 byte 存取跨出)、3 byte → 36(全部跨出);
+  `0x53a81` 5 byte → 25(`0x53a85` 沒列在 fields + 24 筆 `0x53a85` 的 4 byte 存取跨出)、3 byte → 77(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 678 → 693 / 1202、全域位址 36 → 39 / 900、資料 158 → 178 / 35714 bytes。
+- doc35 是混合 EOL,新節只附加 LF 行;doc31 工作副本是純 CRLF(HEAD blob 0 CR),新節附加 CRLF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十五:資料區段 `0x53a55`(FDFIELD 控制段)
+
+起因:同一個要求的第 3 項(最後一項)。事實寫進 doc25 新節 §23(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53a55]` = FDFIELD 第 章節 × 3 + 1 條(控制段,0x8a3 bytes)的指標:章節 loader `0x1088d` 載入、`save_load_restore` 從存檔區塊複製回來、`town_hub_main` free 後清 0。
+配置 3 + 16 × 3 + 16 × 2 + 16 × 3 + 80 × 0x1a = 0x8a3:表頭(地形圖組號、開戰單位數、單位記錄數)、回合事件列、事件表、寶箱列、單位記錄。
+36 筆讀取 = free 4、舊緩衝 1、`memmove` 2、地形圖組號 7、表頭 +1 / +2 2、單位記錄 2、事件表 1、寶箱列 3、回合事件列 14。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53a55` 5 byte → 15(`0x53a59` 沒列在 fields + 14 筆 `0x53a59` 的 4 byte 存取跨出)、3 byte → 39(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 693 → 702 / 1202、全域位址 39 → 40 / 900、資料 178 → 182 / 35714 bytes。
+- doc25 是混合 EOL(HEAD blob 3246 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 本批小結與下一步
+
+續二百一十三 .. 二百一十五 共登錄 5 段(`0x53abd`、`0x51a4d`、`0x53a61`、`0x53a81`、`0x53a55`):遊戲函式 673 → 702 / 1202、全域位址 35 → 40 / 900、資料 154 → 182 / 35714 bytes。
+仍未登錄的鄰居:`0x53a59`、`0x53a5d` / `0x53a65` / `0x53a69`、`0x53a85`、`0x53ac1`、`0x51a59` / `0x51a65`。
+`--gaps globals` 下一批:`0x53eec`(24)、`0x53ac1`(23)、`0x53ecc`(23)、`0x53bf7` / `0x53f66` / `0x541f4`(20)。

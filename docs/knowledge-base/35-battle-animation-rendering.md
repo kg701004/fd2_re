@@ -5604,3 +5604,44 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - `dialog_box_open_anim` / `dialog_box_close_anim` 各 1 筆 `[0x53ab9] + [0x53abd]` 是否為 0;`battle_system_submenu` `0x1a098` 1 byte 寫到存檔頭 `[eax + 7]`。
 
 9 + 8 + 5 + 2 + 1 = 25。
+
+## 2026-11-07:`[0x53abd]` = 畫面內游標 Y(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53abd`:**34 筆,讀 24(其中 1 筆 1 byte)、寫 6、讀改寫 4**,26 個函式。EXE 內初值 0。
+
+**10 個寫入點**(和上一節 `[0x53ab9]` 一一對應,X 換成 Y):
+- 清 0 5 處:`0x205da` `0x2064b`、`0x233c6` `0x23493`、`command_handler_67` `0x236e2`、`command_handler_77` `0x23f5d`、`command_handler_87` `0x258aa`;`save_load_restore` `0x10415` 從存檔頭 `movzx [esi + 8]` 讀回(存的那一邊是 `battle_system_submenu` `0x1a0a1` 1 byte 寫到 `[eax + 8]`)。
+- `cursor_step_up` `0x11b81` −1、`cursor_step_down` `0x11be0` +1:`[0x53abd]` < 2 且 `[0x53aad]` ≠ 0(上)/ `[0x53abd]` > 5 且 `[0x53aad]` ≠ 地圖高 `[0x53ac5]` − 8(下)時改捲鏡頭,否則改 `[0x53abd]`。
+- `step_anim_down` `0x12f1b` +1:(單位 Y − `[0x53aad]`)> 5 且 `[0x53aad]` ≠ `[0x53ac5]` − `[0x51a8b]` 時改捲鏡頭,否則改 `[0x53abd]`;`0x13185` `0x13205` −1:(單位 Y − `[0x53aad]`)< 2 且 `[0x53aad]` ≠ 0 時改捲鏡頭,否則改 `[0x53abd]`。
+所以每個寫入點都維持上一節的 `[0x53ab5]` = `[0x53aad]` + `[0x53abd]`。`cursor_step_down` 的鏡頭上限是地圖高 − 8,`[0x53abd]` 的值域因此是 0 .. 7(INFERRED:由寫入點的邊界推得,沒有實機量)。
+
+**`[0x53abd]` 的 24 筆讀取**:
+- **畫面座標 9 筆**:`imul × 0x18`(每格 24 像素)5 筆 —— `dialog_box_open_anim` `0x165f6`、`dialog_box_close_anim` `0x16bb6`、`action_ring_draw` `0x17a04`、`lut_circle_burst_at_cursor` `0x21ed4`、`0x22253` `0x222f8`;
+  × 0x2ac0(24 列 × 畫布列寬 0x1c8,以 shl / add / sub 組出)4 筆 —— `action_ring_open` `0x1744e`、`action_ring_close` `0x176f7`、`map_save_72px_block` `0x175f3` / `map_restore_72px_block` `0x17664`(先 −1),加到畫布 `[0x53a49]` + 0x8088。
+- **`0x24618` 的 Y 引數 8 筆**:`command_handler_79` `0x245bf`(+ 3)、`command_handler_84` `0x252e1`(− 1)、`command_handler_87` `0x2583a`(+ 1)、`command_handler_50` `0x336d3` / `command_handler_55` `0x33cd0`(+ 5)、`command_handler_54` `0x33baa`(+ 3)/ `0x33bfd` / `0x33c57`(直接 push);
+  X 引數都是 `[0x53ab9]`(或加常數),第 3、4 個引數是 (10, 8) 4 筆、(10, 10) 1 筆、(2, 2) 3 筆。
+- **常數比較 4 筆**:`cursor_step_up` `0x11b5b`(< 2)、`cursor_step_down` `0x11bb3`(> 5)、`draw_map_hud` `0x1ad2a` / `0x1ad48`(> 5;再看 `[0x53ab9]` < 3 / > 9,決定 HUD 錨點 `[0x51a0c]` = 0xf2 / 1)。
+- `dialog_box_open_anim` `0x1660a` / `dialog_box_close_anim` `0x16bc9` 各 1 筆 `[0x53ab9] + [0x53abd]` 是否為 0;`battle_system_submenu` `0x1a0a1` 1 byte 寫到存檔頭 `[eax + 8]`。
+
+9 + 8 + 4 + 2 + 1 = 24。
+
+## 2026-11-07:`0x51a4d` = 字串 `"FDOTHER.DAT"`、`[0x53a81]` = FDOTHER 第 5 號資源(UI 素材容器)的指標(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`。
+
+**`0x51a4d`**:EXE 內 12 bytes `46 44 4f 54 48 45 52 2e 44 41 54 00` = `"FDOTHER.DAT\0"`,後面緊接 `0x51a59` `"FDFIELD.DAT"`、`0x51a65` `"FDSHAP.DAT"`。
+**60 筆位址引用、26 個函式**,每一筆都是 `push 0x51a4d`,下一條就是 `call 0x111ba`,也就是 `0x111ba`(檔名, 舊緩衝, 資源號)的第 1 個引數;程式裡沒有讀寫這 12 bytes 內容的指令。
+
+**`[0x53a81]`**:**77 筆,讀 76、寫 1**,26 個函式。EXE 內初值 0。唯一的寫入點是 `game_main` `0x25cfa`:`0x111ba("FDOTHER.DAT", [0x53a81], 5)` 的回傳值;沒有 free,也沒有別的寫入,整個執行期都指向這份資源(本檔前段記的 FDOTHER 第 5 個資源、「LMI1」子容器)。
+cell 位址 = 基底 + dword[基底 + 6 + 號 × 4]。76 筆讀取依取用方式:
+- **傳給 cell 繪製函式 52 筆**:`blit_raw_cell` `0x1685c` 43(`draw_box_frame_grid` 17、`draw_hp_bar` 6、`draw_item_panel` 5、`draw_item_list_two_column` 5、`draw_stat_bar_cells` 4、`wait_key_with_marker` 3、`draw_unit_status_panel` 2、`draw_command_list` 1);
+  `blit_res_cell_sprite` `0x16886` 9(`draw_battle_situation_panel` 4、`draw_number` 2、`draw_item_panel` / `draw_item_list_two_column` / `sortie_member_select` 各 1)。
+- **傳給 `draw_res_image_frame` `0x15f0e` 10 筆**:`save_load_restore`、`battle_phase_advance`、`phase_banner_zoom_in`、`phase_banner_zoom_out`、`phase_banner_split_slide` 各 2。
+- **自己算 cell 位址 13 筆**:
+  - 第 0 號 2 筆:`dialog_box_open_anim` `0x16649` / `dialog_box_close_anim` `0x16c0c` 以 `movsx word [基底 + 6]` 取位移,交給 `decode_blit_transparent` `0x15e9e`。
+  - 第 20 號(+ 0x56)2 筆(`info_card_build`、`sortie_member_select`)、第 21 號(+ 0x5a)3 筆(`unit_info_cards`、`info_card_build`、`sortie_member_select`)、第 22 號(+ 0x5e)1 筆(`draw_unit_panel` 的面板底圖):這 6 筆交給 `blit_rle_image` `0x4ebff`。
+  - 第 130 號(+ 0x20e)1 筆:`draw_map_hud` `0x1ad72`,交給 `blit_rle_image_at_xy` `0x4e98d`。
+  - 以暫存器當號 4 筆:`draw_signed_number2` `0x1aedd`(交給 `blit_rle_image_at_xy`)、`unit_death_sweep` `0x1ddb9` / `0x1de26` 與 `action_finish_effect` `0x1e03f`(交給 `blit_rle_c0_transparent` `0x4ebab`)。
+- `game_main` `0x25ce7` 1 筆:載入時當 `0x111ba` 的舊緩衝引數(EXE 初值 0)。
+
+52 + 10 + 13 + 1 = 76。

@@ -3373,3 +3373,37 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - `turn_event_dispatch` 的 `cmp edx, [0x53bef]` 1 筆;`event_handler_47` / `_49` 各 1 筆 `mov eax` 後做有號 ÷ 2(本檔 §6.1「回合數 DIV 2 當群組號」)。
 
 16 + 8 + 8 + 1 + 2 = 35。
+
+## 23. `[0x53a55]` = FDFIELD 控制段(0x8a3 bytes)的指標(2026-11-07,資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a55`:**39 筆,讀 36、寫 3**,25 個函式。EXE 內初值 0。
+
+**3 個寫入點**:
+- 章節 loader `0x1088d` `0x10907`:`0x111ba("FDFIELD.DAT"(0x51a59), [0x53a55], 章節 × 3 + 1)`;同一函式把第 章節 × 3 + 2 條放進 `[0x53a59]`、第 章節 × 3 條放進 `[0x53a51]`(doc35 地圖格緩衝)。
+- `save_load_restore` `0x10193`:free 舊的、`malloc(0x8a3)`,`0x101c9` `memmove([0x53a55], 存檔區塊, 0x8a3)` 複製回來(存的那一邊是 `battle_system_submenu` `0x19fee` `memmove(存檔區塊, [0x53a55], 0x8a3)`,後面接著名冊 0xa00 bytes)。
+- `town_hub_main` `0x261b7`:比 0、free、寫 0。
+
+**控制段配置**(由讀取端的位移推得;3 + 16 × 3 + 16 × 2 + 16 × 3 + 80 × 0x1a = 0x8a3,和 malloc 的大小相同):
+
+| 位移 | 內容 | 讀取端 |
+|---|---|---|
+| +0 | byte:地形圖組號 | × 2 / × 2 + 1 當 `"FDSHAP.DAT"`(0x51a65)的資源號,載入 `[0x53a5d]` / `[0x53a69]` |
+| +1 | byte:開戰時的單位數 | → `[0x53be7]`(doc10) |
+| +2 | byte:單位記錄數 | → `[0x53be3]`,`0x10b4e` 的走訪上界 |
+| +3 + 列 × 3 | 16 列回合事件(回合、事件號、陣營) | `turn_event_dispatch`(§22) |
+| +0x33 + (n − 1) × 2 | 16 格事件表(事件號、選擇子) | `field_event_lookup` |
+| +0x53 + 號 × 3 | 16 列寶箱 / 獎勵(種類 byte + word 值) | `ai_mode_dispatch`、`field_cell_treasure_check` |
+| +0x83 + k × 0x1a | 80 筆單位記錄(26 bytes,+0x15 = 群組) | `0x10b4e`、`field_unit_construct` |
+
+**36 筆讀取**:
+- free 4 筆:`save_load_restore` `0x1016f` / `0x10178`、`town_hub_main` `0x261a0` / `0x261a9`。
+- `0x111ba` 的舊緩衝引數 1 筆:`0x1088d` `0x108f4`。
+- `memmove` 2 筆:`save_load_restore` `0x101c9`、`battle_system_submenu` `0x19fee`。
+- +0 地形圖組號 7 筆:`save_load_restore` `0x10233`、`0x1088d` `0x10937`(這 2 筆載入 × 2 與 × 2 + 1 兩條),`derived_strike_scene` `0x2d7a1`、`spell_scene_effects` `0x2dcef`、`ai_item_scene` `0x2e229`、`attack_scene_orchestrator` `0x2e8b9`、`spell_cast_scene` `0x30dbf`(這 5 筆在戰鬥演出結束時把 × 2 那條重載進 `[0x53a5d]`)。
+- +1 / +2 2 筆:`save_load_restore` `0x1027e`、`0x1088d` `0x10982`。
+- 單位記錄 2 筆:`0x10b4e` `0x10bd7`(+0x15 群組比對)、`field_unit_construct` `0x10d71`。
+- 事件表 1 筆:`field_event_lookup` `0x13a77`(+0x33 不是 0xff 且 +0x34 等於引數時,事件號寫進 `[0x51a8f]`)。
+- 寶箱列 3 筆:`ai_mode_dispatch` `0x13cbf`、`field_cell_treasure_check` `0x191be` / `0x19344`。
+- 回合事件列 14 筆:`turn_event_dispatch` `0x1a831`,以及 §22 那 13 筆讀回合數的事件 handler 各讀一次指標(`event_handler_30` 2、`_62`、`_65`、`_67`、`_69`、`_74`、`_75` 2、`_76` 2、`_79`、`_81`)。
+
+4 + 1 + 2 + 7 + 2 + 2 + 1 + 3 + 14 = 36。
