@@ -72,6 +72,35 @@
       ]
     },
     {
+      "start": "0x51a65",
+      "size": 11,
+      "name": "fdshap_dat_filename",
+      "type": "C 字串 \"FDSHAP.DAT\"(11 bytes 含 NUL)",
+      "meaning": "FDSHAP.DAT 的檔名:11 處 push 0x51a65 都緊接 call 0x111ba,當 load_res 的第 1 個引數。save_load_restore / 章節 loader 以地形圖組號 × 2、× 2 + 1 載入 [0x53a5d] / [0x53a69],command_handler_80 固定 0x2e / 0x2f,戰鬥演出 5 個函式結束時重載 × 2。前面 0x51a59 是 \"FDFIELD.DAT\",後面 0x51a70 是 \"DATO.DAT\"。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x24754"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "成對 6 + 演出重載 5 = 11。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**11 筆全是 `push 0x51a65`**"
+        }
+      ]
+    },
+    {
       "start": "0x51a83",
       "size": 4,
       "name": "target_range_selector",
@@ -153,6 +182,122 @@
       ]
     },
     {
+      "start": "0x51aab",
+      "size": 1,
+      "name": "map_hud_enabled",
+      "type": "byte 旗標(選項環第 4 項,存檔)",
+      "meaning": "地圖 HUD 開關:draw_map_hud 在它為 0 時整個 HUD 不畫(非 0 再看 [0x51aac])。options_ring 第 3 項 xor 1 切換,標籤 0x18 + (旗標 == 0);存在戰況存檔表頭 +0xf 與存檔槽 +0xa06,讀檔 3 處寫回。EXE 內初值 1。",
+      "evidence": [
+        {
+          "func": "0x1728c"
+        },
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x2968d"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "標籤 1 + 存檔 2 + `draw_map_hud` 1 = 4。"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "- `draw_map_hud` `0x1ad0c`:為 0 就跳到 `0x1317d`,整個 HUD 不畫"
+        }
+      ]
+    },
+    {
+      "start": "0x51b91",
+      "size": 360,
+      "name": "event_handler_table",
+      "type": "dword[90] 函式指標表(事件號 0 .. 89)",
+      "meaning": "全域事件跳表:8 個 dispatch 點都是 call [事件號 × 4 + 0x51b91]。事件號來自 [0x51a8f](battle_main_input_loop、field_command_ring、friendly / enemy_phase_dispatch 共 5 處)、FDFIELD 回合事件列 +1(turn_event_dispatch)、3 byte 獎勵列的 word 值(field_cell_treasure_check、grant_reward_rows)。90 格都是函式入口(0x34531 .. 0x3644e);下一格 0x51cf9 是游標 x 備份。",
+      "evidence": [
+        {
+          "func": "0x1a813"
+        },
+        {
+          "func": "0x190ac"
+        },
+        {
+          "func": "0x1aa1d"
+        },
+        {
+          "func": "0x1d8ba"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "`[0x51a8f]` 5 + 回合事件 1 + 獎勵列 2 = 8。"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "90 格都是 `docs/data/function_inventory.json` 的函式入口"
+        }
+      ]
+    },
+    {
+      "start": "0x51e61",
+      "size": 1,
+      "name": "bgm_enabled",
+      "type": "byte 旗標(選項環第 1 項,存檔)",
+      "meaning": "音樂開關:play_bgm 開始播放後,旗標為 0 就以 AIL_set_sequence_volume 把音量設 0(曲子照放),非 0 設 0x7f(曲號 0x10 / 0x11 立刻,其他 0x7d0 毫秒漸升)。options_ring 第 0 項翻轉並以 0x3e8 毫秒漸變到 0x7f 或 0;存在戰況存檔表頭 +0x10 與存檔槽 +0xa08。EXE 內初值 1。",
+      "evidence": [
+        {
+          "func": "0x1728c"
+        },
+        {
+          "func": "0x25977"
+        },
+        {
+          "func": "0x19df7"
+        },
+        {
+          "func": "0x2986f"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "標籤 1 + 比較 1 + 存檔 2 + `play_bgm` 1 = 5。"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "本函式推的格式字串 `0x50d0c` 就是 `AIL_set_sequence_volume(0x%X,%d,%d)`"
+        }
+      ]
+    },
+    {
+      "start": "0x51e62",
+      "size": 1,
+      "name": "sfx_enabled",
+      "type": "byte 旗標(選項環第 2 項,存檔)",
+      "meaning": "音效開關:play_sfx_a 與 play_digital_sample(play_sfx_b)在它為 0 時直接返回(另兩個條件是 [0x53ef1] 為 0、[0x54133] 非 0)。options_ring 第 1 項寫 0 / 1 切換,標籤 0x14 + (旗標 == 0);存在戰況存檔表頭 +0x11 與存檔槽 +0xa09。EXE 內初值 1。",
+      "evidence": [
+        {
+          "func": "0x1728c"
+        },
+        {
+          "func": "0x25a96"
+        },
+        {
+          "func": "0x25b45"
+        },
+        {
+          "func": "0x19df7"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "標籤 1 + 比較 1 + 存檔 2 + 播音效 2 = 6。"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "- 兩個播音效函式都是 `[0x53ef1]` 為 0、`[0x51e62]` 為 0 或 `[0x54133]` 非 0 時直接返回,不播。"
+        }
+      ]
+    },
+    {
       "start": "0x52387",
       "size": 6,
       "name": "town_keeper_portrait",
@@ -183,6 +328,64 @@
       "fields": {
         "0x4": "church_keeper_portrait"
       }
+    },
+    {
+      "start": "0x52495",
+      "size": 11,
+      "name": "figani_dat_filename",
+      "type": "C 字串 \"FIGANI.DAT\"(11 bytes 含 NUL)",
+      "meaning": "FIGANI.DAT 的檔名:19 處 push 0x52495 都緊接 call 0x111ba,分布在 7 個戰鬥演出 / 轉職 / 角色卡函式;資源號都是 組 × 3 + k(k = 0 11 筆、1 6 筆、2 2 筆),組大多取自單位記錄 +7。前面 0x5248e 是 \"BG.DAT\",後面 0x524a0 是 \"TAI.DAT\"。",
+      "evidence": [
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2fb2c"
+        },
+        {
+          "func": "0x2ff01"
+        },
+        {
+          "func": "0x31c49"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "k = 0 11 + k = 1 6 + k = 2 2 = 19。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**19 筆全是 `push 0x52495`**"
+        }
+      ]
+    },
+    {
+      "start": "0x52762",
+      "size": 4,
+      "name": "ani_vm_dest",
+      "type": "dword 指標(ANI VM 的畫面目的地)",
+      "meaning": "ANI 播放 VM 的畫面目的指標:唯一寫入是 anim_vm_set_context 的第 2 個引數,唯一呼叫端 ani_player 傳 0xa0000(VGA 顯示記憶體)。opcode 4 .. 9 的 6 個處理函式(填滿、複製、RLE、像素清單、run 填、字面段)以它當基底;opcode 0 .. 3 寫 [0x52766] 調色盤。[0x52760] 是畫面 byte 數 0xfa00。",
+      "evidence": [
+        {
+          "func": "0x36fd3"
+        },
+        {
+          "func": "0x36ee0"
+        },
+        {
+          "func": "0x36f24"
+        },
+        {
+          "func": "0x36fac"
+        },
+        {
+          "doc": "docs/knowledge-base/39-ani-afm-format.md",
+          "quote": "op 4 .. 9 各 1 = 6。"
+        },
+        {
+          "doc": "docs/knowledge-base/39-ani-afm-format.md",
+          "quote": "唯一呼叫端是 `ani_player` `0x20421` 的 `0x2048a`"
+        }
+      ]
     },
     {
       "start": "0x52832",
@@ -649,6 +852,35 @@
       ]
     },
     {
+      "start": "0x53a85",
+      "size": 4,
+      "name": "dialog_portrait",
+      "type": "dword 指標(DATO.DAT 一筆頭像資源,4 個嘴型幀)",
+      "meaning": "目前載入的頭像:9 處以 load_res(\"DATO.DAT\", 舊, 頭像號) 換掉(說話者結構或單位記錄 +7、open_dialog_box 引數、店主頭像表 [0x52387] 等)。draw_dialog_cell 取第 號 幀(基底 + dword[基底 + 號 × 4]),0x15f84 / yes_no_prompt 取第 0 幀(基底 + byte[基底])或第 3 幀(+0xc),scene_charcard_text_stage 依倒數取 0 或 3。",
+      "evidence": [
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x16559"
+        },
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x31c49"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "舊緩衝 9 + 取幀 6 = 15。"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "**9 個寫入點全是 `load_res(\"DATO.DAT\", [0x53a85], 頭像號)` 的回傳**"
+        }
+      ]
+    },
+    {
       "start": "0x53a8d",
       "size": 28,
       "name": "int386_regs",
@@ -1103,6 +1335,35 @@
         {
           "doc": "docs/knowledge-base/36-sfx-audio-data.md",
           "quote": "**4 個寫入點 = 2 個載入處,各先寫 0 再寫 `load_res(\"FDOTHER.DAT\"(0x51a4d), 0, 號)` 的結果**:"
+        }
+      ]
+    },
+    {
+      "start": "0x53bdf",
+      "size": 4,
+      "name": "fdicon_cache_slot_count",
+      "type": "dword(FDICON 快取已用槽數)",
+      "meaning": "FDICON 圖示快取的已用槽數:fdicon_cache_load 為 0 時配置 [0x53a61] 並填第 0 槽,否則在 [0x53b17 + i × 4](i < 槽數)找圖示號,找不到就填第 槽數 槽並 +1,回傳槽號。fopen 之後、逐單位重建快取之前清 0 的有 7 處(戰場 2 處把槽號寫回單位 +2,名冊 5 處)。沒有和 40 槽上限比較的指令。",
+      "evidence": [
+        {
+          "func": "0x11019"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x26152"
+        },
+        {
+          "func": "0x2b843"
+        },
+        {
+          "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
+          "quote": "寫:清 0 7 + `0x111ab` 1 = 8;讀:`0x11090`、`0x11121`、`0x11180`、`0x111a2` = 4。"
+        },
+        {
+          "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
+          "quote": "- 函式內沒有和 40(位移表 0x780 bytes = 40 槽 × 12 dword)比較的指令。"
         }
       ]
     },
@@ -1870,6 +2131,35 @@
       "fields": {
         "0x18": "newline_cleared_to_nul"
       }
+    },
+    {
+      "start": "0x541ac",
+      "size": 4,
+      "name": "stdio_open_streams",
+      "type": "dword 指標(Watcom stdio 已開啟串流串列頭;節點 +0 next、+4 FILE*)",
+      "meaning": "C 函式庫的已開啟串流串列:stdio_init_streams 啟動時掛上靜態 FILE,stdio_alloc_file 新開檔時插入,stdio_reclaim_stream 從已關閉串列 [0x541a0] 搬回;fclose、0x46ca7(關閉 ≥ 第 n 個靜態 FILE 的串流)、flush_streams_matching 走訪它;0x3dbe7 把節點拆下移到 [0x541a0]。",
+      "evidence": [
+        {
+          "func": "0x3db52"
+        },
+        {
+          "func": "0x37339"
+        },
+        {
+          "func": "0x3759c"
+        },
+        {
+          "func": "0x46c48"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "插入時取舊頭 3 + 搜尋 / 走訪 4 = 7。"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "- **取位址 1**:`0x3dbe7` 的 `0x3dbee`"
+        }
+      ]
     },
     {
       "start": "0x541f4",

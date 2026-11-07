@@ -638,3 +638,20 @@ esi 值(`0x1c2`/`0x14a`/`0xd2`/`0x6e`/`0x19`/`0xa`,本節重新核對 `0x1c2`/`0
 直接對照實作的分段時長表」,可視為 RE 部分完成;若要整段勾掉,還需要下一輪真的動手拆分
 `cutScript` 並跑一次 remake 錄影 vs DOS 對照複驗(本節不含程式碼改動與活體驗證,依任務範圍
 只交出反組譯數據與對齊建議)。
+
+## 2026-11-07:`[0x52762]` = ANI 播放 VM 的畫面目的指標(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x52762`:**7 筆全是 4 byte 直接定址,讀 6、寫 1**,分布在 7 個函式。EXE 內初值 0。
+
+- **寫 1**:`anim_vm_set_context` `0x36fd3` 的 `0x36fe3`,寫第 2 個引數(第 1 個 word 寫 `[0x52760]`、第 3 個寫 `[0x52766]`)。唯一呼叫端是 `ani_player` `0x20421` 的 `0x2048a`,引數 `(0xfa00, 0xa0000, malloc(0x300))`,所以執行時一直是 `0xa0000`(VGA 顯示記憶體)。
+- **讀 6** = opcode 跳表 `[0x5276a]` 第 4 .. 9 項的 6 個處理函式,都以它當目的基底(第 0 .. 3 項 `0x36e3d` / `0x36e57` / `0x36e65` / `0x36ea7` 寫 `[0x52766]` 調色盤):
+  - op 4 `fli_chunk_fill_frame` `0x36ef5`:整個畫面填同一 byte。
+  - op 5 `fli_chunk_copy_frame` `0x36f11`:整個畫面原樣複製。
+  - op 6 `anim_vm_op_rle` `0x36f24`:RLE 解到畫面(高 2 bit 為 11 → run),寫滿 `[0x52760]` 個 byte 為止。
+  - op 7 `fli_chunk_pixel_list` `0x36f6b`:N 筆(word 位移, 1 byte 像素)。
+  - op 8 `fli_chunk_run_fill` `0x36f84`、op 9 `fli_chunk_literal_runs` `0x36fae`:以 基底 + word 位移 定每段起點。
+
+op 4 .. 9 各 1 = 6。
+
+- `[0x52760]` 是 0xfa00 = 64000 = 320 × 200,當畫面的 byte 數用(fill / copy 的長度、RLE 的結束條件),不是寬度。
+- §4.1 表格的 `0x36c7d`(VM 狀態初始化)、`0x36c9e`(派發器)和本 EXE 差 0x356(`0x36c7d` + 0x356 = `0x36fd3`),是另一版 EXE 的位址;資料位址 `0x52760` / `0x52762` / `0x52766` / `0x5276a` 兩版相同。

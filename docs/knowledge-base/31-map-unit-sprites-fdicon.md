@@ -397,3 +397,18 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `menu_tick_redraw` `0x27292`、`draw_party_roster_two_column` `0x281fb`、`draw_equip_compare_rows` `0x2830b`、`draw_revive_candidate_rows` `0x2a246`、`draw_class_change_options` `0x2a7f9`、`draw_roster_pick_grid` `0x2b63e`。
 
 15 + 2 + 4 + 13 = 34。
+
+## 2026-11-07:`[0x53bdf]` = FDICON 快取已用的槽數(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53bdf`:**13 筆全是 4 byte 直接定址,寫 8、讀 4、讀改寫 1**,分布在 8 個函式。EXE 內初值 0。
+
+**`fdicon_cache_load(圖示號, 檔案)` `0x11019`**(讀 4、讀改寫 1、寫 1):
+- `0x11090` 為 0 時:第 0 槽的圖示號寫進 `[0x53b17]`,`malloc(0x32a00)` 給 `[0x53a61]`,資料讀到 +0x780,寫 12 個位移,`0x110ff` `inc` 成 1,回傳 0。
+- 不為 0 時:`0x11121` 以它為上限線性比對 `[0x53b17 + i × 4]`,找到就回傳 i;找不到就把圖示號寫進第 `[0x53bdf]` 槽、資料讀到 `[0x539ec]`,`0x11180` 以 槽數 × 12 定位移表的列,`0x111a2` 取舊值當回傳,`0x111ab` 寫回 +1。
+- 函式內沒有和 40(位移表 0x780 bytes = 40 槽 × 12 dword)比較的指令。
+
+**7 個寫 0**,每處都在 `fopen` 之後、逐單位呼叫 `fdicon_cache_load` 之前,也就是重建快取:
+- 戰場 2:`save_load_restore` `0x1035c`(`[0x53a45]` 的 `[0x53beb]` 個單位)、章節 loader `0x1088d` 的 `0x10a11`;兩處都把回傳的槽號寫回單位記錄 `+2`。
+- 名冊 5:`town_hub_main` `0x2622e`、`load_game_menu` `0x299f2`、`class_change_service` `0x2ac23`、`sortie_member_select` `0x2b276`、`roster_move_member_to_slot1` `0x2b951`:走 `[0x53bf7]` 的 `[0x53bfb]` 人,圖示號取 `+7`,回傳值不存。
+
+寫:清 0 7 + `0x111ab` 1 = 8;讀:`0x11090`、`0x11121`、`0x11180`、`0x111a2` = 4。

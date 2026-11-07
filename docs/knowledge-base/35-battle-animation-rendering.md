@@ -5855,3 +5855,25 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `rising_particles_effect` `0x21c01`(i 是引數,小圖遮罩)、`unit_present_intro_frames` `0x2248c`(i = 0x72 + k,k = 0 .. 10)、`0x22253` `0x222d9`(固定 `+0x1f6`,即第 0x7c 項 = 上一個函式的最後一格)。
 
 1 + 5 + 5 = 11。
+
+## 2026-11-07:`0x51a65` = 字串 `"FDSHAP.DAT"`(地形圖塊組的檔名;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x51a65`:**11 筆全是 `push 0x51a65`**(取位址),下一條都是 `call 0x111ba`,也就是 `load_res(檔名, 舊緩衝, 資源號)` 的第 1 個引數;分布在 8 個函式。11 bytes 含 NUL,前面 `0x51a59` 是 `"FDFIELD.DAT"`,後面 `0x51a70` 是 `"DATO.DAT"`。
+
+- 成對載入 3 處 × 2:`save_load_restore` `0x10244` / `0x1025e`、章節 loader `0x1088d` 的 `0x10948` / `0x10962`,號 = FDFIELD 控制段 `[0x53a55]` `+0`(地形圖組號)× 2 → `[0x53a5d]`、× 2 + 1 → `[0x53a69]`;`command_handler_80` `0x24a60` / `0x24a7a` 固定 0x2e / 0x2f(組 0x17,前面另以 `"FDFIELD.DAT"` 0x45 號換掉 `[0x53a51]`)。
+- 戰鬥演出重載 5,只載 × 2、寫回 `[0x53a5d]`,前面先 malloc 一塊給 `[0x53a49]`:`derived_strike_scene` `0x2d7b9`、`spell_scene_effects` `0x2dd01`、`ai_item_scene` `0x2e23b`、`attack_scene_orchestrator` `0x2e8ca`、`spell_cast_scene` `0x30dd1`。
+
+成對 6 + 演出重載 5 = 11。
+
+## 2026-11-07:`0x52495` = 字串 `"FIGANI.DAT"`(戰鬥動畫的檔名;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x52495`:**19 筆全是 `push 0x52495`**,下一條都是 `call 0x111ba`;分布在 7 個函式。11 bytes 含 NUL,前面 `0x5248e` 是 `"BG.DAT"`,後面 `0x524a0` 是 `"TAI.DAT"`。
+
+資源號都是 組 × 3 + k(`shl 2` 再減一次 = × 3),組大多直接取自單位記錄 `+7`,其他是先存在堆疊或暫存器的值(來源沒逐一追):
+- k = 0 11:`derived_strike_scene` `0x2d234` / `0x2d2c0`、`spell_scene_effects` `0x2d932`、`ai_item_scene` `0x2e09c`、`attack_scene_orchestrator` `0x2e4ab` / `0x2e4cc`、`class_change_ceremony_anim` `0x2fbc9` / `0x2fbe7`、`spell_cast_scene` `0x3022d` / `0x302dc`、`scene_charcard_text_stage` `0x31e94`。
+- k = 1 6:`spell_scene_effects` `0x2d94b`、`ai_item_scene` `0x2e0b5`、`attack_scene_orchestrator` `0x2e4e3` / `0x2e562`、`spell_cast_scene` `0x30293`、`scene_charcard_text_stage` `0x31e7e`。
+- k = 2 2:`derived_strike_scene` `0x2d253`、`spell_cast_scene` `0x3024c`。
+
+k = 0 11 + k = 1 6 + k = 2 2 = 19。
+
+- §1 寫的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE:本 EXE 的 `0x28c57` 在 `push 0xff` 指令中間,`0x52388` 落在 `town_keeper_portrait` 表(`0x52387`)裡;FIGANI 的檔名引數是 `0x52495`。§1 那段是另一版 EXE 的位址(沒有追是哪一版)。

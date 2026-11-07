@@ -3426,3 +3426,17 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `0x25e02` == 2 → `0x25977(−1, 1)`、`call [章節 × 4 + 0x51de9]`、`town_hub_main` 回 0 時再 `call [章節 × 4 + 0x51d71]`,最後 `0x25e65` 寫 0。
 
 4 + 3 + 2 = 9。
+
+## 2026-11-07:`0x51b91` = 全域事件跳表 90 格(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x51b91`:**8 筆全是 `call dword ptr [事件號 × 4 + 0x51b91]` 的索引讀取**,分布在 7 個函式;沒有寫入。
+
+- 範圍是 §20.3 的 90 格(0 .. 89,`0x51b91` .. `0x51cf8`,0x168 bytes)。檔內每格存 目標 − 0x10000;本 EXE 的值是 `0x34531` .. `0x3644e`,90 格都是 `docs/data/function_inventory.json` 的函式入口。下一格 `0x51cf9` 是游標 x 備份(檔內值 0x12)。
+- 本檔較早幾節的 handler 位址(§6.1 的 `0x341db..0x354dd`、`0x354fe..0x360f8`、event 82 → `0x35f92`)和本 EXE 都差 0x356:第 0 格 `0x341db` + 0x356 = `0x34531`,第 58 格 `0x354fe` + 0x356 = `0x35854`,第 82 格 `0x35f92` + 0x356 = `0x362e8`。那些是另一版 EXE 的位址。
+
+**8 個 dispatch 點**(事件號的來源):
+- `[0x51a8f]` 不是 0xff 時 5:`battle_main_input_loop` `0x1199c`、`field_command_ring` `0x1712d`、`friendly_phase_dispatch` `0x1d890`、`enemy_phase_dispatch` `0x1d95c` / `0x1d9ec`。
+- 回合事件 1:`turn_event_dispatch` `0x1a85a`(FDFIELD 回合事件列 `+1`,§6.1)。
+- 3 byte 獎勵列(`+0` 類型、`+1` word 值)2:`field_cell_treasure_check` `0x19511`(FDFIELD `+0x53` 起的寶箱列,類型不是 0 / 1)、`grant_reward_rows` `0x1ac1a`(類型 2)。
+
+`[0x51a8f]` 5 + 回合事件 1 + 獎勵列 2 = 8。

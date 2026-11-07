@@ -277,3 +277,24 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 暫存 2:`town_equip_service` `0x28f24`、`status_service` `0x29645`。
 
 10 + 13 + 2 = 25。
+
+## 2026-11-07:`[0x53a85]` = 目前載入的頭像(DATO.DAT 一筆資源;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a85`:**24 筆全是 4 byte 直接定址,讀 15、寫 9**,分布在 8 個函式。EXE 內初值 0。上面「相關全域」表的 `[0x3A85]` 一列就是它。
+
+**9 個寫入點全是 `load_res("DATO.DAT", [0x53a85], 頭像號)` 的回傳**(`0x51a70` = `"DATO.DAT"`;前一條 `push dword ptr [0x53a85]` 是舊緩衝引數):
+- `0x15f84` 4:開框碼 −0x11 `0x161c5` / −0x12 `0x162aa` 取說話者結構 `[0x53c1b]` 的 `+7`(−0x11 路徑在 `0x161a2` 另有 ebp == 0x27 時不取 `+7` 的分支);−0x13 `0x163d7` / −0x14 `0x16453` 取 `[0x53a45]` 單位記錄(號 × 0x50)的 `+7`,號是運算元 word。
+- `info_card_build` `0x17f30`:單位記錄 `+7`。
+- `open_dialog_box` `0x1967e`:引數頭像號。
+- `town_equip_service` `0x28f5e`:`[0x52387 + [0x53f4a]]`(店主頭像表)。
+- `status_service` `0x2967f`:`[0x52387]`(表的第 0 項)。
+- `scene_charcard_text_stage` `0x31ff5`:堆疊上的頭像號 `[esp + 0x20]`。
+
+**15 筆讀取**:
+- 舊緩衝引數 9(上面每個寫入點的前一筆)。
+- 取嘴型幀 6(資源開頭是 4 個 dword 幀位移,doc01 §7):
+  - 第 0 幀 = 基底 + byte[基底] 3:`0x15f84` `0x161e3` / `0x162c8`(接著交給 `dialog_box_open_anim` 與 blit)、`yes_no_prompt` `0x19b9a`。
+  - 第 3 幀 = 基底 + dword[基底 + 0xc] 1:`yes_no_prompt` `0x19c02`。
+  - 依引數 2:`draw_dialog_cell` `0x16573` 基底 + dword[基底 + 號 × 4];`scene_charcard_text_stage` `0x32048` 基底 + dword[基底 + 0 或 0xc](倒數 < 2 時取 0xc,開嘴)。
+
+舊緩衝 9 + 取幀 6 = 15。沒有寫 0 的指令。

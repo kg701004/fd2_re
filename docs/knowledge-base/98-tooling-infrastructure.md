@@ -14342,3 +14342,188 @@ EXE 內的值 `81 80 00 82 83 84`(依城鎮選項 `[0x53f4a]`);28 筆 1 byte 讀
 過程備註:doc14 新節的讀取分類第一次草稿寫成 11 + 10 + 3 + 1(重複算了 `vga_textbox_scroll_up`),寫檔前逐筆重算為 10 + 13 + 2。
 仍未登錄的鄰居:`0x53c6b`、`0x53a71`、`0x53c07` / `0x53c0f`(移動時脈 / 上次計時)、`0x53f62`(清單指標)、`0x5238d`(word 表)、`0x52830` / `0x52833` / `0x52834`。
 下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。
+
+## 2026-11-07 續二百四十一:資料區段 `0x51a65`(字串 "FDSHAP.DAT")
+
+起因:使用者要求逐項處理 `0x51a65`、`0x51e62`、`0x53a85`、`0x53bdf`、`0x51aab`、`0x51b91`、`0x51e61`、`0x52495`、`0x52762`、`0x541ac`(依 `--gaps globals` 函式引用數挑出的 10 個),這是第 1 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+11 筆全是 `push 0x51a65` 緊接 `call 0x111ba`(`load_res` 的檔名):`save_load_restore` / 章節 loader 以地形圖組號 × 2、× 2 + 1 成對載入 `[0x53a5d]` / `[0x53a69]`,`command_handler_80` 固定 0x2e / 0x2f,戰鬥演出 5 個函式重載 × 2。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51a65` 12 byte → 1(`0x51a70` 沒列在 fields)、10 byte → 0(取位址的存取沒有大小,檢查器只證明長度 ≤ 11);未改 → 0。
+- 覆蓋率:遊戲函式 827 → 827 / 1202(8 個函式都已計入)、全域位址 75 → 76 / 900、資料 583 → 594 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十二:資料區段 `0x51e62`(音效開關)
+
+起因:同一個要求的第 2 項。事實寫進 doc11 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 5(讀檔 3、`options_ring` 寫 0 / 1 各 1)、讀 6(標籤、比較、存檔 2、`play_sfx_a` 與 `play_digital_sample` 各 1)。兩個播音效函式在它為 0 時直接返回。存在戰況存檔表頭 `+0x11`、存檔槽 `+0xa09`。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51e62` 2 byte → 1(`0x51e63` 沒列在 fields);未改 → 0。
+- 覆蓋率:遊戲函式 827 → 827 / 1202、全域位址 76 → 77 / 900、資料 594 → 595 / 35714 bytes。
+- doc11 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十三:資料區段 `0x53a85`(目前載入的頭像)
+
+起因:同一個要求的第 3 項。事實寫進 doc14 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 9 全是 `load_res("DATO.DAT", [0x53a85], 頭像號)` 的回傳(說話者 / 單位記錄 `+7`、`open_dialog_box` 引數、店主頭像表等);
+讀 15 = 舊緩衝 9 + 取嘴型幀 6(第 0 幀 3、第 3 幀 1、依引數 2)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53a85` 5 byte → 9(`0x53a89` 沒列在 fields + 8 筆 `0x53a89` 的存取跨出)、3 byte → 24(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 827 → 828 / 1202、全域位址 77 → 78 / 900、資料 595 → 599 / 35714 bytes。
+- doc14 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十四:資料區段 `0x53bdf`(FDICON 快取已用槽數)
+
+起因:同一個要求的第 4 項。事實寫進 doc31 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`fdicon_cache_load` 讀 4、讀改寫 1、寫 1(為 0 時配置並填第 0 槽;否則線性找圖示號,找不到就填第 槽數 槽並 +1);
+另 7 處在 `fopen` 之後清 0、逐單位重建快取(戰場 2 處把槽號寫回單位 `+2`,名冊 5 處)。沒有和 40 槽上限比較的指令。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53bdf` 5 byte → 5(`0x53be3` 沒列在 fields + 4 筆跨出)、3 byte → 13(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 828 → 828 / 1202、全域位址 78 → 79 / 900、資料 599 → 603 / 35714 bytes。
+- doc31 工作複本是 CRLF(HEAD blob 0 CR),新節以 CRLF 附加。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十五:資料區段 `0x51aab`(地圖 HUD 開關)
+
+起因:同一個要求的第 5 項。事實寫進 doc11 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 3(讀檔)、讀改寫 1(`options_ring` `xor 1`)、讀 4(標籤、存檔 2、`draw_map_hud`)。`draw_map_hud` 在它為 0 時整個 HUD 不畫。
+鄰居 `[0x51aac]` 有 14 個寫入、只被 `draw_map_hud` 讀 1 次,不是選項;doc10 的 gate 稽核清單把兩個位址混在一起,新節已列出差別。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51aab` 2 byte → 1(`0x51aac` 沒列在 fields);未改 → 0。
+- 覆蓋率:遊戲函式 828 → 828 / 1202、全域位址 79 → 80 / 900、資料 603 → 604 / 35714 bytes。
+- doc11 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十六:資料區段 `0x51b91`(全域事件跳表 90 格)
+
+起因:同一個要求的第 6 項。事實寫進 doc25 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+8 筆全是 `call dword ptr [事件號 × 4 + 0x51b91]`:`[0x51a8f]` 5、回合事件 1、3 byte 獎勵列 2。90 格都是函式入口(`0x34531` .. `0x3644e`)。
+doc25 較早幾節的 handler 位址和本 EXE 差 0x356(第 0、58、82 格都核對過),是另一版 EXE 的位址。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51b91` 361 byte → 6(`0x51cf9` 沒列在 fields + 5 筆跨出)、364 byte → 1;356 / 359 byte → 0(索引存取不核對大小,檢查器只證明長度 ≤ 360);未改 → 0。
+- 覆蓋率:遊戲函式 828 → 830 / 1202、全域位址 80 → 81 / 900、資料 604 → 964 / 35714 bytes。
+- doc25 是混合 EOL(HEAD blob 3246 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十七:資料區段 `0x51e61`(音樂開關)
+
+起因:同一個要求的第 7 項。事實寫進 doc11 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 4(讀檔 3、`options_ring` 翻轉 1)、讀 5(標籤、比較、存檔 2、`play_bgm`)。`play_bgm` 播放後依它以 `AIL_set_sequence_volume` 設 0 或 0x7f;翻轉時以 0x3e8 毫秒漸變。
+`0x3b124` = `AIL_set_sequence_volume` 有 Miles 追蹤字串為據,doc11 L145 節撤回的「音量呼叫」說法應恢復(新節已寫明)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51e61` 2 byte → 2(`0x51e62` 沒列在 fields + 與 `0x51e62` 段重疊);未改 → 0。
+- 覆蓋率:遊戲函式 830 → 830 / 1202、全域位址 81 → 82 / 900、資料 964 → 965 / 35714 bytes。
+- doc11 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十八:資料區段 `0x52495`(字串 "FIGANI.DAT")
+
+起因:同一個要求的第 8 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+19 筆全是 `push 0x52495` 緊接 `call 0x111ba`,資源號都是 組 × 3 + k(k = 0 11、1 6、2 2)。
+doc35 §1 的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE(新節已寫明)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x52495` 12 byte → 1(`0x524a0` 沒列在 fields)、10 byte → 0(檢查器只證明長度 ≤ 11);未改 → 0。
+- 覆蓋率:遊戲函式 830 → 830 / 1202、全域位址 82 → 83 / 900、資料 965 → 976 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百四十九:資料區段 `0x52762`(ANI VM 的畫面目的指標)
+
+起因:同一個要求的第 9 項。事實寫進 doc39 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+唯一寫入 `anim_vm_set_context` 的第 2 個引數,唯一呼叫端 `ani_player` 傳 `0xa0000`;讀 6 = opcode 4 .. 9 的處理函式各 1。
+`[0x52760]` = 0xfa00 是畫面 byte 數,不是寬度;doc39 §4.1 的程式位址和本 EXE 差 0x356。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x52762` 5 byte → 6(`0x52766` 沒列在 fields + 5 筆跨出)、3 byte → 7(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 830 → 833 / 1202、全域位址 83 → 84 / 900、資料 976 → 980 / 35714 bytes。
+- doc39 工作複本是 CRLF(HEAD blob 0 CR),新節以 CRLF 附加。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十:資料區段 `0x541ac`(Watcom stdio 已開啟串流串列頭)
+
+起因:同一個要求的第 10 項(最後一項)。事實寫進 doc03 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 3(`stdio_init_streams`、`stdio_alloc_file`、`stdio_reclaim_stream` 插到串列頭)、讀 7(取舊頭 3、搜尋 / 走訪 4)、取位址 1(`0x3dbe7` 拆下移到 `[0x541a0]`)。
+節點 `+0` next、`+4` FILE*;靜態 FILE 陣列 `0x52840` 起 20 個 × 0x1a bytes。初值不在 EXE 檔內,載入後是 0 是推論。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x541ac` 5 byte → 3(`0x541b0` 沒列在 fields + 2 筆跨出)、3 byte → 10(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 833 → 835 / 1202、全域位址 84 → 85 / 900、資料 980 → 984 / 35714 bytes。
+- doc03 工作複本是 CRLF(HEAD blob 0 CR),新節以 CRLF 附加。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 本批小結與下一步
+
+續二百四十一 .. 二百五十 共登錄 10 段(`0x51a65`、`0x51e62`、`0x53a85`、`0x53bdf`、`0x51aab`、`0x51b91`、`0x51e61`、`0x52495`、`0x52762`、`0x541ac`):遊戲函式 827 → 835 / 1202、全域位址 75 → 85 / 900、資料 583 → 984 / 35714 bytes。
+順帶發現的舊記載問題(都只在新節寫明,舊段落沒改):doc11 L145 節撤回的「`0x3b124` 是音量呼叫」其實有追蹤字串為據;doc10 gate 稽核把 `0x51aab` / `0x51aac` 混列;doc25 §6.1、doc35 §1、doc39 §4.1 的程式位址是另一版 EXE(和本版差 0x356)。
+仍未登錄的鄰居:`0x51a59`("FDFIELD.DAT")、`0x51a70`("DATO.DAT")、`0x5248e` / `0x524a0`("BG.DAT" / "TAI.DAT")、`0x51aac`、`0x51e63`(曲號表)、`0x51cf9` / `0x51cfd`(游標備份)、`0x53b17`(FDICON 圖示號表)、`0x52760` / `0x52766` / `0x5276a`(ANI VM)、`0x541a0`(已關閉串流串列)。
+下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。

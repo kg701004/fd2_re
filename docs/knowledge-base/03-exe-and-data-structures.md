@@ -449,3 +449,21 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - `dosx_set_int_vector` `0x4d656` 2:值在 2 .. 8 之間才走另一條設定中斷向量的路。
 
 9 + 6 + 2 = 17。本檔開頭記 FD2.EXE 是 DOS4GW LE,執行時應落在 `int 21h` AX = 0xff00 那條、值 1(推論:沒有實機讀值,也沒有對照 Watcom 函式庫原始碼)。鄰居 `0x52833`(只有 2 筆讀取)、`0x52834` / `0x52838`(`_cstart_` 存的 esi / cx)本輪不登錄。
+
+## 2026-11-07:`[0x541ac]` = Watcom stdio 已開啟串流的串列頭(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x541ac`:**11 筆:4 byte 直接定址讀 7、寫 3,取位址 1**,分布在 7 個函式。EXE 檔內沒有這個位址的 bytes(資料物件的檔內頁在它之前就結束),載入後應是 0(推論)。
+
+- 節點 8 bytes:`+0` 下一節點、`+4` FILE 指標。`[0x541a0]` 是已關閉串流的串列頭,節點格式相同。靜態 FILE 陣列從 `0x52840` 起,每個 0x1a bytes,到 `0x52a48` 為止(20 個)。
+- **寫 3**(都是把節點插到串列頭):
+  - `stdio_init_streams` `0x46c76`:啟動時把旗標 `+0xc` 非 0 的靜態 FILE 逐一配 8 bytes 節點掛上,最後清 `[0x541a0]`。
+  - `stdio_alloc_file` `0x3dbcd`:先拿 `[0x541a0]` 的節點;沒有就找旗標 & 3 == 0 的靜態 FILE 配 8 bytes 節點;再沒有就 malloc(0x22) 當節點加 FILE。
+  - `stdio_reclaim_stream` `0x37383`:FILE 不在已開啟串列、但在 `[0x541a0]` 裡時,拆下來搬回已開啟串列;兩邊都沒有就設 errno 4、回傳 0。
+- **讀 7**:
+  - 插入時取舊頭 3:`0x46c68`、`0x3dbc5`、`0x3737b`。
+  - 搜尋 / 走訪 4:`stdio_reclaim_stream` `0x37340`(先找已開啟串列);`fclose` `0x375a2`(找不到回傳 −1,找到呼叫 `0x375c8(FILE, 1)`);`0x46ca7` `0x46cb1`(對位址 ≥ 靜態 FILE[引數] 或 `+0xd` bit 6 的串流呼叫 `0x375c8`,`0x46c8d` 傳 0、`0x46c9c` 傳 5);`flush_streams_matching` `0x46d09`(旗標符合遮罩就計數,`+0xd` bit 4 的再呼叫 `0x3de66`)。
+
+插入時取舊頭 3 + 搜尋 / 走訪 4 = 7。
+
+- **取位址 1**:`0x3dbe7` 的 `0x3dbee`(`mov edx, 0x541ac`,當「指向下一節點欄位的指標」走訪):找到 FILE 就從已開啟串列拆下、旗標 `+0xc` 或上 3、插到 `[0x541a0]`。
+- 函式名是 `docs/data/function_names.json` 既有的;`0x46ca7` / `0x3dbe7` 沒有名字。整組是 Watcom C 函式庫的串流管理,遊戲碼只經由 fopen / fclose 間接碰到它。

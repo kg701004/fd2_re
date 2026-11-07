@@ -1622,3 +1622,43 @@ FDTXT 直接渲染）互相印證，不是同一份證據重複引用。
 
 1 + 2 + 2 + 2 = 7。EXE 裡讀它的只有這 7 筆,玩家方的攻擊 / 法術函式都不讀,所以這個選項只決定敵方(AI)行動要不要切到攻擊 / 法術場景。
 上面 `0x1728C` 子選單那節說玩法語意「依然不猜」;本節的結論來自讀取端的分支,標籤字串 idx 0x16 / 0x17 的內容沒有重新核對。
+
+## 2026-11-07:`[0x51e61]` 音樂開關、`[0x51e62]` 音效開關、`[0x51aab]` 地圖 HUD 開關(選項環其餘 3 項;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`。三個都是 1 byte 直接定址,EXE 內初值都是 1。
+
+- `options_ring` `0x1728c` 的 4 項(`[0x53c57]`):0 → `[0x51e61]`、2 → `[0x53af9]`、3 → `[0x51aab]`,其餘(1)→ `[0x51e62]`。
+- 標籤字串號:`[0x51e61]` 0x12 + (旗標 == 0)、`[0x51e62]` 0x14 + (旗標 == 0)、`[0x53af9]` 0x16 + (旗標 != 0)、`[0x51aab]` 0x18 + (旗標 == 0)。4 項都是功能開著(音樂、音效、敵方場景、HUD)時取偶數號。
+- 標籤內容沒有重新核對。上面 L145 那節依 FDTXT_000 渲染出 8 個人名,和這裡由讀取端得到的功能對不上;是不是字串來源表選錯,沒查。
+- 存檔位置:戰況存檔表頭 `+0xe` 起依序是 `[0x53af9]`、`[0x51aab]`、`[0x51e61]`、`[0x51e62]`;存檔槽 metadata(槽 `+0xa00`)`+6` 起依序是 `[0x51aab]`、`[0x53af9]`、`[0x51e61]`、`[0x51e62]`。L145 那節記的「store 順序相反」是這兩種結構各自的順序,兩邊的記載都對。
+
+### `[0x51e61]` 音樂開關(9 筆:讀 5、寫 4,6 個函式)
+
+- 寫 4:讀檔 3(`save_load_restore` `0x1043e` 表頭 `+0x10`、`title_menu_dispatch` `0x26090` 與 `load_game_menu` `0x299ba` 存檔槽 `+0xa08`);`options_ring` `0x1736e` 寫翻轉後的值(`sete`)。
+- 讀 5:`options_ring` `0x172c4`(標籤)與 `0x17364`(翻轉前比較);存檔 2(`battle_system_submenu` `0x1a0ce`、`save_game_menu` `0x29784`);`play_bgm` `0x25977` 的 `0x25a3a`。
+
+標籤 1 + 比較 1 + 存檔 2 + `play_bgm` 1 = 5。
+
+- 翻轉後 `options_ring` 呼叫 `0x3b124([0x53ed0], 新值 ? 0x7f : 0, 0x3e8)`。`0x3b124` 是 `AIL_set_sequence_volume`:`docs/data/ail_entry_points.json` 的名字來自 Miles 自己的追蹤字串,本函式推的格式字串 `0x50d0c` 就是 `AIL_set_sequence_volume(0x%X,%d,%d)`。上面 L145 那節撤回了「音量呼叫」的說法,依這個字串應恢復:它設定 MIDI 序列音量(0x3e8 毫秒漸變)。
+- `play_bgm` 在 `AIL_start_sequence` 之後:旗標為 0 → 音量 0(曲子照放、聽不到);非 0 而且曲號是 0x10 / 0x11 → 立刻 0x7f;其他曲號 → 先設 0,再以 0x7d0 毫秒升到 0x7f。曲號 −1(停曲)是 0xfa0 毫秒降到 0,不看旗標。
+
+### `[0x51e62]` 音效開關(11 筆:讀 6、寫 5,8 個函式)
+
+- 寫 5:讀檔 3(`save_load_restore` `0x10446` 表頭 `+0x11`、`title_menu_dispatch` `0x26098` 與 `load_game_menu` `0x299c2` 存檔槽 `+0xa09`);`options_ring` 依 `0x173c6` 的比較,`0x173cf` 寫 0、`0x173db` 寫 1。
+- 讀 6:`options_ring` `0x172da`(標籤)與 `0x173c6`;存檔 2(`battle_system_submenu` `0x1a0d7`、`save_game_menu` `0x2978c`);播音效 2:`play_sfx_a` `0x25a96` 的 `0x25ab1`、`play_digital_sample`(doc36 的 `play_sfx_b`)`0x25b45` 的 `0x25b60`。
+
+標籤 1 + 比較 1 + 存檔 2 + 播音效 2 = 6。
+
+- 兩個播音效函式都是 `[0x53ef1]` 為 0、`[0x51e62]` 為 0 或 `[0x54133]` 非 0 時直接返回,不播。
+
+### `[0x51aab]` 地圖 HUD 開關(8 筆:讀 4、寫 3、讀改寫 1,7 個函式)
+
+- 寫 3:讀檔(`save_load_restore` `0x10436` 表頭 `+0xf`、`title_menu_dispatch` `0x26080` 與 `load_game_menu` `0x299aa` 存檔槽 `+0xa06`)。
+- 讀改寫 1:`options_ring` `0x173ba` `xor byte ptr [0x51aab], 1`(`[0x53c57]` == 3)。
+- 讀 4:`options_ring` `0x17306`(標籤);存檔 2(`battle_system_submenu` `0x1a0c5`、`save_game_menu` `0x29774`);`draw_map_hud` `0x1acf3` 的 `0x1ad0c`。
+
+標籤 1 + 存檔 2 + `draw_map_hud` 1 = 4。
+
+- `draw_map_hud` `0x1ad0c`:為 0 就跳到 `0x1317d`,整個 HUD 不畫(那裡只剩 `add esp, 0xc`、4 個 pop、ret,和 `draw_map_hud` 開頭的 4 個 push、`sub esp, 0xc` 對得上);非 0 再看 `[0x51aac]`,也是 0 就不畫。
+- `[0x51aac]` 不是選項:14 個寫入、只有 `draw_map_hud` 讀 1 次,存檔 / 讀檔函式都不碰它。本節不登錄。
+- doc10「`0x51aab`/`0x51aac` raw gate」節的 14 個讀寫點把兩個位址混在一起:屬於 `[0x51aab]` 的只有 `0x10436`、`0x26080`、`0x29774`、`0x299aa`,沒有列 `0x17306`、`0x173ba`、`0x1a0c5`、`0x1ad0c`;其餘 10 個是 `[0x51aac]` 的寫入(`[0x51aac]` 另有 `0x25e0b`、`0x25e5e`、`0x25f04`、`0x25f2e` 沒列)。
