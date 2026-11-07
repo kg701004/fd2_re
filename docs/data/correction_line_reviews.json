@@ -129,6 +129,13 @@
    "excerpt": "doc36 UI 池 index 表:index 2 改為「確認:對話打字音」(`0x16546`)、新增 index 9「確認:腳步音」(`0x322c7`);續一百七十八那段加一句。",
    "verdict": "not_address_erratum",
    "note": "改的是 doc36 UI 池 index 表的語意標籤(待確認→確認),位址本身沒變"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "excerpt_sha1": "bb6ca26ec60fe67e330b2e108d36aa0f668acd71",
+   "excerpt": "- 2026-11-07 續二百六十一補:`python tools/verify_data_types.py --show 0x541ac` 由 `_cstart_` 的指令現算清零範圍 [`0x539ec`, `0x546b0`)(`0",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是 0x541ac 初值的證據等級(推論 → 靜態指令確認),位址本身沒有錯"
   }
  ]
 }

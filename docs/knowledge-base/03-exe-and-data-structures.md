@@ -467,3 +467,5 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 
 - **取位址 1**:`0x3dbe7` 的 `0x3dbee`(`mov edx, 0x541ac`,當「指向下一節點欄位的指標」走訪):找到 FILE 就從已開啟串列拆下、旗標 `+0xc` 或上 3、插到 `[0x541a0]`。
 - 函式名是 `docs/data/function_names.json` 既有的;`0x46ca7` / `0x3dbe7` 沒有名字。整組是 Watcom C 函式庫的串流管理,遊戲碼只經由 fopen / fclose 間接碰到它。
+
+- 2026-11-07 續二百六十一補:`python tools/verify_data_types.py --show 0x541ac` 由 `_cstart_` 的指令現算清零範圍 [`0x539ec`, `0x546b0`)(`0x3cea2` `mov ecx` / `0x3cea7` `mov edi`,立即數都有 fixup;`sub ecx, edi`;`rep stosd` + `rep stosb`)。`0x541ac` 在範圍內,上面「載入後是 0 是推論」改為靜態指令確認(沒有實機讀值)。

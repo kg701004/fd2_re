@@ -233,6 +233,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "worklist_checklist.py":      (["--selftest"], "offline"),
     # 2026-11-05:規格層逆向覆蓋率(程式碼 / 資料區 / 資源三層分母);selftest 只用合成登錄與合成位元組。
     "re_coverage.py":             (["--selftest"], "offline"),
+    # 2026-11-07:data_map type 宣告(字串內容、函式指標表、常數、值域、寬度、初值)逐項對 EXE 核對;合成事實 + 真實檔零失敗。
+    "verify_data_types.py":       (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

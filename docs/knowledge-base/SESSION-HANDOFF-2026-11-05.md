@@ -100,6 +100,7 @@
 續二百五十八(2026-11-07):登錄 `0x541b4` ail_installed_drivers(AIL 已安裝驅動表),遊戲函式 853 / 1202、全域位址 96 / 900、資料 1156 / 35714 bytes。
 續二百五十九(2026-11-07):登錄 `0x627b4` blit_image_width(blit 圖像寬度),遊戲函式 853 / 1202、全域位址 97 / 900、資料 1158 / 35714 bytes。
 續二百六十(2026-11-07):登錄 `0x627b6` blit_rows_left(blit 剩餘列數),遊戲函式 859 / 1202、全域位址 98 / 900、資料 1160 / 35714 bytes。下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。
+續二百六十一(2026-11-07):新增 `tools/verify_data_types.py`,把 data_map 92 段的 `type` 以固定文法逐項對 EXE 核對(字串內容、函式指標表、常數、值域、元素寬度、初值來源);失敗 0、未解析 0。字串 8 段與 `0x51b91` 的長度下限補齊,`0x541ac` 初值 0 由 `_cstart_` 清零範圍 [`0x539ec`, `0x546b0`) 靜態確認。仍未證:只有索引存取的陣列長度下限(`0x52a94`、`0x541b4` 等)、207 筆暫存器來源寫入。
 
 **不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 
@@ -140,10 +141,11 @@
 |---|---|
 | 待辦總數 | `python tools/worklist_checklist.py --summary`(另有 `--check`、`--selftest`) |
 | 規格層覆蓋率 | `python tools/re_coverage.py`(摘要)、`--check`、`--gaps globals \| code \| data \| resources \| files`、`--show-data ADDR`、`--show-resource DAT IDX` |
+| data_map type 核對 | `python tools/verify_data_types.py`(摘要)、`--check`、`--verbose`、`--show ADDR`、`--selftest` |
 | 證據全部重算 | `python docs/knowledge-base/evidence/generators/run_all.py` |
 | assert 數量 | `python docs/knowledge-base/evidence/generators/assert_census.py`(`--executed` 動態) |
 | 改過的工具 | `python tools/verify_selftest_discrimination.py --exhaustive --tool NAME.py`(不要用 `--precommit`) |
-| 提交前閘門 | `re_coverage.py --check`、`verify_tool_hygiene.py`、`audit_evidence_provenance.py --gate` / `--diff`、`verify_address_citations.py --diff`、`verify_address_claim_coverage.py`、`doc98_index.py --check`、`git diff --check` |
+| 提交前閘門 | `re_coverage.py --check`、`verify_data_types.py --check`、`verify_tool_hygiene.py`、`audit_evidence_provenance.py --gate` / `--diff`、`verify_address_citations.py --diff`、`verify_address_claim_coverage.py`、`doc98_index.py --check`、`git diff --check` |
 | harness 離線測試(WSL) | `bash tools/test_dosbox_harness_ports.sh`、`bash tools/test_dosbox_harness_mapper.sh` |
 | mapper | `python tools/dosbox/make_passthrough_map.py check` / `attest [--bin B]` / `--selftest` |
 
