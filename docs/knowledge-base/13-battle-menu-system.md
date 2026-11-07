@@ -3010,3 +3010,35 @@ FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取
 - `shop_buy` `0x28869` 存到 `[0x53f6e]` 1。
 
 10 + 5 + 13 + 1 = 29。46 筆都在 `0x27079` .. `0x2a9cb` 這段的清單函式裡。
+
+## 2026-11-07:`[0x53f4a]` = 城鎮選單的目前選項(0 .. 5;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53f4a`:**54 筆全是 4 byte 直接定址,讀 48、寫 4、讀改寫 2**,分布在 12 個函式。EXE 內初值 0。
+
+**選項值**(由 `town_hub_select` 的分派與其前的 `play_bgm` `0x25977` 曲號決定;店名取自 doc12 的曲號實測):
+- 0:`play_bgm(13)` 後進 `tavern_menu` `0x29300`。
+- 1:`play_bgm(14)` 後進 `shop_menu` `0x279bc`(doc12:武器店 14)。
+- 2:不進店;`town_hub_select` `0x2673f` 以 `open_dialog_box(0x4b)` 走出擊選人那條路。
+- 3:`play_bgm(15)` 後進 `shop_menu`(doc12:道具店 15)。
+- 4:`play_bgm(11)` 後進 `church_menu` `0x29daa`(doc12:教會 11)。
+- 5:`play_bgm(14)` 後進 `shop_menu`(doc12:秘密商店 14),只能由下面的隱藏鍵進入。
+
+**4 個寫入點 + 2 筆讀改寫**,都在 `town_hub_main`:
+- 進城 `0x263b7` 寫 0(緊接 `play_bgm(10)`)。
+- 掃描碼 0x4d(→)`0x2650c` `dec`,< 0 時 `0x2651b` 寫 4;0x4b(←)`0x2653e` `inc`,> 4 時 `0x2654d` 寫 0。兩者都先 `play_sfx_a([0x53eec], 0, 1)`。
+- 隱藏鍵 `0x26572` 寫 5:掃描碼等於城鎮資料 `[0x53f56]` 的 byte `+2`,而且目前選項等於 byte `+1`(`0x2656a` 比較)時。
+
+**48 筆讀取**:
+- 和常數比較 20:
+  - `town_hub_main` 4:`0x26512` / `0x26544` 迴繞;`0x26594` 選項 2 時按確認不播 `play_sfx_a([0x53eec], 1, 3)`;`0x265d3` `town_hub_select` 回來後選項 2 跳回 `0x26378`。
+  - `town_hub_select` 5:`0x2673f` 與分派 `0x26907` / `0x26924` / `0x26941` / `0x2694a`。
+  - `collect_town_shop_items` 2:選項 1 取城鎮資料 `+3` 起 12 格、選項 3 取 `+0xf` 起 8 格、其他取 `+0x17` 起 8 格。
+  - `shop_menu` 5:`0x279f0` / `0x27a00` 決定 `[0x53f66]` 載入 FDOTHER 12 號(預設)/ 29 號(選項 3)/ 63 號(選項 5);`0x27ad7` / `0x27bd8` 選項 1 用文字 0x1f5 / 0x1f7、其他 0x1b8;`0x27d19` 選項 0 時把回傳值設 1。
+  - `service_success_anim` 4:選項 1 / 3 / 4 / 5 各一種成功動畫。
+- 和城鎮資料比較 1:`0x2656a`(上面的隱藏鍵)。
+- 索引 byte 表 `0x52387` 13:當 `open_dialog_box` 的資源號 12(`shop_menu` 2、`shop_buy` 4、`shop_sell_service` 2、`item_storage_service` 4),`town_equip_service` `0x28f3e` 當 `load_res` 的號 1。
+- 索引「城鎮 id × 6 + 選項」的表 5:`0x52363` 1(`town_hub_redraw` `0x266a6`)、`0x52375` 4(`town_hub_select` `0x2685e`、`shop_menu` `0x27c7e`、`tavern_menu` `0x2957c`、`church_menu` `0x29ff2`)。
+- 文字號 9:`town_hub_redraw` `0x26667`(`0x1ef + 選項`,選項標籤)、`shop_buy` 4 與 `shop_sell_service` 2(堆疊上的 word 表 `[esp + 選項 × 2 + k]`)、word 表 `0x5238d` 2(`shop_buy` `0x28a37`、`item_storage_service` `0x291c4`)。
+
+20 + 1 + 13 + 5 + 9 = 48。
+選項 0 的 `play_bgm(13)` 呼叫點是 `0x26914`;doc12 的 `play_bgm` 呼叫端表把它記為「戰後 / 章節轉場後狀態卡(本日實測)」。這裡只記它所在的分支(進酒館之前),那張表沒改。

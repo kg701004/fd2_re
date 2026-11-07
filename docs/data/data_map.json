@@ -455,6 +455,32 @@
       ]
     },
     {
+      "start": "0x53a6d",
+      "size": 4,
+      "name": "remap_lut_bank",
+      "type": "dword 指標(FDOTHER.DAT 第 3 號資源,換色表容器)",
+      "meaning": "換色表資源:game_main 以 load_res(\"FDOTHER.DAT\", 舊, 3) 載入後不再改;第 i 項 = 資源 + [資源 + i × 4 + 6]。地形閃爍相位(0x51a97[[0x53c1f]])2、法術圓圈 / 光環效果的迴圈 6、固定第 3 項 1、法術 / 指令演出的堆疊索引 2。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x21eb1"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "1 + 2 + 6 + 1 + 2 = 12。和 doc31 記的 FDOTHER#3 換色表 bank 是同一個資源。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**寫入 1 筆**:`game_main` `0x25cc6` 寫入 `load_res(\"FDOTHER.DAT\", [0x53a6d], 3)` 的結果"
+        }
+      ]
+    },
+    {
       "start": "0x53a79",
       "size": 4,
       "name": "chapter_dialog_table",
@@ -823,6 +849,35 @@
       ]
     },
     {
+      "start": "0x53ad9",
+      "size": 4,
+      "name": "message_text_index",
+      "type": "dword(FDTXT_000 字串索引)",
+      "meaning": "訊息裡 −4 控制碼插入的字串:0x15f84 以常駐文字表 [0x53a7d] 遞迴印第 [0x53ad9] 條。14 個寫入點寫道具名 +0xb5、指令名 +0x1b9、職業名 +0x96、角色名 [+8] + 1 / [+7] + 1 / 堆疊 byte + 1。",
+      "evidence": [
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x28f65"
+        },
+        {
+          "func": "0x2aa00"
+        },
+        {
+          "func": "0x1e292"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "5 + 1 + 1 + 3 + 3 + 1 = 14。"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "以常駐文字表 `[0x53a7d]`(本檔上兩節)遞迴印出第 `[0x53ad9]` 條。"
+        }
+      ]
+    },
+    {
       "start": "0x53ae1",
       "size": 4,
       "name": "message_number_value",
@@ -848,6 +903,61 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "1 + 2 + 2 + 3 + 2 = 10。"
+        }
+      ]
+    },
+    {
+      "start": "0x53af9",
+      "size": 1,
+      "name": "ai_scene_skip",
+      "type": "byte 旗標(選項環第 3 項,存檔)",
+      "meaning": "非 0 時敵方攻擊不走 attack_scene_orchestrator、敵方法術不走 spell_cast_scene(改在地圖上結算),並在敵方回合載入 / 釋放 FDOTHER 64 號;options_ring xor 1 切換,存在戰況存檔表頭 +0xe 與存檔槽 +0xa07。玩家方函式不讀它。",
+      "evidence": [
+        {
+          "func": "0x1728c"
+        },
+        {
+          "func": "0x1548e"
+        },
+        {
+          "func": "0x15311"
+        },
+        {
+          "func": "0x1a7bd"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "1 + 2 + 2 + 2 = 7。EXE 裡讀它的只有這 7 筆,玩家方的攻擊 / 法術函式都不讀"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "- **讀改寫 1**:`options_ring` `0x173a5` `xor byte ptr [0x53af9], 1`(`[0x53c57]` == 2 時)。"
+        }
+      ]
+    },
+    {
+      "start": "0x53afa",
+      "size": 1,
+      "name": "spawn_keep_position",
+      "type": "byte 旗標(呼叫 0x10b4e 期間暫設 1)",
+      "meaning": "群組出場時照原座標放:field_unit_construct 讀到 0 時把單位重新配置到最近空格,非 0 時直接用 position 列的座標。10 個事件 / 指令 handler 以 11 組「寫 1、call 0x10b4e(群組)、寫 0」包住出場;0x10b4e 其他 47 個呼叫端都在旗標 0 下出場。",
+      "evidence": [
+        {
+          "func": "0x10c50"
+        },
+        {
+          "func": "0x35022"
+        },
+        {
+          "func": "0x32d18"
+        },
+        {
+          "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+          "quote": "- `0x10b4e` 共 58 個呼叫端(掃描 `E8 rel32`),只有這 11 個包了旗標"
+        },
+        {
+          "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+          "quote": "**寫 22 = 11 組 `mov byte ptr [0x53afa], 1; push 群組; call 0x10b4e; mov byte ptr [0x53afa], 0`**:"
         }
       ]
     },
@@ -1259,6 +1369,35 @@
         {
           "doc": "docs/knowledge-base/36-sfx-audio-data.md",
           "quote": "1 + 57 + 3 = 61。用到的音效號最大 0xc。"
+        }
+      ]
+    },
+    {
+      "start": "0x53f4a",
+      "size": 4,
+      "name": "town_hub_selection",
+      "type": "dword(城鎮選單選項 0 .. 5)",
+      "meaning": "城鎮選單的目前選項:0 酒館、1 武器店、2 出擊、3 道具店、4 教會、5 秘密商店(只能由城鎮資料 [0x53f56] +1 / +2 指定的隱藏鍵進入)。town_hub_main 進城寫 0、左右鍵 ±1 在 0 .. 4 迴繞;商店 / 教會 / 酒館函式以它查 0x52387 / 0x52375 / 0x52363 / 0x5238d 等表與分支。",
+      "evidence": [
+        {
+          "func": "0x26152"
+        },
+        {
+          "func": "0x2670e"
+        },
+        {
+          "func": "0x26a0d"
+        },
+        {
+          "func": "0x28b41"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "20 + 1 + 13 + 5 + 9 = 48。"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "- 隱藏鍵 `0x26572` 寫 5:掃描碼等於城鎮資料 `[0x53f56]` 的 byte `+2`,而且目前選項等於 byte `+1`(`0x2656a` 比較)時。"
         }
       ]
     },

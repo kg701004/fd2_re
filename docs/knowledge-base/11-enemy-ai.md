@@ -1606,3 +1606,19 @@ FDTXT 直接渲染）互相印證，不是同一份證據重複引用。
   runtime execution」殘留項的最後尾巴：第一個（LOS）本輪徹底收工；第二個
   （`0x1728C`）從完全空白推進到「機制全懂、語意未知」，不宜再往上誇大
   成「已閉合」。
+
+## 2026-11-07:`[0x53af9]` = 選項環第 3 項的旗標(非 0 時敵方攻擊 / 法術不進場景;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53af9`:**11 筆全是 1 byte 直接定址,讀 7、寫 3、讀改寫 1**,分布在 10 個函式。EXE 內初值 0。
+
+- **寫 3**(讀檔):`save_load_restore` `0x1042e`(戰況存檔表頭 `+0xe`)、`title_menu_dispatch` `0x26088` 與 `load_game_menu` `0x299b2`(存檔槽 `+0xa07`)。
+- **讀改寫 1**:`options_ring` `0x173a5` `xor byte ptr [0x53af9], 1`(`[0x53c57]` == 2 時)。
+- **讀 7**:
+  - `options_ring` `0x172f0`:標籤字串 = 0x16 + (旗標 != 0),即上面 `0x1728C` 子選單那節表格的第 2 列。
+  - 寫進存檔 2:`battle_system_submenu` `0x1a0bc`(表頭 `+0xe`)、`save_game_menu` `0x2977c`(存檔槽 `+0xa07`)。
+  - `ai_spell_execute` `0x153e7`:法術號 < 10 而且旗標為 0 才呼叫 `spell_cast_scene` `0x2ff01`;否則 `load_fdother_80_to_53b13`、`call [0x51d01 + 法術號 × 4]`、`play_loaded_sfx_and_free`。
+  - `ai_attack_execute` `0x154f5`:旗標為 0 走 `attack_scene_orchestrator` `0x2e2b0`;非 0 走另一條(其中有 `defender_can_counter` `0x1f0dc`)。
+  - `load_fdother_64_if_flag` `0x1a7c7` / `free_fdother_64_if_flag` `0x1a7fb`:旗標非 0 才載入 / 釋放 FDOTHER 64 號(`[0x53b0f]`)。
+
+1 + 2 + 2 + 2 = 7。EXE 裡讀它的只有這 7 筆,玩家方的攻擊 / 法術函式都不讀,所以這個選項只決定敵方(AI)行動要不要切到攻擊 / 法術場景。
+上面 `0x1728C` 子選單那節說玩法語意「依然不猜」;本節的結論來自讀取端的分支,標籤字串 idx 0x16 / 0x17 的內容沒有重新核對。

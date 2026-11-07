@@ -232,3 +232,22 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 
 **和本檔開頭表格的差異**:表格 `0xFFFA` 列寫「插入字串 / 數值(`[0x53ae1]`,經 `0x377d9`/`0x37805` 格式化)」,下方註記把 `[0x53ae1]` 和 `[0x53ad9]` / `[0x53add]` 一起稱為「全域字串指標」。
 反組譯看到的是 `0x37b29`(sprintf)/ `0x37b55`(strlen),值以 `"%d"` 印出;`0x377d9` / `0x37805` 本輪沒查。原表沒改。
+
+## 2026-11-07:`[0x53ad9]` = 訊息裡 −4 控制碼插入的字串索引(FDTXT_000;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ad9`:**15 筆全是 4 byte 直接定址,寫 14、讀 1**,分布在 12 個函式。EXE 內初值 0。
+
+**讀取 1 筆**:`0x15f84` 的 −4 分支 `0x16067` `push dword ptr [0x53ad9]; push dword ptr [0x53a7d]; call 0x15f84`,以常駐文字表 `[0x53a7d]`(本檔上兩節)遞迴印出第 `[0x53ad9]` 條。
+
+**14 個寫入點**,寫入值都是 FDTXT_000 的區塊基底 + id(基底與本檔 `[0x53a7d]` 一節的分類相同):
+- 道具名 `+ 0xb5` 5:`field_cell_treasure_check` `0x191e3`(`word [+0x54]`)、`grant_reward_rows` `0x1ac8e`、`shop_buy` `0x28890`、`shop_sell_service` `0x28e2a`(`unit_item_id` 的回傳值)、`event_handler_58` `0x35916`。
+- 指令名 `+ 0x1b9` 1:`apply_pending_exp` `0x1e38f`(`byte [edi + i × 2 + 1]`)。
+- 職業名 `+ 0x96` 1:`class_change_apply` `0x2acca`(`byte [+0x20]`)。
+- 角色名 `byte [+8] + 1` 3:`item_storage_service` `0x28fb3` / `0x29193`、`revive_service` `0x2a553`。
+- `byte [+7] + 1` 3:`shop_buy` `0x28a07`(`[+7] + esi`,這條路徑上 esi == 1:`0x289c8` `cmp esi, 1; jne`)、`shop_sell_service` `0x28d23`、`class_change_service` `0x2ab2f`。doc03 記 `+0x07` 是圖示 id(轉職會改)。
+- 堆疊上的 byte + 1 1:`sortie_required_member_check` `0x2b496`。
+
+5 + 1 + 1 + 3 + 3 + 1 = 14。
+
+差異(只記在這裡與 doc98,原表沒改):本檔開頭表格把 −4 寫成「插入角色名(主角名)」、「名字插入碼」那列稱 `[0x53ad9]` 為來源字串指標;
+反組譯看到的是 FDTXT_000 的字串索引,寫入端有道具名、指令名、職業名與角色名四類。

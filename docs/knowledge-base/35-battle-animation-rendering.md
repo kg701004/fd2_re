@@ -5827,3 +5827,17 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - **總覽圖尺寸 3 筆**:`map_overview_screen` `0x20055`(高 > 40 時改用 3 倍縮放參數:ebp = 3、`[esp + 0x20]` = 0x380)、`0x200cb`(高 × 3 × 512)、`0x201fc`(高 × ebp)。
 
 8 + 5 + 3 + 3 = 19。和 `[0x53ac1]` 一節對照:寬多一類「列優先索引」(y × 寬 + x),高沒有;`draw_map_scaled_fixedpoint` 的寬是走訪上界、高是邊界檢查。
+
+## 2026-11-07:`[0x53a6d]` = 換色表資源(FDOTHER.DAT 第 3 號;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53a6d`:**13 筆全是 4 byte 直接定址,讀 12、寫 1**,分布在 11 個函式。EXE 內初值 0。
+
+**寫入 1 筆**:`game_main` `0x25cc6` 寫入 `load_res("FDOTHER.DAT", [0x53a6d], 3)` 的結果(`0x25cb3` 那筆讀取是舊緩衝引數),之後不再改。
+
+**12 筆讀取 = 舊緩衝 1 + 取第 i 項 11**(第 i 項 = 資源 + `dword [資源 + i × 4 + 6]`):
+- i = `byte [0x51a97 + [0x53c1f]]`(閃爍相位查表)2:`draw_terrain_layer` `0x12170`、`redraw_map_cell` `0x12b8c`。
+- i = 迴圈變數 6:`0x2189a` `0x21922`、`lut_circle_burst_at_cursor` `0x21f19` / `0x21fad`、`lut_circle_shrink_frames` `0x225b7`、`lut_circle_frames` `0x22672`、`0x24618` `0x24696`;進迴圈前 ebx 依序是 0、9、3、5、0、9。
+- i = 3 1:`rising_particles_effect` `0x21ce3`(`add eax, [eax + 0x12]`,0x12 = 6 + 3 × 4)。
+- i 來自堆疊 2:`spell_cast_scene` `0x30b8a`(`[esp + 0xdc] + edi`)、`play_command_cast_animation` `0x30fbc`(`[esp + 4]`)。
+
+1 + 2 + 6 + 1 + 2 = 12。和 doc31 記的 FDOTHER#3 換色表 bank 是同一個資源。

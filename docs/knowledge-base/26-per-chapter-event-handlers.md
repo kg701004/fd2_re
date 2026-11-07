@@ -429,3 +429,13 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 傳給函式:`push dword ptr [0x53c03]` 9 筆 —— 2 筆給章節 loader `0x1088d`(`0x205da` 的 `0x205f9`、`command_handler_87` 的 `0x2586a`)、7 筆給 `0x4e809`(城鎮 / 商店 / 酒館 / 教堂 / 讀檔畫面);
   `save_load_restore` `0x101dc` 與 `draw_battle_situation_panel` `0x1b4b8` 用章節 + 1(前者是 FDTXT.DAT 的條目,見 doc14)。
 - **50 筆 `cmp dword ptr [0x53c03], 常數`**:常數 9 ×2、16 ×2、17 ×5、18 ×1、19 ×2、20 ×2、21 ×5、22 ×5、23 ×2、24 ×3、25 ×6、26 ×5、27 ×5、28 ×2、29 ×2、0xff ×1(上面 `0x2609d`),都是特定章節的特例分支。
+
+## 2026-11-07:`[0x53afa]` = 群組出場時照原座標放的旗標(資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53afa`:**23 筆全是 1 byte 直接定址,寫 22、讀 1**,分布在 11 個函式。EXE 內初值 0。
+
+- **讀 1**:`field_unit_construct` `0x10cb7`:旗標為 0 時往下做最近空格搜尋(本檔上面 position resource 那段),非 0 時 `jne 0x10d4e` 跳過。
+- **寫 22 = 11 組 `mov byte ptr [0x53afa], 1; push 群組; call 0x10b4e; mov byte ptr [0x53afa], 0`**:
+  `command_handler_29`(群組 2)、`command_handler_34`(1)、`command_handler_39`(1)、`event_handler_3`(6)、`event_handler_6`(3)、`event_handler_15`(2)、
+  `event_handler_25`(2)、`event_handler_35`(2)、`event_handler_37`(3 與 4 各一組)、`event_handler_7`(2)。
+- `0x10b4e` 共 58 個呼叫端(掃描 `E8 rel32`),只有這 11 個包了旗標;其他 47 個(含章節 loader `0x1088d`)都在旗標 0 下出場,也就是預設會重新配置到最近空格。
