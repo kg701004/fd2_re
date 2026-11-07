@@ -477,3 +477,21 @@ town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。
 - **方法**:本篇控制流全靠**靜態反組譯**(規則 62:控制流非 runtime-only);標題畫面內容用**已破解解碼器解出輸出當 oracle**(規則 64)視覺驗證,**未動用 DOSBox**。若日後要對「捲動速度/淡入時序/BGM 對齊」做逐幀比對,DOSBox 截圖序列可當最後的時序 oracle,但機制本身已不需動態分析即可確定。
 
 > 相關:doc 09 劇情對話結構 · doc 12 BGM 場景切換(本篇修正其「main=0x10000」與曲號推定)· doc 13 戰場選單 · doc 14 控制碼 · doc 19 腳本系統 · doc 21 Go/Ebiten 架構。工具:`tools/disasm_le.py`、`tools/le_xref.py`。
+
+## 2026-11-07:`[0x53a65]` = 基準調色盤的快取(768 bytes,FDOTHER.DAT 的調色盤資源;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a65`:**39 筆全是 4 byte 直接定址,讀 23、寫 16**,分布在 9 個函式。EXE 內初值 0。
+
+**16 個寫入點**:
+- 13 個是 `load_res("FDOTHER.DAT", [0x53a65], 號)` 的回傳(前一條 `push dword ptr [0x53a65]` 是舊緩衝引數,下面 13 筆讀取):
+  號 0 3(`save_load_restore` `0x1013e`、`title_menu_dispatch` `0x25ef5` / `0x25f7c`)、號 0x65 4(`show_fdother_static_screen` `0x1f7de`、`title_seq` `0x1f9e7` / `0x1fb27` / `0x1fc24`)、
+  號 0x4c / 0x63 / 0x66 / 8 各 1(`title_seq` `0x1f912` / `0x1f985` / `0x1fbee` / `0x1fce4`)、號由引數決定 2(`show_fdother_static_screen` `0x1f77a`、`title_anim_or_still` `0x1f85a`)。
+- 3 個在 `0x31529`:`0x31a8f` 先把目前的調色盤存到 ebp,迴圈 20 次,每次 `0x31b5c` 寫回原值、呼叫 `attack_scene_orchestrator(0, 1)`、`0x31afa` 換成函式自己載入的 FDOTHER 0x39 號並 `0x11d40(0, 0xff, 0)`;結束時 `0x31b7f` 寫回原值,再釋放 0x39 號。
+
+**23 筆讀取**:
+- 舊緩衝引數 13(上面)。
+- 送進 VGA DAC 9(每個函式各 3 筆,R / G / B 三個 byte):
+  `0x11d40(first, last, d)` 每個分量減 d、小於 0 時取 0;`0x11df2` 加 d、大於 0x3f 時取 0x3f;`vga_palette_fade_range` `0x2df01` 依引數插值。三者都不改寫快取本身。
+- `0x31529` 存原值 1。
+
+13 + 9 + 1 = 23。

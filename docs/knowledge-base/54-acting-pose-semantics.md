@@ -85,3 +85,19 @@ remake pure ABI 是 `indexedmap.AdvanceNativeMapSpriteCycles`。實際 Ebiten ad
 - [ ] 建立單一 battle-local raw presentation state，讓玩家移動、AI、acting與事件
       placement全部走同一 writer API，避免 normalized `Dir` 和 raw `+3` 漂移。
 - [ ] 接上 steady／acting／`0x22253` 三條 indexed scheduler 後做原版逐幀截圖比對。
+
+## 2026-11-07:`[0x53c0b]` = 待機動畫時脈(0 .. 3;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53c0b`:**14 筆全是 4 byte 直接定址,讀 12、讀改寫 1、寫 1**,分布在 9 個函式。EXE 內初值 0。
+
+**更新只在 `tick_anim_counters` `0x1297d`**:BIOS 計時 `word [0x46c]`(有號)減上次的 `[0x53c0f]` 大於 4 或小於 0 時,`0x129ac` `inc`、等於 4 時 `0x129bb` 寫 0,再把目前計時存回 `[0x53c0f]`;
+否則不動。移動中的時脈 `[0x53c07]` 每次呼叫都加 1(同樣 4 → 0)。所以待機影格大約每 5 個 BIOS tick(約 0.27 秒)換一次。
+
+**12 筆讀取**:
+- `tick_anim_counters` 1:`0x129b2` 和 4 比較。
+- 把 3 當 1(影格順序 0、1、2、1)4:`draw_unit_sprite` `0x128fc`、`draw_single_unit_sprite` `0x1dac7`(這 2 個在單位不在移動時才取 `[0x53c0b]`,否則取 `[0x53c07]`)、`draw_map_hud` `0x1ae54`、`draw_roster_pick_grid` `0x2b57e`。
+- 把 3 當 2(影格順序 0、1、2、2)6:`0x1c2da` `0x1c40c` / `0x1c33a`、`draw_units_with_list_overlay` `0x1cce4` / `0x1ccf2`、`flash_listed_units_band_cycle` `0x1cea4` / `0x1cdc0`;
+  每個函式是一筆 `cmp [0x53c0b], 3` 加一筆 `add ebx, [0x53c0b]`,等於 3 時改走 `add ebx, 2`。和上面 4 個函式的 3 → 1 不同,本節只記反組譯,沒有實機比對畫面。
+- `draw_terrain_layer` `0x121cf` 1:地形控制 byte bit 0x10 時,影格位移 = 時脈 / 2(0、0、1、1)。
+
+1 + 4 + 6 + 1 = 12。

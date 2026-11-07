@@ -433,3 +433,19 @@ HP `+0x40/+0x42`、MP `+0x46`、AP `+0x48`)都是由 `0x10c50` constructor 或�
 長度 28 bytes:`int386` 經 `0x3da76` 呼叫 `0x46870`,後者把 eax / ebx / ecx / edx / esi / edi 與 cflag(`sbb eax, eax`)寫到輸出結構 `+0` .. `+0x18`,共 7 個 dword,
 和 Watcom 32 位元 `union REGS` 的版面相同;下一個被引用的位址正好是 `0x53aa9`(`camera_x`)。EXE 裡沒有直接存取 `0x53a8f` .. `0x53aa8` 的指令。
 doc25 後來改正的說法(`[0x53a8e]` 是鍵盤掃描碼暫存器,只保留最後處理過的鍵)與這裡一致。
+
+## 2026-11-07:`[0x52832]` = 開機時偵測到的 DOS extender 種類(1 byte;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x52832`:**18 筆全是 1 byte 直接定址,讀 17、寫 1**,分布在 9 個函式(全是 C 執行期函式庫)。EXE 內初值 0。
+
+**唯一的寫入點**:LE 進入點 `_cstart_` `0x3ccb4` 的 `0x3ce03`。先以 ebx = `0x50484152`("PHAR")呼叫 `int 21h` AH = 30h(同一處把 DOS 版本存進 `0x5283a` / `0x5283b`),再看 eax 高 16 位:
+- `0x4458`("DX"):值 = 回傳的 bl − 0x30(版本數字)。
+- `0x4243`("CB"):值 9。
+- 都不是:`int 21h` AX = 0xff00、DX = 0x78,AL != 0 時值 1;否則值 0。
+
+**17 筆讀取**(和常數比較):
+- 堆積取得記憶體 9:`heap_grow` `0x3d842` 5(1 / 9)、`heap_get_os_memory` `0x46728` 3(1 / 9)、`sbrk` `0x467c5` 1(0);值 1 時 `heap_grow` 走 `dpmi_alloc_block`。
+- 浮點模擬 6:`emu387_install` `0x461b7` 3(0 / 9 / 1)、`emu387_hook_int7` `0x4629a` 1(3)、`emu387_unhook_int7` `0x46380` 1(3)、`0x46306` 1(載入 al,`[0x52833]` 非 0 時呼叫 `dosx_cr0_restore`)。
+- `dosx_set_int_vector` `0x4d656` 2:值在 2 .. 8 之間才走另一條設定中斷向量的路。
+
+9 + 6 + 2 = 17。本檔開頭記 FD2.EXE 是 DOS4GW LE,執行時應落在 `int 21h` AX = 0xff00 那條、值 1(推論:沒有實機讀值,也沒有對照 Watcom 函式庫原始碼)。鄰居 `0x52833`(只有 2 筆讀取)、`0x52834` / `0x52838`(`_cstart_` 存的 esi / cx)本輪不登錄。

@@ -5841,3 +5841,17 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - i 來自堆疊 2:`spell_cast_scene` `0x30b8a`(`[esp + 0xdc] + edi`)、`play_command_cast_animation` `0x30fbc`(`[esp + 4]`)。
 
 1 + 2 + 6 + 1 + 2 = 12。和 doc31 記的 FDOTHER#3 換色表 bank 是同一個資源。
+
+## 2026-11-07:`[0x53ad1]` = 地圖效果 / 血條框的圖像資源(FDOTHER.DAT 第 6 號;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ad1`:**12 筆全是 4 byte 直接定址,讀 11、寫 1**,分布在 9 個函式。EXE 內初值 0。
+
+**寫入 1 筆**:`game_main` `0x25d2e` 寫入 `load_res("FDOTHER.DAT", [0x53ad1], 6)` 的結果(`0x25d1b` 那筆讀取是舊緩衝引數),緊接在 `[0x53a7d]` 的載入之後,之後不再改。
+
+**11 筆讀取 = 舊緩衝 1 + 當 `draw_res_image_frame` 的資源引數 5 + 自己取第 i 項 5**(第 i 項 = 資源 + `dword [資源 + i × 4 + 6]`):
+- `draw_res_image_frame` `0x15f0e`(資源, 目的, 跨距, x, y, 項號)5:`redraw_map_with_hp_panels` `0x1e66c` / `0x1e6ea`(跨距 0x1c8)、`play_weapon_hit_effect` `0x1ea7b`(項號 `byte [edi + i × 2 + 1]`)、
+  `open_attack_hp_panels` `0x1eb7e` / `0x1ebae`(項號 0x27 + i,i = 0 .. 9)。
+- 自己取第 i 項 5:`play_map_effect_animation` `0x1c682`(i = 樣板起始號 `0x51f33` + 幀序,見本檔 `0x1c67b` 那列)、`draw_units_with_list_overlay` `0x1cbd4`(i 在堆疊)、
+  `rising_particles_effect` `0x21c01`(i 是引數,小圖遮罩)、`unit_present_intro_frames` `0x2248c`(i = 0x72 + k,k = 0 .. 10)、`0x22253` `0x222d9`(固定 `+0x1f6`,即第 0x7c 項 = 上一個函式的最後一格)。
+
+1 + 5 + 5 = 11。

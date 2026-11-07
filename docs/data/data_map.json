@@ -153,6 +153,67 @@
       ]
     },
     {
+      "start": "0x52387",
+      "size": 6,
+      "name": "town_keeper_portrait",
+      "type": "byte[6] 常數表(依城鎮選項 [0x53f4a] 索引)",
+      "meaning": "城鎮各選項的店主頭像號:81 80 00 82 83 84(酒館、武器店、出擊、道具店、教會、秘密商店)。商店 / 寄放 / 裝備函式以 [0x53f4a] 索引,酒館、存讀檔、狀態固定取第 0 項,教會、復活、轉職固定取第 4 項 0x5238b;值都交給 open_dialog_box 或 load_res 當頭像號。",
+      "evidence": [
+        {
+          "func": "0x279bc"
+        },
+        {
+          "func": "0x29300"
+        },
+        {
+          "func": "0x2968d"
+        },
+        {
+          "func": "0x28efe"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "13 + 7 + 8 = 28。"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "**EXE 內的值**(依 `[0x53f4a]` 城鎮選項索引):`81 80 00 82 83 84`"
+        }
+      ],
+      "fields": {
+        "0x4": "church_keeper_portrait"
+      }
+    },
+    {
+      "start": "0x52832",
+      "size": 1,
+      "name": "dos_extender_type",
+      "type": "byte(_cstart_ 偵測到的 DOS extender 種類)",
+      "meaning": "_cstart_ 以 int 21h AH = 30h(ebx = \"PHAR\")回傳的簽名決定:\"DX\" → bl − 0x30、\"CB\" → 9,否則 int 21h AX = 0xff00 偵測成功 → 1、失敗 → 0。heap_grow / heap_get_os_memory / sbrk、浮點模擬安裝 / 掛 int 7、dosx_set_int_vector 依它分支。",
+      "evidence": [
+        {
+          "func": "0x3ccb4"
+        },
+        {
+          "func": "0x3d842"
+        },
+        {
+          "func": "0x461b7"
+        },
+        {
+          "func": "0x4d656"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "9 + 6 + 2 = 17。"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "**唯一的寫入點**:LE 進入點 `_cstart_` `0x3ccb4` 的 `0x3ce03`。"
+        }
+      ]
+    },
+    {
       "start": "0x538a8",
       "size": 4,
       "name": "ail_mix_src_end",
@@ -425,6 +486,35 @@
         {
           "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
           "quote": "這 3 個戰鬥演出進場時 free 快取,結束時從 FD2.TMP 讀回"
+        }
+      ]
+    },
+    {
+      "start": "0x53a65",
+      "size": 4,
+      "name": "base_palette",
+      "type": "dword 指標(768 bytes 調色盤,FDOTHER.DAT 資源)",
+      "meaning": "基準調色盤的快取:13 處以 load_res(\"FDOTHER.DAT\", 舊, 號) 換掉(號 0、8、0x4c、0x63、0x65、0x66 或引數);0x31529 暫時換成 0x39 號再還原。0x11d40(減亮度)/ 0x11df2(加亮度)/ vga_palette_fade_range 從這裡取 R / G / B 送進 DAC,不改寫快取本身。",
+      "evidence": [
+        {
+          "func": "0x11d40"
+        },
+        {
+          "func": "0x1f894"
+        },
+        {
+          "func": "0x31529"
+        },
+        {
+          "func": "0x2df01"
+        },
+        {
+          "doc": "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+          "quote": "13 + 9 + 1 = 23。"
+        },
+        {
+          "doc": "docs/knowledge-base/23-boot-title-and-scenario-flow.md",
+          "quote": "`0x11d40(first, last, d)` 每個分量減 d、小於 0 時取 0;`0x11df2` 加 d、大於 0x3f 時取 0x3f"
         }
       ]
     },
@@ -820,6 +910,35 @@
       ]
     },
     {
+      "start": "0x53ad1",
+      "size": 4,
+      "name": "map_effect_image_bank",
+      "type": "dword 指標(FDOTHER.DAT 第 6 號資源,多項圖像)",
+      "meaning": "地圖效果 / 血條框的圖像資源:game_main 以 load_res(\"FDOTHER.DAT\", 舊, 6) 載入後不再改;第 i 項 = 資源 + [資源 + i × 4 + 6]。draw_res_image_frame 的資源引數 5(血條框開啟 0x27 .. 0x30 項等),play_map_effect_animation / unit_present_intro_frames(0x72 .. 0x7c 項)等自己取項 5。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x1eb05"
+        },
+        {
+          "func": "0x22470"
+        },
+        {
+          "func": "0x1c4cc"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**11 筆讀取 = 舊緩衝 1 + 當 `draw_res_image_frame` 的資源引數 5 + 自己取第 i 項 5**"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**寫入 1 筆**:`game_main` `0x25d2e` 寫入 `load_res(\"FDOTHER.DAT\", [0x53ad1], 6)` 的結果"
+        }
+      ]
+    },
+    {
       "start": "0x53ad5",
       "size": 4,
       "name": "battle_event_state_table",
@@ -1159,6 +1278,35 @@
       ]
     },
     {
+      "start": "0x53c0b",
+      "size": 4,
+      "name": "idle_anim_phase",
+      "type": "dword(待機動畫時脈 0 .. 3)",
+      "meaning": "待機影格時脈:tick_anim_counters 在 BIOS 計時差 > 4 或 < 0 時 +1(4 → 0)。draw_unit_sprite 等 4 個函式把 3 當 1,0x1c2da 等 3 個清單疊圖函式把 3 當 2,draw_terrain_layer 以時脈 / 2 當地形動畫影格。移動中的時脈是 [0x53c07]。",
+      "evidence": [
+        {
+          "func": "0x1297d"
+        },
+        {
+          "func": "0x127e0"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x1cb94"
+        },
+        {
+          "doc": "docs/knowledge-base/54-acting-pose-semantics.md",
+          "quote": "1 + 4 + 6 + 1 = 12。"
+        },
+        {
+          "doc": "docs/knowledge-base/54-acting-pose-semantics.md",
+          "quote": "**更新只在 `tick_anim_counters` `0x1297d`**"
+        }
+      ]
+    },
+    {
       "start": "0x53c57",
       "size": 4,
       "name": "menu_cursor_index",
@@ -1262,6 +1410,35 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "把畫布 +0x8c05(第 112 列、第 5 欄)起最多 0x56 列、每列 0x136 bytes 複製到合成的第「列」列起、第 5 欄"
+        }
+      ]
+    },
+    {
+      "start": "0x53c67",
+      "size": 4,
+      "name": "dialog_box_offset",
+      "type": "dword(320 寬緩衝區內的位移 y × 320 + x)",
+      "meaning": "對話框 / 頭像貼圖的位置:0x15f84 開框碼 −0x11 / −0x13 寫 0x728(上框)、−0x12 / −0x14 寫 0x9017(下框)、−1 寫 0;open_dialog_box 依頭像號 0x80 .. 0x84 寫 5 個店主位置,其他寫 0x9017;info_card_build / scene_charcard_text_stage 寫 0xc88。讀取端加到 0xa0000、[0x53c63] 等基底再 blit,或和 0x728 / 0x9017 比較選框列與文字起點。",
+      "evidence": [
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x16559"
+        },
+        {
+          "func": "0x28efe"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "10 + 13 + 2 = 25。"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "- `open_dialog_box` `0x1956b` 6:依頭像號 `0x80` → `0x10bb`(123, 13)"
         }
       ]
     },
@@ -1427,6 +1604,35 @@
         {
           "doc": "docs/knowledge-base/13-battle-menu-system.md",
           "quote": "- 兩欄、6 格可見(`游標 - [0x53f4e] >= 6` 時 +2,`游標 < [0x53f4e]` 時 −2)4:"
+        }
+      ]
+    },
+    {
+      "start": "0x53f5e",
+      "size": 4,
+      "name": "list_item_count",
+      "type": "dword(目前城鎮清單的筆數)",
+      "meaning": "城鎮清單的總筆數,和 [0x53f62] 清單指標成對:shop_menu 寫商品數,5 個服務函式在 choice_box_left_right 前寫名冊人數 [0x53bfb],賣出 / 寄放寫道具筆數,復活 / 轉職候選寫引數。menu_tick_redraw 以它決定下箭頭與一欄清單畫幾個單位圖示(最多 3)。",
+      "evidence": [
+        {
+          "func": "0x27079"
+        },
+        {
+          "func": "0x279bc"
+        },
+        {
+          "func": "0x2872b"
+        },
+        {
+          "func": "0x2a29d"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "1 + 5 + 2 + 2 + 2 = 12。"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "- 名冊人數 `[0x53bfb]` 5:`shop_buy` `0x289b1`、`shop_sell_service` `0x28d8a`"
         }
       ]
     },

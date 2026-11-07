@@ -251,3 +251,29 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 
 差異(只記在這裡與 doc98,原表沒改):本檔開頭表格把 −4 寫成「插入角色名(主角名)」、「名字插入碼」那列稱 `[0x53ad9]` 為來源字串指標;
 反組譯看到的是 FDTXT_000 的字串索引,寫入端有道具名、指令名、職業名與角色名四類。
+
+## 2026-11-07:`[0x53c67]` = 對話框 / 頭像在 320 寬緩衝區裡的位移(y × 320 + x;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53c67`:**40 筆全是 4 byte 直接定址,讀 25、寫 15**,分布在 11 個函式。EXE 內初值 0。
+本檔上面「框位置 `[0x3C67]`」一列只列了 `0x728` / `0x9017`;本節把全部寫入值與讀取端列出。
+
+**15 個寫入點**(位移換算成 (x, y)):
+- `0x15f84` 5:開框碼 −0x11 `0x16174` 與 −0x13 `0x16397` 寫 `0x728`(232, 5,上框);−0x12 `0x1625e` 與 −0x14 `0x16413` 寫 `0x9017`(87, 115,下框);結束碼 −1 在 `[esp + 0x18]` 非 0 時 `0x164d7` 寫 0(為 0 時 `0x164b1` 直接跳過)。
+- `open_dialog_box` `0x1956b` 6:依頭像號 `0x80` → `0x10bb`(123, 13)、`0x81` → `0x6ab`(107, 5)、`0x82` → `0xf63`(99, 12)、`0x83` → `0x576`(118, 4)、`0x84` → `0xe3c`(124, 11),其他頭像號 → `0x9017`。
+- 寫 `0xc88`(8, 10)2:`info_card_build` `0x17efa`、`scene_charcard_text_stage` `0x31c83`。
+- 還原 2:`town_equip_service` `0x28f38`、`status_service` `0x2965e`,呼叫 `equip_menu` / `unit_info_cards` 前先存(下面 2 筆讀取),返回後寫回。
+
+**25 筆讀取**:
+- 加到目的地基底,再呼叫 `blit_rle_image` / `blit_rle_image_mirrored`(跨距 0x140)10:
+  - 基底 `0xa0000` 3:`0x15f84` `0x161f9` / `0x162de`、`draw_dialog_cell` `0x16569`。
+  - `[0x53c63]` 畫布 5:`open_dialog_box` `0x19693`、`yes_no_prompt` `0x19bb8` / `0x19bd1` / `0x19c1e` / `0x19c37`。
+  - 其他基底 2:`info_card_build` `0x17f5d`(引數)、`scene_charcard_text_stage` `0x32057`(esi)。
+- 和 `0x728` / `0x9017` 比較 13:
+  - `0x15f84` 6:−3 碼 `0x15fcd` / `0x15fd9` 與 −2 碼 `0x16322` / `0x1632e`,框開著而且已有 3 行時先 `vga_textbox_scroll_up`;`0x16010` / `0x1601c`,框開著才 `draw_dialog_cell` 動嘴。
+  - `draw_dialog_cell` `0x1657e` 1:`0x9017` 用鏡像版。
+  - `dialog_box_open_anim` `0x166a1` / `0x166b7` 2:`0x728` → 框列 2、`0x9017` → 0x70。
+  - `wait_key_with_marker` `0x16cad` 1:文字起點 `0xa0b4f` / `0xa951f`。
+  - `vga_textbox_scroll_up` 3:入口 `0x16e31` / `0x16e3d` 不是兩者之一就返回,`0x16e4d` 選文字起點。
+- 暫存 2:`town_equip_service` `0x28f24`、`status_service` `0x29645`。
+
+10 + 13 + 2 = 25。

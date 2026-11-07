@@ -3042,3 +3042,34 @@ FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取
 
 20 + 1 + 13 + 5 + 9 = 48。
 選項 0 的 `play_bgm(13)` 呼叫點是 `0x26914`;doc12 的 `play_bgm` 呼叫端表把它記為「戰後 / 章節轉場後狀態卡(本日實測)」。這裡只記它所在的分支(進酒館之前),那張表沒改。
+
+## 2026-11-07:`[0x53f5e]` = 城鎮清單的總筆數(和 `[0x53f62]` 清單指標成對;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53f5e`:**16 筆全是 4 byte 直接定址,寫 12、讀 4**,分布在 9 個函式。EXE 內初值 0。
+
+**4 筆讀取**:
+- `menu_tick_redraw` 3:`0x27178`(`[0x53f4e] + 6 < 筆數` 才畫下箭頭)、`0x2720d`(一欄清單用 `+ 3`)、`0x27253`(一欄清單畫 min(筆數, 3) 個單位圖示,單位號取自 `byte [[0x53f62] + [0x53f4e] + k]`)。
+- `shop_buy` `0x288b9` 1:暫存到 edi,`0x289bd` 寫回。
+
+**12 個寫入點**:
+- 商品數 1:`shop_menu` `0x27b6f`(`collect_town_shop_items` 回傳值的低 byte)。
+- 名冊人數 `[0x53bfb]` 5:`shop_buy` `0x289b1`、`shop_sell_service` `0x28d8a`、`town_equip_service` `0x28f0e`、`item_storage_service` `0x2906c`、`status_service` `0x29632`,都緊接著呼叫 `choice_box_left_right`。
+- 道具筆數 2:`shop_sell_service` `0x28deb`、`item_storage_service` `0x290cd`(ebx = 剛傳給 `0x27738` 的第 1 個引數,接著呼叫 `item_list_select`)。
+- `shop_buy` 2:`0x288bf` 寫 esi(同時 `0x288c7` 把 `[0x53f62]` 設成堆疊上的清單)、`0x289bd` 寫回 edi。
+- 引數 2:`revive_candidate_select` `0x2a32e`、`class_change_candidate_select` `0x2a8e8`,第 1 個引數寫進 `[0x53f5e]`、第 2 個寫進 `[0x53f62]`。
+
+1 + 5 + 2 + 2 + 2 = 12。
+
+## 2026-11-07:`0x52387` = 城鎮各選項的店主頭像號(6 byte 常數表;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x52387` 與 `--show-data 0x5238b`:**28 筆全是 1 byte 讀取**,分布在 12 個函式;程式沒有寫入。
+
+**EXE 內的值**(依 `[0x53f4a]` 城鎮選項索引):`81 80 00 82 83 84` —— 0 酒館 0x81、1 武器店 0x80、2 出擊 0(沒有讀取端)、3 道具店 0x82、4 教會 0x83、5 秘密商店 0x84。
+`open_dialog_box` 把頭像號 0x80 .. 0x84 各放在自己的位置(doc14 `[0x53c67]` 一節),其他頭像號一律放在左下角。
+
+**28 筆讀取**,都是 `movzx eax, byte ptr [...]` 後 `push eax`:
+- `[0x52387 + [0x53f4a]]` 索引 13:`open_dialog_box` 的頭像號 12(`shop_menu` 2、`shop_buy` 4、`shop_sell_service` 2、`item_storage_service` 4),`town_equip_service` `0x28f43` 當 `load_res` 的號 1(`equip_menu` 返回後重載頭像)。
+- `[0x52387]` 直接 7(固定第 0 項,酒館):`tavern_menu` 3、`status_service` `0x29664`(`load_res`)1、`save_game_menu` `0x29805` 1、`load_game_menu` `0x29943` / `0x29a49` 2。
+- `[0x5238b]` 直接 8(固定第 4 項,教會):`church_menu` `0x29e12` / `0x29f4d` 2、`revive_service` 3、`class_change_service` 3。
+
+13 + 7 + 8 = 28。下一個位址 `0x5238d` 是另一張 word 表(城鎮選項 → 文字號,本檔 `[0x53f4a]` 一節),不算在這 6 byte 裡。
