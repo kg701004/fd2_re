@@ -265,3 +265,25 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - **暫時讓單位陣列 `[0x53a45]` 指向名冊 3 筆**:`town_hub_main` `0x26347`、`town_hub_select` `0x267dc`(這 2 筆接著 `call sortie_member_select`,返回後把 `[0x53a45]` 寫 0)、`town_hub_select` `0x2680b`(接著 `malloc(0xfa00)`)。
 
 7 + 4 + 1 + 12 + 3 = 27。
+
+## 2026-11-07:`[0x53bf3]` = 金錢(資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53bf3`:**22 筆全是 4 byte 直接定址,讀 14、寫 4、讀改寫 4**,分布在 15 個函式。EXE 內初值 0。
+
+**4 個寫入點**:
+- 讀檔 3:`save_load_restore` `0x10426`(戰況存檔表頭 `+0xa`)、`title_menu_dispatch` `0x26078` 與 `load_game_menu` `0x299a2`(存檔槽 `+0xa02`;同一塊 `+0xa00` 是章節、`+0xa01` 是名冊人數)。
+- 寫 0 1:`command_handler_28` `0x32969`(戰前章節表第 0 格的 handler,結尾 `mov dword ptr [0x53bf3], 0`)。
+
+**4 筆讀改寫**:
+- 直接加 `[0x53ae1]` 2:`field_cell_treasure_check` `0x194e8`(腳下寶物種類 1)、`grant_reward_rows` `0x1abfd`(獎勵列種類 1)。兩處都先 `wait_key_with_marker(0)` 等鍵,沒有數字滾動。
+- `gold_add_with_counter_anim` `0x26ab5`(`add`)、`gold_sub_with_counter_anim` `0x26bcc`(`sub`),加減的是引數 delta。
+
+**14 筆讀取**:
+- 寫進存檔 2:`battle_system_submenu` `0x1a0b3`(戰況存檔表頭 `+0xa`)、`save_game_menu` `0x2976c`(存檔槽 `+0xa02`),和讀檔端的偏移一一對應。
+- `draw_number(dst, stride, 金錢, 0x1f, 8)` 6:`draw_battle_situation_panel` `0x1b4f4`、`shop_menu` `0x27a84` / `0x27ab9`、`church_menu` `0x29e43` / `0x29e78`、`revive_service` `0x2a649`。
+  後 5 處的位置都是 `+0x7bd0`(螢幕 `0xa0000` 或畫面快照 `[0x53c5f]`)。
+- `sprintf(buf, "%0.8d", 金錢)`(`0x37b29`)4:`gold_add_with_counter_anim` `0x26a8a`(改之前)/ `0x26abb`(改之後)、`gold_sub_with_counter_anim` `0x26ba1` / `0x26bd2`。
+  格式字串 `0x50239` / `0x5023f` / `0x50245` / `0x5024b` 四個都是 `"%0.8d"`。
+- 付款前比較 2:`shop_buy` `0x28941`、`revive_service` `0x2a5b4`(`cmp [0x53bf3], [0x53ae1]` 接 `jge`;不足時以 `0x15f84` 顯示文字,足夠時 `revive_service` 接著 `gold_sub_with_counter_anim([0x53ae1])`)。
+
+2 + 6 + 4 + 2 = 14。22 筆裡沒有和常數比較的指令:EXE 沒有對金錢設上限,顯示固定 8 位。

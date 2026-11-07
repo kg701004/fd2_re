@@ -1700,3 +1700,25 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 
 35 + 2 + 2 + 1 = 40。長度 256 bytes:鎖定範圍是 0x100,下一個被引用的位址正好是 `0x542f4`。
 40 筆裡沒有讀取 —— EXE 裡沒有直接讀這段文字的指令(以常數位址間接取用的情形本輪沒有查)。
+
+## 2026-11-07:`[0x53b13]` = 法術 / 效果演出用的音效 bank(FDOTHER.DAT 第 80 或 88 號資源;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53b13`:**21 筆全是 4 byte 直接定址,讀 17、寫 4**,分布在 14 個函式。EXE 內初值 0。
+
+**4 個寫入點 = 2 個載入處,各先寫 0 再寫 `load_res("FDOTHER.DAT"(0x51a4d), 0, 號)` 的結果**:
+- `load_fdother_80_to_53b13` `0x1d4d5` / `0x1d4f0`:80 號(0x50)。呼叫端 6:`ai_spell_execute` `0x1540a`、`player_spell_select` `0x1d446`、`item_effect_dispatch` `0x20c87`、`0x24618` 的 `0x2462d` / `0x2474a`(開頭與結尾各一次)、`spell_scene_effects` `0x2ddbe`。
+- `command_handler_52` `0x33979` / `0x33994`:88 號(0x58),寫入前先呼叫 `0x205da`。
+- 兩處的舊緩衝引數都是 0。
+
+**17 筆讀取**:
+- 當 `play_sfx_a(bank, 音效號, 1)`(`0x25a96`)的 bank 16:
+  - 音效號 1:`0x1c2da` `0x1c303`(呼叫端 11 個效果函式)、`command_handler_52` `0x339e5` / `0x33a0e` / `0x33a37` / `0x33a60`(前 3 次之後各接 `0x24b4d(0x14)` 與 `0x3790a(0x258)`)。
+  - 音效號 2:`command_handler_11` `0x2186d`、`command_handler_12` `0x21aac`。
+  - 音效號 0xb:`command_handler_13` `0x21ae7`、`command_handler_14` `0x21ba7`、`command_handler_15` `0x2212a`、`command_handler_16` `0x22161`、`0x24618` `0x2467f`。
+  - 音效號 0xd:`earthquake_spell_effect` `0x217ac`;音效號 0:`spell_palette_flicker` `0x1d6dc`;音效號 −1:`play_loaded_sfx_and_free` `0x1d504`。
+  - 音效號來自表格:`play_map_effect_animation` `0x1c656`(`byte [esp + ebp + 0x28]`,doc35 記的 `0x51f75` +4 表)。
+- 釋放 1:`play_loaded_sfx_and_free` `0x1d512` `push [0x53b13]` 後 `jmp 0x1a80a`,那裡是 `call 0x3776e`(heap_free)。
+
+5 + 2 + 5 + 3 + 1 = 16;16 + 1 = 17。EXE 裡釋放 `[0x53b13]` 的只有這一處;`play_loaded_sfx_and_free` 的呼叫端 4 個(`ai_spell_execute`、`player_spell_select`、`item_effect_dispatch`、`spell_scene_effects`),
+都同時是 `load_fdother_80_to_53b13` 的呼叫端。`0x24618` 與 `command_handler_52` 載入後沒有對應的釋放(本輪只查直接引用)。
+91-worklist 記的字面音效號 {0, 1, 2, 11, 13, 255} 與這裡相同(255 = −1)。

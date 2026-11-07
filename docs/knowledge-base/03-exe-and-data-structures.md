@@ -405,3 +405,31 @@ HP `+0x40/+0x42`、MP `+0x46`、AP `+0x48`)都是由 `0x10c50` constructor 或�
 結論:`[0x53a45]` 是目前作用中的 0x50-byte 單位 record 陣列基底。戰場上是自己配置的 96 筆陣列;
 城鎮出擊選人期間暫時借用我方名冊 `[0x53bf7]`,用完歸零(不 free,因為那塊屬於名冊)。
 舊文件稱它「戰場單位陣列」只描述了戰場那一種情況;各處 `[0x53a45] + idx*0x50` 的公式不受影響。
+
+## 2026-11-07:`0x53a8d` = int386 共用的 `union REGS`(28 bytes;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53a8d` 與 `0x53a8e`:**`0x53a8d` 49 筆 = 取位址 38、word 寫 8、byte 讀 3;`0x53a8e` 51 筆 = byte 寫 26、byte 讀 25**。兩者合計分布在 15 個函式。EXE 內初值 0。
+
+**取位址 38 筆 = 19 次 `int386(中斷號, 0x53a8d, 0x53a8d)`**(`0x370f0`,輸入與輸出是同一塊):
+- `int 10h` 8 次,前面都是 `mov word ptr [0x53a8d], AX`:
+  - AX = 3(80 × 25 文字模式)7:配置 / 開檔失敗的錯誤路徑 6 —— `save_load_restore` `0x10034` / `0x1019c` / `0x102cc`、章節 loader `0x1088d` 的 `0x109e4`(這 4 個印 `" Out of Memory !!!"`)、
+    `0x10a34`(`"File not found 'FDICON.B24!!"`)、`0x10b4e` 的 `0x10b77`(`"File 'FDICON.B24' error !!"`),都跳到 `0x10056` 以 `printf` 印出再 `push 1; jmp 0x3713c`;另 1 是 `game_main` `0x25e9c`(主迴圈結束後)。
+  - AX = 0x13(320 × 200 × 256 色)1:`game_main` `0x25d66`(配置名冊之後)。
+- `int 16h` 11 次,前面都是 `mov byte ptr [0x53a8e], 0x10`(AH = 0x10 讀延伸鍵):`battle_main_key_poll`、`move_confirm_key_poll`、`wait_key_with_marker`、`action_ring_key_poll`、`yes_no_prompt`、`title_seq`、
+  `map_overview_screen`、`town_hub_main`、`menu_read_key`、`save_slot_selector`、`roster_pick_wait_key`。
+
+**`[0x53a8e]`(AH = 掃描碼)的 26 筆寫入 = 設 AH = 0x10 11 + 正規化 15**:
+- 掃描碼 0xe0(數字鍵盤 Enter)或 0x52(Insert)改成 0x1c(Enter)8:上面 11 個函式扣掉 `yes_no_prompt`、`title_seq`、`map_overview_screen`;`roster_pick_wait_key` 另外把 AL = 0x20(空白)也算進來。
+- 掃描碼 0x53(Delete)改成 1(Esc)7:再扣掉 `town_hub_main`。
+
+**`[0x53a8e]` 的 25 筆讀取**:
+- 呼叫後第一次取 10:11 個函式扣掉 `map_overview_screen`(它不看鍵值)。`yes_no_prompt` 不改寫,直接比 0xe0 / 0x52 / 0x1c / 0x39;`title_seq` 比 0x48 / 0x50(上 / 下)。
+- 正規化中比 0x53 7;正規化後取值 7(6 個函式當回傳值,`save_slot_selector` `0x29d11` 接著比 0x50);`town_hub_main` `0x2657c` 比 0x1c 1。
+
+**`[0x53a8d]`(AL = 字元碼)的 3 筆 byte 讀取**:`title_seq` `0x1feb2`(比 0xd / 0x20)、`town_hub_main` `0x26588`(比 0x20)、`roster_pick_wait_key` `0x2b717`(比 0x20)。
+
+10 + 7 + 7 + 1 = 25;11 + 8 + 7 = 26。
+
+長度 28 bytes:`int386` 經 `0x3da76` 呼叫 `0x46870`,後者把 eax / ebx / ecx / edx / esi / edi 與 cflag(`sbb eax, eax`)寫到輸出結構 `+0` .. `+0x18`,共 7 個 dword,
+和 Watcom 32 位元 `union REGS` 的版面相同;下一個被引用的位址正好是 `0x53aa9`(`camera_x`)。EXE 裡沒有直接存取 `0x53a8f` .. `0x53aa8` 的指令。
+doc25 後來改正的說法(`[0x53a8e]` 是鍵盤掃描碼暫存器,只保留最後處理過的鍵)與這裡一致。

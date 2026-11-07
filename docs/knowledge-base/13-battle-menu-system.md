@@ -2988,3 +2988,25 @@ FD2.EXE 反組譯逐條讀過(Capstone,本 repo 的 `tools/disasm_le.py`),存取
 - `cmp 暫存器, [0x53c57]` 17 筆、`mov 暫存器, [0x53c57]` 42 筆。
 
 所以 `[0x53c57]` 不屬於某一個選單:戰場指令環、道具 / 法術 / 裝備格子、城鎮商店 / 酒館 / 教堂 / 存讀檔 / 轉職 / 復活 / 出擊選單都用同一個 dword 當「目前反白項」。
+
+## 2026-11-07:`[0x53f4e]` = 城鎮清單的捲動位置(第一個可見項的 index;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53f4e`:**46 筆全是 4 byte 直接定址,讀 29、寫 7、讀改寫 10**,分布在 14 個函式。EXE 內初值 0。和游標 `[0x53c57]`(上一節)成對使用。
+
+**7 個寫入點**:
+- 開清單時寫 0 6:`choice_box_left_right` `0x27da8`、`equip_compare_select` `0x27fc9`、`revive_candidate_select` `0x2a31c`、`class_change_candidate_select` `0x2a8d6`(這 4 個寫 esi,函式開頭 `xor esi, esi`,同一處也把 `[0x53c57]` 寫 0)、
+  `shop_sell_service` `0x28dd1`、`item_storage_service` `0x290b3`(常數 0)。
+- 還原 1:`shop_buy` `0x2883a` 從 `[0x53f6e]` 讀回(`0x28869` 把它存到 `[0x53f6e]`,游標同時存到 `[0x53f6a]`)。
+
+**10 筆讀改寫**,都在游標移動之後,接著播捲動動畫:
+- 兩欄、6 格可見(`游標 - [0x53f4e] >= 6` 時 +2,`游標 < [0x53f4e]` 時 −2)4:`item_list_select` `0x27643` / `0x276a6`、`choice_box_left_right` `0x27e59` / `0x27eb4`。
+- 一欄、3 列可見(`>= 3` 時 +1,`<` 時 −1)6:`equip_compare_select` `0x2807d` / `0x280d6`、`revive_candidate_select` `0x2a409` / `0x2a3c1`、`class_change_candidate_select` `0x2a9cb` / `0x2a97f`。
+- +方向接 `menu_box_scroll_up_anim` `0x27816`,−方向接 `menu_box_scroll_down_anim` `0x278e7`。
+
+**29 筆讀取**:
+- 上面 10 筆的比較 10(每個 +/− 各 1)。
+- `menu_tick_redraw` 5:mode 1 / 3 時 `[0x53f4e] != 0` 畫上箭頭(`0xa972a`)、`[0x53f4e] + 6 < [0x53f5e]` 畫下箭頭(`0xae36a`),不成立就畫空白圖;mode 2 用 `+ 3`;另 1 筆以 `[0x53f62][[0x53f4e] + i]` 取可見列要畫的圖。
+- 畫清單 13:`draw_item_list_two_column` 3、`draw_party_roster_two_column` 3、`draw_equip_compare_rows` 2、`draw_revive_candidate_rows` 2、`draw_class_change_options` 3(`+ 6` / `+ 3` 和總數比、`+ i` 當項目 index)。
+- `shop_buy` `0x28869` 存到 `[0x53f6e]` 1。
+
+10 + 5 + 13 + 1 = 29。46 筆都在 `0x27079` .. `0x2a9cb` 這段的清單函式裡。

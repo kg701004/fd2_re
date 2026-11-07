@@ -533,6 +533,38 @@
       ]
     },
     {
+      "start": "0x53a8d",
+      "size": 28,
+      "name": "int386_regs",
+      "type": "union REGS(Watcom 32 位元:eax / ebx / ecx / edx / esi / edi / cflag 7 個 dword)",
+      "meaning": "所有 int386 呼叫共用的暫存器結構(輸入與輸出同一塊):int 10h 8 次(AX = 3 文字模式 7、AX = 0x13 1),int 16h 11 次(AH = 0x10 讀延伸鍵);讀鍵後把掃描碼 0xe0 / 0x52 改成 0x1c、0x53 改成 1。+1 是 AH(掃描碼),+0 的 AL 是字元碼。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x26eda"
+        },
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x2b67f"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "**取位址 38 筆 = 19 次 `int386(中斷號, 0x53a8d, 0x53a8d)`**(`0x370f0`,輸入與輸出是同一塊):"
+        },
+        {
+          "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+          "quote": "和 Watcom 32 位元 `union REGS` 的版面相同;下一個被引用的位址正好是 `0x53aa9`(`camera_x`)。EXE 裡沒有直接存取 `0x53a8f` .. `0x53aa8` 的指令。"
+        }
+      ],
+      "fields": {
+        "0x1": "ah_scan_code"
+      }
+    },
+    {
       "start": "0x53aa9",
       "size": 4,
       "name": "camera_x",
@@ -820,6 +852,32 @@
       ]
     },
     {
+      "start": "0x53b13",
+      "size": 4,
+      "name": "effect_sfx_bank",
+      "type": "dword 指標(FDOTHER.DAT 第 80 或 88 號資源,音效 bank)",
+      "meaning": "法術 / 效果演出用的音效 bank:load_fdother_80_to_53b13 載入 80 號、command_handler_52 載入 88 號(都先寫 0);16 次當 play_sfx_a 0x25a96 的 bank(音效號 −1 / 0 / 1 / 2 / 0xb / 0xd 與一處查表),play_loaded_sfx_and_free 是唯一的釋放處。",
+      "evidence": [
+        {
+          "func": "0x1d4cb"
+        },
+        {
+          "func": "0x1d4f6"
+        },
+        {
+          "func": "0x3396a"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "5 + 2 + 5 + 3 + 1 = 16;16 + 1 = 17。EXE 裡釋放 `[0x53b13]` 的只有這一處"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**4 個寫入點 = 2 個載入處,各先寫 0 再寫 `load_res(\"FDOTHER.DAT\"(0x51a4d), 0, 號)` 的結果**:"
+        }
+      ]
+    },
+    {
       "start": "0x53beb",
       "size": 4,
       "name": "field_unit_count",
@@ -871,6 +929,35 @@
         {
           "doc": "docs/knowledge-base/25-battle-event-system.md",
           "quote": "**3 個寫入點**:`0x205da` `0x2066e` 開戰寫 1;`battle_phase_advance` `0x1a30b` `0x1a5b9` `inc`"
+        }
+      ]
+    },
+    {
+      "start": "0x53bf3",
+      "size": 4,
+      "name": "gold",
+      "type": "dword(我方金錢,無上限檢查,顯示 8 位)",
+      "meaning": "金錢:讀檔從戰況存檔表頭 +0xa / 存檔槽 +0xa02 讀回(存檔端以同偏移寫出),command_handler_28 寫 0;寶物 / 獎勵直接加 [0x53ae1],商店 / 教會經 gold_add / gold_sub_with_counter_anim 加減並逐位滾動;6 處 draw_number(…, 0x1f, 8) 顯示,付款前與 [0x53ae1] 比較。",
+      "evidence": [
+        {
+          "func": "0x26a7a"
+        },
+        {
+          "func": "0x26b91"
+        },
+        {
+          "func": "0x2986f"
+        },
+        {
+          "func": "0x3231b"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "2 + 6 + 4 + 2 = 14。22 筆裡沒有和常數比較的指令:EXE 沒有對金錢設上限,顯示固定 8 位。"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "格式字串 `0x50239` / `0x5023f` / `0x50245` / `0x5024b` 四個都是 `\"%0.8d\"`。"
         }
       ]
     },
@@ -1172,6 +1259,35 @@
         {
           "doc": "docs/knowledge-base/36-sfx-audio-data.md",
           "quote": "1 + 57 + 3 = 61。用到的音效號最大 0xc。"
+        }
+      ]
+    },
+    {
+      "start": "0x53f4e",
+      "size": 4,
+      "name": "list_scroll_top",
+      "type": "dword(城鎮清單第一個可見項的 index)",
+      "meaning": "城鎮 / 商店 / 教會清單的捲動位置:開清單寫 0(shop_buy 從 [0x53f6e] 還原);游標 [0x53c57] 離開可見窗時兩欄清單 ±2(6 格)、一欄清單 ±1(3 列)並播捲動動畫;menu_tick_redraw 依它畫上下箭頭,各畫清單函式以 +i 取項目。",
+      "evidence": [
+        {
+          "func": "0x275e6"
+        },
+        {
+          "func": "0x27f4a"
+        },
+        {
+          "func": "0x272d0"
+        },
+        {
+          "func": "0x27079"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "10 + 5 + 13 + 1 = 29。46 筆都在 `0x27079` .. `0x2a9cb` 這段的清單函式裡。"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "- 兩欄、6 格可見(`游標 - [0x53f4e] >= 6` 時 +2,`游標 < [0x53f4e]` 時 −2)4:"
         }
       ]
     },
