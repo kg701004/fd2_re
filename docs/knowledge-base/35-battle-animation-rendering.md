@@ -5744,3 +5744,86 @@ EXE 內初值是 `0d 00 00 00` / `08 00 00 00`(13 / 8);前面 `0x51a83` 是目�
 - **總覽圖 / 地震演出 2 筆**:`map_overview_screen` `0x2000a`、`earthquake_spell_effect` `0x21548` 把值先 × 3 再換算尺寸。
 
 12 + 1 + 2 = 15。`cursor_step_right` `0x11bfa` 沒有讀 `[0x51a87]`,鏡頭右緣直接用常數(`sub eax, 0xd`,見本檔 `[0x53ac1]` 一節)。
+
+## 2026-11-07:`[0x53a5d]` / `[0x53a69]` = 戰場地形圖塊組 / 圖塊屬性表(FDSHAP.DAT 第 組號 × 2 / × 2 + 1 號;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`:`[0x53a5d]` **47 筆(讀 28、寫 19)**、16 個函式;`[0x53a69]` **20 筆(讀 17、寫 3)**、12 個函式。
+全是 4 byte 直接定址,EXE 內初值都是 0。
+
+**載入**:`save_load_restore` `0x10233` 與章節 loader `0x1088d` 的 `0x10937` 讀地圖控制塊 `[0x53a55]` 的 byte [+0](地形圖組號),
+以 `0x111ba("FDSHAP.DAT", 舊緩衝, 組號 × 2)` 載入 `[0x53a5d]`、以 `(…, 組號 × 2 + 1)` 載入 `[0x53a69]`(字串在 `0x51a65`);
+`command_handler_80` `0x24754` 直接用 0x2e / 0x2f 號(23 × 2 / 23 × 2 + 1),同一處先以 FDFIELD.DAT 0x45 號重載 `[0x53a51]`。`0x111ba` 的舊緩衝引數非 0 時先 free(doc14 `[0x53a79]` 一節)。
+
+**`[0x53a5d]` 19 筆寫入**:
+- 載入 3:上面 3 處。
+- 戰鬥演出 10:`derived_strike_scene` `0x2cf30`、`spell_scene_effects` `0x2d80d`、`ai_item_scene` `0x2dfc8`、`attack_scene_orchestrator` `0x2e2b0`、`spell_cast_scene` `0x2ff01`
+  開頭 free 後寫 0 各 1、結束時以同一個組號 × 2 重載各 1(doc25 地圖控制塊 +0 一節)。這 5 個函式都不碰 `[0x53a69]`。
+- 解碼表替換 4:`map_overview_screen` `0x2000a` 與 `earthquake_spell_effect` `0x21548` 先把原指標存到堆疊,把 `decode_tileset_to_sheet` `0x1399c` 的回傳值寫進 `[0x53a5d]`
+  (`0x20050` / `0x2158b`);結束時 free 它,再把原指標寫回(`0x203a6` / `0x217f7`)。
+- 城鎮 2:`town_hub_main` `0x26152` 進城時 free 後寫 0(`0x261d8`),之後 `malloc(0x25680)` 寫入(`0x2638c`)。
+
+3 + 10 + 4 + 2 = 19。
+
+**`[0x53a5d]` 28 筆讀取**:
+- `0x111ba` 舊緩衝引數 8(3 處載入 + 5 處演出重載)。
+- free 8(演出 5、`map_overview_screen` `0x20394`、`earthquake_spell_effect` `0x217e5`、`town_hub_main` `0x261ca`);`town_hub_main` `0x261c1` free 前 `cmp 0` 1。
+- 取圖塊 5(圖塊 = 基底 + dword[基底 + 6 + 號 × 4]):`draw_terrain_layer` `0x121ec`、`redraw_map_cell` `0x12b74`(取第 號 + 1 項,只在屬性 byte 0 bit 7 成立時)、
+  `decode_tileset_to_sheet` `0x13a10`、`draw_map_hud` `0x1ada9`(游標格的圖塊,號來自 `map_cell_info`),加上 `decode_tileset_to_sheet` `0x139ac` 讀 `word [+4]`(圖塊數;解碼表 = `malloc(數 × 576 + 6)`,表頭 word 24、24、數)。
+- 解碼表取圖塊 2:`map_overview_screen` `0x20108`、`earthquake_spell_effect` `0x21632`,位址 = 基底 + 6 + 號 × 576(24 × 24)。
+- 解碼前存原指標 2:`0x20042`、`0x2157d`。
+- 城鎮 2:`town_hub_main` `0x263e4` 以 `blit_rle_image_at_xy` 把 FDOTHER 資源畫到 +0x8088(456 寬緩衝的第 72 列、第 72 欄);
+  `town_hub_redraw` `0x26613` `memmove([0x53a49], [0x53a5d], 0x25680)`,重畫時先把這張乾淨的背景複製回戰場畫布。
+
+8 + 8 + 1 + 5 + 2 + 2 + 2 = 28。城鎮裡 `[0x53a5d]` 不是圖塊組,而是一張 456 × 336(0x25680)的背景備份;下一次 `0x111ba` 載入時當舊緩衝 free。
+
+**`[0x53a69]` 3 筆寫入**:只有上面 3 處載入。沒有 free 或寫 0 的指令;`town_hub_main` 進城時清的是 `[0x53a45]` / `[0x53a55]` / `[0x53a5d]` / `[0x53a51]`,不含它,換圖時由 `0x111ba` 釋放舊的。
+
+**`[0x53a69]` 17 筆讀取**(每個圖塊 4 bytes,記錄 = 基底 + 號 × 4,號 = 格子 `word & 0x3ff`):
+- `0x111ba` 舊緩衝引數 3。
+- `flood_fill_reach_grid` `0x4e390` 第 6 引數 6:`ai_physical_candidate_select` `0x14331`、`move_unit_toward_point` `0x14cae` / `0x14d61`、`ai_spell_candidate_select` `0x15a43`、`0x18890` 的 `0x18930`、
+  `collect_targets_in_range` `0x1483d`(這處第 1 引數是 `move_cost_row_ptr(0)` 的回傳值,推引數中間夾了一次 call)。
+- `grid_path_search` `0x4e4f6` 第 10 引數(地形表)5:`ai_move_toward_reachable_opponent` `0x14191`、`move_unit_toward_point` `0x14c16` / `0x14c5b` / `0x14e75`、`0x18890` 的 `0x189cd`。
+- 直接讀 3:`draw_terrain_layer` `0x12247` 與 `redraw_map_cell` `0x12b52` 讀 byte 0 測 bit 3(成立時圖塊號再依 `[0x53a40]` 調整);
+  `map_cell_info` `0x12e86` 把 4 個 byte 複製到輸出 +4 .. +7(doc98 記的 out[5] 就是 byte 1,也是移動成本列的索引)。
+
+3 + 6 + 5 + 3 = 17。
+
+## 2026-11-07:`[0x53ec4]` = 跳字佇列的已用格數(每個目標 4 格;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53ec4`:**30 筆全是 4 byte 直接定址,讀 10、寫 18、讀改寫 2**,分布在 18 個函式。EXE 內初值 0。
+
+佇列是三個平行的 byte 陣列,以 `[0x53ec4]` + 格號索引:`0x53c6c` 字形(0 = 空白,不畫)、`0x53d34` 橫向位移、`0x53dfc` 單位號。三個陣列起點相距 0xc8(200)bytes。
+
+**18 筆寫 0**:13 個動作函式各 1 —— `item_effect_dispatch` `0x20c6f`、`command_generic_damage` `0x21227`、`spell_damage_on_targets_flash` `0x212b9`、`command_generic_damage_type21` `0x213b7`、
+`command_handler_9` `0x214ad`、`earthquake_spell_effect` `0x21548`、`cast_heal_on_targets` `0x21b18`、`command_handler_17` `0x226ea`、`command_handler_18` `0x2282f`、`command_handler_19` `0x22960`、
+`cast_fixed_heal_after_mp` `0x22aa8`、`command_handler_25` `0x22c04`、`cast_status_spell` `0x22cda`;`spell_scene_effects` `0x2d80d` 5。
+
+**2 筆 `add 4`**:
+- `queue_unit_number_popup` `0x1e1d0`:4 格,第 k 格位移 = k × 5 + 2、單位號 = 第 3 引數;`sprintf(buf, "%d", 數值)`(`0x501b6`),字串長度 ≤ 3 − k 的格字形寫 0,其他格字形 = 第 2 引數 + 數字字元 − '0'。
+- `queue_unit_fixed_popup` `0x1e1dc` `0x1e286`:4 格字形取自 `0x5204a` 起 4 bytes,位移 k × 5 + 2(k = 1 那格多 1)。
+- 兩者開頭都先檢查單位在視野內(鏡頭 ± `[0x51a87]` / `[0x51a8b]`),不在就直接返回、不排;排入時都沒有和上限比較。
+
+**10 筆讀取**:
+- 排入時取目前格數 4:`queue_unit_number_popup` `0x1e18e` / `0x1e1b2`、`queue_unit_fixed_popup` `0x1e249` / `0x1e265`。
+- `action_finish_effect` `0x1df58` 2:`0x1df78` 為 0 就跳到共用的返回尾段 `0x11452`;否則 `malloc(0x25680)` 存一份戰場畫布,`0x1e00a` 以它當走訪上界,只畫字形非 0 的格(本檔 22 幀那節)。
+- 呼叫 `action_finish_effect` 前檢查非 0 4:`item_effect_dispatch` `0x20d16`、`cast_fixed_heal_after_mp` `0x22ae8`(非 0 就 `jne 0x1df58` 尾端跳入)、`command_handler_25` `0x22cad`、
+  `apply_status_spell_to_targets` `0x22e2f`(非 0 跳到 `0x22a7b` 的 `call 0x1df58`)。
+
+4 + 2 + 4 = 10。三個陣列本輪不登錄。
+
+## 2026-11-07:`[0x53ac5]` = 戰場地圖高(格數;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data 0x53ac5`:**21 筆全是 4 byte 直接定址,讀 19、寫 2**,分布在 15 個函式。EXE 內初值 0。
+
+**2 個寫入點**,都緊接在 `[0x53ac1]`(地圖寬)之後讀地圖格緩衝 `[0x53a51]` 的表頭 `movsx eax, word ptr [eax + 2]`:`save_load_restore` `0x1022e`、章節 loader `0x1088d` 的 `0x10932`。
+`command_handler_80` `0x24754` 重載 `[0x53a51]` 時不更新寬 / 高。
+
+**19 筆讀取**:
+- **走訪上界 8 筆**(`cmp y, [0x53ac5]` 接 `jge`):`field_unit_construct` `0x10ccb`、`map_count_flagged_event_cells` `0x12277`、`collect_targets_in_range` `0x1487e` / `0x14909`、
+  `map_collect_cells_byte3_set` `0x14b3f`、`find_event_cell` `0x15e1d`、`map_overview_screen` `0x20137`、`earthquake_spell_effect` `0x2165b`。
+- **邊界檢查 5 筆**:`mark_unit_cell_blocking` `0x14672`(y < 高 − 1 才處理下方格)、`build_target_candidates` `0x14ab6`(0 ≤ y < 高)、`draw_map_scaled_fixedpoint` `0x1f6ce`(0 ≤ y < 高)、
+  `ai_item_action` `0x1524e` / `0x15256`(y ≥ 高時把 `[0x53c3b]` 夾成高 − 1)。
+- **游標 / 鏡頭下緣 3 筆**:`cursor_step_down` `0x11ba5`(游標 Y `[0x53ab5]` == 高 − 1 就不動)、`0x11bbc`(鏡頭 Y `[0x53aad]` == 高 − 8 就只動游標)、`step_anim_down` `0x12ef9`(高 − `[0x51a8b]` 與鏡頭 Y 比)。
+- **總覽圖尺寸 3 筆**:`map_overview_screen` `0x20055`(高 > 40 時改用 3 倍縮放參數:ebp = 3、`[esp + 0x20]` = 0x380)、`0x200cb`(高 × 3 × 512)、`0x201fc`(高 × ebp)。
+
+8 + 5 + 3 + 3 = 19。和 `[0x53ac1]` 一節對照:寬多一類「列優先索引」(y × 寬 + x),高沒有;`draw_map_scaled_fixedpoint` 的寬是走訪上界、高是邊界檢查。

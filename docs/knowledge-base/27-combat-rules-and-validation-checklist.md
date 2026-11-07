@@ -890,3 +890,24 @@ PRNG 與內聯的判定併成了一個不存在的函式。兩處都已訂正。
 * 三筆的 `correct_address` 只有 `0x2a2e8`→`0x2ac7d` 是文件直接寫明的;另兩筆要讀完
   doc25 §11.7 才能填,本輪未做。
 * 184 這個數字**只涵蓋 obj1 的入口主張**;資料段的結構主張仍然沒有分母。
+
+## 2026-11-07:`[0x53ec8]` = 單次行動的待入帳經驗值(逐筆存取帳;資料區段登錄,`docs/data/data_map.json`)
+
+語意見 §5 與 doc98(`apply_pending_exp` `0x1e292` 入帳:EX + 待入帳值,每滿 100 升一級)。本節只記每一筆存取。
+存取次數來自 `python tools/re_coverage.py --show-data 0x53ec8`:**29 筆全是 4 byte 直接定址,讀 5、寫 15、讀改寫(`add`)9**,分布在 19 個函式。EXE 內初值 0。
+
+**15 筆寫入**:
+- 寫 0 9:`battle_main_input_loop` `0x118ee`、`ai_item_action` `0x152fd`、`ai_spell_execute` `0x1546a`、`player_action_ring` `0x18dc4` / `0x1906b`、`apply_pending_exp` `0x1e51a`(入帳後)、
+  `item_effect_dispatch` `0x21046`、`event_handler_30` `0x34e9e`、`event_handler_55` `0x357ce`。
+- 寫 99 1:`battle_main_input_loop` `0x11962`(`0x11959` `cmp 0x63` 接 `jle`,超過才寫)。
+- 攻擊公式 4:`map_attack_resolve` `0x1f024` / `0x1f03c`、`scene_attack_resolve` `0x2fa9f` / `0x2fab9`。兩個結算函式形狀相同:第 1 筆寫乘除後的基礎值,
+  條件成立時第 2 筆(`0x1f03c` / `0x2fab9`)把它再乘一個數、除一個數(doc35 續一百二十五的實測是依傷害 / HP 比例縮放)。
+- 除法 1:`player_action_ring` `0x19045`,`0x19039` 讀出後 `idiv ebx` 寫回(§5 的「÷ 施法者等級」)。
+
+**9 筆 `add`**:`spell_damage_apply` `0x1c8e2`、`heal_hp_apply` `0x1c9cf`、`command_handler_23` `0x221e0`、`effect_ap_percent_buff` `0x22810`、`effect_dp_percent_buff` `0x22955`、
+`effect_hit_ev_buff` `0x22a66`、`effect_cure_status_flag` `0x22baf`、`command_handler_25` `0x22c9b`、`apply_status_spell_to_targets` `0x22e0b`。
+
+**5 筆讀取**:`battle_main_input_loop` `0x11959`(上限比較)、`player_action_ring` `0x19039`(除法前讀出)、`apply_pending_exp` `0x1e2c9`(為 0 就跳過)、`0x1e30d`(EX + 待入帳值)、
+`0x1e319`(複製到 `[0x53ae1]`,給訊息的 −6 控制碼印成數字,見 doc14 2026-11-07 `[0x53ae1]` 一節)。
+
+9 + 1 + 4 + 1 = 15 筆寫入;15 + 9 + 5 = 29。

@@ -374,6 +374,35 @@
       ]
     },
     {
+      "start": "0x53a5d",
+      "size": 4,
+      "name": "terrain_tileset",
+      "type": "dword 指標(FDSHAP.DAT 地形圖塊組;總覽圖 / 地震暫換成解碼表;城鎮裡是背景備份)",
+      "meaning": "戰場地形圖塊組:save_load_restore / 章節 loader / command_handler_80 以 0x111ba(\"FDSHAP.DAT\", 舊緩衝, 組號 × 2) 載入,圖塊 = 基底 + dword[基底 + 6 + 號 × 4]。戰鬥演出 5 個函式 free 後重載;map_overview_screen / earthquake_spell_effect 暫時換成 decode_tileset_to_sheet 的 24 × 24 解碼表再換回;town_hub_main 改成 malloc(0x25680) 的城鎮背景備份,town_hub_redraw 複製回 [0x53a49]。",
+      "evidence": [
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x1399c"
+        },
+        {
+          "func": "0x265ec"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "8 + 8 + 1 + 5 + 2 + 2 + 2 = 28。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "以 `0x111ba(\"FDSHAP.DAT\", 舊緩衝, 組號 × 2)` 載入 `[0x53a5d]`"
+        }
+      ]
+    },
+    {
       "start": "0x53a61",
       "size": 4,
       "name": "fdicon_cache_buffer",
@@ -396,6 +425,32 @@
         {
           "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
           "quote": "這 3 個戰鬥演出進場時 free 快取,結束時從 FD2.TMP 讀回"
+        }
+      ]
+    },
+    {
+      "start": "0x53a69",
+      "size": 4,
+      "name": "terrain_tile_attrs",
+      "type": "dword 指標(FDSHAP.DAT 圖塊屬性表,每圖塊 4 bytes)",
+      "meaning": "地形圖塊屬性表:和 [0x53a5d] 同 3 處以 FDSHAP.DAT 組號 × 2 + 1 載入,記錄 = 基底 + 號 × 4。byte 0 bit 3 讓繪製依 [0x53a40] 調整圖塊號;map_cell_info 把 4 bytes 複製到輸出 +4 .. +7(byte 1 是移動成本列索引);flood_fill_reach_grid 第 6 引數、grid_path_search 第 10 引數。沒有 free 或寫 0 的指令。",
+      "evidence": [
+        {
+          "func": "0x12e38"
+        },
+        {
+          "func": "0x14818"
+        },
+        {
+          "func": "0x14b78"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "3 + 6 + 5 + 3 = 17。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`map_cell_info` `0x12e86` 把 4 個 byte 複製到輸出 +4 .. +7"
         }
       ]
     },
@@ -678,6 +733,35 @@
       ]
     },
     {
+      "start": "0x53ac5",
+      "size": 4,
+      "name": "field_map_height",
+      "type": "dword(戰場地圖高,格數)",
+      "meaning": "戰場地圖高:save_load_restore / 章節 loader 在 [0x53a51] 載入後讀表頭 word [+2] 寫入(command_handler_80 重載時不更新)。19 筆讀取 = 走訪上界 8、邊界檢查 5、游標 / 鏡頭下緣 3、總覽圖尺寸 3。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x11b9b"
+        },
+        {
+          "func": "0x2000a"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "8 + 5 + 3 + 3 = 19。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "都緊接在 `[0x53ac1]`(地圖寬)之後讀地圖格緩衝 `[0x53a51]` 的表頭 `movsx eax, word ptr [eax + 2]`"
+        }
+      ]
+    },
+    {
       "start": "0x53ad5",
       "size": 4,
       "name": "battle_event_state_table",
@@ -703,6 +787,35 @@
         {
           "doc": "docs/knowledge-base/25-battle-event-system.md",
           "quote": "**固定偏移 50 筆**(讀出後第一個用到的位置):`+0` 2、`+0xc` 4、`+0x10` 25、`+0x11` 10、`+0x12` 2、`+0x13` 3、`+0x14` 1、`+0x15` 3。"
+        }
+      ]
+    },
+    {
+      "start": "0x53ae1",
+      "size": 4,
+      "name": "message_number_value",
+      "type": "dword 有號整數(訊息 −6 控制碼印出的數)",
+      "meaning": "訊息裡 −6(0xFFFA)控制碼印出的數值:0x15f84 以 sprintf(buf, \"%d\", 值) 轉字串再畫。10 個寫入點寫寶箱金額、獎勵數量、中毒傷害、待入帳經驗、能力成長、買賣價格、復活費用、存檔欄號、轉職加值;讀回的用途是加減金錢 [0x53bf3] 與加回能力值。",
+      "evidence": [
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x190ac"
+        },
+        {
+          "func": "0x2872b"
+        },
+        {
+          "func": "0x1e292"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "所以 `[0x53ae1]` 存的是一個整數,不是字串指標。"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "1 + 2 + 2 + 3 + 2 = 10。"
         }
       ]
     },
@@ -952,6 +1065,58 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "把畫布 +0x8c05(第 112 列、第 5 欄)起最多 0x56 列、每列 0x136 bytes 複製到合成的第「列」列起、第 5 欄"
+        }
+      ]
+    },
+    {
+      "start": "0x53ec4",
+      "size": 4,
+      "name": "popup_queue_used",
+      "type": "dword(跳字佇列已用格數,每目標 4 格)",
+      "meaning": "跳字佇列已用格數:13 個動作函式與 spell_scene_effects 開始時寫 0,queue_unit_number_popup / queue_unit_fixed_popup 每排一個目標 +4(沒有上限檢查);action_finish_effect 以它為走訪上界畫 0x53c6c / 0x53d34 / 0x53dfc 三個平行陣列,為 0 時不畫。",
+      "evidence": [
+        {
+          "func": "0x1e0db"
+        },
+        {
+          "func": "0x1e1dc"
+        },
+        {
+          "func": "0x1df58"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "4 + 2 + 4 = 10。三個陣列本輪不登錄。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`0x53c6c` 字形(0 = 空白,不畫)、`0x53d34` 橫向位移、`0x53dfc` 單位號"
+        }
+      ]
+    },
+    {
+      "start": "0x53ec8",
+      "size": 4,
+      "name": "pending_action_exp",
+      "type": "dword(單次行動的待入帳經驗值,上限 99)",
+      "meaning": "單次行動累積、尚未入帳的經驗值:攻擊結算以公式寫入、法術 / 恢復 / 輔助效果 add 累加、player_action_ring 除以施法者等級、battle_main_input_loop 夾到 99;apply_pending_exp 入帳(並複製到 [0x53ae1] 給訊息)後寫 0,另有 8 處寫 0。",
+      "evidence": [
+        {
+          "func": "0x1e292"
+        },
+        {
+          "func": "0x117e7"
+        },
+        {
+          "func": "0x2f7b6"
+        },
+        {
+          "doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+          "quote": "9 + 1 + 4 + 1 = 15 筆寫入;15 + 9 + 5 = 29。"
+        },
+        {
+          "doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+          "quote": "寫 99 1:`battle_main_input_loop` `0x11962`(`0x11959` `cmp 0x63` 接 `jle`,超過才寫)。"
         }
       ]
     },

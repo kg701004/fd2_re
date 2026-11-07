@@ -206,3 +206,29 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - **其他 9 筆**:`0x15f84` 自己在 `0x1606d` 遞迴印 `[0x53ad9]`(控制碼 −4 的名字);`draw_save_slot_list` `0x29b96` `+ 0x202`;`turn_status_tick` `0x1a9ed` `lea [edi + 0x1e1]`;`town_hub_redraw` `0x2666e` `0x1ef + [0x53f4a]`;`draw_battle_situation_panel` `0x1b41d` 2 筆(edi,本 repo doc26 記為章節 × 2 + 0x255);`shop_menu` `0x279bc` 2 筆(esi);`apply_stat_growth` `0x1e59d` 1 筆(堆疊引數)。
 
 56 + 25 + 9 = 90。
+
+## 2026-11-07:`[0x53ae1]` = 訊息裡 −6 控制碼印出的數值(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ae1`:**20 筆直接定址,寫 10(4 byte)、讀 10(4 byte 8、word 1、byte 1)**,分布在 11 個函式。EXE 內初值 0。
+
+**−6 控制碼**:`0x15f84` 在 `0x160a5` `cmp eax, -6` 之後 `sprintf(buf, "%d", [0x53ae1])`(`0x37b29`,格式字串 `0x5014c` = `"%d"`)、`strlen`(`0x37b55`),再逐字畫,每字 ebp + 0x10。
+所以 `[0x53ae1]` 存的是一個整數,不是字串指標。
+
+**10 筆寫入**:
+- `field_cell_treasure_check` `0x19477`:寶箱金額。`grant_reward_rows` `0x1abaf`:獎勵數量。
+- `turn_status_tick` `0x1a8c3`:最大 HP `word [+0x42]` ÷ 10,接著從目前 HP `word [+0x40]` 扣掉(下限 0)。
+- `apply_pending_exp` `0x1e31e`:待入帳經驗值 `[0x53ec8]`。`apply_stat_growth` `0x1e55a`:能力成長量。
+- `shop_buy` `0x288a9`:道具價格 `word [+0x13]`。`shop_sell_service` `0x28e51`:價格 × 3 ÷ 4。`revive_service` `0x2a56b`:`word [0x52397 + 職業 byte [+0x20] × 2]` × 等級 `byte [+0x21]`。
+- `draw_save_slot_list` `0x29ad2`:存檔欄號 + 1。`class_change_apply` `0x2ad8b`:`0x4e7dd` 回傳記錄的 `byte [+1]`(非 0 才寫)。
+
+**10 筆讀取**:
+- −6 控制碼 1:`0x15f84` `0x160ae`。
+- 加到金錢 `[0x53bf3]` 2:`field_cell_treasure_check` `0x194e3`、`grant_reward_rows` `0x1abf8`。
+- 和金錢比較 2:`shop_buy` `0x28946`、`revive_service` `0x2a5b9`;交給金錢動畫 3:`gold_sub_with_counter_anim` `0x26b91`(`shop_buy` `0x28b26`、`revive_service` `0x2a609`)、
+  `gold_add_with_counter_anim` `0x26a7a`(`shop_sell_service` `0x28ed1`)。
+- 加回能力值 2:`apply_stat_growth` `0x1e5ab`(`word`,加到能力值)、`class_change_apply` `0x2add4`(`byte`,加到 `+0x3b`)。
+
+1 + 2 + 2 + 3 + 2 = 10。
+
+**和本檔開頭表格的差異**:表格 `0xFFFA` 列寫「插入字串 / 數值(`[0x53ae1]`,經 `0x377d9`/`0x37805` 格式化)」,下方註記把 `[0x53ae1]` 和 `[0x53ad9]` / `[0x53add]` 一起稱為「全域字串指標」。
+反組譯看到的是 `0x37b29`(sprintf)/ `0x37b55`(strlen),值以 `"%d"` 印出;`0x377d9` / `0x37805` 本輪沒查。原表沒改。
