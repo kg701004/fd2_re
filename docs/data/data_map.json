@@ -101,6 +101,58 @@
       ]
     },
     {
+      "start": "0x51a87",
+      "size": 4,
+      "name": "view_width_cells",
+      "type": "dword 常數(戰場視野寬 13 格)",
+      "meaning": "戰場視野寬,EXE 初值 13,沒有寫入。12 個繪製 / 排程函式以鏡頭 X [0x53aa9] + 它做可見範圍檢查;step_anim_right 以地圖寬 [0x53ac1] − 它當鏡頭右緣;map_overview_screen / earthquake_spell_effect 換算尺寸。",
+      "evidence": [
+        {
+          "func": "0x127e0"
+        },
+        {
+          "func": "0x13315"
+        },
+        {
+          "func": "0x2000a"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "EXE 內初值是 `0d 00 00 00` / `08 00 00 00`(13 / 8)"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "12 + 1 + 2 = 15。"
+        }
+      ]
+    },
+    {
+      "start": "0x51a8b",
+      "size": 4,
+      "name": "view_height_cells",
+      "type": "dword 常數(戰場視野高 8 格)",
+      "meaning": "戰場視野高,EXE 初值 8,沒有寫入。讀取與 [0x51a87] 一一對應:12 個可見範圍檢查(鏡頭 Y [0x53aad] + 它,多數再 +1)、step_anim_down 以地圖高 [0x53ac5] − 它當鏡頭下緣、map_overview_screen / earthquake_spell_effect 換算尺寸。",
+      "evidence": [
+        {
+          "func": "0x127e0"
+        },
+        {
+          "func": "0x12eaa"
+        },
+        {
+          "func": "0x21548"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`step_anim_down` `0x12eaa` 以 地圖高 `[0x53ac5]` − `[0x51a8b]` 與鏡頭 Y 比"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "鏡頭 Y − 1 ≤ y ≤ 鏡頭 Y + 8 + 1(Y 多一個 `inc`)"
+        }
+      ]
+    },
+    {
       "start": "0x538a8",
       "size": 4,
       "name": "ail_mix_src_end",
@@ -822,6 +874,84 @@
         {
           "doc": "docs/knowledge-base/13-battle-menu-system.md",
           "quote": "**209 筆全是 4 byte 直接定址,讀 149、寫 33、讀改寫 27**"
+        }
+      ]
+    },
+    {
+      "start": "0x53c5b",
+      "size": 4,
+      "name": "ui_compose_frame",
+      "type": "dword 指標(選單面板的合成畫面,malloc 0xfa00)",
+      "meaning": "選單面板動畫的合成畫面:10 個開面板函式 malloc(0xfa00),present_box_at_row / info_card_present_frame / unit_info_cards 每一格先複製背景 [0x53c5f]、再把畫布 [0x53c63] 上的面板貼到動畫位置,最後整張 memmove 到 0xa0000;7 個關面板函式 free。",
+      "evidence": [
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x17aed"
+        },
+        {
+          "func": "0x196cb"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "所以 `[0x53c5f]` = 開面板前的畫面快照(背景)、`[0x53c63]` = 面板畫布(面板內容先畫在這裡)、`[0x53c5b]` = 合成畫面"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "9 + 8 + 7 + 14 = 38。"
+        }
+      ]
+    },
+    {
+      "start": "0x53c5f",
+      "size": 4,
+      "name": "ui_saved_screen",
+      "type": "dword 指標(開面板前的畫面快照,malloc 0xfa00)",
+      "meaning": "開面板前的畫面快照:10 個開面板函式 malloc(0xfa00) 後 memmove([0x53c5f], 0xa0000, 0xfa00),9 個再複製成畫布 [0x53c63] 的起點;呈現函式每一格以它為底;7 個關面板函式 memmove 回 0xa0000 後 free。shop_menu / church_menu / revive_service 直接在它上面畫圖示與數字。",
+      "evidence": [
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x196cb"
+        },
+        {
+          "func": "0x279bc"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "配置後先 `memmove([0x53c5f], 0xa0000, 0xfa00)` 存下目前畫面"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "31 + 8 + 7 + 6 = 52。"
+        }
+      ]
+    },
+    {
+      "start": "0x53c63",
+      "size": 4,
+      "name": "ui_panel_canvas",
+      "type": "dword 指標(選單面板的畫布,malloc 0xfa00)",
+      "meaning": "選單面板的畫布:開面板時從背景 [0x53c5f] 複製起點,面板內容(清單、數字、圖示、框格)畫在這裡,再由 present_box_at_row(從 +0x8c05 起最多 0x56 列)或 menu_transition_panel_a / _b / _c 貼到合成畫面 [0x53c5b];sortie_member_select / roster_pick_wait_key 直接整張送到 0xa0000。7 個關面板函式 free。",
+      "evidence": [
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x19953"
+        },
+        {
+          "func": "0x2b4fb"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "13 + 9 + 8 + 8 + 7 + 13 + 23 = 81。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "把畫布 +0x8c05(第 112 列、第 5 欄)起最多 0x56 列、每列 0x136 bytes 複製到合成的第「列」列起、第 5 欄"
         }
       ]
     },

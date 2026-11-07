@@ -5685,3 +5685,62 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `blit_raw_cell` `0x1685c` 2(`draw_item_list_two_column` `0x27506`、`draw_revive_candidate_rows` `0x2a19c`)。
 
 5 + 4 + 29 + 9 = 47。`church_menu` 只載入、沒有 free。
+
+## 2026-11-07:`[0x53c5b]` / `[0x53c5f]` / `[0x53c63]` = 選單面板的三張全螢幕緩衝(合成畫面 / 背景快照 / 面板畫布,各 320 × 200;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`:`[0x53c5b]` **48 筆(讀 38、寫 10)**、15 個函式;`[0x53c5f]` **62 筆(讀 52、寫 10)**、19 個函式;
+`[0x53c63]` **91 筆(讀 81、寫 10)**、19 個函式。全是 4 byte 直接定址,EXE 內初值都是 0。
+
+**寫入**:三個位址都只在同一組 10 個開面板的函式寫入,每次都是 `malloc(0xfa00)`(64000 = 320 × 200)的回傳值:
+`info_card_open_anim` `0x17e0b`、`open_dialog_box` `0x1956b`、`player_spell_select` `0x1cff0`、`open_item_list_panel` `0x27738`、`choice_box_left_right` `0x27d33`、
+`equip_compare_select` `0x27f4a`、`save_slot_selector` `0x29bcb`、`revive_candidate_select` `0x2a29d`、`class_change_candidate_select` `0x2a857`、`sortie_member_select` `0x2af28`
+(`sortie_member_select` 在 `[0x53c5f]` 與 `[0x53c63]` 之間多配一塊放在 `[esp + 0x28]`)。
+配置後先 `memmove([0x53c5f], 0xa0000, 0xfa00)` 存下目前畫面;除了 `sortie_member_select`,9 個函式接著 `memmove([0x53c63], [0x53c5f], 0xfa00)`,讓畫布從背景開始。
+
+**三張的分工**(由兩個呈現函式的形狀確定):
+- `present_box_at_row` `0x1974c`(列, 合成, 畫布):`memmove(合成, [0x53c5f], 0xfa00)`,把畫布 +0x8c05(第 112 列、第 5 欄)起最多 0x56 列、每列 0x136 bytes 複製到合成的第「列」列起、第 5 欄(超過第 200 列截掉),
+  最後 `memmove(0xa0000, 合成, 0xfa00)`。9 個呼叫點都是 `push [0x53c63]; push [0x53c5b]; push 列`,做面板上下滑動。
+- `info_card_present_frame` `0x18409`(步, 合成, 畫布, 背景):`memmove(合成, 背景, 0xfa00)`,依步數呼叫 `menu_transition_panel_a` / `_b` / `_c`(`0x182ad` / `0x18312` / `0x1839b`,引數 (位置, 合成, 畫布))
+  把畫布上的三塊面板貼到合成,最後 `memmove(0xa0000, 合成, 0xfa00)`。8 個呼叫點依序推 `[0x53c5f]`、`[0x53c63]`、`[0x53c5b]`。
+
+所以 `[0x53c5f]` = 開面板前的畫面快照(背景)、`[0x53c63]` = 面板畫布(面板內容先畫在這裡)、`[0x53c5b]` = 合成畫面(背景 + 動畫位置上的面板,整張送到 VGA)。
+
+**`[0x53c5b]` 38 筆讀取**:`present_box_at_row` 第 2 引數 9、`info_card_present_frame` 第 2 引數 8、free 7、`unit_info_cards` `0x17aed` 自己做同樣的合成 14
+(`memmove(合成, 背景)` 3、`menu_transition_panel_a` / `_b` / `_c` 第 2 引數 3 / 3 / 2、`memmove(0xa0000, 合成)` 3)。9 + 8 + 7 + 14 = 38。
+
+**`[0x53c5f]` 52 筆讀取**:
+- `memmove` 31:存畫面(目的地)10、複製成畫布起點 9、關面板時還原到 `0xa0000` 7(`unit_info_cards`、`close_box_slide_down` `0x196cb`、`item_panel_session` `0x1b932`、`equip_menu` `0x1bffe`、
+  `player_spell_select`、`close_box_slide_down_no_redraw` `0x26996`、`sortie_member_select`)、`unit_info_cards` 複製成合成 3、`present_box_at_row` 1、`sortie_member_select` 複製到 `[esp + 0x28]` 1。
+- `info_card_present_frame` 第 4 引數 8、free 7。
+- 直接畫在背景上 6:`shop_menu` `0x279bc`、`church_menu` `0x29daa`、`revive_service` `0x2a43e` 各 2 筆 —— +0x76c5(第 95 列、第 5 欄)`blit_rle_image`、+0x7bd0(第 99 列、第 16 欄)`draw_number`。
+  這 3 個函式本身不配置這三塊緩衝。
+
+31 + 8 + 7 + 6 = 52。
+
+**`[0x53c63]` 81 筆讀取**:
+- `memmove` 13:目的地 11(從背景 9、`yes_no_prompt` `0x19953` 從 `0xa0000` 1、`draw_roster_pick_grid` `0x2b4fb` 從 `[esp + 0x18]` 1)、
+  來源 2(`sortie_member_select` `0x2b19e`、`roster_pick_wait_key` `0x2b67f` 直接送到 `0xa0000`)。
+- `present_box_at_row` 第 3 引數 9、`info_card_present_frame` 第 3 引數 8、`menu_transition_panel_a` / `_b` / `_c` 第 3 引數 8(`unit_info_cards`)。
+- free 7(其中 `unit_info_cards` `0x17d64` 是 `push` 後 `jmp 0x15e94`,那裡是共用的 `call free; add esp, 4; pop ebx; ret`)。
+- 當畫布交給繪製函式 13:`draw_command_list` 2、`info_card_build` 2、`draw_item_panel`、`draw_box_frame_grid`、`draw_item_list_two_column`、`draw_party_roster_two_column`、
+  `draw_equip_compare_rows`、`draw_save_slot_list`、`draw_revive_candidate_rows`、`draw_class_change_options`、`draw_unit_status_panel` 各 1。
+- 基底 + 位移直接畫 23:+0x8c05 `blit_rle_image` 6(`open_item_list_panel`、`choice_box_left_right`、`equip_compare_select`、`save_slot_selector`、`revive_candidate_select`、`class_change_candidate_select`)、
+  + `[0x53c67]` `blit_rle_image` / `blit_rle_image_mirrored` 5(`open_dialog_box` 1、`yes_no_prompt` 4)、`unit_info_cards` +0x7585 `blit_rle_image` 1、
+  `draw_roster_pick_grid` +0x2bfd / +0x5b7d `draw_number` 2、其他自己算列位移 9(`slide_in_choice_icons` `0x197e5` 2、`yes_no_prompt` 4、`draw_roster_pick_grid` 3)。
+
+13 + 9 + 8 + 8 + 7 + 13 + 23 = 81。三個位址的 free 都是同樣 7 個函式;`[0x53c67]`(畫布內的位移)本輪不登錄。
+
+## 2026-11-07:`[0x51a87]` / `[0x51a8b]` = 戰場視野寬 / 高(格數,常數 13 / 8;資料區段登錄,`docs/data/data_map.json`)
+
+存取次數來自 `python tools/re_coverage.py --show-data`:兩個位址各 **15 筆,全是 4 byte 直接讀取,沒有寫入**,各 15 個函式。
+EXE 內初值是 `0d 00 00 00` / `08 00 00 00`(13 / 8);前面 `0x51a83` 是目標範圍選擇模式(本檔已登錄),後面 `0x51a8f` 初值 0xff。
+
+兩者的 15 筆讀取一一對應:
+- **可見範圍檢查 12 筆**(鏡頭 `[0x53aa9]` / `[0x53aad]` 加上寬 / 高,超出就不畫或不排):`draw_map_overlay_cell` `0x126f7`、`draw_unit_sprite` `0x127e0`、`redraw_map_cell` `0x12ac6`、`0x1c2da`、
+  `play_map_effect_animation` `0x1c4cc`、`draw_units_with_list_overlay` `0x1cb94`、`flash_listed_units_band_cycle` `0x1cd17`、`draw_single_unit_sprite` `0x1da16`、`unit_death_sweep` `0x1db65`、
+  `queue_unit_number_popup` `0x1e0db`、`queue_unit_fixed_popup` `0x1e1dc`、`0x32999`。
+  比較方式各函式不完全一樣;例如 `draw_unit_sprite` 是 鏡頭 X − 1 ≤ x ≤ 鏡頭 X + 13、鏡頭 Y − 1 ≤ y ≤ 鏡頭 Y + 8 + 1(Y 多一個 `inc`)。
+- **鏡頭邊緣 1 筆**:`step_anim_right` `0x13315` 以 地圖寬 `[0x53ac1]` − `[0x51a87]` 與鏡頭 X 比;`step_anim_down` `0x12eaa` 以 地圖高 `[0x53ac5]` − `[0x51a8b]` 與鏡頭 Y 比。
+- **總覽圖 / 地震演出 2 筆**:`map_overview_screen` `0x2000a`、`earthquake_spell_effect` `0x21548` 把值先 × 3 再換算尺寸。
+
+12 + 1 + 2 = 15。`cursor_step_right` `0x11bfa` 沒有讀 `[0x51a87]`,鏡頭右緣直接用常數(`sub eax, 0xd`,見本檔 `[0x53ac1]` 一節)。
