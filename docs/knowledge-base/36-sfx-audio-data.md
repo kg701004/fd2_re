@@ -1722,3 +1722,26 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 5 + 2 + 5 + 3 + 1 = 16;16 + 1 = 17。EXE 裡釋放 `[0x53b13]` 的只有這一處;`play_loaded_sfx_and_free` 的呼叫端 4 個(`ai_spell_execute`、`player_spell_select`、`item_effect_dispatch`、`spell_scene_effects`),
 都同時是 `load_fdother_80_to_53b13` 的呼叫端。`0x24618` 與 `command_handler_52` 載入後沒有對應的釋放(本輪只查直接引用)。
 91-worklist 記的字面音效號 {0, 1, 2, 11, 13, 255} 與這裡相同(255 = −1)。
+
+## 2026-11-07:`0x52a94` = AIL 計時器 16 槽的狀態(0 空、1 已配置、2 執行中;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x52a94`:**10 筆:4 byte 索引讀 5、索引寫 4、取位址 1**,分布在 6 個函式。EXE 內初值全 0。索引是 計時器 handle(槽號 × 4 的 byte 位移)。
+平行的 16 格陣列:`[0x52a54]` callback、`[0x52a94]` 狀態、`[0x52ad4]` 累加、`[0x52b14]` 週期、`[0x52b54]` 待呼叫次數、`[0x52b94]` user 值。
+
+- **取位址 1**:`ail_timer_reprogram` `0x3ecc5` 以 `rep stosd` 清 16 格(其後 5 個平行陣列同樣清)。同一段接著把 INT 8 掛到 `ail_timer_isr` `0x3ea8e`,`0x3ed3f` 直接把第 15 槽(`0x52ad0`)寫成 2,再以 `AIL_set_timer_period(0x3c, 0xd68d)` 設第 15 槽週期 54925 µs。
+- **索引寫 4**:`timer_slot_alloc` `0x3f25e` 寫 1(並存 callback)、`ail_impl_release_timer_handle` `0x3f2b8` 寫 0、`timer_slot_start` `0x3f30c` 1 → 2、`ail_impl_stop_timer` `0x3f360` 2 → 1。
+- **索引讀 5**:`ail_timer_isr` `0x3eade`(== 2 的槽累加 `[0x52be2]`,超過週期就減去並把待呼叫次數 +1)、`ail_timer_reprogram` `0x3ec2d`(非 0 的槽取最小週期)、`timer_slot_alloc` `0x3f246`(找 0)、`timer_slot_start` `0x3f303`(== 1 才改)、`ail_impl_stop_timer` `0x3f357`(== 2 才改)。
+
+isr 1 + 最小週期 1 + 配置 1 + 啟動 1 + 停止 1 = 5。
+
+- `timer_slot_alloc` 只掃 位移 0 .. 0x38(第 0 .. 14 槽),第 15 槽不會被配給呼叫端;isr 與 `ail_timer_reprogram` 掃滿 16 槽。
+
+## 2026-11-07:`0x541b4` = AIL 已安裝的驅動表(16 個驅動指標;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x541b4`:**8 筆:4 byte 索引讀 3、索引寫 3、取位址 2**,分布在 6 個函式。EXE 內初值全 0。範圍 0x40 bytes,剛好接到 `0x541f4` `ail_error_text`。
+
+- **取位址 2**:`ail_api_lock_memory` `0x3f4fe` 以 `dpmi_lock_range(0x541b4, 0x40)` 鎖住、`ail_api_unlock_memory` `0x3fdfa` 以 `dpmi_unlock_range` 解鎖(長度引數都是 0x40)。
+- **索引寫 3**:`ail_driver_install_core` `0x3fa66`(第一個是 0 的格寫驅動指標,並把格號寫進驅動 `[+0xc]` 的 `+0x32` word;16 格都滿時走另一條)、`ail_impl_uninstall_driver` `0x3fc23`(找到相同指標的格寫 0)、`ail_set_default_preferences` `0x3fd95`(16 格全寫 0)。
+- **索引讀 3**:`ail_driver_install_core` `0x3fa5d`(找 0)、`ail_impl_uninstall_driver` `0x3fc19`(比對)、`ail_impl_shutdown` `0x3fdb7`(第 15 格到第 0 格,非 0 的呼叫 `AIL_uninstall_driver`,之後 `AIL_release_all_timers`、`ail_timer_restore_int8`)。
+
+安裝 1 + 移除 1 + 關閉 1 = 3。

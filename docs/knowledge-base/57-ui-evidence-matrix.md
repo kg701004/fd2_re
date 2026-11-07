@@ -873,3 +873,16 @@ legality path，或是某個從未被列入`0x14818`/`0x14742` call-xref的獨�
 `0x14818`/`0x14742`的`xref_from`全域反查，此路仍留待下一輪如果要繼續深挖。維持D，
 但「native argument↔weapon min/max mapping」現在有一個可驗證的具體候選答案（單一
 radius+mode，非min/max對），不再是完全空白的問句。
+
+## 2026-11-07:`[0x53a89]` = FDOTHER.DAT 第 2 號的 78 格圖示庫(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53a89`:**8 筆全是 4 byte 直接定址,讀 7、寫 1**,分布在 6 個函式。EXE 內初值 0。
+
+- **寫 1**:`game_main` `0x25cac` 寫入 `load_res("FDOTHER.DAT", [0x53a89], 2)` 的回傳(`0x25c99` 推舊緩衝,是下面讀取的 1 筆);之後不再改。
+- **讀 7** = 舊緩衝 1 + 取第 i 格 6(格 = 基底 + dword[基底 + i × 4]):
+  - `action_ring_open` `0x17513`、`action_ring_close` `0x1775b`:i = 項目號 × 3 + 可用 word × 2。
+  - `action_ring_draw` `0x17a2e`:基底 + dword[基底 + eax × 4](eax 的來源沒追)。
+  - `slide_in_choice_icons` `0x198a9`、`yes_no_prompt` `0x19a9c`:i = 選項號 × 3(`imul 0xc`)。
+  - `yes_no_prompt` `0x19ce4`:基底 + dword[基底 + eax × 4](eax 的來源沒追)。
+
+舊緩衝 1 + 動作環 3 + 選項圖示 2 + `yes_no_prompt` 1 = 7。

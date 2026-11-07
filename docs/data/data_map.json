@@ -101,6 +101,35 @@
       ]
     },
     {
+      "start": "0x51a70",
+      "size": 9,
+      "name": "dato_dat_filename",
+      "type": "C 字串 \"DATO.DAT\"(9 bytes 含 NUL)",
+      "meaning": "DATO.DAT(頭像)的檔名:9 處 push 0x51a70 都緊接 call 0x111ba,正好是 [0x53a85] 的 9 個頭像載入點(0x15f84 4、info_card_build、open_dialog_box、town_equip_service、status_service、scene_charcard_text_stage)。後面 0x51a79 是 \"FDMUS.DAT\"。",
+      "evidence": [
+        {
+          "func": "0x15f84"
+        },
+        {
+          "func": "0x17eef"
+        },
+        {
+          "func": "0x1956b"
+        },
+        {
+          "func": "0x31c49"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "4 + 1 + 1 + 1 + 1 + 1 = 9。"
+        },
+        {
+          "doc": "docs/knowledge-base/14-text-control-codes.md",
+          "quote": "9 處正好是上面 `[0x53a85]` 那節的 9 個頭像載入點"
+        }
+      ]
+    },
+    {
       "start": "0x51a83",
       "size": 4,
       "name": "target_range_selector",
@@ -178,6 +207,35 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "鏡頭 Y − 1 ≤ y ≤ 鏡頭 Y + 8 + 1(Y 多一個 `inc`)"
+        }
+      ]
+    },
+    {
+      "start": "0x51a8f",
+      "size": 4,
+      "name": "pending_cell_event",
+      "type": "dword(事件號,0xff = 沒有)",
+      "meaning": "格子事件的待處理事件號:只有 field_event_lookup 會寫入非 0xff 的值(FDFIELD +0x33 起的格子事件 2 byte,篩選相符時;移動尾端以游標格、篩選 0 呼叫,AI / 行動迴圈以單位座標、篩選 1 呼叫)。5 個 dispatch 點不是 0xff 就呼叫 [0x51b91 + 事件號 × 4];6 處寫回 0xff。EXE 內初值 0xff。",
+      "evidence": [
+        {
+          "func": "0x13a44"
+        },
+        {
+          "func": "0x117e7"
+        },
+        {
+          "func": "0x16f55"
+        },
+        {
+          "func": "0x1d8ba"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "寫 1 + 0xff 6 = 7;讀 5 × 2 = 10。"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "- **唯一寫入事件號的地方**:`field_event_lookup(x, y, 篩選)` `0x13a44` 的 `0x13a95`。"
         }
       ]
     },
@@ -330,6 +388,35 @@
       }
     },
     {
+      "start": "0x5248e",
+      "size": 7,
+      "name": "bg_dat_filename",
+      "type": "C 字串 \"BG.DAT\"(7 bytes 含 NUL)",
+      "meaning": "BG.DAT(戰鬥背景)的檔名:16 處 push 0x5248e 都緊接 call 0x111ba,分布在 6 個戰鬥演出 / 轉職函式。9 處以資源號 0 / 1 / 2 載入三格輪替 [0x5413f] / [0x54143] / [0x54147],2 處 [0x5413b]、1 處 [0x54137],4 處只存在堆疊。後面緊接 0x52495 \"FIGANI.DAT\"。",
+      "evidence": [
+        {
+          "func": "0x2cf30"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2fb2c"
+        },
+        {
+          "func": "0x2ff01"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "輪替 9 + `[0x5413b]` 2 + `[0x54137]` 1 + 區域 4 = 16。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**16 筆全是 `push 0x5248e`**"
+        }
+      ]
+    },
+    {
       "start": "0x52495",
       "size": 11,
       "name": "figani_dat_filename",
@@ -355,6 +442,35 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "**19 筆全是 `push 0x52495`**"
+        }
+      ]
+    },
+    {
+      "start": "0x524a0",
+      "size": 8,
+      "name": "tai_dat_filename",
+      "type": "C 字串 \"TAI.DAT\"(8 bytes 含 NUL)",
+      "meaning": "TAI.DAT 的檔名:6 處 push 0x524a0 都緊接 call 0x111ba,6 個戰鬥演出 / 角色卡函式各 1 處,回傳只存在堆疊。資源號固定 3 2 處、條件 3 1 處、spell_scene_effects 用 map_cell_info 輸出 +6 的地形 byte(和同函式的 BG.DAT 號相同)、2 處暫存器值。",
+      "evidence": [
+        {
+          "func": "0x2cf30"
+        },
+        {
+          "func": "0x2d80d"
+        },
+        {
+          "func": "0x2dfc8"
+        },
+        {
+          "func": "0x31c49"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "固定 3 2 + 條件 1 + 地形 byte 1 + 暫存器 2 = 6。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**6 筆全是 `push 0x524a0`**"
         }
       ]
     },
@@ -415,6 +531,38 @@
           "quote": "**唯一的寫入點**:LE 進入點 `_cstart_` `0x3ccb4` 的 `0x3ce03`。"
         }
       ]
+    },
+    {
+      "start": "0x52a94",
+      "size": 64,
+      "name": "ail_timer_status",
+      "type": "dword[16](AIL 計時器槽狀態:0 空、1 已配置、2 執行中)",
+      "meaning": "Miles AIL 計時器 16 槽的狀態,以 handle(槽號 × 4)索引:timer_slot_alloc 找 0 寫 1(只配第 0 .. 14 槽)、release 寫 0、start 1 → 2、stop 2 → 1;ail_timer_isr 只對 2 的槽累加,ail_timer_reprogram 取非 0 槽的最小週期。初始化清 16 格後把第 15 槽直接寫 2、週期 0xd68d。平行陣列:[0x52a54] callback、[0x52ad4] 累加、[0x52b14] 週期、[0x52b54] 待呼叫次數、[0x52b94] user 值。",
+      "evidence": [
+        {
+          "func": "0x3ea8e"
+        },
+        {
+          "func": "0x3ec17"
+        },
+        {
+          "func": "0x3f236"
+        },
+        {
+          "func": "0x3f344"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "isr 1 + 最小週期 1 + 配置 1 + 啟動 1 + 停止 1 = 5。"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "`0x3ed3f` 直接把第 15 槽(`0x52ad0`)寫成 2"
+        }
+      ],
+      "fields": {
+        "0x3c": "slot15_status"
+      }
     },
     {
       "start": "0x538a8",
@@ -877,6 +1025,35 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "**9 個寫入點全是 `load_res(\"DATO.DAT\", [0x53a85], 頭像號)` 的回傳**"
+        }
+      ]
+    },
+    {
+      "start": "0x53a89",
+      "size": 4,
+      "name": "ui_icon_cell_bank",
+      "type": "dword 指標(FDOTHER.DAT 第 2 號,78 格圖示)",
+      "meaning": "動作環 / 選項圖示用的 78 格圖示庫:game_main 以 load_res(\"FDOTHER.DAT\", 舊, 2) 載入後不再改;第 i 格 = 基底 + dword[基底 + i × 4]。action_ring_open / close 取 項目號 × 3 + 可用 word × 2,slide_in_choice_icons / yes_no_prompt 取 選項號 × 3,action_ring_draw 與 yes_no_prompt 另 1 處依暫存器。",
+      "evidence": [
+        {
+          "func": "0x1741c"
+        },
+        {
+          "func": "0x176b4"
+        },
+        {
+          "func": "0x197e5"
+        },
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "doc": "docs/knowledge-base/57-ui-evidence-matrix.md",
+          "quote": "舊緩衝 1 + 動作環 3 + 選項圖示 2 + `yes_no_prompt` 1 = 7。"
+        },
+        {
+          "doc": "docs/knowledge-base/57-ui-evidence-matrix.md",
+          "quote": "- **寫 1**:`game_main` `0x25cac` 寫入 `load_res(\"FDOTHER.DAT\", [0x53a89], 2)` 的回傳"
         }
       ]
     },
@@ -1924,6 +2101,39 @@
       ]
     },
     {
+      "start": "0x5413f",
+      "size": 12,
+      "name": "bg_cycle_frames",
+      "type": "dword 指標[3](BG.DAT 第 0 / 1 / 2 號)",
+      "meaning": "戰鬥背景三格輪替:derived_strike_scene / attack_scene_orchestrator / class_change_ceremony_anim 先寫 0 再以 load_res(\"BG.DAT\", 舊, 0 / 1 / 2) 載入,結束時 free。pan_view_left / right_to_panel 以 i % 3 等、class_change_ceremony_anim、anim_loop_over_cycling_bg 以 [索引 × 4 + 0x5413f] 取格交給 blit_rle_image_at_xy。",
+      "evidence": [
+        {
+          "func": "0x2cf30"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2f4d4"
+        },
+        {
+          "func": "0x2fe14"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "- `[0x5413f]` 17 筆:寫 6、直接讀 5、索引讀 6。`[0x54143]` / `[0x54147]` 各 12 筆:寫 6、讀 6。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "- doc91 記的「三個輪替槽是 BG.DAT 的子資源 0/1/2」和這裡一致。"
+        }
+      ],
+      "fields": {
+        "0x4": "bg_cycle_frame_1",
+        "0x8": "bg_cycle_frame_2"
+      }
+    },
+    {
       "start": "0x54153",
       "size": 4,
       "name": "battle_anim_sfx_bank",
@@ -2162,6 +2372,35 @@
       ]
     },
     {
+      "start": "0x541b4",
+      "size": 64,
+      "name": "ail_installed_drivers",
+      "type": "dword 指標[16](AIL 已安裝驅動)",
+      "meaning": "Miles AIL 已安裝的驅動表:ail_driver_install_core 寫進第一個空格(格號存到驅動 +0xc 的 +0x32),ail_impl_uninstall_driver 清掉相同指標的格,ail_set_default_preferences 清 16 格,ail_impl_shutdown 由第 15 格往回逐一 AIL_uninstall_driver。ail_api_lock_memory / unlock 以 0x40 bytes 鎖定 / 解鎖。",
+      "evidence": [
+        {
+          "func": "0x3f950"
+        },
+        {
+          "func": "0x3fb90"
+        },
+        {
+          "func": "0x3fdaf"
+        },
+        {
+          "func": "0x3f4e0"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "安裝 1 + 移除 1 + 關閉 1 = 3。"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "以 `dpmi_lock_range(0x541b4, 0x40)` 鎖住"
+        }
+      ]
+    },
+    {
       "start": "0x541f4",
       "size": 256,
       "name": "ail_error_text",
@@ -2184,6 +2423,64 @@
         {
           "doc": "docs/knowledge-base/36-sfx-audio-data.md",
           "quote": "**`sprintf(0x541f4, 格式, …)` 2 筆**"
+        }
+      ]
+    },
+    {
+      "start": "0x627b4",
+      "size": 2,
+      "name": "blit_image_width",
+      "type": "word(目前 blit 的圖像寬度)",
+      "meaning": "blit 函式群共用的圖像寬度:blit_rle_sprite_remap / blit_rle_image_at_xy / blit_image_rows 從圖像開頭 lodsw 讀出,decode_image_with_header 寫引數。讀來算列尾跳過的 byte(跨距 − 寬度)、每列剩餘像素計數、rep movsb 長度。下一個 word [0x627b6] 是剩餘列數。",
+      "evidence": [
+        {
+          "func": "0x4e8d3"
+        },
+        {
+          "func": "0x4e98d"
+        },
+        {
+          "func": "0x4ecbf"
+        },
+        {
+          "func": "0x4ecf0"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "寫 4;讀 跨距 2 + 每列計數 4 + 複製長度 2 = 8。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**`[0x627b4]` 寬度(12 筆:寫 4、讀 8)**"
+        }
+      ]
+    },
+    {
+      "start": "0x627b6",
+      "size": 2,
+      "name": "blit_rows_left",
+      "type": "word(目前 blit 的剩餘列數)",
+      "meaning": "blit 函式群共用的列計數:和 [0x627b4] 同 4 處寫入(圖像高度);RLE blit 每畫完一列 dec,不為 0 就回到列迴圈(4 處),blit_rows_dst_pitch / src_pitch 讀進 dx 當列數。",
+      "evidence": [
+        {
+          "func": "0x4e8d3"
+        },
+        {
+          "func": "0x4e98d"
+        },
+        {
+          "func": "0x4ec7c"
+        },
+        {
+          "func": "0x4eca4"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "寫 4 + 列迴圈 `dec` 4 + 讀進 dx 2 = 10。"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**`[0x627b6]` 剩餘列數(10 筆:寫 4、讀改寫 4、讀 2)**"
         }
       ]
     }

@@ -3440,3 +3440,16 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 3 byte 獎勵列(`+0` 類型、`+1` word 值)2:`field_cell_treasure_check` `0x19511`(FDFIELD `+0x53` 起的寶箱列,類型不是 0 / 1)、`grant_reward_rows` `0x1ac1a`(類型 2)。
 
 `[0x51a8f]` 5 + 回合事件 1 + 獎勵列 2 = 8。
+
+## 2026-11-07:`[0x51a8f]` = 格子事件的待處理事件號(0xff = 沒有;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x51a8f`:**17 筆全是 4 byte 直接定址,讀 10、寫 7**,分布在 6 個函式。EXE 內初值 0xff。
+
+- **唯一寫入事件號的地方**:`field_event_lookup(x, y, 篩選)` `0x13a44` 的 `0x13a95`。它先呼叫 `map_cell_info`,輸出 `+4` 有 0x60 位元或格子事件 word(`+2`)為 0 就不寫;否則取 FDFIELD 控制段 `+0x33 + (word − 1) × 2` 的 2 byte(`+0` 事件號、`+1` 篩選),事件號不是 0xff 且篩選等於第 3 個引數時寫入。
+- `field_event_lookup` 的 5 個呼叫點:`step_anim_left` `0x13175`(四個方向的移動共用尾端)以游標格 `[0x53ab1]` / `[0x53ab5]`、篩選 0 呼叫;`ai_mode_dispatch` `0x13e77`、`0x18890` `0x18aef` / `0x18b0c` / `0x18b66` 以單位記錄 `+0` / `+1` 的座標、篩選 1 呼叫。
+- **寫 0xff 6**:`battle_main_input_loop` `0x119a6`(呼叫事件後)、`field_command_ring` `0x17104`、`0x18890` `0x188bd`、`friendly_phase_dispatch` `0x1d853`、`enemy_phase_dispatch` `0x1d8f8` / `0x1d9b0`(後 3 處在每個單位之前)。
+- **讀 10**:5 個 dispatch 點各 2 筆,先 `cmp dword ptr [0x51a8f], 0xff`、不相等再 `mov eax, dword ptr [0x51a8f]` 當 `[0x51b91]` 事件跳表的索引:`battle_main_input_loop` `0x1198a` / `0x11996`、`field_command_ring` `0x1711b` / `0x17127`、`friendly_phase_dispatch` `0x1d87e` / `0x1d88a`、`enemy_phase_dispatch` `0x1d94a` / `0x1d956` 與 `0x1d9da` / `0x1d9e6`。
+
+寫 1 + 0xff 6 = 7;讀 5 × 2 = 10。
+
+- doc91 記的「它不是一般攻擊 / 移動的選擇器」和這裡一致:只有走到帶格子事件的格子(篩選相符)時才不是 0xff。

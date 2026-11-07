@@ -14527,3 +14527,183 @@ doc35 §1 的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE(新節已�
 順帶發現的舊記載問題(都只在新節寫明,舊段落沒改):doc11 L145 節撤回的「`0x3b124` 是音量呼叫」其實有追蹤字串為據;doc10 gate 稽核把 `0x51aab` / `0x51aac` 混列;doc25 §6.1、doc35 §1、doc39 §4.1 的程式位址是另一版 EXE(和本版差 0x356)。
 仍未登錄的鄰居:`0x51a59`("FDFIELD.DAT")、`0x51a70`("DATO.DAT")、`0x5248e` / `0x524a0`("BG.DAT" / "TAI.DAT")、`0x51aac`、`0x51e63`(曲號表)、`0x51cf9` / `0x51cfd`(游標備份)、`0x53b17`(FDICON 圖示號表)、`0x52760` / `0x52766` / `0x5276a`(ANI VM)、`0x541a0`(已關閉串流串列)。
 下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。
+
+## 2026-11-07 續二百五十一:資料區段 `0x51a70`(字串 "DATO.DAT")
+
+起因:使用者要求逐項處理 `0x51a70`、`0x51a8f`、`0x5248e`、`0x524a0`、`0x52a94`、`0x53a89`、`0x5413f`、`0x541b4`、`0x627b4`、`0x627b6`(依 `--gaps globals` 函式引用數挑出、並列 6 個函式的 10 個),這是第 1 項。事實寫進 doc14 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+9 筆全是 `push 0x51a70` 緊接 `call 0x111ba`,正好是 `[0x53a85]` 的 9 個頭像載入點。後面 `0x51a79` 是 "FDMUS.DAT"。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51a70` 10 byte → 1(`0x51a79` 沒列在 fields)、8 byte → 0(取位址的存取沒有大小,檢查器只證明長度 ≤ 9);未改 → 0。
+- 覆蓋率:遊戲函式 835 → 839 / 1202、全域位址 85 → 86 / 900、資料 984 → 993 / 35714 bytes。
+- doc14 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十二:資料區段 `0x51a8f`(格子事件的待處理事件號)
+
+起因:同一個要求的第 2 項。事實寫進 doc25 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+只有 `field_event_lookup` 寫入非 0xff(FDFIELD `+0x33` 起的格子事件、篩選相符時);它的 5 個呼叫點:移動尾端以游標格、篩選 0,AI / 行動迴圈以單位座標、篩選 1。
+寫 0xff 6;讀 10 = 5 個 dispatch 點各「比較 0xff + 取值」2 筆。EXE 內初值 0xff。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x51a8f` 5 byte → 3(`0x51a93` 沒列在 fields + 2 筆跨出)、3 byte → 17(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 839 → 840 / 1202、全域位址 86 → 87 / 900、資料 993 → 997 / 35714 bytes。
+- doc25 是混合 EOL(HEAD blob 3246 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十三:資料區段 `0x5248e`(字串 "BG.DAT")
+
+起因:同一個要求的第 3 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+16 筆全是 `push 0x5248e` 緊接 `call 0x111ba`:三格輪替 9、`[0x5413b]` 2、`[0x54137]` 1、只存在堆疊 4。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x5248e` 8 byte → 2(`0x52495` 沒列在 fields + 與 `0x52495` 段重疊);未改 → 0。
+- 覆蓋率:遊戲函式 840 → 840 / 1202、全域位址 87 → 88 / 900、資料 997 → 1004 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十四:資料區段 `0x524a0`(字串 "TAI.DAT")
+
+起因:同一個要求的第 4 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+6 筆全是 `push 0x524a0` 緊接 `call 0x111ba`,6 個函式各 1;資源號固定 3 2、條件 3 1、地形 byte 1、暫存器 2。檔案內容沒有查。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x524a0` 9 byte → 1(`0x524a8` 沒列在 fields)、7 byte → 0(檢查器只證明長度 ≤ 8);未改 → 0。
+- 覆蓋率:遊戲函式 840 → 841 / 1202、全域位址 88 → 89 / 900、資料 1004 → 1012 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十五:資料區段 `0x52a94`(AIL 計時器 16 槽的狀態)
+
+起因:同一個要求的第 5 項。事實寫進 doc36 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+以 handle(槽號 × 4)索引:配置 0 → 1、釋放 → 0、啟動 1 → 2、停止 2 → 1;isr 只對 2 的槽累加。初始化清 16 格後直接把第 15 槽(`0x52ad0`)寫 2、週期 0xd68d;配置只給第 0 .. 14 槽。
+`0x52ad0` 以 fields `slot15_status` 登錄。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x52a94` 65 byte → 1(`0x52ad4` 沒列在 fields)、63 byte → 1(`0x52ad0` 的 4 byte 寫入跨出);未改 → 0。
+- 覆蓋率:遊戲函式 841 → 844 / 1202、全域位址 89 → 91 / 900(`0x52ad0` 一起計入)、資料 1012 → 1076 / 35714 bytes。
+- doc36 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十六:資料區段 `0x53a89`(FDOTHER 第 2 號 78 格圖示庫)
+
+起因:同一個要求的第 6 項。事實寫進 doc57 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`game_main` 載入 1 次;讀 7 = 舊緩衝 1 + 取格 6(動作環 3、選項圖示 2、`yes_no_prompt` 1)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53a89` 5 byte → 10(`0x53a8d` 沒列在 fields + 與 `0x53a8d` 段重疊 + 8 筆跨出)、3 byte → 8(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 844 → 846 / 1202、全域位址 91 → 92 / 900、資料 1076 → 1080 / 35714 bytes。
+- doc57 工作複本是 CRLF(HEAD blob 0 CR),新節以 CRLF 附加。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十七:資料區段 `0x5413f`(戰鬥背景三格輪替)
+
+起因:同一個要求的第 7 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x5413f]` / `[0x54143]` / `[0x54147]` 一起登錄成 12 bytes(索引讀取 `[edx × 4 + 0x5413f]` 同時用到三格),後兩格列在 fields。
+寫 18(三個演出函式先寫 0 再載 BG.DAT 0 / 1 / 2);直接讀 17(舊緩衝 7、free 9、blit 1);索引讀 6(全部交給 `blit_rle_image_at_xy`)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x5413f` 13 byte → 17(`0x5414b` 沒列在 fields + 16 筆跨出)、11 byte → 12(`0x54147` 的存取跨出)、4 byte → 2(fields 落在區段外);未改 → 0。
+- 覆蓋率:遊戲函式 846 → 850 / 1202、全域位址 92 → 95 / 900、資料 1080 → 1092 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十八:資料區段 `0x541b4`(AIL 已安裝的驅動表)
+
+起因:同一個要求的第 8 項。事實寫進 doc36 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+16 個驅動指標:安裝寫第一個空格、移除清相同指標、預設值清 16 格、關閉由第 15 格往回逐一 `AIL_uninstall_driver`;lock / unlock 長度 0x40,剛好接到 `0x541f4`。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x541b4` 65 byte → 2(`0x541f4` 沒列在 fields + 與 `0x541f4` 段重疊)、63 byte → 0(只有索引與取位址存取,檢查器只證明長度 ≤ 64);未改 → 0。
+- 覆蓋率:遊戲函式 850 → 853 / 1202、全域位址 95 → 96 / 900、資料 1092 → 1156 / 35714 bytes。
+- doc36 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百五十九:資料區段 `0x627b4`(blit 圖像寬度)
+
+起因:同一個要求的第 9 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+寫 4(3 個 blit 函式從圖像開頭 `lodsw`、`decode_image_with_header` 寫引數);讀 8(列尾跳過 2、每列計數 4、`rep movsb` 長度 2)。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x627b4` 3 byte → 12(`0x627b6` 沒列在 fields + 與 `0x627b6` 段重疊 + 10 筆跨出)、1 byte → 12(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 853 → 853 / 1202、全域位址 96 → 97 / 900、資料 1156 → 1158 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百六十:資料區段 `0x627b6`(blit 剩餘列數)
+
+起因:同一個要求的第 10 項(最後一項)。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+和寬度同 4 處寫入;RLE blit 每列 `dec` 4;`blit_rows_dst_pitch` / `src_pitch` 讀進 dx 2。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS(登錄錯誤 0);`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x627b6` 3 byte → 3(`0x627b8` 沒列在 fields + 2 筆跨出)、1 byte → 10(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 853 → 859 / 1202(6 個 blit 函式在兩個 word 都登錄後才計入)、全域位址 97 → 98 / 900、資料 1158 → 1160 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+### (3) 本批小結與下一步
+
+續二百五十一 .. 二百六十 共登錄 10 段(`0x51a70`、`0x51a8f`、`0x5248e`、`0x524a0`、`0x52a94`、`0x53a89`、`0x5413f`、`0x541b4`、`0x627b4`、`0x627b6`):遊戲函式 835 → 859 / 1202、全域位址 85 → 98 / 900、資料 984 → 1160 / 35714 bytes。
+過程備註:doc35 背景輪替節的 free 那一行第一次草稿寫亂了,寫檔前重算為三格各 3(舊緩衝 7 + free 9 + blit 1 = 17);doc36 isr 那行的時脈位址在草稿裡抄錯一個字,寫檔前依反組譯改正。
+仍未登錄的鄰居:`0x51a79`("FDMUS.DAT")、`0x51a93`、`0x524a8`、`0x54137` / `0x5413b`(另兩個 BG 槽)、`0x5414b`、`0x52a54` / `0x52ad4` / `0x52b14` / `0x52b54` / `0x52b94`(AIL 計時器平行陣列)、`0x52be2`、`0x627b8`。
+下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。

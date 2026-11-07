@@ -5877,3 +5877,53 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 k = 0 11 + k = 1 6 + k = 2 2 = 19。
 
 - §1 寫的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE:本 EXE 的 `0x28c57` 在 `push 0xff` 指令中間,`0x52388` 落在 `town_keeper_portrait` 表(`0x52387`)裡;FIGANI 的檔名引數是 `0x52495`。§1 那段是另一版 EXE 的位址(沒有追是哪一版)。
+
+## 2026-11-07:`0x5248e` = 字串 `"BG.DAT"`(戰鬥背景的檔名;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x5248e`:**16 筆全是 `push 0x5248e`**,下一條都是 `call 0x111ba`;分布在 6 個函式。7 bytes 含 NUL,後面緊接 `0x52495` `"FIGANI.DAT"`。
+
+- 三格輪替 9:`derived_strike_scene` `0x2d13c` / `0x2d156` / `0x2d170`、`attack_scene_orchestrator` `0x2e5fb` / `0x2e615` / `0x2e62f`、`class_change_ceremony_anim` `0x2fb53` / `0x2fb6d` / `0x2fb87`,資源號 0 / 1 / 2 依序寫進 `[0x5413f]` / `[0x54143]` / `[0x54147]`(見下節)。
+- `[0x5413b]` 2:`ai_item_scene` `0x2e0d3`、`attack_scene_orchestrator` `0x2e50b`。`[0x54137]` 1:`attack_scene_orchestrator` `0x2e5e1`。
+- 只存在堆疊 / 暫存器 4:`derived_strike_scene` `0x2d0ca` / `0x2d104`、`spell_scene_effects` `0x2d8b7`(資源號 = `map_cell_info` 輸出 `+6` 的 byte)、`spell_cast_scene` `0x3015b`。
+
+輪替 9 + `[0x5413b]` 2 + `[0x54137]` 1 + 區域 4 = 16。
+
+## 2026-11-07:`0x524a0` = 字串 `"TAI.DAT"`(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x524a0`:**6 筆全是 `push 0x524a0`**,下一條都是 `call 0x111ba`;6 個函式各 1 筆,回傳都只存在堆疊上。8 bytes 含 NUL。
+
+- 資源號:`ai_item_scene` `0x2e07b`、`scene_charcard_text_stage` `0x31dce` 固定 3;`attack_scene_orchestrator` `0x2e48a` 在某個值等於 0x37 時用 3;`spell_scene_effects` `0x2d89c` 用 `map_cell_info` 輸出 `+6` 的 byte(和同函式的 `"BG.DAT"` 號相同);`derived_strike_scene` `0x2d0e8`、`spell_cast_scene` `0x30179` 是暫存器值(來源沒追)。
+
+固定 3 2 + 條件 1 + 地形 byte 1 + 暫存器 2 = 6。
+
+## 2026-11-07:`[0x5413f]` / `[0x54143]` / `[0x54147]` = 戰鬥背景三格輪替(BG.DAT 第 0 / 1 / 2 號;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`。三個 dword 一起登錄成 12 bytes 的陣列(`[edx × 4 + 0x5413f]` 的索引讀取同時用到三格)。EXE 內初值都是 0。
+
+- `[0x5413f]` 17 筆:寫 6、直接讀 5、索引讀 6。`[0x54143]` / `[0x54147]` 各 12 筆:寫 6、讀 6。
+- **寫 18**:`derived_strike_scene`、`attack_scene_orchestrator`、`class_change_ceremony_anim` 各先把三格寫 0(9),再以 `load_res("BG.DAT", 舊, 0 / 1 / 2)` 載入(9)。
+- **直接讀 17**:
+  - 舊緩衝引數 7:`[0x5413f]` 只有 `attack_scene_orchestrator` `0x2e5f5`(另兩個函式第 0 格傳 0);`[0x54143]` / `[0x54147]` 各 3。
+  - free 9:三格各 3(`[0x5413f]` 是 `0x2d71e`、`0x2e870`、`0x2fdc1`)。
+  - 直接當第 0 格 blit 1:`class_change_ceremony_anim` `0x2fd2b`(`blit_rle_image_at_xy`)。
+
+舊緩衝 7 + free 9 + blit 1 = 17。
+- **索引讀 6**(全部交給 `blit_rle_image_at_xy`):`pan_view_left_to_panel` `0x2f506`(i % 3)/ `0x2f5f0`((i + 2) % 3)、`pan_view_right_to_panel` `0x2f664`(i % 3)/ `0x2f772`((i + 1) % 3)、`class_change_ceremony_anim` `0x2fc3d`、`anim_loop_over_cycling_bg` `0x2fe87`。
+- doc91 記的「三個輪替槽是 BG.DAT 的子資源 0/1/2」和這裡一致。
+
+## 2026-11-07:`[0x627b4]` 圖像寬度、`[0x627b6]` 剩餘列數(blit 函式群共用的 word;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data`。兩個都是 2 byte 直接定址,EXE 內初值 0,引用它們的都是同樣 6 個 blit 函式。
+
+**`[0x627b4]` 寬度(12 筆:寫 4、讀 8)**
+- 寫 4:`blit_rle_sprite_remap` `0x4e8de`、`blit_rle_image_at_xy` `0x4e998`、`blit_image_rows` `0x4ec85` 從圖像開頭 `lodsw` 讀出;`decode_image_with_header` `0x4ecc9` 寫引數,並 `stosw` 進輸出的開頭。
+- 讀 8:跨距減寬度 = 列尾要跳的 byte 2(`0x4e901`、`0x4e9bb`);每列的剩餘像素計數 4(`blit_rle_sprite_remap` `0x4e911`,`blit_rle_image_at_xy` 三種模式 `0x4e9dc` / `0x4ea4b` / `0x4eac5`);`rep movsb` 長度 2(`blit_rows_dst_pitch` `0x4ecad`、`blit_rows_src_pitch` `0x4ecf9`)。
+
+寫 4;讀 跨距 2 + 每列計數 4 + 複製長度 2 = 8。
+
+**`[0x627b6]` 剩餘列數(10 筆:寫 4、讀改寫 4、讀 2)**
+- 寫 4:和寬度同一組,下一個 `lodsw` / 引數(`0x4e8e6`、`0x4e9a0`、`0x4ec8d`、`0x4ecd4`)。
+- 讀改寫 4:每畫完一列 `dec word ptr [0x627b6]`,不為 0 就回到列迴圈:`blit_rle_sprite_remap` `0x4e97f`、`blit_rle_image_at_xy` 三種模式 `0x4ea3d` / `0x4eab4` / `0x4eb3a`。
+- 讀 2:`blit_rows_dst_pitch` `0x4eca6`、`blit_rows_src_pitch` `0x4ecf2` 讀進 dx 當列數。
+
+寫 4 + 列迴圈 `dec` 4 + 讀進 dx 2 = 10。

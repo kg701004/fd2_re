@@ -298,3 +298,11 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   - 依引數 2:`draw_dialog_cell` `0x16573` 基底 + dword[基底 + 號 × 4];`scene_charcard_text_stage` `0x32048` 基底 + dword[基底 + 0 或 0xc](倒數 < 2 時取 0xc,開嘴)。
 
 舊緩衝 9 + 取幀 6 = 15。沒有寫 0 的指令。
+
+## 2026-11-07:`0x51a70` = 字串 `"DATO.DAT"`(頭像檔名;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x51a70`:**9 筆全是 `push 0x51a70`**,下一條都是 `call 0x111ba`(`load_res` 的檔名);分布在 6 個函式。9 bytes 含 NUL,後面 `0x51a79` 是 `"FDMUS.DAT"`(`play_bgm` 用)。
+
+9 處正好是上面 `[0x53a85]` 那節的 9 個頭像載入點:`0x15f84` `0x161b8` / `0x1629d` / `0x163ca` / `0x16446`、`info_card_build` `0x17f23`、`open_dialog_box` `0x19671`、`town_equip_service` `0x28f51`、`status_service` `0x29672`、`scene_charcard_text_stage` `0x31fe8`。每處前一條都是 `push dword ptr [0x53a85]`,回傳寫回 `[0x53a85]`。
+
+4 + 1 + 1 + 1 + 1 + 1 = 9。
