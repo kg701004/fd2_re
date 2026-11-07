@@ -245,3 +245,23 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 其他 5 筆:上面 2 筆 1 byte 存檔、`0x112b6` × 0x50、`0x1143e` push、`draw_party_roster_two_column` `0x2810b` `0x28130` 和 6 比(一頁的列數)。
 
 17 + 10 + 5 + 2 + 5 = 39。
+
+## 2026-11-07:`[0x53bf7]` = 我方常駐名冊(32 × 0x50 bytes)的指標(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53bf7`:**28 筆全是 4 byte 直接定址,讀 27、寫 1**,分布在 20 個函式。EXE 內初值 0。
+
+**唯一的寫入點**:`game_main` `0x25d61`,`malloc(0xa00)` 的回傳值(0xa00 = 32 筆 × 0x50,和單位記錄同格式),緊接在 `[0x53a49]` 的 `malloc(0x25680)` 之後。指標之後不再改,內容以 `memmove` 進出。
+
+**27 筆讀取**:
+- **整塊 0xa00 bytes 複製 7 筆**(`memmove` `0x3771c`):
+  - 寫進名冊 3 筆:`save_load_restore` `0x1011b`(來源是戰況存檔區塊 +0x8a3)、`title_menu_dispatch` `0x26050`、`load_game_menu` `0x2997a`(來源是存檔槽,緊接的 +0xa00 是章節)。
+  - 從名冊讀出 4 筆:`battle_system_submenu` `0x1a002`(寫到戰況存檔區塊 +0x8a3,doc25 §23 的控制段之後)、`save_game_menu` `0x29748`(寫到存檔槽)、`roster_reorder_selected_first` `0x2b7a2`、`roster_move_member_to_slot1` `0x2b8a6`(這 2 筆是重排前整份備份到 malloc 的暫存)。
+- **單筆 0x50 bytes 寫回名冊 4 筆**:`roster_reorder_selected_first` `0x2b7e2` / `0x2b829`、`roster_move_member_to_slot1` `0x2b8c9`(目的地 = 基底 + 0x50,第 1 格)/ `0x2b910`。
+- **章節 loader `0x1088d` 1 筆**:`0x10a6d` edi = 名冊開頭,迴圈 `[0x53be7]`(開戰單位數)次 `memmove(單位記錄, 名冊記錄, 0x50)`,再以 FDFIELD 控制段 6 byte 一組的資料改寫 `+0` / `+1` 等欄位 —— 名冊前 `[0x53be7]` 人就是出場的我方單位。
+- **基底 + 號 × 0x50 取一筆 12 筆**:JOIN constructor `0x112a5` `0x112c6`(新成員放在第 `[0x53bfb]` 格)、`roster_recalc_equipped_stats` `0x11478`、
+  `0x11506` `0x1154e`(走訪戰場單位,依 `+8` 角色號找到名冊記錄後 `memmove(名冊記錄, 單位記錄, 0x50)` 寫回)、`find_unit_by_char_id` `0x12cbb`、
+  `0x24bde` `0x24c05` 與 `0x33499` `0x334c0`(名冊裡有沒有某個 `+8` 角色號,回 1 / 0)、`0x25089` `0x250a2`(全員 `+5` 清 0、`+0x40` ← `+0x42`、`+0x44` ← `+0x46`)、
+  `town_hub_main` `0x2623d`、`load_game_menu` `0x29a01`、`class_change_service` `0x2ac32`、`sortie_member_select` `0x2b288`、`roster_move_member_to_slot1` `0x2b960`。
+- **暫時讓單位陣列 `[0x53a45]` 指向名冊 3 筆**:`town_hub_main` `0x26347`、`town_hub_select` `0x267dc`(這 2 筆接著 `call sortie_member_select`,返回後把 `[0x53a45]` 寫 0)、`town_hub_select` `0x2680b`(接著 `malloc(0xfa00)`)。
+
+7 + 4 + 1 + 12 + 3 = 27。

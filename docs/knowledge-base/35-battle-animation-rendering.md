@@ -5645,3 +5645,43 @@ cell 位址 = 基底 + dword[基底 + 6 + 號 × 4]。76 筆讀取依取用方�
 - `game_main` `0x25ce7` 1 筆:載入時當 `0x111ba` 的舊緩衝引數(EXE 初值 0)。
 
 52 + 10 + 13 + 1 = 76。
+
+## 2026-11-07:`[0x53ac1]` = 戰場地圖寬(格數;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ac1`:**34 筆全是 4 byte 直接定址,讀 32、寫 2**,分布在 23 個函式。EXE 內初值 0。
+
+**2 個寫入點**,都在地圖格緩衝 `[0x53a51]` 剛載入之後讀表頭 `movsx edx, word ptr [eax]`:`save_load_restore` `0x10224`、章節 loader `0x1088d` 的 `0x10928`。
+下一條把 `word [+2]` 存到 `[0x53ac5]`(地圖高,本輪不登錄)。
+
+**32 筆讀取**:
+- **列優先索引 14 筆**(y × 寬 + x,再 × 4 取 `[0x53a51]` 的格子):`field_unit_construct` `0x10ce4`、`target_cursor_loop` `0x11727`、`draw_terrain_layer` `0x1219d`、`map_count_flagged_event_cells` `0x122b5`、`draw_move_range_overlay` `0x126de`、
+  `redraw_map_cell` `0x12b2e`、`map_cell_info` `0x12e4e`、`mark_unit_cell_blocking` `0x14689`、`map_cell_set_bit7` `0x146b5`、`map_block_cells_of_side` `0x14707`、`collect_targets_in_range` `0x148ee` / `0x14924` / `0x1496a`、`move_unit_toward_point` `0x14d03`。
+- **走訪上界 9 筆**(`cmp x, [0x53ac1]` 接 `jge` / `jl`):`field_unit_construct` `0x10cdc`、`map_count_flagged_event_cells` `0x12284`、`collect_targets_in_range` `0x14892` / `0x148cf`、`map_collect_cells_byte3_set` `0x14b4f`、
+  `find_event_cell` `0x15e2a`、`draw_map_scaled_fixedpoint` `0x1f61e`、`map_overview_screen` `0x2012e`、`earthquake_spell_effect` `0x21652`。
+- **邊界檢查 4 筆**:`mark_unit_cell_blocking` `0x1465b`(x < 寬 − 1 才處理)、`build_target_candidates` `0x14aa5`(0 ≤ x < 寬)、`ai_item_action` `0x1520b` / `0x15213`(x ≥ 寬時把 `[0x53c37]` 夾成寬 − 1)。
+- **游標 / 鏡頭右緣 3 筆**:`cursor_step_right` `0x11c04`(游標 X `[0x53ab1]` == 寬 − 1 就不動)、`0x11c1b`(鏡頭 X `[0x53aa9]` == 寬 − 13 就只動游標)、`step_anim_right` `0x13363`(寬 − `[0x51a87]` 與鏡頭 X 比)。
+- **總覽圖尺寸 2 筆**:`map_overview_screen` `0x200b7`(寬 × 3)、`0x201f3`(寬 × ebp)。
+
+14 + 9 + 4 + 3 + 2 = 32。
+
+## 2026-11-07:`[0x53f66]` = 城鎮選單的 FDOTHER 資源指標(第 12 / 13 / 14 / 29 / 63 號;資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53f66`:**55 筆全是 4 byte 直接定址,讀 47、寫 8**,分布在 20 個函式。EXE 內初值 0。
+
+**8 個寫入點**:
+- 載入 5 處,形狀都是 `push 號; push dword ptr [0x53f66]; push 0x51a4d; call 0x111ba`,回傳值寫回:`title_menu_dispatch` `0x25f5d`(13 號)、`town_hub_main` `0x2632a`(13 號)、`tavern_menu` `0x2933c`(13 號)、
+  `church_menu` `0x29de6`(14 號)、`shop_menu` `0x27a22`(預設 12 號,`[0x53f4a]` == 3 時 29 號、== 5 時 63 號)。
+- free 後寫 0 3 處:`title_menu_dispatch` `0x260cf`、`shop_menu` `0x27d0f`、`tavern_menu` `0x2960d`。
+
+**47 筆讀取**:
+- 舊緩衝引數 5 筆:上面 5 處載入各 1。
+- free 4 筆:上面 3 處各 1,加 `town_hub_main` `0x26339`(free 後沒有寫 0,下一條是 `mov eax, dword ptr [0x53bf7]`,接著進出擊選單)。
+- **取 cell 29 筆**(cell = 基底 + dword[基底 + 6 + 號 × 4],和 `[0x53a81]` 同一種表頭),之後都 `push 0x140` 以 320 寬貼出:
+  - 號由暫存器決定 7 筆:`carousel_menu_open` `0x26dc5`、`menu_read_key` `0x26f49`、`menu_tick_redraw` `0x270d5` / `0x27143` / `0x27191` / `0x271d8` / `0x27226`。
+  - 固定號 22 筆:1 號(+0xa)3(`shop_menu` `0x27a63`、`church_menu` `0x29e22`、`revive_service` `0x2a623`)、2 號(+0xe)1(`draw_cell_6x9` `0x26cb1`,再跳過 4 bytes)、
+    16 號(+0x46)6(`open_item_list_panel` `0x277aa`、`choice_box_left_right` `0x27db4`、`equip_compare_select` `0x27fd5`、`save_slot_selector` `0x29c4a`、`revive_candidate_select` `0x2a334`、`class_change_candidate_select` `0x2a8ee`)、
+    17 號(+0x4a)4(`menu_tick_redraw` `0x27155` / `0x271b3` / `0x271ea` / `0x27238`)、`draw_equip_compare_rows` `0x2825b` 8(18 .. 21 號各 1、22 號 4)。
+- **整個資源交給繪製函式 9 筆**:`blit_res_cell_sprite` `0x16886` 7(`shop_menu` `0x27c2d`、`service_success_anim` `0x28b5d` / `0x28b9c` / `0x28bf6` / `0x28c8e`、`tavern_menu` `0x2952b`、`church_menu` `0x29fa1`)、
+  `blit_raw_cell` `0x1685c` 2(`draw_item_list_two_column` `0x27506`、`draw_revive_candidate_rows` `0x2a19c`)。
+
+5 + 4 + 29 + 9 = 47。`church_menu` 只載入、沒有 free。

@@ -13812,3 +13812,97 @@ doc10 / doc25 / doc47 舊稱的「鏡頭 / camX / camY」與此一致。
 續二百一十三 .. 二百一十五 共登錄 5 段(`0x53abd`、`0x51a4d`、`0x53a61`、`0x53a81`、`0x53a55`):遊戲函式 673 → 702 / 1202、全域位址 35 → 40 / 900、資料 154 → 182 / 35714 bytes。
 仍未登錄的鄰居:`0x53a59`、`0x53a5d` / `0x53a65` / `0x53a69`、`0x53a85`、`0x53ac1`、`0x51a59` / `0x51a65`。
 `--gaps globals` 下一批:`0x53eec`(24)、`0x53ac1`(23)、`0x53ecc`(23)、`0x53bf7` / `0x53f66` / `0x541f4`(20)。
+
+## 2026-11-07 續二百一十六:資料區段 `0x53eec`(UI 音效池)
+
+起因:使用者要求逐項處理 `0x53eec`、`0x53ac1`、`0x53ecc`、`0x53bf7` / `0x53f66` / `0x541f4`,這是第 1 項。事實寫進 doc36 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53eec]` = FDOTHER 第 31 號資源(UI 音效池)的指標:`game_main` `0x25c78` 載入後不再改。
+61 筆讀取 = 舊緩衝 1、`push` 給 play_sfx_a `0x25a96` 57(0 號 36 筆,其餘 1 .. 8 號與 0xb 號)、`push` 給 `play_digital_sample` `0x25b45` 3(0xc 號 2、7 號 1)。
+
+### (2) 差異(只記在這裡,原文沒改)
+
+doc36 §2 說 `push dword ptr [0x53eec]` 系列共 58 處;反組譯是 61 筆讀取,其中當音效池引數的 60 筆(play_sfx_a 57 + `play_digital_sample` 3),另 1 筆是載入時的舊緩衝。
+
+### (3) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53eec` 5 byte → 1(`0x53ef0` 沒列在 fields)、3 byte → 62(4 byte 存取全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 702 → 706 / 1202、全域位址 40 → 41 / 900、資料 182 → 186 / 35714 bytes。
+- doc36 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十七:資料區段 `0x53ac1`(戰場地圖寬)
+
+起因:同一個要求的第 2 項。事實寫進 doc35 新節(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53ac1]` = 地圖寬(格數):`save_load_restore` 與章節 loader `0x1088d` 在 `[0x53a51]` 載入後讀表頭 `word [+0]`(`word [+2]` 給 `[0x53ac5]` 地圖高)。
+32 筆讀取 = 列優先索引 14、走訪上界 9、邊界檢查 4、游標 / 鏡頭右緣 3、總覽圖尺寸 2。
+
+### (2) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53ac1` 5 byte → 22(`0x53ac5` 沒列在 fields + 21 筆 `0x53ac5` 的 4 byte 存取跨出)、3 byte → 34(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 706 → 711 / 1202、全域位址 41 → 42 / 900、資料 186 → 190 / 35714 bytes。
+- doc35 是混合 EOL(HEAD blob 5049 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十八:資料區段 `0x53ecc`(戰鬥結束碼)
+
+起因:同一個要求的第 3 項。事實寫進 doc25 新節 §24(2026-11-07),`docs/data/data_map.json` 登錄 1 段。
+
+### (1) 內容
+
+`[0x53ecc]` = 戰鬥結束碼:寫 0 4 處、共用判定 `0x205be` 2 → 0 / 1、17 個 `battle_result_check_*` handler 寫 1 21 處、寫 2 5 處。
+9 筆讀取 = `battle_phase_advance` 4、`friendly_phase_dispatch` / `enemy_phase_dispatch` 3(非 0 就提早返回 / 離開迴圈)、`game_main` 2(== 1 GAME OVER 畫面、== 2 章節戰後表 + 城鎮)。
+
+### (2) 差異(只記在這裡,原文沒改)
+
+doc23 狀態變數表說 `[0x53ecc]`「戰役迴圈清 0」;寫 0 的除了 `game_main` `0x25df1` / `0x25e65`,還有換章包裝 `0x205da` 的 `0x205ef`(載入地圖前),以及 `0x205be` 判定中途的 `0x206a6`。
+`function_inventory` 依入口切函式,把 `0x205be` 的迴圈(`0x2067d..0x206c4`)算進 `0x205da`。
+
+### (3) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53ecc` 5 byte → 10(`0x53ed0` 沒列在 fields + 9 筆 `0x53ed0` 的 4 byte 存取跨出)、3 byte → 41(全部跨出);未改 → 0。
+- 覆蓋率:遊戲函式 711 → 730 / 1202、全域位址 42 → 43 / 900、資料 190 → 194 / 35714 bytes。
+- doc25 是混合 EOL(HEAD blob 3246 CR),新節只附加 LF 行。
+- 未跑:verify_all_tools、run_all。
+
+## 2026-11-07 續二百一十九:資料區段 `0x53bf7`、`0x53f66`、`0x541f4`(常駐名冊、城鎮選單資源、AIL 錯誤訊息緩衝)
+
+起因:同一個要求的第 4 項(最後一項)。事實寫進 doc10 新節(`0x53bf7`)、doc35 新節(`0x53f66`)、doc36 新節(`0x541f4`),`docs/data/data_map.json` 登錄 3 段。
+
+### (1) 內容
+
+- `[0x53bf7]`:`game_main` `0x25d61` `malloc(0xa00)`(32 × 0x50)後不再改;27 筆讀取 = 整塊複製 7、單筆寫回 4、章節 loader 出場複製 1、取一筆 12、暫借給 `[0x53a45]` 3。
+- `[0x53f66]`:城鎮選單 5 處以 `0x111ba("FDOTHER.DAT", 舊, 號)` 載入(12 / 13 / 14 / 29 / 63 號),3 處 free 後寫 0;47 筆讀取 = 舊緩衝 5、free 4、取 cell 29、整個資源交給繪製函式 9。
+- `0x541f4`:AIL 錯誤訊息緩衝 256 bytes;40 筆引用 = 內嵌 strcpy 35、sprintf 2、DPMI 鎖定 / 解鎖 2、startup 清空 1,沒有讀取。
+
+### (2) 沒有追的部分
+
+`town_hub_main` `0x26339` free `[0x53f66]` 後沒有寫 0,`church_menu` 載入 14 號後沒有 free;下一次 `0x111ba` 收到的舊緩衝是哪一塊、會不會重複 free,本輪沒有追。
+
+### (3) 驗證
+
+- `re_coverage --check` PASS;`--selftest` PASS。工具本身沒改。
+- 負向對照(在記憶體內改 data_map 再呼叫 `re_coverage.evaluate`,檔案沒動;數字是登錄錯誤筆數):
+  `0x53bf7` 5 byte → 44(`0x53bfb` 沒列在 fields + 與 `0x53bfb` 段重疊 + 42 筆 `0x53bfb` 的 4 byte 存取跨出)、3 byte → 28(全部跨出);
+  `0x53f66` 5 byte → 8(`0x53f6a` 沒列在 fields + 7 筆 `0x53f6a` 的 4 byte 存取跨出)、3 byte → 55(全部跨出);
+  `0x541f4` 257 byte → 1(`0x542f4` 沒列在 fields)、255 byte → 0:位址引用沒有寬度,工具查不出緩衝長度;256 bytes 是由 `dpmi_lock_range(0x541f4, 0x100)` 與下一個被引用位址 `0x542f4` 確認的;未改 → 0。
+- 覆蓋率:遊戲函式 730 → 738 / 1202、全域位址 43 → 46 / 900、資料 194 → 458 / 35714 bytes(`0x541f4` 一段 256 bytes)。
+- doc10 工作副本是純 CRLF(HEAD blob 0 CR),新節附加 CRLF 行;doc35 只附加 LF 行;doc36 是純 LF。
+- 未跑:verify_all_tools、run_all。
+
+### (4) 本批小結與下一步
+
+續二百一十六 .. 二百一十九 共登錄 6 段(`0x53eec`、`0x53ac1`、`0x53ecc`、`0x53bf7`、`0x53f66`、`0x541f4`):遊戲函式 702 → 738 / 1202、全域位址 40 → 46 / 900、資料 182 → 458 / 35714 bytes。
+仍未登錄的鄰居:`0x53ac5`(地圖高)、`0x53ed0`、`0x53f6a`、`0x541b4`、`0x542f4`。
+`--gaps globals` 下一批:`0x53c5f` / `0x53c63` / `0x53ec8`(19)、`0x53ec4`(18)、`0x53a5d`(16)、`0x51a87`(15)。

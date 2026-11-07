@@ -3407,3 +3407,22 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 回合事件列 14 筆:`turn_event_dispatch` `0x1a831`,以及 §22 那 13 筆讀回合數的事件 handler 各讀一次指標(`event_handler_30` 2、`_62`、`_65`、`_67`、`_69`、`_74`、`_75` 2、`_76` 2、`_79`、`_81`)。
 
 4 + 1 + 2 + 7 + 2 + 2 + 1 + 3 + 14 = 36。
+
+## 24. `[0x53ecc]` = 戰鬥結束碼(章節勝敗判定寫入、戰役迴圈消費)(2026-11-07,資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53ecc`:**41 筆全是 4 byte 直接定址,讀 9、寫 32**,分布在 23 個函式。EXE 內初值 0。
+
+**32 個寫入點**:
+- 寫 0 4 處:`0x205da` 的 `0x205ef`(換章包裝,呼叫章節 loader `0x1088d` 之前)、`game_main` `0x25df1` / `0x25e65`(下面兩條分支處理完)、`0x205be` 的 `0x206a6`(見下一項)。
+- 共用判定 `0x205be`(§4 記過的三值規則):`0x205c9` 先寫 2,再走訪 `[0x53a45]` 的 `[0x53beb]` 筆單位,任一筆 `+6 == 0` 且 `+5` bit0 == 0(還活著的敵方)就在 `0x206a6` 寫 ebx(此時 ebx = `+6` = 0);
+  走訪完,第 0 筆的 `+5` bit0 == 1 就在 `0x206b9` 寫 1。這段迴圈在 `0x2067d..0x206c4`,位址落在 `0x205da` 之後,依入口切函式的工具會把 `0x206a6` / `0x206b9` 算進 `0x205da`。
+- 章節勝敗 handler 17 個(`battle_result_check_1` .. `battle_result_check_29`,`0x206c5..0x20c6e`)26 處:寫 1 21 處、寫 2 5 處。多數是判定呼叫回非 0 才寫;
+  `battle_result_check_16` `0x208c4`、`battle_result_check_28` `0x20bea`、`battle_result_check_29` `0x20c64` 在 `0x15f84` 返回後無條件寫 1。
+
+**9 筆讀取**:
+- `battle_phase_advance` `0x1a30b` 4 筆:`0x1a4d9` / `0x1a4f5` / `0x1a566` / `0x1a599` `cmp dword ptr [0x53ecc], 0; jne 0x10b46`。`0x10b46` 是 `spawn_group` 尾端的 epilogue(`add esp, 8; pop ebp; pop edi; pop esi; pop ebx; ret`),非 0 就直接返回。
+- `friendly_phase_dispatch` `0x1d8aa`、`enemy_phase_dispatch` `0x1d976` / `0x1da06`:非 0 就離開單位迴圈。
+- `game_main` 2 筆(戰場迴圈 `0x117e7` 返回後):`0x25dd5` == 1 → `show_result_resource_79` `0x22e5c`(FDOTHER #79,doc35 §18 的 GAME OVER 畫面),之後 `0x25df1` 寫 0;
+  `0x25e02` == 2 → `0x25977(−1, 1)`、`call [章節 × 4 + 0x51de9]`、`town_hub_main` 回 0 時再 `call [章節 × 4 + 0x51d71]`,最後 `0x25e65` 寫 0。
+
+4 + 3 + 2 = 9。

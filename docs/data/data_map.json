@@ -597,6 +597,35 @@
       ]
     },
     {
+      "start": "0x53ac1",
+      "size": 4,
+      "name": "field_map_width",
+      "type": "dword(戰場地圖寬,格數)",
+      "meaning": "地圖寬:save_load_restore 與章節 loader 0x1088d 在 [0x53a51] 載入後讀表頭 word [+0](word [+2] 給 [0x53ac5] 地圖高)。讀取:y×寬+x 取 [0x53a51] 格子 14、走訪上界 9、邊界檢查 / 夾住 4、cursor_step_right / step_anim_right 的右緣 3、map_overview_screen 的尺寸 2。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x11bfa"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "**2 個寫入點**,都在地圖格緩衝 `[0x53a51]` 剛載入之後讀表頭 `movsx edx, word ptr [eax]`"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "14 + 9 + 4 + 3 + 2 = 32。"
+        }
+      ]
+    },
+    {
       "start": "0x53ad5",
       "size": 4,
       "name": "battle_event_state_table",
@@ -677,6 +706,35 @@
         {
           "doc": "docs/knowledge-base/25-battle-event-system.md",
           "quote": "**3 個寫入點**:`0x205da` `0x2066e` 開戰寫 1;`battle_phase_advance` `0x1a30b` `0x1a5b9` `inc`"
+        }
+      ]
+    },
+    {
+      "start": "0x53bf7",
+      "size": 4,
+      "name": "roster_buffer",
+      "type": "dword 指標(我方常駐名冊,malloc 0xa00 = 32 × 0x50)",
+      "meaning": "常駐名冊:game_main 0x25d61 malloc(0xa00) 後不再改,記錄格式和單位記錄相同(0x50 bytes,+8 角色號),人數在 [0x53bfb]。存讀檔以 memmove 整塊複製(存檔槽、戰況存檔區塊 +0x8a3);章節 loader 0x1088d 把前 [0x53be7] 筆複製成出場單位,0x11506 依角色號寫回;town_hub_main / town_hub_select 進出擊選單時暫時讓 [0x53a45] 指向它。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x11506"
+        },
+        {
+          "func": "0x2b843"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "`malloc(0xa00)` 的回傳值(0xa00 = 32 筆 × 0x50,和單位記錄同格式)"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "7 + 4 + 1 + 12 + 3 = 27。"
         }
       ]
     },
@@ -764,6 +822,87 @@
         {
           "doc": "docs/knowledge-base/13-battle-menu-system.md",
           "quote": "**209 筆全是 4 byte 直接定址,讀 149、寫 33、讀改寫 27**"
+        }
+      ]
+    },
+    {
+      "start": "0x53ecc",
+      "size": 4,
+      "name": "battle_end_code",
+      "type": "dword(戰鬥結束碼 0 / 1 / 2)",
+      "meaning": "戰鬥結束碼:0x205be 先寫 2、有敵方存活寫 0、第 0 筆單位陣亡寫 1;17 個 battle_result_check_* handler 寫 1 / 2;換章包裝 0x205da 與 game_main 寫 0。battle_phase_advance、friendly_phase_dispatch、enemy_phase_dispatch 非 0 就提早返回;game_main 在戰場迴圈返回後 == 1 呼叫 show_result_resource_79(GAME OVER),== 2 呼叫章節戰後表 [0x51de9] 與 town_hub_main。",
+      "evidence": [
+        {
+          "func": "0x205be"
+        },
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x1a30b"
+        },
+        {
+          "func": "0x206c5"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "`0x205c9` 先寫 2,再走訪 `[0x53a45]` 的 `[0x53beb]` 筆單位"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "`0x25dd5` == 1 → `show_result_resource_79` `0x22e5c`"
+        }
+      ]
+    },
+    {
+      "start": "0x53eec",
+      "size": 4,
+      "name": "ui_sfx_pool",
+      "type": "dword 指標(FDOTHER 第 31 號資源,UI 音效池)",
+      "meaning": "UI 音效池:game_main 0x25c78 以 load_res(\"FDOTHER.DAT\", [0x53eec], 0x1f) 載入後不再改。57 處 push 給 play_sfx_a 0x25a96、3 處 push 給 play_digital_sample 0x25b45,前一條是音效號(0 號 36 筆為選單游標,最大 0xc)。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x117e7"
+        },
+        {
+          "func": "0x1b9de"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**唯一的寫入點**是 `game_main` `0x25bf4` 的 `0x25c78`"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "1 + 57 + 3 = 61。用到的音效號最大 0xc。"
+        }
+      ]
+    },
+    {
+      "start": "0x53f66",
+      "size": 4,
+      "name": "town_menu_resource",
+      "type": "dword 指標(城鎮選單的 FDOTHER 資源)",
+      "meaning": "城鎮選單資源:title_menu_dispatch / town_hub_main / tavern_menu 載入 FDOTHER 13 號、church_menu 14 號、shop_menu 12 / 29 / 63 號(依 [0x53f4a]);title_menu_dispatch / shop_menu / tavern_menu free 後寫 0。cell = 基底 + dword[基底 + 6 + 號×4],29 處取 cell、9 處整個交給 blit_res_cell_sprite / blit_raw_cell。",
+      "evidence": [
+        {
+          "func": "0x279bc"
+        },
+        {
+          "func": "0x25ebb"
+        },
+        {
+          "func": "0x2825b"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "`church_menu` `0x29de6`(14 號)、`shop_menu` `0x27a22`(預設 12 號,`[0x53f4a]` == 3 時 29 號、== 5 時 63 號)"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "5 + 4 + 29 + 9 = 47。"
         }
       ]
     },
@@ -975,6 +1114,32 @@
       "fields": {
         "0x18": "newline_cleared_to_nul"
       }
+    },
+    {
+      "start": "0x541f4",
+      "size": 256,
+      "name": "ail_error_text",
+      "type": "char[256](AIL 錯誤訊息緩衝)",
+      "meaning": "AIL 的錯誤訊息:35 處內嵌 strcpy(rep movsd)與 2 處 sprintf 把錯誤字串寫進來,ail_api_lock_memory / ail_api_unlock_memory 以 0x100 bytes 鎖定 / 解鎖,ail_set_default_preferences 清第 0 byte。沒有直接讀它的指令。",
+      "evidence": [
+        {
+          "func": "0x3f950"
+        },
+        {
+          "func": "0x3fca9"
+        },
+        {
+          "func": "0x3f4e0"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "35 + 2 + 2 + 1 = 40。長度 256 bytes:鎖定範圍是 0x100,下一個被引用的位址正好是 `0x542f4`。"
+        },
+        {
+          "doc": "docs/knowledge-base/36-sfx-audio-data.md",
+          "quote": "**`sprintf(0x541f4, 格式, …)` 2 筆**"
+        }
+      ]
     }
   ]
 }

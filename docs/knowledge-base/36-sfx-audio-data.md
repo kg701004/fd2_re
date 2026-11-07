@@ -1666,3 +1666,37 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
 - 6 + 30 = 36,和 `[0x538b4]` 的 36 個讀取常式是同一組。
 
 `[0x538bc]` 本輪不登錄:除了上面的 `0x49760` 寫入與 30 筆以 `0x538b8` 為基底的索引讀取,`math_err_build_exception` `0x499da` 的 `0x49a4c` 另有一筆 `[eax*4 + 0x538bc]`(eax = 旗標 & 0x1f),用途沒有追。
+
+## 2026-11-07:`[0x53eec]` = UI 音效池(FDOTHER.DAT 第 31 號資源)的指標(資料區段登錄,`docs/data/data_map.json`)
+
+FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --show-data 0x53eec`:**62 筆全是 4 byte 直接定址,讀 61、寫 1**,分布在 24 個函式。EXE 內初值 0。
+
+**唯一的寫入點**是 `game_main` `0x25bf4` 的 `0x25c78`:`0x111ba("FDOTHER.DAT"(0x51a4d), [0x53eec], 0x1f)` 的回傳值,之後不再改。
+(本篇 §2 的 `0x26a63` / `0x26a78` / `call 0x11fba` 是同一段程式的檔案位移,和線性位址差 0xe00。)
+
+**61 筆讀取**:
+- `0x111ba` 的舊緩衝引數 1 筆:`game_main` `0x25c65`(就是上面那次載入)。
+- **`push dword ptr [0x53eec]` 緊接 `call 0x25a96`(play_sfx_a)57 筆**。前一條推的是音效號:
+  - 0 號 36 筆:`item_grid_select` 6、`command_grid_select` 6、`battle_main_input_loop` 4、`item_list_select` 4、`choice_box_left_right` 4、`sortie_member_select` 4、`town_hub_main` 2、`carousel_menu_select` 2、`equip_compare_select` 2、`target_cursor_loop` 1、`copy_protection_password_check` 1(多半是選單游標移動)。
+  - 1 號 1(`town_hub_main` `0x265a1`)、2 號 3(`typewriter_tick` `0x16540`、`copy_protection_password_check` `0x34120` / `0x3415c`)、3 號 1(`unit_death_sweep` `0x1dda4`)、4 號 2(`rest_hp_recover` `0x14037`、`battle_phase_advance` `0x1a3d9`)。
+  - 5 號 4(`unit_info_cards` `0x17c50`、`info_card_open_anim` `0x17ed8`、`save_slot_selector` `0x29c84`、`sortie_member_select` `0x2b084`)、6 號 3(`unit_info_cards` `0x17b28` / `0x17d20`、`sortie_member_select` `0x2b1eb`)。
+  - 7 號 4(`battle_main_input_loop` `0x11934`、`save_slot_selector` `0x29d2a` / `0x29d66`、`copy_protection_password_check` `0x34178`)、8 號 2(`action_ring_open` `0x1748f`、`action_ring_close` `0x176cd`)、0xb 號 1(`play_step_sfx` `0x32301`)。
+  - 前第 2 條推的第 3 個引數:55 筆是 1;`town_hub_main` `0x265a1` 是 3、`copy_protection_password_check` `0x341e1` 是 eax。
+- **`push dword ptr [0x53eec]` 緊接 `call play_digital_sample` `0x25b45` 3 筆**:0xc 號 2(`ai_mode_dispatch` `0x13d0d`、`field_cell_treasure_check` `0x191a3`,後者第 3 個引數是 ebx)、7 號 1(`sortie_member_select` `0x2b0c1`)。
+
+1 + 57 + 3 = 61。用到的音效號最大 0xc。
+
+## 2026-11-07:`0x541f4` = AIL 的錯誤訊息緩衝(256 bytes;資料區段登錄,`docs/data/data_map.json`)
+
+存取來自 `python tools/re_coverage.py --show-data 0x541f4`:**40 筆,位址引用 39、1 byte 寫入 1**,分布在 20 個 AIL 函式,沒有遊戲函式。EXE 內初值 0。
+
+- **內嵌 strcpy 35 筆**:`mov edi, 0x541f4; mov esi, 訊息; mov ecx, n; rep movsd`,再以 movsw / movsb 補尾。訊息都是 AIL 自己的錯誤字串,
+  例如 `ail_impl_api_read_ini` `0x3f907` 複製 `0x511f7` `"Corrupted .INI file\n"`(ecx 5 → 20 bytes,加 movsb 1 byte = 21 = 字串 20 字 + NUL)、
+  `ail_driver_install_core` `0x3f968` 複製 `0x5120c` `"Insufficient memory for driver descriptor\n"`、`ail_impl_create_wave_synthesizer` `0x45e47` 複製 `0x516a0` `"Insufficient memory for HWAVE descriptor\n"`。
+  分布:`ail_dig_install_core` 7、`ail_mdi_install_core` 6、`ail_driver_install_core` 5、`ail_impl_init_sequence` 3、`ail_impl_allocate_file_sample` 2、`ail_impl_set_sample_file` 2,其餘 10 個函式各 1。
+- **`sprintf(0x541f4, 格式, …)` 2 筆**:`ail_impl_init_sequence` `0x4475d`(格式 `0x51638` `"Driver could not install timbre bank %u, patch %u\n"`)、`ail_impl_install_timbre` `0x44bd3`(格式 `0x5166c`)。
+- **DPMI 鎖定 2 筆**:`ail_api_lock_memory` `0x3f51f` `dpmi_lock_range(0x541f4, 0x100)`、`ail_api_unlock_memory` `0x3fe1b` `dpmi_unlock_range(0x541f4, 0x100)`。
+- **清空 1 筆**:`ail_set_default_preferences` `0x3fca9`(上一節所說真正的 startup)的 `0x3fda4` `mov byte ptr [0x541f4], ah`(ah 剛 `xor ah, ah`)。
+
+35 + 2 + 2 + 1 = 40。長度 256 bytes:鎖定範圍是 0x100,下一個被引用的位址正好是 `0x542f4`。
+40 筆裡沒有讀取 —— EXE 裡沒有直接讀這段文字的指令(以常數位址間接取用的情形本輪沒有查)。
