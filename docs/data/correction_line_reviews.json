@@ -136,6 +136,13 @@
    "excerpt": "- 2026-11-07 續二百六十一補:`python tools/verify_data_types.py --show 0x541ac` 由 `_cstart_` 的指令現算清零範圍 [`0x539ec`, `0x546b0`)(`0",
    "verdict": "not_address_erratum",
    "note": "訂正的是 0x541ac 初值的證據等級(推論 → 靜態指令確認),位址本身沒有錯"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "excerpt_sha1": "d2bbf5053e686e32624c7f5d1e27da54dbf04482",
+   "excerpt": "- **工具抓到的反例**:value 證據第一版把 `[0x51a8f]` 的立即數 255(「沒有事件」哨兵,讀取前另有檢查)算成 `0x51b91` 的索引,得到跑出區段的範圍。改為「任一立即數會出界就整筆不採信」,不另挑塞得下的值;",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是本工具 value 證據的採信規則(哨兵立即數 255 讓整筆不採信),0x51a8f / 0x51b91 兩個位址本身沒有訂正"
   }
  ]
 }

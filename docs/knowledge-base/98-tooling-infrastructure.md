@@ -14750,3 +14750,52 @@ doc35 §1 的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE(新節已�
 - `verify_selftest_discrimination.py` INVOKE 加一行(`verify_data_types.py` offline);`--check-registry` 過期 0。
 - data_map 沒改;覆蓋率不變(遊戲函式 859 / 1202、全域位址 98 / 900、資料 1160 / 35714 bytes)。
 - 未跑:verify_all_tools、run_all。
+
+## 2026-11-11 續二百六十二:`tools/verify_data_lower_bounds.py` —— data_map 每段長度下限對 EXE 計算
+
+起因:續二百六十一的「仍未證」第一項是只有索引存取的陣列(`0x52a94`、`0x541b4`、`0x5417c`、`0x541f4`)沒有長度下限的機器證據:`[eax + 0x541b4]` 這種存取,re_coverage 只看得到位移,看不到 eax 跑到多少,陣列登成 4 byte 也通過。使用者要求「先做一支工具證明只用索引存取的陣列的長度下限」。
+
+### (1) 工具
+
+`python tools/verify_data_lower_bounds.py [--check | --verbose | --show ADDR | --selftest]`。下限 = 程式碼定址到區段起點 + N 為止(陣列短於 N 就會被程式自己寫出界);這是程式碼的定址範圍,不是實機觀察。證據分級,互不混算:
+
+- **access**(指令真的讀寫那些 byte)
+  - direct:沒有基底 / 索引暫存器的記憶體運算元。
+  - loop:索引存取的計數器由迴圈形狀解出。最內層向後條件跳躍前一條是 `cmp R, 立即數` / `test R, R`;迴圈體內 R 只在存取之後、比較之前寫一次(`inc` / `dec` / `add` / `sub` 立即數;`call` 視為改寫 eax / ecx / edx);遞增不能被繞過;唯一入口,初值是 `mov R, 立即數` / `xor R, R`(可隔一條跳到比較的 `jmp`),全程式沒有其他跳躍跳進來;索引暫存器可以是 R,或迴圈體內由 `mov Q, R` / `shl Q, k` 算出。計數器的值逐次模擬(有號 / 無號依條件跳躍),不套公式。
+  - rep:`rep stos*` / `rep movs*` 前 4 條內 `mov edi, 位址(有 fixup)` 與 `mov ecx, 立即數`,緊接的非 rep `movs*` / `stos*` 加上(內嵌 strcpy 的尾巴);函式內有 `std` 不採信。
+- **content**:`verify_data_types` 已以內容證明整段(C 字串逐 byte + NUL、函式指標表每格 fixup)。
+- **value**(比 access 弱):索引在同一基本區塊內由 `mov` / `movzx R, [V]` 載入,下限取程式寫進 V 的最大立即數。沒有證明那個值一定流到這次讀取;V 的任何一個立即數會定址出界時整筆不採信。
+- **declared**(程式把長度當參數交出去,不保證用到):`push 長度` / `push 位址` / `call F`,F 以結構辨認為 DPMI 鎖定 / 解鎖範圍的包裝(`0x3666c` 0600h、`0x36683` 0601h;後者設好功能號後 `jmp` 進 `0x365fd` 共用 int386 呼叫)。
+
+`--check` 失敗條件:任何 access 證據跑出它所在區段(低於起點或超過 size)、宣告長度大於 size、本工具解出的記憶體運算元位置與 re_coverage 指令層存取(kind "mem")不逐筆相同。
+
+### (2) 結果(現有 92 段)
+
+- 失敗 0。等級:access 79、content 9、value 1、declared 1、partial 2。記憶體運算元與 re_coverage 逐筆相同 4569 筆。
+- 索引存取:迴圈解出 9 筆、解不出 63 筆(其中 13 筆有 value 證據);rep 29 筆;DPMI 範圍呼叫 12 筆。
+- **`0x541b4`**(`dword 指標[16]`):6 筆索引存取全部由迴圈解出,access 64 = size。安裝 `0x3fa5d` / `0x3fa66` 與移除 `0x3fc19` / `0x3fc23` 是 `cmp ecx|edx, 0x10` 的頂端測試迴圈(`mov eax, ecx` / `shl eax, 2`),清除 `0x3fd95` 是 `[eax*4 + 0x541b4]`,關閉 `0x3fdb7` 是 `esi` 15 → 0 遞減(`test esi, esi` / `jge`;迴圈體內的 `call` 不改 esi)。
+- **`0x52a94`**(`dword[16]`):`0x3ecc5` `mov edi, 0x52a94` / `mov ecx, 0x10` / `rep stosd` 清 64 byte;`0x3eade`(isr)與 `0x3ec2d`(取最小週期)是 `edi` 0 .. 0x3c、步長 4 的底部測試迴圈;直接寫 `0x52ad0` 也到 +0x40。access 64 = size。
+- **`0x52387`**(`byte[6]` 城鎮管理員頭像):直接存取只到 +4(`0x5238b`);13 筆 `[eax + 0x52387]` 的 eax 都剛由 `[0x53f4a]` 載入,`0x26572` 寫 `mov dword [0x53f4a], 5` → value 6 = size。游標本身只在 0 .. 4 循環(`0x2650c` .. `0x26557`),5 是另一個按鍵條件成立時才寫的第 6 個選項;「5 一定流到讀取」沒有證明。
+- **`0x541f4`**(`char[256]`):28 筆內嵌 strcpy 的 `rep movs*`,長度 21 .. 43 byte,最長 2 筆 43 byte(例:`0x3f972` `ecx = 10` + `movsw` + `movsb`),access 只到 43;鎖定 / 解鎖 `push 0x100` / `push 0x541f4`(`0x3f524`、`0x3fe20`)→ declared 256。
+- **partial 2 段**(誠實列出):
+  - `0x5417c`(`char[26]` asctime):只有 `0x37df6` 寫 +0x18 的 NUL,access 25 / 26;strcpy 的長度來自 asctime 的執行期結果。
+  - `0x53a8d`(`union REGS`):區段內的直接存取只到 +2;整個結構以指標交給 `int386`(`0x370f0`)→ `int386x`(`0x3da76`),要追兩層 Watcom 函式庫的指標參數才看得到其餘欄位。
+- **工具抓到的反例**:value 證據第一版把 `[0x51a8f]` 的立即數 255(「沒有事件」哨兵,讀取前另有檢查)算成 `0x51b91` 的索引,得到跑出區段的範圍。改為「任一立即數會出界就整筆不採信」,不另挑塞得下的值;`0x51b91` 由 content 證明(90 格 fixup)。
+
+### (3) 仍未證
+
+- `0x5417c` 第 26 byte、`0x53a8d` +2 之後的欄位(函式庫指標參數)、`0x541f4` 43 byte 之後只有宣告長度。
+- value 等級的「值流到讀取」。
+- 迴圈解不出的 63 筆索引存取。全部落在已證到 size 的段內(access 42:`0x538b8` 30、`0x52a94` 6、`0x5413f` 6;content 8:`0x51b91`;value 13:`0x52387`),partial / declared 段 0 筆,所以不影響下限結論;value 段那 13 筆仍待補「值流到讀取」。依原因分:
+  - 30 筆(`0x538b8`)的迴圈起點就是 inventory 的函式入口(`0x48dd5` .. `0x49656`,迴圈體被登成獨立函式),函式清單裡看不到初值;
+  - 19 筆不在迴圈內(索引來自變數或參數);
+  - 14 筆是迴圈形狀不合規則(計數器推導、多次寫入、巢狀、比較不是立即數)。
+- 這 30 筆第一版的原因訊息報成「不在指令邊界」,是因為起點等於函式第一條時套錯了訊息;已拆成兩個原因,並各補一題 selftest。
+
+### (4) 驗證
+
+- `verify_data_lower_bounds --selftest` PASS(合成指令序列的正負向對照,負向題逐題核對拒絕原因字串;真實檔已知答案與零失敗);`--check` PASS。
+- `verify_selftest_discrimination.py --exhaustive --tool verify_data_lower_bounds.py`:第一輪 172/201(29 個逃逸:4 處等價 / 冗餘程式改寫消除、2 個視窗迴圈改成切片、其餘補邊界 selftest);第二輪 185/185,逃逸 0。
+- `verify_selftest_discrimination.py` INVOKE 加一行(`verify_data_lower_bounds.py` offline);`--check-registry` 過期 0。
+- data_map 沒改;覆蓋率不變。
+- 未跑:verify_all_tools、run_all。

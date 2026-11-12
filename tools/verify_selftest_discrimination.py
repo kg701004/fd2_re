@@ -235,6 +235,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "re_coverage.py":             (["--selftest"], "offline"),
     # 2026-11-07:data_map type 宣告(字串內容、函式指標表、常數、值域、寬度、初值)逐項對 EXE 核對;合成事實 + 真實檔零失敗。
     "verify_data_types.py":       (["--selftest"], "offline"),
+    "verify_data_lower_bounds.py": (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
