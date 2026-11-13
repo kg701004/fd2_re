@@ -14799,3 +14799,38 @@ doc35 §1 的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE(新節已�
 - `verify_selftest_discrimination.py` INVOKE 加一行(`verify_data_lower_bounds.py` offline);`--check-registry` 過期 0。
 - data_map 沒改;覆蓋率不變。
 - 未跑:verify_all_tools、run_all。
+
+## 2026-11-12 續二百六十三:`verify_data_lower_bounds` 補 rep 基本區塊掃描、非 rep 字串串、指標追蹤 —— `0x53a8d` 證到 28
+
+起因:續二百六十二的「仍未證」有四項:`0x5417c` 第 26 byte、`0x53a8d` +2 之後的欄位(函式庫指標參數)、`0x541f4` 43 byte 之後、value 等級的「值流到讀取」。逐項判斷後的處理:前兩項之中 `0x53a8d` 可以機器證明,做成工具;`rep` 視窗太窄是工具本身的錯,一併修;`0x5417c` 與值流的前提機器證不了,只記錄、不新增證據等級(等級互不混算,把前提混進下限會讓 access 不再只代表程式碼定址)。
+
+### (1) rep 改成掃到基本區塊開頭;新增非 rep 字串串(chain)
+
+- 續二百六十二的 `REP_WINDOW = 4`(註解寫「FD2 實際最多 3 條」)是錯的:9 個 `rep movsd` 的 `mov ecx, 立即數` 在前 5 條(`0x40f35`、`0x40fb8`、`0x43dbd`、`0x43e30`、`0x43e95`、`0x43f8d` 寫 `0x541f4`;`0x40e49`、`0x43c84`、`0x43cd1` 寫 `0x542f4`,不在 data_map)。改成往回掃到前一條分支 / call / ret / int 或第一條跳躍目標為止,不限條數。
+- 新增 chain:連續非 rep `movs*` / `stos*`,edi 在同一基本區塊內由 `mov edi, 位址(有 fixup)` 設定。唯一一筆是 `0x4469b`(`0x4468c` `mov edi, 0x541f4`,4 × movsd + movsw + movsb = 19 byte)。
+- `0x541f4`:rep 28 → 34 筆、chain 1 筆,共 35 處內嵌 strcpy,與 data_map `meaning` 的 35 處一致;但 `meaning` 括號寫「rep movsd」,其中 `0x4469b` 沒有 rep(只記錄,data_map 未改);最長仍是 43 byte(新增的最長是 `0x43e30` 41 byte),access 下限不變,仍是 declared 256。
+
+### (2) 指標追蹤(ptr)
+
+- `call` 所在基本區塊內有立即數(有 fixup)指到某段,就從區塊開頭逐條執行到這個 call 返回,跨進被呼叫的函式(含 `push 位址` / `ret` 跳進 int 跳板)。值只分「fixup 來的位址」、「一般數值」、「堆疊位址」、「區段暫存器初值」、「未知」;沒有 fixup 的立即數永遠只是數值。經暫存器定址、位址由 fixup 推得的存取記為 ptr 證據,**依指標的 fixup 來源歸段**(指標寫出來源區段 = 失敗,和迴圈跑進鄰段同一標準)。
+- 只走直線:條件跳躍、`loop`、rep 字串指令、跳到未知位址、esp 不再是已知堆疊位址、超過 4000 條就停;停之前的存取仍採信(它們在每一條從起點出發的路徑上都會執行)。
+- 前提(寫在 `trace` 的說明,本工具不證):平面模式 ds = es = ss;`int n` 返回到下一條且不改 esp 以上的堆疊(int 前若有暫存器持有堆疊位址,整個堆疊模型丟棄);data_map 區段不是堆疊。
+- 結果:288 個起點,19 個追到返回呼叫點;其餘停在 `0x3dace` `jne`(121,printf 系列的緩衝檢查)、`0x37044` `jae`(120)、`0x365e7` `jae`(10)、rep movsd(13)等。有證據的只有 2 段:
+  - **`0x53a8d`(`union REGS`)**:19 個 `int386` 呼叫點(`0x10049` 等,in = out = `0x53a8d`)都追到返回,每點 14 筆:`0x468b7` .. `0x468c5` 讀 in +0 .. +0x14、`0x46884` .. `0x46897` 寫 out +0 .. +0x18(`0x46892` `pop [edi + 0x14]`、`0x46897` `mov [edi + 0x18], eax`)、`0x3da90` 讀 out.eax。鏈:`0x370f0` → `0x3da76`(esi = intno、edi = in、edx = out)→ `0x46870` → `0x468a7` `push 0x46948 + 3 × intno` / `ret` 進 `int 0x10; ret` → 回 `0x4687a`,由堆疊取回 out 與原 ds 後寫出。**access 28 = size**(與 Watcom `union REGS` 7 個 dword 一致)。
+  - `0x5417c`:`0x37dec` strcpy(`0x400cc`)只追到第一個 byte(`0x400d8` 寫 [`0x5417c`])就停在 `0x400dd` `je`,不改變下限。
+
+### (3) 不做成工具等級、只記錄的兩項
+
+- **`0x5417c` 第 26 byte**:`0x37dec` 是 strcpy(`0x5417c`, asctime(...)),`0x400cc` 逐 byte 複製到 NUL。來源是 asctime 的靜態緩衝區 `0x54394`,由 `0x3ff8b` 固定版面寫入:`0x4006b` 寫 +0x18 = `'\n'`、`0x40071` 寫 +0x19 = 0;星期 / 月份名稱取自 `0x51828` / `0x5182f` / `0x51836` 與 `0x51804` / `0x51810` / `0x5181c` 以 tm 欄位為索引;數字欄由 `0x3ff4a` 寫 `'0' + 商`、`'0' + 餘`(`0x47952` 除以 10)。所以 strcpy 恰好複製 26 byte 的條件是「tm 欄位在範圍內,+0 .. +0x18 全不是 0」;tm 是 `localtime` 的執行期結果,這個前提本工具證不了。access 仍是 25 / 26(`0x37df6` 寫 +0x18),維持 partial。
+- **value 等級的「值流到讀取」**(`0x52387`):`[0x53f4a] = 5` 寫在 `0x26572`(函式 `0x26152`),13 筆讀取在別的函式,中間隔著 call;要證「5 一定流到讀取」得先證明中間的函式沒有經指標改寫 `0x53f4a`(別名分析),指標追蹤只走直線、遇分支就停,不足以證明「沒有寫」。維持 value 等級。
+- `0x541f4` 43 byte 之後:sprintf 的輸出長度要依格式字串與引數推,同樣不做;維持 declared 256。
+
+### (4) 驗證
+
+- `verify_data_lower_bounds --selftest` PASS:rep / chain 的區塊邊界正負向題;指標追蹤以手組機器碼經真的 capstone 解碼(fixup 有 / 無、條件跳躍停、int 前暫存器持有堆疊位址、經未知指標寫、ds 改成未知 / 存回堆疊再讀回、寫到區段內 / 外的已知位址、返回呼叫點即停、無窮迴圈、push / ret 跳板、leave、指標寫進鄰段仍歸來源段而失敗);真實檔:`0x53a8d` access 28、19 個呼叫點、`0x46897` 寫 out+0x18;`0x541f4` rep 34 筆 + chain `0x4469b`;`0x5417c` 停在 `0x400dd`。`--check` PASS:92 段失敗 0,access 80、content 9、value 1、declared 1、partial 1(`0x5417c`)。
+- 窮舉突變(`--exhaustive --tool verify_data_lower_bounds.py`,2026-11-13 10:47–15:44):可達 403 個、抓到 343、逃逸 60。逐一對照:追蹤器的特例分支(部分暫存器讀寫、`movzx`、`lea`、`xor` 歸零、`inc` / `dec`、`call` / `jmp` 暫存器、索引倍率、16 位元 `push`、`pop [esp]`、寫到區段外但指標來源在區段內)、非 rep 串末條是跳躍目標、`block_start` 都沒有各自的題。補 (4t)、(10w)–(10al) 共 17 題,每題都讓該分支算出的值流進一筆被記下的存取;以暫存副本逐一重跑完整 selftest:50 個抓到,剩 10 個證明為等價(指令長度上限、堆疊起點平移、低位遮罩在每個去處都會再做一次、`lea` 運算元大小相同、`xor` 同暫存器分支、串首判斷與 `chain_extent` 重複),逐筆理由登錄在 `docs/data/equivalent_mutants.json`;`--check-registry` 128 筆、過期 0。
+- 補題時((10ag) 手組機器碼經 capstone 解碼)抓到一個真缺陷:16 位元 `lea cx, [edi + 0x40]` 不進 `lea` 分支,落到通用分支後記憶體運算元被記成一筆 2 byte 存取(`lea` 不存取記憶體,會多算下限)。通用分支改成排除 `nop` 與 `lea`;真實檔 `--check` 輸出修正前後逐位元組相同。
+- 上述版本的完整窮舉(2026-11-13 20:18–23:19):可達 421 個、抓到 402、已登錄等價 10、逃逸 9。L616 的 4 個是真缺口:沒有任何 `movsx` 題,`movzx` 題的值也都沒有最高位元;補 (10am)(`mov ecx, 0x8555` 後 cl 0x55 經 `movsx` → +0x55、ch 0x85 經 `movsx` → −0x7b、經 `movzx` → +0x85,三筆都只讀,不丟堆疊模型),以暫存副本重跑完整 selftest 4 個都抓到。其餘 5 個證明為等價:堆疊窄讀遮罩 ×2(窄讀的值只流到 8 / 16 位元暫存器寫入與 `movzx` / `movsx`,兩處都再遮罩)、`movzx` / `movsx` 來源遮罩 ×2(來源值本來就在範圍內;capstone 實測 byte / word 立即數報成 0x85、0xff、0xffa5 這類正值)、`add` / `sub` 改看 `ops[1].size`(capstone 實測兩運算元同寬)。這 5 個以暫存副本重跑仍逃掉,真實檔 `--verbose` 輸出與未突變逐位元組相同(對照突變 L627 `compare Eq->NotEq#2` 輸出不同;已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證)。`--check-registry` 133 筆。
+- 補 (10am) 後的完整窮舉(2026-11-13 23:34 – 11-14 02:32,`--exhaustive --tool verify_data_lower_bounds.py`):可達 424 個、抓到 409、已登錄等價 15,**歸零**(未登錄的可達逃逸 0、登錄錯誤 0、過期 0、落點無法追蹤 0、基準失敗 0),rc=0。
+- data_map 沒改;覆蓋率不變。
+- 未跑:verify_all_tools、run_all。

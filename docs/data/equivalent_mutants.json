@@ -901,6 +901,126 @@
    "reason": "group_episodes 只收完整的 episode;episodes 只在已看過遊戲 run 時標完整(left_from = 那段的 e1),回到遊戲才填 back_to,所以分組鍵兩格都不會是 None,`key[0] is None` 改看 key[1] 結果都是 False。",
    "evidence": "續一百七十七 2026-10-31:docs/knowledge-base/evidence/generators/drivers_s177/equiv_episodes.py 在 7 份紀錄(lc171a .. lc174b,216544 個完整 episode,鍵 None 0 個)上 cmd_episodes 原版與此突變輸出 7 / 7 逐位元組相同;對照突變(f-string 改印 key[1])7 / 7 不同",
    "scope_hash": "eb1de2151037"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "Decoder.at|x = next(iter(self.md.disasm(self.code[off:off + 16], addr)), None)|int 16->17#0",
+   "kind": "equivalent",
+   "reason": "x86 指令最長 15 byte,capstone 只解第一條;切 16 或 17 byte 解出的第一條相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "902b645da1c0"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|regs[\"esp\"] = (\"s\", 0)|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "堆疊值 (\"s\", k) 只彼此相加減與比較(槽位鍵、ret_slot、int 時的 o < sp),起點整體平移 1 不改變任何比較結果,也不出現在回傳的存取裡。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace.rd_reg|n = (n >> 8) & 0xFF if name in HIGH8 else n & ((1 << (8 * w)) - 1)|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "低位部分暫存器讀出的值,每個去處都會再遮罩到同寬度:movzx / movsx 依來源寬度遮罩、wr_reg 部分寫入以 v & m 併入、寫進堆疊槽只能以同寬度讀回或以較窄寬度讀出時再遮罩、其餘指令走通用路徑變未知;遮罩多留的高位流不出去。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace.rd_reg|n = (n >> 8) & 0xFF if name in HIGH8 else n & ((1 << (8 * w)) - 1)|int 8->9#1",
+   "kind": "equivalent",
+   "reason": "同上一筆(遮罩改成 9 × w 位元):多留的高位在每個去處都會被再遮罩掉。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|elif mn == \"lea\" and len(ops) == 2 and ops[0].size == 4:|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "capstone 對 lea 的記憶體運算元大小等於目的暫存器大小(實測 lea ecx 4 / 4、lea cx 2 / 2),改看 ops[1].size 判斷相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|elif mn in (\"xor\", \"sub\") and len(ops) == 2 and ops[0].type == ops[1].type == X86_OP_REG \\|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "改成只看 ops[1] 是暫存器;差別只在 ops[0] 是記憶體時,而那時 ops[0].reg 讀到的是記憶體運算元的 segment (沒有前綴是 0、有前綴是區段暫存器),不可能等於 ops[1] 的通用暫存器,下一個條件 ops[0].reg == ops[1].reg 仍不成立。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|wr_reg(x.reg_name(ops[0].reg), ops[0].size, (\"c\", 0))|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "這個分支的條件是 ops[0].reg == ops[1].reg,寫 ops[1] 的暫存器就是寫同一個。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|wr_reg(x.reg_name(ops[0].reg), ops[0].size, (\"c\", 0))|int 0->1#1",
+   "kind": "equivalent",
+   "reason": "同一暫存器(分支條件 ops[0].reg == ops[1].reg),兩個運算元大小相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "collect|elif x.mn in TAIL and not (i and (lst[i - 1].mn in REP or lst[i - 1].mn in TAIL)):|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "這個「只在串首」的判斷是重複的:非串首的 movs / stos 前一條是 rep 或字串指令,它們都隱含寫 edi,chain_extent 的 _block_setters 會把那一條當成 edi 的設定者而以「不是 mov edi, 位址」拒絕,不會多記一筆。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "bae706d846cf"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "collect|elif x.mn in TAIL and not (i and (lst[i - 1].mn in REP or lst[i - 1].mn in TAIL)):|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "同上一筆:放進來的非串首字串指令仍由 chain_extent 拒絕(前一條字串指令隱含寫 edi)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-12 續二百六十三 (4):窮舉 60 個可達逃逸,補 (4t)、(10w)–(10al) 後以暫存副本逐一重跑完整 selftest:50 個抓到,只剩這 10 個",
+   "scope_hash": "bae706d846cf"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace.rd_slot|return (\"c\", _signed(v[1] & ((1 << (8 * w)) - 1)))|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "遮罩改成 (2 << 8w) - 1:堆疊槽以較窄寬度讀出的數值只流到:mov 8 / 16 位元暫存器(wr_reg 以 v & m 併入,寫高 8 位元則變未知)、movzx / movsx(依來源寬度再遮罩);add / sub 只處理 32 位元目的,來源也是 32 位元(capstone 實測兩運算元同寬);16 位元 push / call 帶 0x66 前綴先停;jmp word [mem] 拿到數值一律以「跳躍目標不是已知位址」停。遮罩多留的高位流不出去。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace.rd_slot|return (\"c\", _signed(v[1] & ((1 << (8 * w)) - 1)))|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "遮罩改成 9 × w 位元:堆疊槽以較窄寬度讀出的數值只流到:mov 8 / 16 位元暫存器(wr_reg 以 v & m 併入,寫高 8 位元則變未知)、movzx / movsx(依來源寬度再遮罩);add / sub 只處理 32 位元目的,來源也是 32 位元(capstone 實測兩運算元同寬);16 位元 push / call 帶 0x66 前綴先停;jmp word [mem] 拿到數值一律以「跳躍目標不是已知位址」停。遮罩多留的高位流不出去。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|n = v[1] & ((1 << (8 * ops[1].size)) - 1)|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "遮罩改成 (2 << 8w) - 1:movzx / movsx 的來源數值本來就落在 [0, 2^(8w)):暫存器由 rd_reg 遮罩(低位與高 8 位元)、堆疊窄讀由 rd_slot 遮罩、同寬槽位只由 mov [堆疊], 同寬暫存器(已遮罩)或同寬立即數寫入(capstone 實測 byte / word 立即數是 0x85、0xff、0xffa5 這類正值),其他寫入都存未知;遮罩多留的位元一律是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|n = v[1] & ((1 << (8 * ops[1].size)) - 1)|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "遮罩改成 9 × w 位元:movzx / movsx 的來源數值本來就落在 [0, 2^(8w)):暫存器由 rd_reg 遮罩(低位與高 8 位元)、堆疊窄讀由 rd_slot 遮罩、同寬槽位只由 mov [堆疊], 同寬暫存器(已遮罩)或同寬立即數寫入(capstone 實測 byte / word 立即數是 0x85、0xff、0xffa5 這類正值),其他寫入都存未知;遮罩多留的位元一律是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
+   "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_lower_bounds.py",
+   "key": "trace|elif mn in (\"add\", \"sub\") and len(ops) == 2 and ops[0].type == X86_OP_REG and ops[0].size == 4:|int 0->1#1",
+   "kind": "equivalent",
+   "reason": "add / sub 的兩個運算元大小相同(capstone 實測 add eax,5 / add ax,5 / add al,cl / add eax,[esp] / sub esp,0x100 / sub cx,[esp] / add ax,-1 依序 4/4、2/2、1/1、4/4、4/4、2/2、2/2,立即數也報成目的寬度),改看 ops[1].size 判斷相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
+   "scope_hash": "59c14cd5c9bc"
   }
  ]
 }

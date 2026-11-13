@@ -143,6 +143,13 @@
    "excerpt": "- **工具抓到的反例**:value 證據第一版把 `[0x51a8f]` 的立即數 255(「沒有事件」哨兵,讀取前另有檢查)算成 `0x51b91` 的索引,得到跑出區段的範圍。改為「任一立即數會出界就整筆不採信」,不另挑塞得下的值;",
    "verdict": "not_address_erratum",
    "note": "訂正的是本工具 value 證據的採信規則(哨兵立即數 255 讓整筆不採信),0x51a8f / 0x51b91 兩個位址本身沒有訂正"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-11-05.md",
+   "excerpt_sha1": "03682558ad89aea44733db44f495733a70331184",
+   "excerpt": "續二百六十三(2026-11-12):`verify_data_lower_bounds` 的 rep 改為掃到基本區塊開頭(原 4 條視窗漏 9 個 rep)、新增非 rep 字串串與指標追蹤(從 call 所在區塊逐條執行到返回,只走直",
+   "verdict": "not_address_erratum",
+   "note": "訂正的是本工具的 rep 掃描規則(4 條視窗 → 基本區塊),0x53a8d 位址本身沒有訂正"
   }
  ]
 }

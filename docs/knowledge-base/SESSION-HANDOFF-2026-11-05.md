@@ -102,6 +102,7 @@
 續二百六十(2026-11-07):登錄 `0x627b6` blit_rows_left(blit 剩餘列數),遊戲函式 859 / 1202、全域位址 98 / 900、資料 1160 / 35714 bytes。下一批:依 `--show-data` 的函式數重新排(本輪清單已處理完)。
 續二百六十一(2026-11-07):新增 `tools/verify_data_types.py`,把 data_map 92 段的 `type` 以固定文法逐項對 EXE 核對(字串內容、函式指標表、常數、值域、元素寬度、初值來源);失敗 0、未解析 0。字串 8 段與 `0x51b91` 的長度下限補齊,`0x541ac` 初值 0 由 `_cstart_` 清零範圍 [`0x539ec`, `0x546b0`) 靜態確認。仍未證:只有索引存取的陣列長度下限(`0x52a94`、`0x541b4` 等)、207 筆暫存器來源寫入。
 續二百六十二(2026-11-11):新增 `tools/verify_data_lower_bounds.py`,以存取證據(直接定址、迴圈計數器逐次模擬、`rep` 立即數長度)算 data_map 每段的長度下限,另分 content / value / declared 三級;92 段失敗 0,access 79、content 9、value 1(`0x52387`)、declared 1(`0x541f4`)、partial 2(`0x5417c` 25 / 26、`0x53a8d` 經指標交給 int386)。`0x541b4`、`0x52a94` 由迴圈 / `rep stosd` 證到 64。
+續二百六十三(2026-11-12):`verify_data_lower_bounds` 的 rep 改為掃到基本區塊開頭(原 4 條視窗漏 9 個 rep)、新增非 rep 字串串與指標追蹤(從 call 所在區塊逐條執行到返回,只走直線);`0x53a8d` 由 19 個 int386 呼叫點證到 28(`0x46897` 寫 out+0x18),等級 access 80、content 9、value 1、declared 1、partial 1(`0x5417c`)。`0x5417c` 第 26 byte 需「tm 欄位在範圍內」、值流需別名分析,只記錄、不做成證據等級。
 
 **不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 

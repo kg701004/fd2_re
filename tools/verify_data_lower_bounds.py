@@ -24,9 +24,16 @@
             - 唯一入口:迴圈起點前一條就是初值(`mov R, 立即數` / `xor R, R`),或前一條是跳到比較的 `jmp`、再前一條是
               初值;整個程式(不只本函式)沒有其他跳躍跳進初值之後、迴圈體或比較裡;
           計數器的值由「初值、步長、比較條件(有號 / 無號)」逐次模擬,不套公式;超過 MAX_ITERS 次不採信。
-* rep     `rep stos*` / `rep movs*` 前 REP_WINDOW 條內 `mov edi, 位址(有 fixup)` 與 `mov ecx, 立即數`,中間沒有
-          分支、也沒有任何跳躍跳進來;長度 = ecx × 寬度,緊接的非 rep `movs*` / `stos*` 依序加上(內嵌 strcpy 的尾巴)。
-          函式內有 `std` 就不採信(Watcom / C 呼叫約定在函式邊界 DF = 0)。
+* rep     `rep stos*` / `rep movs*` 所在基本區塊內(往回到前一條分支 / call / ret / int,或第一條跳躍目標為止,
+          不限條數)`mov edi, 位址(有 fixup)` 與 `mov ecx, 立即數`;長度 = ecx × 寬度,緊接的非 rep `movs*` / `stos*`
+          依序加上(內嵌 strcpy 的尾巴)。函式內有 `std` 就不採信(Watcom / C 呼叫約定在函式邊界 DF = 0)。
+          (續二百六十二用固定 4 條視窗,漏掉 `ecx` 在前 5 條的 9 個 rep;續二百六十三改成基本區塊。)
+* chain   一串連續非 rep `movs*` / `stos*`(前一條不是 rep 或同類字串指令),edi 在同一基本區塊內由
+          `mov edi, 位址(有 fixup)` 設定:長度 = 各條寬度之和(沒有 rep 的內嵌 strcpy,例 `0x4469b` 19 byte)。
+* ptr     指標追蹤:`call` 所在基本區塊內有立即數(有 fixup)指到某段,就從區塊開頭逐條執行(trace)到這個
+          call 返回,跨進被呼叫的函式;經暫存器定址、位址由 fixup 推得的存取依指標來源歸段。只走直線,遇到條件
+          跳躍等就停,停之前的存取仍採信。前提(平面模式、`int` 不改 esp 以上的堆疊、data_map 區段不是堆疊)
+          寫在 trace 的說明。例:`int386` 的 out 參數在 `0x46897` 寫 `[edi + 0x18]` → `0x53a8d` 28 byte。
 
 變數值證據(value)—— 比 access 弱:索引在同一基本區塊內由 `mov R, [V]` / `movzx R, [V]` 載入(前 VALUE_WINDOW 條內、
           中間沒有分支也沒有跳躍目標),V 是直接定址的變數;下限取「程式寫進 V 的最大立即數」(`mov [V], 立即數`,
@@ -73,8 +80,6 @@ sys.path.insert(0, str(ROOT / "tools"))
 M32 = 0xFFFFFFFF
 # 計數器模擬的次數上限(FD2 的迴圈最多 256 次;超過就不採信,避免把無窮迴圈當成有界)
 MAX_ITERS = 4096
-# rep 前幾條內要找到 edi / ecx 的立即數(FD2 實際最多 3 條)
-REP_WINDOW = 4
 # 索引暫存器的載入要在存取前幾條內(FD2 實際是緊接的前一條)
 VALUE_WINDOW = 4
 
@@ -90,6 +95,8 @@ COND = frozenset(("jb", "jae", "jbe", "ja", "jl", "jge", "jle", "jg", "jne", "je
 STEP = {"inc": 1, "dec": -1, "add": 1, "sub": -1}
 REP = {"rep stosd": 4, "rep stosw": 2, "rep stosb": 1, "rep movsd": 4, "rep movsw": 2, "rep movsb": 1}
 TAIL = {"stosd": 4, "stosw": 2, "stosb": 1, "movsd": 4, "movsw": 2, "movsb": 1}
+# 存取證據的種類(judge 取這些的最遠位置當 access 下限)
+ACCESS_KINDS = ("direct", "loop", "rep", "chain", "ptr")
 
 
 class Mem(NamedTuple):
@@ -262,21 +269,33 @@ def resolve_loop(lst: list[Ins], ia: int, srcs: dict[int, set[int]]) -> tuple[di
              "loop": (lst[it].addr, lst[ij].addr)}, "")
 
 
+def _block_setters(lst: list[Ins], i: int, srcs: dict[int, set[int]], regs: tuple[str, ...]) -> dict[str, Ins]:
+    """從 lst[i] 往回掃到所在基本區塊的開頭,回傳 regs 中每個暫存器最近一次被寫的指令。
+
+    區塊開頭 = 前一條分支 / call / ret / int 之後,或第一條身為跳躍目標的指令(那一條本身屬於區塊)。
+    沒有條數上限:續二百六十二的 REP_WINDOW = 4 漏掉 9 個 `ecx` 在前 5 條設定的 rep(0x40f35 等)。
+    """
+    got: dict[str, Ins] = {}
+    for x in reversed(lst[:i]):
+        if x.mn in ("jmp", "call", "ret", "int") or x.mn in COND:
+            break
+        for r in regs:
+            if r not in got and _writes(x, r):
+                got[r] = x
+        if srcs.get(x.addr):
+            break
+    return got
+
+
 def rep_extent(lst: list[Ins], i: int, srcs: dict[int, set[int]], has_std: bool) -> tuple[dict | None, str]:
     """lst[i] 是 rep stos / movs:回傳 ({"start", "len"}, "") 或 (None, 原因)。"""
     w = REP[lst[i].mn]
     if has_std:
         return None, "函式內有 std"
-    got: dict[str, Ins] = {}
-    for x in reversed(lst[max(0, i - REP_WINDOW):i]):
-        if x.mn in ("jmp", "call", "ret", "int") or x.mn in COND:
-            break
-        for r in ("edi", "ecx"):
-            if r not in got and _writes(x, r):
-                got[r] = x
+    got = _block_setters(lst, i, srcs, ("edi", "ecx"))
     edi, ecx = got.get("edi"), got.get("ecx")
     if edi is None or ecx is None:
-        return None, f"前 {REP_WINDOW} 條內找不到 edi / ecx 的設定"
+        return None, "同一基本區塊內找不到 edi / ecx 的設定"
     if not (edi.mn == "mov" and edi.regs[:1] == ("edi",) and edi.imm is not None and edi.imm_fx):
         return None, f"{hex(edi.addr)} 不是 mov edi, 位址(有 fixup)"
     if not (ecx.mn == "mov" and ecx.regs[:1] == ("ecx",) and ecx.imm is not None and not ecx.imm_fx):
@@ -290,6 +309,32 @@ def rep_extent(lst: list[Ins], i: int, srcs: dict[int, set[int]], has_std: bool)
     while k < len(lst) and lst[k].mn in TAIL and lst[k].mn.startswith(fam):
         n += TAIL[lst[k].mn]
         k += 1
+    return {"start": edi.imm, "len": n}, ""
+
+
+def chain_extent(lst: list[Ins], i: int, srcs: dict[int, set[int]], has_std: bool) -> tuple[dict | None, str]:
+    """lst[i] 是一串連續非 rep `movs*` / `stos*` 的第一條(前一條不是 rep 或同類字串指令):
+    回傳 ({"start", "len"}, "") 或 (None, 原因)。
+
+    例:`0x4468c` `mov edi, 0x541f4` / `mov esi, 0x51624` / `mov eax, -1` / 4 × movsd / movsw / movsb = 19 byte
+    (內嵌 strcpy 沒有 rep 的形式)。edi 要在同一基本區塊內由 `mov edi, 位址(有 fixup)` 設定;
+    設定到串尾之間不能有跳躍目標。
+    """
+    if has_std:
+        return None, "函式內有 std"
+    fam = lst[i].mn[:4]
+    got = _block_setters(lst, i, srcs, ("edi",))
+    edi = got.get("edi")
+    if edi is None:
+        return None, "同一基本區塊內找不到 edi 的設定"
+    if not (edi.mn == "mov" and edi.regs[:1] == ("edi",) and edi.imm is not None and edi.imm_fx):
+        return None, f"{hex(edi.addr)} 不是 mov edi, 位址(有 fixup)"
+    n, k = 0, i
+    while k < len(lst) and lst[k].mn in TAIL and lst[k].mn.startswith(fam):
+        n += TAIL[lst[k].mn]
+        k += 1
+    if any(srcs.get(x.addr) for x in lst if edi.addr < x.addr <= lst[k - 1].addr):
+        return None, "設定與字串指令之間有跳躍目標"
     return {"start": edi.imm, "len": n}, ""
 
 
@@ -350,8 +395,311 @@ def range_fn_kind(f: list[Ins], funcs: dict[int, list[Ins]]) -> str | None:
     return None
 
 
-def collect(funcs: dict[int, list[Ins]], regions: list[tuple[int, int]]) -> dict:
-    """掃全部函式,蒐集每段的證據、未解出的索引存取、記憶體運算元位置。"""
+# ---------------------------------------------------------------- 指標追蹤(ptr)
+#
+# 值:("a", n, b) 由 fixup 來的線性位址 n(加減一般數值仍是位址;b 是那個 fixup 的目標,存取依 b 歸段,
+# 指標跑出它來源的區段就和迴圈跑進鄰段一樣算失敗)、("c", n) 一般數值(有號 32 位元)、
+# ("s", k) 追蹤起點 esp + k 的堆疊位址、("g", 名稱) 追蹤起點的區段暫存器值、None 未知。
+# 沒有 fixup 的立即數永遠只是數值:LE 載入時只重定位有 fixup 的欄位,數值剛好等於某個位址不代表指到那裡。
+
+MAX_TRACE = 4000
+SEG = ("cs", "ds", "es", "fs", "gs", "ss")
+GPR32 = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
+HIGH8 = frozenset(("ah", "bh", "ch", "dh"))
+# 平面模式(DOS/4GW)ds = es = ss:用起點的這三個值定址都等同直接定址
+FLAT = frozenset((("g", "ds"), ("g", "es"), ("g", "ss")))
+
+
+class Decoder:
+    """位址 → capstone 指令(快取);fixups 是欄位位置 → 線性位址。"""
+
+    def __init__(self, md: object, code: bytes, base: int, fixups: dict[int, int]) -> None:
+        self.md, self.code, self.base, self.fx = md, code, base, fixups
+        self._cache: dict[int, object | None] = {}
+
+    def at(self, addr: int) -> object | None:
+        if addr not in self._cache:
+            off = addr - self.base
+            x = None
+            if 0 <= off < len(self.code):
+                x = next(iter(self.md.disasm(self.code[off:off + 16], addr)), None)
+            self._cache[addr] = x
+        return self._cache[addr]
+
+
+class _Stop(Exception):
+    """追蹤停止(原因字串)。停止前記下的存取仍然有效:那些指令在每一條從追蹤起點出發的路徑上都會執行。"""
+
+
+def _add(a: tuple | None, b: tuple | None) -> tuple | None:
+    if a is None or b is None:
+        return None
+    if a[0] == "c" and b[0] == "c":
+        return ("c", _signed(a[1] + b[1]))
+    if a[0] == "c":
+        a, b = b, a
+    if b[0] != "c" or a[0] not in ("a", "s"):
+        return None
+    return ("a", (a[1] + b[1]) & M32, a[2]) if a[0] == "a" else ("s", a[1] + b[1])
+
+
+def _neg(a: tuple | None) -> tuple | None:
+    return ("c", _signed(-a[1])) if a is not None and a[0] == "c" else None
+
+
+def trace(dec: Decoder, start: int, call: int, regions: list[tuple[int, int]]) -> tuple[list[tuple], str]:
+    """從 start 起逐條執行到 call 這一條 call 返回為止,記下經暫存器定址、位址已知的記憶體存取。
+
+    追蹤只走直線:遇到條件跳躍、`loop`、rep 字串指令、間接跳躍到未知位址、esp 不再是堆疊位址等就停;
+    停之前的存取仍採信(它們在每一條從 start 出發的路徑上都會執行)。起點的暫存器全部未知。
+
+    前提(寫在這裡,不由本函式證明):
+      - 平面模式:起點的 ds / es / ss 指向同一個平面區段,所以用它們定址等同直接定址;
+      - `int n` 返回到下一條,esp 與 esp 以上的堆疊內容不變;通用暫存器視為未知、esp 以下的內容丟棄;
+        int 前若有暫存器持有堆疊位址(處理程式可能寫那個緩衝區),整個堆疊模型丟棄;
+      - data_map 區段不是堆疊:寫到區段內的位址不影響堆疊模型(寫到其他已知位址、未知位址就整個丟棄)。
+
+    Returns:
+        ([(指令位址, 線性位址, 寬度, 指標來源的 fixup 目標), ...], 停止原因;正常返回時是 "")。
+    """
+    from capstone import CS_AC_WRITE
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
+
+    regs: dict[str, tuple | None] = {r: None for r in GPR32}
+    regs["esp"] = ("s", 0)
+    segs: dict[str, tuple | None] = {s: ("g", s) for s in SEG}
+    mem: dict[int, tuple[int, tuple | None]] = {}
+    acc: list[tuple] = []
+    ret_slot: list[int] = []
+
+    def in_region(n: int) -> bool:
+        return any(s <= n < e for s, e in regions)
+
+    def rd_slot(k: int, w: int) -> tuple | None:
+        e = mem.get(k)
+        if e is None or e[0] < w:
+            return None
+        v = e[1]
+        if e[0] == w or v is None:
+            return v
+        if v[0] == "c":
+            return ("c", _signed(v[1] & ((1 << (8 * w)) - 1)))
+        return v if v[0] == "g" and w == 2 else None
+
+    def wr_slot(k: int, w: int, v: tuple | None) -> None:
+        for o in [o for o, (ow, _v) in mem.items() if o < k + w and k < o + ow]:
+            del mem[o]
+        mem[k] = (w, v)
+
+    def rd_reg(name: str, w: int) -> tuple | None:
+        if name in SEG:
+            return segs[name]
+        v = regs.get(FULL.get(name, ""))
+        if w == 4 or v is None:
+            return v
+        if v[0] == "g":
+            return v if w == 2 else None
+        if v[0] != "c":
+            return None
+        n = v[1] & M32
+        n = (n >> 8) & 0xFF if name in HIGH8 else n & ((1 << (8 * w)) - 1)
+        return ("c", n)
+
+    def wr_reg(name: str, w: int, v: tuple | None) -> None:
+        if name in SEG:
+            if name == "ss":
+                raise _Stop("改寫 ss")
+            segs[name] = v if v is not None and v[0] == "g" else None
+            return
+        full = FULL.get(name)
+        if full is None:
+            raise _Stop(f"不認得的暫存器 {name}")
+        if full == "esp" and (w != 4 or v is None or v[0] != "s"):
+            raise _Stop("esp 不再是已知堆疊位址")
+        if w == 4:
+            regs[full] = v
+            return
+        old = regs[full]
+        if v is not None and v[0] == "g" and w == 2:
+            regs[full] = v
+        elif v is not None and v[0] == "c" and old is not None and old[0] == "c" and name not in HIGH8:
+            m = (1 << (8 * w)) - 1
+            regs[full] = ("c", _signed((old[1] & M32 & ~m) | (v[1] & m)))
+        else:
+            regs[full] = None
+
+    def ea(x: object, op: object) -> tuple | None:
+        m = op.mem
+        site = x.address + x.disp_offset
+        v = ("a", dec.fx[site], dec.fx[site]) if x.disp_offset and site in dec.fx else ("c", _signed(m.disp))
+        if m.base:
+            v = _add(v, regs.get(FULL.get(x.reg_name(m.base), "")))
+        if m.index:
+            iv = regs.get(FULL.get(x.reg_name(m.index), ""))
+            v = _add(v, iv if m.scale == 1 else (("c", _signed(iv[1] * m.scale)) if iv and iv[0] == "c" else None))
+        return v
+
+    def seg_of(x: object, op: object) -> str:
+        if op.mem.segment:
+            return x.reg_name(op.mem.segment)
+        b = x.reg_name(op.mem.base) if op.mem.base else ""
+        return "ss" if b in ("esp", "ebp") else "ds"
+
+    def touch(x: object, op: object, write: bool, v: tuple | None = None) -> tuple | None:
+        """一個記憶體運算元:記存取、讀出或寫入值(堆疊模型)。"""
+        a = ea(x, op)
+        if a is not None and a[0] == "a" and (op.mem.base or op.mem.index) \
+                and segs.get(seg_of(x, op)) in FLAT:
+            acc.append((x.address, a[1], op.size, a[2]))
+        if a is not None and a[0] == "s":
+            if write:
+                wr_slot(a[1], op.size, v)
+                return None
+            return rd_slot(a[1], op.size)
+        if write and not (a is not None and a[0] == "a" and in_region(a[1])):
+            mem.clear()
+        return None
+
+    def val(x: object, op: object) -> tuple | None:
+        if op.type == X86_OP_REG:
+            return rd_reg(x.reg_name(op.reg), op.size)
+        if op.type == X86_OP_IMM:
+            site = x.address + x.imm_offset
+            return ("a", dec.fx[site], dec.fx[site]) if site in dec.fx else ("c", _signed(op.imm))
+        return touch(x, op, False)
+
+    def put(x: object, op: object, v: tuple | None) -> None:
+        if op.type == X86_OP_REG:
+            wr_reg(x.reg_name(op.reg), op.size, v)
+        else:
+            touch(x, op, True, v)
+
+    def push(v: tuple | None) -> None:
+        sp = _add(regs["esp"], ("c", -4))
+        wr_reg("esp", 4, sp)
+        wr_slot(sp[1], 4, v)
+
+    def pop() -> tuple | None:
+        sp = regs["esp"]
+        v = rd_slot(sp[1], 4)
+        wr_reg("esp", 4, _add(sp, ("c", 4)))
+        return v
+
+    def target(v: tuple | None) -> int:
+        if v is None or v[0] != "a":
+            raise _Stop("跳躍目標不是已知位址")
+        return v[1]
+
+    pc = start
+    try:
+        for _step in range(MAX_TRACE):
+            x = dec.at(pc)
+            if x is None:
+                raise _Stop(f"{hex(pc)} 無法解碼")
+            mn, ops, nxt = x.mnemonic, x.operands, pc + x.size
+            if x.prefix[2] == 0x66 and mn in ("push", "pop", "call", "ret", "leave"):
+                raise _Stop(f"{hex(pc)} 16 位元堆疊操作")
+            if mn.startswith(("rep", "loop")) or (mn.startswith("j") and mn != "jmp"):
+                raise _Stop(f"{hex(pc)} {mn}")
+            if mn == "push" and len(ops) == 1:
+                push(val(x, ops[0]))
+            elif mn == "pop" and len(ops) == 1:
+                if ops[0].type == X86_OP_MEM and ops[0].mem.base and x.reg_name(ops[0].mem.base) == "esp":
+                    raise _Stop(f"{hex(pc)} pop 到 esp 定址的記憶體")
+                put(x, ops[0], pop())
+            elif mn == "mov" and len(ops) == 2:
+                put(x, ops[0], val(x, ops[1]))
+            elif mn in ("movzx", "movsx") and len(ops) == 2:
+                v = val(x, ops[1])
+                if v is not None and v[0] == "c":
+                    n = v[1] & ((1 << (8 * ops[1].size)) - 1)
+                    if mn == "movsx" and n >> (8 * ops[1].size - 1):
+                        n -= 1 << (8 * ops[1].size)
+                    v = ("c", _signed(n))
+                else:
+                    v = None
+                put(x, ops[0], v)
+            elif mn == "lea" and len(ops) == 2 and ops[0].size == 4:
+                wr_reg(x.reg_name(ops[0].reg), 4, ea(x, ops[1]))
+            elif mn in ("xor", "sub") and len(ops) == 2 and ops[0].type == ops[1].type == X86_OP_REG \
+                    and ops[0].reg == ops[1].reg:
+                wr_reg(x.reg_name(ops[0].reg), ops[0].size, ("c", 0))
+            elif mn in ("add", "sub") and len(ops) == 2 and ops[0].type == X86_OP_REG and ops[0].size == 4:
+                d = x.reg_name(ops[0].reg)
+                b = val(x, ops[1])
+                wr_reg(d, 4, _add(regs[d], b if mn == "add" else _neg(b)))
+            elif mn in ("inc", "dec") and len(ops) == 1 and ops[0].type == X86_OP_REG and ops[0].size == 4:
+                d = x.reg_name(ops[0].reg)
+                wr_reg(d, 4, _add(regs[d], ("c", 1 if mn == "inc" else -1)))
+            elif mn == "leave":
+                wr_reg("esp", 4, regs["ebp"])
+                regs["ebp"] = pop()
+            elif mn == "call" and len(ops) == 1:
+                t = dec.fx.get(pc + x.imm_offset, ops[0].imm & M32) if ops[0].type == X86_OP_IMM \
+                    else target(val(x, ops[0]))
+                push(("a", nxt, nxt))
+                if pc == call and not ret_slot:
+                    ret_slot.append(regs["esp"][1])
+                nxt = t
+            elif mn == "ret":
+                sp = regs["esp"][1]
+                t = pop()
+                if ops:
+                    wr_reg("esp", 4, _add(regs["esp"], ("c", ops[0].imm)))
+                if ret_slot and sp >= ret_slot[0]:
+                    return acc, "" if sp == ret_slot[0] else "返回時 esp 跑過呼叫點"
+                nxt = target(t)
+            elif mn == "jmp" and len(ops) == 1:
+                nxt = (ops[0].imm & M32) if ops[0].type == X86_OP_IMM else target(val(x, ops[0]))
+            elif mn in ("int", "int3", "into", "int1"):
+                if any(v is not None and v[0] == "s" for r, v in regs.items() if r != "esp"):
+                    mem.clear()
+                for r in GPR32:
+                    if r != "esp":
+                        regs[r] = None
+                sp = regs["esp"][1]
+                for o in [o for o in mem if o < sp]:
+                    del mem[o]
+            elif mn in ("iret", "iretd", "retf", "hlt", "ljmp", "lcall", "enter", "pushal", "popal", "pushad",
+                        "popad", "pushfd", "popfd", "pushf", "popf", "std"):
+                raise _Stop(f"{hex(pc)} {mn}")
+            else:
+                # 其他指令:記憶體運算元照記存取;寫入的暫存器變未知;寫記憶體依位址更新堆疊模型。
+                # nop / lea 的記憶體運算元只是位址,不存取記憶體(16 位元 lea 會落到這裡,見 (10ag))
+                for op in ops:
+                    if op.type == X86_OP_MEM and mn not in ("nop", "lea"):
+                        touch(x, op, bool(op.access & CS_AC_WRITE), None)
+                _rd, wr = x.regs_access()
+                for r in (x.reg_name(k) for k in wr):
+                    if r in ("esp", "sp", "ss"):
+                        raise _Stop(f"{hex(pc)} {mn} 改寫 {r}")
+                    if r in SEG:
+                        segs[r] = None
+                    elif r in FULL:
+                        regs[FULL[r]] = None
+            pc = nxt
+        raise _Stop(f"超過 {MAX_TRACE} 條")
+    except _Stop as e:
+        return acc, str(e)
+
+
+def block_start(lst: list[Ins], i: int, srcs: dict[int, set[int]]) -> int:
+    """lst[i] 所在基本區塊的第一條的索引(前一條分支 / call / ret / int 之後,或跳躍目標本身)。"""
+    b = i
+    while b > 0 and not srcs.get(lst[b].addr):
+        y = lst[b - 1]
+        if y.mn in ("jmp", "call", "ret", "int") or y.mn in COND:
+            break
+        b -= 1
+    return b
+
+
+def collect(funcs: dict[int, list[Ins]], regions: list[tuple[int, int]], dec: Decoder | None = None) -> dict:
+    """掃全部函式,蒐集每段的證據、未解出的索引存取、記憶體運算元位置。
+
+    dec 不是 None 時另做指標追蹤:每個 `call` 所在基本區塊內有立即數(有 fixup)指到某一段,就從區塊開頭
+    逐條執行到這個 call 返回(trace),經暫存器定址、位址已知的存取記為 ptr 證據(以 call 位址為鍵)。
+    """
     lists = list(funcs.values())
     srcs = branch_sources(lists)
     ranged = {a: k for a, f in funcs.items() if (k := range_fn_kind(f, funcs))}
@@ -366,8 +714,8 @@ def collect(funcs: dict[int, list[Ins]], regions: list[tuple[int, int]]) -> dict
             if x.mn == "mov" and x.mem is not None and x.mem.base is None and x.mem.index is None                     and x.imm is not None and not x.imm_fx:
                 imm_w.setdefault(x.mem.disp, {}).setdefault(x.mem.width, set()).add(
                     x.imm & ((1 << (8 * x.mem.width)) - 1))
-    wit: dict[int, dict] = {s: {"direct": {}, "loop": {}, "rep": {}, "range": {}, "value": {}, "unresolved": {},
-                                "mem_sites": set()}
+    wit: dict[int, dict] = {s: {"direct": {}, "loop": {}, "rep": {}, "chain": {}, "ptr": {}, "range": {}, "value": {},
+                                "unresolved": {}, "mem_sites": set()}
                             for s, _e in regions}
     for lst in lists:
         has_std = any(x.mn == "std" for x in lst)
@@ -396,11 +744,26 @@ def collect(funcs: dict[int, list[Ins]], regions: list[tuple[int, int]]) -> dict
                 res, why = rep_extent(lst, i, srcs, has_std)
                 if res is not None and (reg := region_of(res["start"])):
                     wit[reg[0]]["rep"][x.addr] = (res["start"], res["start"] + res["len"])
+            elif x.mn in TAIL and not (i and (lst[i - 1].mn in REP or lst[i - 1].mn in TAIL)):
+                res, why = chain_extent(lst, i, srcs, has_std)
+                if res is not None and (reg := region_of(res["start"])):
+                    wit[reg[0]]["chain"][x.addr] = (res["start"], res["start"] + res["len"])
             if x.mn == "call" and x.target in ranged and i >= 2:
                 pa, pn = lst[i - 1], lst[i - 2]
                 if pa.mn == "push" and pa.imm_fx and pn.mn == "push" and pn.imm is not None and not pn.imm_fx \
                         and not srcs.get(pa.addr) and not srcs.get(x.addr) and (reg := region_of(pa.imm)):
                     wit[reg[0]]["range"][x.addr] = (pa.imm, pa.imm + pn.imm, ranged[x.target])
+            if dec is not None and x.mn == "call":
+                b = block_start(lst, i, srcs)
+                if any(y.imm_fx and y.imm is not None and region_of(y.imm) for y in lst[b:i]):
+                    acc, why = trace(dec, lst[b].addr, x.addr, regions)
+                    per: dict[int, list[tuple]] = {}
+                    for site, a, wd, src in acc:
+                        if reg := region_of(src):
+                            per.setdefault(reg[0], []).append((site, a, wd))
+                    for s, hits in per.items():
+                        wit[s]["ptr"][x.addr] = (min(a for _s, a, _w in hits), max(a + wd for _s, a, wd in hits),
+                                                 {"start": lst[b].addr, "hits": hits, "stop": why})
     return {"wit": wit, "ranged": ranged}
 
 
@@ -412,7 +775,7 @@ def judge(start: int, size: int, w: dict, cov_sites: set[int], content: bool = F
     end = start + size
     fail: list[str] = []
     lb_access = 0
-    for kind in ("direct", "loop", "rep"):
+    for kind in ACCESS_KINDS:
         for ins, (lo, hi, *_r) in w[kind].items():
             if lo < start or hi > end:
                 fail.append(f"{hex(start)}: {kind} {hex(ins)} 定址 [{hex(lo)}, {hex(hi)}) 跑出區段 "
@@ -443,15 +806,43 @@ def judge(start: int, size: int, w: dict, cov_sites: set[int], content: bool = F
 
 # ---------------------------------------------------------------- 讀原版
 
-def load() -> tuple[dict[int, list[Ins]], list[dict], dict[int, set[int]], set[int]]:
+def conv(md: object, fx1: dict[int, int], x: object) -> Ins:
+    """capstone 指令 → Ins(立即數 / 位移有 fixup 時換成線性位址)。"""
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
+
+    regs: list[str | None] = []
+    imm, imm_site, mem, target = None, None, None, None
+    for op in x.operands:
+        if op.type == X86_OP_REG:
+            regs.append(FULL.get(md.reg_name(op.reg)))
+        else:
+            regs.append(None)
+        if op.type == X86_OP_IMM:
+            imm_site = x.address + x.imm_offset
+            imm = fx1[imm_site] if imm_site in fx1 else op.imm & M32
+        elif op.type == X86_OP_MEM:
+            site = x.address + x.disp_offset
+            disp = fx1[site] if x.disp_offset and site in fx1 else op.mem.disp & M32
+            mem = Mem(FULL.get(md.reg_name(op.mem.base)) if op.mem.base else None,
+                      FULL.get(md.reg_name(op.mem.index)) if op.mem.index else None,
+                      op.mem.scale, disp, op.size)
+    imm_fx = imm_site in fx1
+    if (x.mnemonic == "jmp" or x.mnemonic in COND or x.mnemonic == "call") and imm is not None and not imm_fx:
+        target = imm
+    _rd, wr = x.regs_access()
+    writes = frozenset(FULL[n] for n in (md.reg_name(r) for r in wr) if n in FULL)
+    return Ins(x.address, x.mnemonic, tuple(regs), imm, imm_fx, mem if x.mnemonic != "lea" else None,
+               writes, target)
+
+
+def load() -> tuple[dict[int, list[Ins]], list[dict], dict[int, set[int]], set[int], Decoder]:
     """回傳 (函式入口 → 指令摘要清單, data_map regions, 區段起點 → re_coverage mem 存取的指令位址,
-    verify_data_types 以內容證明整段的區段起點)。"""
+    verify_data_types 以內容證明整段的區段起點, 指標追蹤用的解碼器)。"""
     import disasm_le
     import le_xref
     import re_coverage as R
     import verify_data_types as V
     from capstone import CS_ARCH_X86, CS_MODE_32, Cs
-    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
 
     facts, regions = V.load_facts()
     content = set()
@@ -467,35 +858,10 @@ def load() -> tuple[dict[int, list[Ins]], list[dict], dict[int, set[int]], set[i
     md = Cs(CS_ARCH_X86, CS_MODE_32)
     md.detail = True
 
-    def conv(x: object) -> Ins:
-        regs: list[str | None] = []
-        imm, imm_site, mem, target = None, None, None, None
-        for op in x.operands:
-            if op.type == X86_OP_REG:
-                regs.append(FULL.get(md.reg_name(op.reg)))
-            else:
-                regs.append(None)
-            if op.type == X86_OP_IMM:
-                imm_site = x.address + x.imm_offset
-                imm = fx1[imm_site] if imm_site in fx1 else op.imm & M32
-            elif op.type == X86_OP_MEM:
-                site = x.address + x.disp_offset
-                disp = fx1[site] if x.disp_offset and site in fx1 else op.mem.disp & M32
-                mem = Mem(FULL.get(md.reg_name(op.mem.base)) if op.mem.base else None,
-                          FULL.get(md.reg_name(op.mem.index)) if op.mem.index else None,
-                          op.mem.scale, disp, op.size)
-        imm_fx = imm_site in fx1
-        if (x.mnemonic == "jmp" or x.mnemonic in COND or x.mnemonic == "call") and imm is not None and not imm_fx:
-            target = imm
-        _rd, wr = x.regs_access()
-        writes = frozenset(FULL[n] for n in (md.reg_name(r) for r in wr) if n in FULL)
-        return Ins(x.address, x.mnemonic, tuple(regs), imm, imm_fx, mem if x.mnemonic != "lea" else None,
-                   writes, target)
-
     funcs: dict[int, list[Ins]] = {}
     for e in inv:
         a = int(e["addr"], 16)
-        funcs[a] = [conv(x) for x in disasm_le.sweep_range(md, code, cbase, a, a + e["span_upper"])
+        funcs[a] = [conv(md, fx1, x) for x in disasm_le.sweep_range(md, code, cbase, a, a + e["span_upper"])
                     if not isinstance(x, tuple)]
     cov: dict[int, set[int]] = {}
     spans = [(int(r["start"], 16), int(r["start"], 16) + r["size"]) for r in regions]
@@ -505,13 +871,13 @@ def load() -> tuple[dict[int, list[Ins]], list[dict], dict[int, set[int]], set[i
         for s, e in spans:
             if s <= t < e:
                 cov.setdefault(s, set()).add(ins)
-    return funcs, regions, cov, content
+    return funcs, regions, cov, content, Decoder(md, code, cbase, fx1)
 
 
 def run(funcs: dict[int, list[Ins]], regions: list[dict], cov: dict[int, set[int]],
-        content: set[int]) -> tuple[list, dict]:
+        content: set[int], dec: Decoder | None = None) -> tuple[list, dict]:
     spans = [(int(r["start"], 16), int(r["start"], 16) + r["size"]) for r in regions]
-    col = collect(funcs, spans)
+    col = collect(funcs, spans, dec)
     out = []
     for r in regions:
         s = int(r["start"], 16)
@@ -523,8 +889,9 @@ def _describe(r: dict, w: dict, j: dict) -> list[str]:
     s = int(r["start"], 16)
     lines = [f"{r['start']:>8} {r['size']:4d} {r.get('name', ''):28} {j['grade']:8} 存取下限 {j['lb_access']:4d} "
              f"變數值 {j['lb_value']:4d} 宣告 {j['lb_declared']:4d}  direct {len(w['direct'])} loop {len(w['loop'])} "
-             f"rep {len(w['rep'])} value {len(w['value'])} range {len(w['range'])} 未解出 {len(w['unresolved'])}"]
-    best = [(hi, kind, ins) for kind in ("direct", "loop", "rep") for ins, (lo, hi, *_x) in w[kind].items()]
+             f"rep {len(w['rep'])} chain {len(w['chain'])} ptr {len(w['ptr'])} value {len(w['value'])} "
+             f"range {len(w['range'])} 未解出 {len(w['unresolved'])}"]
+    best = [(hi, kind, ins) for kind in ACCESS_KINDS for ins, (lo, hi, *_x) in w[kind].items()]
     if best:
         hi, kind, ins = max(best)
         lines.append(f"           最遠:{kind} {hex(ins)} → +{hex(min(hi, s + r['size']) - s)}")
@@ -543,7 +910,9 @@ def report(out: list, col: dict, verbose: bool) -> int:
           f"value = 加上變數值證據才達 size;declared = 只有宣告長度達 size)")
     print(f"  記憶體運算元與 re_coverage 指令層存取逐筆核對 {sum(len(w['mem_sites']) for _r, w, _j in out)} 筆")
     print(f"  索引存取:迴圈解出 {loops} 筆、迴圈解不出 {unres} 筆(其中變數值證據 "
-          f"{sum(len(w['value']) for _r, w, _j in out)} 筆);rep {sum(len(w['rep']) for _r, w, _j in out)} 筆;"
+          f"{sum(len(w['value']) for _r, w, _j in out)} 筆);rep {sum(len(w['rep']) for _r, w, _j in out)} 筆、"
+          f"非 rep 字串串 {sum(len(w['chain']) for _r, w, _j in out)} 筆、"
+          f"指標追蹤 {sum(len(w['ptr']) for _r, w, _j in out)} 個呼叫點;"
           f"DPMI 範圍呼叫 {sum(len(w['range']) for _r, w, _j in out)} 筆(範圍函式 "
           f"{sorted((hex(a), k) for a, k in col['ranged'].items())})")
     for r, w, j in out:
@@ -565,7 +934,7 @@ def show(out: list, addr: int) -> int:
     r, w, j = hit[0]
     for ln in _describe(r, w, j):
         print(ln)
-    for kind in ("direct", "loop", "rep", "value", "range"):
+    for kind in (*ACCESS_KINDS, "value", "range"):
         for ins, (lo, hi, *x) in sorted(w[kind].items()):
             extra = ""
             if kind == "loop":
@@ -576,6 +945,11 @@ def show(out: list, addr: int) -> int:
                 extra = f"  {x[0]}"
             elif kind == "value":
                 extra = f"  索引取自 [{hex(x[0])}],最大立即數寫入 {x[1]}"
+            elif kind == "ptr":
+                d = x[0]
+                far = max(d["hits"], key=lambda h: h[1] + h[2])
+                extra = (f"  追蹤起點 {hex(d['start'])},{len(d['hits'])} 筆經暫存器存取,最遠 {hex(far[0])} "
+                         f"[{hex(far[1])}, +{far[2]});停止:{d['stop'] or '返回呼叫點'}")
             print(f"  {kind:6} {hex(ins)} [{hex(lo)}, {hex(hi)}){extra}")
     for ins, why in sorted(w["unresolved"].items()):
         print(f"  未解出 {hex(ins)}:{why}")
@@ -749,17 +1123,48 @@ def selftest() -> int:
           "不是 mov ecx" in str(rext([I(0x00, "mov", ("ecx", "edx"), writes=("ecx",)), *rp[1:]])))
     check("(4e) 中間有 call 不採信",
           "找不到" in str(rext([rp[0], rp[1], I(0x0A, "call", (None,), 0x100, target=0x100), *rp[3:]])))
-    check("(4f) 有跳躍跳進設定與 rep 之間不採信",
-          "跳躍目標" in rep_extent(rp, 3, branch_sources([rp, [I(0x900, "jmp", (None,), 0x0A, target=0x0A)]]), False)[1])
+    check("(4f) 有跳躍跳進設定與 rep 之間(區塊從那裡開始)不採信",
+          "找不到" in rep_extent(rp, 3, branch_sources([rp, [I(0x900, "jmp", (None,), 0x0A, target=0x0A)]]), False)[1])
     check("(4g) rep stosd 不接 movs 尾巴",
           rext([rp[0], rp[1], I(0x0A, "mov", ("eax", None), 0, writes=("eax",)),
                 I(0x0F, "rep stosd", (), writes=("edi", "ecx")), rp[4], rp[6]]) == (S, 40))
-    check("(4i) 設定在函式第一條、rep 前恰好 REP_WINDOW 條內採信",
-          rext([rp[0], rp[1], *[I(0x06 + k, "nop") for k in range(REP_WINDOW - 2)], *rp[3:]], REP_WINDOW)
-          == (S, 43))
-    check("(4h) 設定超出 REP_WINDOW 不採信",
-          "找不到" in str(rext([rp[0], rp[1], *[I(0x06 + k, "nop") for k in range(REP_WINDOW)], *rp[3:]],
-                              2 + REP_WINDOW)))
+    far = [rp[0], rp[1], *[I(0x06 + k, "nop") for k in range(9)], *rp[3:]]
+    check("(4i) 設定在函式第一條、與 rep 隔 9 條(同一基本區塊)採信", rext(far, 11) == (S, 43))
+    check("(4h) 跳躍目標在設定之後(區塊從那裡開始)不採信",
+          "找不到" in rep_extent(far, 11, branch_sources([far, [I(0x900, "jmp", (None,), 0x09, target=0x09)]]),
+                                False)[1])
+    check("(4j) 設定本身是跳躍目標(區塊第一條)仍採信",
+          rep_extent(far, 11, branch_sources([far, [I(0x900, "jmp", (None,), 0x00, target=0x00)]]), False)[0]
+          == {"start": S, "len": 43})
+    check("(4k) rep 本身是跳躍目標不採信",
+          "跳躍目標" in rep_extent(rp, 3, branch_sources([rp, [I(0x900, "jmp", (None,), 0x0F, target=0x0F)]]), False)[1])
+    ch = [I(0x00, "mov", ("edi", None), S, True, writes=("edi",)),
+          I(0x05, "mov", ("esi", None), 0x51624, True, writes=("esi",)),
+          I(0x0A, "mov", ("eax", None), 0xFFFFFFFF, writes=("eax",)),
+          *[I(0x0F + k, "movsd", (), writes=("edi", "esi")) for k in range(4)],
+          I(0x13, "movsw", (), writes=("edi", "esi")),
+          I(0x15, "movsb", (), writes=("edi", "esi")),
+          I(0x16, "ret")]
+
+    def cext(lst: list[Ins], i: int = 3, std: bool = False, extra: list | None = None) -> tuple | str:
+        res, why = chain_extent(lst, i, branch_sources([lst, extra or []]), std)
+        return (res["start"], res["len"]) if res else why
+
+    check("(4l) 非 rep:4 × movsd + movsw + movsb = 19 byte", cext(ch) == (S, 19))
+    check("(4m) 非 rep 串:函式有 std 不採信", "std" in str(cext(ch, std=True)))
+    check("(4n) 非 rep 串:edi 沒有 fixup 不採信",
+          "不是 mov edi" in str(cext([I(0x00, "mov", ("edi", None), S, False, writes=("edi",)), *ch[1:]])))
+    check("(4o) 非 rep 串:串中有跳躍目標不採信",
+          "跳躍目標" in str(cext(ch, extra=[I(0x900, "jmp", (None,), 0x13, target=0x13)])))
+    check("(4p) 非 rep 串:設定前有 call(不同區塊)不採信",
+          "找不到" in str(cext([ch[0], I(0x03, "call", (None,), 0x100, target=0x100), *ch[1:]], 4)))
+    check("(4q) 非 rep 串:stos 不接 movs", cext([ch[0], I(0x0F, "stosd", (), writes=("edi",)), *ch[3:]], 1) == (S, 4))
+    wch = collect({0x0: rp}, [(S, S + 0x100)])["wit"][S]
+    check("(4r) rep 後面的 movs 尾巴不另算成串", wch["rep"] == {0x0F: (S, S + 43)} and wch["chain"] == {})
+    wch = collect({0x0: ch}, [(S, S + 0x100)])["wit"][S]
+    check("(4s) collect 只在串首記一筆", wch["chain"] == {0x0F: (S, S + 19)})
+    check("(4t) 非 rep 串:最後一條是跳躍目標不採信",
+          "跳躍目標" in str(cext(ch, extra=[I(0x900, "jmp", (None,), 0x15, target=0x15)])))
     # (5) DPMI 範圍函式辨認與宣告長度
     g = [I(0x200, "sub", ("esp", None), 0x38, writes=("esp",)),
          I(0x203, "mov", (None, None), 0x600, mem=Mem("esp", None, 1, 0, 4)),
@@ -792,7 +1197,8 @@ def selftest() -> int:
           collect({0x100: f, 0x200: g, 0x400: caller2}, [(B, B + 0x40)])["wit"][B]["range"] == {})
     # (6) judge
     def wset(**kw: dict) -> dict:
-        d = {"direct": {}, "loop": {}, "rep": {}, "range": {}, "value": {}, "unresolved": {}, "mem_sites": set()}
+        d = {"direct": {}, "loop": {}, "rep": {}, "chain": {}, "ptr": {}, "range": {}, "value": {}, "unresolved": {},
+             "mem_sites": set()}
         d.update(kw)
         return d
 
@@ -882,14 +1288,163 @@ def selftest() -> int:
     check("(9n) byte 寫入的負立即數取 8 位元(-3 → 253);原因帶變數位址",
           wv["value"] == {} and "[253]" in wv["unresolved"][0x30A] and "[0x53f4a]" in wv["unresolved"][0x30A])
 
+    # (10) 指標追蹤:手組機器碼,經真的 capstone 解碼(呼叫端 0x1000 push P / push P / push 0x10 / call F)
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    md.detail = True
+    P, GX = 0x53A8D, 0x60000
+    # F(不用 ebp 當框架指標,int 時沒有暫存器持有堆疊位址):
+    # mov edi, [esp+8] / mov edx, [esp+0xc] / mov eax, [edi] / push edx
+    FB = bytes.fromhex("8b7c24088b54240c8b0752")
+    # F 尾:pop edi / mov [edi+0x18], eax / ret
+    FE = bytes.fromhex("5f894718c3")
+
+    def build(mid: bytes = bytes.fromhex("cd10"), fx_p: bool = True, after: bytes = b"", f: bytes | None = None,
+              more: dict | None = None, xfx: dict | None = None) -> tuple[Decoder, int, dict]:
+        cal, fx = bytearray(), dict(xfx or {})
+        for _k in range(2):
+            if fx_p:
+                fx[0x1000 + len(cal) + 1] = P
+            cal += b"\x68" + P.to_bytes(4, "little")
+        cal += bytes.fromhex("6a10")
+        at = 0x1000 + len(cal)
+        cal += b"\xe8" + ((0x1100 - (at + 5)) & M32).to_bytes(4, "little") + after + bytes.fromhex("83c40cc3")
+        code = bytearray(0x300)
+        code[0:len(cal)] = cal
+        body = f if f is not None else FB + mid + FE
+        code[0x100:0x100 + len(body)] = body
+        for a, bs in (more or {}).items():
+            code[a - 0x1000:a - 0x1000 + len(bs)] = bs
+        return Decoder(md, bytes(code), 0x1000, fx), at, fx
+
+    def tr(size: int = 0x1C, **kw: object) -> tuple[set, str]:
+        dec, at, _fx = build(**kw)
+        acc, why = trace(dec, 0x1000, at, [(P, P + size)])
+        return {(a - P, w) for _s, a, w, _b in acc}, why
+
+    check("(10a) 讀 [P] 4 byte、int 後由堆疊取回 P 寫 [P+0x18] → 正常返回", tr() == ({(0, 4), (0x18, 4)}, ""))
+    check("(10b) push 沒有 fixup(數值剛好等於位址)不算指標", tr(fx_p=False)[0] == set())
+    r = tr(mid=bytes.fromhex("7500"))
+    check("(10c) 條件跳躍就停,停之前的存取仍採信", r[0] == {(0, 4)} and "jne" in r[1])
+    check("(10d) int 前有暫存器持有堆疊位址 → 堆疊模型丟棄", tr(mid=bytes.fromhex("8d0c24cd10"))[0] == {(0, 4)})
+    check("(10e) 經未知指標寫記憶體 → 堆疊模型丟棄", tr(mid=bytes.fromhex("8901"))[0] == {(0, 4)})
+    check("(10f) ds 改成未知值後的存取不算", tr(mid=bytes.fromhex("8ed8"))[0] == {(0, 4)})
+    site = 0x1100 + len(FB) + 1
+    check("(10g) 寫到區段外的已知位址 → 堆疊模型丟棄",
+          tr(mid=b"\xa3" + bytes(4), xfx={site: GX})[0] == {(0, 4)})
+    check("(10h) 寫到區段內的已知位址 → 堆疊模型保留",
+          tr(mid=b"\xa3" + bytes(4), xfx={site: P + 8})[0] == {(0, 4), (0x18, 4)})
+    check("(10i) 返回呼叫點就停(之後的存取不算)",
+          tr(size=0x40, after=bytes.fromhex("894730")) == ({(0, 4), (0x18, 4)}, ""))
+    r = tr(mid=bytes.fromhex("ebfe"))
+    check("(10j) 無窮迴圈 → 超過上限停", r[0] == {(0, 4)} and "超過" in r[1])
+    check("(10k) ds 存到堆疊再以 16 位元讀回 → 恢復平面 ds,存取採信",
+          tr(mid=bytes.fromhex("8cd8508b078ed88e1c2458"))[0] == {(0, 4), (0x18, 4)})
+    check("(10l) 同上但沒有讀回 ds → 不算", tr(mid=bytes.fromhex("8cd8508b078ed858"))[0] == {(0, 4)})
+    # int386x 形:call 跳板 / push 位址(有 fixup)/ ret 進 int n; ret / 回來後由堆疊重載 edi
+    thunk = bytes.fromhex("8b7c2408" "e877000000" "8b7c2408" "894718" "c3")
+    jt = {0x1180: b"\x68" + bytes(4) + b"\xc3", 0x1200: bytes.fromhex("cd10c3")}
+    check("(10m) push 位址 / ret 跳進 int 跳板再返回 → [P+0x18] 採信",
+          tr(f=thunk, more=jt, xfx={0x1181: 0x1200}) == ({(0x18, 4)}, ""))
+    r = tr(f=thunk, more=jt)
+    check("(10n) 跳板位址沒有 fixup → 停在 ret", r[0] == set() and "跳躍目標" in r[1])
+    check("(10o) sub esp / leave / ret 正常返回",
+          tr(f=bytes.fromhex("5589e583ec108b7d0c894718c9c3")) == ({(0x18, 4)}, ""))
+    r = tr(f=bytes.fromhex("5589e58b6d00c9c3"))
+    check("(10p) ebp 變未知後 leave → 停", r[0] == set() and "esp" in r[1])
+    check("(10q) _add:位址 + 位址 = 未知、堆疊 + 數值、數值 + 位址、32 位元回繞",
+          _add(("a", 1, 1), ("a", 2, 2)) is None and _add(("s", -8), ("c", 4)) == ("s", -4)
+          and _add(("c", -1), ("a", 0x10, 0x10)) == ("a", 0xF, 0x10)
+          and _add(("c", 0x7FFFFFFF), ("c", 1)) == ("c", -0x80000000)
+          and _add(("g", "ds"), ("c", 1)) is None and _neg(("a", 4, 4)) is None and _neg(("c", 4)) == ("c", -4))
+    dec, at, fx = build()
+    fl = {0x1000: [conv(md, fx, x) for x in md.disasm(dec.code[0:0x20], 0x1000)],
+          0x1100: [conv(md, fx, x) for x in md.disasm(dec.code[0x100:0x100 + len(FB) + 2 + len(FE)], 0x1100)]}
+    wp = collect(fl, [(P, P + 0x10)], dec)["wit"][P]
+    check("(10r) collect:以 call 位址為鍵記 ptr [P, P+0x1c)", set(wp["ptr"]) == {at}
+          and wp["ptr"][at][:2] == (P, P + 0x1C) and wp["ptr"][at][2]["start"] == 0x1000)
+    j = judge(P, 0x10, wp, set())
+    check("(10s) ptr 超過 size → 失敗", any("ptr" in e for e in j["fail"]))
+    wv2 = collect(fl, [(P, P + 0x10), (P + 0x10, P + 0x40)], dec)["wit"]
+    check("(10v) 指標寫進鄰段仍歸它來源的區段(不算鄰段的證據)", wv2[P + 0x10]["ptr"] == {}
+          and wv2[P]["ptr"][at][:2] == (P, P + 0x1C))
+    check("(10t) 不傳解碼器就不追蹤", collect(fl, [(P, P + 0x10)])["wit"][P]["ptr"] == {})
+    fl2 = {0x1000: [conv(md, {}, x) for x in md.disasm(dec.code[0:0x20], 0x1000)], 0x1100: fl[0x1100]}
+    check("(10u) 區塊內沒有指到區段的 fixup 立即數 → 不追蹤",
+          collect(fl2, [(P, P + 0x10)], dec)["wit"][P]["ptr"] == {})
+
+    # (10w)–(10al) 續二百六十三窮舉突變的逃逸:追蹤器每個特例分支各一題,分支算出的值都要流進一筆被記下的存取
+    # (F 的 mid 第一條在 M0;FB 之後 edi = edx = P,堆疊頂是 FB push 的 edx = P,FE 由那裡取回 edi)
+    # (題內有經未知指標寫的反例時,依 (10e) 堆疊模型丟棄,FE 的 [P+0x18] 就不在預期內)
+    M0 = 0x1100 + len(FB)
+    hit0 = {(0, 4), (0x18, 4)}
+
+    def tw(**kw: object) -> tuple[set, str]:
+        """區段 [P, P + 0x2000):題內的寫入都在區段內,堆疊模型保留,FE 取回的 edi 仍是 P。"""
+        return tr(size=0x2000, **kw)
+    check("(10w) _add:位址 + 數值保留指標來源(來源 ≠ 位址)",
+          _add(("a", 0x14, 0x10), ("c", 4)) == ("a", 0x18, 0x10)
+          and _add(("c", 4), ("a", 0x14, 0x10)) == ("a", 0x18, 0x10))
+    # push 0x1335 / movzx ecx, byte [esp] / mov [edi+ecx], eax / pop ecx
+    check("(10x) 堆疊上 4 byte 數值以 1 byte 讀出(movzx)→ 遮罩成 0x35 當索引",
+          tw(mid=bytes.fromhex("6835130000" "0fb60c24" "89040f" "59")) == (hit0 | {(0x35, 4)}, ""))
+    # mov ecx, 0x1335 / movzx edx, cl / mov [edi+edx], eax / movzx edx, ch / mov [edi+edx], eax
+    check("(10y) 部分暫存器讀:cl = 0x35、ch = 0x13(movzx 寫入目的暫存器)",
+          tw(mid=bytes.fromhex("b935130000" "0fb6d1" "890417" "0fb6d5" "890417"))
+          == (hit0 | {(0x35, 4), (0x13, 4)}, ""))
+    # mov ecx, 0x8555 / movsx edx, cl / mov ebx, [edi+edx] / movsx edx, ch / mov ebx, [edi+edx]
+    # / movzx edx, ch / mov ebx, [edi+edx+0x200](只讀:區段外的讀不丟堆疊模型)
+    check("(10am) movsx 依來源最高位元延伸:cl 0x55 → +0x55、ch 0x85 → −0x7b;movzx ch 0x85 → +0x85",
+          tw(mid=bytes.fromhex("b955850000" "0fbed1" "8b1c17" "0fbed5" "8b1c17" "0fb6d5" "8b9c1700020000"))
+          == (hit0 | {(0x55, 4), (-0x7B, 4), (0x285, 4)}, ""))
+    # mov ecx, 0x1300 / mov cl, 0x35 / mov [edi+ecx], eax / mov ch, 7 / mov [edi+ecx+0x40], eax
+    check("(10z) 部分暫存器寫:cl 併進原數值;寫 ch 之後變未知",
+          tw(mid=bytes.fromhex("b900130000" "b135" "89040f" "b507" "89440f40")) == ({(0, 4), (0x1335, 4)}, ""))
+    # mov ax, ds / mov es, ax / mov es:[edi+0x10], ecx
+    check("(10aa) ds 經 16 位元暫存器搬到 es 仍是平面區段,es: 存取採信",
+          tw(mid=bytes.fromhex("668cd8" "668ec0" "26894f10")) == (hit0 | {(0x10, 4)}, ""))
+    # mov ecx, 4 / mov [edi+ecx*4+0x20], eax / mov ecx, P(fixup) / mov [ecx*1+0x40], eax(只有索引、倍率 1)
+    check("(10ab) 索引倍率:ecx × 4;倍率 1 的索引可以是指標",
+          tw(mid=bytes.fromhex("b904000000" "89448f20" "b9") + P.to_bytes(4, "little") + bytes.fromhex("89040d40000000"),
+             xfx={M0 + 10: P}) == (hit0 | {(0x30, 4), (0x40, 4)}, ""))
+    # mov [edi+0x100], eax:位址在區段外、指標來源 P 在區段內 —— 依位址判斷,堆疊模型丟棄,FE 取回的 edi 變未知
+    check("(10ac) 寫到區段外(指標來源在區段內)→ 堆疊模型丟棄",
+          tr(mid=bytes.fromhex("898700010000")) == ({(0, 4), (0x100, 4)}, ""))
+    # mov eax, 0x1180(fixup)/ add eax, 0x10 / call eax → 0x1190:mov [edi+0x20], ecx / ret;0x1180 是 jne
+    check("(10ad) call 暫存器:目標是位址本身(0x1190),不是指標來源(0x1180)",
+          tw(mid=bytes.fromhex("b880110000" "83c010" "ffd0"), xfx={M0 + 1: 0x1180},
+             more={0x1180: bytes.fromhex("7500"), 0x1190: bytes.fromhex("894f20c3")}) == (hit0 | {(0x20, 4)}, ""))
+    r = tr(mid=bytes.fromhex("6650"))
+    check("(10ae) 16 位元 push → 停", r[0] == {(0, 4)} and "16 位元" in r[1])
+    r = tr(mid=bytes.fromhex("8f0424"))
+    check("(10af) pop 到 esp 定址的記憶體 → 停", r[0] == {(0, 4)} and "pop 到 esp" in r[1])
+    # lea ecx, [edi+0x30] / mov [ecx], eax / lea cx, [edi+0x40] / mov [ecx+8], eax
+    check("(10ag) lea 32 位元算出位址;16 位元 lea 之後 ecx 未知",
+          tw(mid=bytes.fromhex("8d4f30" "8901" "668d4f40" "894108")) == ({(0, 4), (0x30, 4)}, ""))
+    # mov ecx, 5 / xor ecx, ecx / mov [edi+ecx+0x28], eax / xor ecx, edx / mov [edi+ecx+0x38], eax
+    check("(10ah) xor 同一暫存器 = 0;不同暫存器 → 未知",
+          tw(mid=bytes.fromhex("b905000000" "31c9" "89440f28" "31d1" "89440f38")) == ({(0, 4), (0x28, 4)}, ""))
+    # inc edi / mov [edi+0x40], eax / dec edi / dec edi / mov [edi+0x50], eax
+    check("(10ai) inc / dec 32 位元暫存器",
+          tw(mid=bytes.fromhex("47" "894740" "4f4f" "894750")) == (hit0 | {(0x41, 4), (0x4F, 4)}, ""))
+    # mov eax, 0x1180(fixup)/ jmp eax → 0x1180:mov [edi+0x20], ecx + FE
+    check("(10aj) jmp 暫存器(已知位址)",
+          tw(mid=bytes.fromhex("b880110000" "ffe0"), xfx={M0 + 1: 0x1180},
+             more={0x1180: bytes.fromhex("894f20") + FE}) == (hit0 | {(0x20, 4)}, ""))
+    # add [edi+0x30], eax(其他指令的記憶體運算元照記)/ nop dword [edi+0x40](nop 不算存取)
+    check("(10ak) 其他指令的記憶體運算元記為存取,nop 的不算",
+          tw(mid=bytes.fromhex("014730" "0f1f4740")) == (hit0 | {(0x30, 4)}, ""))
+    check("(10al) block_start:區塊從前一條 ret 之後開始",
+          block_start([I(0x0, "ret"), I(0x1, "nop"), I(0x2, "call", (None,), 0x100, target=0x100)], 2, {}) == 1)
+
     # (8) 真實檔已知答案
     try:
-        funcs, regions, cov, content = load()
+        funcs, regions, cov, content, dec = load()
     except SystemExit as e:
         print(f"  (8) 真實檔無法載入:{e}")
         fails.append("(8) 載入")
     else:
-        out, col = run(funcs, regions, cov, content)
+        out, col = run(funcs, regions, cov, content, dec)
         by = {int(r["start"], 16): (w, jj) for r, w, jj in out}
         w, jj = by[0x541B4]
         check("(8a) 0x541b4 由迴圈證到 64(access)", jj["grade"] == "access" and len(w["loop"]) == 6
@@ -899,12 +1454,17 @@ def selftest() -> int:
         check("(8c) 0x52a94 access 64,rep 0x3eccf 長度 64", jj["grade"] == "access"
               and w["rep"].get(0x3ECCF) == (0x52A94, 0x52AD4))
         w, jj = by[0x541F4]
-        check("(8d) 0x541f4 rep 0x3f972 = 43 byte", w["rep"].get(0x3F972) == (0x541F4, 0x541F4 + 43))
+        check("(8d) 0x541f4 rep 0x3f972 = 43 byte;rep 34 筆(ecx 在前 5 條的 0x43e30 = 41)、非 rep 串 0x4469b = 19",
+              w["rep"].get(0x3F972) == (0x541F4, 0x541F4 + 43) and len(w["rep"]) == 34
+              and w["rep"].get(0x43E30) == (0x541F4, 0x541F4 + 41)
+              and w["chain"] == {0x4469B: (0x541F4, 0x541F4 + 19)})
         check("(8e) 0x541f4 鎖定宣告 0x100(declared)", jj["grade"] == "declared" and jj["lb_declared"] == 256
               and w["range"].get(0x3F524) == (0x541F4, 0x542F4, "lock"))
         check("(8f) 範圍函式恰好 0x3666c lock / 0x36683 unlock", col["ranged"] == {0x3666C: "lock", 0x36683: "unlock"})
         w, jj = by[0x5417C]
-        check("(8g) 0x5417c 只證到 25 / 26(partial)", jj["grade"] == "partial" and jj["lb_access"] == 25)
+        check("(8g) 0x5417c 只證到 25 / 26(partial);strcpy 0x400cc 追到第一個 je 就停",
+              jj["grade"] == "partial" and jj["lb_access"] == 25
+              and w["ptr"].get(0x37DEC, (0, 0, {}))[2].get("stop") == "0x400dd je")
         w, jj = by[0x52387]
         check("(8h) 0x52387 由 [0x53f4a] 的立即數 5 證到 6(value)", jj["grade"] == "value" and jj["lb_access"] == 5
               and w["value"].get(0x27A53) == (0x52387, 0x5238D, 0x53F4A, 5))
@@ -912,7 +1472,10 @@ def selftest() -> int:
         check("(8i) 0x51b91 content;[0x51a8f] 的 255 哨兵讓 value 不採信",
               jj["grade"] == "content" and not w["value"] and "255" in w["unresolved"].get(0x1199C, ""))
         w, jj = by[0x53A8D]
-        check("(8j) int386_regs 只證到 2(partial,經指標交給函式庫)", jj["grade"] == "partial" and jj["lb_access"] == 2)
+        check("(8j) int386_regs 由指標追蹤證到 28(access):19 個 int386 呼叫點,0x46897 寫 out+0x18",
+              jj["grade"] == "access" and jj["lb_access"] == 28 and len(w["ptr"]) == 19
+              and w["ptr"][0x10049][:2] == (0x53A8D, 0x53AA9)
+              and (0x46897, 0x53AA5, 4) in w["ptr"][0x10049][2]["hits"] and w["ptr"][0x10049][2]["stop"] == "")
         check("(8k) 記憶體運算元與 re_coverage 逐筆相同(非空)", sum(len(w["mem_sites"]) for _r, w, _j in out) > 4000)
         check("(8l) 真實檔零失敗", len(out) == len(regions) and not [x for *_y, x in out if x["fail"]])
     print(f"selftest: {'PASS' if not fails else 'FAIL'}({len(fails)} 項失敗)")
@@ -929,8 +1492,8 @@ def main(argv: list[str]) -> int:
     a = ap.parse_args(argv)
     if a.selftest:
         return selftest()
-    funcs, regions, cov, content = load()
-    out, col = run(funcs, regions, cov, content)
+    funcs, regions, cov, content, dec = load()
+    out, col = run(funcs, regions, cov, content, dec)
     if a.show:
         return show(out, int(a.show, 16))
     return report(out, col, a.verbose)
