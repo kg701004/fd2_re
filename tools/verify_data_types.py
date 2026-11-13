@@ -26,14 +26,17 @@
             純量常數的 `type` 若恰好寫了一個十進位數,檔內值必須等於它。
 * 值域      `A .. B`、`A / B / C`、`0 空、1 已配置、2 執行中` 這類列舉、`旗標`(= 0 / 1)、`上限 N`;
             有值域時 `0xNN = …` 標的哨兵值也算合法。每一筆**立即數寫入**(`mov [x], imm`)的值必須在值域內;
-            暫存器來源、`inc` / `add` 等讀改寫只計數為「未判定寫入」,不當作通過。指標型別不做值域。
+            `mov [x], 暫存器` 在同一基本區塊內往回找得到 `mov 32 位元暫存器, 立即數` 或 `xor` / `sub` 同一暫存器
+            (見 `reg_const`)時,同樣核對;其餘暫存器來源、`inc` / `add` 等讀改寫只計數為「未判定寫入」,
+            不當作通過。指標型別不做值域。
 * 指標      `指標`:立即數寫入只能是 0,或立即數本身有 fixup(指向程式自己的位址)。
 * 初值      每段報告初值來源:`file`(EXE 檔內頁)、`zeroed`(落在 `_cstart_` 以 `rep stosd` 清零的
             [edi, ecx) 範圍,範圍由 `_cstart_` 的指令現算,不寫死)、`none`(兩者皆非,初值未定)。
 
 不核對的(誠實列出)
 --------------------
-* 暫存器來源的寫入值、索引定址但基底不是區段起點的存取、動態上限(`0 .. 地圖寬 − 13`)、語意性的說明文字。
+* 跨基本區塊(中間有分支、call、跳躍目標)或由其他指令算出的暫存器來源寫入值、索引定址但基底不是區段起點的存取、
+  動態上限(`0 .. 地圖寬 − 13`)、語意性的說明文字。
 * 值域只檢查立即數寫入:通過代表「程式碼裡寫死的值都合法」,不代表執行期不會出現別的值。
 
 用法
@@ -172,6 +175,86 @@ def allowed_ok(a: dict, v: int) -> bool:
     return False
 
 
+# ---------------------------------------------------------------- 暫存器常數
+
+# 暫存器族:寫入任一成員都算改寫整個暫存器
+FAMILY = {r: fam for fam, regs in (("eax", ("eax", "ax", "al", "ah")), ("ebx", ("ebx", "bx", "bl", "bh")),
+                                   ("ecx", ("ecx", "cx", "cl", "ch")), ("edx", ("edx", "dx", "dl", "dh")),
+                                   ("esi", ("esi", "si")), ("edi", ("edi", "di")), ("ebp", ("ebp", "bp")))
+          for r in regs}
+# 控制流程(助記符開頭):遇到就停(值可能來自別條路徑,或被呼叫 / 中斷處理改寫)
+FLOW = ("j", "call", "ret", "iret", "int", "loop")
+
+
+def reg_const(seq: list, i: int, targets: set[int],
+              imm_of: Callable[[object], tuple[int | None, bool]]) -> tuple[int | None, bool, str]:
+    """seq[i] 是 `mov [m], 暫存器`:在同一基本區塊內往回找那個暫存器最後一次被寫入的值。
+
+    只接受寫入者是 `mov 32 位元暫存器, 立即數`(立即數以 imm_of 取,有 fixup 時是目標)或
+    `xor` / `sub` 同一個 32 位元暫存器(= 0);來源是 ax / al / ah 這類部分暫存器時取對應位元。
+    中間遇到分支 / call / ret / int、跨過跳躍目標(targets),或寫入者是其他指令(只寫部分暫存器、
+    `cdq` 這類隱含寫入、算術)就不判定 —— 寧可留在「未判定」,不猜。
+
+    Args:
+        seq: 函式的 capstone 指令清單(需 detail)。
+        i: 寫入指令在 seq 的索引。
+        targets: 基本區塊開頭(跳躍目標與函式內的 fixup 目標)。
+        imm_of: 指令 → (立即數, 有沒有 fixup)。
+
+    Returns:
+        (值或 None, 值有沒有 fixup, 不判定的原因;判定成功時是 "")。
+    """
+    from capstone.x86 import X86_OP_IMM, X86_OP_REG
+
+    x = seq[i]
+    ops = x.operands
+    if x.mnemonic != "mov" or len(ops) != 2 or ops[1].type != X86_OP_REG:
+        return None, False, "不是 mov [m], 暫存器"
+    src = x.reg_name(ops[1].reg)
+    fam = FAMILY.get(src)
+    if fam is None:
+        return None, False, f"來源 {src} 不是通用暫存器"
+    members = {r for r, f in FAMILY.items() if f == fam}
+    for k in reversed(range(i)):
+        if seq[k + 1].address in targets:
+            return None, False, f"{hex(seq[k + 1].address)} 是區塊開頭"
+        y = seq[k]
+        if y.mnemonic.startswith(FLOW):
+            return None, False, f"{hex(y.address)} {y.mnemonic} 在中間"
+        written = {y.reg_name(r) for r in y.regs_access()[1]}
+        if not written & members:
+            continue
+        yo = y.operands
+        if (y.mnemonic == "mov" and len(yo) == 2 and yo[0].type == X86_OP_REG and y.reg_name(yo[0].reg) == fam
+                and yo[1].type == X86_OP_IMM):
+            v, fx = imm_of(y)
+        elif y.mnemonic in ("xor", "sub") and yo[1].type == X86_OP_REG and y.reg_name(yo[1].reg) == fam:
+            # 目的必是 fam 的成員(上面 written 已確認)且與來源同寬 → 就是 fam 本身:xor / sub 自己 = 0
+            v, fx = 0, False
+        else:
+            return None, False, f"{hex(y.address)} {y.mnemonic} 改寫 {fam}"
+        if src == fam:
+            return v & 0xFFFFFFFF, fx, ""
+        if fx:
+            return None, False, f"{hex(y.address)} 的位址只取 {src}"
+        if src.endswith("h"):
+            return (v >> 8) & 0xFF, False, ""
+        return v & (0xFF if src.endswith("l") else 0xFFFF), False, ""
+    return None, False, "往回到函式開頭沒有設定"
+
+
+def block_starts(seq: list, lo: int, hi: int, fixup_targets: set[int]) -> set[int]:
+    """函式 [lo, hi) 內的基本區塊開頭:跳躍 / loop 的立即數目標,加上落在函式內的 fixup 目標
+    (跳躍表的 case 由間接 jmp 進入,指令裡看不到,只看得到表內指向它的 fixup)。"""
+    from capstone.x86 import X86_OP_IMM
+
+    tg = {t for t in fixup_targets if lo <= t < hi}
+    for x in seq:
+        if x.mnemonic.startswith(("j", "loop")) and x.operands[0].type == X86_OP_IMM:
+            tg.add(x.operands[0].imm)
+    return tg
+
+
 # ---------------------------------------------------------------- 原版事實
 
 class Facts:
@@ -183,13 +266,16 @@ class Facts:
         fixups: 全部物件的 fixup {來源線性位址: 目標}。
         entries: function_inventory 的入口集合。
         accesses: re_coverage 的指令層存取(指令, 目標, 寬度, 讀寫, 種類, 有沒有索引)。
-        insn: 指令位址 → (助記符, 立即數, 立即數有沒有 fixup)。
+        insn: 指令位址 → (助記符, 立即數, 立即數有沒有 fixup);`mov [m], 暫存器` 由 reg_const 判定出值時,
+            立即數就是那個值。
         regions: 已登錄區段 [(start, end)]。
+        reg_src: 寫入位址 → reg_const 的結果(只用來把核對數拆成「立即數 / 暫存器常數」報告)。
     """
 
     def __init__(self, image: Callable[[int, int], bytes | None], zeroed: list[tuple[int, int]],
                  fixups: dict[int, int], entries: set[int], accesses: list | tuple,
-                 insn: Callable[[int], Insn], regions: list[tuple[int, int]]) -> None:
+                 insn: Callable[[int], Insn], regions: list[tuple[int, int]],
+                 reg_src: dict[int, tuple[int | None, bool, str]] | None = None) -> None:
         self.image = image
         self.zeroed = zeroed
         self.fixups = fixups
@@ -197,6 +283,7 @@ class Facts:
         self.accesses = accesses
         self.insn = insn
         self.regions = regions
+        self.reg_src = reg_src or {}
 
 
 def find_zeroed(insns: list[tuple[int, str, str, int | None]]) -> list[tuple[int, int]]:
@@ -239,7 +326,7 @@ def check_region(r: dict, f: Facts) -> dict:
     size = r["size"]
     end = start + size
     c = parse_type(r.get("type", ""), size)
-    res: dict = {"claim": c, "fail": [], "note": [], "imm_checked": 0, "undetermined": 0, "narrow": []}
+    res: dict = {"claim": c, "fail": [], "note": [], "imm_checked": 0, "via_reg": 0, "undetermined": 0, "narrow": []}
     src, init = init_source(f, start, size)
     res["init"] = src
     if c["kind"] == "unparsed":
@@ -307,6 +394,8 @@ def check_region(r: dict, f: Facts) -> dict:
             res["undetermined"] += 1
             continue
         v = imm & ((1 << (8 * width)) - 1)
+        if (c.get("pointer") or "allowed" in c) and f.reg_src.get(ins, (None,))[0] is not None:
+            res["via_reg"] += 1
         if c.get("pointer"):
             res["imm_checked"] += 1
             if v != 0 and not imm_fx and v not in c.get("pointer_flags", ()):
@@ -357,11 +446,33 @@ def load_facts() -> tuple[Facts, list[dict]]:
         has_fx = imm is not None and site in fx1
         return (fx1[site] if has_fx else imm), has_fx
 
+    # `mov [m], 暫存器` 的寫入位址:在所屬函式(inventory 入口 .. span_upper)內以 reg_const 往回找常數
+    fx_all = disasm_le.build_fixups(exe, meta, None)
+    fx_targets = set(fx_all.values())
+    inv = sorted((int(e["addr"], 16), e["span_upper"])
+                 for e in json.loads(R.INVENTORY.read_text(encoding="utf-8"))["entries"])
+    sites = sorted({ins for ins, _t, _w, rw, kind, _ix in w["ctx"].accesses if kind == "mem" and "w" in rw})
+    reg_src: dict[int, tuple[int | None, bool, str]] = {}
+    cache: dict[int, tuple[list, dict[int, int], set[int]]] = {}
+    for a in sites:
+        owner = [(e, n) for e, n in inv if e <= a < e + n]
+        if not owner:
+            continue
+        e, n = max(owner)
+        if e not in cache:
+            seq = [x for x in disasm_le.sweep_range(md, code, cbase, e, e + n) if not isinstance(x, tuple)]
+            cache[e] = (seq, {x.address: k for k, x in enumerate(seq)}, block_starts(seq, e, e + n, fx_targets))
+        seq, pos, tg = cache[e]
+        if a in pos:
+            reg_src[a] = reg_const(seq, pos[a], tg, imm_of)
+
     def insn(a: int) -> Insn:
         x = next(md.disasm(code[a - cbase:], a), None)
         if x is None:
             return ("", None, False)
         imm, has_fx = imm_of(x)
+        if imm is None and a in reg_src:
+            imm, has_fx = reg_src[a][:2]
         return (x.mnemonic, imm, has_fx)
 
     cstart = [a for a, n in FI.load_watcom().items() if str(n) == "_cstart_"]
@@ -375,8 +486,7 @@ def load_facts() -> tuple[Facts, list[dict]]:
     if not zeroed:
         raise SystemExit("在 _cstart_ 找不到 rep stosd 清零範圍")
     regions = [(int(r["start"], 16), int(r["start"], 16) + r["size"]) for r in dm["regions"]]
-    facts = Facts(image, zeroed, disasm_le.build_fixups(exe, meta, None), set(w["funcs"]),
-                  w["ctx"].accesses, insn, regions)
+    facts = Facts(image, zeroed, fx_all, set(w["funcs"]), w["ctx"].accesses, insn, regions, reg_src)
     return facts, dm["regions"]
 
 
@@ -397,7 +507,8 @@ def print_report(facts: Facts, out: list[tuple[dict, dict]], verbose: bool) -> i
     print(f"  初值來源 {dict(sorted(inits.items()))};_cstart_ 清零範圍 "
           f"{[(hex(a), hex(b)) for a, b in facts.zeroed]}")
     ranged = [(r, x) for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
-    print(f"  值域 / 指標宣告 {len(ranged)} 段:立即數寫入核對 {sum(x['imm_checked'] for _r, x in ranged)} 筆、"
+    print(f"  值域 / 指標宣告 {len(ranged)} 段:立即數寫入核對 {sum(x['imm_checked'] for _r, x in ranged)} 筆"
+          f"(其中區塊內暫存器常數 {sum(x['via_reg'] for _r, x in ranged)} 筆)、"
           f"未判定寫入 {sum(x['undetermined'] for _r, x in ranged)} 筆")
     print(f"  常數宣告 {sum(1 for _r, x in out if x['claim'].get('const'))} 段;"
           f"字串 {kinds.get('cstring', 0)} 段;函式指標表 {kinds.get('fptr_table', 0)} 段")
@@ -412,7 +523,7 @@ def print_report(facts: Facts, out: list[tuple[dict, dict]], verbose: bool) -> i
                 extra = f" 值域 set={sorted(a['set']) if a['set'] is not None else None} range={a['range']} " \
                         f"upper={a['upper']} 哨兵={sorted(a['sentinel'])}"
             print(f"{r['start']:>8} {r['size']:4d} {c['kind']:10} init={x['init']:6} 立即數 {x['imm_checked']} "
-                  f"未判定 {x['undetermined']} 窄 {len(x['narrow'])}{extra}")
+                  f"(暫存器 {x['via_reg']}) 未判定 {x['undetermined']} 窄 {len(x['narrow'])}{extra}")
             for n in x["note"]:
                 print(f"           {n}")
             for e in x["fail"]:
@@ -463,13 +574,14 @@ def selftest() -> int:
     imms: dict[int, Insn] = {0x900: ("mov", 1, False), 0x901: ("mov", 7, False), 0x902: ("inc", None, False),
                              0x903: ("mov", 0xff, False), 0x904: ("mov", 0x5000, True),
                              0x905: ("mov", 0x5000, False), 0x906: ("mov", 0, False), 0x907: ("mov", -1, False),
-                             0x908: ("mov", 1, False)}
+                             0x908: ("mov", 1, False), 0x909: ("mov", 3, False), 0x90a: ("mov", None, False)}
     fx = {0x1100: 0x400, 0x1104: 0x404, 0x1108: 0x408}
     ents = {0x400, 0x404, 0x408, 0x40c}
 
-    def facts(acc: list, fixups: dict[int, int] | None = None) -> Facts:
+    def facts(acc: list, fixups: dict[int, int] | None = None,
+              rs: dict[int, tuple[int | None, bool, str]] | None = None) -> Facts:
         return Facts(image, [(0x2000, 0x2100)], fx if fixups is None else fixups, ents, acc,
-                     lambda a: imms.get(a, ("", None, False)), [(0x1100, 0x110c)])
+                     lambda a: imms.get(a, ("", None, False)), [(0x1100, 0x110c)], rs)
 
     def reg(start: int, size: int, t: str) -> dict:
         return {"start": hex(start), "size": size, "type": t}
@@ -593,6 +705,75 @@ def selftest() -> int:
           find_zeroed(seq[:3] + [nop] * (STOSD_WINDOW - 1) + [stosd]) == [(0x539ec, 0x546b0)])
     check(f"rep stosd 在第 {STOSD_WINDOW + 1} 條 → 找不到", find_zeroed(seq[:3] + [nop] * STOSD_WINDOW + [stosd]) == [])
 
+    # 暫存器常數的計數:判定出值的算核對、也算「暫存器」;判定不出的算未判定
+    rs = {0x909: (3, False, ""), 0x90a: (None, False, "call 在中間")}
+    wr = [(0x909, 0x1050, 4, "w", "mem", False)]
+    cnt = check_region(reg(0x1050, 4, "dword(x 0 .. 6)"), facts(wr, rs=rs))
+    check("(r0a) 暫存器常數 3 在值域內 → 核對 1、暫存器 1", (cnt["imm_checked"], cnt["via_reg"], cnt["fail"]) == (1, 1, []))
+    cnt = check_region(reg(0x1050, 4, "dword(x 0 .. 2)"), facts(wr, rs=rs))
+    check("(r0b) 暫存器常數 3 在值域外 → 失敗", cnt["fail"] != [] and cnt["via_reg"] == 1)
+    cnt = check_region(reg(0x1070, 4, "dword 指標(x)"), facts([(0x909, 0x1070, 4, "w", "mem", False)], rs=rs))
+    check("(r0c) 指標的暫存器常數也計暫存器", (cnt["imm_checked"], cnt["via_reg"]) == (1, 1))
+    cnt = check_region(reg(0x1050, 4, "dword(x)"), facts(wr, rs=rs))
+    check("(r0d) 沒有宣告 → 未判定、不計暫存器", (cnt["undetermined"], cnt["via_reg"]) == (1, 0))
+    cnt = check_region(reg(0x1050, 4, "dword(x 0 .. 6)"), facts([(0x90a, 0x1050, 4, "w", "mem", False)], rs=rs))
+    check("(r0e) 判定不出 → 未判定", (cnt["undetermined"], cnt["imm_checked"], cnt["via_reg"]) == (1, 0, 0))
+    cnt = check_region(reg(0x1050, 4, "dword(x 0 .. 6)"), facts(wr))
+    check("(r0f) 沒有 reg_src 的立即數不計暫存器", (cnt["imm_checked"], cnt["via_reg"]) == (1, 0))
+
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    from capstone.x86 import X86_OP_IMM
+    cs = Cs(CS_ARCH_X86, CS_MODE_32)
+    cs.detail = True
+
+    def rc(hexs: str, targets: set[int] | None = None,
+           fxs: dict[int, int] | None = None) -> tuple[int | None, bool, str]:
+        seq = list(cs.disasm(bytes.fromhex(hexs), 0x100))
+        assert sum(x.size for x in seq) == len(hexs) // 2, hexs
+
+        def imm(x: object) -> tuple[int | None, bool]:
+            v = next((op.imm for op in x.operands if op.type == X86_OP_IMM), None)
+            site = x.address + x.imm_offset
+            return (fxs[site], True) if fxs and site in fxs else (v, False)
+        return reg_const(seq, len(seq) - 1, targets or set(), imm)
+
+    st = "a300200000"                                   # mov [0x2000], eax
+    check("(r1) mov eax, 5 → 5", rc("b805000000" + st) == (5, False, ""))
+    check("(r2) xor ecx, ecx;mov [m], cl → 0", rc("31c9" + "880d00200000") == (0, False, ""))
+    check("(r3) sub edx, edx;mov [m], edx → 0", rc("29d2" + "891500200000") == (0, False, ""))
+    # 每個暫存器族、每種寬度:mov r32, 0x1234 後以 32 / 16 / 低 8 / 高 8 位元寫出
+    fam_ok = []
+    for k, name in enumerate(("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")):
+        setter = bytes((0xB8 + k,)).hex() + "34120000"
+        got = [rc(setter + "89" + bytes(((k << 3) | 5,)).hex() + "00200000")[:2],
+               rc(setter + "6689" + bytes(((k << 3) | 5,)).hex() + "00200000")[:2]]
+        want = [(None, False)] * 2 if name == "esp" else [(0x1234, False)] * 2
+        if k < 4:
+            got += [rc(setter + "88" + bytes(((k << 3) | 5,)).hex() + "00200000")[:2],
+                    rc(setter + "88" + bytes((((k + 4) << 3) | 5,)).hex() + "00200000")[:2]]
+            want += [(0x34, False), (0x12, False)]
+        fam_ok.append(got == want)
+    check("(r4) 7 個暫存器族 × 32 / 16 / 8 / 高 8 位元取值;esp 不判定", all(fam_ok))
+    check("(r5) 中間有分支 / call / ret / iret / int / loop → 不判定",
+          all(rc("b805000000" + mid + st)[:2] == (None, False) for mid in ("eb00", "7400", "e800000000", "c3", "cf", "cd21", "e200")))
+    check("(r6) 寫入指令本身是區塊開頭 → 不判定", rc("b805000000" + st, {0x105})[:2] == (None, False))
+    check("(r7) 中間一條是區塊開頭 → 不判定", rc("b805000000" + "b907000000" + st, {0x105})[:2] == (None, False))
+    check("(r8) 設定指令本身是區塊開頭不影響 → 5", rc("b805000000" + st, {0x100}) == (5, False, ""))
+    check("(r9) 中間改寫別的暫存器 → 略過,仍是 5", rc("b805000000" + "b907000000" + st) == (5, False, ""))
+    check("(r10) 中間有其他指令改寫(inc / cdq / mov al / mov eax,[m] / xor eax,ebx / xor eax,[m] / mov ax)→ 不判定",
+          all(rc(h)[:2] == (None, False) for h in ("b805000000" + "40" + st, "b805000000" + "99" + "891500200000",
+                                          "b005" + st, "8b0500300000" + st, "31d8" + st, "330500300000" + st,
+                                          "66b83412" + st)))
+    check("(r11) 往回到開頭沒有設定 → 不判定", rc(st)[:2] == (None, False))
+    check("(r12) 立即數有 fixup → 取目標、帶 fixup", rc("b800300000" + st, fxs={0x101: 0x53000}) == (0x53000, True, ""))
+    check("(r13) fixup 位址只取 al → 不判定", rc("b800300000" + "a200200000", fxs={0x101: 0x53000})[:2] == (None, False))
+    check("(r14) 不是 mov [m], 暫存器 / 來源是區段暫存器 → 不判定",
+          rc("c7050020000005000000")[:2] == (None, False) and rc("8c1d00200000")[:2] == (None, False))
+    check("(r15) 0xffffffff 保留 32 位元", rc("b8ffffffff" + st) == (0xFFFFFFFF, False, ""))
+    seq = list(cs.disasm(bytes.fromhex("eb02" + "ffe0" + "e2fc" + "c3"), 0x100))
+    check("(r16) 區塊開頭 = jmp / loop 立即數目標 + 函式內 fixup 目標(含下界、不含上界);jmp eax 不算",
+          block_starts(seq, 0x100, 0x107, {0xFF, 0x100, 0x105, 0x107}) == {0x104, 0x102, 0x100, 0x105})
+
     # 真實檔:倉庫登錄零失敗、零未解析
     try:
         f, regions = load_facts()
@@ -605,9 +786,19 @@ def selftest() -> int:
         check("真實 _cstart_ 清零範圍 = [0x539ec, 0x546b0)", f.zeroed == [(0x539ec, 0x546b0)])
         check("真實 0x262e2 = mov [0x53a51], 1(無 fixup)", f.insn(0x262e2) == ("mov", 1, False))
         check("真實 0x46170 立即數以 fixup 目標 0x49ad8 為準", f.insn(0x46170) == ("mov", 0x49ad8, True))
+        # 暫存器常數(2026-11-14 逐條讀反組譯核對)
+        check("真實 0x37ea6 = mov [0x54174], eax,區塊內 mov eax, 1 → 1", f.reg_src.get(0x37ea6) == (1, False, "")
+              and f.insn(0x37ea6) == ("mov", 1, False))
+        check("真實 0x3dbcd 跨過區塊開頭 0x3dbbf → 不判定", f.reg_src.get(0x3dbcd, (0, False, ""))[:2] == (None, False)
+              and "0x3dbbf" in f.reg_src[0x3dbcd][2])
+        check("真實 寫入位址判定出值 38 處", sum(1 for v in f.reg_src.values() if v[0] is not None) == 38)
         got = {r["start"]: x for r, x in out}
         check("真實 0x541ac 初值 zeroed、0x51a87 初值 file",
               got["0x541ac"]["init"] == "zeroed" and got["0x51a87"]["init"] == "file")
+        ranged = [x for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
+        check("真實 值域 / 指標寫入:核對 273(暫存器 13)、未判定 194",
+              (sum(x["imm_checked"] for x in ranged), sum(x["via_reg"] for x in ranged),
+               sum(x["undetermined"] for x in ranged)) == (273, 13, 194))
     except SystemExit as e:
         check(f"讀原版失敗:{e}", False)
 

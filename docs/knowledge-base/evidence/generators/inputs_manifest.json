@@ -34941,6 +34941,17 @@
     ]
    }
   },
+  "ev_s264": {
+   "outputs": [
+    "static_s264_lower_bound_gaps_20261114.json"
+   ],
+   "inputs": {
+    "{GAME}/FD2.EXE": [
+     509158,
+     "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"
+    ]
+   }
+  },
   "ev_s65": {
    "outputs": [
     "collect_targets_selector_20261001.json",

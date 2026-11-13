@@ -14834,3 +14834,60 @@ doc35 §1 的「descriptor = `0x52388`」與 `0x28c57` 不符本 EXE(新節已�
 - 補 (10am) 後的完整窮舉(2026-11-13 23:34 – 11-14 02:32,`--exhaustive --tool verify_data_lower_bounds.py`):可達 424 個、抓到 409、已登錄等價 15,**歸零**(未登錄的可達逃逸 0、登錄錯誤 0、過期 0、落點無法追蹤 0、基準失敗 0),rc=0。
 - data_map 沒改;覆蓋率不變。
 - 未跑:verify_all_tools、run_all。
+
+## 2026-11-14 續二百六十四:未完成項目盤點 —— 補跑 verify_all_tools / run_all、`0x5417c` 第 26 byte 與 `0x52387` 值流證明(`ev_s264`)、`verify_data_types` 區塊內暫存器常數
+
+起因:使用者「還有哪些未完成? 請依照你的建議將每項都優化完善」。盤點 doc98 續二百六十一 .. 二百六十三的「仍未證」、「只記錄」與每節結尾的「未跑」,逐項處理如下。
+
+### (1) verify_all_tools、run_all 補跑(續二百四十三起每節都寫「未跑」)
+
+- `python tools/verify_all_tools.py`(2026-11-14 02:41–02:58):PASS 822、FAIL 0、WARN 3、SKIP 105、INFO 52,rc=0。3 個 WARN 都不是缺陷:`extract_event_id_groups.py`「no usage guard」與 `audit_evidence_provenance.py` 提及 `ANI.DAT` / `FD2.EXE` 是本檔「兩個 WARN 查證後都不是缺陷」一節已查過的;`verify_tool_hygiene.py` 提及 `remake/only-mark` 是它自己 selftest 的假資料字串(`one_mark.write_text(…"remake/only-mark"…)`),不是開檔。
+- `python docs/knowledge-base/evidence/generators/run_all.py`(02:41–03:04):**91/91 IDENTICAL**,rc=0。加入 `ev_s264` 後 `run_all.py ev_s264` 1/1 IDENTICAL。
+
+### (2) `0x5417c` 第 26 byte —— 證到 26(對任何 time_t 與時區)
+
+續二百六十三記錄的前提是「tm 欄位在範圍內」。逐條讀 Watcom 函式庫(名稱由 `function_inventory.load_watcom()` 對到 `_localtime` `0x3fee0`、`__brktime` `0x47525`、`__isindst` `0x476c1`)後發現這個前提**不需要執行期資料**:
+
+- `__brktime(days0 = 0x63df, t, tz, tm)` 全部用無號 `div`:時 = (X % 86400) / 3600、分、秒由除數得上限 23 / 59 / 59;days = 0x63df + X // 86400(t < 12 小時且 tz > 0 的路徑再 −1),X 是 32 位元無號,所以 days ∈ [25566, 75277]。年 / 月 / 日由逐條對應指令的 Python 模型跑遍這 49,712 個 days:年 69 .. 206、月 0 .. 11、日 1 .. 31,星期 = (days + 1) % 7。模型另與真實曆法(`datetime`)逐日比對:到 2101-06-01 全部相同,之後 Watcom 以 (y − 1) // 4 估閏年、沒扣 2100 年,日期晚一天(1,712 天;星期仍對)—— 不影響範圍,但把模型與指令的對應釘住(變異「年迴圈少扣 1」靠這個對照才抓到)。
+- `__isindst` 的 tm 指標在 ebx,寫記憶體只有區域變數與 tm+0x20(tm_isdst);ebx 只推給比較函式 `0x47922`(只讀)。所以 asctime 讀的欄位全部來自 `__brktime` 最後一次寫入。
+- asctime(`0x3ff8b`)寫進靜態字串 `0x54394`:名稱取自 [`0x51804`, `0x5183d`)(3 張 × 12 月、3 張 × 7 星期,沒有 0),數字欄由 `0x3ff4a` 寫 `'0' + div(x, 10)` 的商 / 餘(`0x47952` 是 `cdq` / `idiv`),年寫 `div(年, 100)` 的商 + 19 與餘;固定的空白、冒號、+0x18 `'\n'`、+0x19 0。每個位置可能的值都算出來:**+0 .. +0x18 沒有 0,第一個 NUL 在 +0x19**。
+- strcpy(`0x400cc`)逐 byte 複製到 NUL(NUL 也寫),所以 `0x37dec` 恰好寫 [`0x5417c`, `0x54196`) = 26 byte = data_map size。之後 `0x37df6` 把 +0x18 改成 0。
+- 只在設了 AIL_DEBUG 環境變數時執行(`0x37d3e` AIL_startup 開檔成功才走到);正常遊戲不寫這段。
+- `verify_data_lower_bounds` 的等級仍是 partial(工具只看程式碼定址,不跨進 Watcom 函式庫推字串長度);下限 26 = size 由 partial 等級 + `ev_s264` 共同成立。
+
+### (3) `0x52387` 第 6 byte —— 「5 流到讀取」由既有實機紀錄證明
+
+- [0x53f4a] 的寫入全碼只有 6 處:`0x263b7` 0、`0x2650c` dec(負就設 4)、`0x2651b` 4、`0x2653e` inc(> 4 就設 0)、`0x2654d` 0、`0x26572` 5。5 只來自 `0x26572`:按鍵(edx)等於執行期表 `[[0x53f56] + 2]`、目前選項等於 `[[0x53f56] + 1]` 時設定 —— 條件取自執行期資料,所以靜態證不了路徑可走。
+- `shop_menu` `0x27a4e` / `0x27a53` 以 [0x53f4a] 為索引讀 `0x52387`;EXE 內值 `81 80 00 82 83 84`。
+- 實機:doc58「2026-09-03 三續:★ 秘密商店(selection5)成功開啟」—— 原版 ch02 在酒店前按 Shift+F1,標籤變「？　？　？」,進入後店主與武器店不同(截圖 `docs/figures/secret-shop-ch02-original-dosbox.png`,sha256 7d751ab8…)。這是 [0x53f4a] = 5 時進商店讀到第 6 byte 的直接觀察。
+- `verify_data_lower_bounds` 的等級仍是 value(工具等級只代表程式碼定址,不混入實機);下限 6 = size 由 value 等級 + 本節的實機紀錄共同成立。
+
+`ev_s264.py` 把 (2)(3) 做成證據產生器(`docs/knowledge-base/evidence/static_s264_lower_bound_gaps_20261114.json`):逐條核對引用的指令清單、fixup 目標、表內容、模型範圍、曆法對照、實機紀錄標題與截圖 sha256。`mut_s264.py` 26 個變異全部以 AssertionError 失敗(第一版「年迴圈少扣 1」逃掉,補曆法對照後抓到);`assert_census` 41/41 全部執行到;`inputs_manifest.json` 只多 `{GAME}/FD2.EXE`。
+
+### (4) `0x541f4` 43 byte 之後 —— declared 是最終等級
+
+兩處 sprintf(`0x44762`、`0x44bd8` 呼叫 `0x37b29`)的格式字串都是 `0x51638` / `0x5166c` "Driver could not install timbre bank %u, patch %u\n"(字面 46 字 + 2 個 `%u`):若 `0x37b29` 是標準 sprintf(不在 Watcom 名單,未證),輸出 49 .. 67 byte;strcpy 最長 43 byte。程式寫這段最多 67 byte,256 來自 `ail_api_lock_memory` / `ail_api_unlock_memory` 鎖定的 0x100 —— 沒有程式碼會寫到 256,不會有更高的存取證據。維持 declared。
+data_map `meaning` 的「35 處內嵌 strcpy(rep movsd)」改成「34 處 rep movsd、1 處 `0x4469b` 非 rep 的 movsd / movsw / movsb」(續二百六十三只記錄的那一筆)。
+
+### (5) `verify_data_types`:區塊內暫存器常數
+
+`mov [x], 暫存器` 在同一基本區塊內往回找到 `mov 32 位元暫存器, 立即數` 或 `xor` / `sub` 同一暫存器時,把那個值當立即數核對值域(`reg_const`;來源是 ax / al / ah 時取對應位元)。中間遇到分支 / call / ret / iret / int / loop、跨過區塊開頭(跳躍 / loop 目標與函式內的 fixup 目標,`block_starts`),或寫入者是其他指令就不判定。
+
+- 結果:值域 / 指標寫入核對 260 → **273**(暫存器常數 13 筆,全在值域內),未判定 207 → **194**;92 段失敗 0。全部寫入位址判定出值 38 處(其餘在未宣告值域的段)。
+- 剩下 194 筆:call 在中間 115(值是函式回傳)、其他指令改寫 38(`mov` 由別的來源 21、`add` 6、`idiv` 5、`movzx` 2、`sub` 2、`lea` 1、`sete` 1)、分支 / 區塊開頭 15、讀改寫(`inc` / `dec` / `add [x], r` / `xor`)26。要再往下得做跨函式值分析,不在本輪。
+- selftest 補 (r0a)–(r16):計數、7 個暫存器族 × 32 / 16 / 8 / 高 8 位元、6 種控制流程停止、區塊開頭(寫入本身 / 中間 / 設定指令本身不算)、略過無關寫入、7 種其他改寫、fixup(取目標;只取 al 不判定)、0xffffffff;真實檔 `0x37ea6` → 1、`0x3dbcd` 停在區塊開頭 `0x3dbbf`、38 處、273 / 13 / 194。
+- 突變預檢(新增 / 改動行上的突變點,暫存副本跑完整 selftest、ROOT 指回真實倉庫):第一版 57 個逃 12 個(回傳旗標、迴圈起點、xor / sub 判斷、低 / 高位元取值、`insn()` 的條件);補 (r0a)(r4) 改比對整個 tuple、把多餘的條件化簡後重跑 50 / 50 抓到。
+- 窮舉突變(`--exhaustive --tool verify_data_types.py`,2026-11-14 03:23–04:39):可達 158 個、抓到 158,**歸零**(未登錄的可達逃逸 0、登錄錯誤 0、過期 0、落點無法追蹤 0、基準失敗 0),rc=0。
+- `verify_data_lower_bounds` import 本工具(`load_facts`、`check_region`):以 HEAD 版與目前版 `verify_data_types` 各跑一次 `--verbose`(242 行)與 `--selftest`(161 行,0 失敗),輸出逐位元組相同(真實 FD2.EXE 92 段的等級,含 `0x5417c` partial、`0x52387` value;stderr 確認兩次載入的是不同檔案);它取的只有字串 / 函式指標表的內容證明,不受值域核對影響,所以不重跑它的窮舉。
+
+### (6) 仍未完成(誠實列出)
+
+- `verify_data_types` 未判定寫入 194 筆(上面的分類)。
+- `verify_data_lower_bounds` 迴圈解不出的 63 筆索引存取(capstone 逐指令解碼後索引範圍算不出;全在已證到 size 的段內,不影響下限)。
+- 整體覆蓋:遊戲函式 859 / 1202、全域位址 98 / 900、資料 1160 / 35714 bytes(本輪不變)。
+
+### (7) 驗證
+
+- `re_coverage --check`、`verify_data_types --check`(92 段失敗 0;273 / 13 / 194)、`verify_data_lower_bounds --check`(92 段失敗 0;access 80、content 9、value 1、declared 1、partial 1)。
+- `verify_tool_hygiene`、`audit_evidence_provenance --gate` / `--diff`、`worklist_checklist --check`(未勾 115、錯誤 0)、`verify_selftest_discrimination --selftest` / `--check-registry`(133 筆、過期 0)、`assert_census`(92/92、9/9)、`verify_address_citations --diff`、`verify_address_claim_coverage`、`doc98_index --check`、`git diff --check`:全部 rc=0。
+- 覆蓋率不變(遊戲函式 859 / 1202、資料 1160 / 35714 bytes)。

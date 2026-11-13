@@ -1,0 +1,290 @@
+{
+ "generator": "docs/knowledge-base/evidence/generators/ev_s264.py",
+ "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+ "A_0x5417c": {
+  "claim": "strcpy(0x5417c, asctime(localtime(time()))) 對任何 time_t 與時區都恰好寫 26 byte",
+  "brktime_days_range": [
+   25566,
+   75277
+  ],
+  "tm_year": [
+   69,
+   206
+  ],
+  "tm_mon": [
+   0,
+   11
+  ],
+  "tm_mday": [
+   1,
+   31
+  ],
+  "tm_wday": [
+   0,
+   6
+  ],
+  "calendar_mismatch_from": "2101-06-02",
+  "calendar_mismatch_days": 1712,
+  "tm_hour_max": 23,
+  "tm_min_max": 59,
+  "tm_sec_max": 59,
+  "isdst_memory_writes": [
+   "dword ptr [ebp - 0x10]",
+   "dword ptr [ebp - 0xc]",
+   "dword ptr [ebp - 4]",
+   "dword ptr [ebp - 8]",
+   "dword ptr [ebx + 0x20]"
+  ],
+  "asctime_byte_values": {
+   "+0x0": [
+    70,
+    77,
+    83,
+    84,
+    87
+   ],
+   "+0x1": [
+    97,
+    101,
+    104,
+    111,
+    114,
+    117
+   ],
+   "+0x2": [
+    100,
+    101,
+    105,
+    110,
+    116,
+    117
+   ],
+   "+0x3": [
+    32
+   ],
+   "+0x4": [
+    65,
+    68,
+    70,
+    74,
+    77,
+    78,
+    79,
+    83
+   ],
+   "+0x5": [
+    97,
+    99,
+    101,
+    111,
+    112,
+    117
+   ],
+   "+0x6": [
+    98,
+    99,
+    103,
+    108,
+    110,
+    112,
+    114,
+    116,
+    118,
+    121
+   ],
+   "+0x7": [
+    32
+   ],
+   "+0x8": [
+    32,
+    49,
+    50,
+    51
+   ],
+   "+0x9": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0xa": [
+    32
+   ],
+   "+0xb": [
+    48,
+    49,
+    50
+   ],
+   "+0xc": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0xd": [
+    58
+   ],
+   "+0xe": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53
+   ],
+   "+0xf": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0x10": [
+    58
+   ],
+   "+0x11": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53
+   ],
+   "+0x12": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0x13": [
+    32
+   ],
+   "+0x14": [
+    49,
+    50
+   ],
+   "+0x15": [
+    48,
+    49,
+    57
+   ],
+   "+0x16": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0x17": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+   ],
+   "+0x18": [
+    10
+   ],
+   "+0x19": [
+    0
+   ]
+  },
+  "asctime_first_nul": 25,
+  "strcpy_writes": [
+   "0x5417c",
+   "0x54196"
+  ],
+  "data_map_size": 26
+ },
+ "B_0x52387": {
+  "claim": "[0x53f4a] = 5 只由 0x26572 寫入,shop_menu 0x27a53 以它索引 0x52387;實機秘密商店證明 5 流到讀取",
+  "exe_values": [
+   129,
+   128,
+   0,
+   130,
+   131,
+   132
+  ],
+  "sel_writes": [
+   [
+    "0x263b7",
+    "mov dword ptr [0x3f4a], 0"
+   ],
+   [
+    "0x2650c",
+    "dec dword ptr [0x3f4a]"
+   ],
+   [
+    "0x2651b",
+    "mov dword ptr [0x3f4a], 4"
+   ],
+   [
+    "0x2653e",
+    "inc dword ptr [0x3f4a]"
+   ],
+   [
+    "0x2654d",
+    "mov dword ptr [0x3f4a], 0"
+   ],
+   [
+    "0x26572",
+    "mov dword ptr [0x3f4a], 5"
+   ]
+  ],
+  "gate": [
+   "mov eax, dword ptr [0x3f56]",
+   "movzx ebx, byte ptr [eax + 2]",
+   "cmp edx, ebx",
+   "jne 0x2657c",
+   "movzx eax, byte ptr [eax + 1]",
+   "cmp eax, dword ptr [0x3f4a]",
+   "jne 0x2657c",
+   "mov dword ptr [0x3f4a], 5"
+  ],
+  "read": [
+   "0x27a4e",
+   "0x27a53"
+  ],
+  "live_record": {
+   "doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+   "heading": "### 2026-09-03 三續：★ 秘密商店（selection5）成功開啟",
+   "figure": "docs/figures/secret-shop-ch02-original-dosbox.png",
+   "figure_sha256": "7d751ab8baaacb38e27c5b8038f87dc5ab550f108cd94b042edf78cca525ab99"
+  },
+  "data_map_size": 6
+ }
+}

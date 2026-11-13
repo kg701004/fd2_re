@@ -2405,7 +2405,7 @@
       "size": 256,
       "name": "ail_error_text",
       "type": "char[256](AIL 錯誤訊息緩衝)",
-      "meaning": "AIL 的錯誤訊息:35 處內嵌 strcpy(rep movsd)與 2 處 sprintf 把錯誤字串寫進來,ail_api_lock_memory / ail_api_unlock_memory 以 0x100 bytes 鎖定 / 解鎖,ail_set_default_preferences 清第 0 byte。沒有直接讀它的指令。",
+      "meaning": "AIL 的錯誤訊息:35 處內嵌 strcpy(34 處 rep movsd、0x4469b 一處非 rep 的 movsd / movsw / movsb)與 2 處 sprintf 把錯誤字串寫進來,ail_api_lock_memory / ail_api_unlock_memory 以 0x100 bytes 鎖定 / 解鎖,ail_set_default_preferences 清第 0 byte。沒有直接讀它的指令。",
       "evidence": [
         {
           "func": "0x3f950"
