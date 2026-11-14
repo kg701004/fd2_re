@@ -14891,3 +14891,50 @@ data_map `meaning` 的「35 處內嵌 strcpy(rep movsd)」改成「34 處 rep mo
 - `re_coverage --check`、`verify_data_types --check`(92 段失敗 0;273 / 13 / 194)、`verify_data_lower_bounds --check`(92 段失敗 0;access 80、content 9、value 1、declared 1、partial 1)。
 - `verify_tool_hygiene`、`audit_evidence_provenance --gate` / `--diff`、`worklist_checklist --check`(未勾 115、錯誤 0)、`verify_selftest_discrimination --selftest` / `--check-registry`(133 筆、過期 0)、`assert_census`(92/92、9/9)、`verify_address_citations --diff`、`verify_address_claim_coverage`、`doc98_index --check`、`git diff --check`:全部 rc=0。
 - 覆蓋率不變(遊戲函式 859 / 1202、資料 1160 / 35714 bytes)。
+
+## 2026-11-14 續二百六十五:`verify_data_types` 函式回傳寫入與指標來源宣告核對 —— 未判定 194 → 83
+
+起因:使用者再次「還有哪些未完成? 請依照你的建議將每項都優化完善」。續二百六十四 (6) 的第一項是未判定寫入 194 筆,其中「call 在中間」115 筆最多。逐筆分類(暫存副本腳本,不寫 repo):115 筆裡 111 筆是 `mov [x], eax` 緊接在 `call` 之後(中間只有 `add esp, N` 這類不寫 eax 的指令),值就是函式回傳值;呼叫目標 `0x111ba` load_res 63 筆、`0x3706e` malloc 45 筆、其他 3 筆;其餘 4 筆來源是 esi / ebx / ebp(要跨函式證暫存器保存,本輪不做)。這 111 筆全部落在 `指標` 型別的區段,而這些區段的 `type` 文字本來就寫了來源(「FDOTHER.DAT 第 6 號資源」「malloc 0xfa00」「BG.DAT 第 0 / 1 / 2 號」),從來沒有被機器核對過。
+
+### (1) 工具:函式回傳與參數
+
+- `call_source`:`mov [m], eax` 在同一基本區塊內往回,eax 最後一次被寫入是 `call 立即數` → 回傳 (呼叫目標, 參數)。中間有寫 eax(含 ax / al / ah)的指令、其他控制流程、區塊開頭、間接 call 就不判定。
+- `call_args`:call 前同一區塊內往回取 argc(function_inventory)個 push,cdecl 由右至左,最後一個 push 是第 1 個參數;push 立即數取 fixup 目標、push 暫存器以 `reg_value`(由 `reg_const` 抽出的往回找常數核心,行為不變)找區塊內常數、push 記憶體是變數。中間有控制流程、區塊開頭,或 `add esp` / `pop` / `sub esp` 這類改 esp 的指令就不取(那些 push 可能屬於別次呼叫)。
+- 報告多「函式回傳 N 筆」一欄:**不算未判定,也不算值域核對**(回傳值本身不核)。
+
+### (2) 工具:指標的來源宣告
+
+`source_claims` 從指標 `type` 取三種宣告:檔名(`X.DAT`,或 FD 開頭的裸名 `FDOTHER` → `FDOTHER.DAT`)、資源號(`第 N 號` / `第 N 條` / `第 80 或 88 號` / `第 0 / 1 / 2 號`,依序)、malloc 大小(`malloc(0x20)` / `malloc 0xfa00`)。`check_sources` 對該段的函式回傳寫入核對,每一項都會說不:
+
+- load_res 寫入的第 1 個參數(fixup 指向的 C 字串)必須是宣告的檔名之一;
+- load_res 的第 3 個參數是常數時必須是宣告的號碼;陣列且號碼數 = 元素數時第 k 格必須是第 k 個號碼(`0x5413f` 三格 = BG.DAT 0 / 1 / 2);
+- malloc 的常數大小必須是宣告的大小;
+- 宣告的每個號碼、每個大小都至少要有一個寫入點(只寫在說明裡、程式碼沒有的號碼會失敗)。
+
+宣告沒寫號碼的段只核檔名(`0x53a85` 的頭像號由 `movzx` 從執行期記錄 / 表取得、`0x54153` 的號碼來自堆疊上的表,本來就不是常數)。參數取不到或不是常數、宣告沒寫的函式種類(`0x53a5d` 的 decode_tileset_to_sheet、`0x53a55` 的 malloc(0x8a3))、宣告了檔名但沒有 load_res 寫入點(`0x53a61` FDICON 是 malloc(0x32a00) 的快取)只記錄「未核對」,不算通過也不算失敗。load_res / malloc 以命名表(`function_inventory.real_names()`)的名稱認,不寫死位址。
+
+data_map 只改一處:`0x53a49` type「456 × 336(0x25680 bytes)」→「456 × 336(malloc 0x25680 bytes)」(game_main 與 5 個戰鬥演出共 6 處 `push 0x25680; call malloc` 寫回 [0x53a49],meaning 原本就這樣寫),讓這個大小也被核對。
+
+### (3) 結果
+
+- 值域 / 指標寫入:立即數核對 273(暫存器常數 13)不變;**函式回傳 111**;**未判定 194 → 83**;92 段失敗 0。
+- 來源宣告 24 段、參數核對 120 項,全部相符:例如 `0x25d2e` = load_res("FDOTHER.DAT", [0x53ad1], 6)、`0x17e23` = malloc(0xfa00)、`0x2fb60` 的第 0 號是 `push ebp`,由區塊內 `0x2fb3d xor ebp, ebp` 得到 0、`0x53b13` 兩處分別載第 80、88 號、`0x53eec` 第 31 號、`0x53a7d` FDTXT.DAT 第 0 條。
+- 剩下 83 筆:讀改寫(`inc` / `dec` / `add [x], r` / `xor`)26、其他指令改寫 38(`mov` 由別的來源 21、`add` 6、`idiv` 5、`movzx` 2、`sub` 2、`lea` 1、`sete` 1)、分支 / 區塊開頭 15、call 之後來源不是 eax 4(`0x24c54` esi / `0x1dd8f` ebx / `0x1dd9a` esi / `0x2679f` ebp)。
+
+### (4) 驗證
+
+- selftest 補 (c1)–(c9)(call_source / call_args:參數順序、fixup、暫存器常數、記憶體、5 種取不到參數的情況、4 種不判定)、(s1)–(s14b)(文法、檔名 / 號碼 / 陣列逐格(3 格與 2 格)/ 多號碼 / malloc 的相符與失敗、只記錄的三種情況與記錄的確切筆數、字串讀取與映像尾端邊界),真實檔:111 / 83、24 段 / 120 項、三個已知呼叫點,以及**改錯真實 type 一處必須失敗**的 6 個對照(第 6 號 → 7、malloc 0xfa00 → 0xfa01、BG 號碼順序對調、DATO → FDOTHER、第 80 → 81、malloc 0x25680 → 0x25681)。共 130 項 PASS。
+- 突變預檢(相對 HEAD 新增 / 改動行上的突變點,暫存副本跑完整 selftest、ROOT 指回真實倉庫):第一版 61 個逃 11 個(`_cstr` 的長度上限與 range 邊界、「未核對」記錄的筆數、`loads` 的比較、陣列逐格條件 `> 1`);補 (s4) 比對 note 為空、(s7)(s12)(s13) 比對確切記錄文字、(s9b) 2 格陣列、(s13b) malloc 變數、(s14b) 32 byte 邊界與映像尾端後重跑這 11 個,全部抓到。
+- `verify_data_lower_bounds` import 本工具:HEAD 版與目前版 `verify_data_types` 各跑 `--verbose`(242 行)與 `--selftest`(161 行,0 失敗),輸出逐位元組相同(真實 FD2.EXE 92 段的等級;stderr 確認兩次載入的是不同檔案)。
+- `verify_selftest_discrimination --exhaustive --tool verify_data_types.py`:可達突變 213 / 213 抓到(其餘 0 個落在 selftest 執行不到的行),窮舉結論歸零(未登錄的可達逃逸 0、登錄錯誤 0、過期 0、落點無法追蹤 0、基準失敗 0),rc=0。`verify_data_lower_bounds` 的輸出不變(上一項),不重跑它的窮舉。
+
+### (5) 仍未完成(誠實列出)
+
+- `verify_data_types` 未判定寫入 83 筆(上面 (3) 的分類);其中 call 之後來源不是 eax 的 4 筆要跨函式證暫存器保存(callee 有沒有改 esi / ebx / ebp)才能判定。
+- `verify_data_lower_bounds` 迴圈解不出的 63 筆索引存取(不變)。
+- 整體覆蓋:遊戲函式 859 / 1202、全域位址 98 / 900、資料 1160 / 35714 bytes(本輪不變)。
+
+### (6) 驗證
+
+- `re_coverage --check`、`verify_data_types --check`(92 段失敗 0;273 / 13 / 111 / 83;來源宣告 24 段 / 120 項)、`verify_data_lower_bounds --check`(92 段失敗 0)。
+- `verify_tool_hygiene`(66 筆全為永久豁免)、`audit_evidence_provenance --gate` / `--diff`、`worklist_checklist --check`(未勾 115、錯誤 0)、`verify_selftest_discrimination --selftest` / `--check-registry`(133 筆、過期 0)、`assert_census`(92/92、9/9)、`verify_address_citations --diff`、`verify_address_claim_coverage`、`doc98_index --check`、`git diff --check`:全部 rc=0。

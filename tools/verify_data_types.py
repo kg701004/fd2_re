@@ -30,6 +30,13 @@
             (見 `reg_const`)時,同樣核對;其餘暫存器來源、`inc` / `add` 等讀改寫只計數為「未判定寫入」,
             不當作通過。指標型別不做值域。
 * 指標      `指標`:立即數寫入只能是 0,或立即數本身有 fixup(指向程式自己的位址)。
+* 函式回傳  `mov [x], eax` 在同一基本區塊內往回,eax 最後由 `call 立即數` 寫入(`call_source`)時,值是那個函式的
+            回傳值:另計「函式回傳」,不算未判定,也不算值域核對(回傳值本身不核)。呼叫的參數由 call 前的 push 取得
+            (`call_args`)。
+* 來源宣告  指標 `type` 寫了 `X.DAT` / `FDOTHER`(檔名)、`第 N 號` / `第 N 或 M 號` / `第 0 / 1 / 2 號`(資源號)、
+            `malloc 0xN`(大小)時(`source_claims`):load_res 寫入的第 1 個參數(fixup 指向的字串)必須是宣告的檔名,
+            常數的第 3 個參數必須是宣告的號碼(陣列且號碼數 = 元素數時逐格對應),malloc 的常數大小必須是宣告的大小;
+            宣告的每個號碼與大小都要至少有一個寫入點。load_res / malloc 以命名表的名稱認,不寫死位址。
 * 初值      每段報告初值來源:`file`(EXE 檔內頁)、`zeroed`(落在 `_cstart_` 以 `rep stosd` 清零的
             [edi, ecx) 範圍,範圍由 `_cstart_` 的指令現算,不寫死)、`none`(兩者皆非,初值未定)。
 
@@ -38,6 +45,8 @@
 * 跨基本區塊(中間有分支、call、跳躍目標)或由其他指令算出的暫存器來源寫入值、索引定址但基底不是區段起點的存取、
   動態上限(`0 .. 地圖寬 − 13`)、語意性的說明文字。
 * 值域只檢查立即數寫入:通過代表「程式碼裡寫死的值都合法」,不代表執行期不會出現別的值。
+* 函式回傳的值本身(例如 malloc 回傳的是不是有效指標)、跨函式的暫存器保存、load_res / malloc 以外的呼叫目標的參數;
+  參數不是常數(例如 `DATO.DAT` 的頭像號來自單位記錄)時只記錄「未核對」。
 
 用法
 ----
@@ -151,6 +160,10 @@ def parse_type(t: str, size: int) -> dict:
     fm = _FLAGS_AS.search(rest)
     if c["pointer"] and fm:
         c["pointer_flags"] = {int(x) for x in re.findall(r"\d+", fm.group(1))}
+    if c["pointer"]:
+        sc = source_claims(rest)
+        if any(sc.values()):
+            c["source"] = sc
     if not c["pointer"]:
         vals, rng, upper = _values(rest)
         if vals is not None or rng is not None or upper is not None:
@@ -204,13 +217,20 @@ def reg_const(seq: list, i: int, targets: set[int],
     Returns:
         (值或 None, 值有沒有 fixup, 不判定的原因;判定成功時是 "")。
     """
-    from capstone.x86 import X86_OP_IMM, X86_OP_REG
+    from capstone.x86 import X86_OP_REG
 
     x = seq[i]
     ops = x.operands
     if x.mnemonic != "mov" or len(ops) != 2 or ops[1].type != X86_OP_REG:
         return None, False, "不是 mov [m], 暫存器"
-    src = x.reg_name(ops[1].reg)
+    return reg_value(seq, i, x.reg_name(ops[1].reg), targets, imm_of)
+
+
+def reg_value(seq: list, i: int, src: str, targets: set[int],
+              imm_of: Callable[[object], tuple[int | None, bool]]) -> tuple[int | None, bool, str]:
+    """seq[i] 讀暫存器 src(`mov [m], src`、`push src`):同一基本區塊內往回找 src 的值;規則見 reg_const。"""
+    from capstone.x86 import X86_OP_IMM, X86_OP_REG
+
     fam = FAMILY.get(src)
     if fam is None:
         return None, False, f"來源 {src} 不是通用暫存器"
@@ -255,6 +275,180 @@ def block_starts(seq: list, lo: int, hi: int, fixup_targets: set[int]) -> set[in
     return tg
 
 
+# 參數:(值或 None, 值有沒有 fixup, 來源說明)
+Arg = tuple[int | None, bool, str]
+
+
+def call_source(seq: list, i: int, targets: set[int], imm_of: Callable[[object], tuple[int | None, bool]],
+                argc_of: Callable[[int], int | None]) -> tuple[int | None, list[Arg] | None, str]:
+    """seq[i] 是 `mov [m], eax`:同一基本區塊內往回,eax 最後一次被寫入是 `call 立即數` 時,值就是那個函式的回傳值。
+
+    中間的指令不得寫 eax(含 ax / al / ah)、不得是其他控制流程、不得跨過區塊開頭;否則不判定。
+    找到 call 後以 call_args 取它的參數(argc 不明或取不到時參數是 None,呼叫目標照樣回傳)。
+
+    Returns:
+        (呼叫目標或 None, 參數清單或 None, 不判定的原因;判定成功時是 "")。
+    """
+    from capstone.x86 import X86_OP_IMM, X86_OP_REG
+
+    x = seq[i]
+    ops = x.operands
+    if (x.mnemonic != "mov" or len(ops) != 2 or ops[1].type != X86_OP_REG
+            or x.reg_name(ops[1].reg) != "eax"):
+        return None, None, "不是 mov [m], eax"
+    members = {r for r, f in FAMILY.items() if f == "eax"}
+    for k in reversed(range(i)):
+        if seq[k + 1].address in targets:
+            return None, None, f"{hex(seq[k + 1].address)} 是區塊開頭"
+        y = seq[k]
+        if y.mnemonic == "call":
+            if y.operands[0].type != X86_OP_IMM:
+                return None, None, f"{hex(y.address)} 間接 call"
+            t = y.operands[0].imm
+            n = argc_of(t)
+            return t, None if n is None else call_args(seq, k, n, targets, imm_of), ""
+        if y.mnemonic.startswith(FLOW):
+            return None, None, f"{hex(y.address)} {y.mnemonic} 在中間"
+        if {y.reg_name(r) for r in y.regs_access()[1]} & members:
+            return None, None, f"{hex(y.address)} {y.mnemonic} 改寫 eax"
+    return None, None, "往回到函式開頭沒有 call"
+
+
+def call_args(seq: list, c: int, n: int, targets: set[int],
+              imm_of: Callable[[object], tuple[int | None, bool]]) -> list[Arg] | None:
+    """seq[c] 是 call:同一基本區塊內往回取最後 n 個 push 當參數(cdecl 由右至左 push,最後一個 push 是第 1 個)。
+
+    push 立即數取 imm_of(有 fixup 時是目標)、push 暫存器以 reg_value 往回找常數、push 記憶體是變數(值 None)。
+    中間遇到控制流程、區塊開頭,或 push 以外改動 esp 的指令(`add esp`、`pop`、`sub esp`)就不取(回傳 None):
+    那些 push 可能不屬於這次呼叫。
+    """
+    from capstone.x86 import X86_OP_IMM, X86_OP_REG
+
+    out: list[Arg] = []
+    for k in reversed(range(c)):
+        if len(out) == n:
+            break
+        if seq[k + 1].address in targets:
+            return None
+        y = seq[k]
+        if y.mnemonic.startswith(FLOW):
+            return None
+        if y.mnemonic == "push":
+            op = y.operands[0]
+            if op.type == X86_OP_IMM:
+                v, fx = imm_of(y)
+                out.append((None if v is None else v & 0xFFFFFFFF, fx, "立即數"))
+            elif op.type == X86_OP_REG:
+                v, fx, why = reg_value(seq, k, y.reg_name(op.reg), targets, imm_of)
+                out.append((v, fx, why or "暫存器常數"))
+            else:
+                out.append((None, False, "記憶體"))
+            continue
+        if "esp" in {y.reg_name(r) for r in y.regs_access()[1]}:
+            return None
+    return out if len(out) == n else None
+
+
+# ---------------------------------------------------------------- 指標的來源宣告
+
+_SRC_FILE = re.compile(r"(?<![A-Za-z0-9_])([A-Z][A-Z0-9]{1,7}\.DAT|FD[A-Z]{2,6})(?![A-Za-z0-9_.])")
+_SRC_MALLOC = re.compile(r"malloc ?\(?(0x[0-9a-f]+)")
+_SRC_INDEX = re.compile(r"第 (\d+(?: ?(?:/|或) ?\d+)*) ?(?:號|條)")
+# 來源宣告核對的兩種呼叫目標(以命名表的名稱認,不寫死位址)
+LOAD_RES = "load_res"
+MALLOC = "malloc"
+
+
+def source_claims(t: str) -> dict:
+    """指標型別說明文字裡的來源宣告:{"files": {檔名}, "malloc": {大小}, "index": [資源號, …]};沒有就是空的。
+
+    檔名是 `X.DAT`,或 FD 開頭的裸名(`FDOTHER` → `FDOTHER.DAT`);`malloc(0x20)` / `malloc 0xfa00` 是配置大小;
+    `第 N 號` / `第 N 條` / `第 0 / 1 / 2 號` / `第 80 或 88 號` 是資源號(依出現順序)。
+    """
+    files = {f if f.endswith(".DAT") else f + ".DAT" for f in _SRC_FILE.findall(t)}
+    m = _SRC_INDEX.search(t)
+    return {"files": files, "malloc": {int(x, 16) for x in _SRC_MALLOC.findall(t)},
+            "index": [int(x) for x in re.findall(r"\d+", m.group(1))] if m else []}
+
+
+def _cstr(f: "Facts", a: int, limit: int = 32) -> str | None:
+    """a 處的 C 字串(latin-1);limit byte 內沒有 NUL 或不在檔內頁時回傳 None。"""
+    for n in range(limit, 0, -1):
+        b = f.image(a, n)
+        if b is not None:
+            return b.split(b"\0")[0].decode("latin-1") if b"\0" in b else None
+    return None
+
+
+def check_sources(c: dict, calls: list[tuple[int, int, int | None, list[Arg] | None]], f: "Facts",
+                  where: str, res: dict) -> None:
+    """把 `source_claims` 對函式回傳寫入核對;結果寫進 res["fail"] / res["note"] / res["src_checked"]。
+
+    calls 元素是 (寫入指令, 元素索引, 呼叫目標, 參數)。每一項都會說不:
+    * 檔名:每個 load_res 寫入的第 1 個參數(fixup 指向的 C 字串)必須是宣告的檔名之一。
+    * 資源號:load_res 的第 3 個參數是常數時必須在宣告裡;陣列且資源號個數 = 元素數時,第 k 格必須是第 k 個號碼;
+      宣告的每個號碼都要有載入點。
+    * malloc:常數大小必須在宣告裡;宣告的每個大小都要有配置點。
+    參數取不到或不是常數的只記錄,不算通過也不算失敗。
+    """
+    sc = c.get("source")
+    if not sc:
+        return
+    seen_idx: set[int] = set()
+    seen_size: set[int] = set()
+    vague = 0
+    other = 0
+    loads = 0
+    for ins, k, callee, args in calls:
+        name = f.names.get(callee) if callee is not None else None
+        if (name not in (LOAD_RES, MALLOC) or (name == MALLOC and not sc["malloc"])
+                or (name == LOAD_RES and not sc["files"] and not sc["index"])):
+            other += 1
+            continue
+        loads += name == LOAD_RES
+        if args is None:
+            vague += 1
+            continue
+        if name == LOAD_RES:
+            fv, ffx, _how = args[0]
+            fname = _cstr(f, fv) if ffx and fv is not None else None
+            if sc["files"]:
+                res["src_checked"] += 1
+                if fname is None:
+                    vague += 1
+                elif fname.upper() not in sc["files"]:
+                    res["fail"].append(f"{where}: {hex(ins)} 由 load_res 載入 {fname!r},type 寫的是 {sorted(sc['files'])}")
+            iv, ifx, _how = args[2]
+            if sc["index"]:
+                res["src_checked"] += 1
+                if iv is None or ifx:
+                    vague += 1
+                    continue
+                seen_idx.add(iv)
+                want = ([sc["index"][k]] if c["count"] == len(sc["index"]) > 1 else sc["index"])
+                if iv not in want:
+                    res["fail"].append(f"{where}: {hex(ins)} 載入第 {iv} 號(第 {k} 格),type 寫的是 {want}")
+        elif sc["malloc"]:
+            res["src_checked"] += 1
+            sv, sfx, _how = args[0]
+            if sv is None or sfx:
+                vague += 1
+                continue
+            seen_size.add(sv)
+            if sv not in sc["malloc"]:
+                res["fail"].append(f"{where}: {hex(ins)} malloc({hex(sv)}),type 寫的是 {[hex(x) for x in sorted(sc['malloc'])]}")
+    for i in sorted(set(sc["index"]) - seen_idx):
+        res["fail"].append(f"{where}: type 寫第 {i} 號,但沒有任何 load_res 寫入點載入它")
+    for s in sorted(sc["malloc"] - seen_size):
+        res["fail"].append(f"{where}: type 寫 malloc {hex(s)},但沒有任何寫入點以這個大小配置")
+    if vague:
+        res["note"].append(f"來源宣告:{vague} 個參數不是常數或取不到,未核對")
+    if other:
+        res["note"].append(f"來源宣告:{other} 筆回傳來自宣告沒寫的函式種類,未核對")
+    if sc["files"] and not loads:
+        res["note"].append(f"來源宣告:檔名 {sorted(sc['files'])} 沒有 load_res 寫入點,未核對")
+
+
 # ---------------------------------------------------------------- 原版事實
 
 class Facts:
@@ -270,12 +464,16 @@ class Facts:
             立即數就是那個值。
         regions: 已登錄區段 [(start, end)]。
         reg_src: 寫入位址 → reg_const 的結果(只用來把核對數拆成「立即數 / 暫存器常數」報告)。
+        call_src: 寫入位址 → (呼叫目標, 參數或 None):`mov [m], eax` 的值是那個函式的回傳值(call_source)。
+        names: 呼叫目標 → 函式名稱(命名表;來源宣告只認 load_res / malloc)。
     """
 
     def __init__(self, image: Callable[[int, int], bytes | None], zeroed: list[tuple[int, int]],
                  fixups: dict[int, int], entries: set[int], accesses: list | tuple,
                  insn: Callable[[int], Insn], regions: list[tuple[int, int]],
-                 reg_src: dict[int, tuple[int | None, bool, str]] | None = None) -> None:
+                 reg_src: dict[int, tuple[int | None, bool, str]] | None = None,
+                 call_src: dict[int, tuple[int, list[Arg] | None]] | None = None,
+                 names: dict[int, str] | None = None) -> None:
         self.image = image
         self.zeroed = zeroed
         self.fixups = fixups
@@ -284,6 +482,8 @@ class Facts:
         self.insn = insn
         self.regions = regions
         self.reg_src = reg_src or {}
+        self.call_src = call_src or {}
+        self.names = names or {}
 
 
 def find_zeroed(insns: list[tuple[int, str, str, int | None]]) -> list[tuple[int, int]]:
@@ -326,7 +526,8 @@ def check_region(r: dict, f: Facts) -> dict:
     size = r["size"]
     end = start + size
     c = parse_type(r.get("type", ""), size)
-    res: dict = {"claim": c, "fail": [], "note": [], "imm_checked": 0, "via_reg": 0, "undetermined": 0, "narrow": []}
+    res: dict = {"claim": c, "fail": [], "note": [], "imm_checked": 0, "via_reg": 0, "undetermined": 0, "narrow": [],
+                 "call_ret": 0, "src_checked": 0}
     src, init = init_source(f, start, size)
     res["init"] = src
     if c["kind"] == "unparsed":
@@ -387,9 +588,14 @@ def check_region(r: dict, f: Facts) -> dict:
             if v != c["const_value"]:
                 res["fail"].append(f"{where}: 宣告常數 {c['const_value']},EXE 檔內值 {v}")
 
-    # 值域與指標的立即數寫入
+    # 值域與指標的立即數寫入;函式回傳的寫入另計,並對 type 的來源宣告核對
+    calls: list[tuple[int, int, int | None, list[Arg] | None]] = []
     for ins, t, width, rw in writes:
         mn, imm, imm_fx = f.insn(ins)
+        if mn == "mov" and imm is None and ins in f.call_src:
+            res["call_ret"] += 1
+            calls.append((ins, (t - start) // c["elem"], *f.call_src[ins]))
+            continue
         if mn != "mov" or imm is None:
             res["undetermined"] += 1
             continue
@@ -406,6 +612,7 @@ def check_region(r: dict, f: Facts) -> dict:
                 res["fail"].append(f"{where}: {hex(ins)} 寫入立即數 {v}({hex(v)}),不在宣告值域內")
         else:
             res["undetermined"] += 1
+    check_sources(c, calls, f, where, res)
     res["note"] = [n for n in res["note"] if n]
     return res
 
@@ -449,10 +656,12 @@ def load_facts() -> tuple[Facts, list[dict]]:
     # `mov [m], 暫存器` 的寫入位址:在所屬函式(inventory 入口 .. span_upper)內以 reg_const 往回找常數
     fx_all = disasm_le.build_fixups(exe, meta, None)
     fx_targets = set(fx_all.values())
-    inv = sorted((int(e["addr"], 16), e["span_upper"])
-                 for e in json.loads(R.INVENTORY.read_text(encoding="utf-8"))["entries"])
+    inv_entries = json.loads(R.INVENTORY.read_text(encoding="utf-8"))["entries"]
+    inv = sorted((int(e["addr"], 16), e["span_upper"]) for e in inv_entries)
+    argc = {int(e["addr"], 16): e.get("argc") for e in inv_entries}
     sites = sorted({ins for ins, _t, _w, rw, kind, _ix in w["ctx"].accesses if kind == "mem" and "w" in rw})
     reg_src: dict[int, tuple[int | None, bool, str]] = {}
+    call_src: dict[int, tuple[int, list[Arg] | None]] = {}
     cache: dict[int, tuple[list, dict[int, int], set[int]]] = {}
     for a in sites:
         owner = [(e, n) for e, n in inv if e <= a < e + n]
@@ -465,6 +674,11 @@ def load_facts() -> tuple[Facts, list[dict]]:
         seq, pos, tg = cache[e]
         if a in pos:
             reg_src[a] = reg_const(seq, pos[a], tg, imm_of)
+            if reg_src[a][0] is None:
+                callee, args, _why = call_source(seq, pos[a], tg, imm_of, argc.get)
+                if callee is not None:
+                    call_src[a] = (callee, args)
+    names = {a: n for a, n in FI.real_names().items() if a in {v[0] for v in call_src.values()}}
 
     def insn(a: int) -> Insn:
         x = next(md.disasm(code[a - cbase:], a), None)
@@ -486,7 +700,7 @@ def load_facts() -> tuple[Facts, list[dict]]:
     if not zeroed:
         raise SystemExit("在 _cstart_ 找不到 rep stosd 清零範圍")
     regions = [(int(r["start"], 16), int(r["start"], 16) + r["size"]) for r in dm["regions"]]
-    facts = Facts(image, zeroed, fx_all, set(w["funcs"]), w["ctx"].accesses, insn, regions, reg_src)
+    facts = Facts(image, zeroed, fx_all, set(w["funcs"]), w["ctx"].accesses, insn, regions, reg_src, call_src, names)
     return facts, dm["regions"]
 
 
@@ -509,7 +723,11 @@ def print_report(facts: Facts, out: list[tuple[dict, dict]], verbose: bool) -> i
     ranged = [(r, x) for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
     print(f"  值域 / 指標宣告 {len(ranged)} 段:立即數寫入核對 {sum(x['imm_checked'] for _r, x in ranged)} 筆"
           f"(其中區塊內暫存器常數 {sum(x['via_reg'] for _r, x in ranged)} 筆)、"
+          f"函式回傳 {sum(x['call_ret'] for _r, x in ranged)} 筆、"
           f"未判定寫入 {sum(x['undetermined'] for _r, x in ranged)} 筆")
+    srcd = [(r, x) for r, x in out if x["claim"].get("source")]
+    print(f"  來源宣告(load_res 檔名 / 資源號、malloc 大小) {len(srcd)} 段:參數核對 "
+          f"{sum(x['src_checked'] for _r, x in srcd)} 項")
     print(f"  常數宣告 {sum(1 for _r, x in out if x['claim'].get('const'))} 段;"
           f"字串 {kinds.get('cstring', 0)} 段;函式指標表 {kinds.get('fptr_table', 0)} 段")
     print(f"  窄存取(寬度小於元素,不算失敗) {sum(len(x['narrow']) for _r, x in out)} 筆,"
@@ -523,7 +741,8 @@ def print_report(facts: Facts, out: list[tuple[dict, dict]], verbose: bool) -> i
                 extra = f" 值域 set={sorted(a['set']) if a['set'] is not None else None} range={a['range']} " \
                         f"upper={a['upper']} 哨兵={sorted(a['sentinel'])}"
             print(f"{r['start']:>8} {r['size']:4d} {c['kind']:10} init={x['init']:6} 立即數 {x['imm_checked']} "
-                  f"(暫存器 {x['via_reg']}) 未判定 {x['undetermined']} 窄 {len(x['narrow'])}{extra}")
+                  f"(暫存器 {x['via_reg']}) 回傳 {x['call_ret']}(來源核對 {x['src_checked']}) "
+                  f"未判定 {x['undetermined']} 窄 {len(x['narrow'])}{extra}")
             for n in x["note"]:
                 print(f"           {n}")
             for e in x["fail"]:
@@ -565,6 +784,8 @@ def selftest() -> int:
     mem[0:7] = b"BG.DAT\0"
     mem[0x10:0x14] = struct.pack("<I", 13)
     mem[0x20:0x22] = b"\xfa\0"
+    mem[0x180:0x1a0] = b"A" * 32                        # _cstr:第 33 byte 才是 NUL
+    mem[0x1fd:0x1ff] = b"AA"                            # _cstr:映像最後 3 byte = "AA\0"
 
     def image(a: int, n: int) -> bytes | None:
         if 0x1000 <= a and a + n <= 0x1200:
@@ -774,6 +995,113 @@ def selftest() -> int:
     check("(r16) 區塊開頭 = jmp / loop 立即數目標 + 函式內 fixup 目標(含下界、不含上界);jmp eax 不算",
           block_starts(seq, 0x100, 0x107, {0xFF, 0x100, 0x105, 0x107}) == {0x104, 0x102, 0x100, 0x105})
 
+    # 函式回傳:call_source / call_args(push 0x20;call 0x200;add esp, 4;mov [0x2000], eax)
+    def cs_(hexs: str, argc: dict[int, int] | None = None, targets: set[int] | None = None,
+            fxs: dict[int, int] | None = None) -> tuple[int | None, list | None, str]:
+        seq = list(cs.disasm(bytes.fromhex(hexs), 0x100))
+        assert sum(x.size for x in seq) == len(hexs) // 2, hexs
+
+        def imm(x: object) -> tuple[int | None, bool]:
+            v = next((op.imm for op in x.operands if op.type == X86_OP_IMM), None)
+            site = x.address + x.imm_offset
+            return (fxs[site], True) if fxs and site in fxs else (v, False)
+        return call_source(seq, len(seq) - 1, targets or set(), imm, (argc if argc is not None else {0x200: 1}).get)
+
+    call200 = "e8f9000000"                              # 位於 0x102 時 → 0x200
+    check("(c1) push 0x20;call;add esp;mov [m], eax → (0x200, [0x20])",
+          cs_("6a20" + call200 + "83c404" + st) == (0x200, [(0x20, False, "立即數")], ""))
+    check("(c2) argc 不明 → 目標照回、參數 None", cs_("6a20" + call200 + "83c404" + st, argc={}) == (0x200, None, ""))
+    check("(c3) call 與寫入之間改寫 eax(inc / mov eax, 5 / mov al)→ 不判定",
+          all(cs_("6a20" + call200 + mid + st)[0] is None for mid in ("40", "b805000000", "b005")))
+    check("(c4) 之間有分支 / 寫入是區塊開頭 / 間接 call / 來源不是 eax → 不判定",
+          cs_("6a20" + call200 + "eb00" + st)[0] is None
+          and cs_("6a20" + call200 + "83c404" + st, targets={0x10a})[0] is None
+          and cs_("6a20" + "ffd0" + st)[0] is None
+          and cs_("6a20" + call200 + "891d00200000")[0] is None)
+    check("(c5) 之間改寫別的暫存器 → 略過,仍是 0x200",
+          cs_("6a20" + call200 + "8b1d00300000" + st)[0] == 0x200)
+    check("(c6) 往回到開頭沒有 call → 不判定", cs_("b805000000" + st)[0] is None)
+    # 3 個參數:push [m];push ebx(mov ebx, 7);push 0x1000(fixup → 0x51a4d);call
+    three = "bb07000000" + "ff3500300000" + "53" + "6800100000" + "e8ea000000" + st
+    got = cs_(three, argc={0x200: 3}, fxs={0x10d: 0x51a4d})
+    check("(c7) 參數順序 = 最後一個 push 是第 1 個;立即數 fixup 取目標;暫存器常數;記憶體是變數",
+          got == (0x200, [(0x51a4d, True, "立即數"), (7, False, "暫存器常數"), (None, False, "記憶體")], ""))
+    check("(c8) push 之間有 add esp / pop / 分支 / 區塊開頭,或 push 不夠 → 參數 None",
+          all(cs_(h, argc={0x200: 2}, targets=tg)[1] is None and cs_(h, argc={0x200: 2}, targets=tg)[0] == 0x200
+              for h, tg in (("6a01" + "83c404" + "6a02" + "e8f4000000" + st, None),
+                            ("6a01" + "59" + "6a02" + "e8f6000000" + st, None),
+                            ("6a01" + "7400" + "6a02" + "e8f5000000" + st, None),
+                            ("6a01" + "6a02" + "e8f7000000" + st, {0x102}),
+                            ("6a02" + call200 + st, None))))
+    check("(c9) push 暫存器判定不出 → 值 None 並帶原因",
+          cs_("53" + "e8fa000000" + st)[1][0][:2] == (None, False) and cs_("53" + "e8fa000000" + st)[1][0][2] != "")
+
+    # 來源宣告的文法與核對(0x700 = load_res、0x704 = malloc、0x708 = 其他;0x1000 是 "BG.DAT")
+    sc = source_claims("dword 指標[3](BG.DAT 第 0 / 1 / 2 號;FDOTHER 第 80 或 88 號,malloc(0x20)、malloc 0xfa00)")
+    check("(s1) 文法:檔名(含裸名)、malloc 兩種寫法、資源號依序",
+          sc == {"files": {"BG.DAT", "FDOTHER.DAT"}, "malloc": {0x20, 0xfa00}, "index": [0, 1, 2]})
+    check("(s2) 文法:沒有宣告 → 空;小寫 / 數字開頭 / FD2 不算檔名;非數字的第 … 條不算",
+          not any(source_claims("dword 指標(fd.dat、2BG.DAT、FD2、FDFIELD.DATX、第 章節×3 條)").values())
+          and source_claims("指標 → FDTXT.DAT 第 0 條")["index"] == [0])
+    check("(s3) 只有指標型別收來源宣告", "source" in parse_type("dword 指標(BG.DAT 第 2 號)", 4)
+          and "source" not in parse_type("dword(BG.DAT 第 2 號 0 .. 6)", 4)
+          and "source" not in parse_type("dword 指標(畫面)", 4))
+    for a in range(0x910, 0x920):
+        imms[a] = ("mov", None, False)
+    nm = {0x700: LOAD_RES, 0x704: MALLOC, 0x708: "other"}
+    bg = (0x1000, True, "立即數")
+    var = (None, False, "記憶體")
+
+    def src(t: str, cl: dict[int, tuple[int, list | None]], size: int = 4) -> dict:
+        acc = [(ins, 0x1070 + 4 * (k % (size // 4)), 4, "w", "mem", False) for k, ins in enumerate(cl)]
+        return check_region(reg(0x1070, size, t), Facts(image, [], fx, ents, acc, lambda a: imms.get(a, ("", None, False)),
+                                                        [], {}, cl, nm))
+
+    ok = src("dword 指標(BG.DAT 第 2 號)", {0x910: (0x700, [bg, var, (2, False, "")])})
+    check("(s4) 檔名與資源號相符 → 0;回傳 1、來源核對 2、不算未判定、沒有記錄",
+          (ok["fail"], ok["call_ret"], ok["src_checked"], ok["undetermined"], ok["note"]) == ([], 1, 2, 0, []))
+    bad = src("dword 指標(BG.DAT 第 2 號)", {0x910: (0x700, [bg, var, (3, False, "")])})["fail"]
+    check("(s5) 資源號不同 → 失敗(且宣告的第 2 號沒有載入點也失敗)", len(bad) == 2)
+    check("(s6) 檔名不同 → 失敗",
+          src("dword 指標(DATO.DAT 第 2 號)", {0x910: (0x700, [bg, var, (2, False, "")])})["fail"] != [])
+    vg = src("dword 指標(BG.DAT 第 2 號)", {0x910: (0x700, [(0x1000, False, "立即數"), var, var])})
+    check("(s7) 檔名沒有 fixup、資源號是變數 → 未核對的記錄,不失敗以外還要報『沒有載入點』",
+          vg["note"] == ["來源宣告:2 個參數不是常數或取不到,未核對"] and len(vg["fail"]) == 1)
+    arr = "dword 指標[3](BG.DAT 第 0 / 1 / 2 號)"
+    cl3 = {0x910 + k: (0x700, [bg, var, (k, False, "")]) for k in range(3)}
+    check("(s8) 陣列逐格對號碼 → 0", src(arr, cl3, 12)["fail"] == [])
+    sw = {**cl3, 0x911: (0x700, [bg, var, (0, False, "")])}
+    check("(s9) 第 1 格載入第 0 號 → 失敗", src(arr, sw, 12)["fail"] != [])
+    two = {0x910: (0x700, [bg, var, (1, False, "")]), 0x911: (0x700, [bg, var, (0, False, "")])}
+    check("(s9b) 2 格陣列號碼對調 → 失敗(號碼數 = 元素數 = 2 也逐格對)",
+          src("dword 指標[2](BG.DAT 第 0 / 1 號)", two, 8)["fail"] != [])
+    either = "dword 指標(BG.DAT 第 80 或 88 號)"
+    check("(s10) 純量的多個號碼:任一相符,但每個號碼都要有載入點",
+          src(either, {0x910: (0x700, [bg, var, (88, False, "")])})["fail"] != []
+          and src(either, {0x910: (0x700, [bg, var, (88, False, "")]),
+                           0x911: (0x700, [bg, var, (80, False, "")])})["fail"] == [])
+    mal = "dword 指標(畫布,malloc 0xfa00)"
+    check("(s11) malloc 大小相符 → 0;不同 → 失敗;沒有配置點 → 失敗",
+          src(mal, {0x910: (0x704, [(0xfa00, False, "")])})["fail"] == []
+          and src(mal, {0x910: (0x704, [(0xfa01, False, "")])})["fail"] != []
+          and src(mal, {0x910: (0x708, [(0xfa00, False, "")])})["fail"] != [])
+    oth = src("dword 指標(BG.DAT)", {0x910: (0x708, None), 0x911: (0x704, [(0x20, False, "")])})
+    check("(s12) 其他函式 / 宣告沒寫 malloc 的配置 → 記錄、不失敗;沒有 load_res → 檔名未核對的記錄",
+          oth["fail"] == [] and oth["call_ret"] == 2 and oth["src_checked"] == 0
+          and oth["note"] == ["來源宣告:2 筆回傳來自宣告沒寫的函式種類,未核對",
+                              "來源宣告:檔名 ['BG.DAT'] 沒有 load_res 寫入點,未核對"])
+    check("(s13) 參數 None → 記錄未核對 1 個", src("dword 指標(BG.DAT 第 2 號)", {0x910: (0x700, None)})["note"]
+          == ["來源宣告:1 個參數不是常數或取不到,未核對"])
+    mv = src(mal, {0x910: (0x704, [var])})
+    check("(s13b) malloc 大小是變數 → 記錄未核對 1 個,且宣告的大小沒有配置點 → 失敗",
+          mv["note"] == ["來源宣告:1 個參數不是常數或取不到,未核對"] and len(mv["fail"]) == 1)
+    check("(s14) 字串讀取:NUL 結尾、沒有 NUL、不在檔內",
+          (_cstr(facts([]), 0x1000), _cstr(facts([]), 0x1000, 4), _cstr(facts([]), 0x3000))
+          == ("BG.DAT", None, None))
+    check("(s14b) 字串讀取的邊界:32 byte 內沒有 NUL → None、31 byte + NUL → 字串;映像尾端只剩 1 / 3 byte 也讀",
+          (_cstr(facts([]), 0x1180), _cstr(facts([]), 0x1181), _cstr(facts([]), 0x11ff), _cstr(facts([]), 0x11fd))
+          == (None, "A" * 31, "", "AA"))
+
     # 真實檔:倉庫登錄零失敗、零未解析
     try:
         f, regions = load_facts()
@@ -796,9 +1124,33 @@ def selftest() -> int:
         check("真實 0x541ac 初值 zeroed、0x51a87 初值 file",
               got["0x541ac"]["init"] == "zeroed" and got["0x51a87"]["init"] == "file")
         ranged = [x for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
-        check("真實 值域 / 指標寫入:核對 273(暫存器 13)、未判定 194",
+        check("真實 值域 / 指標寫入:核對 273(暫存器 13)、函式回傳 111、未判定 83",
               (sum(x["imm_checked"] for x in ranged), sum(x["via_reg"] for x in ranged),
-               sum(x["undetermined"] for x in ranged)) == (273, 13, 194))
+               sum(x["call_ret"] for x in ranged), sum(x["undetermined"] for x in ranged)) == (273, 13, 111, 83))
+        srcd = [x for r, x in out if x["claim"].get("source")]
+        check("真實 來源宣告 24 段、參數核對 120 項",
+              (len(srcd), sum(x["src_checked"] for x in srcd)) == (24, 120))
+        # 函式回傳(2026-11-14 逐條讀反組譯核對):0x25d26 push 6 / push [0x53ad1] / push 0x1a4d(fixup → "FDOTHER.DAT")
+        cs6 = f.call_src.get(0x25d2e)
+        check("真實 0x25d2e = load_res(\"FDOTHER.DAT\", 記憶體, 6)",
+              cs6 is not None and f.names.get(cs6[0]) == LOAD_RES and cs6[1] is not None
+              and _cstr(f, cs6[1][0][0]) == "FDOTHER.DAT" and cs6[1][2][:2] == (6, False) and cs6[1][1][0] is None)
+        check("真實 0x17e23 = malloc(0xfa00)", f.call_src.get(0x17e23) is not None
+              and f.names.get(f.call_src[0x17e23][0]) == MALLOC and f.call_src[0x17e23][1] == [(0xfa00, False, "立即數")])
+        check("真實 0x2fb60 第 0 號由 push ebp 的暫存器常數取得",
+              f.call_src.get(0x2fb60) is not None and f.call_src[0x2fb60][1][2] == (0, False, "暫存器常數"))
+        # 對照:把真實 type 的宣告改錯一處,必須失敗
+        byst = {r["start"]: r for r in regions}
+
+        def alt(start: str, old: str, new: str) -> list[str]:
+            r = dict(byst[start])
+            assert r["type"].count(old) == 1, (start, old)
+            r["type"] = r["type"].replace(old, new)
+            return check_region(r, f)["fail"]
+        check("真實 對照:第 6 號 → 7、malloc 0xfa00 → 0xfa01、BG 號碼順序對調、DATO → FDOTHER、FDOTHER 第 80 → 81 全部失敗",
+              all(alt(*a) for a in (("0x53ad1", "第 6 號", "第 7 號"), ("0x53c5b", "0xfa00", "0xfa01"),
+                                    ("0x5413f", "0 / 1 / 2", "0 / 2 / 1"), ("0x53a85", "DATO.DAT", "FDOTHER.DAT"),
+                                    ("0x53b13", "第 80 或", "第 81 或"), ("0x53a49", "malloc 0x25680", "malloc 0x25681"))))
     except SystemExit as e:
         check(f"讀原版失敗:{e}", False)
 

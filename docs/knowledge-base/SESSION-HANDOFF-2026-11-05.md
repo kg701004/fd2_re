@@ -104,6 +104,7 @@
 續二百六十二(2026-11-11):新增 `tools/verify_data_lower_bounds.py`,以存取證據(直接定址、迴圈計數器逐次模擬、`rep` 立即數長度)算 data_map 每段的長度下限,另分 content / value / declared 三級;92 段失敗 0,access 79、content 9、value 1(`0x52387`)、declared 1(`0x541f4`)、partial 2(`0x5417c` 25 / 26、`0x53a8d` 經指標交給 int386)。`0x541b4`、`0x52a94` 由迴圈 / `rep stosd` 證到 64。
 續二百六十三(2026-11-12):`verify_data_lower_bounds` 的 rep 改為掃到基本區塊開頭(原 4 條視窗漏 9 個 rep)、新增非 rep 字串串與指標追蹤(從 call 所在區塊逐條執行到返回,只走直線);`0x53a8d` 由 19 個 int386 呼叫點證到 28(`0x46897` 寫 out+0x18),等級 access 80、content 9、value 1、declared 1、partial 1(`0x5417c`)。`0x5417c` 第 26 byte 需「tm 欄位在範圍內」、值流需別名分析,只記錄、不做成證據等級。
 續二百六十四(2026-11-14):補跑 verify_all_tools(PASS 822、FAIL 0)與 run_all(91/91 IDENTICAL);新增 `ev_s264`:`0x5417c` 第 26 byte 對任何 time_t / 時區成立(`__brktime` 全用無號 div,範圍逐日算過)、`0x52387` 的 5 流到讀取由 doc58 2026-09-03 秘密商店實機紀錄證明;`verify_data_types` 加區塊內暫存器常數,值域核對 260 → 273、未判定 207 → 194;`0x541f4` 程式最多寫 67 byte,256 來自鎖定長度,declared 是最終等級。
+續二百六十五(2026-11-14):`verify_data_types` 加函式回傳寫入(`mov [x], eax` 緊接 `call 立即數`)與指標來源宣告核對(load_res 檔名 / 資源號、malloc 大小,逐參數、每個宣告的號碼與大小都要有寫入點):未判定 194 → 83、函式回傳 111、來源宣告 24 段 / 120 項全部相符;data_map `0x53a49` type 補「malloc」;窮舉突變 213 / 213 歸零。
 
 **不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 
