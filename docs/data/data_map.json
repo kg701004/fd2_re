@@ -475,6 +475,30 @@
       ]
     },
     {
+      "start": "0x52754",
+      "size": 4,
+      "name": "file_io_error",
+      "type": "dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 建檔或寫入失敗、5 取長度失敗或讀取不足、6 寫入不足)",
+      "meaning": "file_size_by_name / file_load_whole / file_save_creat / file_save_open 一進入就清成 0,失敗時設碼後回傳(-1 或 0);14 個寫入點都是立即數(FD2.EXE 反組譯 0x36c59 .. 0x36e21)。get_error_52754 是唯一讀取者,沒有呼叫端。執行檔初值 0。",
+      "evidence": [
+        {
+          "func": "0x36c56"
+        },
+        {
+          "func": "0x36cab"
+        },
+        {
+          "func": "0x36d58"
+        },
+        {
+          "func": "0x36dc7"
+        },
+        {
+          "func": "0x36c50"
+        }
+      ]
+    },
+    {
       "start": "0x52762",
       "size": 4,
       "name": "ani_vm_dest",

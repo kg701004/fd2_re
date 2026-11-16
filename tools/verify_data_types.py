@@ -2227,11 +2227,11 @@ def selftest() -> int:
         check("真實 0x541ac 初值 zeroed、0x51a87 初值 file",
               got["0x541ac"]["init"] == "zeroed" and got["0x51a87"]["init"] == "file")
         ranged = [x for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
-        check("真實 值域 / 指標寫入:核對 273(暫存器 13)、函式回傳 111、跨區塊 24、歸納 8、未判定 51",
+        check("真實 值域 / 指標寫入:核對 287(暫存器 17)、函式回傳 111、跨區塊 24、歸納 8、未判定 51",
               (sum(x["imm_checked"] for x in ranged), sum(x["via_reg"] for x in ranged),
                sum(x["call_ret"] for x in ranged), sum(x["flow"] for x in ranged),
                sum(x["inductive"] for x in ranged), sum(x["undetermined"] for x in ranged))
-              == (273, 13, 111, 24, 8, 51))
+              == (287, 17, 111, 24, 8, 51))
         srcd = [x for r, x in out if x["claim"].get("source")]
         check("真實 來源宣告 24 段、參數核對 122 項",
               (len(srcd), sum(x["src_checked"] for x in srcd)) == (24, 122))
@@ -2264,9 +2264,9 @@ def selftest() -> int:
         rc0, txt = rep(out)
         check("真實 報告的統計行(型別 / 初值來源 / 每種跨區塊值分開加總 / 常數字串 / 窄存取);失敗 0 → 回傳 0",
               rc0 == 0 and txt[:3] == [
-                  "data_map type 核對:92 段;失敗 0、未解析 0",
-                  "  型別 {'array': 6, 'cstring': 8, 'fptr_table': 1, 'scalar': 76, 'union': 1}",
-                  "  初值來源 {'file': 26, 'zeroed': 66};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
+                  "data_map type 核對:93 段;失敗 0、未解析 0",
+                  "  型別 {'array': 6, 'cstring': 8, 'fptr_table': 1, 'scalar': 77, 'union': 1}",
+                  "  初值來源 {'file': 27, 'zeroed': 66};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
               and "    跨區塊 / 跨 call 判定 24 筆(值:常數 11、函式回傳 3、固定位址舊值 7、movzx 式子 4);讀改寫歸納 8 筆"
               in txt
               and "  常數宣告 3 段;字串 8 段;函式指標表 1 段" in txt
