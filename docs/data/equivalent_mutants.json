@@ -1021,6 +1021,22 @@
    "reason": "add / sub 的兩個運算元大小相同(capstone 實測 add eax,5 / add ax,5 / add al,cl / add eax,[esp] / sub esp,0x100 / sub cx,[esp] / add ax,-1 依序 4/4、2/2、1/1、4/4、4/4、2/2、2/2,立即數也報成目的寬度),改看 ops[1].size 判斷相同。",
    "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-13 續二百六十三 (4):最終版本窮舉剩 9 個可達逃逸,補 (10am) 抓到 L616 的 4 個;這 5 個在暫存副本重跑完整 selftest 仍逃掉,真實檔正常執行(--verbose)輸出與未突變逐位元組相同(對照突變 L627 compare Eq->NotEq#2 輸出不同;但已知非等價的 L616 突變在真實檔也相同,所以真實檔比對只是旁證,等價依據是下列去處逐一檢查與 capstone 實測)",
    "scope_hash": "59c14cd5c9bc"
+  },
+  {
+   "tool": "verify_data_types.py",
+   "key": "Preserve.__init__|self.assumed = False|bool False->True#0",
+   "kind": "equivalent",
+   "reason": "assumed 的初值只會被最外層 __call__ 存進 outer:每次 __call__ 在 _check 之前都把 assumed 重設成 False,_check 期間只由內層呼叫設定,memo 寫入只看這段期間的 assumed 與 stack;最外層結束時 assumed = outer or …只交還給呼叫者,而 Preserve 的外部呼叫者(FlowCtx.preserves、selftest)從不讀 assumed,下一次查詢又先存再重設。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-15 續二百六十六 (5):突變預檢 442 點逃脫 41,逐一讀碼分類;其餘 39 個補測試或改寫程式碼後重跑全數抓到",
+   "scope_hash": "9cf8cf6b9c25"
+  },
+  {
+   "tool": "verify_data_types.py",
+   "key": "load_facts.decode|dcache[a] = next(md.disasm(code[o:o + 16], a), None) if o in range(len(code)) else None|int 16->17#0",
+   "kind": "equivalent",
+   "reason": "x86 指令最長 15 byte,capstone 只解第一條(next(...));給 16 或 17 byte 解出的第一條相同(與 verify_data_lower_bounds Decoder.at 的同型條目同理)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-15 續二百六十六 (5):突變預檢 442 點逃脫 41,逐一讀碼分類;其餘 39 個補測試或改寫程式碼後重跑全數抓到",
+   "scope_hash": "00d36b4b921b"
   }
  ]
 }

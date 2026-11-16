@@ -105,6 +105,7 @@
 續二百六十三(2026-11-12):`verify_data_lower_bounds` 的 rep 改為掃到基本區塊開頭(原 4 條視窗漏 9 個 rep)、新增非 rep 字串串與指標追蹤(從 call 所在區塊逐條執行到返回,只走直線);`0x53a8d` 由 19 個 int386 呼叫點證到 28(`0x46897` 寫 out+0x18),等級 access 80、content 9、value 1、declared 1、partial 1(`0x5417c`)。`0x5417c` 第 26 byte 需「tm 欄位在範圍內」、值流需別名分析,只記錄、不做成證據等級。
 續二百六十四(2026-11-14):補跑 verify_all_tools(PASS 822、FAIL 0)與 run_all(91/91 IDENTICAL);新增 `ev_s264`:`0x5417c` 第 26 byte 對任何 time_t / 時區成立(`__brktime` 全用無號 div,範圍逐日算過)、`0x52387` 的 5 流到讀取由 doc58 2026-09-03 秘密商店實機紀錄證明;`verify_data_types` 加區塊內暫存器常數,值域核對 260 → 273、未判定 207 → 194;`0x541f4` 程式最多寫 67 byte,256 來自鎖定長度,declared 是最終等級。
 續二百六十五(2026-11-14):`verify_data_types` 加函式回傳寫入(`mov [x], eax` 緊接 `call 立即數`)與指標來源宣告核對(load_res 檔名 / 資源號、malloc 大小,逐參數、每個宣告的號碼與大小都要有寫入點):未判定 194 → 83、函式回傳 111、來源宣告 24 段 / 120 項全部相符;data_map `0x53a49` type 補「malloc」;窮舉突變 213 / 213 歸零。
+續二百六十六(2026-11-15):`verify_data_types` 加跨區塊 / 跨 call 值分析(條件跳躍精煉、匯合、迴圈最小不動點、被呼叫者保存暫存器的序言 / 結語與不碰證明、DOS 4Ch 不回傳)、讀改寫歸納(xor 旗標、inc / dec 回繞)、舊值複製、`byte + 2` 式子:未判定 83 → 51(跨區塊 24、歸納 8);找到 data_map `0x53a49` 漏寫 earthquake_spell_effect 的 malloc 0xfa00(`0x21675`),type 已補。
 
 **不再處理**:worklist 的 obsolete_remake 68 項 —— 屬於已移除的 remake;使用者 2026-11-05 決定不恢復 remake,這 68 項維持關閉。
 

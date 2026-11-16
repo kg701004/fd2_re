@@ -702,7 +702,7 @@
       "start": "0x53a49",
       "size": 4,
       "name": "field_canvas",
-      "type": "dword 指標 → 456 × 336(malloc 0x25680 bytes)的戰場離屏畫布",
+      "type": "dword 指標 → 456 × 336(malloc 0x25680 bytes)的戰場離屏畫布;earthquake_spell_effect 迴圈內暫換成 malloc 0xfa00 緩衝",
       "meaning": "戰場離屏畫布,列距 0x1c8(456),地圖視窗原點在 +0x8088(第 72 列第 72 行)。game_main 開機 malloc(0x25680);5 個戰鬥演出先 free 再 malloc(0x25680) 寫回;act / unit_death_sweep / earthquake_spell_effect / spawn_intro 暫時改指後還原。",
       "evidence": [
         {
