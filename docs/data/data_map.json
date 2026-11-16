@@ -499,6 +499,79 @@
       ]
     },
     {
+      "start": "0x52758",
+      "size": 4,
+      "name": "mem_alloc_hook",
+      "type": "dword 函式指標表(1 格:配置掛鉤,執行檔初值 malloc)",
+      "meaning": "記憶體配置掛鉤:fixup 指向 malloc(0x3706e)。6 個讀取:swap_hook_52758 讀舊值回傳,其餘 4 個都是 call [0x52758] 傳一個 byte 數:ail_mem_alloc_lock(0x364da)、lx_load_file(0x36837)、file_load_whole 沒給緩衝區時(0x36ce1)、ail_mdi_install_core(0x43e74,數量 × 0x6d4)。唯一寫入者 swap_hook_52758 沒有呼叫端也沒有 fixup 引用(FD2.EXE 反組譯,obj1 全段 e8 / e9 rel32 掃描 0 筆),執行期間一直是 malloc。",
+      "evidence": [
+        {
+          "func": "0x364b4"
+        },
+        {
+          "func": "0x364d4"
+        },
+        {
+          "func": "0x367d1"
+        },
+        {
+          "func": "0x36cab"
+        },
+        {
+          "func": "0x43ad0"
+        }
+      ]
+    },
+    {
+      "start": "0x5275c",
+      "size": 4,
+      "name": "mem_free_hook",
+      "type": "dword 函式指標表(1 格:釋放掛鉤,執行檔初值 heap_free)",
+      "meaning": "記憶體釋放掛鉤:fixup 指向 heap_free(0x3776e)。7 個讀取:swap_hook_5275c 讀舊值回傳,其餘 5 個都是 call [0x5275c] 傳一個指標:ail_mem_unlock_free(0x36517)、file_load_whole 開檔失敗與讀取不足時(0x36d1a、0x36d35)、ail_impl_install_dig_driver_file(0x41344)、ail_impl_install_mdi_driver_file(0x441c4)。唯一寫入者 swap_hook_5275c 沒有呼叫端也沒有 fixup 引用(同上),執行期間一直是 heap_free。",
+      "evidence": [
+        {
+          "func": "0x364c4"
+        },
+        {
+          "func": "0x364fb"
+        },
+        {
+          "func": "0x36cab"
+        },
+        {
+          "func": "0x41300"
+        },
+        {
+          "func": "0x44180"
+        }
+      ]
+    },
+    {
+      "start": "0x52760",
+      "size": 2,
+      "name": "ani_vm_frame_bytes",
+      "type": "word(ANI VM 一張畫面的 byte 數;唯一寫入者的唯一呼叫端傳 0xfa00)",
+      "meaning": "anim_vm_set_context(0x36fd3)的第 1 個引數以 word 寫入(0x36fda);唯一呼叫端 ani_player 的 0x2048a 傳 0xfa00 = 320 × 200。3 個讀取(FD2.EXE 反組譯):fli_chunk_fill_frame / fli_chunk_copy_frame 當長度、anim_vm_op_rle 當結束條件。緊接的 0x52762 是 ani_vm_dest。執行檔初值 0。",
+      "evidence": [
+        {
+          "func": "0x36fd3"
+        },
+        {
+          "func": "0x36ee0"
+        },
+        {
+          "func": "0x36f08"
+        },
+        {
+          "func": "0x36f24"
+        },
+        {
+          "doc": "docs/knowledge-base/39-ani-afm-format.md",
+          "quote": "`[0x52760]` 是 0xfa00 = 64000 = 320 × 200,當畫面的 byte 數用"
+        }
+      ]
+    },
+    {
       "start": "0x52762",
       "size": 4,
       "name": "ani_vm_dest",
@@ -524,6 +597,46 @@
         {
           "doc": "docs/knowledge-base/39-ani-afm-format.md",
           "quote": "唯一呼叫端是 `ani_player` `0x20421` 的 `0x2048a`"
+        }
+      ]
+    },
+    {
+      "start": "0x52766",
+      "size": 4,
+      "name": "ani_vm_palette",
+      "type": "dword 指標(ANI VM 的 768 byte 調色盤目的地)",
+      "meaning": "anim_vm_set_context 的第 3 個引數(0x36feb);唯一呼叫端 ani_player 傳 0x2045b 的 malloc(0x300) 回傳。4 個讀取都是 opcode 0 .. 3 的處理函式當目的(FD2.EXE 反組譯):fli_chunk_fill_palette 填 0xc0 dword、anim_vm_op_palette 複製 0xc0 dword、pcx_rle_unpack_768 解 0x300 byte、fli_chunk_palette_packets。執行檔初值 0。",
+      "evidence": [
+        {
+          "func": "0x36fd3"
+        },
+        {
+          "func": "0x36e3d"
+        },
+        {
+          "func": "0x36e57"
+        },
+        {
+          "func": "0x36e65"
+        },
+        {
+          "func": "0x36ea7"
+        }
+      ]
+    },
+    {
+      "start": "0x5276a",
+      "size": 40,
+      "name": "ani_vm_op_table",
+      "type": "dword[10] 函式指標表(ANI VM opcode 0 .. 9)",
+      "meaning": "anim_vm_run 的 call [opcode × 4 + 0x5276a](0x37012)是唯一引用;opcode 是腳本的 1 byte,不檢查範圍。10 格 fixup 依序是 fli_chunk_fill_palette、anim_vm_op_palette、pcx_rle_unpack_768、fli_chunk_palette_packets、fli_chunk_fill_frame、fli_chunk_copy_frame、anim_vm_op_rle、fli_chunk_pixel_list、fli_chunk_run_fill、fli_chunk_literal_runs;表尾 0x52792 是 0,0x52796 起是 __STK 的錯誤字串(FD2.EXE fixup 與反組譯)。",
+      "evidence": [
+        {
+          "func": "0x36ff4"
+        },
+        {
+          "doc": "docs/knowledge-base/39-ani-afm-format.md",
+          "quote": "第 11 項起變成別的資料段內容「Stack...」字串,故 **opcode 只有 0–9**"
         }
       ]
     },

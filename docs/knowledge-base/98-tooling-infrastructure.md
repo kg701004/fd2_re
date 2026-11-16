@@ -15021,3 +15021,31 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 - 同一組的 `0x52758` / `0x5275c`(配置 / 釋放掛鉤):執行檔內的原始 dword 加上 obj1 基底後正好是 `malloc` / `heap_free` 的入口,但這兩格的 fixup 還沒對到(本輪用 `le_xref.parse_fixups` 以這兩個位址查沒有條目,鍵的定義未讀),初值未確認,下一輪再登錄。
 - 續二百六十六 (6) 的其餘項目不變。
+
+## 2026-11-17 續二百六十八:data_map 登錄記憶體掛鉤 `0x52758` / `0x5275c` 與 ANI VM 狀態 `0x52760` / `0x52766` / `0x5276a`
+
+起因:使用者「請自動接續進行」。續二百六十七 (3) 的下一批是 `0x52758` / `0x5275c`;同一區緊接的 ANI VM 狀態也一起登錄。
+
+### (1) 讀碼結果(真實 FD2.EXE 反組譯與 fixup)
+
+- fixup 的鍵是**檔案位移**(`le_xref.parse_fixups` 的 docstring:src_file_offset → target_linear)。續二百六十七用線性位址去查,所以查不到;換成檔案位移後 `0x52758` → `0x3706e` malloc、`0x5275c` → `0x3776e` heap_free。
+- `0x52758` mem_alloc_hook:6 個讀取裡 4 個是 `call [0x52758]` 傳 byte 數(ail_mem_alloc_lock `0x364da`、lx_load_file `0x36837`、file_load_whole `0x36ce1`、ail_mdi_install_core `0x43e74`),另 1 個是 swap_hook_52758 讀舊值回傳。`0x5275c` mem_free_hook:5 個 `call [0x5275c]`(ail_mem_unlock_free `0x36517`、file_load_whole `0x36d1a` / `0x36d35`、ail_impl_install_dig_driver_file `0x41344`、ail_impl_install_mdi_driver_file `0x441c4`)+ swap_hook_5275c 的讀舊值。
+- 兩格唯一的寫入者 swap_hook_52758 / swap_hook_5275c 沒有呼叫端:fixup 目標沒有任何一筆指向 `0x364b4` / `0x364c4`,obj1 全段 `e8` / `e9` rel32 逐 byte 掃描也是 0 筆(含假陽性的掃法也 0)。所以執行期間掛鉤一直是 malloc / heap_free。
+- `0x52760` ani_vm_frame_bytes(word)、`0x52766` ani_vm_palette(dword 指標):`anim_vm_set_context` `0x36fd3` 的第 1 / 3 個引數;唯一呼叫端 ani_player `0x2048a` 傳 `0xfa00` 與 `0x2045b` 的 `malloc(0x300)` 回傳。`0x52766` 的 4 個讀取都是 opcode 0 .. 3 的處理函式(填 / 複製 0xc0 dword、解 0x300 byte)。
+- `0x5276a` ani_vm_op_table:10 格 fixup 依序指向 opcode 0 .. 9 的處理函式(doc39 已記),唯一引用是 anim_vm_run `0x37012` 的 `call [opcode × 4 + 0x5276a]`,opcode 是腳本的 1 byte、不檢查範圍。表尾 `0x52792` 是 0,`0x52796` 起是 __STK 的錯誤字串。
+
+### (2) 驗證
+
+- `verify_data_types --check`:98 段失敗 0。兩個掛鉤與 opcode 表以「函式指標表」宣告,工具核對每格都是指向函式入口的 fixup,並核對表尾後一格不是沒登錄的入口 fixup。
+- 對照(記憶體內改宣告,不寫 repo,讀真實 FD2.EXE):
+  - 沒有 fixup 的 `0x52754` 宣告成函式指標表 → 失敗。
+  - 拿掉 `0x5275c` 只留 `0x52758` → 「表尾後仍是指向入口 0x3776e 的 fixup」失敗;`0x52758` 宣告成 2 格吞掉 `0x5275c` 則通過,所以失敗來自表尾規則。
+  - opcode 表 9 格 → 表尾後 `0x5278e` 仍是 fixup,失敗;11 格 → `0x52792` 不是 fixup,失敗;10 格 0 失敗。
+- 未判定寫入 51 → 54:3 筆都是堆疊引數寫入(兩個沒有呼叫端的 swap_hook、`anim_vm_set_context` 寫 `0x52766`)。`verify_data_lower_bounds` 迴圈解不出 63 → 64(opcode 表的索引是 1 byte、沒有比較,0 .. 255 × 4 的範圍,表長由 fixup 數決定)。
+- 兩支工具的 selftest 只更新真實計數(98 段、fptr_table 4、scalar 79、file 32、未判定 54),產品碼沒改,不重跑窮舉突變;`verify_data_types` 與 `verify_data_lower_bounds` selftest PASS。
+- 覆蓋:遊戲函式 863 → 877 / 1202、全域位址 99 → 104 / 900、資料 1164 → 1218 / 35714 bytes。
+
+### (3) 仍未完成
+
+- `0x52742` / `0x52745` / `0x52748` / `0x5274b`(各 3 byte)、`0x5274e`(5 byte):event_handler_39 / 41 / 51 / 55 / 58 以 `movsw + movsb` / `movsd + movsb` 把區域陣列的初值從這裡複製到堆疊。**與 doc25 §6.3 不一致,NOT CONFIRMED**:doc25 寫 `0x5274E` 的五個 byte 是 `0x1D, 0x2B, 0x33, 0x3D, 0x47`,但真實 FD2.EXE 這一頁 `0x5274a` 起是 `00 00 0b 00 1d 2b 33 3d 47 00`,`0x5274e` 起是 `2b 33 3d 47 00`;event_handler_58 的 `0x35868` `mov esi, 0x5274e`(fixup)接 `movsd` / `movsb` 複製的正是這 5 byte,doc25 那 5 個值是從 `0x5274d` 開始。這一頁的位移對應用同頁字串核對過:`0x3705f` `mov eax, 0x52796`(fixup)指向的位址正好是 `Stack…` 的 `S`;LE 表頭的 `data_off` 當絕對值會得到另一組 byte,而那正是知識庫已記為錯誤的算法,不能當獨立來源。下一輪讀完 5 個 handler 再登錄,並決定 doc25 的訂正與登記。
+- 續二百六十六 (6) 的其餘項目不變。

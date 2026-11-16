@@ -3,11 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 312 節、19 個主題。
+共 313 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 14653:2026-11-07 續二百五十八:資料區段 `0x541b4`(AIL 已安裝的驅動表)
 - 行 14670:2026-11-07 續二百五十九:資料區段 `0x627b4`(blit 圖像寬度)
 - 行 14687:2026-11-07 續二百六十:資料區段 `0x627b6`(blit 剩餘列數) 〔來源:反組譯、FDMUS〕
 - 行 14711:2026-11-07 續二百六十一:`tools/verify_data_types.py` —— data_map `type` 宣告逐項對 EXE 核對
@@ -17,6 +16,7 @@
 - 行 14895:2026-11-14 續二百六十五:`verify_data_types` 函式回傳寫入與指標來源宣告核對 —— 未判定 194 → 83 〔來源:FDOTHER、FD2.EXE〕
 - 行 14942:2026-11-15 續二百六十六:`verify_data_types` 跨區塊 / 跨 call 值分析與讀改寫歸納 —— 未判定 83 → 51,找到 0x53a49 漏寫的 malloc 0xfa00 〔來源:反組譯、FD2.EXE〕
 - 行 14997:2026-11-16 續二百六十七:data_map 登錄 `0x52754` file_io_error(檔案 I/O 錯誤碼) 〔來源:反組譯、FD2.EXE〕
+- 行 15025:2026-11-17 續二百六十八:data_map 登錄記憶體掛鉤 `0x52758` / `0x5275c` 與 ANI VM 狀態 `0x52760` / `0x52766` / `0x5276a` 〔來源:反組譯、FD2.EXE〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -298,7 +298,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(147 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(148 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -447,6 +447,7 @@
 - 行 14895:2026-11-14 續二百六十五:`verify_data_types` 函式回傳寫入與指標來源宣告核對 —— 未判定 194 → 83 〔來源:FDOTHER、FD2.EXE〕
 - 行 14942:2026-11-15 續二百六十六:`verify_data_types` 跨區塊 / 跨 call 值分析與讀改寫歸納 —— 未判定 83 → 51,找到 0x53a49 漏寫的 malloc 0xfa00 〔來源:反組譯、FD2.EXE〕
 - 行 14997:2026-11-16 續二百六十七:data_map 登錄 `0x52754` file_io_error(檔案 I/O 錯誤碼) 〔來源:反組譯、FD2.EXE〕
+- 行 15025:2026-11-17 續二百六十八:data_map 登錄記憶體掛鉤 `0x52758` / `0x5275c` 與 ANI VM 狀態 `0x52760` / `0x52766` / `0x5276a` 〔來源:反組譯、FD2.EXE〕
 
 ## dispatch 跳表與指令表(7 節)
 
