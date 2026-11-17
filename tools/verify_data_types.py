@@ -2264,12 +2264,12 @@ def selftest() -> int:
         rc0, txt = rep(out)
         check("真實 報告的統計行(型別 / 初值來源 / 每種跨區塊值分開加總 / 常數字串 / 窄存取);失敗 0 → 回傳 0",
               rc0 == 0 and txt[:3] == [
-                  "data_map type 核對:98 段;失敗 0、未解析 0",
-                  "  型別 {'array': 6, 'cstring': 8, 'fptr_table': 4, 'scalar': 79, 'union': 1}",
-                  "  初值來源 {'file': 32, 'zeroed': 66};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
+                  "data_map type 核對:103 段;失敗 0、未解析 0",
+                  "  型別 {'array': 11, 'cstring': 8, 'fptr_table': 4, 'scalar': 79, 'union': 1}",
+                  "  初值來源 {'file': 37, 'zeroed': 66};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
               and "    跨區塊 / 跨 call 判定 24 筆(值:常數 11、函式回傳 3、固定位址舊值 7、movzx 式子 4);讀改寫歸納 8 筆"
               in txt
-              and "  常數宣告 3 段;字串 8 段;函式指標表 4 段" in txt
+              and "  常數宣告 8 段;字串 8 段;函式指標表 4 段" in txt
               and "  窄存取(寬度小於元素,不算失敗) 30 筆,分布在 11 段" in txt)
         rce, txe = rep([])
         check("報告 空輸入:各計數 0、型別 {}、回傳 0",

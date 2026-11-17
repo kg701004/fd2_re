@@ -475,6 +475,90 @@
       ]
     },
     {
+      "start": "0x52742",
+      "size": 3,
+      "name": "event39_reward_row",
+      "type": "byte[3] 常數表(獎勵列一列:種類、word 道具編號)",
+      "meaning": "event_handler_39 的區域陣列初值:0x352db 的 mov esi(fixup)接 movsw + movsb 複製到堆疊,再以 grant_reward_rows(單位, 1, 這一列)發放。FD2.EXE 檔內 byte 是 00 d3 00:種類 0、道具編號 0xd3。grant_reward_rows 的種類 0 分支(0x1ac7b)令 [0x53ad9] = 編號 + 0xb5(道具名)、顯示 FDTXT 0x1b0,再 unit_add_item(0x1accc);回傳 -1 時走欄位已滿的分支。唯一引用是這一個 mov esi,沒有寫入(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x352ca"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "3 byte 獎勵列(`+0` 類型、`+1` word 值)"
+        }
+      ]
+    },
+    {
+      "start": "0x52745",
+      "size": 3,
+      "name": "event41_reward_row",
+      "type": "byte[3] 常數表(獎勵列一列:種類、word 道具編號)",
+      "meaning": "event_handler_41 的區域陣列初值:0x35357 的 mov esi(fixup)接 movsw + movsb 複製到堆疊,再以 grant_reward_rows(單位, 1, 這一列)發放。FD2.EXE 檔內 byte 是 00 d5 00:種類 0、道具編號 0xd5。grant_reward_rows 的種類 0 分支(0x1ac7b)令 [0x53ad9] = 編號 + 0xb5(道具名)、顯示 FDTXT 0x1b0,再 unit_add_item(0x1accc);回傳 -1 時走欄位已滿的分支。唯一引用是這一個 mov esi,沒有寫入(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x35346"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "3 byte 獎勵列(`+0` 類型、`+1` word 值)"
+        }
+      ]
+    },
+    {
+      "start": "0x52748",
+      "size": 3,
+      "name": "event51_reward_row",
+      "type": "byte[3] 常數表(獎勵列一列:種類、word 道具編號)",
+      "meaning": "event_handler_51 的區域陣列初值:0x35601 的 mov esi(fixup)接 movsw + movsb 複製到堆疊,再以 grant_reward_rows(單位, 1, 這一列)發放。FD2.EXE 檔內 byte 是 00 65 00:種類 0、道具編號 0x65。grant_reward_rows 的種類 0 分支(0x1ac7b)令 [0x53ad9] = 編號 + 0xb5(道具名)、顯示 FDTXT 0x1b0,再 unit_add_item(0x1accc);回傳 -1 時走欄位已滿的分支。唯一引用是這一個 mov esi,沒有寫入(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x355f0"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "3 byte 獎勵列(`+0` 類型、`+1` word 值)"
+        }
+      ]
+    },
+    {
+      "start": "0x5274b",
+      "size": 3,
+      "name": "event55_reward_row",
+      "type": "byte[3] 常數表(獎勵列一列:種類、word 道具編號)",
+      "meaning": "event_handler_55 的區域陣列初值:0x35741 的 mov esi(fixup)接 movsw + movsb 複製到堆疊,再以 grant_reward_rows(單位, 1, 這一列)發放。FD2.EXE 檔內 byte 是 00 0b 00:種類 0、道具編號 0x0b。grant_reward_rows 的種類 0 分支(0x1ac7b)令 [0x53ad9] = 編號 + 0xb5(道具名)、顯示 FDTXT 0x1b0,再 unit_add_item(0x1accc);回傳 -1 時走欄位已滿的分支。只在第 1 個引數是 0、[0x53ad5] 第 0 格是 0 且 unit_inactive(0x11) 成立時發放,發放前把第 0 格設 1。唯一引用是這一個 mov esi,沒有寫入(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x35730"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "3 byte 獎勵列(`+0` 類型、`+1` word 值)"
+        }
+      ]
+    },
+    {
+      "start": "0x5274e",
+      "size": 5,
+      "name": "event58_treasure_items",
+      "type": "byte[5] 常數表(五選一寶物的道具編號,依寶物格位索引)",
+      "meaning": "event_handler_58 的區域陣列初值:0x35868 的 mov esi(fixup)接 movsd + movsb 複製 5 byte 到堆疊。FD2.EXE 檔內是 1d 2b 33 3d 47 = 道具 29 / 43 / 51 / 61 / 71。unit_item_count 等於 8 時只顯示 FDTXT 0x1e0;否則 map_cell_info 取格位(byte [esp + 2])當索引,[0x53ad9] = 道具 + 0xb5,unit_add_item(0x35966),再把 [0x53ad5] 第 0 .. 4 格設 1。唯一引用是這一個 mov esi,沒有寫入(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x35854"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "以 slot 索引 EXE `0x5274E` 的五 bytes"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "`[0x1D,0x2B,0x33,0x3D,0x47]`"
+        }
+      ]
+    },
+    {
       "start": "0x52754",
       "size": 4,
       "name": "file_io_error",
