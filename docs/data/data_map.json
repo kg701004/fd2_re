@@ -817,6 +817,72 @@
       ]
     },
     {
+      "start": "0x527f4",
+      "size": 1,
+      "name": "x87_type",
+      "type": "byte(x87 型別:0 沒有、2 二八七型、3 三八七型或模擬器)",
+      "meaning": "fpu_detect_init(0x46425)在它是 0 時才偵測:fninit + fnstcw,控制字高 byte 是 3 才呼叫 fpu_detect_type,後者以 0x4cf20 的 1 / 0 與 −(1 / 0) 比較分辨 287(回 2)與 387(回 3);[0x52830] 是 0 時把結果寫進這格與 0x527f5(0x46456 / 0x4645c)。emu387_install(0x461b7)直接寫 3。x87_cos_core / x87_sin_core / x87_tan_core 只在它等於 3 時直接執行 fcos / fsin / fptan,其他值走以 fldpi 等自己化約角度的另一條算法(FD2.EXE 反組譯)。_cstart_ 之前的執行檔初值 0。",
+      "evidence": [
+        {
+          "func": "0x46425"
+        },
+        {
+          "func": "0x461b7"
+        },
+        {
+          "func": "0x3cb06"
+        },
+        {
+          "func": "0x3cb1f"
+        },
+        {
+          "func": "0x3cbfb"
+        }
+      ]
+    },
+    {
+      "start": "0x527f5",
+      "size": 1,
+      "name": "x87_real_type",
+      "type": "byte(實體 x87 型別:0 沒有、2 二八七型、3 三八七型)",
+      "meaning": "只由 fpu_detect_init 寫:偵測前先寫 0(0x46431),偵測後與 0x527f4 寫同一個結果(0x4645c);模擬器只改 0x527f4,不改這格。fpu_detect_type 與 fpreset 在它非 0 時才把 0x463db / 0x463e7 寫進 [0x539a0] / [0x539a4] 並重新偵測(FD2.EXE 反組譯)。執行檔初值 0。",
+      "evidence": [
+        {
+          "func": "0x46425"
+        },
+        {
+          "func": "0x463f2"
+        },
+        {
+          "func": "0x4641b"
+        }
+      ]
+    },
+    {
+      "start": "0x52804",
+      "size": 4,
+      "name": "heap_curbrk",
+      "type": "dword 指標(目前的 break;0xfffffffe = 位址已用到頂)",
+      "meaning": "_cstart_ 以對齊後的 esp 寫初值(0x3cd3a,同一個值也寫進 0x52818);sbrk(0x467c5)成功時回傳舊值並把新的 break 寫進來(0x46863)。heap_grow 在 DOS extender 種類 [0x52832] 不是 1 / 9 時以 [0x52804] + 需要的大小呼叫 sbrk,相加溢位就改傳 0xfffffffe,所以這格可能變成 0xfffffffe,heap_grow 開頭看到它就不再擴充(0x3d85a)。heap_tail_free_size 以它判斷最後一塊空閒區是否緊貼 break,heap_get_os_memory 以它算 sbrk 的目標(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3ccb4"
+        },
+        {
+          "func": "0x467c5"
+        },
+        {
+          "func": "0x3d842"
+        },
+        {
+          "func": "0x3d77b"
+        },
+        {
+          "func": "0x46728"
+        }
+      ]
+    },
+    {
       "start": "0x52832",
       "size": 1,
       "name": "dos_extender_type",

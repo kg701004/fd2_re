@@ -15111,3 +15111,26 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 - `re_coverage --gaps globals` 其餘:`0x527f4` / `0x527f5`(FPU 型別)、`0x52804`(heap / sbrk)、`0x53af5`(捲動位移)、`0x53c23`(AI 分數)、`0x54133`(靜音旗標)等。
 - 續二百六十六 (6) 的其餘項目不變。
+
+## 2026-11-17 續二百七十一:data_map 登錄 Watcom 執行期的 `0x527f4` / `0x527f5` x87 型別與 `0x52804` 目前的 break
+
+起因:使用者「請自動接續進行」。續二百七十 (4) 的下一批。
+
+### (1) 讀碼結果(真實 FD2.EXE 反組譯與 fixup)
+
+- `0x527f4` x87_type(byte,0 / 2 / 3):fpu_detect_init `0x46425` 只在它是 0 時偵測:`fninit` + `fnstcw`,控制字高 byte 是 3 才呼叫 fpu_detect_type;後者跳到 `0x4cf20`,以 `1 / 0` 與 `−(1 / 0)` 比較,相等回 2(287 的投影無窮大)、不等回 3。`[0x52830]` 是 0 時把結果寫進 `0x527f4` 與 `0x527f5`(`0x46456` / `0x4645c`)。emu387_install `0x461b7` 直接寫 3。x87_cos_core / x87_sin_core / x87_tan_core 只在它等於 3 時直接執行 `fcos` / `fsin` / `fptan`,其他值走以 `fldpi` 自己化約角度的另一條路。
+- `0x527f5` x87_real_type(byte,0 / 2 / 3):只由 fpu_detect_init 寫,偵測前先寫 0(`0x46431`,`xor bl, bl` 跨區塊常數),偵測後與 `0x527f4` 同值;模擬器只改 `0x527f4`。fpu_detect_type 與 fpreset 在它非 0 時才把 `0x463db` / `0x463e7` 寫進 `[0x539a0]` / `[0x539a4]`。
+- `0x52804` heap_curbrk(dword 指標):_cstart_ `0x3cd3a` 以對齊後的 esp 寫初值(同值也寫 `0x52818`);sbrk `0x467c5` 成功時回傳舊值、寫入新的 break(`0x46863`)。heap_grow 在 DOS extender 種類 `[0x52832]` 不是 1 / 9 時以 `[0x52804]` + 大小呼叫 sbrk,相加溢位改傳 0xfffffffe(`0x3d912`),所以 sbrk 成功時這格會是 0xfffffffe,heap_grow 開頭(`0x3d85a`)看到就不再擴充。heap_tail_free_size 以它判斷最後一塊空閒區是否緊貼 break,heap_get_os_memory 以它算 sbrk 的目標。
+
+### (2) 驗證
+
+- `verify_data_types --check`:110 段失敗 0。第一次 `0x527f4` 失敗:type 文字「2 80287、3 80387」被解析成值 {0, 80387},`0x461b7` 寫 3 就不在值域內;改成「2 二八七型、3 三八七型」後值域是 {0, 2, 3}。
+- 寫入分類:立即數 302 → 303(`0x461b7`)、跨區塊 24 → 25(`0x46431`)、未判定 55 → 59(`0x46456` / `0x4645c` 的 bl 來自 fpu_detect_type 的回傳、`0x3cd3a` 的 esp、`0x46863` 的 sbrk 引數)。
+- 對照(記憶體內改宣告,不寫 repo,讀真實 FD2.EXE):`0x527f4` 拿掉 3 → `0x461b7` 失敗;`0x527f5` 拿掉 0 → `0x46431` 的跨區塊常數 0 失敗;`0x52804` 宣告常數 → 2 筆寫入失敗。
+- `verify_data_types` selftest 只更新真實計數,產品碼沒改,不重跑窮舉突變;`verify_data_types` 與 `verify_data_lower_bounds` selftest PASS,lower_bounds 110 段失敗 0(迴圈解不出維持 74)。
+- 覆蓋:遊戲函式 889 → 894 / 1202、全域位址 113 → 116 / 900、資料 1276 → 1282 / 35714 bytes。
+
+### (3) 仍未完成
+
+- `0x53af5` 與同組的 `0x53aed` / `0x53af1`(地圖畫面位置與捲動位移,draw_terrain_layer 以 `[0x53aed] + [0x53af5]` 與 `[0x53af1] × 0x1c8` 定位)要一起讀;`0x53c23`(AI 分數)、`0x54133`(靜音旗標)與其餘 4 引用的全域位址。
+- 續二百六十六 (6) 的其餘項目不變。
