@@ -15080,3 +15080,34 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 - `re_coverage --gaps globals` 的其餘全域位址(`0x51aac`、`0x52363`、`0x52375`、`0x527f4`、`0x52804`、`0x53af5`、`0x53c23`、`0x53f72`、`0x54133` 等各 5 個引用)。
 - 續二百六十六 (6) 的其餘項目不變。
+
+## 2026-11-17 續二百七十:data_map 登錄 `0x51aac` 地圖 HUD 暫時開關、`0x52363` / `0x52375` 城鎮選項座標表、`0x53f72` 城鎮清單游標動畫格
+
+起因:使用者「請自動接續進行」。續二百六十九 (4) 的下一批是 `re_coverage --gaps globals` 前面幾個 5 引用的全域位址。
+
+### (1) 讀碼結果(真實 FD2.EXE 反組譯與 fixup)
+
+- `0x51aac` map_hud_shown(byte 旗標,執行檔初值 1):draw_map_hud `0x1ad1b` 在 `[0x51aab]` 非 0 之後再看它,0 就整個 HUD 不畫。14 筆寫入只有 0 / 1,兩兩成對包住一段呼叫:end_player_phase_if_all_acted `0x135b4` / `0x135d4` 與 field_command_ring `0x1726b` / `0x17277` 包 battle_phase_advance;game_main `0x25dde` / `0x25dea` 包 show_result_resource_79、`0x25e0b` / `0x25e5e` 包章節處理表 `0x51de9` / `0x51d71` 與 town_hub_main;title_menu_dispatch 包 town_hub_main 與 `0x51d71` 表。doc10 §2 的讀寫點清單把 `0x51aab` 與 `0x51aac` 放在一起,這次以 fixup 目標分開(`0x10436`、`0x29774`、`0x299aa` 等是 `0x51aab`)。
+- `0x52363` town_option_icon_x / `0x52375` town_option_icon_y(各 18 byte 常數表):索引 = row31_ptr_6238d(`[0x53c03]`)取回的城鎮資料 `+0`(版面號)× 6 + `[0x53f4a]`。town_hub_redraw `0x266ac` / `0x266c1` 以 `[0x53a49] + 0x8088 + x + y × 0x1c8` 當 blit_tile24_rle 的目的;town_hub_select、shop_menu、tavern_menu、church_menu 以 `x − 0x96`、`y − 0x64` 算進場縮放的中心。FD2.EXE 檔內 x 表 `1d 29 3b 9a b6 0a / 5a 21 35 94 de c4 / 3b 0a 3b 82 f2 88`、y 表 `2e 6d a3 8b 41 0a / 1e 69 a3 8b 55 08 / 1a 90 a3 96 1f 14`。x 表的 18 byte 由 `0x52375` 緊接決定,y 表由 `0x52387` town_keeper_portrait 緊接決定;城鎮資料 `+0` 在各章的值域本輪沒有逐章核對(檔內前 26 列只有 0 / 1 / 2,後面幾列是 5 與 0xff,章節對應見 doc91 372 的未決問題)。
+- `0x53f72` town_menu_cursor_frame(dword,0 .. 3):menu_tick_redraw 在 `[0x53f52]` 是奇數時 `inc`,等於 4 時 `0x270a3` 寫 0;menu_tick_redraw 與 4 個畫清單函式讀它,3 當 1 用(0、1、2、1 來回)。
+
+### (2) 驗證
+
+- `verify_data_types --check`:107 段失敗 0。立即數寫入 287 → 302(`0x51aac` 14 筆、`0x53f72` 1 筆);未判定 54 → 55,多的是 `0x53f72` 的 `inc`:inc 之後到 `0x270a3` 寫 0 之前,記憶體裡短暫是 4(中間沒有呼叫),所以工具不歸納成 0 .. 3 是對的,不改工具。
+- 對照(記憶體內改宣告,不寫 repo,讀真實 FD2.EXE):`0x51aac` 只准 0 / 2 → `0x135d4` 寫 1 失敗;`0x53f72` 改 1 .. 3 → `0x270a3` 寫 0 失敗;`0x52363` 宣告 17 格 → 長度不符失敗;`0x51aac` 宣告常數 → 14 筆寫入失敗。
+- `verify_data_lower_bounds --check`:107 段失敗 0;迴圈解不出 64 → 74,多的 10 筆是兩張城鎮表的 5 + 5 個 `[reg + 表]` 存取(索引是版面號 × 6 + 選項,靜態沒有上界),兩段等級 partial。
+- `verify_data_types` selftest 只更新真實計數(107 段、array 13、scalar 81、file 40、zeroed 67、常數 10、立即數 302、未判定 55),產品碼沒改,不重跑窮舉突變;兩支 selftest PASS。
+- 覆蓋:遊戲函式 882 → 889 / 1202、全域位址 109 → 113 / 900、資料 1235 → 1276 / 35714 bytes。
+
+### (3) 與 doc35 §3.2 不一致(FD2.EXE 反組譯、fixup 與檔內 byte 都對不上;NOT CONFIRMED,只記錄,沒改 doc35)
+
+- doc35 §3.2 寫「`0x28b61` `mov edx,[0x53c03]; movzx edx, byte[edx+0x2363]`」,表值 `[4, 9, 14, 18, 14, 0, 2, 4, …]`。FD2.EXE 裡:
+  - `0x28b5d` 是 `push dword ptr [0x53f66]`(6 byte),`0x28b61` 落在這條指令中間;
+  - 指向 `0x52363` 的 fixup 只有上面 5 筆,檔內 `63 23 00` 也正好只出現 5 次;`0f b6 92 63 23`(`movzx edx, byte [edx + 0x2363]`)0 次;
+  - `0x52363` 起逐位址印出是 29 / 41 / 59 / 154 / 182 / 10,`04 09 0e 12 0e 00` 在整個檔案 0 次。
+- 三項都對不上,doc35 那段可能出自另一個執行檔版本或位址換算;本輪沒有追來源,只在這裡記錄。
+
+### (4) 仍未完成
+
+- `re_coverage --gaps globals` 其餘:`0x527f4` / `0x527f5`(FPU 型別)、`0x52804`(heap / sbrk)、`0x53af5`(捲動位移)、`0x53c23`(AI 分數)、`0x54133`(靜音旗標)等。
+- 續二百六十六 (6) 的其餘項目不變。

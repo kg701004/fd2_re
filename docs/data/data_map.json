@@ -269,6 +269,34 @@
       ]
     },
     {
+      "start": "0x51aac",
+      "size": 1,
+      "name": "map_hud_shown",
+      "type": "byte 旗標(地圖 HUD 暫時隱藏)",
+      "meaning": "地圖 HUD 的暫時開關:draw_map_hud 在 [0x51aab] 非 0 之後再看它,0 時整個 HUD 不畫(0x1ad1b)。寫入只有 0 與 1,且都成對包住一段呼叫:end_player_phase_if_all_acted 與 field_command_ring 包 battle_phase_advance、game_main 包 show_result_resource_79 與章節處理表 0x51de9 / 0x51d71、title_menu_dispatch 包 town_hub_main 與 0x51d71 表,回來寫 1(FD2.EXE 反組譯)。執行檔初值 1。",
+      "evidence": [
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "func": "0x13565"
+        },
+        {
+          "func": "0x16f55"
+        },
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x25ebb"
+        },
+        {
+          "doc": "docs/knowledge-base/10-sprite-rendering-camp-and-state.md",
+          "quote": "### 2. `0x51aab`/`0x51aac` raw gate:通用機制稽核結果 [已確認為通用,非逐章]"
+        }
+      ]
+    },
+    {
       "start": "0x51b91",
       "size": 360,
       "name": "event_handler_table",
@@ -352,6 +380,70 @@
         {
           "doc": "docs/knowledge-base/11-enemy-ai.md",
           "quote": "- 兩個播音效函式都是 `[0x53ef1]` 為 0、`[0x51e62]` 為 0 或 `[0x54133]` 非 0 時直接返回,不播。"
+        }
+      ]
+    },
+    {
+      "start": "0x52363",
+      "size": 18,
+      "name": "town_option_icon_x",
+      "type": "byte[18] 常數表(城鎮選項圖示的 x 座標;索引是版面號乘六加選項)",
+      "meaning": "索引 = row31_ptr_6238d([0x53c03]) 取回的城鎮資料第 0 byte(版面號)× 6 + [0x53f4a]。town_hub_redraw 0x266ac 以 [0x53a49] + 0x8088 + x + y × 0x1c8 當 blit_tile24_rle 的目的(畫選項圖示);town_hub_select 與 shop_menu / tavern_menu / church_menu 以 x − 0x96 算進場縮放的中心。FD2.EXE 檔內 18 byte:1d 29 3b 9a b6 0a / 5a 21 35 94 de c4 / 3b 0a 3b 82 f2 88(版面號 0 / 1 / 2 各 6 格;0x52375 緊接在後)。城鎮資料 +0 在各章的實際值域本輪沒有逐章核對。沒有寫入。",
+      "evidence": [
+        {
+          "func": "0x265ec"
+        },
+        {
+          "func": "0x2670e"
+        },
+        {
+          "func": "0x279bc"
+        },
+        {
+          "func": "0x29300"
+        },
+        {
+          "func": "0x29daa"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "索引「城鎮 id × 6 + 選項」的表 5"
+        },
+        {
+          "doc": "docs/knowledge-base/56-fd2-remake-sdd.md",
+          "quote": "coord_table(0x52363/0x52375)[record_byte0*6+selection]"
+        }
+      ]
+    },
+    {
+      "start": "0x52375",
+      "size": 18,
+      "name": "town_option_icon_y",
+      "type": "byte[18] 常數表(城鎮選項圖示的 y 座標;索引是版面號乘六加選項)",
+      "meaning": "與 0x52363 同一個索引。town_hub_redraw 0x266c1 乘 0x1c8 當列位移;town_hub_select 與 shop_menu / tavern_menu / church_menu 以 y − 0x64 算縮放中心。FD2.EXE 檔內 18 byte:2e 6d a3 8b 41 0a / 1e 69 a3 8b 55 08 / 1a 90 a3 96 1f 14。緊接的 0x52387 是 town_keeper_portrait。沒有寫入。",
+      "evidence": [
+        {
+          "func": "0x265ec"
+        },
+        {
+          "func": "0x2670e"
+        },
+        {
+          "func": "0x279bc"
+        },
+        {
+          "func": "0x29300"
+        },
+        {
+          "func": "0x29daa"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "索引「城鎮 id × 6 + 選項」的表 5"
+        },
+        {
+          "doc": "docs/knowledge-base/56-fd2-remake-sdd.md",
+          "quote": "coord_table(0x52363/0x52375)[record_byte0*6+selection]"
         }
       ]
     },
@@ -2318,6 +2410,30 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "5 + 4 + 29 + 9 = 47。"
+        }
+      ]
+    },
+    {
+      "start": "0x53f72",
+      "size": 4,
+      "name": "town_menu_cursor_frame",
+      "type": "dword(城鎮清單游標動畫格 0 .. 3)",
+      "meaning": "menu_tick_redraw 在 [0x53f52] 是奇數時 inc,等於 4 時寫 0(0x270a3),所以在 0 .. 3 循環;menu_tick_redraw 與 draw_party_roster_two_column / draw_equip_compare_rows / draw_revive_candidate_rows / draw_class_change_options 讀它,3 當 1 用(畫面是 0、1、2、1 來回)。_cstart_ 清零(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x27079"
+        },
+        {
+          "func": "0x2810b"
+        },
+        {
+          "func": "0x2825b"
+        },
+        {
+          "func": "0x2a0c2"
+        },
+        {
+          "func": "0x2a694"
         }
       ]
     },
