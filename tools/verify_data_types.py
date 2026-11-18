@@ -147,7 +147,8 @@ def parse_type(t: str, size: int) -> dict:
         return {"kind": "union", "elem": 4, "count": int(m.group(1))}
     m = _CHAR.match(t)
     if m:
-        return {"kind": "array", "elem": 1, "count": int(m.group(1))}
+        # char 緩衝不核值域,但「常數」照樣核(沒有寫入、初值在檔內),否則 `char[N] 常數` 寫了也不會失敗
+        return {"kind": "array", "elem": 1, "count": int(m.group(1)), "const": "常數" in t[m.end():]}
     m = _BASE.match(t)
     if not m:
         return {"kind": "unparsed"}
@@ -1256,6 +1257,19 @@ def check_region(r: dict, f: Facts) -> dict:
             if v != c["const_value"]:
                 res["fail"].append(f"{where}: 宣告常數 {c['const_value']},EXE 檔內值 {v}")
 
+    # 初值:值域宣告的每一格,檔內初值或 _cstart_ 清零的 0 也要在值域內。
+    # 讀改寫歸納與「自身舊值」都以初值當起點,初值不合宣告時那些結論也不成立。
+    # 只有式子(`byte + 2`)而沒有列舉 / 範圍 / 上限 / 哨兵的宣告不核(式子描述寫入,不描述初值)。
+    # 指標型別 parse_type 不產生 allowed,所以 `al is not None` 已把指標排除。
+    al = c.get("allowed")
+    if (al is not None and init is not None
+            and (al["set"] is not None or al["range"] is not None or al["upper"] is not None or al["sentinel"])):
+        bad_init = [k for k in range(c["count"]) if not _init_ok(c, f, start, size, start + k * c["elem"])]
+        if bad_init:
+            k = bad_init[0]
+            v = int.from_bytes(init[k * c["elem"]:(k + 1) * c["elem"]], "little")
+            res["fail"].append(f"{where}: {len(bad_init)} 格初值不在宣告值域內(第 {k} 格 = {v},{src})")
+
     # 值域與指標的立即數寫入;函式回傳的寫入另計,並對 type 的來源宣告核對
     calls: list[tuple[int, int, int | None, list[Arg] | None]] = []
     for ins, t, width, rw in writes:
@@ -1512,6 +1526,7 @@ def selftest() -> int:
     mem = bytearray(0x200)
     mem[0:7] = b"BG.DAT\0"
     mem[0x10:0x14] = struct.pack("<I", 13)
+    mem[0x14:0x18] = struct.pack("<I", 0xFFFFFFFF)       # 初值核對:哨兵
     mem[0x20:0x22] = b"\xfa\0"
     mem[0x180:0x1a0] = b"A" * 32                        # _cstr:第 33 byte 才是 NUL
     mem[0x1fd:0x1ff] = b"AA"                            # _cstr:映像最後 3 byte = "AA\0"
@@ -1593,6 +1608,22 @@ def selftest() -> int:
     # 值域
     w1 = [(0x900, 0x1050, 4, "w", "mem", False)]
     check("值域內 → 0", errs(reg(0x1050, 4, "dword(x 0 .. 6)"), w1) == [])
+    # 初值(0x1010 檔內 dword 13;0x2004 清零;0x3000 不在檔內也不清零)
+    check("(i1) 檔內初值 13:值域 0 .. 13 → 0;0 .. 12 → 失敗;列舉 {0, 13} → 0;上限 12 → 失敗",
+          [bool(errs(reg(0x1010, 4, t))) for t in ("dword(x 0 .. 13)", "dword(x 0 .. 12)",
+                                                   "dword(x:0 空、13 滿)", "dword(x,上限 12)")]
+          == [False, True, False, True])
+    check("(i2) 清零的 0:值域 1 .. 6 → 失敗;0 .. 6 → 0;旗標 → 0",
+          [bool(errs(reg(0x2004, 4, t))) for t in ("dword(x 1 .. 6)", "dword(x 0 .. 6)", "dword 旗標(x)")]
+          == [True, False, False])
+    check("(i3) 陣列逐格:0、13、0xffffffff 對 0 .. 12 → 2 格失敗、指名第 1 格 = 13;沒有初值(none)/ 指標 / 只有式子 → 不核",
+          "2 格初值不在宣告值域內(第 1 格 = 13,file)" in " ".join(errs(reg(0x100c, 12, "dword[3](x 0 .. 12)")))
+          and errs(reg(0x3000, 4, "dword(x 1 .. 6)")) == []
+          and errs(reg(0x1010, 4, "dword 指標(x)")) == []
+          and errs(reg(0x1010, 1, "byte(x 半徑 byte + 2)")) == [])
+    check("(i4) 哨兵:初值 0xffffffff = 哨兵 → 0;不是哨兵 → 失敗",
+          errs(reg(0x1014, 4, "dword(x 0 .. 6;0xffffffff = 沒有)")) == []
+          and errs(reg(0x1014, 4, "dword(x 0 .. 6;0xfffffffe = 沒有)")) != [])
     check("值域外 → 失敗", errs(reg(0x1050, 4, "dword(x 0 .. 6)"), [(0x901, 0x1050, 4, "w", "mem", False)]) != [])
     check("列舉外 → 失敗", errs(reg(0x1050, 4, "dword(碼 0 / 1 / 2)"), [(0x901, 0x1050, 4, "w", "mem", False)]) != [])
     check("上限外 → 失敗", errs(reg(0x1050, 4, "dword(x,上限 6)"), [(0x901, 0x1050, 4, "w", "mem", False)]) != [])
@@ -1617,6 +1648,12 @@ def selftest() -> int:
           errs(reg(0x1050, 1, "byte(x 0 .. 6,0xff = 沒有)"), [(0x907, 0x1050, 1, "w", "mem", False)]) == [])
     check("char 陣列不當指標",
           errs(reg(0x1080, 4, "char[4] 緩衝"), [(0x905, 0x1080, 1, "w", "mem", False)]) == [])
+    check("文法:char 常數", parse_type("char[4] 常數", 4)["const"] is True
+          and parse_type("char[4] 緩衝", 4)["const"] is False)
+    check("char 常數沒有寫入 → 0", errs(reg(0x1080, 4, "char[4] 常數")) == [])
+    check("char 常數被寫 → 失敗",
+          errs(reg(0x1080, 4, "char[4] 常數"), [(0x905, 0x1080, 1, "w", "mem", False)]) != [])
+    check("char 常數在清零範圍 → 失敗", errs(reg(0x2000, 4, "char[4] 常數")) != [])
 
     # 指標
     check("指標 fixup 立即數 → 0", errs(reg(0x1070, 4, "dword 指標(x)"), [(0x904, 0x1070, 4, "w", "mem", False)]) == [])
@@ -2227,14 +2264,14 @@ def selftest() -> int:
         check("真實 0x541ac 初值 zeroed、0x51a87 初值 file",
               got["0x541ac"]["init"] == "zeroed" and got["0x51a87"]["init"] == "file")
         ranged = [x for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
-        check("真實 值域 / 指標寫入:核對 303(暫存器 17)、函式回傳 111、跨區塊 25、歸納 8、未判定 59",
+        check("真實 值域 / 指標寫入:核對 337(暫存器 20)、函式回傳 129、跨區塊 29、歸納 14、未判定 82",
               (sum(x["imm_checked"] for x in ranged), sum(x["via_reg"] for x in ranged),
                sum(x["call_ret"] for x in ranged), sum(x["flow"] for x in ranged),
                sum(x["inductive"] for x in ranged), sum(x["undetermined"] for x in ranged))
-              == (303, 17, 111, 25, 8, 59))
+              == (337, 20, 129, 29, 14, 82))
         srcd = [x for r, x in out if x["claim"].get("source")]
-        check("真實 來源宣告 24 段、參數核對 122 項",
-              (len(srcd), sum(x["src_checked"] for x in srcd)) == (24, 122))
+        check("真實 來源宣告 30 段、參數核對 139 項",
+              (len(srcd), sum(x["src_checked"] for x in srcd)) == (30, 139))
         # 跨區塊 / 歸納(2026-11-15 逐條讀反組譯核對)
         fs = f.flow_src
         q = fs.get(0x21675, (None, ""))[0]
@@ -2264,13 +2301,13 @@ def selftest() -> int:
         rc0, txt = rep(out)
         check("真實 報告的統計行(型別 / 初值來源 / 每種跨區塊值分開加總 / 常數字串 / 窄存取);失敗 0 → 回傳 0",
               rc0 == 0 and txt[:3] == [
-                  "data_map type 核對:110 段;失敗 0、未解析 0",
-                  "  型別 {'array': 13, 'cstring': 8, 'fptr_table': 4, 'scalar': 84, 'union': 1}",
-                  "  初值來源 {'file': 43, 'zeroed': 67};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
-              and "    跨區塊 / 跨 call 判定 25 筆(值:常數 12、函式回傳 3、固定位址舊值 7、movzx 式子 4);讀改寫歸納 8 筆"
+                  "data_map type 核對:197 段;失敗 0、未解析 0",
+                  "  型別 {'array': 27, 'cstring': 15, 'fptr_table': 8, 'scalar': 146, 'union': 1}",
+                  "  初值來源 {'file': 92, 'zeroed': 105};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
+              and "    跨區塊 / 跨 call 判定 29 筆(值:常數 13、函式回傳 5、固定位址舊值 10、movzx 式子 4);讀改寫歸納 14 筆"
               in txt
-              and "  常數宣告 10 段;字串 8 段;函式指標表 4 段" in txt
-              and "  窄存取(寬度小於元素,不算失敗) 30 筆,分布在 11 段" in txt)
+              and "  常數宣告 21 段;字串 15 段;函式指標表 8 段" in txt
+              and "  窄存取(寬度小於元素,不算失敗) 32 筆,分布在 13 段" in txt)
         rce, txe = rep([])
         check("報告 空輸入:各計數 0、型別 {}、回傳 0",
               rce == 0 and txe[:2] == ["data_map type 核對:0 段;失敗 0、未解析 0", "  型別 {}"]
@@ -2305,6 +2342,9 @@ def selftest() -> int:
         check("真實 對照:拿掉 0x53a49 的 malloc 0xfa00、0x53c0b 0 .. 3 → 0 .. 2、0x51a83 byte + 2 → byte + 3 全部失敗",
               all(alt(*a) for a in (("0x53a49", "暫換成 malloc 0xfa00 緩衝", "暫換成緩衝"), ("0x53c0b", "0 .. 3", "0 .. 2"),
                                     ("0x51a83", "byte + 2", "byte + 3"))))
+        bad = alt("0x51a10", "1 .. 14", "2 .. 14")
+        check("真實 對照:0x51a10 的 1 .. 14 → 2 .. 14 只由初值核對抓到(檔內初值 1;唯一的寫入 0x24d39 是未判定)",
+              len(bad) == 1 and "初值不在宣告值域內" in bad[0] and "第 0 格 = 1,file" in bad[0])
     except SystemExit as e:
         check(f"讀原版失敗:{e}", False)
 

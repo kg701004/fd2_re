@@ -53,6 +53,185 @@
       ]
     },
     {
+      "start": "0x50468",
+      "size": 13,
+      "name": "ail_dbg_fmt_result_d",
+      "type": "C 字串 \"Result = %d\\x0A\"(13 bytes 含 NUL)",
+      "meaning": "AIL_set_preference、AIL_call_driver、AIL_set_sample_file、AIL_sample_playback_rate 的AIL 進入點離開前的追蹤輸出:fprintf([0x54164], 這格, 回傳值),只在追蹤檔開啟時印;之前先印 [0x54178] − 1 個 0x50311 縮排(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x37f70"
+        },
+        {
+          "func": "0x382e9"
+        },
+        {
+          "func": "0x3958e"
+        },
+        {
+          "func": "0x39c09"
+        }
+      ]
+    },
+    {
+      "start": "0x5048e",
+      "size": 15,
+      "name": "ail_dbg_fmt_result_hex",
+      "type": "C 字串 \"Result = 0x%X\\x0A\"(15 bytes 含 NUL)",
+      "meaning": "AIL_get_real_vect、AIL_install_driver、AIL_install_DIG_INI、AIL_allocate_file_sample 的AIL 進入點離開前的追蹤輸出:fprintf([0x54164], 這格, 回傳值),只在追蹤檔開啟時印;之前先印 [0x54178] − 1 個 0x50311 縮排(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x38074"
+        },
+        {
+          "func": "0x38f2b"
+        },
+        {
+          "func": "0x3908b"
+        },
+        {
+          "func": "0x393b5"
+        }
+      ]
+    },
+    {
+      "start": "0x50593",
+      "size": 13,
+      "name": "ail_dbg_fmt_result_u",
+      "type": "C 字串 \"Result = %u\\x0A\"(13 bytes 含 NUL)",
+      "meaning": "AIL_API_read_INI、AIL_register_timer、AIL_set_timer_user、AIL_interrupt_divisor 的AIL 進入點離開前的追蹤輸出:fprintf([0x54164], 這格, 回傳值),只在追蹤檔開啟時印;之前先印 [0x54178] − 1 個 0x50311 縮排(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3846a"
+        },
+        {
+          "func": "0x387bc"
+        },
+        {
+          "func": "0x388a7"
+        },
+        {
+          "func": "0x38afc"
+        }
+      ]
+    },
+    {
+      "start": "0x50f1a",
+      "size": 16,
+      "name": "ail_dbg_fmt_result_dd",
+      "type": "C 字串 \"Result = %d:%d\\x0A\"(16 bytes 含 NUL)",
+      "meaning": "AIL_sequence_position(兩個回傳值)的AIL 進入點離開前的追蹤輸出:fprintf([0x54164], 這格, 回傳值),只在追蹤檔開啟時印;之前先印 [0x54178] − 1 個 0x50311 縮排(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3bce2"
+        }
+      ]
+    },
+    {
+      "start": "0x51a10",
+      "size": 1,
+      "name": "backdrop_scroll_rows",
+      "type": "byte(背景圖每次循環捲動的列數 1 .. 14)",
+      "meaning": "reveal_wipe(n) 在 n 不是 0 時只把 n 的低 byte 寫進這格(0x24d39)就返回;n 是 0 時以這格 k:malloc(k × 0x138) 暫存 [0x53aff] 最下面 k 列,其餘列由下往上各下移 k 列,再把暫存的 k 列貼回最上面,也就是 312 寬的背景圖向下循環捲動 k 列。執行檔初值 1;command_handler_81 以 edi = 2 .. 9(各 30 幀)與 10 .. 14(各 12 幀,每幀另以遞增的計數呼叫 0x11d40)逐步加速(0x24c82 / 0x24cf3)。另外兩個呼叫端(prepare_chapter_aux_graphics、draw_terrain_layer 的 0x17 章節分支)都傳 0(FD2.EXE 反組譯)。函式名 reveal_wipe 與它實際做的事(循環捲動)不一致,本輪不改名。",
+      "evidence": [
+        {
+          "func": "0x24d22"
+        }
+      ]
+    },
+    {
+      "start": "0x51a11",
+      "size": 1,
+      "name": "bgm_last_track",
+      "type": "byte(上一次 bgm 的曲號;0xff = 停止)",
+      "meaning": "bgm(曲號, …) 先比較:與這格相同就直接返回(0x25982);否則寫入曲號的低 byte(0x25997),曲號是 −1 時以 0x3b124 把音量淡到 0 後返回。執行檔初值 0xff(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x25977"
+        }
+      ]
+    },
+    {
+      "start": "0x51a12",
+      "size": 24,
+      "name": "terrain_ap_percent",
+      "type": "dword[6] 常數表(地形的攻擊力修正百分比,有號)",
+      "meaning": "值依序是 5、0、−5、−5、−5、0。索引是 map_cell_info(0x12e38)輸出的 +5 byte,也就是地形屬性表 [0x53a69] 的 byte 1,直接當索引(沒有加 1)。draw_map_hud 把它畫在地形資訊框;ai_physical_candidate_select、map_attack_resolve、scene_attack_resolve 以「值 += 值 × 百分比 / 100」(有號除法)修正攻方 / 守方的攻擊力(0x143f1 / 0x1455b / 0x1eda7 / 0x2f8c4)。沒有寫入點(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x1ecc7"
+        },
+        {
+          "func": "0x2f7b6"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "已驗證 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5)"
+        }
+      ]
+    },
+    {
+      "start": "0x51a2a",
+      "size": 24,
+      "name": "terrain_dp_percent",
+      "type": "dword[6] 常數表(地形的防禦力修正百分比,有號)",
+      "meaning": "值依序是 0、0、10、10、−5、0。索引是 map_cell_info(0x12e38)輸出的 +5 byte,也就是地形屬性表 [0x53a69] 的 byte 1,直接當索引(沒有加 1)。draw_map_hud 把它畫在地形資訊框;ai_physical_candidate_select、map_attack_resolve、scene_attack_resolve 以「值 += 值 × 百分比 / 100」(有號除法)修正攻方 / 守方的防禦力(0x14413 / 0x14573 / 0x1edec / 0x2f909)。沒有寫入點(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x1acf3"
+        },
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x1ecc7"
+        },
+        {
+          "func": "0x2f7b6"
+        }
+      ]
+    },
+    {
+      "start": "0x51a42",
+      "size": 1,
+      "name": "copy_check_enter_countdown",
+      "type": "byte(防拷密碼檢查前的 Enter 倒數 0 .. 3)",
+      "meaning": "battle_main_input_loop 按 Space / Enter 時,它不是 0 就減 1(0x1189b);是 0 時走到 0x118a3 比較 [0x53a44],但下一條是無條件 jmp,copy_protection_password_check 的呼叫(0x118ac)走不到。EXE 裡只有這 2 筆存取,所以它從 3 減到 0 之後就不再有作用。執行檔初值 3(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x117e7"
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "`[0x51a42]`(資料初值 3)每按一次 Enter 減 1,減到 0 且 `[0x53a44]` 仍是 0 時進入密碼檢查,答對之前會一直回到檢查。"
+        }
+      ]
+    },
+    {
+      "start": "0x51a43",
+      "size": 10,
+      "name": "fdtxt_dat_filename",
+      "type": "C 字串 \"FDTXT.DAT\"(10 bytes 含 NUL)",
+      "meaning": "save_load_restore(0x101e9)、loadch(0x108b7)、game_main(0x25d07)以 push 0x51a43 傳給載入函式的檔名(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x25bf4"
+        }
+      ]
+    },
+    {
       "start": "0x51a4d",
       "size": 12,
       "name": "fdother_dat_filename",
@@ -68,6 +247,27 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "每一筆都是 `push 0x51a4d`,下一條就是 `call 0x111ba`,也就是 `0x111ba`(檔名, 舊緩衝, 資源號)的第 1 個引數"
+        }
+      ]
+    },
+    {
+      "start": "0x51a59",
+      "size": 12,
+      "name": "fdfield_dat_filename",
+      "type": "C 字串 \"FDFIELD.DAT\"(12 bytes 含 NUL)",
+      "meaning": "save_load_restore(0x1015d / 0x1020f)、loadch(0x108de / 0x108fa / 0x10913)、spawn(0x10bb5)、command_handler_80(0x24a46)以 push 0x51a59 傳給載入函式的檔名(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x10b4e"
+        },
+        {
+          "func": "0x24754"
         }
       ]
     },
@@ -126,6 +326,18 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "9 處正好是上面 `[0x53a85]` 那節的 9 個頭像載入點"
+        }
+      ]
+    },
+    {
+      "start": "0x51a79",
+      "size": 10,
+      "name": "fdmus_dat_filename",
+      "type": "C 字串 \"FDMUS.DAT\"(10 bytes 含 NUL)",
+      "meaning": "bgm 在 0x259f5 以 push 0x51a79 傳給載入函式的檔名(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x25977"
         }
       ]
     },
@@ -240,6 +452,33 @@
       ]
     },
     {
+      "start": "0x51a93",
+      "size": 4,
+      "name": "range_flash_fixed_phase",
+      "type": "dword 常數(範圍閃爍的固定相位;0xffffffff = 自動輪播,EXE 沒有寫入點)",
+      "meaning": "draw_terrain_layer 每次畫地形先看它(0x12106):是 −1 就依 BIOS tick 推進 [0x53c1f],否則把它直接寫進 [0x53c1f](0x1215a)。執行檔初值 0xffffffff,EXE 裡只有這 2 筆讀取、沒有寫入,所以原版資料下固定相位的分支走不到(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x51a97",
+      "size": 20,
+      "name": "range_flash_lut_index",
+      "type": "byte[20] 常數表(範圍閃爍相位對應的換色表項,先遞增再遞減)",
+      "meaning": "依 [0x53c1f] 索引,值是 0、1 .. 10、9 .. 1 共 20 個;取出的值當 [0x53a6d] 換色表容器的項號。draw_terrain_layer(0x12169)在格子的範圍標記(格 +7)不是 0xff 時以這張換色表畫地形圖塊(blit_tile24_rle_remap),redraw_map_cell(0x12b85)重畫單格時也一樣,範圍標記格因此明暗來回(FD2.EXE 反組譯)。下一個 byte 0x51aab 是別的全域(save_load_restore 寫)。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x12ac6"
+        }
+      ]
+    },
+    {
       "start": "0x51aab",
       "size": 1,
       "name": "map_hud_enabled",
@@ -297,6 +536,27 @@
       ]
     },
     {
+      "start": "0x51b19",
+      "size": 120,
+      "name": "chapter_battle_check_table",
+      "type": "dword[30] 函式指標表(章節號 0 .. 29 的戰鬥結果判定 handler)",
+      "meaning": "30 格都是指向入口的 fixup(battle_result_check_default 與 battle_result_check_1 .. 29)。battle_main_input_loop、turn_status_tick、friendly_phase_dispatch、enemy_phase_dispatch(2 處)以 call [[0x53c03] × 4 + 0x51b19] 呼叫(0x1197b 等 5 處)。表尾緊接 0x51b91 全域事件表(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x117e7"
+        },
+        {
+          "func": "0x1a866"
+        },
+        {
+          "func": "0x1d80b"
+        },
+        {
+          "func": "0x1d8ba"
+        }
+      ]
+    },
+    {
       "start": "0x51b91",
       "size": 360,
       "name": "event_handler_table",
@@ -322,6 +582,52 @@
         {
           "doc": "docs/knowledge-base/25-battle-event-system.md",
           "quote": "90 格都是 `docs/data/function_inventory.json` 的函式入口"
+        }
+      ]
+    },
+    {
+      "start": "0x51d01",
+      "size": 112,
+      "name": "command_effect_table",
+      "type": "dword[28] 函式指標表(法術 / 指令號 0 .. 27 的效果 handler)",
+      "meaning": "28 格都是入口(command_handler_0 .. 27)。只有兩個呼叫點:ai_spell_execute 0x1541f 以 [0x53c2f]、player_spell_select 0x1d479 以玩家選的號碼 call [號 × 4 + 0x51d01]。下一格 0x51d71 起是另一張以章節號索引的表,所以這張表只有 28 格;doc25 §20.3 把 0x51d01 起 88 格算成一張表,依據是逐格都是入口,沒有看 game_main / title_menu_dispatch 以 0x51d71 / 0x51de9 為基底的呼叫(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x15311"
+        },
+        {
+          "func": "0x1cff0"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "0x1d479  call dword ptr [eax*4 + 0x51d01]   ; 玩家 command ring(FUN_0001cff0 內)"
+        }
+      ]
+    },
+    {
+      "start": "0x51d71",
+      "size": 120,
+      "name": "chapter_enter_table",
+      "type": "dword[30] 函式指標表(章節號 0 .. 29 的進場 handler)",
+      "meaning": "30 格都是入口(inventory 名 command_handler_28 .. 57)。game_main 在過章後 town_hub_main 回傳 0 時、title_menu_dispatch 新遊戲 / 讀檔後,以 call [[0x53c03] × 4 + 0x51d71] 呼叫(0x25e3a / 0x25f10 / 0x260f5),接著以 [0x51e63 + 章節] 呼叫 bgm(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x25ebb"
+        }
+      ]
+    },
+    {
+      "start": "0x51de9",
+      "size": 120,
+      "name": "chapter_clear_table",
+      "type": "dword[30] 函式指標表(章節號 0 .. 29 的過章 handler)",
+      "meaning": "30 格都是入口(inventory 名 command_handler_58 .. 87,其中 61 .. 87 把 [0x53c03] 加 1)。game_main 在戰場迴圈返回、[0x53ecc] 是 2(勝利)時,先 bgm(−1, 1),再 call [[0x53c03] × 4 + 0x51de9](0x25e23),之後進 town_hub_main。表尾 0x51e61 起是 byte 變數(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
         }
       ]
     },
@@ -380,6 +686,39 @@
         {
           "doc": "docs/knowledge-base/11-enemy-ai.md",
           "quote": "- 兩個播音效函式都是 `[0x53ef1]` 為 0、`[0x51e62]` 為 0 或 `[0x54133]` 非 0 時直接返回,不播。"
+        }
+      ]
+    },
+    {
+      "start": "0x51e63",
+      "size": 30,
+      "name": "chapter_bgm_table",
+      "type": "byte[30] 常數表(依章節號索引的戰場曲號)",
+      "meaning": "以 [0x53c03] 索引,值傳給 bgm 當曲號:save_load_restore、battle_phase_advance(3 處)、game_main、title_menu_dispatch(3 處)。值多為 0x13,另有 3 / 4 / 8(FD2.EXE 反組譯)。下一格 0x51e81 是另一張章節 byte 表。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1a30b"
+        },
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x25ebb"
+        }
+      ]
+    },
+    {
+      "start": "0x51e81",
+      "size": 30,
+      "name": "chapter_enemy_bgm_table",
+      "type": "byte[30] 常數表(依章節號索引的敵方回合曲號)",
+      "meaning": "battle_phase_advance 在敵方回合前以 bgm(這格[章節], 0) 換曲(0x1a57a),之後呼叫 enemy_phase_dispatch;另在 0x1a50e 與 0x1a5b2 兩處比較 [0x51e63 + 章節] 與這格,不同就先 bgm(−1, 0) 停曲。值是 1 / 4 / 6 / 8 / 0xc(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x1a30b"
         }
       ]
     },
@@ -563,6 +902,54 @@
         {
           "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
           "quote": "**6 筆全是 `push 0x524a0`**"
+        }
+      ]
+    },
+    {
+      "start": "0x526e3",
+      "size": 6,
+      "name": "figani_sfx_bank_resource",
+      "type": "byte[6] 常數表(FIGANI 記錄 +4 對應的 FDOTHER 音效 bank 號)",
+      "meaning": "值依序是 48 .. 53。fdother_nested_resource_load 以 movsd + movsw 把這 6 bytes 複製到堆疊,以 FIGANI 記錄 +4 byte − 1 當索引取 FDOTHER.DAT 的資源號(0x3150b)。沒有寫入點(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x314de"
+        }
+      ]
+    },
+    {
+      "start": "0x526e9",
+      "size": 20,
+      "name": "charcard_demo_left_icon",
+      "type": "byte[20] 常數表(片尾示範戰第 0 號單位的圖示 id)",
+      "meaning": "scene_charcard_orchestrator 以 rep movsd 把這 20 bytes 複製到堆疊,片尾 20 場示範戰每場取一格(FD2.EXE 反組譯)。第 k 場寫入 [0x53a45] 第 0 筆 record 的 +7(圖示 id),並依它 < 0x4c 把 +6 設 2、否則設 0。沒有寫入點。",
+      "evidence": [
+        {
+          "func": "0x31529"
+        }
+      ]
+    },
+    {
+      "start": "0x526fd",
+      "size": 20,
+      "name": "charcard_demo_right_icon",
+      "type": "byte[20] 常數表(片尾示範戰第 1 號單位的圖示 id)",
+      "meaning": "scene_charcard_orchestrator 以 rep movsd 把這 20 bytes 複製到堆疊,片尾 20 場示範戰每場取一格(FD2.EXE 反組譯)。第 k 場寫入 [0x53a45] 第 1 筆 record 的 +7(+0x57),並依它 < 0x4c 把 +6(+0x56)設 2、否則設 0。沒有寫入點。",
+      "evidence": [
+        {
+          "func": "0x31529"
+        }
+      ]
+    },
+    {
+      "start": "0x52711",
+      "size": 20,
+      "name": "charcard_demo_scene",
+      "type": "byte[20] 常數表(片尾示範戰的場景資源號)",
+      "meaning": "scene_charcard_orchestrator 以 rep movsd 把這 20 bytes 複製到堆疊,片尾 20 場示範戰每場取一格(FD2.EXE 反組譯)。第 k 場寫進 [0x54133](0x31ae4),再呼叫 attack_scene_orchestrator(0, 1)。值在 3 .. 53 之間。沒有寫入點。",
+      "evidence": [
+        {
+          "func": "0x31529"
         }
       ]
     },
@@ -817,6 +1204,27 @@
       ]
     },
     {
+      "start": "0x527a8",
+      "size": 4,
+      "name": "near_heap_first_block",
+      "type": "dword 指標(近堆積第一個區段;0 = 還沒有區段)",
+      "meaning": "Watcom 近堆積的區段串列頭:nmalloc 與 heap_free_near 把 0x527a8 當堆積描述(eax = 0x527a8、ebx = 0x527b0)傳給配置 / 釋放核心;heap_grow 把新區段接上串列時,沒有前一段就寫進這格(0x3d9b7 / 0x3d9d6),[0x527ac] 是最後一段,區段 +0 大小、+4 前一段、+8 下一段;heap_tail_free_size 與 heap_grow 先比較它是否為 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3707e"
+        },
+        {
+          "func": "0x3777e"
+        },
+        {
+          "func": "0x3d77b"
+        },
+        {
+          "func": "0x3d842"
+        }
+      ]
+    },
+    {
       "start": "0x527f4",
       "size": 1,
       "name": "x87_type",
@@ -944,6 +1352,105 @@
       }
     },
     {
+      "start": "0x52bea",
+      "size": 4,
+      "name": "ail_lock_depth",
+      "type": "dword 計數(AIL 鎖定巢狀深度)",
+      "meaning": "ail_lock_enter inc、ail_lock_leave dec;ail_timer_isr 在它 > 0 時不呼叫計時器回呼(0x3eb16 jg);ail_timer_reprogram 寫 0(0x3eca2)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3ea74"
+        },
+        {
+          "func": "0x3ea81"
+        },
+        {
+          "func": "0x3ea8e"
+        },
+        {
+          "func": "0x3ec17"
+        }
+      ]
+    },
+    {
+      "start": "0x53604",
+      "size": 4,
+      "name": "ail_timer_service_busy",
+      "type": "dword 旗標(ail_drv_timer_service 正在執行)",
+      "meaning": "ail_drv_timer_service 的重入保護:不是 0 就直接返回;否則寫 1(0x3f570),呼叫驅動(0x382e9,功能 0x302)後寫 0(0x3f5ab)。ail_api_lock_memory / ail_api_unlock_memory 以 push 4、push 0x53604 鎖定 / 解鎖這 4 bytes,ail_timer_lock_memory 另以 0x52a54 .. 0x53604 當一段資料鎖定範圍(0x3f446)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3f565"
+        },
+        {
+          "func": "0x3f4e0"
+        },
+        {
+          "func": "0x3fddc"
+        },
+        {
+          "func": "0x3f446"
+        }
+      ]
+    },
+    {
+      "start": "0x53698",
+      "size": 128,
+      "name": "ail_gtl_filename_prefix",
+      "type": "char[128](AIL GTL 音色庫檔名前綴,初值 \"SAMPLE\")",
+      "meaning": "ail_impl_set_gtl_filename_prefix 把參數字串複製進來(0x442b0),再從尾端往回找:先遇到 '.' 就在那裡截斷(去掉副檔名),先遇到 '\\' 時只有它是最後一個字元才截掉,否則不改;ail_mdi_install_core 把它複製到驅動結構 +0x80(0x43beb)。ail_mdi_lock_memory / ail_mdi_unlock_memory 以 push 0x80、push 0x53698 鎖定這 128 bytes。執行檔初值 \"SAMPLE\"(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x442b0"
+        },
+        {
+          "func": "0x43ad0"
+        },
+        {
+          "func": "0x42110"
+        },
+        {
+          "func": "0x45380"
+        }
+      ]
+    },
+    {
+      "start": "0x53776",
+      "size": 2,
+      "name": "emu387_saved_msw_bits",
+      "type": "word(安裝 x87 模擬器前的 MSW MP / EM 位元)",
+      "meaning": "emu387_install 以 smsw 存入、and 6 只留 MP / EM 位元(0x461c5 / 0x461cc);__sys_fini_387_emulator 以它呼叫 int 21h(0x46345),emu387_unhook_int7 把它 or 回 CR0 的 bit 1 / 2(0x463ac);dosx_cr0_restore 以 int 21h AX = 2535h 讀出 [0x53730] 後,把這格零延伸寫進 [0x53730] 再寫回(0x463ca)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x461b7"
+        },
+        {
+          "func": "0x46306"
+        },
+        {
+          "func": "0x46380"
+        },
+        {
+          "func": "0x463ba"
+        }
+      ]
+    },
+    {
+      "start": "0x53778",
+      "size": 1,
+      "name": "emu387_installed",
+      "type": "byte 旗標(x87 模擬器已安裝)",
+      "meaning": "emu387_install 寫 1(0x461be);__sys_fini_387_emulator 不是 1 就直接返回,還原後寫 0(0x46375)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x461b7"
+        },
+        {
+          "func": "0x46306"
+        }
+      ]
+    },
+    {
       "start": "0x538a8",
       "size": 4,
       "name": "ail_mix_src_end",
@@ -1042,6 +1549,88 @@
       ]
     },
     {
+      "start": "0x539f4",
+      "size": 4,
+      "name": "range_flash_last_tick",
+      "type": "dword 有號整數(範圍閃爍上次推進時的 BIOS tick 低 word)",
+      "meaning": "draw_terrain_layer 在 [0x51a93] 是 −1 時比較 movsx word [0x46c]:與這格的差大於 2,或 tick 比這格小(回繞),就把 [0x53c1f] 加 1(20 → 0)並把目前的 tick 寫回(0x12153)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x539f8",
+      "size": 4,
+      "name": "backdrop_anim_last_tick",
+      "type": "dword 有號整數(背景圖章節上次推進動畫時的 BIOS tick 低 word)",
+      "meaning": "draw_terrain_layer 的兩條背景圖分支共用:[0x53c03] 是 9 / 0x18 / 0x19 / 0x1c / 0x1d 時,tick 與這格不同就呼叫 blit_rows_wave_offset([0x53aff], [0x53b03], [0x539fc]) 並把 [0x539fc] 加 1;[0x53c03] 是 0x17 時,tick 不同就呼叫 reveal_wipe(0)。兩者都把目前的 tick 寫回(0x11f86 / 0x120c1)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x539fc",
+      "size": 4,
+      "name": "backdrop_wave_phase",
+      "type": "dword(背景波動相位 0 .. 15)",
+      "meaning": "blit_rows_wave_offset 的第 3 引數:draw_terrain_layer 在背景圖章節每個新 tick 傳入後加 1,到 16 寫 0(0x11f8b .. 0x11f9a)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x53a00",
+      "size": 4,
+      "name": "terrain_phase_last_tick",
+      "type": "dword 有號整數(地形動畫相位上次切換時的 BIOS tick 低 word)",
+      "meaning": "draw_terrain_layer 開頭比較 movsx word [0x46c] 與這格,不同就把 [0x53a40] xor 1 並寫回目前的 tick(0x11f07 / 0x11f1e),所以地形相位每個 tick 切換一次(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x53a40",
+      "size": 4,
+      "name": "terrain_anim_phase",
+      "type": "dword 旗標(地形動畫相位;只以 byte xor 1 切換,以 dword 讀)",
+      "meaning": "draw_terrain_layer 在 BIOS tick 改變時 xor byte 1(0x11f0f);畫每格時依圖塊屬性 [0x53a69] byte 0:bit 3 讓圖塊號加 2 × 相位(0x12258)、bit 2 加相位(0x121e6)、bit 4 改加 [0x53c0b] / 2;redraw_map_cell 以 bit 3 同樣加 2 × 相位(0x12b61)。高 3 bytes 沒有寫入點,清零後一直是 0,所以 dword 讀到的是 0 / 1(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x12ac6"
+        }
+      ]
+    },
+    {
+      "start": "0x53a44",
+      "size": 1,
+      "name": "copy_check_passed",
+      "type": "byte 旗標(防拷密碼已答對)",
+      "meaning": "copy_protection_password_check 答對時寫 1(0x342b4);battle_main_input_loop 0x118a3 讀它,但比較結果沒有人用(下一條是無條件 jmp)。兩筆都在走不到的防拷路徑上(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x33faf"
+        },
+        {
+          "func": "0x117e7"
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "`[0x53a44]` 的寫入端只有 0x342b4(密碼答對),讀取端只有 0x118a5 —— 兩者都在這條被跳過的路徑上。"
+        }
+      ]
+    },
+    {
       "start": "0x53a45",
       "size": 4,
       "name": "active_unit_array",
@@ -1107,6 +1696,27 @@
       ]
     },
     {
+      "start": "0x53a4d",
+      "size": 4,
+      "name": "map_overlay_tile_bank",
+      "type": "dword 指標(FDOTHER.DAT 第 1 號資源,圖塊容器)",
+      "meaning": "game_main 以 load_res(\"FDOTHER.DAT\", 舊, 1) 載入後不再改(0x25c92);第 i 塊 = 基底 + dword[基底 + 6 + i × 4]。draw_map_overlay_cell 依參數取一塊畫到戰場畫布(0x12779),draw_roster_pick_grid 取第 0 塊(0x2b5a2),draw_password_screen 把基底傳給 0x344b4(0x34482)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x25bf4"
+        },
+        {
+          "func": "0x126f7"
+        },
+        {
+          "func": "0x2b4fb"
+        },
+        {
+          "func": "0x34366"
+        }
+      ]
+    },
+    {
       "start": "0x53a51",
       "size": 4,
       "name": "field_map_cells",
@@ -1161,6 +1771,31 @@
         {
           "doc": "docs/knowledge-base/25-battle-event-system.md",
           "quote": "章節 loader `0x1088d` `0x10907`:`0x111ba(\"FDFIELD.DAT\"(0x51a59), [0x53a55], 章節 × 3 + 1)`"
+        }
+      ]
+    },
+    {
+      "start": "0x53a59",
+      "size": 4,
+      "name": "field_unit_spawn_table",
+      "type": "dword 指標 → FDFIELD.DAT 第 章節×3+2 條(表頭 2 bytes + 每筆 6 bytes)",
+      "meaning": "save_load_restore(0x1016a)、章節 loader 0x1088d(0x108eb)、spawn(0x10bc2)以 load_res(\"FDFIELD.DAT\", 舊, 章節 × 3 + 2) 載入,三者之後都 heap_free 再寫 0(0x10462 / 0x10b32 / 0x10c0f)。field_unit_construct 讀 緩衝 + 2 + 參數 × 6 的 +0 與 +2 byte(0x10c8a),章節 loader 讀 緩衝 + 2 + [0x53be3] × 6(0x10a62)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x10010"
+        },
+        {
+          "func": "0x1088d"
+        },
+        {
+          "func": "0x10b4e"
+        },
+        {
+          "func": "0x10c50"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "同一函式把第 章節 × 3 + 2 條放進 `[0x53a59]`"
         }
       ]
     },
@@ -1814,6 +2449,68 @@
       ]
     },
     {
+      "start": "0x53aed",
+      "size": 4,
+      "name": "terrain_redraw_col_shift",
+      "type": "dword(背景圖橫向補償:0 平時、24 往左走時補畫左側一欄)",
+      "meaning": "step_anim_left 每幀在呼叫 draw_terrain_layer 畫 14 欄(起點欄 [0x53aa9] − 1,目的位址 [0x53a49] + 0x8070,比平常的 0x8088 左移 24 px)前寫 24、畫完寫 0(0x130a6 / 0x130e9)。draw_terrain_layer 只在背景圖章節([0x53c03] 是 9 / 0x18 / 0x19 / 0x1c / 0x1d、0x11 / 0x15 / 0x16 / 0x1b、0x17 三條分支)把它加進 copy_rect 的目的位址,所以左移的起點不會讓背景圖跟著左移;逐格畫地形的一般章節不讀它(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1300d"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "work buffer stride **0x1c8=456**"
+        }
+      ]
+    },
+    {
+      "start": "0x53af1",
+      "size": 4,
+      "name": "terrain_redraw_row_shift",
+      "type": "dword(背景圖縱向補償列數:0 平時、24 往上走時補畫上方一列)",
+      "meaning": "scroll_step(往上走一步,單位方向 byte 寫 2)在 [0x53aad] 不是 0 時,每幀呼叫 draw_terrain_layer 畫 9 列(起點列 [0x53aad] − 1,目的位址 [0x53a49] + 0x55c8 = 0x8088 − 24 × 0x1c8)前寫 24、畫完寫 0(0x132b3 / 0x132e6)。draw_terrain_layer 的三條背景圖分支把它乘上 work buffer 的列距 0x1c8 加進目的位址,抵銷上移 24 列的起點(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x13185"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "doc": "docs/knowledge-base/25-battle-event-system.md",
+          "quote": "work buffer stride **0x1c8=456**"
+        }
+      ]
+    },
+    {
+      "start": "0x53af5",
+      "size": 4,
+      "name": "step_scroll_offset",
+      "type": "dword 有號整數(走一步期間鏡頭已捲動的 work buffer 位元組數,步伐結束歸零)",
+      "meaning": "四個走一步的動畫各跑 6 幀,鏡頭要跟著捲動時每幀加上同一個步長並把畫面來源位址也加同一個步長:step_anim_down 加 0x720(4 列 × 0x1c8,0x12f84)、scroll_step 加 −0x720(0x13296)、step_anim_left 加 −4(0x130b0)、step_anim_right 加 4(0x133ee);單位靠近邊緣而改成單位在畫面上移動時步長是 0。6 幀合計一格(24 px 或 24 列)。結束時 0x12ff4(下 / 上)或 0x13153(左 / 右)寫 0。draw_terrain_layer 的三條背景圖分支把它加進目的位址,背景圖因此跟著畫面來源一起移動,在畫面上維持不動(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x12eaa"
+        },
+        {
+          "func": "0x1300d"
+        },
+        {
+          "func": "0x13185"
+        },
+        {
+          "func": "0x13315"
+        },
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
       "start": "0x53af9",
       "size": 1,
       "name": "ai_scene_skip",
@@ -1865,6 +2562,75 @@
         {
           "doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
           "quote": "**寫 22 = 11 組 `mov byte ptr [0x53afa], 1; push 群組; call 0x10b4e; mov byte ptr [0x53afa], 0`**:"
+        }
+      ]
+    },
+    {
+      "start": "0x53aff",
+      "size": 4,
+      "name": "chapter_backdrop",
+      "type": "dword 指標(章節背景圖:load_res 原圖,或 malloc 0xea00 等解碼畫布;其他章節 0)",
+      "meaning": "prepare_chapter_aux_graphics(0x10652)先 heap_free 舊值並寫 0,再依 [0x53c03] 決定:9 / 0x18 / 0x19 是 load_res(\"FDOTHER.DAT\", 舊, 15)、0x1c / 0x1d 是 55 號(0x10871),都是直接畫的原圖;0x11 / 0x15 / 0x16 / 0x1b 是 malloc(列距 × 高)的解碼畫布(0x1ce × 0xe2、0x198 × 0x114、0x198 × 0x100、0x1ce × 0xf4,0x10744),由 [0x53b03] 暫存的兩張 RLE 圖以 blit_rle_image_at_xy 解成上下兩半;0x17 是 malloc 0xea00(312 × 192,0x107ea),把 42 號圖解進來後呼叫 reveal_wipe(0)。draw_terrain_layer 的三條背景圖分支以它當波動來源 / 視差來源 / 直接來源,reveal_wipe 以 [0x51a10] 列為單位把它上下循環捲動(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x10652"
+        },
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x24d22"
+        }
+      ]
+    },
+    {
+      "start": "0x53b03",
+      "size": 4,
+      "name": "chapter_backdrop_work",
+      "type": "dword 指標(背景波動輸出畫布 malloc 0xfa00;其他章節在載入 FDOTHER 第 42 號等 RLE 原圖時暫存,解碼後釋放寫 0)",
+      "meaning": "prepare_chapter_aux_graphics 先 heap_free 舊值並寫 0。[0x53c03] 是 9 / 0x18 / 0x19 / 0x1c / 0x1d 時寫 malloc(0xfa00)(0x10883),draw_terrain_layer 每個新 tick 以 blit_rows_wave_offset([0x53aff], 這格, [0x539fc]) 把原圖逐列位移寫進來,再以列距 0x140 copy_rect 312 × 192 到 work buffer。0x11 / 0x15 / 0x16 / 0x1b 時先後暫存 FDOTHER 第 bl、bl + 1 號(bl 是 0x10 / 0x23 / 0x28 / 0x2e,0x10760 / 0x10792),0x17 時暫存第 42 號(0x10804),解碼進 [0x53aff] 後 heap_free 並寫 0(0x107c5 / 0x10831)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x10652"
+        },
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x53b07",
+      "size": 4,
+      "name": "step_frame_x",
+      "type": "dword(橫向步伐的幀進度:0 .. 6)",
+      "meaning": "step_anim_right 開頭寫 0(0x13352,edi 是函式開頭 xor 的 0),鏡頭跟著捲動時每幀加 1(0x133f8);step_anim_left 開頭寫 6(0x13049),鏡頭捲動時每幀加 −1(0x130ba);兩者結束都在 0x1315d 寫 0。draw_terrain_layer 只在視差背景章節([0x53c03] 是 0x11 / 0x15 / 0x16 / 0x1b)讀它:來源位址是 [0x53aff] + 起點欄 × 3 + 起點列 × 列距 × 2 + 這格 / 2 + ([0x53b0b] / 3) × 列距(有號除法,0x1204e),也就是背景每格只移 3 px。step_anim_left 傳入的起點欄是 [0x53aa9] − 1,所以從 6 數到 0 時背景連續移動(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x13315"
+        },
+        {
+          "func": "0x1300d"
+        },
+        {
+          "func": "0x11eee"
+        }
+      ]
+    },
+    {
+      "start": "0x53b0b",
+      "size": 4,
+      "name": "step_frame_y",
+      "type": "dword(縱向步伐的幀進度:0 .. 6)",
+      "meaning": "step_anim_down 開頭寫 0(0x12ee8,edi 此時還是函式開頭 xor 的 0),鏡頭捲動時每幀加 1(0x12f8e),結束寫 0(0x12ffe);scroll_step(往上走一步)開頭在 [0x53aad] 不是 0 時寫 6、否則寫 0(0x131cc / 0x131d8),鏡頭捲動時每幀加 −1(0x132a0),結束跳到同一個 0x12ffe。draw_terrain_layer 的視差背景分支以這格 / 3(idiv 3,0x12064)乘列距加進來源位址,背景每格只移 2 列;scroll_step 在 [0x53aad] 不是 0 時傳入的起點列是 [0x53aad] − 1(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x12eaa"
+        },
+        {
+          "func": "0x13185"
+        },
+        {
+          "func": "0x11eee"
         }
       ]
     },
@@ -2120,6 +2886,244 @@
         {
           "doc": "docs/knowledge-base/54-acting-pose-semantics.md",
           "quote": "**更新只在 `tick_anim_counters` `0x1297d`**"
+        }
+      ]
+    },
+    {
+      "start": "0x53c1f",
+      "size": 4,
+      "name": "range_flash_phase",
+      "type": "dword(範圍閃爍相位 0 .. 19)",
+      "meaning": "[0x51a97] 的索引。draw_terrain_layer 依 BIOS tick 每隔 3 個 tick 以上加 1,到 20 寫 0(0x12132 .. 0x12141);[0x51a93] 不是 −1 時改寫成它(0x1215f)。ai_item_action 先寫 0,再以 1 .. 8 逐一寫入並重畫畫面(0x15271 / 0x152a0)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x11eee"
+        },
+        {
+          "func": "0x12ac6"
+        },
+        {
+          "func": "0x15055"
+        }
+      ]
+    },
+    {
+      "start": "0x53c23",
+      "size": 4,
+      "name": "ai_spell_best_score",
+      "type": "dword 有號整數(法術候選的最佳分數;6 以上才施放)",
+      "meaning": "ai_spell_candidate_select(0x1598a)開頭把 [0x53c23] 寫 0,對每個法術、每個 0x4e390 / 0x14b16 產生的候選格以 ai_spell_target_score 評分,分數嚴格較大、或相同而候選記錄 word 較大時,把分數、格 X / Y、法術號寫進 0x53c23 / 0x53c27 / 0x53c2b / 0x53c2f(0x15af5 .. 0x15b12)。ai_choose_action(0x14ef0)比較 [0x53c4f] / [0x53c23] / [0x53c33] 三個分數:三者都小於 6 就不行動,否則取最大者執行 ai_attack_execute / ai_spell_execute / ai_item_action(平手另有規則)。ai_mode_dispatch、ai_spell_execute、enemy_phase_dispatch 也各以「≥ 6」判斷(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1598a"
+        },
+        {
+          "func": "0x14ef0"
+        },
+        {
+          "func": "0x15311"
+        },
+        {
+          "func": "0x13a9f"
+        },
+        {
+          "func": "0x1d8ba"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "這是目前唯一足夠的 AI-like score topology"
+        }
+      ]
+    },
+    {
+      "start": "0x53c27",
+      "size": 4,
+      "name": "ai_spell_best_x",
+      "type": "dword(法術候選的格 X,地圖格座標)",
+      "meaning": "ai_spell_candidate_select(0x1598a)開頭把 [0x53c23] 寫 0,對每個法術、每個 0x4e390 / 0x14b16 產生的候選格以 ai_spell_target_score 評分,分數嚴格較大、或相同而候選記錄 word 較大時,把分數、格 X / Y、法術號寫進 0x53c23 / 0x53c27 / 0x53c2b / 0x53c2f(0x15af5 .. 0x15b12)。ai_spell_execute 以 (X, Y) 呼叫 collect_targets_in_range 收目標、camera_step_to 移鏡頭(0x1537b / 0x153bc)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1598a"
+        },
+        {
+          "func": "0x15311"
+        }
+      ]
+    },
+    {
+      "start": "0x53c2b",
+      "size": 4,
+      "name": "ai_spell_best_y",
+      "type": "dword(法術候選的格 Y,地圖格座標)",
+      "meaning": "ai_spell_candidate_select(0x1598a)開頭把 [0x53c23] 寫 0,對每個法術、每個 0x4e390 / 0x14b16 產生的候選格以 ai_spell_target_score 評分,分數嚴格較大、或相同而候選記錄 word 較大時,把分數、格 X / Y、法術號寫進 0x53c23 / 0x53c27 / 0x53c2b / 0x53c2f(0x15af5 .. 0x15b12)。ai_spell_execute 以 (X, Y) 呼叫 collect_targets_in_range 收目標、camera_step_to 移鏡頭(0x15375 / 0x153b6)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1598a"
+        },
+        {
+          "func": "0x15311"
+        }
+      ]
+    },
+    {
+      "start": "0x53c2f",
+      "size": 4,
+      "name": "ai_spell_best_index",
+      "type": "dword(法術候選的法術號)",
+      "meaning": "ai_spell_candidate_select(0x1598a)開頭把 [0x53c23] 寫 0,對每個法術、每個 0x4e390 / 0x14b16 產生的候選格以 ai_spell_target_score 評分,分數嚴格較大、或相同而候選記錄 word 較大時,把分數、格 X / Y、法術號寫進 0x53c23 / 0x53c27 / 0x53c2b / 0x53c2f(0x15af5 .. 0x15b12)。法術號來自 unit_list_bits_1a 輸出的位元索引(單位 +0x1a .. +0x1e 的 40 個位元)。ai_spell_execute 以它查 0x4e866 的法術記錄;小於 10 且 [0x53af9] 是 0 時走 spell_cast_scene,否則經 [0x51d01 + 號 × 4] 間接呼叫(0x1541f);ai_choose_action 在與物理平手時看它是否小於 11(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1598a"
+        },
+        {
+          "func": "0x15311"
+        },
+        {
+          "func": "0x14ef0"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "`0x15311` 也直接以 `[0x53C2F]` 查 `0x4E516`"
+        }
+      ]
+    },
+    {
+      "start": "0x53c33",
+      "size": 4,
+      "name": "ai_item_best_score",
+      "type": "dword 有號整數(道具候選的最佳分數;6 以上才使用)",
+      "meaning": "ai_item_candidate_select(0x1567e)開頭把 [0x53c33] 寫 0,對每個道具欄位、每個候選格以 ai_item_target_score 評分,嚴格較大時把分數、格 X / Y、欄位索引寫進 0x53c33 / 0x53c37 / 0x53c3b / 0x53c3f(0x15808 .. 0x15823)。ai_choose_action(0x14ef0)比較 [0x53c4f] / [0x53c23] / [0x53c33] 三個分數:三者都小於 6 就不行動,否則取最大者執行 ai_attack_execute / ai_spell_execute / ai_item_action(平手另有規則)。enemy_phase_dispatch 也以「≥ 6」判斷(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1567e"
+        },
+        {
+          "func": "0x14ef0"
+        },
+        {
+          "func": "0x1d8ba"
+        }
+      ]
+    },
+    {
+      "start": "0x53c37",
+      "size": 4,
+      "name": "ai_item_best_x",
+      "type": "dword(道具候選的格 X,地圖格座標)",
+      "meaning": "ai_item_candidate_select(0x1567e)開頭把 [0x53c33] 寫 0,對每個道具欄位、每個候選格以 ai_item_target_score 評分,嚴格較大時把分數、格 X / Y、欄位索引寫進 0x53c33 / 0x53c37 / 0x53c3b / 0x53c3f(0x15808 .. 0x15823)。ai_item_action 以 (X, Y) 收目標、移鏡頭;另一條分支把它改成 [0x53ab1] + (X − [0x53ab1]) × 倍數並夾在 0 .. 地圖寬 [0x53ac1] − 1(0x15206 .. 0x15224)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1567e"
+        },
+        {
+          "func": "0x15055"
+        }
+      ]
+    },
+    {
+      "start": "0x53c3b",
+      "size": 4,
+      "name": "ai_item_best_y",
+      "type": "dword(道具候選的格 Y,地圖格座標)",
+      "meaning": "ai_item_candidate_select(0x1567e)開頭把 [0x53c33] 寫 0,對每個道具欄位、每個候選格以 ai_item_target_score 評分,嚴格較大時把分數、格 X / Y、欄位索引寫進 0x53c33 / 0x53c37 / 0x53c3b / 0x53c3f(0x15808 .. 0x15823)。ai_item_action 以 (X, Y) 收目標、移鏡頭;另一條分支把它改成 [0x53ab5] + (Y − [0x53ab5]) × 倍數並夾在 0 .. 地圖高 [0x53ac5] − 1(0x15249 .. 0x15267)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1567e"
+        },
+        {
+          "func": "0x15055"
+        }
+      ]
+    },
+    {
+      "start": "0x53c3f",
+      "size": 4,
+      "name": "ai_item_best_slot",
+      "type": "dword(道具候選的道具欄位索引)",
+      "meaning": "ai_item_candidate_select(0x1567e)開頭把 [0x53c33] 寫 0,對每個道具欄位、每個候選格以 ai_item_target_score 評分,嚴格較大時把分數、格 X / Y、欄位索引寫進 0x53c33 / 0x53c37 / 0x53c3b / 0x53c3f(0x15808 .. 0x15823)。欄位索引是單位記錄 +0xb 起每 2 bytes 一格的迴圈變數;ai_item_action 以 unit_item_id(單位, 欄位)取道具(0x1507c / 0x152e9)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x1567e"
+        },
+        {
+          "func": "0x15055"
+        }
+      ]
+    },
+    {
+      "start": "0x53c43",
+      "size": 4,
+      "name": "ai_attack_best_x",
+      "type": "dword(物理攻擊候選的目的格 X,地圖格座標)",
+      "meaning": "ai_physical_candidate_select(0x14237)開頭把 [0x53c4f] 寫 0,先比優先級再比分數,嚴格較大時把目的格 X / Y、目標單位索引、優先級寫進 0x53c43 / 0x53c47 / 0x53c4b / 0x53c4f(0x144dd .. 0x144f4)。ai_attack_execute 以 (X, Y) 呼叫 0x14b78 移動攻擊者(0x154c0)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x1548e"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "勝出目的格、目標索引與優先級寫入"
+        }
+      ]
+    },
+    {
+      "start": "0x53c47",
+      "size": 4,
+      "name": "ai_attack_best_y",
+      "type": "dword(物理攻擊候選的目的格 Y,地圖格座標)",
+      "meaning": "ai_physical_candidate_select(0x14237)開頭把 [0x53c4f] 寫 0,先比優先級再比分數,嚴格較大時把目的格 X / Y、目標單位索引、優先級寫進 0x53c43 / 0x53c47 / 0x53c4b / 0x53c4f(0x144dd .. 0x144f4)。ai_attack_execute 以 (X, Y) 呼叫 0x14b78 移動攻擊者(0x154ba)(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x1548e"
+        }
+      ]
+    },
+    {
+      "start": "0x53c4b",
+      "size": 4,
+      "name": "ai_attack_best_target",
+      "type": "dword(物理攻擊候選的目標單位索引,執行期單位記錄每筆 0x50)",
+      "meaning": "ai_physical_candidate_select(0x14237)開頭把 [0x53c4f] 寫 0,先比優先級再比分數,嚴格較大時把目的格 X / Y、目標單位索引、優先級寫進 0x53c43 / 0x53c47 / 0x53c4b / 0x53c4f(0x144dd .. 0x144f4)。ai_attack_execute 以它呼叫 focus_unit 等共 16 處;ai_choose_action 以 [0x53a45] + 它 × 0x50 讀目標記錄;ai_spell_execute 也在 0x15452 以它呼叫 0x1aa1d(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x1548e"
+        },
+        {
+          "func": "0x14ef0"
+        },
+        {
+          "func": "0x15311"
+        }
+      ]
+    },
+    {
+      "start": "0x53c4f",
+      "size": 4,
+      "name": "ai_attack_best_priority",
+      "type": "dword 有號整數(物理攻擊候選的最佳優先級;6 以上才攻擊)",
+      "meaning": "ai_physical_candidate_select(0x14237)開頭把 [0x53c4f] 寫 0,先比優先級再比分數,嚴格較大時把目的格 X / Y、目標單位索引、優先級寫進 0x53c43 / 0x53c47 / 0x53c4b / 0x53c4f(0x144dd .. 0x144f4)。ai_choose_action(0x14ef0)比較 [0x53c4f] / [0x53c23] / [0x53c33] 三個分數:三者都小於 6 就不行動,否則取最大者執行 ai_attack_execute / ai_spell_execute / ai_item_action(平手另有規則)。ai_mode_dispatch 也以「≥ 6」判斷(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x14237"
+        },
+        {
+          "func": "0x14ef0"
+        },
+        {
+          "func": "0x13a9f"
+        },
+        {
+          "doc": "docs/knowledge-base/11-enemy-ai.md",
+          "quote": "`0x53C43/0x53C47/0x53C4B/0x53C4F`。"
         }
       ]
     },
@@ -2425,6 +3429,27 @@
       ]
     },
     {
+      "start": "0x53f52",
+      "size": 4,
+      "name": "town_menu_anim_phase",
+      "type": "dword(城鎮選單動畫相位 0 .. 3)",
+      "meaning": "town_hub_main(0x26465)與 menu_read_key(0x26f9b)每次 inc,等於 4 就寫 0;menu_read_key 另在 0x26f23 寫 2。town_hub_redraw 與 menu_tick_redraw 依它挑動畫幀(test 1 取奇偶、cmp 3)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x26152"
+        },
+        {
+          "func": "0x265ec"
+        },
+        {
+          "func": "0x26eda"
+        },
+        {
+          "func": "0x27079"
+        }
+      ]
+    },
+    {
       "start": "0x53f5e",
       "size": 4,
       "name": "list_item_count",
@@ -2450,6 +3475,27 @@
         {
           "doc": "docs/knowledge-base/13-battle-menu-system.md",
           "quote": "- 名冊人數 `[0x53bfb]` 5:`shop_buy` `0x289b1`、`shop_sell_service` `0x28d8a`"
+        }
+      ]
+    },
+    {
+      "start": "0x53f62",
+      "size": 4,
+      "name": "town_list_entries",
+      "type": "dword 指標(目前城鎮清單的內容,每項 1 byte)",
+      "meaning": "menu_tick_redraw 取 [這格 + [0x53f4e] + 列] 的 byte,乘 0x30 當 FDICON 快取 [0x53a61] 的 dword 偏移表索引畫圖示(0x2727e)。寫入端:shop_buy 指向自己的堆疊陣列(0x288c7)、revive_candidate_select / class_change_candidate_select 寫第 2 個參數(0x2a328 / 0x2a8e2),同時設定 [0x53f5e] 筆數(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x27079"
+        },
+        {
+          "func": "0x2872b"
+        },
+        {
+          "func": "0x2a29d"
+        },
+        {
+          "func": "0x2a857"
         }
       ]
     },
@@ -2504,6 +3550,67 @@
       ]
     },
     {
+      "start": "0x54133",
+      "size": 4,
+      "name": "charcard_demo_scene_id",
+      "type": "dword(片尾示範戰的場景資源號,0 = 一般戰鬥;0 .. 53)",
+      "meaning": "寫入端只有兩處:scene_charcard_orchestrator 在片尾 20 場示範戰每場前寫 [0x52711 + k](0x31ae4);attack_scene_orchestrator 第一段 scene_attack_sequence 播完後,它不是 0 就寫 1 再播一次(0x2e735),scene_attack_sequence 在 0x2f36b 比較它是否等於 1。不是 0 時:attack_scene_orchestrator 把它當 BG.DAT 與 TAI.DAT 的資源號(0x2e462;攻守一方圖示 id 是 0x1a / 0x36 / 0x37 時TAI.DAT 改用 3);跳過進場時 heap_free [0x53a61] / [0x53a49] / [0x53a5d](0x2e32a)、draw_unit_panel_by_side(0x2e51d)與離場時重新配置地圖畫面、重載 FDSHAP 的流程(0x2e89a);play_sfx 與 play_digital_sample 直接返回,不播音效。兩個 scene_charcard_orchestrator 呼叫點(0x2545d / 0x25970,第 26 / 29 章戰後)之後都是 jmp 到自己,所以沒有清回 0 的寫入點也不影響後續。在 _cstart_ 的清零範圍內,啟動時是 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x31529"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2ebe1"
+        },
+        {
+          "func": "0x25a96"
+        },
+        {
+          "func": "0x25b45"
+        },
+        {
+          "doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+          "quote": "其真正起點是 `0x31529`——一個「換場+角色卡」的 orchestrator"
+        }
+      ]
+    },
+    {
+      "start": "0x54137",
+      "size": 4,
+      "name": "battle_scene_backdrop_b",
+      "type": "dword 指標(BG.DAT 戰鬥背景圖,第二張)",
+      "meaning": "attack_scene_orchestrator 先寫 0,再以 load_res(\"BG.DAT\", 0, 背景號) 載入(0x2e5b3 / 0x2e5ee);第 1 個參數的單位 record +6 是 0 時與 [0x5413b] 互換(0x2e649 .. 0x2e65a)。之後畫到畫面並傳給 scene_attack_sequence(FD2.EXE 反組譯)。在 _cstart_ 的清零範圍內,啟動時是 0。",
+      "evidence": [
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2ebe1"
+        }
+      ]
+    },
+    {
+      "start": "0x5413b",
+      "size": 4,
+      "name": "battle_scene_backdrop_a",
+      "type": "dword 指標(BG.DAT 戰鬥背景圖)",
+      "meaning": "ai_item_scene 與 attack_scene_orchestrator 進場先寫 0(0x2dfd9 / 0x2e2e9),再以 load_res(\"BG.DAT\", 舊, 背景號) 載入(0x2e0e0 / 0x2e518;背景號在示範戰時是 [0x54133]);attack_scene_orchestrator 可能與 [0x54137] 互換。之後畫到畫面並傳給 scene_attack_sequence(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x2dfc8"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x2ebe1"
+        }
+      ]
+    },
+    {
       "start": "0x5413f",
       "size": 12,
       "name": "bg_cycle_frames",
@@ -2535,6 +3642,39 @@
         "0x4": "bg_cycle_frame_1",
         "0x8": "bg_cycle_frame_2"
       }
+    },
+    {
+      "start": "0x5414b",
+      "size": 4,
+      "name": "battle_scene_sfx_bank_a",
+      "type": "dword 指標(戰鬥場景第 1 個參數單位的動作音效 bank;0 = 沒有)",
+      "meaning": "derived_strike_scene、ai_item_scene、attack_scene_orchestrator(0x2d270 / 0x2e11b / 0x2e68e)由 fdother_nested_resource_load(FIGANI 記錄)載入:記錄 +4 byte 是 0 時回傳 0,否則載入 FDOTHER.DAT 第 [0x526e3 + (+4) − 1] 號。之後 push 給 play_sfx 當音效 bank,場景結束時不是 0 就 heap_free(沒有寫回 0)。play_command_cast_animation 也 push 它。attack_scene_orchestrator 在示範戰([0x54133] 不是 0)時不載入(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x2cf30"
+        },
+        {
+          "func": "0x2dfc8"
+        },
+        {
+          "func": "0x2e2b0"
+        },
+        {
+          "func": "0x30e9d"
+        }
+      ]
+    },
+    {
+      "start": "0x5414f",
+      "size": 4,
+      "name": "battle_scene_sfx_bank_b",
+      "type": "dword 指標(attack_scene_orchestrator 第 2 個參數單位的動作音效 bank;0 = 沒有)",
+      "meaning": "attack_scene_orchestrator(0x2e69f)由 fdother_nested_resource_load(FIGANI 記錄)載入:記錄 +4 byte 是 0 時回傳 0,否則載入 FDOTHER.DAT 第 [0x526e3 + (+4) − 1] 號。之後 push 給 play_sfx 當音效 bank,場景結束時不是 0 就 heap_free(沒有寫回 0);並傳給 scene_attack_sequence(0x2e708 / 0x2e73f)。示範戰時不載入(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x2e2b0"
+        }
+      ]
     },
     {
       "start": "0x54153",
@@ -2746,6 +3886,27 @@
       }
     },
     {
+      "start": "0x541a0",
+      "size": 4,
+      "name": "stdio_free_stream_nodes",
+      "type": "dword 指標(Watcom stdio 空閒串流節點串列頭;節點 +0 next、+4 FILE*)",
+      "meaning": "__freefp 把關閉的 FILE* 所在節點從 [0x541ac] 已開啟串列移到這裡(0x3dc12);stdio_alloc_file 先從這裡取節點(0x3db62);0x3dc1a 起的迴圈逐一 heap_free 並前進(0x3dc34);stdio_init_streams 寫 0(0x46c81);stdio_reclaim_stream 以 mov edx, 0x541a0 取它的位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3db52"
+        },
+        {
+          "func": "0x3dbe7"
+        },
+        {
+          "func": "0x46c48"
+        },
+        {
+          "func": "0x37339"
+        }
+      ]
+    },
+    {
       "start": "0x541ac",
       "size": 4,
       "name": "stdio_open_streams",
@@ -2826,6 +3987,395 @@
         {
           "doc": "docs/knowledge-base/36-sfx-audio-data.md",
           "quote": "**`sprintf(0x541f4, 格式, …)` 2 筆**"
+        }
+      ]
+    },
+    {
+      "start": "0x542f4",
+      "size": 24,
+      "name": "ail_driver_io_parms",
+      "type": "dword[6](AIL 驅動 I/O 參數暫存,24 bytes)",
+      "meaning": "ail_dig_install_core 與 ail_mdi_install_core 先以 memset(0x542f4, −1, 0x18) 填滿(0x40dcc / 0x43c55),呼叫端有給參數時以 rep movsd 複製 6 個 dword 進來(0x40def / 0x43c7e),再交給探測函式;ail_api_lock_memory 以 push 0x18、push 0x542f4 鎖定(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x40cf0"
+        },
+        {
+          "func": "0x43ad0"
+        },
+        {
+          "func": "0x3f4e0"
+        },
+        {
+          "func": "0x3fddc"
+        }
+      ]
+    },
+    {
+      "start": "0x5430c",
+      "size": 72,
+      "name": "ail_preferences",
+      "type": "dword[18](AIL 偏好設定表,依偏好號索引)",
+      "meaning": "ail_impl_set_preference(號, 值) 讀出舊值、寫入新值後回傳舊值(0x3f93b / 0x3f946);ail_dig_service、ail_dig_install_core、ail_mdi_install_core 等直接讀個別格(例如 0x54310 / 0x54334 / 0x54350)。ail_api_lock_memory 以 push 0x48、push 0x5430c 鎖定這 72 bytes(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x3f937"
+        },
+        {
+          "func": "0x3f4e0"
+        },
+        {
+          "func": "0x406b0"
+        },
+        {
+          "func": "0x40cf0"
+        },
+        {
+          "func": "0x43ad0"
+        }
+      ],
+      "fields": {
+        "0x4": "pref_1",
+        "0x8": "pref_2",
+        "0xc": "pref_3",
+        "0x10": "pref_4",
+        "0x14": "pref_5",
+        "0x18": "pref_6",
+        "0x1c": "pref_7",
+        "0x20": "pref_8",
+        "0x24": "pref_9",
+        "0x28": "pref_10",
+        "0x2c": "pref_11",
+        "0x30": "pref_12",
+        "0x34": "pref_13",
+        "0x38": "pref_14",
+        "0x3c": "pref_15",
+        "0x40": "pref_16",
+        "0x44": "pref_17"
+      }
+    },
+    {
+      "start": "0x60000",
+      "size": 2,
+      "name": "palette_cycle_last_tick",
+      "type": "word(調色盤循環上次換色時的計時值)",
+      "meaning": "palette_cycle_tick 以 0x4e310 的回傳值減去它,差 < 2 就不換色;換色後寫入新的計時值(0x4e378)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e31c"
+        }
+      ]
+    },
+    {
+      "start": "0x60002",
+      "size": 1,
+      "name": "palette_cycle_phase",
+      "type": "byte(調色盤循環相位 0 .. 15)",
+      "meaning": "palette_cycle_tick 每次換色 inc,等於 0x10 就寫 0(0x4e330 .. 0x4e33f),再以 相位 × 3 當 [0x60003] 的起點(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e31c"
+        }
+      ]
+    },
+    {
+      "start": "0x60003",
+      "size": 93,
+      "name": "palette_cycle_dac",
+      "type": "byte[93] 常數表(調色盤循環的 DAC 值,31 組 RGB)",
+      "meaning": "palette_cycle_tick 從 0x60003 + 相位 × 3 起,以 out 0x3c8 / 0x3c9 依序寫 16 色(色號 0xe0 .. 0xef)× 3 byte;相位最大 15,所以最多讀到 15 × 3 + 48 = 93 bytes,正好到 0x60060。值在 0x0b .. 0x26 之間。沒有寫入點(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e31c"
+        }
+      ]
+    },
+    {
+      "start": "0x60060",
+      "size": 4,
+      "name": "flood_tile_attrs",
+      "type": "dword 指標(地形圖塊屬性表,每圖塊 4 bytes)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(最後一個參數;呼叫端 0x14331 / 0x189cd 傳 [0x53a69])。flood_try_cell / path_flood_test_cell 以 格子 word & 0x3ff 為圖塊號,讀這張表 + 圖塊號 × 4 + 1 的 byte 當地形類別,再以 [esi + 類別] 扣移動預算(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e4be"
+        },
+        {
+          "func": "0x4e680"
+        }
+      ]
+    },
+    {
+      "start": "0x60064",
+      "size": 4,
+      "name": "flood_map_cells",
+      "type": "dword 指標(戰場地圖格緩衝,表頭 byte 0 寬、byte 2 高,每格 4 bytes)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(呼叫端傳 [0x53a51]);同時把表頭的寬 / 高寫進 [0x60068] / [0x60069],起點格指標 = 這格 + 4 + (y × 寬 + x) × 4 + 3(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        }
+      ]
+    },
+    {
+      "start": "0x60068",
+      "size": 1,
+      "name": "flood_map_width",
+      "type": "byte(地圖寬,格)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(取自地圖表頭 byte 0);flood_move_recurse / path_flood_recurse 以 cmp dl 檢查右邊界(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e42c"
+        },
+        {
+          "func": "0x4e5cc"
+        }
+      ]
+    },
+    {
+      "start": "0x60069",
+      "size": 1,
+      "name": "flood_map_height",
+      "type": "byte(地圖高,格)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(取自地圖表頭 byte 2);兩個遞迴函式以 cmp dh 檢查下邊界(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e42c"
+        },
+        {
+          "func": "0x4e5cc"
+        }
+      ]
+    },
+    {
+      "start": "0x6006a",
+      "size": 4,
+      "name": "flood_cost_table",
+      "type": "dword 指標(單位的地形類別移動成本表)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(第 1 個參數,同時留在 esi);EXE 裡只有這 2 筆寫入,沒有讀取 —— 實際查表用的是 esi(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        }
+      ]
+    },
+    {
+      "start": "0x6006e",
+      "size": 1,
+      "name": "flood_start_x",
+      "type": "byte(起點 x)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(第 2 個參數),用來算起點格指標並當遞迴的初始 dl(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        }
+      ]
+    },
+    {
+      "start": "0x6006f",
+      "size": 1,
+      "name": "flood_start_y",
+      "type": "byte(起點 y)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(第 3 個參數),用來算起點格指標並當遞迴的初始 dh(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        }
+      ]
+    },
+    {
+      "start": "0x60070",
+      "size": 1,
+      "name": "flood_move_budget",
+      "type": "byte(起點的移動預算)",
+      "meaning": "flood_fill_reach_grid(0x4e390)與 grid_path_search(0x4e4f6)進場時由參數寫入(第 4 個參數),寫進起點格的剩餘預算 byte 並當遞迴的初始 cl(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        }
+      ]
+    },
+    {
+      "start": "0x60071",
+      "size": 1,
+      "name": "path_target_x",
+      "type": "byte(路徑搜尋的目的地 x)",
+      "meaning": "grid_path_search 由第 6 個參數寫入;path_flood_record_best 只在 dl 等於它、dh 等於 [0x60072] 時記錄路徑(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e751"
+        }
+      ]
+    },
+    {
+      "start": "0x60072",
+      "size": 1,
+      "name": "path_target_y",
+      "type": "byte(路徑搜尋的目的地 y)",
+      "meaning": "grid_path_search 由第 7 個參數寫入;path_flood_record_best 以 cmp dh 比較(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e751"
+        }
+      ]
+    },
+    {
+      "start": "0x60073",
+      "size": 4,
+      "name": "path_out_buf",
+      "type": "dword 指標(路徑輸出緩衝)",
+      "meaning": "grid_path_search 由第 5 個參數寫入。path_flood_record_best 找到更短路徑時,把軟堆疊每層 +3 的方向 byte 以 stosb 依序寫進去;store_dx_if_flag40 在 0x40 旗標格寫 2 bytes 座標(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e751"
+        },
+        {
+          "func": "0x4e703"
+        }
+      ]
+    },
+    {
+      "start": "0x60077",
+      "size": 1,
+      "name": "path_depth",
+      "type": "byte(路徑搜尋目前的遞迴深度)",
+      "meaning": "grid_path_search 寫 0(0x4e5aa);path_flood_recurse 進入 inc、離開 dec;path_flood_record_best 與 count_distinct_runs_x4 以它當層數(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e5cc"
+        },
+        {
+          "func": "0x4e71f"
+        },
+        {
+          "func": "0x4e751"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "`inc byte[0x60077]` / `dec byte[0x60077]` 分別在進入/離開時執行"
+        }
+      ]
+    },
+    {
+      "start": "0x60078",
+      "size": 1,
+      "name": "path_best_len",
+      "type": "byte(路徑搜尋的最佳路徑長度,0xff = 沒找到)",
+      "meaning": "grid_path_search 先寫 0xff(0x4e5b1),結束時當回傳值;path_flood_record_best 在深度 ≤ 它時寫入深度(0x4e76f);store_dx_if_flag40 寫 1(0x4e716)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e751"
+        },
+        {
+          "func": "0x4e703"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "0x4e5b1  mov byte[0x60078], 0xff ; 結果 sentinel(不可達預設值)"
+        }
+      ]
+    },
+    {
+      "start": "0x60079",
+      "size": 257,
+      "name": "flood_soft_stack",
+      "type": "byte[257](flood-fill 與路徑搜尋的軟堆疊)",
+      "meaning": "兩個遞迴引擎以 lea edi, [0x60079] 當軟堆疊基底:flood_move_recurse 每層 7 bytes(word XY、byte 預算、dword 格指標),path_flood_recurse 每層 8 bytes(+3 是方向)。下一個被引用的位址是 0x6017a,所以這段只有 257 bytes:flood 第 37 層、路徑搜尋第 33 層起會寫到 [0x6017a] 之後(FD2.EXE 反組譯與 fixup)。",
+      "evidence": [
+        {
+          "func": "0x4e390"
+        },
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e71f"
+        },
+        {
+          "func": "0x4e751"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "固定位址 `LEA EDI,[0x60079]`"
+        }
+      ]
+    },
+    {
+      "start": "0x6017a",
+      "size": 1,
+      "name": "path_mode",
+      "type": "byte(路徑搜尋模式)",
+      "meaning": "grid_path_search 由第 8 個參數寫入(0x4e536)。path_flood_test_cell 在成本相等時只有它是 1 才放行;它是 2 時改呼叫 store_dx_if_flag40。呼叫端 0x189d9 傳 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e4f6"
+        },
+        {
+          "func": "0x4e680"
+        },
+        {
+          "doc": "docs/knowledge-base/13-battle-menu-system.md",
+          "quote": "0x4e6ab  cmp byte[0x6017a], 1"
+        }
+      ]
+    },
+    {
+      "start": "0x6017b",
+      "size": 2,
+      "name": "blit_mask_width",
+      "type": "word(blit_mask_remap 目前圖像的寬度)",
+      "meaning": "blit_mask_remap 從圖像表頭讀寬度寫入(0x4e7ab),每列開始時讀回當計數(0x4e7bc)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4e795"
         }
       ]
     },
