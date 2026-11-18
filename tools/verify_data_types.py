@@ -1416,7 +1416,7 @@ def load_facts() -> tuple[Facts, list[dict]]:
     names = FI.real_names()     # Facts 只用 .get 查呼叫目標(call_src / flow_src 的 ret)的名稱
 
     def insn(a: int) -> Insn:
-        x = next(md.disasm(code[a - cbase:], a), None)
+        x = decode(a)   # 2026-11-18:原本 md.disasm(code[a - cbase:]) 每次反組譯到 obj1 結尾,佔 selftest 約一半時間
         if x is None:
             return ("", None, False)
         imm, has_fx = imm_of(x)

@@ -110,12 +110,17 @@ def sweep_range(md, code, base, start, end):
 
     產出 capstone 指令,或 `(linear, byte)` 表示該位址無法解碼。起點在 end 之前的指令整條產出
     (可以跨過 end)。`resync_sweep`(calls)與 `range_lines`(dis / range)共用這一套續掃。
+
+    2026-11-18:capstone 5 的 `disasm()` 先把整個 buffer 反組譯完才逐條產出,原本傳 `code[off:]`,
+    掃一個函式也會反組譯到 obj1 結尾(verify_data_types --selftest 59 秒裡 55 秒在這裡)。
+    切片只到 lim + 15:x86 指令最長 15 bytes,起點在 lim 之前的指令最多用到 lim + 13,
+    起點在 lim 以後的本來就不產出,所以產出不變(11565 組範圍與舊版逐條比對 0 不同)。
     """
     lim = min(end, base + len(code)) - base
     off = start - base
     while off < lim:
         nxt = off
-        for insn in md.disasm(code[off:], base + off):
+        for insn in md.disasm(code[off:lim + 15], base + off):
             if insn.address - base >= lim:
                 return
             yield insn
@@ -433,6 +438,40 @@ def selftest():
               f"全段 {len(full)} 行、db {bad_f} 行、最後 {full[-1]!r}")
         if not ok8d:
             fails.append(f"dis / range 續掃不對:{got8d} {lines_r} db {bad_f}")
+
+        print("\n(8e) sweep_range 每次交給 capstone 的 buffer 只到 lim + 15(2026-11-18,原本到程式碼結尾)")
+
+        class Spy:
+            """記錄每次 disasm 的 (起點, buffer 長度),再交給真的 capstone。"""
+
+            def __init__(self) -> None:
+                self.calls: list[tuple[int, int]] = []
+
+            def disasm(self, buf: bytes, addr: int):
+                self.calls.append((addr, len(buf)))
+                return md.disasm(buf, addr)
+
+        # 合成:nop,接一條 15 bytes 的 mov(4 個 ds 前綴),起點 0x1001 = end − 1 → 必須整條產出;
+        # 之後 FE F8 無法解碼 → 續掃點,跳 1 byte 後 F8 = clc、C3 = ret。切片少於 lim + 14 時這條長指令會解不出來;
+        # 第二次的 buffer 被程式碼結尾截短(min(lim + 15, len) − off = 2)。
+        long15 = b"\x3e" * 4 + bytes.fromhex("c784887856341278563412")
+        syn8e = b"\x90" + long15 + b"\xfe\xf8\xc3"
+        spy = Spy()
+        got8e = [(x if isinstance(x, tuple) else (x.address, x.size))
+                 for x in sweep_range(spy, syn8e, 0x1000, 0x1000, 0x1002)]
+        spy_s = Spy()
+        got8e_s = [(x if isinstance(x, tuple) else (x.address, x.size))
+                   for x in sweep_range(spy_s, syn8e, 0x1000, 0x1000, 0x1012)]
+        spy_r = Spy()
+        n_r = sum(1 for _ in sweep_range(spy_r, code, base, 0x4E390, 0x4E4F6))
+        ok8e = (got8e == [(0x1000, 1), (0x1001, 15)] and spy.calls == [(0x1000, 17)]
+                and got8e_s == [(0x1000, 1), (0x1001, 15), (0x1010, 0xFE), (0x1011, 1)]
+                and spy_s.calls == [(0x1000, 19), (0x1011, 2)]
+                and n_r > 0 and spy_r.calls == [(0x4E390, 0x4E4F6 - 0x4E390 + 15)])
+        print(f"    {'PASS' if ok8e else 'FAIL'}: 合成 {got8e} / {got8e_s};buffer {spy.calls} / {spy_s.calls};"
+              f"真 EXE 0x4e390..0x4e4f6 {n_r} 條,buffer {spy_r.calls}")
+        if not ok8e:
+            fails.append(f"sweep_range 切片上限不對:{spy.calls} {spy_s.calls} {spy_r.calls} {got8e} {got8e_s}")
 
     print("\n(9) le_xref.find_callers 的掃描範圍必須由 LE 表頭推出,涵蓋新版 obj1 後段")
     from le_xref import find_callers, code_file_range

@@ -1036,7 +1036,7 @@
    "kind": "equivalent",
    "reason": "x86 指令最長 15 byte,capstone 只解第一條(next(...));給 16 或 17 byte 解出的第一條相同(與 verify_data_lower_bounds Decoder.at 的同型條目同理)。",
    "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-15 續二百六十六 (5):突變預檢 442 點逃脫 41,逐一讀碼分類;其餘 39 個補測試或改寫程式碼後重跑全數抓到",
-   "scope_hash": "00d36b4b921b"
+   "scope_hash": "5baf11124742"
   }
  ]
 }

@@ -15736,3 +15736,42 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 - `verify_data_types` 看不到以暫存器位址(lea / mov edi, imm)與 memset、rep movs / stos 的寫入。
 - `verify_data_types` 改了產品碼(續二百七十六、續二百八十一),commit 前要跑 `--exhaustive --tool verify_data_types.py`。
 - 續二百六十六 (6) 的其餘項目不變。
+
+## 2026-11-18 續二百八十四:capstone 反組譯切片只到需要的長度,verify_data_types selftest 55 秒 → 2.3 秒
+
+起因:使用者問要不要新工具來做快速完整驗證。當時每批登錄都會改到 `verify_data_types.py` selftest 寫死的真實計數,commit 前就要重跑 `--exhaustive --tool verify_data_types.py`,上次 8 小時 18 分。原本提的方案是把預期計數搬到資料檔,讓只改資料的批次不必跑窮舉。照「先量再改」的順序先量 selftest,發現慢的原因是反組譯切片,不是工作量本身。
+
+### (1) 量測
+
+- `python -m cProfile tools/verify_data_types.py --selftest`:共 59.2 秒,capstone `disasm` 佔 55.0 秒(414402 次呼叫)。
+- capstone 5.0.9 的 Python `disasm()` 以 `count=0` 呼叫 `cs_disasm`,先把整個 buffer 反組譯完才逐條產出(讀 `capstone/__init__.py` 的 `disasm` 原始碼)。
+- 兩個呼叫點傳的是「從這裡到 obj1 結尾」:
+  - `disasm_le.sweep_range`:`md.disasm(code[off:], ...)`,掃一個函式也反組譯到 `0x4ef29`;
+  - `verify_data_types.load_facts.insn`:`next(md.disasm(code[a - cbase:], a), None)`,只要第一條卻反組譯整段尾巴,1318 次共約 26 秒。
+
+### (2) 改法
+
+- `sweep_range` 的切片改成 `code[off:lim + 15]`。x86 指令最長 15 bytes,起點在 lim 之前的指令最多用到 lim + 13;起點在 lim 以後的本來就不產出。所以產出不變。
+- `insn` 改用同一個函式裡已有的 `decode(a)`(切 16 bytes、有快取)。這個寫法原本就給 `decode` 用,登錄表裡它的 16 → 17 等價突變理由不變,只更新了上下文雜湊(`--revalidate-registry --tool verify_data_types.py`)。
+- `disasm_le --selftest` 新增 (8e):用記錄呼叫的替身包住 capstone,核對每次交給它的 buffer 長度正好是 `min(lim + 15, len(code)) − off`。合成碼放一條 15 bytes 的 mov(4 個 ds 前綴),起點在 end − 1,必須整條產出。
+
+### (3) 驗證
+
+- **直接差分**:舊版與新版 `sweep_range` 在 11565 組 (start, end) 上逐條比對(每個 inventory 函式、42 個續掃點附近、最大函式 `0x4a424` 每個指令邊界 ± 1、4000 組亂數、空範圍與越過程式碼尾端)。舊版共產出 3722414 條,新版 0 組不同。
+  - 對照:切片上限改成 lim + 0 / + 1 / + 5 時分別有 6364 / 3484 / 370 組不同;+ 14 時 0 組,與「最多用到 lim + 13」一致。
+- **工具輸出差分**:改前改後各跑 19 條命令(`disasm_le` 的 selftest、`range` 4 段、`dis`;`re_coverage` 的 selftest / summary / check / 5 種 gaps;`verify_data_lower_bounds` 的 selftest / check / verbose;`verify_data_types` 的 selftest / check)。stdout、stderr、回傳碼全部逐字相同,唯一不同是 `disasm_le --selftest` 多了 (8e) 三行。
+- **故障注入**(在記憶體內改原始碼,不寫 repo):切片改回到結尾、lim + 13、lim + 14、lim + 16,(8e) 都 FAIL,selftest 回傳 1;原樣 PASS。
+- 耗時(改前 → 改後):
+  - `verify_data_types --selftest` 57.9 → 2.3 秒,`--check` 51.6 → 1.9 秒;
+  - `verify_data_lower_bounds --selftest` 55.5 → 3.3 秒,`--check` 66.5 → 3.3 秒;
+  - `re_coverage` 各命令約 9 → 1 秒(`load_world` 也走 `sweep_range`)。
+- 閘門 13/13(`--check-registry` 在重驗雜湊後通過)。
+- `verify_selftest_discrimination --exhaustive --tool disasm_le.py --tool verify_data_types.py`:歸零。
+  - `disasm_le.py` 可達 32/32 抓到;`verify_data_types.py` 可達 639/641 抓到,其餘 2 為已登錄等價突變(與續二百八十三 commit 前那次相同)。
+  - 19:51:41 → 20:15:11,共 23 分半;上次同一支工具 8 小時 18 分。
+
+### (4) 結論與沒做的事
+
+- 不做「把預期計數搬到資料檔」。它的唯一目的是避開 8 小時的窮舉,代價是只改資料的 commit 不再重跑 selftest 的突變測試。窮舉降到 23 分半之後,照舊每次 commit 前跑,不必承擔這個風險。
+- 同型寫法 `ail_driver_disasm.py` 還有 4 處 `disasm(b[a:])`,但對象是幾 KB 的 AIL 驅動程式,沒有量到成本,沒改。
+- 續二百八十三 (4) 的其餘項目不變。
