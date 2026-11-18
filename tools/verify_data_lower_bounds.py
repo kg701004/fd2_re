@@ -66,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -767,20 +768,39 @@ def collect(funcs: dict[int, list[Ins]], regions: list[tuple[int, int]], dec: De
     return {"wit": wit, "ranged": ranged}
 
 
-def judge(start: int, size: int, w: dict, cov_sites: set[int], content: bool = False) -> dict:
+# 原程式本身的越界寫入(2026-11-18):type 寫 `0x2ba21 迴圈多寫 4 byte`,代表那條指令的定址範圍
+# 正好是 [start, end + 4)。只放行逐字相符的那一條;宣告了卻沒看到、或多寫的量不同都算失敗。
+_OVERRUN = re.compile(r"(0x[0-9a-f]+) 迴圈多寫 (\d+) byte")
+
+
+def declared_overruns(t: str) -> dict[int, int]:
+    """type 裡宣告的原程式越界:{指令位址: 超出區段尾端的 byte 數}。"""
+    return {int(a, 16): int(n) for a, n in _OVERRUN.findall(t)}
+
+
+def judge(start: int, size: int, w: dict, cov_sites: set[int], content: bool = False,
+          overruns: dict[int, int] | None = None) -> dict:
     """一段的結論:access / declared 下限、等級、失敗。
 
     content 為 True 代表 verify_data_types 已以內容證明整段(C 字串逐 byte + NUL、函式指標表每格 fixup)。
+    overruns 是 type 宣告的原程式越界(declared_overruns):那條指令的範圍必須正好是 [start, end + N),
+    才不算失敗;宣告了而沒有那條指令、或範圍不同,都失敗。越界的部分不計入下限。
     """
     end = start + size
     fail: list[str] = []
     lb_access = 0
+    over = dict(overruns or {})
     for kind in ACCESS_KINDS:
         for ins, (lo, hi, *_r) in w[kind].items():
-            if lo < start or hi > end:
+            if ins in over and lo == start and hi == end + over[ins]:
+                over.pop(ins)
+            elif lo < start or hi > end:
                 fail.append(f"{hex(start)}: {kind} {hex(ins)} 定址 [{hex(lo)}, {hex(hi)}) 跑出區段 "
                             f"[{hex(start)}, {hex(end)})")
             lb_access = max(lb_access, min(hi, end) - start)
+    for ins, n in over.items():
+        fail.append(f"{hex(start)}: type 宣告 {hex(ins)} 迴圈多寫 {n} byte,但沒有那條指令定址 "
+                    f"[{hex(start)}, {hex(end + n)})")
     lb_value = max((min(hi, end) - start for lo, hi, _var, _v in w["value"].values()), default=0)
     lb_decl = 0
     for ins, (lo, hi, _k) in w["range"].items():
@@ -825,7 +845,9 @@ def conv(md: object, fx1: dict[int, int], x: object) -> Ins:
             disp = fx1[site] if x.disp_offset and site in fx1 else op.mem.disp & M32
             mem = Mem(FULL.get(md.reg_name(op.mem.base)) if op.mem.base else None,
                       FULL.get(md.reg_name(op.mem.index)) if op.mem.index else None,
-                      op.mem.scale, disp, op.size)
+                      op.mem.scale, disp,
+                      # 遠指標載入讀 offset + 2 byte selector(與 re_coverage.FAR_LOADS 相同,2026-11-19)
+                      op.size + 2 if x.mnemonic in ("lds", "les", "lfs", "lgs", "lss") else op.size)
     imm_fx = imm_site in fx1
     if (x.mnemonic == "jmp" or x.mnemonic in COND or x.mnemonic == "call") and imm is not None and not imm_fx:
         target = imm
@@ -881,7 +903,8 @@ def run(funcs: dict[int, list[Ins]], regions: list[dict], cov: dict[int, set[int
     out = []
     for r in regions:
         s = int(r["start"], 16)
-        out.append((r, col["wit"][s], judge(s, r["size"], col["wit"][s], cov.get(s, set()), s in content)))
+        out.append((r, col["wit"][s], judge(s, r["size"], col["wit"][s], cov.get(s, set()), s in content,
+                                            declared_overruns(r.get("type", "")))))
     return out, col
 
 
@@ -1225,6 +1248,17 @@ def selftest() -> int:
           (j["lb_access"], j["lb_value"], j["lb_declared"], j["grade"]) == (0, 0, 0, "partial"))
     j = judge(B, 64, wset(rep={1: (B, B + 64)}, direct={2: (B, B + 4)}), set())
     check("(6j) rep 達 size → access", j["grade"] == "access" and j["lb_access"] == 64)
+    # 宣告的原程式越界:只放行逐字相符的那一條
+    ov = wset(loop={1: (B, B + 64, {})})
+    check("(6p) 文法:迴圈多寫", declared_overruns("dword[15](x;原程式 0x2ba21 迴圈多寫 4 byte)") == {0x2ba21: 4})
+    j = judge(B, 60, ov, set(), overruns={1: 4})
+    check("(6q) 宣告多寫 4 byte 且相符 → 不失敗、下限只算到 size", not j["fail"] and j["lb_access"] == 60)
+    check("(6r) 宣告多寫 8 byte(不符)→ 失敗", bool(judge(B, 60, ov, set(), overruns={1: 8})["fail"]))
+    check("(6s) 宣告的是別條指令 → 失敗(兩筆:越界本身與宣告落空)",
+          len(judge(B, 60, ov, set(), overruns={2: 4})["fail"]) == 2)
+    check("(6t) 宣告了但範圍沒越界 → 失敗", bool(judge(B, 64, ov, set(), overruns={1: 4})["fail"]))
+    check("(6u) 越界且低於起點 → 失敗",
+          bool(judge(B, 60, wset(loop={1: (B - 4, B + 64, {})}), set(), overruns={1: 4})["fail"]))
     # (7) collect:直接 / 索引分流、esp 基底不算
     fl = [I(0x10, "mov", (None, None), 1, mem=Mem(None, None, 1, B + 8, 4)),
           I(0x16, "mov", ("eax", None), mem=Mem("esp", None, 1, B, 4), writes=("eax",)),
@@ -1477,6 +1511,9 @@ def selftest() -> int:
               and w["ptr"][0x10049][:2] == (0x53A8D, 0x53AA9)
               and (0x46897, 0x53AA5, 4) in w["ptr"][0x10049][2]["hits"] and w["ptr"][0x10049][2]["stop"] == "")
         check("(8k) 記憶體運算元與 re_coverage 逐筆相同(非空)", sum(len(w["mem_sites"]) for _r, w, _j in out) > 4000)
+        w, jj = by[0x52834]
+        check("(8m) 0x52834 遠指標:0x4cf66 lfs 讀 6 byte(offset + selector)→ access 6",
+              jj["grade"] == "access" and jj["lb_access"] == 6 and w["direct"].get(0x4CF66, (0, 0))[:2] == (0x52834, 0x5283A))
         check("(8l) 真實檔零失敗", len(out) == len(regions) and not [x for *_y, x in out if x["fail"]])
     print(f"selftest: {'PASS' if not fails else 'FAIL'}({len(fails)} 項失敗)")
     return 1 if fails else 0

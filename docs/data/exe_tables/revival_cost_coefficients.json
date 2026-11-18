@@ -49,5 +49,6 @@
   },
   "postcondition": "revived member disappeared from the candidate list"
  },
- "supersedes": "word_52669 (old-EXE address; proven 0 refs, its bytes are SFX ids 92/93/94)"
+ "supersedes": "word_52669 (old-EXE address; proven 0 refs, its bytes are SFX ids 92/93/94)",
+ "base_address_note_2026_11_19": "2026-11-19(doc98 續二百八十五 / 二百八十六):FD2.EXE 兩個讀取點用不同基底,但讀到的是同一批 word —— revive_service 0x2a560 movsx word [職業 × 2 + 0x52397]、draw_revive_candidate_rows 0x2a1d5 movsx word [(職業 − 1) × 2 + 0x52399]。職業從 1 起,第 0 格(0x52397 = 506)不會被讀到,它是城鎮『持有已滿』文字號表 0x5238d 的第 5 格。data_map 把費率表登在 0x52399 起、word[30](職業 1 .. 30)。數值與 EXE 相同,本檔不改。"
 }

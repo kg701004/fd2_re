@@ -44,7 +44,7 @@ AFM - Animation File Manager Version 1.00 Copyright (C) 1993 Lo Yuan Tsung 09/29
 +0   int16 LE   dx        該幀「絕對螢幕 X」(320×200 系統)
 +2   int16 LE   dy        該幀「絕對螢幕 Y」
 +4   uint16 LE  = 0
-+6   uint16 LE  = 2
++6   uint16 LE  = 2   ← **2026-11-19 更正(doc98 續二百八十六,原版 .DAT 逐筆解碼)**:+4 / +6 不是常數:2118 幀裡 (0, 2) 只有 1647 幀;只有 +8 = 0 在 2118 幀都成立
 +8   uint8      = 0
 +9   uint16 LE  W         點陣解碼寬(realW)
 +11  uint16 LE  H         點陣解碼高(realH)
@@ -59,7 +59,7 @@ AFM - Animation File Manager Version 1.00 Copyright (C) 1993 Lo Yuan Tsung 09/29
 > (如 013:f11 劈擊 dx=89 伸向左、f12-14 突刺 dy 38→63),引擎只要每幀貼在 (dx,dy),不需任何錨點/位移計算。
 > remake 資產管線須把 (dx,dy) 一併導出(`remake/assets/figani/meta.json`),別只導像素。
 
-**3-byte 迷你資源**(如 `FIGANI_002` = `00 00 0A`):動畫之間的群組分隔 / 索引標記,非動畫本體。
+**3-byte 迷你資源**(如 `FIGANI_002` = `00 00 0A`):動畫之間的群組分隔 / 索引標記,非動畫本體。(**2026-11-19 更正(doc98 續二百八十六,原版 .DAT 逐筆解碼)**:144 筆 3 byte 資源都是 `00 00 0A`(幀數 0),分布在 143 .. 146、384 .. 398 這類連續區段,比較像「組 × 3 + k」的空動畫槽,不是群組分隔)
 
 ## 幀像素 codec(已完整破解)
 

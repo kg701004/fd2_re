@@ -3,12 +3,10 @@
 > 由 `tools/doc98_index.py --write` 從 [`98-tooling-infrastructure.md`](98-tooling-infrastructure.md) 的二級標題產生,**不要手改**;`--check` 檢查它與 doc98 一致。
 > 「行 N」是 doc98 的行號(Read 時用 offset = N)。一節可以出現在多個主題下。
 
-共 329 節、19 個主題。
+共 331 節、19 個主題。
 
 ## 最近 10 節
 
-- 行 15268:2026-11-17 續二百七十五:data_map 登錄章節背景圖的兩個指標 `0x53aff` / `0x53b03` 〔來源:反組譯、FDOTHER、FD2.EXE〕
-- 行 15309:2026-11-17 續二百七十六:data_map 登錄 `0x51a10` 背景捲動列數;verify_data_types 加「初值也要在值域內」 〔來源:反組譯、FD2.EXE〕
 - 行 15365:2026-11-18 續二百七十七:data_map 登錄敵方 AI 的三組最佳候選(法術 / 道具 / 物理攻擊,12 段) 〔來源:反組譯、FD2.EXE〕
 - 行 15409:2026-11-18 續二百七十八:data_map 登錄章節 / 指令函式指標表 4 張與章節曲表;`0x51d01` 起的 88 格是三張表 〔來源:反組譯、FD2.EXE〕
 - 行 15456:2026-11-18 續二百七十九:data_map 登錄地形 AP / DP 百分比表、bgm 上一曲、防拷倒數與旗標、FDTXT 檔名、敵方回合曲表(7 段) 〔來源:反組譯、FDSHAP、FD2.EXE〕
@@ -17,6 +15,8 @@
 - 行 15615:2026-11-18 續二百八十二:data_map 登錄戰鬥場景的 BG.DAT 背景與音效 bank、城鎮選單動畫相位與清單內容、stdio 空閒節點、AIL I/O 參數與偏好表(10 段) 〔來源:反組譯、FDOTHER、FD2.EXE〕
 - 行 15675:2026-11-18 續二百八十三:data_map 登錄 obj3 起頭的調色盤循環與 flood-fill / 路徑搜尋模組(19 段);doc13 兩處與 EXE 不符 〔來源:反組譯、FDSHAP、FD2.EXE〕
 - 行 15740:2026-11-18 續二百八十四:capstone 反組譯切片只到需要的長度,verify_data_types selftest 55 秒 → 2.3 秒 〔來源:capstone、反組譯〕
+- 行 15779:2026-11-18 續二百八十五:data_map 197 → 835 段,被引用的全域位址 900/900;verify_data_types 加 double 常數、re_coverage 補錨點指令、verify_data_lower_bounds 認宣告的原程式越界 〔來源:Ghidra、反組譯、FDICON〕
+- 行 15864:2026-11-19 續二百八十六:續二百八十五的未完成項逐項處理 —— 工具盲點、文件更正、區段長度複查、.DAT 資源 1005/1005 格式已驗、原版檔案 49/49 〔來源:capstone、反組譯、org_game〕
 
 ## Ghidra 與反組譯工具(5 節)
 
@@ -303,7 +303,7 @@
 - 行 11002:2026-10-24 續一百五十三:「沒有獨立來源」重新逐項判斷,9 個產生器的 sweep ESCAPED 16 → 2(單位欄位位移改讀 EXE 指令運算元) 〔來源:反組譯、FDFIELD、FD2.EXE〕
 - 行 12562:2026-11-01 續一百八十:doc36 UI 池 index 表重核並鎖住;sfx_02 / sfx_09 對到句子與單位索引;另 15 個產生器改用 calllog_segments、assert_census 加私有解析閘門;ev_s158 i / n 判準(DOSBox-X 呼叫紀錄 cl1 .. cl14、lc130a / lc131 / lc157 / lc159b / lc163a / lc166a / lc167a / lc168a / lc169a / lc171a / lc172,FD2.EXE、FDTXT) 〔來源:DOSBox-X、反組譯、FDTXT〕
 
-## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(164 節)
+## 畫面、換色與繪圖(LUT、光束炮、移動範圍明暗、HUD、FDICON、RLE)(166 節)
 
 - 行 9500:2026-10-13 續一百二十二:`lut_circle_ramp_at_unit` 在畫面上的樣子以 DOSBox-X 逐幀錄到 —— 三組引數都與靜態相符,順帶訂正 `ai_item_action` 那個呼叫的條件 〔來源:DOSBox-X、斷點、反組譯〕
 - 行 9545:2026-10-13 續一百二十三:光束炮在圓形換色之後的流程以 DOSBox-X 逐站錄到 —— 順序與靜態相同,主角陣亡後回標題也直接停到了 〔來源:DOSBox-X、斷點、反組譯〕
@@ -469,6 +469,8 @@
 - 行 15615:2026-11-18 續二百八十二:data_map 登錄戰鬥場景的 BG.DAT 背景與音效 bank、城鎮選單動畫相位與清單內容、stdio 空閒節點、AIL I/O 參數與偏好表(10 段) 〔來源:反組譯、FDOTHER、FD2.EXE〕
 - 行 15675:2026-11-18 續二百八十三:data_map 登錄 obj3 起頭的調色盤循環與 flood-fill / 路徑搜尋模組(19 段);doc13 兩處與 EXE 不符 〔來源:反組譯、FDSHAP、FD2.EXE〕
 - 行 15740:2026-11-18 續二百八十四:capstone 反組譯切片只到需要的長度,verify_data_types selftest 55 秒 → 2.3 秒 〔來源:capstone、反組譯〕
+- 行 15779:2026-11-18 續二百八十五:data_map 197 → 835 段,被引用的全域位址 900/900;verify_data_types 加 double 常數、re_coverage 補錨點指令、verify_data_lower_bounds 認宣告的原程式越界 〔來源:Ghidra、反組譯、FDICON〕
+- 行 15864:2026-11-19 續二百八十六:續二百八十五的未完成項逐項處理 —— 工具盲點、文件更正、區段長度複查、.DAT 資源 1005/1005 格式已驗、原版檔案 49/49 〔來源:capstone、反組譯、org_game〕
 
 ## dispatch 跳表與指令表(7 節)
 

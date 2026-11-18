@@ -15088,7 +15088,7 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 ### (1) 讀碼結果(真實 FD2.EXE 反組譯與 fixup)
 
 - `0x51aac` map_hud_shown(byte 旗標,執行檔初值 1):draw_map_hud `0x1ad1b` 在 `[0x51aab]` 非 0 之後再看它,0 就整個 HUD 不畫。14 筆寫入只有 0 / 1,兩兩成對包住一段呼叫:end_player_phase_if_all_acted `0x135b4` / `0x135d4` 與 field_command_ring `0x1726b` / `0x17277` 包 battle_phase_advance;game_main `0x25dde` / `0x25dea` 包 show_result_resource_79、`0x25e0b` / `0x25e5e` 包章節處理表 `0x51de9` / `0x51d71` 與 town_hub_main;title_menu_dispatch 包 town_hub_main 與 `0x51d71` 表。doc10 §2 的讀寫點清單把 `0x51aab` 與 `0x51aac` 放在一起,這次以 fixup 目標分開(`0x10436`、`0x29774`、`0x299aa` 等是 `0x51aab`)。
-- `0x52363` town_option_icon_x / `0x52375` town_option_icon_y(各 18 byte 常數表):索引 = row31_ptr_6238d(`[0x53c03]`)取回的城鎮資料 `+0`(版面號)× 6 + `[0x53f4a]`。town_hub_redraw `0x266ac` / `0x266c1` 以 `[0x53a49] + 0x8088 + x + y × 0x1c8` 當 blit_tile24_rle 的目的;town_hub_select、shop_menu、tavern_menu、church_menu 以 `x − 0x96`、`y − 0x64` 算進場縮放的中心。FD2.EXE 檔內 x 表 `1d 29 3b 9a b6 0a / 5a 21 35 94 de c4 / 3b 0a 3b 82 f2 88`、y 表 `2e 6d a3 8b 41 0a / 1e 69 a3 8b 55 08 / 1a 90 a3 96 1f 14`。x 表的 18 byte 由 `0x52375` 緊接決定,y 表由 `0x52387` town_keeper_portrait 緊接決定;城鎮資料 `+0` 在各章的值域本輪沒有逐章核對(檔內前 26 列只有 0 / 1 / 2,後面幾列是 5 與 0xff,章節對應見 doc91 372 的未決問題)。
+- `0x52363` town_option_icon_x / `0x52375` town_option_icon_y(各 18 byte 常數表):索引 = row31_ptr_6238d(`[0x53c03]`)取回的城鎮資料 `+0`(版面號)× 6 + `[0x53f4a]`。town_hub_redraw `0x266ac` / `0x266c1` 以 `[0x53a49] + 0x8088 + x + y × 0x1c8` 當 blit_tile24_rle 的目的;town_hub_select、shop_menu、tavern_menu、church_menu 以 `x − 0x96`、`y − 0x64` 算進場縮放的中心。FD2.EXE 檔內 x 表 `1d 29 3b 9a b6 0a / 5a 21 35 94 de c4 / 3b 0a 3b 82 f2 88`、y 表 `2e 6d a3 8b 41 0a / 1e 69 a3 8b 55 08 / 1a 90 a3 96 1f 14`。x 表的 18 byte 由 `0x52375` 緊接決定,y 表由 `0x52387` town_keeper_portrait 緊接決定;城鎮資料 `+0` 在各章的值域本輪沒有逐章核對(檔內前 26 列只有 0 / 1 / 2,後面幾列是 5 與 0xff,章節對應見 doc91 372 的未決問題)。(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:城鎮表只有 26 列:`0x6238d` + 26 × 31 = `0x626b3`,第 27 列起是升級學法術表,「後面幾列」不是城鎮記錄;見續二百八十五)
 - `0x53f72` town_menu_cursor_frame(dword,0 .. 3):menu_tick_redraw 在 `[0x53f52]` 是奇數時 `inc`,等於 4 時 `0x270a3` 寫 0;menu_tick_redraw 與 4 個畫清單函式讀它,3 當 1 用(0、1、2、1 來回)。
 
 ### (2) 驗證
@@ -15775,3 +15775,170 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 - 不做「把預期計數搬到資料檔」。它的唯一目的是避開 8 小時的窮舉,代價是只改資料的 commit 不再重跑 selftest 的突變測試。窮舉降到 23 分半之後,照舊每次 commit 前跑,不必承擔這個風險。
 - 同型寫法 `ail_driver_disasm.py` 還有 4 處 `disasm(b[a:])`,但對象是幾 KB 的 AIL 驅動程式,沒有量到成本,沒改。
 - 續二百八十三 (4) 的其餘項目不變。
+
+## 2026-11-18 續二百八十五:data_map 197 → 835 段,被引用的全域位址 900/900;verify_data_types 加 double 常數、re_coverage 補錨點指令、verify_data_lower_bounds 認宣告的原程式越界
+
+起因:使用者要求「把所有要執行的批次全部自動接續逐項進行」。續二百八十四之後還有 680 個被程式碼引用、沒有登錄的全域位址。這一輪把它們依鄰近程度分成 13 個工作包(每包 16 .. 102 個位址),由唯讀代理逐包讀 FD2.EXE 反組譯草擬區段,主 session 逐包併入後跑三個核對;核對抓到的問題回頭修工具或改登錄。
+
+### (1) 結果
+
+- data_map 197 → 835 段(+638)。
+- `re_coverage --summary`:
+  - 被程式碼引用的全域位址 220 → 900 / 900;
+  - 遊戲函式(引用的全域位址全部已登錄)943 → 1202 / 1202;
+  - obj2 + obj3 資料 2805 → 27912 / 35714 bytes(78.2%)。
+- 新段的型別:C 字串 249、double 15、函式指標表 5,其餘是純量與陣列。
+
+### (2) 各工作包的內容(全部依 FD2.EXE 反組譯與 fixup)
+
+- **0x50004 .. 0x5030f(66 條字串 + 10 個 double)**:fopen 檔名與模式(FD2.SAV、FDICON.B24、FD2.TMP、ANI.DAT)、配置 / 開檔失敗訊息(多數共用錯誤出口 0x10056:printf 後 `push 1; jmp 0x3713c`)、sprintf 格式、AIL 時間戳格式 0x502f4。double 常數見 (3)。
+- **0x50313 .. 0x516f0(178 條字串)**:ail_startup 的 9 條、AIL_shutdown 與 102 條 `AIL_xxx(...)` 進入追蹤格式(push 數等於 % 數,[0x54164] → fprintf 0x3f46b)、INI 解析字串(0x511b4 位數表、6 個鍵名)、33 條以內嵌 strcpy 複製到 0x541f4 的錯誤訊息(每處 rep movsd 換算長度等於 size)、IFF / XMIDI 區塊 ID、tzset 的 "TZ"。字串間 31 段 1–3 byte 對齊空隙沒有引用,沒登錄。
+- **0x51760 .. 0x51f96(39 段)**:Watcom 執行期(DOS/4G 廠商字串、asctime 字母表、ctype 表 256 byte、月首累計日數 word[13]、HUGE_VAL、±inf、±DBL_MAX、dbl_scale_pow10 的十的冪表)、0x51a0c 地圖 HUD 框位移、0x51aad / 0x51ad1 / 0x51af5 施法閃光的 DAC R / G / B、0x51cf9 / 0x51cfd 瞬移落點、指令環圖示號表、0x51f96 職業法術傷害倍率 dword[28]。
+- **0x52006 .. 0x52363(58 段)**:單一函式用的常數表(0x5204e 開場捲動閃光的觸發倒數 dword[15]、0x52096 / 0x520a2 / 0x520ae 地震晃動的中心 dx / dy / 步進)與 48 段過章佈位表 `ch<章節號>_clear_layout_{x,y,pose}`(handler 以 movs 複製到堆疊當 layout_units 0x233c6 的引數;ch09 0x235f9 與 ch19 0x23e74 自己跑迴圈)。
+- **0x5238d .. 0x52796(46 段)**:城鎮商店的 FDTXT 文字號表 word[6] × 7、教會 0x52399 復活費率 word[30](0x2a225 `dec eax` 後以職業 − 1 索引)、0x523d5 轉職道具、依章節的 0x523e7 / 0x52470、0x524a8 職業會心率、0x524c6 TAI phase handler 函式指標表 dword[10] 與各 handler 的區域陣列初值、0x52796 "Stack Overflow!\r\n"。
+- **0x527ac .. 0x52a54(32 段)**:近堆積描述子、exit 掛鉤、_cstart_ 變數、0x52840 stdio FILE 陣列 byte[520](20 × 0x1a)、0x52a49 _fmode 常數 0x100。
+- **0x52ad4 .. 0x53790(32 段)**:AIL 計時器平行陣列 dword[16] × 4、int 8 舊向量與 PIT、USE16 ISR 與兩個 ISR 堆疊、鎖定 / 重入旗標、0x5360c 聲相增益表 byte[128]、0x5377c DOS 錯誤碼 → errno 表。
+- **0x537e4 .. 0x539f2(33 段)**:CRT 雜項、時區(夏令規則 dword[9] × 2、timezone 18000、時區名 char[31])、AIL 混音狀態、0x538c0 23 個數學函式名稱指標表、0x5391c x87 預設控制字 word 常數 4735(0x127f)、CRT 初始化 / 結束表。
+- **0x53a04 .. 0x53f46(42 段)**:開框動畫背景條 0x53a18(dword 指標[5],各 malloc 0x682c)、HP 面板座標、跳字佇列平行陣列 byte[200] × 3、指令環「4 格啟用表」初值 × 5、AIL handle 與 FDMUS 曲目、音樂 / 音效可用旗標。
+- **0x53f56 .. 0x541b0(45 段)**:城鎮記錄指標、商店游標、TAI handler 0 .. 9 的私有狀態 35 段、errno / _doserrno、delay 校準圈數 0x541b0。
+- **0x54354 .. 0x546b0 與 obj3(41 段)**:AIL DIG / MDI 服務回呼變數、0x54400 TIMB 工作副本 byte[512]、兩個 struct tm、asctime 緩衝;obj3 的 0x60181 防拷答案表 300 bytes(題號 `prng_next() % 100`,0x34047 `mov ebx, 0x64` / idiv)、0x61955 dword[21] 常數表與 10 張「起點 + 索引 × 列寬」的遊戲資料表。
+- **0x627a3 .. 0x627d8(16 段)**:draw_glyph16 的字色 / 指標 / 字形號、prng_seed、blit_scaled_transparent 的參數、0x627d8 dword[106](每格 fixup 指向 0x62980 .. 0x634b9;呼叫 0x1366a 的 110 處都 push 0 .. 0x69)。
+
+### (3) 工具改動(各附 selftest,記憶體內拿掉改動對應題 FAIL)
+
+- **`verify_data_types` 加 `double 常數` 文法**。`double 常數 1.5(…)`、`double[N] 常數表 v0 / v1 / …(…)`;元素 8 byte,必須沒有寫入、初值在檔內,而且每格的 IEEE 754 值等於宣告值(Python float 精確比對,接受 inf / -inf / 十進位)。可寫的 double 沒有文法(`double(…)` 未解析)。原因:p01 的 10 個、p04 的 5 個 x87 qword 常數(fmul / fdiv / fadd / fcomp qword)以 dword / byte 宣告都會因 8 byte 存取失敗。15 段全部以此登錄,值與檔內相同(0x501f8 是十進位字面 0.0174532,不是精確的 π/180)。selftest +14 題。
+- **`verify_data_types` 元素內部的窄存取**。只在兩種情況放行:double 的高 / 低 dword,或偏移是區段 `fields` 宣告的子欄位(0x54600 的 `test word [0x54602], 0xfff0`)。原本的「dword[2] +2 的 word → 未對齊」照舊失敗:先試過一般化成「對齊自身寬度就算窄存取」,這條舊 selftest 失敗,所以收窄。selftest +4 題。
+- **`re_coverage.decode_accesses` 補錨點指令**。由 `verify_data_lower_bounds` 的逐筆比對在登錄 AIL 鎖定旗標後抓到:
+  - 0x40100 / 0x42110 / 0x45670 前的填充把線性掃描帶錯位(0x400ff `add [ebx-0x7d], dl`),入口的真指令 `cmp dword [0x53690], 0` 等不見了。改成錨點(各函式入口反組譯得到的指令起點)有、線性掃描沒解到的指令,逐條單獨解碼補進存取清單:+7 筆(0x37028 `mov [0x52794], ss` 是寫入),沒有減少。
+  - 線性指令內部(不含起點)含錨點時兩者衝突,以錨點為準:0x36ff4 的範圍上限蓋進填充,錯位的 0x37027 `add [ebp+edx+0x2794], cl`(內部含入口 0x37028)原本被當可信;改列錨點不成立。
+  - 存取 7139 → 7145 筆;錨點不成立的指令 5 → 6。selftest (7d2) / (7d3) 合成碼、(6j) / (6j3) 真實檔。
+- **`verify_data_lower_bounds` 認宣告的原程式越界**。tai_phase_handler_0 的初始化迴圈 0x2ba21 跑 i < 8,其餘迴圈都是 i < 7,第 8 格寫到 0x53f92(下一段 tai_h1_slot_frame 的第 0 格,值 −14)。0x53f76 照實登 dword[7],type 寫 `原程式 0x2ba21 迴圈多寫 4 byte`:那條指令的定址範圍必須正好是 [start, end + 4) 才放行,宣告了卻沒有、或多寫的量不同都失敗。selftest +6 題。
+- `verify_data_types` selftest 的真實計數更新為 835 段的現值。
+
+### (4) 驗證
+
+- `re_coverage --check`、`verify_data_types --check`(835 段,失敗 0、未解析 0)、`verify_data_lower_bounds --check`(失敗 0):每包併入後各跑一次。
+- 每個代理在 data_map 副本上自我核對,並各自做負向對照(改字面、size、資源號、malloc 大小、值域、fields、quote 都被抓到)。
+- 主 session 對 638 段新登錄做記憶體內改錯:字串改末字元 249/249、字串 size − 1 249/249、double 改值 15/15、函式指標表少一格 5/5、純量常數值 + 1 2/2 全部失敗。值域上限 − 1 只抓到 2/5:另 3 段(0x53afb、0x54017、0x540ed)沒有任何立即數寫到上限(上限由暫存器或 inc 達到),宣告只靠讀碼。
+- 四支工具 selftest 都 PASS;閘門 13/13。
+- `verify_selftest_discrimination --exhaustive --tool verify_data_types.py --tool re_coverage.py --tool verify_data_lower_bounds.py`(23:15:32 → 00:05:33):未歸零,可達逃逸 3。
+  - verify_data_types `parse_type` 的 double `"pointer": False` → True:文法題沒釘 pointer,補進 tuple。
+  - verify_data_types 窄存取條件 `0 < width` → `1 < width`:沒有 1 byte 的內部子欄位題,補「dword 的最高 byte、fields 有 0x3 → 窄存取」。
+  - re_coverage `decode_accesses` 錨點補解的切片 16 → 17:x86 指令最長 15 byte、只取第一條,登錄為等價突變(與 verify_data_types / verify_data_lower_bounds 的同型條目同理)。
+  - 兩題補上後記憶體內套用這兩個突變,selftest 都 FAIL。
+- 重跑 `--exhaustive --tool verify_data_types.py --tool re_coverage.py`(00:07:45 → 00:36:08):歸零。verify_data_types 可達 660/662 抓到、re_coverage 89/90 抓到,其餘為已登錄等價突變;verify_data_lower_bounds 第一次就是 412/427 抓到、其餘 15 為已登錄等價突變,之後沒有再改。
+- 稽核:另外兩個代理各抽 20 段(排除字串,種子 20261118)逐條對反組譯核對 meaning 的主張。結果見 (5)。
+
+### (5) 稽核結果
+
+- 40 段:OK 38、MINOR 2、WRONG 0、無法判定 0。兩段 MINOR 已照稽核改 meaning:
+  - 0x5199c:0x4d899 fcomp / fnstsw / sahf / 0x4d8a2 jne,輸入是 NaN 時比較無序、ZF 同樣是 1,也會換成 DBL_MAX(原本只寫 +∞)。
+  - 0x52b54:inc 的條件是累加值 ≥ 週期(0x3eaef cmp / 0x3eaf5 jb);第 15 槽不受 [0x52bea] 管制(0x3eb1d jg);續接原 int 8 時 0x3eb7e / 0x3eb81 的 xchg 換的是 pushal 存 ecx / eax 的兩格,retf 從那裡取舊向量,中斷返回框沒動(原本寫成換掉返回位址)。
+- 稽核另外記下(沒改):shop_sell_service 的 function_names 摘要讀錯表(同 (6));0x3ec7c 起的計時器初始化碼沒有自己的 function_inventory 入口。
+
+### (6) 與文件不符之處(文件都沒改,只記錄;依 FD2.EXE 反組譯)
+
+- doc47 / doc50 的序列表 getter 0x4e7f8 → 現版 0x4eb48(差 0x350)。
+- doc35 約第 1171–1177 行(Ghidra 描述):存進全域的參數是 7 個不是 10 個;描邊寫在左下 [edi+跨距−1] 與正下 [edi+跨距](0x4ee20 / 0x4ee23),不是左右。function_names 說 blit_image_transparent_core 的 [0x627a3] 是「列尾跳距」,實為整列跨距。
+- doc36 第 1511 行 AIL_SYS_DEBUG 在 0x50320 → 實為 0x5031d(0x37d74 push 0x5031d)。doc36 第 21–37 行 play_sfx 的 0x268c7 起 → 現版 0x25ac7 起。doc36 約第 1668 行未追的 [eax*4 + 0x538bc] 是 eax = 旗標 & 0x1f(從 1 起)讀 0x538c0 名稱表。doc36 第 736 行 handler 9 比的是第 5 參數 [esp+0x14];[0x5412e] 是 tick。doc36 第 764 行「xref_to 0x53fb2 回傳 0 筆」,fixup 實有 15 筆。
+- doc23 第 306 / 475 行說 0x5204e 是「選單設定結構」,實為捲動閃光倒數表(0x1fbbc `cmp esi, [esp+eax*4]`;doc98 第 10436 行的說法對)。
+- doc58 第 1994 行說 0x52096 / 0x520a2 / 0x520ae 是「調色盤/精靈幀資料」,實為 draw_map_scaled_fixedpoint 的中心 x / y 位移與步進(0x216cb / 0x216a4 / 0x2167e)。
+- doc03 的 heap 描述子表把 +0x20 / +0x24 寫成「heap 範圍上下界」,實為空閒串列哨兵 +0x1c 的前一個 / 下一個(0x3d5f0 從 +0x24 走訪;檔內初值兩格的 fixup 都指向 0x527cc)。
+- doc13 第 110 行 word_51f96 實為 dword 表(rep movsd 28 個;doc27 第 109 行已指出)。
+- doc14 第 22 / 233 行把 [0x53ADD] 稱為字串指標、−5 是插入角色名;實為 FDTXT_000 的字串索引,唯一寫入 0x1937b 寫道具號 + 0xb5(道具名)。
+- doc40 第 60 行 0x3453E → 現版 0x34894(差 0x356)。doc39 第 244 行 [0x541b0] 的寫入處 0x3dc9f → 現版 0x3e014(delay_calibrate 0x3dfef 內,差 0x375)。
+- doc91 第 457 行「[0x53fb2] == 6 → 3」實為事件碼 6(0x2bdee 比的是事件碼)。
+- doc98 約第 15091 行說城鎮表「後面幾列是 5 與 0xff」:0x6238d + 26 × 31 = 0x626b3,第 27 列起是升級學法術表,城鎮表只有 26 列。
+- function_names:shop_sell_service 沒東西可賣時讀的是 0x52464(0x28d59),不是 [0x52458](那是賣出確認,0x28e87);anim_step_and_draw 的 mode == 0 也把 [0x54131] 歸零(0x31202 跳到 0x3125d)。
+- docs/data/exe_tables/revival_cost_coefficients.json 與 revive_fee_rates.json 把 0x52397 當第 0 格(506),實際表從 0x52399 起、以職業 − 1 索引,0x52397 是 0x5238d 表的第 5 格;職業 1 以後的數值不受影響。
+
+### (7) 仍未完成
+
+- 長度靠排列 / 鄰表起點推得、程式碼沒有索引上限的表:asctime 6 表、DAC 3 表、動畫 3 表、跳字佇列 3 表(各 200)、0x53b17、obj3 的 0x602ad / 0x61646 / 0x6188a / 0x61af9 / 0x61da1 / 0x6238d(長度是上限,meaning 已註明)。
+- 0x52dfc 計時器 ISR 堆疊的下界、0x53730 CR0 緩衝與 0x54630 的長度、0x546b0 之後的命令列副本與初始堆疊沒有整塊登錄。
+- 工具盲點(只記錄):`dword 指標[N] 常數表` 少登一格兩支工具都不會失敗(只對函式指標表核長度);`lfs eax, [0x52834]`(0x4cf66)實讀 6 byte,re_coverage 當 4 byte;`verify_data_types --show 0x524c6` 丟 TypeError(claim 內的 set 不能 JSON 序列化,`--check` 不受影響)。
+- 上面 (6) 的文件不符都沒改。
+- 資料區 78.2%(其餘是沒有直接引用的空隙與表內容)、`.DAT` 資源 0 / 1005、原版檔案 0 / 49 不變。
+- 本輪改了 `verify_data_types`、`re_coverage`、`verify_data_lower_bounds` 三支工具的產品碼;窮舉已在 (4) 歸零。
+
+## 2026-11-19 續二百八十六:續二百八十五的未完成項逐項處理 —— 工具盲點、文件更正、區段長度複查、.DAT 資源 1005/1005 格式已驗、原版檔案 49/49
+
+起因:使用者要求「還沒做的 請逐項仔細全部進行處理」。對象是續二百八十五 (6)(7) 列的項目與 `.DAT` 資源、原版檔案兩項覆蓋率。研究由唯讀代理在 scratchpad 草擬、主 session 逐項核對後寫入;每項附 selftest 或負向對照。
+
+### (1) 工具盲點(各附 selftest;記憶體內拿掉改動,對應題 FAIL)
+
+- **遠指標載入的寬度**。`lds` / `les` / `lfs` / `lgs` / `lss` 的記憶體運算元是 offset + 2 byte selector,capstone 的 `op.size` 只報 offset 的寬度。`re_coverage.decode_accesses` 與 `verify_data_lower_bounds` 的解碼都改成 op.size + 2;整個 EXE 只有 0x4cf66 `lfs eax, [0x52834]` 這一條碰到全域。`verify_data_types` 加 `fword`(6 byte)元素,data_map 的 0x52834 / 0x52838 兩段合成一段 6 byte 的 `env_far_ptr`(fields 0x4 = 選擇子)。selftest:re_coverage (7d4)、verify_data_lower_bounds (8m)。
+- **常數指標表的長度**。`dword 指標[N] 常數表` 原本只對函式指標表核表尾,少登一格兩支工具都通過。現在每格要是 0 或檔內 fixup,表尾後一格若仍是 fixup、又不屬於其他區段就失敗。真實的 0x538c0 少登一格、0x51980 少登一格都 FAIL。selftest +4 題。
+- **`verify_data_types --show` 的 TypeError**。巢狀的 set(函式指標表的來源宣告)不能 JSON 序列化;改成以 default 印出。834 段逐段 `--show` 0 例外;selftest +1 題。
+- **檔案 / 資源證據的 ref**。`re_coverage.evidence_errors` 在沒有 region(檔案、資源)時整段跳過,`{"func": X, "ref": Y}` 不管 X 有沒有引用 Y 都成立。改成寫了 ref 就核對。selftest (4h)。
+
+### (2) 文件更正(原文保留,行尾加「2026-11-19 更正」註記)
+
+- 續二百八十五 (6) 的各項加在 doc03、doc13(兩處)、doc14(三處)、doc23(兩處)、doc35(兩處)、doc36(四處)、doc47(兩處)、doc50、doc58、doc91、doc98 共 20 處;另加 doc31(FDICON 快取鍵是 b1:`0x10ed2 push [esp+0xc]` 在一次 push 之後取的是 `0x10d86` 存的記錄 +0x84)、doc36(SAMPLE.AD / .OPL 是 GTL 音色庫)、doc01(遊戲目錄沒有 DOS4GW.EXE)。`tools/parse_field.py` 的同一個 b0 / b1 註解一併改正(只改註解;`test_parse_field.py` OK)。
+- 續二百八十五 (6) 列的兩項其實早已更正,這次沒有再加:doc36 第 21–37 行 play_sfx 位址在同檔「⚠ 位址勘誤(第 9 輪)」已說明是檔案偏移 +0xE00;doc40 的 0x3453E 在同檔 §① 已改成 0x34894;doc39 的 0x3dc9f 已是 known_address_errata 的條目(現版函式 0x3dfef、寫入 0x3e014)。
+- 復活費率表:續二百八十五 (6) 說 exe_tables 兩份 JSON「把 0x52397 當第 0 格」是錯的,這個說法本身太重。revive_service 0x2a560 確實以 `word [職業 × 2 + 0x52397]` 讀(活體 3/3 驗證過),draw_revive_candidate_rows 0x2a1d5 以 `word [(職業 − 1) × 2 + 0x52399]` 讀,兩者讀到同一批 word;職業從 1 起,0x52397(506)不會被讀到。兩份 JSON 只加說明欄,數值不改。
+- `function_names.json` 三筆摘要更正:shop_sell_service(沒有可賣道具時讀 0x52464)、anim_step_and_draw(mode 0 也把 [0x54131] 歸零)、blit_image_transparent_core([0x627a3] 是整列跨距)。
+- `known_address_errata.json` 加 0x4e7f8 → 0x4eb48(舊版位移 0x350)與 0x50320 → 0x5031d(個別誤記)。
+- `verify_address_citations` 的非 diff 檢查在 HEAD 已經失敗:15 筆 ARGUED 引用超出基準(閘門只跑 `--diff`,所以一直沒被看見)。逐筆以 git blame 找到最新一行並讀過:都是說明舊位址的訂正段落、引用表格原文,或是現版正確的指令位址剛好等於某筆勘誤的舊位址(0x3453e `call 0x112a5`、0x2e341 `push [0x53a49]`、0x4e9bb `mov ax, [0x627b4]`、0x27fc9 `mov [0x53f4e], esi`)。審過後寫回基準線;ARGUED 存量 1647 不變。
+
+### (3) 區段長度 / 值域複查(結論附在各段 meaning 的「長度複查」句)
+
+- **obj3 遊戲資料表**:0x602ad(道具,最大編號 214 → 215 列)、0x61646 / 0x6188a(職業 0 .. 28 → 29 列)、0x61955(類型最大 20 → 21 項)、0x619fd(法術最大 35 → 36 列)、0x61af9(b1 − 0x44 最大 67 → 68 列)、0x61da1(32 列)、0x6238d(城鎮 26 列)、0x626b3(20 列)由資料與程式碼證到現登長度;0x615fe、0x620a1 只證到下界(第 34 / 35 列與第 67 列靜態走不到)。資料來源:FDFIELD.DAT 33 圖 1887 個單位、211 筆掉落、26 列城鎮商店、32 列預設隊員、轉職表、學法術表。
+- **新登錄 6 段**:0x619a9 / 0x619b6 / 0x619c3 / 0x619d0 / 0x619e1 / 0x619f2 命中特效記錄(1 byte 幀數 n + n × {圖號, 音效}),長度由 play_weapon_hit_effect 0x1e9d3 讀幀數與 0x1eaa9 的迴圈上限決定。
+- **Watcom / AIL**:asctime 月份表 12 格(__brktime 0x47525 是唯一寫 tm 的地方,逐日模擬可達日數 tm_mon 只有 0 .. 11)、星期表 7 格(0x47648 無號 div 7)、施法閃光 DAC 表 36 格(法術號 0 .. 35)、動畫表 33 格(0x1c4e4 / 0x1c4f5 / 0x1c504 各以 rep movsd 複製 33 byte)。0x546b0 由 1 byte 改登 4096 byte:BSS 之後到物件 2 結尾,命令列副本與初始堆疊(LE 表頭 ESP = 物件 2 + 0x56b0)。0x52dfc 只能證到上界 2048(ISR 回呼靜態估算最深約 422 byte,沒算間接呼叫與巢狀中斷),0x53730 與 0x54630 的長度沒有 EXE 內常數,維持只登可證明的部分。
+- **值域**:0x53afb 0 .. 64、0x54017 與 0x540ed 0 .. 1 已證明(寫入點逐一讀過);0x53c13 的全域值域 0 .. 3 成立,但要靠「指令環不在是否框執行期間進入」這個跨函式條件,`verify_data_types` 的單指令歸納表達不了,寫在 meaning、不寫進 type(寫進去會被歸納核對打掉)。
+- **無法靜態證明**:跳字佇列 0x53c6c / 0x53d34 / 0x53dfc(各 200):排入端 0x1e1d0 / 0x1e286 只 `add [0x53ec4], 4`、不比上限,FDFIELD 有同陣營 70 個單位的圖,資料也排除不了一次超過 50 個目標 —— 原程式在極端情況下可能寫出陣列(沒有實機驗證)。
+- **另記(原程式行為,沒有實機驗證)**:序章 map 32 的兩個我方單位 b1 = 0x30 / 0x42 走低階分支 0x10e2c,`lower_class_row24` 會讀到表外;0x51f75 動畫號 0x20 的第 0 幀會把 0x51f33[0] 當音效號。
+
+### (4) `.DAT` 資源:20 種格式 probe,1005/1005 格式已驗
+
+- 新工具 `tools/resource_probes.py` 收 20 種格式的 probe,`re_coverage.PROBES` 併入(加原有的 container / empty 共 22 種)。每個 probe 都是結構不變量,例如 4 模式 RLE 恰好解出 W × H 而且恰好用完全部 byte、offset 表恰好吻合、XMIDI 的 IFF 長度與 EVNT 事件流逐一解析到 `ff 2f 00`。
+- 草稿由三個代理分格式設計;主 session 在 1005 筆上比對,重疊的兩對(TAI 的 rle_sprite 與圖像的 rle4_image、FIGANI 的 figani_anim 與 FDOTHER 的 frame_anim)接受集合完全相同,各只留一份。
+- `resource_probes --selftest`(對原版):每種格式接受的筆數恰好等於預期(frame_anim 292、rle4_image 144、figani_stub 144、portrait_rle4 136、tile_bank 35、glyph_text 34、field_map / field_control / field_spawn / terrain_attr 各 33、xmidi_form 15、afm_anim 9、vga_palette 7、lmi_image_bank 6、space_crlf 5、raw_image / rlec0_image 2、其餘 1);接受的每一筆截斷 1 byte、尾端補 0x00 / 0xff 全部不通過;表頭前 4 byte 各 +1 至少擋下一半(前 4 byte 不是表頭的 4 種格式改用專屬對照、每筆都擋下);空 bytes 與 300 筆隨機 bytes 沒有 probe 收;只有 FDOTHER 第 15 號同時被 raw_image 與 rlec0_image 接受;沒有 probe 收的 40 筆正好是 11 筆空資源與 29 個巢狀容器。
+- 原版資料沒出現的邊界另以 107 筆人工輸入測(`_selftest_boundary_cases`):1×1 圖、1 筆的表、值域上下限、XMIDI 少用的 status 與多 byte VLQ、AFM 各 opcode 貼齊上限,以及讓每個「不收」分支至少走到一次的輸入;每個「不收」盡量配一個只差一個欄位的「要收」對照。來由見 (6) 的突變窮舉。
+- 擋不住的(probe 的 docstring 也列):寬高互換、像素值 / 事件內容被改成另一個合法值、field_control 的單位數改小(原版有 3 筆在 N 筆之後多帶記錄)。
+- `resource_map.json` 登錄 1005 筆:格式已驗 1005、加上用途與證據的 971。用途證據多半是 load_res 呼叫點的資源號(132 個 `call 0x111ba` 的第 3 個參數)、data_map 已登錄的資源號表,或 knowledge-base 原句;每筆都由 `re_coverage --check` 核對(func 在 inventory 且真的引用 ref、quote 逐字存在)。沒有用途的 34 筆:11 筆空資源、BG 10 個 10×3 全透明佔位圖與第 38 / 45 號、TITLE 第 1 .. 6 號、FDMUS 第 0 / 2 / 5 / 7 / 9 號(3 byte 的 `20 0d 0a`)。
+- 與文件不符(已在 doc01 / doc05 / doc06 行尾加更正註記):doc01 / doc05 的 2 模式 RLE 是 4 模式 sprite RLE 的子集(BG 第 36 / 37 號、FDOTHER 第 47、59、60、69 .. 75、100 號只有 4 模式解得開);TAI.DAT 的 56 筆是台座 sprite,不是腳本;doc06 說 FIGANI 3 byte 資源是「群組分隔」,分布看起來是組 × 3 + k 的空槽;doc06 的幀標頭「+4 = 0、+6 = 2」不是常數(2118 幀裡 1647 幀)。
+
+### (5) 原版檔案的內容事實(讀遊戲目錄原檔;resource_map.files 引用)
+
+以下取自遊戲目錄 `org_game/炎龍騎士團/FLAME2` 的原檔(主 session 以 Python 讀檔重算一次,與草擬代理的結果相同):
+
+- `G.BAT`:全文只有一行 `FD2.EXE`(含換行共 8 bytes),是啟動遊戲的批次檔;FD2.EXE 與 SETSOUND.EXE 都沒有 "G.BAT" 字串。
+- `FD2.PIF`:967 bytes 的 Windows PIF,標題 "FD2"、程式路徑 "D:\FD2\FD2.EXE",延伸段標記 "MICROSOFT PIFEX"(0x171)、"WINDOWS 386 3.0"(0x187)、"WINDOWS VMM 4.0"(0x205),圖示來源 "PIFMGR.DLL"(0x273);遊戲本身不讀它(FD2.EXE 沒有 ".PIF" 字串)。
+- `TITLE.DAT`:LLLLLL 容器,位移表 38、21444、21674、21991、22202、22505、22901、23377(最後一個等於檔長),第 0 筆 320×200、第 1 .. 6 筆是 61 .. 62 × 7 .. 8 的小圖、第 7 筆空;FD2.EXE 與 SETSOUND.EXE 全檔都沒有 "TITLE" 字串(不分大小寫),FD2.EXE 不開這個檔,標題畫面用的是 FDOTHER.DAT。
+- `AILDRVR.LST`:SETSOUND.EXE 的驅動清單與自動選卡規則,26 個 `[檔名]` 段(DIG 9 段、MDI 17 段,sbpro2.mdi 與 opl3.mdi 各兩段);沒有列 NULL.MDI;SETSOUND.EXE 有 "Could not open AILDRVR.LST" 字串,FD2.EXE 全檔沒有 "AILDRVR"。
+- `SETSOUND.EXE`:Miles AIL 的音效卡設定程式(DOS/4GW 綁定),字串含 "AIL3MDI" / "AIL3DIG" / "*.dig" / "*.mdi"、"AILDRVR.LST"、"MDI.INI"、"DIG.INI";FD2.EXE 全檔沒有 "SETSOUND" 字串。
+- `DIG.INI` 的 DRIVER 是 SB16.DIG,`MDI.INI` 的 DRIVER 是 SBPRO2.MDI,兩者 IO_ADDR 220h、IRQ / DMA -1,檔頭註解 "Miles Design Audio Interface Library V3.02 of 18-Jan-95"。
+- `NULL.MDI`:檔頭 "AIL3MDI\x1a",驅動內的裝置名 "No music",只在 MDI.INI 指定它時載入。
+- `SAMPLE.AD` 與 `SAMPLE.OPL` 逐位元組相同(md5 b04ce567…),是 MDI 驅動依副檔名載入的 GTL 音色庫:0x43ad0 把 0x53698 的前綴 "SAMPLE" 接上驅動給的副檔名(AD:ADLIB / PAS / SBLASTER / SBPRO1 / SBAWE32;OPL:ADLIBG / OPL3 / PASPLUS / SBPRO2)。
+- `SAMPLE.BNK`:開頭 01 00 "ADLIB-" 的 Ad Lib 樂器庫;沒有任何 MDI 驅動的 GTL 副檔名是 BNK,FD2.EXE 與 SETSOUND.EXE 都沒有 "BNK" 字串,執行時不用。
+- 遊戲目錄沒有 DOS4GW.EXE:FD2.EXE 與 SETSOUND.EXE 都把 DOS/4GW 綁在 MZ stub 裡(LE 檔頭在 0x27acc / 0x27c64)。
+
+`resource_map.json` 的 files 登錄 49 筆:遊戲資料 11 個與 FD2.SAV / FD2.TMP、DIG.INI / MDI.INI 以 FD2.EXE 的檔名字串 + 引用函式為證據(func + ref);25 個驅動以 INI 安裝函式與驅動簽章比對函式 0x3f950,加 doc04 原句;其餘以上面的事實與 knowledge-base 原句為證據。FD2.SAV / FD2.TMP 不釘 md5。
+
+### (6) 驗證
+
+- selftest:`re_coverage`、`verify_data_types`、`verify_data_lower_bounds`、`resource_probes`、`parse_field`(test_parse_field)全部 PASS。`re_coverage --check`:遊戲函式 1202/1202、全域 900/900、資料 89.9%(32091/35714 byte)、原版檔案 49/49、`.DAT` 資源 1005/1005 格式已驗(971 筆有用途)。`verify_data_types`:840 段、失敗 0、未解析 0。
+- 閘門 `gates_s262.sh` 13/13 rc 0(第一次跑 `audit_evidence_provenance --diff` 擋下本節 3 行缺來源標記,補「org_game 原版」後通過);census 92/92、9/9。
+- **稽核(唯讀代理逐筆重讀原檔與反組譯,主 session 核對)**:資源 31 筆 OK 27 / MINOR 4、檔案 15 筆 OK 13 / MINOR 2,MINOR 全部改正:
+  - TAI 台座 40 筆「菱形」→「橢圓形」:40 個非透明 sprite 逐張量 1/4 高處寬度 / 最大寬度都是 0.86(橢圓 0.87、菱形 0.5),部分頂面有菱形格紋;另 16 筆是 10×3 全透明佔位,第 3 號是飛行單位「不畫台座」用(attack_scene_orchestrator 0x2e40e .. 0x2e485)。doc35 加更正註記。
+  - TAI 與 BG「同號」加限定:spell_scene_effects / derived_strike_scene 與 BG 同號,attack_scene_orchestrator 取對手單位所在格,不一定同號。
+  - ANI 第 7 號逐幀解碼:騎士持長柄斧對巨人揮出新月形斬擊光弧(木台 / 繩欄場地),不是「月光背景」。doc39 加更正註記。
+  - FDICON.B24 只有 0x1088d / 0x10b4e / 0x10010 三處開檔;FDSHAP.DAT 另有 command_handler_80 0x24754 固定載入第 0x2e / 0x2f 筆。
+  - `function_names.json` title_anim_or_still:第 3 參數不是 -1 時先載 FDOTHER 資源,兩條路徑都播 ani_player(原寫「否則才播動畫」)。
+- **突變窮舉**(`verify_selftest_discrimination --exhaustive --tool`):
+  - re_coverage 90/91、verify_data_lower_bounds 413/428,其餘為已登錄等價突變。
+  - verify_data_types 第一輪 7 個可達逃逸:補 5 題(常數指標表多格、錯誤訊息位址、`--show` 回傳碼 0 / 1、初值最多印 32 byte),記憶體內逐一重套都 FAIL;`show()` 的 ensure_ascii 登錄為等價(印的欄位全是 ASCII)。第二輪 678/681,其餘 3 個是登錄的等價突變。
+  - resource_probes(selftest 讀 org_game 原版 11 個 .DAT;第四、五輪加 `--confirm-timeouts`,逾時抓到的突變用完整上限重跑確認):
+    - 第一輪因 INVOKE 沒登錄中斷。第二輪 487/568、81 個可達逃逸:selftest 只拿 org_game 原版資料核對,原版沒有的邊界(1×1 圖、1 筆的表、值域上下限、0x80 / 0xa0 / 0xd0 status、多 byte VLQ 長度)都沒測到。補 66 筆人工邊界輸入(`_selftest_boundary_cases`;每個「不收」盡量配一個只差一個欄位的「要收」對照),抓到 51 個;`_xmidi_evnt_ok.vlq` 算了沒用的 v 刪掉(3 個突變點消失)。剩下 30 個逐一論證為等價(多擋 / 少擋的輸入原版下一步也擋,例如長度下限被後面的「長度恰好吻合」包含;vlq / rle 的回傳值不會是 0),理由寫在登錄表。差分佐證:每個突變與原版在邊界輸入 + 原版該格式最多 60 筆與其截斷 / 改 byte 擾動(每個突變 283 .. 11406 筆)上逐筆比對,30/30 沒有差異;配對對照:邊界輸入抓得到的 3 個突變(`_wh` 寬 0 → 1、地形移動代碼上限 5 → 6、meta 長度位移 7 → 8)差分都找到差異。
+    - 第三輪 559/597,多出 8 個逃逸。原因是分母變了:這 8 行在第二輪 selftest 根本執行不到(原版 9 個 AFM 沒有 op 3、FDMUS 沒有 0xf7),不計入可達突變;補邊界輸入後執行得到才出現(在舊版原始碼上記憶體內重套,8 個都 rc 0)。補 6 筆抓到 4 個,4 個登錄為等價(失敗值 -1 → -2 兩處,呼叫端只判斷 < 0;vlq 回傳不會是 0;idx × 3 + cnt × 3 是 3 的倍數,> 768 等於 > 769)。
+    - 第四輪 565/599 歸零。但同一個分母問題還在:產品碼 663 個突變點,selftest 執行到的只有 599 個 —— 約 30 個「不收」分支沒有任何輸入走到,`return False` 改成 `return True` 也不會被發現。再補 35 筆讓每個「不收」分支至少走到一次(共 107 筆),執行行數 563 → 634;仍執行不到的 33 個是模組層常數、`if __name__` 與 `_ok` 的 except(沒有 probe 會丟例外)—— 前兩者在 import 時執行,追蹤記不到。
+    - 第五輪(同樣讀 org_game 原版 .DAT)594/630,新執行到的 2 個失敗回傳值(-1 → -2,與第三輪同理)登錄為等價後歸零:登錄的等價突變共 36 個。登錄表探針對這支是 UNVERIFIABLE(沒有 NORMAL_RUN),所以等價的機器佐證是上面的差分,不是登錄表探針。
+  - 同樣檢查其他三支工具本次新增的行:verify_data_types 37 個突變點、verify_data_lower_bounds 7 個、re_coverage 5 個,selftest 執行不到的只有模組層常數、參數預設值與 `sys.path.insert` 這些 import 時執行的行。
+
+### (7) 仍未完成
+
+- 0x52dfc 計時器 ISR 堆疊的實際深度、0x53730 / 0x54630 的實際長度:沒有 EXE 內常數,要活體量測。
+- 跳字佇列可能寫出陣列的極端情況、序章低階分支的表外讀取:由 FD2.EXE 反組譯與 FDFIELD.DAT 推得,沒有實機驗證。
+- 34 筆資源沒有用途(見 (4));FIGANI 的 k = 0 / 1 / 2 各代表什麼動作、DATO 頭像號對應哪個角色沒有登錄。

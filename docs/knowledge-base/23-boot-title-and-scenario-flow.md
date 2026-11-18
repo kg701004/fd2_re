@@ -303,7 +303,7 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 | ↓ | 0x50 | 游標 `ebp`++,到頂則 wrap 到 0;播 SFX |
 | Enter / Space / 0xe0 / 0x52 | 0x0d/0x20 | 確認(選中項閃爍 4 次 → 回傳 `ebp`) |
 
-- 游標索引 = `ebp`,選單項由 0x1ff79 繪製/反白;項數與預設項來自設定結構 0x5204e。
+- 游標索引 = `ebp`,選單項由 0x1ff79 繪製/反白;項數與預設項來自設定結構 0x5204e。(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:`0x5204e` 是開場捲動閃光的觸發倒數表 dword[15](`0x1fbbc cmp esi, [esp+eax*4]`),不是選單設定結構;doc98 續二百八十五)
 - **此主選單迴圈未見 ESC 分支**(只有移動 + 確認)[驗];ESC 取消是戰場/子選單的行為(見 doc 13),非主選單。
 - 回傳值分派(回 `0x25ebb`，2026-07-29 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀取四個章節存檔槽**（進 `0x30550`，把選中記錄的 roster/metadata 載入 globals，再跑 preparation 與章節 pre-handler）。`eax != 0 && eax != 1` 的第三分支才在 `0x26130` 呼叫 `0x10010`，由 FD2.SAV plaintext `0x30c3` 的 current-runtime header 與同檔 runtime blobs 恢復目前戰鬥。這是與四槽章節存檔分離的續戰入口；玩家可見選單標籤仍以原版畫面證據為準，不讓 remake 的自有 JSON load 冒充 native FD2.SAV compatibility。
 
@@ -472,7 +472,7 @@ town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。
   `0x4E031` 稱為戰鬥驅動器的斷言已撤回。`0x0000..0x08A2` 已閉合為 FDFIELD 控制映像，
   `0x30A3..0x30C2` 已閉合為 battle-local event state；仍未閉合的是兩者
   與 pending groups、`battle.State`、正式 `Game` controller handoff 的嚴格一致性，不是第三
-  分支或 header 章節欄位本身。選單設定結構 0x5204e 的其他欄與各章 handler
+  分支或 header 章節欄位本身。選單設定結構 0x5204e 的其他欄與各章 handler(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:`0x5204e` 不是選單設定結構,見上一處更正)
   仍需逐一展開。
 - **方法**:本篇控制流全靠**靜態反組譯**(規則 62:控制流非 runtime-only);標題畫面內容用**已破解解碼器解出輸出當 oracle**(規則 64)視覺驗證,**未動用 DOSBox**。若日後要對「捲動速度/淡入時序/BGM 對齊」做逐幀比對,DOSBox 截圖序列可當最後的時序 oracle,但機制本身已不需動態分析即可確定。
 

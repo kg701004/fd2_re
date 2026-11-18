@@ -49,7 +49,7 @@
 
 像素資料兩型：
 - **未壓縮**：body 長度 == W×H(實例 `FDOTHER_015` / `FDOTHER_055`，size=64004=4+320×200)。
-- **RLE 壓縮**(第 2 輪破解，視覺驗證通過)：
+- **RLE 壓縮**(第 2 輪破解，視覺驗證通過)：(**2026-11-19 更正(doc98 續二百八十六,原版 .DAT 逐筆解碼)**:控制 byte 實際是 4 模式(高 2 bit:00 run 讀 1 值、01 dither 讀 1 值佔 2 × count、10 literal、11 透明不讀值;count = (c & 0x3F) + 1);上面的 2 模式寫法只是它的子集 —— BG 的 run / literal 都不超過 64,兩種文法解出一樣,但 BG 第 36 / 37 號、FDOTHER 第 47、59、60、69 .. 75、100 號與 BG 的 10×3 全透明佔位圖(`c9 c9 c9`)只有 4 模式解得開;`tools/resource_probes.py` 的 rle4_image 以 4 模式核對全部 144 筆)
 
 ```
 讀 byte c:
@@ -132,7 +132,7 @@ dump 成 `docs/data/exe_tables/terrain.json`。
 
 ## 6. 音效驅動(非遊戲資料)
 
-`*.MDI` / `*.DIG` / `SAMPLE.*` / `DOS4GW.EXE` / `SETSOUND.EXE` 屬 Miles Sound System(AIL)
+`*.MDI` / `*.DIG` / `SAMPLE.*` / `DOS4GW.EXE` / `SETSOUND.EXE` 屬 Miles Sound System(AIL)(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:遊戲目錄沒有 `DOS4GW.EXE`:FD2.EXE 與 SETSOUND.EXE 都把 DOS/4GW 綁在 MZ stub 裡,LE 檔頭在 0x27acc / 0x27c64)
 驅動與 DOS extender，非遊戲內容；重製時以現代音訊管線取代，毋須逆向。
 
 ## 7. 人物頭像格式(DATO.DAT)[已驗證]

@@ -105,10 +105,11 @@ def parse_map(raw, m):
             break
         death_effect = native_death_effect(b)
         units.append({"camp": ["enemy", "ally", "own"][b[0]] if b[0] < 3 else b[0],
-                      # 0x10ec1/0x10ef5 copy this raw byte to runtime +6,
-                      # while 0x10ed6 passes it to 0x11019 before writing the
-                      # returned FDICON cache slot to +2. Keep the raw key
-                      # separate from the human-readable camp label.
+                      # 0x10ec1/0x10ef5 copy this raw byte to runtime +6.
+                      # (2026-11-19: the key 0x10ed6 passes to 0x11019 is b1,
+                      # not this byte -- 0x10ed2 push [esp+0xc] reads the slot
+                      # 0x10d86 filled from record +0x84 after one push.)
+                      # Keep the raw byte separate from the camp label.
                       "native_map_selector_key": b[0],
                       # 0x10ec1/0x10ef5 copy the same FDFIELD b0 directly to
                       # runtime record +6. Preserve this raw provenance; it

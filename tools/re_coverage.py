@@ -116,6 +116,12 @@ def probe_empty(b: bytes) -> bool:
 
 
 PROBES: dict[str, Callable[[bytes], bool]] = {"container": probe_container, "empty": probe_empty}
+# 2026-11-19:.DAT 資源的 20 種格式 probe 由 resource_probes.py 提供(各自的負向對照在那支的 selftest)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import resource_probes  # noqa: E402
+
+assert not set(resource_probes.PROBES) & set(PROBES)
+PROBES.update(resource_probes.PROBES)
 
 
 def probe_ok(fmt: str, b: bytes, probes: dict[str, Callable[[bytes], bool]]) -> bool | None:
@@ -149,6 +155,10 @@ class Ctx:
 Access = tuple[int, int, int, str, str, bool]
 
 
+# 遠指標載入:記憶體運算元是 offset + selector(32 位元 = 6 byte),capstone 的 op.size 只報 offset 寬度
+FAR_LOADS = ("lds", "les", "lfs", "lgs", "lss")
+
+
 def decode_accesses(code: bytes, base: int, fx: dict[int, int],
                     anchors: set[int] | None = None) -> tuple[list[Access], list[int], list[int]]:
     """把 obj1 每個 fixup 對回它所在指令的運算元,得到存取寬度與讀寫。
@@ -156,6 +166,12 @@ def decode_accesses(code: bytes, base: int, fx: dict[int, int],
     fixup 位置必須正好是記憶體運算元的 displacement(→ "mem")或立即數(→ "addr")的起點才算對上;
     對不上的(線性掃描錯位、跳表)放進 unresolved。anchors 是另一條解碼路徑(從每個函式入口反組譯)
     得到的指令起點:線性掃描得到、但 anchors 裡沒有的指令放進 unanchored,不參與大小核對。
+
+    反過來,anchors 裡有、線性掃描卻沒有解到的指令(函式開頭前的填充把線性掃描帶錯位,例:0x40100 的
+    `cmp dword [0x53690], 0` 被解成 0x400ff / 0x40102),2026-11-18 起逐條從錨點單獨解碼補進 accesses;
+    原本這些真的存取整條消失,verify_data_lower_bounds 的逐筆比對才抓到。
+    線性指令的內部(不含起點)若含有錨點,兩種解碼互相衝突,以錨點為準:這條線性指令即使起點也在 anchors 裡
+    (函式範圍上限多算進填充時會發生,例:0x36ff4 的範圍蓋到 0x37027,而 0x37028 是另一個入口),也列 unanchored。
 
     Returns:
         (accesses, unresolved fixup 位置, unanchored 指令位址)
@@ -169,9 +185,24 @@ def decode_accesses(code: bytes, base: int, fx: dict[int, int],
     out: list[Access] = []
     seen: set[int] = set()
     loose: list[int] = []
-    for x in disasm_le.sweep_range(md, code, base, base, base + len(code)):
-        if isinstance(x, tuple):
-            continue
+    linear = [x for x in disasm_le.sweep_range(md, code, base, base, base + len(code)) if not isinstance(x, tuple)]
+    extra = []
+    if anchors is not None:
+        got = {x.address for x in linear}
+        for a in sorted(anchors - got):
+            if base <= a < base + len(code):
+                one = next(md.disasm(code[a - base:a - base + 16], a), None)
+                if one is not None:
+                    extra.append(one)
+    straddle: set[int] = set()
+    if anchors is not None:
+        import bisect
+        srt = sorted(anchors)
+        for x in linear:
+            i = bisect.bisect_right(srt, x.address)
+            if i < len(srt) and srt[i] < x.address + x.size:
+                straddle.add(x.address)
+    for x in linear + extra:
         for site in range(x.address, x.address + x.size):
             if site not in fx:
                 continue
@@ -182,14 +213,16 @@ def decode_accesses(code: bytes, base: int, fx: dict[int, int],
                         acc: Access = (x.address, fx[site], 0, "", "addr", False)
                     else:
                         rw = ("r" if op.access & CS_AC_READ else "") + ("w" if op.access & CS_AC_WRITE else "")
-                        acc = (x.address, fx[site], op.size, rw, "mem", bool(op.mem.base or op.mem.index))
+                        # 遠指標載入讀 offset + 2 byte selector;capstone 的 op.size 只報 offset 的寬度(2026-11-19)
+                        width = op.size + 2 if x.mnemonic in FAR_LOADS else op.size
+                        acc = (x.address, fx[site], width, rw, "mem", bool(op.mem.base or op.mem.index))
                 elif op.type == X86_OP_IMM and x.imm_offset == off:
                     acc = (x.address, fx[site], 0, "", "addr", False)
                 else:
                     continue
                 out.append(acc)
                 seen.add(site)
-                if anchors is not None and x.address not in anchors:
+                if anchors is not None and (x.address not in anchors or x.address in straddle):
                     loose.append(x.address)
                 break
     return out, sorted(set(fx) - seen), sorted(set(loose))
@@ -232,9 +265,10 @@ def evidence_errors(ev: object, ctx: Ctx, where: str, region: tuple[int, int] | 
             if fa not in ctx.funcs:
                 errs.append(f"{tag}: 函式 {e['func']} 不在 function_inventory")
                 continue
-            if region is None:
-                continue
             g = ctx.funcs[fa]
+            if region is None and "ref" not in e:
+                continue
+            # 檔案 / 資源登錄(region 為 None)寫了 ref 也要核對(2026-11-19;原本整段跳過)
             if "ref" in e:
                 try:
                     ra = parse_addr(e["ref"])
@@ -787,6 +821,10 @@ def selftest() -> int:
     check("(4f) 缺 role 被抓", has(check_files([{**fe[0], "role": ""}], present, ctx)[1], "缺 role"))
     check("(4g) 檔案證據不成立被抓",
           has(check_files([{**fe[0], "evidence": []}], present, ctx)[1], "沒有證據"))
+    check("(4h) 檔案證據的 func + ref:函式有引用 → 成立、沒引用 → 被抓",
+          check_files([{**fe[0], "evidence": [{"func": "0x10000", "ref": "0x50010"}]}], present, ctx)[1] == []
+          and has(check_files([{**fe[0], "evidence": [{"func": "0x10000", "ref": "0x60004"}]}], present, ctx)[1],
+                  "沒有引用 0x60004"))
 
     # (5) 小工具
     check("(5a) 原版檔名判準:大寫 8.3 才算",
@@ -794,6 +832,10 @@ def selftest() -> int:
           == [True, True, False, False, False])
     check("(5b) probe 丟例外算失敗、沒有 probe 回 None",
           probe_ok("container", b"xx", PROBES) is False and probe_ok("pcm", b"", PROBES) is None)
+    check("(5b2) PROBES 含 container / empty 與 resource_probes 的 20 種;截斷 1 byte 的 4 模式圖不通過",
+          len(PROBES) == 22 and set(resource_probes.PROBES) <= set(PROBES)
+          and probe_ok("rle4_image", b"\x01\x00\x01\x00\x00\x07", PROBES) is True
+          and probe_ok("rle4_image", b"\x01\x00\x01\x00\x00", PROBES) is False)
     check("(5c) pct", (pct(1, 4), pct(0, 0)) == ("1/4 (25.0%)", "0/0"))
     check("(5d) covered 是半開區間", (covered(0x5001f, good), covered(0x50020, good)) == (True, False))
 
@@ -825,6 +867,24 @@ def selftest() -> int:
         check("(7b) 錯位的 fixup 列為 unresolved", unres == [0x10026])
         check("(7c) 錨點裡沒有的指令列為 unanchored", loose == [0x10018])
         check("(7d) 不給錨點就不判 unanchored", decode_accesses(code, 0x10000, fx)[2] == [])
+        # (7e) 函式前的填充把線性掃描帶錯位(00 83 3d … 被解成 add [ebx+0x3d], al):錨點上的真指令要單獨解碼補回
+        pad = b"\x00" + b"\x83\x3d" + z4 + b"\x00" + b"\xc3"   # 0x10001 cmp dword [abs], 0  disp @0x10003
+        fxp = {0x10003: 0x50010}
+        real = (0x10001, 0x50010, 4, "r", "mem", False)
+        acc_p, unres_p, _loose_p = decode_accesses(pad, 0x10000, fxp, {0x10001, 0x10008})
+        check("(7d2) 線性掃描跳過的錨點指令補進 accesses;不給錨點就沒有",
+              real in acc_p and unres_p == [] and real not in decode_accesses(pad, 0x10000, fxp)[0])
+        # (7d3) 線性指令起點也是錨點、但內部含另一個錨點:00 a1 … 被解成 0x10000 add [ecx+disp], ah(蓋住 0x10001
+        # mov eax, [abs]),兩者都對上 fixup @0x10002 → 線性那條列 unanchored、不進大小核對,錨點那條進
+        st = b"\x00\xa1" + z4 + b"\xc3"
+        a3, _u3, loose3 = decode_accesses(st, 0x10000, {0x10002: 0x50010}, {0x10000, 0x10001, 0x10006})
+        # (7d4) 遠指標載入:0f b4 05 disp32 = lfs eax, [abs],一次讀 6 byte;mov eax, [abs] 照舊 4
+        far = b"\x0f\xb4\x05" + z4 + b"\xa1" + z4
+        acc_f = decode_accesses(far, 0x10000, {0x10003: 0x50010, 0x10008: 0x50020})[0]
+        check("(7d4) lfs 的存取寬度 6、mov 的 4",
+              acc_f == [(0x10000, 0x50010, 6, "r", "mem", False), (0x10007, 0x50020, 4, "r", "mem", False)])
+        check("(7d3) 內部含錨點的線性指令列為 unanchored",
+              loose3 == [0x10000] and (0x10001, 0x50010, 4, "r", "mem", False) in a3)
     else:
         print("SKIP (7) 沒有 capstone")
 
@@ -878,11 +938,21 @@ def selftest() -> int:
         check("(6h) 倉庫的 data_map / resource_map 0 錯誤", r["errors"] == [])
         check("(6i) 函式庫與遊戲函式加總 = 1356",
               r["code"]["game_total"] + r["code"]["library_total"] == 1356 and r["code"]["unnamed"] == [])
-        check("(6j) 資料 fixup 全部對得上指令;錨點不成立的只有 AIL 區 5 條,指向資料區的都只是取址(不含寬度)",
-              w["unresolved_data"] == [] and w["unanchored"] == [0x40102, 0x40112, 0x42112, 0x4211D, 0x45672]
-              and w["unanchored_kinds"] == {"addr"})
+        # 2026-11-18:0x37027 是 0x36ff4 範圍蓋進填充的錯位解碼(內部含入口 0x37028),改列錨點不成立;
+        # 它是唯一指向資料區的 mem 種類,真的那筆 0x37028 mov [0x52794], ss 由錨點補解(見 6j3)
+        check("(6j) 資料 fixup 全部對得上指令;錨點不成立的 6 條(0x37027 + AIL 區 5 條)",
+              w["unresolved_data"] == [] and w["unanchored"] == [0x37027, 0x40102, 0x40112, 0x42112, 0x4211D, 0x45672]
+              and w["unanchored_kinds"] == {"addr", "mem"})
         check("(6j2) 錨點不成立的指令不進大小核對",
               not {a[0] for a in w["ctx"].accesses} & set(w["unanchored"]))
+        # 2026-11-18:線性掃描在 AIL 鎖定函式開頭前錯位,這 7 筆只能從函式入口的錨點解出
+        seven = {(0x37028, 0x52794, 2, "w", "mem", False), (0x40101, 0x53690, 4, "r", "mem", False),
+                 (0x4010E, 0x41A40, 0, "", "addr", False), (0x40113, 0x40100, 0, "", "addr", False),
+                 (0x42111, 0x5371C, 4, "r", "mem", False), (0x4211E, 0x45380, 0, "", "addr", False),
+                 (0x45671, 0x5372C, 4, "r", "mem", False)}
+        check("(6j3) 錨點補解:0x40101 cmp [0x53690] 等 7 筆在 accesses 裡、錯位的 0x37027 不在(共 7145 筆)",
+              seven <= set(w["ctx"].accesses) and len(w["ctx"].accesses) == 7145
+              and not [a for a in w["ctx"].accesses if a[0] == 0x37027])
         a45 = [a for a in w["ctx"].accesses if a[1] == 0x53A45]
         check("(6k) [0x53a45] 262 筆全是 4 byte 直接定址,10 筆寫入的位置已知",
               len(a45) == 262 and {(a[2], a[4], a[5]) for a in a45} == {(4, "mem", False)}

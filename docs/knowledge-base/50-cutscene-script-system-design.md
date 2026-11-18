@@ -231,7 +231,7 @@ identity。
 另藏於 `.DAT`／`FD2.TMP`，再被載入 text/code 區；此路已查明並排除。FD2.EXE 的 LE object #1
 `0x10000..0x4ebd8` flags=`0x2045` 是 executable code；object #2/#3 flags=`0x2043` 是 RW data。
 acting directory `0x627d8` 位於 **object #3 的 file-backed initialized data**（file+`0x565d8`），
-payload bank 同在該 object（file+`0x53e00`），不是 runtime copy。getter `0x4e7f8` 唯一操作是
+payload bank 同在該 object（file+`0x53e00`），不是 runtime copy。getter `0x4e7f8` 唯一操作是(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:現版是 `0x4eb48`,`0x4e7f8` 是舊版位址)
 `mov eax,[0x627d8+id*4]`，沒有呼叫檔案 loader。
 
 通用 loader `0x111ba` 則是 `fopen("rb") → seek(index*4+6) → read(start/end) → malloc(length)

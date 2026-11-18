@@ -21,6 +21,8 @@
             表尾後一個 dword 若也是指向入口的 fixup,而且不屬於另一個已登錄區段,就是表登短了。→ 下限與上限。
 * 元素寬度  直接定址的存取寬度大於元素寬度 → 失敗;小於元素寬度(例如 `cmp byte [dword 變數], 0`)列為窄存取,
             只報告不失敗(合法,但代表那處只看低位元組,值域宣稱要能放進那個寬度)。陣列的直接存取必須對齊元素。
+            元素內部的窄存取(對齊自身寬度、不跨出元素)只在兩種情況放行:double 的高 / 低 dword,或偏移是
+            區段 `fields` 宣告的子欄位(例:`test word [dword + 2], …` 讀高 word,fields 列 `0x2`);其餘仍是沒對齊。
             `union` 不核寬度。
 * 常數      `常數`:區段內沒有任何寫入(直接或以區段起點為基底的索引寫入);初值必須來自 EXE 檔內(不在清零範圍);
             純量常數的 `type` 若恰好寫了一個十進位數,檔內值必須等於它。
@@ -30,6 +32,10 @@
             (見 `reg_const`)時,同樣核對;其餘暫存器來源、`inc` / `add` 等讀改寫只計數為「未判定寫入」,
             不當作通過。指標型別不做值域。
 * 指標      `指標`:立即數寫入只能是 0,或立即數本身有 fixup(指向程式自己的位址)。
+* 浮點常數  `double 常數 1.5(…)`、`double[N] 常數表 v0 / v1 / …(…)`(x87 以 qword 讀的常數;2026-11-18 加):
+            元素 8 byte;必須沒有寫入、初值在檔內,而且每格的 IEEE 754 值逐格等於宣告值(`inf` / `-inf` / 十進位,
+            以 Python float 精確比對)。只讀 double 的高 / 低 dword 算窄存取(見「元素寬度」)。
+            可寫的 double 沒有文法(`double(…)` 列為未解析)。
 * 函式回傳  `mov [x], eax` 在同一基本區塊內往回,eax 最後由 `call 立即數` 寫入(`call_source`)時,值是那個函式的
             回傳值:另計「函式回傳」,不算未判定,也不算值域核對(回傳值本身不核)。呼叫的參數由 call 前的 push 取得
             (`call_args`)。
@@ -72,7 +78,8 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
-WIDTH = {"byte": 1, "word": 2, "dword": 4}
+# fword = 32 位元遠指標(dword offset + word selector),lfs / lds 這類指令一次讀 6 byte(2026-11-19)
+WIDTH = {"byte": 1, "word": 2, "dword": 4, "fword": 6}
 # `sub ecx, edi` 之後幾條內要看到 `rep stosd`(FD2 實際在第 4 條)
 STOSD_WINDOW = 8
 
@@ -86,7 +93,7 @@ _STR = re.compile(r'^C 字串 "((?:[^"\\]|\\x[0-9A-Fa-f]{2})*)"'
                   r'(?:\((\d+) bytes 含 NUL\)|\(((?:[0-9a-f]{2} ?)+)\))?')
 _UNION = re.compile(r"^union REGS\(.*?(\d+) 個 dword\)")
 _CHAR = re.compile(r"^char\[(\d+)\]")
-_BASE = re.compile(r"^(byte|word|dword)( 指標)?(?:\[(\d+)\])?")
+_BASE = re.compile(r"^(byte|word|dword|fword)( 指標)?(?:\[(\d+)\])?")
 _RANGE = re.compile(r"(?<![\w.])(\d+) ?\.\. ?(\d+)(?![\w.])")
 _LIST = re.compile(r"(?<![\w/])(\d+)((?: ?/ ?\d+)+)(?![\w/])")
 _LABELLED = re.compile(r"(?<![\w])(\d+) [^\d、,()::]+(?=、|\)|$)")
@@ -96,6 +103,9 @@ _SENTINEL = re.compile(r"(?<![\w])(0x[0-9a-f]+) = ")
 _DEC = re.compile(r"(?<![\w\[.])(\d+)(?![\w\].])")
 # 式子宣告:`byte + 2` = movzx 一個 byte 再加 2(值域核對以式子本身比對,不展開成範圍)
 _FORMULA = re.compile(r"(?<![\w])(byte|word) \+ (\d+)(?![\w])")
+# 浮點常數:`double 常數 1.5(…)` / `double[3] 常數表 1.5 / inf / -8.0(…)`;只有常數(可寫的 double 不登)
+_FLOAT = r"[+-]?(?:inf|\d+(?:\.\d+)?(?:e[+-]?\d+)?)"
+_DOUBLE = re.compile(rf"^double(?:\[(\d+)\])? 常數表? ?({_FLOAT}(?: ?/ ?{_FLOAT})*)")
 
 
 def _unescape(lit: str) -> bytes:
@@ -149,6 +159,10 @@ def parse_type(t: str, size: int) -> dict:
     if m:
         # char 緩衝不核值域,但「常數」照樣核(沒有寫入、初值在檔內),否則 `char[N] 常數` 寫了也不會失敗
         return {"kind": "array", "elem": 1, "count": int(m.group(1)), "const": "常數" in t[m.end():]}
+    m = _DOUBLE.match(t)
+    if m:
+        return {"kind": "double", "elem": 8, "count": int(m.group(1)) if m.group(1) else 1, "pointer": False,
+                "const": True, "double_values": [float(x) for x in re.split(r" ?/ ?", m.group(2))]}
     m = _BASE.match(t)
     if not m:
         return {"kind": "unparsed"}
@@ -1229,7 +1243,18 @@ def check_region(r: dict, f: Facts) -> dict:
                                f"且不屬於其他已登錄區段(表登短了?)")
         res["note"].append(f"{c['count']} 格函式指標全部有 fixup 指向入口" if not bad else "")
 
+    # 常數指標表(2026-11-19):每格是 0 或檔內 fixup;表尾後一格若仍是 fixup、又不屬於其他已登錄區段,就是登短了
+    if c["kind"] == "array" and c.get("pointer") and c.get("const") and c["elem"] == 4 and src == "file":
+        bad = [hex(start + 4 * k) for k in range(c["count"])
+               if start + 4 * k not in f.fixups and init[4 * k:4 * k + 4] != b"\0\0\0\0"]
+        if bad:
+            res["fail"].append(f"{where}: 常數指標表有 {len(bad)} 格既不是 0 也沒有 fixup:{bad}")
+        if end in f.fixups and not any(s <= end < e for s, e in f.regions if s != start):
+            res["fail"].append(f"{where}: 表尾後 {hex(end)} 仍是 fixup(指向 {hex(f.fixups[end])}),"
+                               f"且不屬於其他已登錄區段(表登短了?)")
+
     # 存取寬度與寫入
+    field_offs = {int(k, 16) for k in r.get("fields", {})}
     writes = []
     for ins, t, width, rw, kind, indexed in f.accesses:
         if kind != "mem" or not (start <= t < end):
@@ -1239,7 +1264,13 @@ def check_region(r: dict, f: Facts) -> dict:
         if indexed or c["kind"] == "union":
             continue
         off = t - start
-        if off % c["elem"]:
+        inner = (0 < width < c["elem"] and off % width == 0 and off % c["elem"] + width <= c["elem"]
+                 and ((c["kind"] == "double" and width == 4) or off in field_offs))
+        if inner:
+            # 元素內部的窄存取(2026-11-18):double 的高 / 低 dword,或 fields 宣告過的子欄位
+            # (例:0x54600 的 +2 = test word [0x54602])。沒宣告的內部存取照舊算沒對齊。
+            res["narrow"].append((ins, t, width, rw))
+        elif off % c["elem"]:
             res["fail"].append(f"{where}: {hex(ins)} 直接存取 {hex(t)} 沒有對齊 {c['elem']} byte 元素")
         elif width > c["elem"]:
             res["fail"].append(f"{where}: {hex(ins)} 以 {width} byte 存取 {c['elem']} byte 元素")
@@ -1252,6 +1283,13 @@ def check_region(r: dict, f: Facts) -> dict:
             res["fail"].append(f"{where}: 宣告常數,但有 {len(writes)} 筆寫入:{[hex(ins) for ins, *_rest in writes]}")
         if src != "file":
             res["fail"].append(f"{where}: 宣告常數,但初值不是 EXE 檔內位元組({src})")
+        elif c["kind"] == "double":
+            want = c["double_values"]
+            got = [struct.unpack_from("<d", init, 8 * k)[0] for k in range(len(init) // 8)]
+            if len(want) != c["count"]:
+                res["fail"].append(f"{where}: 宣告 {c['count']} 格 double,列了 {len(want)} 個值")
+            elif got != want:
+                res["fail"].append(f"{where}: 宣告 double {want},EXE 檔內值 {got}")
         elif "const_value" in c:
             v = int.from_bytes(init[:c["elem"]], "little")
             if v != c["const_value"]:
@@ -1501,7 +1539,9 @@ def show(facts: Facts, regions: list[dict], addr: int) -> int:
     r = hit[0]
     x = check_region(r, facts)
     print(json.dumps({k: (sorted(v) if isinstance(v, set) else v) for k, v in x["claim"].items()
-                      if k not in ("literal", "declared_hex", "allowed")}, ensure_ascii=False))
+                      if k not in ("literal", "declared_hex", "allowed")}, ensure_ascii=False,
+                     # 巢狀的 set(例:函式指標表的 source 宣告)也要能印;2026-11-19 前 --show 0x524c6 丟 TypeError
+                     default=lambda o: sorted(o) if isinstance(o, (set, frozenset)) else str(o)))
     if "allowed" in x["claim"]:
         print(f"  值域 {x['claim']['allowed']}")
     print(f"  初值 {x['init']}  {(facts.image(int(r['start'], 16), min(r['size'], 32)) or b'').hex(' ')}")
@@ -1676,6 +1716,75 @@ def selftest() -> int:
     check("檔內頁裡的清零範圍:跨進去 → none、緊鄰之後 → file、整段在內 → zeroed",
           [init_source(inner, a, 4)[0] for a in (0x10fe, 0x1104, 0x1100)] == ["none", "file", "zeroed"])
     check("未解析 → 失敗", errs(reg(0x1000, 4, "qword x")) != [])
+    import contextlib
+    import io
+
+    def shown(regs: list, addr: int, acc: list | None = None) -> tuple[int | None, str]:
+        sb = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(sb):
+                rc = show(facts(acc or []), regs, addr)
+        except TypeError as e:
+            return None, f"TypeError {e}"
+        return rc, sb.getvalue()
+    rc_s, out_s = shown([reg(0x1100, 12, "dword[3] 函式指標表(TAI.DAT 的 x)")], 0x1100)
+    check("--show 印得出巢狀 set(來源宣告),成立的段回 0", rc_s == 0 and '"files": ["TAI.DAT"]' in out_s)
+    rc_f, _out_f = shown([reg(0x1080, 4, "char[4] 常數")], 0x1080, [(0x905, 0x1080, 1, "w", "mem", False)])
+    check("--show 失敗的段回 1", rc_f == 1)
+    _rc_b, out_b = shown([reg(0x1180, 40, "byte[40](x)")], 0x1180)
+    check("--show 初值最多印 32 byte", "  初值 file  " + " ".join(["41"] * 32) + "\n" in out_b)
+    # 常數指標表多格:第 1 格是 0(沒有 fixup 也合法)、第 0 / 2 格有 fixup;換錯格寬會讀到第 2 格的值
+    mem[0x1e0:0x1ec] = struct.pack("<III", 0x400, 0, 0x408)
+    check("常數指標表 3 格(中間一格 0、沒有 fixup)→ 0",
+          errs(reg(0x11e0, 12, "dword 指標[3] 常數表(x)"), fixups={0x11e0: 0x400, 0x11e8: 0x408}) == [])
+    bad_m = errs(reg(0x11e4, 8, "dword 指標[2] 常數表(x)"), fixups={})
+    check("常數指標表非 0 又沒有 fixup 的格,訊息寫出它的位址 0x11e8",
+          len(bad_m) == 1 and "['0x11e8']" in bad_m[0])
+    # 常數指標表:fixup 在 0x1100 / 0x1104 / 0x1108;登 3 格成立、登 2 格表尾後仍是 fixup → 失敗
+    check("常數指標表 3 格(每格 fixup)→ 0", errs(reg(0x1100, 12, "dword 指標[3] 常數表(x)")) == [])
+    check("常數指標表登 2 格、表尾後仍是 fixup → 失敗", errs(reg(0x1100, 8, "dword 指標[2] 常數表(x)")) != [])
+    check("常數指標表某格非 0 又沒有 fixup → 失敗", errs(reg(0x1010, 4, "dword 指標[1] 常數表(x)")) != [])
+    check("可寫的指標陣列不核表尾", errs(reg(0x1100, 8, "dword 指標[2](x)")) == [])
+
+    # double 常數(2026-11-18):逐格比對檔內 IEEE 754;qword 讀取不算超寬;只讀高 dword 算窄存取
+    mem[0x1c0:0x1d8] = struct.pack("<3d", 1.5, float("inf"), 0.0174532)
+    dq = parse_type("double[3] 常數表 1.5 / inf / -8.0(x)", 24)
+    check("文法:double 常數表(不是指標)",
+          (dq["kind"], dq["elem"], dq["count"], dq["const"], dq["pointer"], dq["double_values"])
+          == ("double", 8, 3, True, False, [1.5, float("inf"), -8.0]))
+    check("文法:沒寫常數的 double → 未解析", parse_type("double(x)", 8)["kind"] == "unparsed")
+    rd8 = [(0x90b, 0x11c0, 8, "r", "mem", False)]
+    check("double 常數 1.5、qword 讀 → 0", errs(reg(0x11c0, 8, "double 常數 1.5(x)"), rd8) == [])
+    check("double 值不同 → 失敗", errs(reg(0x11c0, 8, "double 常數 1.25(x)"), rd8) != [])
+    check("double[3] 逐格相同 → 0", errs(reg(0x11c0, 24, "double[3] 常數表 1.5 / inf / 0.0174532(x)")) == [])
+    check("double[3] 第 3 格差 1e-7 → 失敗", errs(reg(0x11c0, 24, "double[3] 常數表 1.5 / inf / 0.0174533(x)")) != [])
+    check("double[3] 第 2 格寫成 -inf → 失敗", errs(reg(0x11c0, 24, "double[3] 常數表 1.5 / -inf / 0.0174532(x)")) != [])
+    check("double[3] 少列一個值 → 失敗", errs(reg(0x11c0, 24, "double[3] 常數表 1.5 / inf(x)")) != [])
+    check("double size 4 → 失敗", errs(reg(0x11c0, 4, "double 常數 1.5(x)")) != [])
+    check("double 被寫 → 失敗", errs(reg(0x11c0, 8, "double 常數 1.5(x)"), [(0x90b, 0x11c0, 8, "w", "mem", False)]) != [])
+    hi = check_region(reg(0x11c8, 8, "double 常數 inf(x)"), facts([(0x90b, 0x11cc, 4, "r", "mem", False)]))
+    check("只讀 double 高 dword → 窄存取、不失敗", hi["fail"] == [] and hi["narrow"] == [(0x90b, 0x11cc, 4, "r")])
+    check("double 偏移 2 的 word 存取 → 失敗",
+          errs(reg(0x11c0, 8, "double 常數 1.5(x)"), [(0x90b, 0x11c2, 2, "r", "mem", False)]) != [])
+    check("double 第 2 格以 dword 讀低半部 → 窄存取、不失敗",
+          check_region(reg(0x11c0, 16, "double[2] 常數表 1.5 / inf(x)"),
+                       facts([(0x90b, 0x11c8, 4, "r", "mem", False)]))["fail"] == [])
+    check("double 在清零範圍 → 失敗", errs(reg(0x2000, 8, "double 常數 0.0(x)")) != [])
+    # 元素內部的窄存取(2026-11-18):對齊自身寬度、不跨元素 → 窄存取;否則失敗
+    hi_w = [(0x90b, 0x1052, 2, "r", "mem", False)]
+    hw = check_region({**reg(0x1050, 4, "dword(x)"), "fields": {"0x2": "hi"}}, facts(hi_w))
+    check("dword 的高 word、fields 有 0x2 → 窄存取、不失敗",
+          hw["fail"] == [] and hw["narrow"] == [(0x90b, 0x1052, 2, "r")])
+    check("dword 的高 word、沒有 fields → 失敗(未宣告的內部存取)", errs(reg(0x1050, 4, "dword(x)"), hi_w) != [])
+    check("fields 有 0x1、word 存取 +1(沒對齊自身寬度)→ 失敗",
+          check_region({**reg(0x1050, 4, "dword(x)"), "fields": {"0x1": "m"}},
+                       facts([(0x90b, 0x1051, 2, "r", "mem", False)]))["fail"] != [])
+    by = check_region({**reg(0x1050, 4, "dword(x)"), "fields": {"0x3": "top"}},
+                      facts([(0x90b, 0x1053, 1, "r", "mem", False)]))
+    check("dword 的最高 byte、fields 有 0x3 → 窄存取、不失敗", by["fail"] == [] and by["narrow"] == [(0x90b, 0x1053, 1, "r")])
+    check("fields 有 0x2、dword 存取 +2(跨元素)→ 失敗",
+          check_region({**reg(0x1050, 8, "dword[2](x)"), "fields": {"0x2": "m"}},
+                       facts([(0x90b, 0x1052, 4, "r", "mem", False)]))["fail"] != [])
 
     # _cstart_ 清零範圍推導
     seq = [(0, "mov", "ecx, 0x46b0", 0x546b0), (1, "mov", "edi, 0x39ec", 0x539ec), (2, "sub", "ecx, edi", None),
@@ -2264,14 +2373,14 @@ def selftest() -> int:
         check("真實 0x541ac 初值 zeroed、0x51a87 初值 file",
               got["0x541ac"]["init"] == "zeroed" and got["0x51a87"]["init"] == "file")
         ranged = [x for r, x in out if "allowed" in x["claim"] or x["claim"].get("pointer")]
-        check("真實 值域 / 指標寫入:核對 337(暫存器 20)、函式回傳 129、跨區塊 29、歸納 14、未判定 82",
+        check("真實 值域 / 指標寫入:核對 400(暫存器 33)、函式回傳 143、跨區塊 34、歸納 18、未判定 118",
               (sum(x["imm_checked"] for x in ranged), sum(x["via_reg"] for x in ranged),
                sum(x["call_ret"] for x in ranged), sum(x["flow"] for x in ranged),
                sum(x["inductive"] for x in ranged), sum(x["undetermined"] for x in ranged))
-              == (337, 20, 129, 29, 14, 82))
+              == (400, 33, 143, 34, 18, 118))
         srcd = [x for r, x in out if x["claim"].get("source")]
-        check("真實 來源宣告 30 段、參數核對 139 項",
-              (len(srcd), sum(x["src_checked"] for x in srcd)) == (30, 139))
+        check("真實 來源宣告 37 段、參數核對 148 項",
+              (len(srcd), sum(x["src_checked"] for x in srcd)) == (37, 148))
         # 跨區塊 / 歸納(2026-11-15 逐條讀反組譯核對)
         fs = f.flow_src
         q = fs.get(0x21675, (None, ""))[0]
@@ -2301,13 +2410,13 @@ def selftest() -> int:
         rc0, txt = rep(out)
         check("真實 報告的統計行(型別 / 初值來源 / 每種跨區塊值分開加總 / 常數字串 / 窄存取);失敗 0 → 回傳 0",
               rc0 == 0 and txt[:3] == [
-                  "data_map type 核對:197 段;失敗 0、未解析 0",
-                  "  型別 {'array': 27, 'cstring': 15, 'fptr_table': 8, 'scalar': 146, 'union': 1}",
-                  "  初值來源 {'file': 92, 'zeroed': 105};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
-              and "    跨區塊 / 跨 call 判定 29 筆(值:常數 13、函式回傳 5、固定位址舊值 10、movzx 式子 4);讀改寫歸納 14 筆"
+                  "data_map type 核對:840 段;失敗 0、未解析 0",
+                  "  型別 {'array': 222, 'cstring': 264, 'double': 15, 'fptr_table': 13, 'scalar': 325, 'union': 1}",
+                  "  初值來源 {'file': 616, 'none': 1, 'zeroed': 223};_cstart_ 清零範圍 [('0x539ec', '0x546b0')]"]
+              and "    跨區塊 / 跨 call 判定 34 筆(值:常數 16、函式回傳 6、固定位址舊值 11、movzx 式子 4);讀改寫歸納 18 筆"
               in txt
-              and "  常數宣告 21 段;字串 15 段;函式指標表 8 段" in txt
-              and "  窄存取(寬度小於元素,不算失敗) 32 筆,分布在 13 段" in txt)
+              and "  常數宣告 180 段;字串 264 段;函式指標表 13 段" in txt
+              and "  窄存取(寬度小於元素,不算失敗) 53 筆,分布在 23 段" in txt)
         rce, txe = rep([])
         check("報告 空輸入:各計數 0、型別 {}、回傳 0",
               rce == 0 and txe[:2] == ["data_map type 核對:0 段;失敗 0、未解析 0", "  型別 {}"]

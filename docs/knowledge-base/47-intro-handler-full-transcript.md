@@ -27,7 +27,7 @@
 |---|---|---|---|
 | `0x135dd(col,row)` | **平滑鏡頭平移**:目前鏡頭格 [0x53aa9]/[0x53aad] 逐格 inc/dec 至目標,先欄後列,每步 0x11cac 重繪 | 0x135fc-0x13668 雙 while 迴圈 | (未命名) |
 | `0x15f84(txtbuf,idx,…)` | **對白播放器**:讀 [0x53a79](當前章 FDTXT)offset 表第 idx 條,逐字渲染,處理 0xFFFD 翻頁(0x15fc4 `cmp eax,-3`) | 0x15fb9 `movsx eax,[esi+idx*2]; add esi,eax` = offset 表查找 | doc23 §4 誤判為「逐格貼序幕影像」 |
-| `0x1366a(id)` | **演出(acting)播放器**:getter `0x4e7f8` 以當下 loader 修補後的 table pointer 取 `id` 對應資源;格式 `[幀數] + 每幀{(拍數,N) + N×(單位idx,姿態)}`;逐 tick 寫 unit[+3]=姿態、unit[+4]=tick 計數並 0x11cac/0x11eee 重繪(13×8 視窗) | 0x13687/0x1369a/0x13832 幀迴圈;0x137e6/0x1389a 寫 [0x53a45]+idx*80+3/+4；table 必須於目標 ACT 中斷當下讀取 | (未知函式) |
+| `0x1366a(id)` | **演出(acting)播放器**:getter `0x4e7f8` 以當下 loader 修補後的 table pointer 取 `id` 對應資源;格式 `[幀數] + 每幀{(拍數,N) + N×(單位idx,姿態)}`;逐 tick 寫 unit[+3]=姿態、unit[+4]=tick 計數並 0x11cac/0x11eee 重繪(13×8 視窗) | 0x13687/0x1369a/0x13832 幀迴圈;0x137e6/0x1389a 寫 [0x53a45]+idx*80+3/+4；table 必須於目標 ACT 中斷當下讀取 | (未知函式) |(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:現版 getter 是 `0x4eb48`(event_seq_table_get);`0x4e7f8` 是舊版位址,差 0x350)
 | `0x10b4e(g)` | spawn 群組 g(doc25 已知) | — | — |
 | `0x112a5(char_id)` | **加入隊伍名冊**:序章尾連呼 0(索爾)/9(悠妮)/4(亞雷斯)/0x1e(蓋亞) | 0x327f5-0x32815 四連呼 | (未知) |
 | `0x25977(track,loop?)` | play_bgm;(-1,0)=停止;序章草地起 track 0xb=11 | 記憶 play_bgm 真位址 ✓ | — |
@@ -94,7 +94,7 @@
 ## 5. 未解(誠實列表,下一輪 RE 錨點)
 
 > **2026-07-15 更正：下列 acting container／填表點已解，不再是未解項。** `0x627d8` 不在純 BSS，
-> 而在 FD2.EXE 的 LE object #3（RW initialized data，file+`0x565d8`）。getter `0x4e7f8` 直接做
+> 而在 FD2.EXE 的 LE object #3（RW initialized data，file+`0x565d8`）。getter `0x4e7f8` 直接做(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:現版是 `0x4eb48`,`0x4e7f8` 是舊版位址)
 > `[0x627d8 + id*4]`；106-entry directory 指向同一 object 內 file+`0x53e00` 的 payload bank。
 > 因此沒有執行期填表點，也不是 FDOTHER／FIGANI／FD2.TMP 載入。canonical exporter 為
 > `tools/export_acting_resources.py`。保留本更正是為了避免再沿早期候選重查。

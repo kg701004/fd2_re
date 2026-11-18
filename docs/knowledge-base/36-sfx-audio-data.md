@@ -136,7 +136,7 @@ $ python3 tools/unpack_dat.py --list FDOTHER.DAT | grep '^    31'
 |---|---|
 | `*.DIG`(`SBLASTER.DIG` 等) | Miles AIL **數位輸出驅動**(依音效卡選一份載入),純程式碼,不含遊戲音效資料 |
 | `SAMPLE.BNK` | 標準 Miles SDK 隨附的 **AdLib 樂器名稱庫**(`ADLIB-` magic + 樂器名字串表),FM 合成器音色定義,與遊戲 SFX 資料無關 |
-| `SAMPLE.AD` / `SAMPLE.OPL` | 與 `SAMPLE.BNK` 配套的偏移索引表,同屬 AIL SDK 標準檔案 |
+| `SAMPLE.AD` / `SAMPLE.OPL` | 與 `SAMPLE.BNK` 配套的偏移索引表,同屬 AIL SDK 標準檔案 **2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:兩檔逐位元組相同,是 MDI 驅動依副檔名載入的 GTL 音色庫(`0x43ad0` 把 `0x53698` 的前綴 "SAMPLE" 接上驅動給的副檔名;預設 SBPRO2.MDI 載入 SAMPLE.OPL),與 SAMPLE.BNK 無關;SAMPLE.BNK 執行時不用。|
 | `FDOTHER.DAT` 資源 `#31`、動態 index(`+0x21`/`[+eax-0xc]`) | **真正的遊戲 SFX 樣本資料**(本篇結論) |
 
 `SAMPLE.BNK/AD/OPL` 三檔的內容(偏移遞增表 + 樂器名字串)是 Miles Sound System 開發套件的**通用隨附
@@ -733,7 +733,7 @@ Y位移=`-10,-24,-30,-24,-10,4,10,4`(下探到-30再回升到+10的弧線)。**�
 | 6 | 轟雷術 | `0x2c67d` | 寫入一個literal常數`0x3c8efa2d`(若視為float≈0.0174,接近1度弧度制,疑似角度) + 5-dword + 5-byte | template-A變體(movement,含角度常數,疑似拋物線/投擲類) |
 | 7 | 神雷術 | `0x2cafc` | 與action_id4/5逐指令同構,10-dword陣列(第三個同型) | template-A變體(movement,單軸,與4/5同型) |
 | 8 | 聖光彈 | `0x2ccf4` | 只有4-dword(比其他都小) + 依`[ESP+0x34]`參數分流 | template-B候選(資料量小、有flag分流，形狀更接近action_id2/9而非0/1) |
-| 9 | 咒殺術(邊界待查,見下) | `0x2ce1a` | 無關鍵幀表,依第1參數分流寫`[0x5412e]`/`[0x5412f]`狀態旗標,回傳0x14(20) | template-B(狀態效果,已於更早輪次讀出但未寫入本文件) |
+| 9 | 咒殺術(邊界待查,見下) | `0x2ce1a` | 無關鍵幀表,依第1參數分流寫`[0x5412e]`/`[0x5412f]`狀態旗標,回傳0x14(20) | template-B(狀態效果,已於更早輪次讀出但未寫入本文件) |(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:比較的是第 5 個參數 `[esp+0x14]`(事件碼),不是第 1 個;`[0x5412e]` 是 tick 計數,不是狀態旗標)
 
 **名稱來源**：`docs/data/command_labels.json`(FDTXT_000,既有資料,非本輪解碼)——本輪的貢獻是
 **把這份已存在的command名稱表跟`DAT_000524c6`的結構分類接上**,不是重新解出名稱本身。0-8全部
@@ -761,7 +761,7 @@ live驗證副產品。
 movement類內部至少再分3種子形狀(雙軸/單軸/含角度常數)——這個分類本身就足以支撐「不同
 action_id是不同招式」的招式名稱交叉對照工作，下一輪可以針對子分類挑1-2個代表逐一決定
 byte-exact的關鍵幀語意，不需要每個都做到底。`0x53fb2`
-一帶三個連續byte全域**尚未在本專案任何既有doc命名**。`xref_to 0x53fb2`回傳0筆——這正是
+一帶三個連續byte全域**尚未在本專案任何既有doc命名**。`xref_to 0x53fb2`回傳0筆——這正是(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:以 LE fixup 查 `0x53fb2` 有 15 筆)
 本輪`.object1`盲區的延伸效應:Ghidra的`-noanalysis`分析連這個function本身都不認得,自然也
 不會追蹤它內部的data reference,不是這個全域真的沒有其他讀寫者。下一輪若要追這三個byte的
 語意,需要用`bytes`直接讀取live記憶體(而非靜態`xref_to`)或改用逐一手動反組譯掃過其餘9個
@@ -1508,7 +1508,7 @@ sample handle」是由**呼叫形狀 + 兩次配置 + 驅動層位址群**推得
 obj2 裡這種 `AIL_xxx(fmt)
 ` 追蹤字串共 **105 條**,涵蓋 Miles AIL 的整個 API 表面
 (startup/shutdown、timer、DIG 與 MDI driver、sample、sequence、timbre、channel、
-wave synthesizer)。環境變數名 `AIL_DEBUG` / `AIL_SYS_DEBUG` 也在同一段(`0x50313`/`0x50320`)。
+wave synthesizer)。環境變數名 `AIL_DEBUG` / `AIL_SYS_DEBUG` 也在同一段(`0x50313`/`0x50320`)。(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:`AIL_SYS_DEBUG` 在 `0x5031d`(`0x37d74 push 0x5031d`),`0x50320` 是它的第 4 個字元)
 
 ### 19.2 `tools/derive_ail_entry_points.py`(新,已登錄產物重生表與突變測試表)
 
@@ -1665,7 +1665,7 @@ FD2.EXE 反組譯逐條讀過,存取次數來自 `python tools/re_coverage.py --
   `0x48f6c` `mix_merge_16_stereo_u` / `0x48fea` `mix_merge_16_stereo_swap_u`(doc98 的 AIL 混音累加表條目記為第 0xab / 0xaf 格:16 位元雙聲道、無號、重取樣)。
 - 6 + 30 = 36,和 `[0x538b4]` 的 36 個讀取常式是同一組。
 
-`[0x538bc]` 本輪不登錄:除了上面的 `0x49760` 寫入與 30 筆以 `0x538b8` 為基底的索引讀取,`math_err_build_exception` `0x499da` 的 `0x49a4c` 另有一筆 `[eax*4 + 0x538bc]`(eax = 旗標 & 0x1f),用途沒有追。
+`[0x538bc]` 本輪不登錄:除了上面的 `0x49760` 寫入與 30 筆以 `0x538b8` 為基底的索引讀取,`math_err_build_exception` `0x499da` 的 `0x49a4c` 另有一筆 `[eax*4 + 0x538bc]`(eax = 旗標 & 0x1f),用途沒有追。(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:eax = 旗標 & 0x1f 從 1 起算,`[eax*4 + 0x538bc]` 讀的是 `0x538c0` 起 23 個數學函式名稱的指標表,不是 `0x538bc` 這格;見 data_map `0x538c0`)
 
 ## 2026-11-07:`[0x53eec]` = UI 音效池(FDOTHER.DAT 第 31 號資源)的指標(資料區段登錄,`docs/data/data_map.json`)
 

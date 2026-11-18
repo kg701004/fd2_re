@@ -515,7 +515,7 @@
   {
    "addr": "0x311e5",
    "name": "anim_step_and_draw",
-   "summary": "(anim, mode, dst, stride):mode==0 只把影格計數 [0x54130] 歸零;否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格(0x31204 / 0x31208 / 0x3120c 推第 2 / 4 / 3 個當它的 mode / stride / dst),計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。續一百一十四:第 3 / 4 個由佔位名 a3 / a4 改成 dst / stride(原樣轉交給 blit_anim_frame 的第 3 / 4 個;實機第 3 個是指標、第 4 個 0x280 / 0x140)。 續一百一十七:第 2 個由 enable 改名 mode —— 非 0 時原樣當 blit_anim_frame 的 mode(實機 -1、0x4b0 等)。",
+   "summary": "(anim, mode, dst, stride):mode==0 把影格計數 [0x54130] 與序列索引 [0x54131] 都歸零(0x31202 跳到 0x3125d;2026-11-19 更正,原寫只歸零 [0x54130]);否則以 blit_anim_frame 畫序列 [0x54131] 的目前影格(0x31204 / 0x31208 / 0x3120c 推第 2 / 4 / 3 個當它的 mode / stride / dst),計數 +1,到該序列的長度(byte[anim + dword[anim+seq*4+8] + 6])就換下一個序列,序列數(byte[anim])用完回 0。續一百一十四:第 3 / 4 個由佔位名 a3 / a4 改成 dst / stride(原樣轉交給 blit_anim_frame 的第 3 / 4 個;實機第 3 個是指標、第 4 個 0x280 / 0x140)。 續一百一十七:第 2 個由 enable 改名 mode —— 非 0 時原樣當 blit_anim_frame 的 mode(實機 -1、0x4b0 等)。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [
@@ -1564,7 +1564,7 @@
   {
    "addr": "0x4ed4f",
    "name": "blit_image_transparent_core",
-   "summary": "blit_image_transparent 的暫存器慣例核心(edi=dst、esi=src、[0x627a3]=列尾跳距):逐列逐像素,0 跳過、非 0 寫入。",
+   "summary": "blit_image_transparent 的暫存器慣例核心(edi=dst、esi=src、[0x627a3]=整列跨距(每列 push edi / pop edi 後 add edi, ebx;2026-11-19 更正,原寫列尾跳距)):逐列逐像素,0 跳過、非 0 寫入。",
    "confidence": "static_re",
    "date": "2026-09-19",
    "evidence": [
@@ -7759,7 +7759,7 @@
   {
    "addr": "0x28cbd",
    "name": "shop_sell_service",
-   "summary": "商店賣出:choice_box_left_right 選角色,收集其非空(flag 0x80 清)物品;沒有就顯示依 hub 選項取自 [0x52458] 的文字。否則 open_item_list_panel/item_list_select(sell=1)選物品,售價 = row+0x13 × 3/4 存 [0x53ae1],yes_no_prompt 確認後service_success_anim、gold_add_with_counter_anim、remove_inventory_slot、recalc_equipped_stats。舊文件位址 0x2f642(勘誤)。",
+   "summary": "商店賣出:choice_box_left_right 選角色,收集其非空(flag 0x80 清)物品;沒有就顯示依 hub 選項取自 [0x52464] 的文字(0x28d59;2026-11-19 更正,原寫 [0x52458],那張是賣出確認文字,0x28e87)。否則 open_item_list_panel/item_list_select(sell=1)選物品,售價 = row+0x13 × 3/4 存 [0x53ae1],yes_no_prompt 確認後service_success_anim、gold_add_with_counter_anim、remove_inventory_slot、recalc_equipped_stats。舊文件位址 0x2f642(勘誤)。",
    "confidence": "static_re",
    "date": "2026-09-28",
    "evidence": [
@@ -26081,7 +26081,7 @@
   {
    "addr": "0x1f81e",
    "name": "title_anim_or_still",
-   "summary": "(動畫號, delay_ms, FDOTHER 索引) 第 3 參數不是 -1 時清 VGA 並以該 FDOTHER 索引直接顯示,否則以 ani_player 播動畫;另以 palette_brightness_ramp 調亮度(FD2.EXE 反組譯)。title_seq 呼叫(doc39)。 續一百一十八(直接讀反組譯):補第 1 / 2 個 —— 原樣轉給 ani_player 的 動畫號 / delay_ms(0x1f876 / 0x1f872)。",
+   "summary": "(動畫號, delay_ms, FDOTHER 索引) 第 3 參數不是 -1 時先清 VGA(0x1f83b)、以 load_res(FDOTHER, [0x53a65], 第 3 參數)把該資源載進 [0x53a65];兩條路徑接著都 0x11d40(0, 0xff, 0) 並以 ani_player(動畫號, delay_ms, 0) 播動畫(0x1f87a)(2026-11-19 更正:原寫『否則才播動畫』);另以 palette_brightness_ramp 調亮度(FD2.EXE 反組譯)。title_seq 呼叫(doc39)。 續一百一十八(直接讀反組譯):補第 1 / 2 個 —— 原樣轉給 ani_player 的 動畫號 / delay_ms(0x1f876 / 0x1f872)。",
    "confidence": "static_re",
    "date": "2026-10-13",
    "evidence": [

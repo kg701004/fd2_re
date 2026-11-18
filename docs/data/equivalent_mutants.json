@@ -1037,6 +1037,310 @@
    "reason": "x86 指令最長 15 byte,capstone 只解第一條(next(...));給 16 或 17 byte 解出的第一條相同(與 verify_data_lower_bounds Decoder.at 的同型條目同理)。",
    "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-15 續二百六十六 (5):突變預檢 442 點逃脫 41,逐一讀碼分類;其餘 39 個補測試或改寫程式碼後重跑全數抓到",
    "scope_hash": "5baf11124742"
+  },
+  {
+   "tool": "re_coverage.py",
+   "key": "decode_accesses|one = next(md.disasm(code[a - base:a - base + 16], a), None)|int 16->17#0",
+   "kind": "equivalent",
+   "reason": "x86 指令最長 15 byte,capstone 只解第一條(next(...));給 16 或 17 byte 解出的第一條相同(與 verify_data_types load_facts.decode、verify_data_lower_bounds Decoder.at 的同型條目同理)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-18 續二百八十五 (3):錨點補解只取每個錨點的第一條指令;窮舉 re_coverage.py 可達 89/90,唯一逃逸是這個切片長度",
+   "scope_hash": "5cdcc97e3896"
+  },
+  {
+   "tool": "verify_data_types.py",
+   "key": "show|if k not in (\"literal\", \"declared_hex\", \"allowed\")}, ensure_ascii=False,|bool False->True#0",
+   "kind": "equivalent",
+   "reason": "show() 印的 claim 欄位只有 kind / elem / count / pointer / const / 來源宣告的檔名與號碼 / double 值,全是 ASCII;C 字串的 literal 與 declared_hex 已排除。ensure_ascii 是 True 或 False 輸出逐字相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):窮舉 verify_data_types 的 7 個可達逃逸,補 5 題後記憶體內逐一重套都 FAIL;只剩這一個",
+   "scope_hash": "446e7926419e"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_wh|if len(b) < 4:|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在長度恰好 4(只有寬高、沒有像素)。所有呼叫端都要求至少 1 個像素 byte(寬高都 >= 1):raw 長度 != 4 + 寬×高、RLE 解碼空 body 不足 target、cell 長度不符,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "c1600b109f12"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_tile_bank|if len(b) < 6:|int 6->7#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 6 時原版下一行要求長度 >= 6 + 4n(n >= 1 即 >= 10),一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "14d6af576e91"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_tile_bank|if tw == 0 or th == 0 or n == 0 or len(b) < 6 + 4 * n:|int 6->7#0",
+   "kind": "equivalent",
+   "reason": "差別只在長度恰好 6 + 4n:n 格時第 0 張圖塊範圍 [6+4n, 長度) 是空的,遞增檢查擋下;n+1 格要求長度 >= 10 + 4n。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "14d6af576e91"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_tile_bank|if tw == 0 or th == 0 or n == 0 or len(b) < 6 + 4 * n:|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "改成要求長度 >= 6 + 5n。每張圖塊至少 1 byte(offset 嚴格遞增),原版收的資源長度 >= 6 + 4n + n;突變多擋的那些(長度 < 6 + 5n)必有空圖塊,原版也不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "14d6af576e91"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_terrain_attr|if (b[k + 2] | b[k + 3] << 8) >= _BG_COUNT:|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "高位 byte 是 0 時兩者相同;不是 0 時原版 >= 256、突變 >= 512,都 >= 56,都擋下。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "d36b27de26e2"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_lmi_entries|if len(b) < 10 or b[:4] != b\"LMI1\":|int 10->11#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 10 時原版下一行要求長度 >= 6 + 4(n + 1) >= 14,一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cc01e9c44771"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_lmi_entries|if n == 0 or len(b) < 6 + 4 * (n + 1):|int 6->7#0",
+   "kind": "equivalent",
+   "reason": "差別只在長度恰好 6 + 4(n+1):offset[0] 必須等於它、offset[n] 必須等於長度,兩者相同就違反嚴格遞增(n >= 1)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cc01e9c44771"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_lmi_entries|if n == 0 or len(b) < 6 + 4 * (n + 1):|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "改成要求長度 >= 11 + 5n。_lmi_entries 只被 lmi_lut_bank(每筆 256 byte)與 lmi_image_bank(每筆 >= 5 byte)使用,兩者收的資源長度 >= 10 + 4n + 5n >= 11 + 5n(n >= 1)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cc01e9c44771"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_lmi_entries|if n == 0 or len(b) < 6 + 4 * (n + 1):|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "改成要求長度 >= 14 + 4n。兩個使用端收的資源長度 >= 10 + 9n >= 14 + 4n(n >= 1)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cc01e9c44771"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_lmi_entries|offs = [struct.unpack_from(\"<I\", b, 6 + 4 * i)[0] for i in range(n + 1)]|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "多讀的 offs[n+1] 落在第 0 筆內容的前 4 byte,之後只用到 offs[0..n],值不影響結果;只有內容不足 4 byte 時會丟例外,而兩個使用端都要求每筆 >= 5 byte。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cc01e9c44771"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_cell_table_raw|if len(b) < 8:|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 8:offset[0] = 4 時唯一一格只有 4 byte(需要 >= 5);offset[0] = 8 時兩格的 offset[1] 必須在 8 與 8 之間。原版都不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "b249cc34c7eb"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_frame_anim|if len(b) < 12:|int 12->13#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 12:n = 1 時 offset[0] = 12 = 長度,第 0 幀是空的;n >= 2 時長度 < 8 + 4n。原版都不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "184e7daca476"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_frame_anim|if n == 0 or len(b) < 8 + 4 * n:|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "差別只在長度恰好 8 + 4n:offset[0] 必須等於它,第 0 幀範圍 [8+4n, 長度) 是空的,遞增檢查擋下。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "184e7daca476"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_frame_anim|if n == 0 or len(b) < 8 + 4 * n:|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "改成要求長度 >= 8 + 5n。每幀至少 14 byte(13 byte 幀頭 + 至少 1 byte RLE),原版收的長度 >= 8 + 18n。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "184e7daca476"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_frame_anim|if len(f) < 13:|int 13->14#0",
+   "kind": "equivalent",
+   "reason": "差別只在幀恰好 13 byte(沒有 RLE byte);寬高都 >= 1 時 _rle4_exact(b\"\", 寬×高) 不成立,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "184e7daca476"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_afm_anim|if n < 0xAD or not b.startswith(b\"AFM - Animation File Manager\") or b[0x50] != 0x1A or b[0xA1] != 0:|int 173->174#0",
+   "kind": "equivalent",
+   "reason": "差別只在長度恰好 0xAD(只有檔頭);幀數 >= 1 時第一筆幀記錄 pos + 8 > 長度,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "3371f4b3e16f"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_afm_anim|if p < 0:|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "rle() 回 -1 或讀完的位置;位置至少是起點 + 1,而起點已跳過 opcode(>= 1),所以不會是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "3371f4b3e16f"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_field_map|if len(b) < 4:|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 4 時寬高 >= 1,長度 != 4 + 寬×高×4,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cab9d26c57bc"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_field_spawn|if len(b) < 2:|int 2->3#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 2 時 N >= 1,長度 != 2 + 6N,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "a0df5c54725e"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_glyph_text|if any(offs[i] >= offs[i + 1] for i in range(n - 1)) or offs[-1] >= len(b):|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "少查最後一對 offset。那一對若不遞增,第 n-2 條字串的範圍長度 <= 0:0 時 words 是空 tuple、words[-1] 丟例外;負的奇數走 return False;負的偶數 struct 丟例外 —— 原版與突變都不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "f2c93dd545c2"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_portrait_rle4|if len(b) < 16:|int 16->17#0",
+   "kind": "equivalent",
+   "reason": "長度恰好 16 時 offset[3] > offset[0] = 16,offset[3] + 4 > 16,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4236a480e500"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_portrait_rle4|if offs[0] != 0x10 or any(offs[i] >= offs[i + 1] for i in range(3)) or offs[3] + 4 > len(b):|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在第 4 幀恰好 4 byte(只有寬高);寬×高 >= 1 時解碼一開始就 i >= e,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4236a480e500"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_portrait_rle4|if e - s < 4:|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在某幀恰好 4 byte(只有寬高);寬×高 >= 1 時解碼一開始就 i >= e,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4236a480e500"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_iff_chunks|if o + 8 > end:|int 8->9#0",
+   "kind": "equivalent",
+   "reason": "差別只在最後一個 chunk 的檔頭恰好貼齊 end(長度 0)。probe_xmidi_form 每一層的最後一個 chunk 都必須非空(INFO 長 2、CAT / FORM 至少有 4 byte 型別、EVNT 至少要有 ff 2f 00),長度 0 的最後 chunk 原版也不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "cdf6a5cf41b4"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok|if i + 2 > end or b[i] >= 0x80 or b[i + 1] >= 0x80:|int 2->3#0",
+   "kind": "equivalent",
+   "reason": "差別只在通道訊息的資料恰好結束在 end;之後沒有 ff 2f 00,原版跑完迴圈也回 False(0x9n 的 VLQ 在 end 回 -1)。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "89d4bf575a28"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok|if i < 0:|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "vlq() 回 -1 或讀完的位置(> 起點 >= 1),不會是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "89d4bf575a28"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok|if p < 0:|int 0->1#0",
+   "kind": "equivalent",
+   "reason": "vlq() 回 -1 或讀完的位置(> 起點 >= 1),不會是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "89d4bf575a28"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_xmidi_form|if t1 != b\"FORM\" or l1 < 4 or b[o1:o1 + 4] != b\"XDIR\":|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在 FORM 長度恰好 4(只有型別 XDIR):內層沒有 chunk,INFO 個數 0 != 1,原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4e697b8e203a"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_xmidi_form|if t2 != b\"CAT \" or l2 < 4 or b[o2:o2 + 4] != b\"XMID\":|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在 CAT 長度恰好 4(只有型別 XMID):內層 0 個 FORM != 序列數(>= 1),原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4e697b8e203a"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_xmidi_form|if tag != b\"FORM\" or ln < 4 or b[o:o + 4] != b\"XMID\":|int 4->5#0",
+   "kind": "equivalent",
+   "reason": "差別只在 FORM 長度恰好 4(只有型別 XMID):內層 chunk 清單是空的,不是 [EVNT] / [TIMB, EVNT],原版一樣不收。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 窮舉 81 個可達逃逸,補 66 筆人工邊界輸入後抓到 51 個;剩下這些在邊界輸入、原版 1005 筆與其截斷 / 改 byte 擾動上與原版逐筆相同",
+   "scope_hash": "4e697b8e203a"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_afm_anim.rle|return -1|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "rle() 的失敗值;唯一的呼叫端只判斷 p < 0,回 -1 或 -2 結果相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 第三輪窮舉 8 個可達逃逸,補 6 筆邊界輸入抓到 4 個;剩下這 4 個的理由逐一寫在 reason",
+   "scope_hash": "3371f4b3e16f"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_afm_anim|if idx * 3 + cnt * 3 > 768:|int 768->769#0",
+   "kind": "equivalent",
+   "reason": "左邊 idx × 3 + cnt × 3 一定是 3 的倍數,> 768 與 > 769 都等於 >= 771。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 第三輪窮舉 8 個可達逃逸,補 6 筆邊界輸入抓到 4 個;剩下這 4 個的理由逐一寫在 reason",
+   "scope_hash": "3371f4b3e16f"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok.vlq|return -1|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "vlq() 的失敗值(超過 4 byte);三個呼叫端都只判斷 < 0,回 -1 或 -2 結果相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 第三輪窮舉 8 個可達逃逸,補 6 筆邊界輸入抓到 4 個;剩下這 4 個的理由逐一寫在 reason",
+   "scope_hash": "89d4bf575a28"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok|if p < 0:|int 0->1#1",
+   "kind": "equivalent",
+   "reason": "sysex 分支的 vlq() 回 -1 或讀完的位置(> 起點 >= 1),不會是 0。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 第三輪窮舉 8 個可達逃逸,補 6 筆邊界輸入抓到 4 個;剩下這 4 個的理由逐一寫在 reason",
+   "scope_hash": "89d4bf575a28"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "probe_afm_anim.rle|return -1|int 1->2#1",
+   "kind": "equivalent",
+   "reason": "rle() 的失敗值(run 長度 0、缺值 byte 或寫過頭);唯一的呼叫端只判斷 p < 0,回 -1 或 -2 結果相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 補「不收」分支的輸入後第五輪窮舉,新執行到的兩個失敗回傳值;同一函式另一個 return -1 已登錄同理由",
+   "scope_hash": "3371f4b3e16f"
+  },
+  {
+   "tool": "resource_probes.py",
+   "key": "_xmidi_evnt_ok.vlq|return -1|int 1->2#0",
+   "kind": "equivalent",
+   "reason": "vlq() 的失敗值(讀到 end);三個呼叫端都只判斷 < 0,回 -1 或 -2 結果相同。",
+   "evidence": "docs/knowledge-base/98-tooling-infrastructure.md 2026-11-19 續二百八十六 (6):resource_probes 補「不收」分支的輸入後第五輪窮舉,新執行到的兩個失敗回傳值;同一函式另一個 return -1 已登錄同理由",
+   "scope_hash": "89d4bf575a28"
   }
  ]
 }

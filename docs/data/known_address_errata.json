@@ -140,7 +140,7 @@
           "50-cutscene-script-system-design.md": 2,
           "56-fd2-remake-sdd.md": 3,
           "91-worklist.md": 6,
-          "98-tooling-infrastructure.md": 3,
+          "98-tooling-infrastructure.md": 4,
           "SESSION-HANDOFF-2026-07-06.md": 6
         }
       }
@@ -271,11 +271,13 @@
         ],
         "note": "errata 檔內同時出現 0x027fc9 與 0x27fc9 兩種寫法,掃描前一律正規化。",
         "baseline": {
+          "13-battle-menu-system.md": 1,
           "35-battle-animation-rendering.md": 3,
           "36-sfx-audio-data.md": 26,
           "37-spell-effect-figani.md": 1,
           "56-fd2-remake-sdd.md": 4,
           "91-worklist.md": 7,
+          "98-tooling-infrastructure.md": 1,
           "SESSION-HANDOFF-2026-07-06.md": 2
         }
       }
@@ -517,7 +519,7 @@
         ],
         "note": "2026-09-17 dossier 第一批;baseline 由 verify_address_citations --write-baseline 填。",
         "baseline": {
-          "25-battle-event-system.md": 7,
+          "25-battle-event-system.md": 8,
           "91-worklist.md": 2,
           "98-tooling-infrastructure.md": 1
         }
@@ -543,7 +545,7 @@
         ],
         "note": "2026-09-17 dossier 第一批;baseline 由 verify_address_citations --write-baseline 填。",
         "baseline": {
-          "25-battle-event-system.md": 9,
+          "25-battle-event-system.md": 10,
           "27-combat-rules-and-validation-checklist.md": 1,
           "91-worklist.md": 2,
           "98-tooling-infrastructure.md": 1
@@ -1320,7 +1322,7 @@
         "note": "2026-09-17 dossier 第二批;baseline 由 verify_address_citations --write-baseline 填。",
         "baseline": {
           "12-music-playback-and-scene.md": 1,
-          "36-sfx-audio-data.md": 7,
+          "36-sfx-audio-data.md": 8,
           "91-worklist.md": 1
         }
       }
@@ -2052,6 +2054,7 @@
         "baseline": {
           "12-music-playback-and-scene.md": 1,
           "25-battle-event-system.md": 4,
+          "35-battle-animation-rendering.md": 1,
           "42-re-vs-remake-gap-audit.md": 2,
           "50-cutscene-script-system-design.md": 1,
           "56-fd2-remake-sdd.md": 6,
@@ -2281,7 +2284,6 @@
         "baseline": {
           "14-text-control-codes.md": 4,
           "35-battle-animation-rendering.md": 14,
-          "36-sfx-audio-data.md": 1,
           "56-fd2-remake-sdd.md": 4,
           "57-ui-evidence-matrix.md": 1,
           "58-remake-live-verification-log.md": 1,
@@ -2338,7 +2340,7 @@
         ],
         "note": "2026-09-19 dialog 參數追查時補登;baseline 由 verify_address_citations --write-baseline 填。",
         "baseline": {
-          "35-battle-animation-rendering.md": 8,
+          "35-battle-animation-rendering.md": 9,
           "56-fd2-remake-sdd.md": 1,
           "58-remake-live-verification-log.md": 1,
           "91-worklist.md": 1,
@@ -2837,6 +2839,7 @@
           "57-ui-evidence-matrix.md": 1,
           "58-remake-live-verification-log.md": 1,
           "91-worklist.md": 22,
+          "98-tooling-infrastructure.md": 1,
           "99-chapter-sweep-results.md": 1,
           "SESSION-HANDOFF-2026-07-06.md": 6
         }
@@ -3363,7 +3366,7 @@
         ],
         "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
         "baseline": {
-          "25-battle-event-system.md": 2
+          "25-battle-event-system.md": 3
         }
       }
     },
@@ -3411,7 +3414,7 @@
         ],
         "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
         "baseline": {
-          "25-battle-event-system.md": 1
+          "25-battle-event-system.md": 2
         }
       }
     },
@@ -3715,7 +3718,7 @@
         ],
         "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
         "baseline": {
-          "25-battle-event-system.md": 2
+          "25-battle-event-system.md": 3
         }
       }
     },
@@ -3918,7 +3921,7 @@
         ],
         "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
         "baseline": {
-          "14-text-control-codes.md": 1,
+          "14-text-control-codes.md": 2,
           "35-battle-animation-rendering.md": 2
         }
       }
@@ -3943,7 +3946,7 @@
         ],
         "note": "2026-09-19 舊版位址全面掃描;baseline 由 verify_address_citations --write-baseline 產生。",
         "baseline": {
-          "14-text-control-codes.md": 1
+          "14-text-control-codes.md": 2
         }
       }
     },
@@ -4616,7 +4619,7 @@
         ],
         "note": "續一百四十六登錄;同行寫出 0x36ff4 或勘誤標記者豁免。",
         "baseline": {
-          "39-ani-afm-format.md": 3,
+          "39-ani-afm-format.md": 4,
           "91-worklist.md": 1,
           "98-tooling-infrastructure.md": 2
         }
@@ -4677,6 +4680,51 @@
           "39-ani-afm-format.md": 3,
           "98-tooling-infrastructure.md": 1
         }
+      }
+    },
+    {
+      "wrong_address": "0x4e7f8",
+      "correct_address": "0x4eb48",
+      "wrong_semantic_claimed": "演出(acting)序列表的 getter(doc47 / doc50)",
+      "discovered_date": "2026-11-18",
+      "discovery_method": "續二百八十五 p13:本版(md5 33464c81…)0x1366a 的 110 個呼叫點都經 0x4eb48 event_seq_table_get(push ebp / mov ebp, esp)取 [0x627d8 + id × 4];0x4e7f8 在本版落在函式中間。差 0x350,與 draw_glyph16 舊位址 0x4ea2a → 0x4ed7a 同一位移。",
+      "root_cause": "舊版 EXE 位址;0x4dxxx–0x4exxx 區段在新版整體高 0x350(同續十九的那批)。",
+      "affected_docs": [
+        "docs/knowledge-base/47-intro-handler-full-transcript.md",
+        "docs/knowledge-base/50-cutscene-script-system-design.md"
+      ],
+      "correction_doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+      "correction_section": "2026-11-19 續二百八十六",
+      "still_pending": "知識庫原文保留,doc47 兩處、doc50 一處已在同一行加更正註記。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x4e7f8"
+        ],
+        "note": "續二百八十六登錄;同行寫出 0x4eb48 或勘誤標記者豁免。",
+        "baseline": {}
+      }
+    },
+    {
+      "wrong_address": "0x50320",
+      "correct_address": "0x5031d",
+      "wrong_semantic_claimed": "環境變數名字串 AIL_SYS_DEBUG 的位址(doc36)",
+      "discovered_date": "2026-11-18",
+      "discovery_method": "續二百八十五 p02:ail_startup 0x37d74 push 0x5031d 後 call getenv;0x5031d 起是 \"AIL_SYS_DEBUG\\0\",0x50320 是它的第 4 個字元。doc36 同檔另一處寫的 0x5031d 是對的。",
+      "root_cause": "個別誤記(不是版本位移):0x50313 \"AIL_DEBUG\\0\" 長 10,下一條起點是 0x5031d。",
+      "affected_docs": [
+        "docs/knowledge-base/36-sfx-audio-data.md"
+      ],
+      "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "correction_section": "AIL_DEBUG 追蹤字串段(行尾更正註記)",
+      "still_pending": "知識庫原文保留,同一行已加更正註記。",
+      "citation_check": {
+        "mode": "address",
+        "flag": [
+          "0x50320"
+        ],
+        "note": "續二百八十六登錄;同行寫出 0x5031d 或勘誤標記者豁免。",
+        "baseline": {}
       }
     }
   ]

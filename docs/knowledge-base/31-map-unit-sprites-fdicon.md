@@ -80,7 +80,7 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 
 > **撤回全域 identity assertion（2026-07-26）**：角色表、DATO、FDICON 素材與若干玩家 roster 的數值相同，
 > 只能作為素材觀察，不能證明 `unit+2 = character id = portrait`。完整 constructor trace 已證實 FDFIELD
-> `b1→unit+7`，而 scripted FDFIELD constructor 已閉合 `b0→0x11019→unit+2 cache slot`：`b0` 亦寫
+> `b1→unit+7`，而 scripted FDFIELD constructor 已閉合 `b0→0x11019→unit+2 cache slot`：`b0` 亦寫(**2026-11-19 更正(doc98 續二百八十六,FD2.EXE 反組譯)**:交給 `0x11019` 的是 `b1`:`0x10d7f` 讀記錄 `+0x84`(`b1`)存 `[esp+8]`,`0x10ece` push 一次後 `0x10ed2 push [esp+0xc]` 取的就是那一格;`b0` 只寫 `+6`(`0x10ef5`)。與 persistent 路徑 `0x10a77` 讀 `+7`(也是 `b1`)一致)
 > native camp `+6`（敵0／友1／己2），不是角色／portrait byte。玩家 persistent roster 則有獨立的 `+7`
 > source path；兩者共享 cache ABI，不能 alias。
 > 因此敵方、玩家及轉職都不得由「恆等」推導 map group，`fig` 僅保留 compatibility approximation。`unit+7`
