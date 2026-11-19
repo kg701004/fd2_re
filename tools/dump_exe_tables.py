@@ -50,11 +50,15 @@ def lin2file(d: bytes, lin: int) -> int:
         對應的檔案位移。
 
     Raises:
-        ValueError: linear 位址不落在任何 LE object 內。
+        ValueError: linear 位址不落在任何 LE object 內,或落在 object 的零填頁(BSS)。
     """
     meta = parse_le(d)
     for o in meta["objs"]:
         if o["base"] <= lin < o["base"] + o["vsize"]:
+            # 2026-11-19:vsize 超出檔內頁的部分是零填頁(BSS),檔內沒有對應位元組,
+            # 照公式算會落到下一個 object 的檔內頁(與 disasm_le.lin2file 同一個修正)
+            if lin - o["base"] >= o["pages"] * meta["page_size"]:
+                raise ValueError(f"linear 位址 {lin:#x} 在 object 的零填頁(BSS),檔內沒有對應位元組")
             return meta["data_off"] + (o["first"] - 1) * meta["page_size"] + lin - o["base"]
     raise ValueError(f"linear 位址 {lin:#x} 不落在任何 LE object 內")
 

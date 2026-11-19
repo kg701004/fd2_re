@@ -7,6 +7,18 @@
   },
   "regions": [
     {
+      "start": "0x50000",
+      "size": 4,
+      "name": "obj2_head_null_area",
+      "type": "byte[4](物件開頭,沒有引用)",
+      "meaning": "資料物件 2 的頭 4 byte,檔內是 01 01 01 00;EXE 內沒有任何指令或 fixup 引用這 4 byte,第一個被引用的資料是緊接的 0x50004 save_load_restore_oom_msg。Watcom C 啟動碼在資料群組開頭放 __nullarea(4 byte 01 01 01 00,結束時檢查是否被改寫以偵測寫入 NULL 指標),位置與位元組都吻合(推論,沒有和 Watcom 原始碼逐字比對)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x50004",
       "size": 20,
       "name": "save_load_restore_oom_msg",
@@ -939,6 +951,18 @@
       ]
     },
     {
+      "start": "0x502ed",
+      "size": 3,
+      "name": "align_pad_502ed",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "password_question_number_fmt 結束於 0x502ed,下一項 lx_signature 起於 0x502f0(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x502f0",
       "size": 3,
       "name": "lx_signature",
@@ -950,6 +974,18 @@
         },
         {
           "func": "0x367d1"
+        }
+      ]
+    },
+    {
+      "start": "0x502f3",
+      "size": 1,
+      "name": "align_pad_502f3",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "lx_signature 結束於 0x502f3,下一項 ail_debug_timestamp_fmt 起於 0x502f4(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2551,6 +2587,18 @@
       ]
     },
     {
+      "start": "0x511b1",
+      "size": 3,
+      "name": "align_pad_511b1",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_dbg_fmt_destroy_wave_synthesizer 結束於 0x511b1,下一項 ail_ini_hex_digits 起於 0x511b4(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x511b4",
       "size": 17,
       "name": "ail_ini_hex_digits",
@@ -2755,6 +2803,18 @@
       ]
     },
     {
+      "start": "0x512a2",
+      "size": 2,
+      "name": "align_pad_512a2",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_drv_out_of_timer_handles 結束於 0x512a2,下一項 ail_err_dma_buffer_too_large_vdm 起於 0x512a4(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x512a4",
       "size": 43,
       "name": "ail_err_dma_buffer_too_large_vdm",
@@ -2763,6 +2823,18 @@
       "evidence": [
         {
           "func": "0x406b0"
+        }
+      ]
+    },
+    {
+      "start": "0x512cf",
+      "size": 1,
+      "name": "align_pad_512cf",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_dma_buffer_too_large_vdm 結束於 0x512cf,下一項 ail_err_dig_no_mem_driver 起於 0x512d0(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 46(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2779,6 +2851,18 @@
       ]
     },
     {
+      "start": "0x512f6",
+      "size": 2,
+      "name": "align_pad_512f6",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_no_mem_driver 結束於 0x512f6,下一項 ail_err_dig_driver_required 起於 0x512f8(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 3b 0d(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x512f8",
       "size": 22,
       "name": "ail_err_dig_driver_required",
@@ -2791,6 +2875,18 @@
       ]
     },
     {
+      "start": "0x5130e",
+      "size": 2,
+      "name": "align_pad_5130e",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_driver_required 結束於 0x5130e,下一項 ail_err_dig_hw_not_found 起於 0x51310(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 74 65(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51310",
       "size": 34,
       "name": "ail_err_dig_hw_not_found",
@@ -2799,6 +2895,18 @@
       "evidence": [
         {
           "func": "0x40cf0"
+        }
+      ]
+    },
+    {
+      "start": "0x51332",
+      "size": 2,
+      "name": "align_pad_51332",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_hw_not_found 結束於 0x51332,下一項 ail_err_dig_no_dma_buffers 起於 0x51334(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 20 6c(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2827,6 +2935,18 @@
       ]
     },
     {
+      "start": "0x51375",
+      "size": 3,
+      "name": "align_pad_51375",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_no_build_buffer 結束於 0x51375,下一項 ail_err_dig_no_sample_structs 起於 0x51378(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 66 6f 72(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51378",
       "size": 38,
       "name": "ail_err_dig_no_sample_structs",
@@ -2835,6 +2955,18 @@
       "evidence": [
         {
           "func": "0x40cf0"
+        }
+      ]
+    },
+    {
+      "start": "0x5139e",
+      "size": 2,
+      "name": "align_pad_5139e",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_no_sample_structs 結束於 0x5139e,下一項 ail_err_dig_out_of_timer_handles 起於 0x513a0(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 72 69(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2851,6 +2983,18 @@
       ]
     },
     {
+      "start": "0x513b6",
+      "size": 2,
+      "name": "align_pad_513b6",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_out_of_timer_handles 結束於 0x513b6,下一項 ail_err_dig_driver_file_not_found 起於 0x513b8(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 75 69(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x513b8",
       "size": 23,
       "name": "ail_err_dig_driver_file_not_found",
@@ -2859,6 +3003,18 @@
       "evidence": [
         {
           "func": "0x41300"
+        }
+      ]
+    },
+    {
+      "start": "0x513cf",
+      "size": 1,
+      "name": "align_pad_513cf",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_driver_file_not_found 結束於 0x513cf,下一項 ail_dig_ini_filename 起於 0x513d0(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 72(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2887,6 +3043,18 @@
       ]
     },
     {
+      "start": "0x513f5",
+      "size": 3,
+      "name": "align_pad_513f5",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_err_dig_ini_open_failed 結束於 0x513f5,下一項 ail_err_out_of_sample_handles 起於 0x513f8(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 20 44 4d(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x513f8",
       "size": 23,
       "name": "ail_err_out_of_sample_handles",
@@ -2895,6 +3063,18 @@
       "evidence": [
         {
           "func": "0x41460"
+        }
+      ]
+    },
+    {
+      "start": "0x5140f",
+      "size": 1,
+      "name": "align_pad_5140f",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_out_of_sample_handles 結束於 0x5140f,下一項 wav_chunk_id_fmt 起於 0x51410(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -2992,6 +3172,18 @@
       ]
     },
     {
+      "start": "0x51493",
+      "size": 1,
+      "name": "align_pad_51493",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_set_sample_bad_type 結束於 0x51493,下一項 iff_chunk_id_form 起於 0x51494(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51494",
       "size": 5,
       "name": "iff_chunk_id_form",
@@ -3000,6 +3192,18 @@
       "evidence": [
         {
           "func": "0x42520"
+        }
+      ]
+    },
+    {
+      "start": "0x51499",
+      "size": 3,
+      "name": "align_pad_51499",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "iff_chunk_id_form 結束於 0x51499,下一項 iff_chunk_id_cat 起於 0x5149c(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 73 69 7a(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3016,6 +3220,18 @@
       ]
     },
     {
+      "start": "0x514a1",
+      "size": 3,
+      "name": "align_pad_514a1",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "iff_chunk_id_cat 結束於 0x514a1,下一項 iff_form_type_xmid 起於 0x514a4(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 59 54 45(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x514a4",
       "size": 5,
       "name": "iff_form_type_xmid",
@@ -3024,6 +3240,18 @@
       "evidence": [
         {
           "func": "0x42520"
+        }
+      ]
+    },
+    {
+      "start": "0x514a9",
+      "size": 3,
+      "name": "align_pad_514a9",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "iff_form_type_xmid 結束於 0x514a9,下一項 ail_err_note_queue_overflow 起於 0x514ac(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 65 6e 61(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3040,6 +3268,18 @@
       ]
     },
     {
+      "start": "0x514ca",
+      "size": 2,
+      "name": "align_pad_514ca",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_note_queue_overflow 結束於 0x514ca,下一項 ail_err_mdi_no_mem_driver 起於 0x514cc(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 28 42(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x514cc",
       "size": 38,
       "name": "ail_err_mdi_no_mem_driver",
@@ -3052,6 +3292,18 @@
       ]
     },
     {
+      "start": "0x514f2",
+      "size": 2,
+      "name": "align_pad_514f2",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_no_mem_driver 結束於 0x514f2,下一項 ail_err_mdi_driver_required 起於 0x514f4(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 65 63(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x514f4",
       "size": 22,
       "name": "ail_err_mdi_driver_required",
@@ -3060,6 +3312,18 @@
       "evidence": [
         {
           "func": "0x43ad0"
+        }
+      ]
+    },
+    {
+      "start": "0x5150a",
+      "size": 2,
+      "name": "align_pad_5150a",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_driver_required 結束於 0x5150a,下一項 ail_err_mdi_hw_not_found 起於 0x5150c(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 6c 65(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3088,6 +3352,18 @@
       ]
     },
     {
+      "start": "0x51555",
+      "size": 3,
+      "name": "align_pad_51555",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_no_instrument_manager 結束於 0x51555,下一項 ail_err_mdi_no_sequence_structs 起於 0x51558(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 54 20 00(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51558",
       "size": 40,
       "name": "ail_err_mdi_no_sequence_structs",
@@ -3112,6 +3388,18 @@
       ]
     },
     {
+      "start": "0x51596",
+      "size": 2,
+      "name": "align_pad_51596",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_out_of_timer_handles 結束於 0x51596,下一項 ail_err_mdi_driver_file_not_found 起於 0x51598(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 6d 65(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51598",
       "size": 23,
       "name": "ail_err_mdi_driver_file_not_found",
@@ -3120,6 +3408,18 @@
       "evidence": [
         {
           "func": "0x44180"
+        }
+      ]
+    },
+    {
+      "start": "0x515af",
+      "size": 1,
+      "name": "align_pad_515af",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_driver_file_not_found 結束於 0x515af,下一項 ail_mdi_ini_filename 起於 0x515b0(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 20(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3148,6 +3448,18 @@
       ]
     },
     {
+      "start": "0x515d5",
+      "size": 3,
+      "name": "align_pad_515d5",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_err_mdi_ini_open_failed 結束於 0x515d5,下一項 ail_err_out_of_sequence_handles 起於 0x515d8(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 72 65 20(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x515d8",
       "size": 25,
       "name": "ail_err_out_of_sequence_handles",
@@ -3156,6 +3468,18 @@
       "evidence": [
         {
           "func": "0x44330"
+        }
+      ]
+    },
+    {
+      "start": "0x515f1",
+      "size": 3,
+      "name": "align_pad_515f1",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "ail_err_out_of_sequence_handles 結束於 0x515f1,下一項 ail_err_invalid_xmidi_sequence 起於 0x515f4(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 69 61 6c(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3184,6 +3508,18 @@
       ]
     },
     {
+      "start": "0x51611",
+      "size": 3,
+      "name": "align_pad_51611",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "xmidi_chunk_id_timb 結束於 0x51611,下一項 xmidi_chunk_id_rbrn 起於 0x51614(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 20 00 43(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51614",
       "size": 5,
       "name": "xmidi_chunk_id_rbrn",
@@ -3192,6 +3528,18 @@
       "evidence": [
         {
           "func": "0x443d0"
+        }
+      ]
+    },
+    {
+      "start": "0x51619",
+      "size": 3,
+      "name": "align_pad_51619",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "xmidi_chunk_id_rbrn 結束於 0x51619,下一項 xmidi_chunk_id_evnt 起於 0x5161c(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 6e 6f 74(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3208,6 +3556,18 @@
       ]
     },
     {
+      "start": "0x51621",
+      "size": 3,
+      "name": "align_pad_51621",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "xmidi_chunk_id_evnt 結束於 0x51621,下一項 ail_err_no_timbres_loaded 起於 0x51624(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 63 61 74(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51624",
       "size": 19,
       "name": "ail_err_no_timbres_loaded",
@@ -3216,6 +3576,18 @@
       "evidence": [
         {
           "func": "0x443d0"
+        }
+      ]
+    },
+    {
+      "start": "0x51637",
+      "size": 1,
+      "name": "align_pad_51637",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_err_no_timbres_loaded 結束於 0x51637,下一項 ail_fmt_timbre_install_failed_seq 起於 0x51638(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 65(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3236,6 +3608,18 @@
       ]
     },
     {
+      "start": "0x5166b",
+      "size": 1,
+      "name": "align_pad_5166b",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_fmt_timbre_install_failed_seq 結束於 0x5166b,下一項 ail_fmt_timbre_install_failed 起於 0x5166c(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 4d(前一個字串之後剩下的非 0 位元組)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x5166c",
       "size": 51,
       "name": "ail_fmt_timbre_install_failed",
@@ -3252,6 +3636,18 @@
       ]
     },
     {
+      "start": "0x5169f",
+      "size": 1,
+      "name": "align_pad_5169f",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "ail_fmt_timbre_install_failed 結束於 0x5169f,下一項 ail_err_no_mem_hwave_descriptor 起於 0x516a0(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x516a0",
       "size": 42,
       "name": "ail_err_no_mem_hwave_descriptor",
@@ -3260,6 +3656,18 @@
       "evidence": [
         {
           "func": "0x45e21"
+        }
+      ]
+    },
+    {
+      "start": "0x516ca",
+      "size": 2,
+      "name": "align_pad_516ca",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_err_no_mem_hwave_descriptor 結束於 0x516ca,下一項 fp_support_not_loaded_msg 起於 0x516cc(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3288,6 +3696,409 @@
       ]
     },
     {
+      "start": "0x516f3",
+      "size": 1,
+      "name": "align_pad_516f3",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "tz_env_name 結束於 0x516f3,下一項 math_func_name_acos 起於 0x516f4(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
+      "start": "0x516f4",
+      "size": 5,
+      "name": "math_func_name_acos",
+      "type": "C 字串 \"acos\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 0 格(函式碼 1)的 fixup 0x538c0 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x516f9",
+      "size": 5,
+      "name": "math_func_name_asin",
+      "type": "C 字串 \"asin\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 1 格(函式碼 2)的 fixup 0x538c4 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x516fe",
+      "size": 5,
+      "name": "math_func_name_sqrt",
+      "type": "C 字串 \"sqrt\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 2 格(函式碼 3)的 fixup 0x538c8 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51703",
+      "size": 4,
+      "name": "math_func_name_exp",
+      "type": "C 字串 \"exp\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 3 格(函式碼 4)的 fixup 0x538cc 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51707",
+      "size": 5,
+      "name": "math_func_name_cosh",
+      "type": "C 字串 \"cosh\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 4 格(函式碼 5)的 fixup 0x538d0 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5170c",
+      "size": 5,
+      "name": "math_func_name_sinh",
+      "type": "C 字串 \"sinh\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 5 格(函式碼 6)的 fixup 0x538d4 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51711",
+      "size": 4,
+      "name": "math_func_name_pow",
+      "type": "C 字串 \"pow\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 6 格(函式碼 7)的 fixup 0x538d8 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51715",
+      "size": 6,
+      "name": "math_func_name_acosh",
+      "type": "C 字串 \"acosh\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 7 格(函式碼 8)的 fixup 0x538dc 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5171b",
+      "size": 5,
+      "name": "math_func_name_log2",
+      "type": "C 字串 \"log2\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 8 格(函式碼 9)的 fixup 0x538e0 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51720",
+      "size": 4,
+      "name": "math_func_name_log",
+      "type": "C 字串 \"log\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 9 格(函式碼 10)的 fixup 0x538e4 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51724",
+      "size": 6,
+      "name": "math_func_name_log10",
+      "type": "C 字串 \"log10\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 10 格(函式碼 11)的 fixup 0x538e8 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5172a",
+      "size": 6,
+      "name": "math_func_name_atanh",
+      "type": "C 字串 \"atanh\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 11 格(函式碼 12)的 fixup 0x538ec 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51730",
+      "size": 6,
+      "name": "math_func_name_atan2",
+      "type": "C 字串 \"atan2\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 12 格(函式碼 13)的 fixup 0x538f0 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51736",
+      "size": 5,
+      "name": "math_func_name_ipow",
+      "type": "C 字串 \"ipow\"(5 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 13 格(函式碼 14)的 fixup 0x538f4 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5173b",
+      "size": 6,
+      "name": "math_func_name_dpowi",
+      "type": "C 字串 \"dpowi\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 14 格(函式碼 15)的 fixup 0x538f8 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51741",
+      "size": 4,
+      "name": "math_func_name_cos",
+      "type": "C 字串 \"cos\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 15 格(函式碼 16)的 fixup 0x538fc 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51745",
+      "size": 4,
+      "name": "math_func_name_sin",
+      "type": "C 字串 \"sin\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 16 格(函式碼 17)的 fixup 0x53900 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51749",
+      "size": 4,
+      "name": "math_func_name_tan",
+      "type": "C 字串 \"tan\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 17 格(函式碼 18)的 fixup 0x53904 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5174d",
+      "size": 3,
+      "name": "math_func_name_y0",
+      "type": "C 字串 \"y0\"(3 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 18 格(函式碼 19)的 fixup 0x53908 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51750",
+      "size": 3,
+      "name": "math_func_name_y1",
+      "type": "C 字串 \"y1\"(3 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 19 格(函式碼 20)的 fixup 0x5390c 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51753",
+      "size": 3,
+      "name": "math_func_name_yn",
+      "type": "C 字串 \"yn\"(3 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 20 格(函式碼 21)的 fixup 0x53910 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x51756",
+      "size": 4,
+      "name": "math_func_name_mod",
+      "type": "C 字串 \"mod\"(4 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 21 格(函式碼 22)的 fixup 0x53914 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
+      "start": "0x5175a",
+      "size": 6,
+      "name": "math_func_name_cotan",
+      "type": "C 字串 \"cotan\"(6 bytes 含 NUL)",
+      "meaning": "math_func_names(0x538c0)第 22 格(函式碼 23)的 fixup 0x53918 指向這個字串;math_err_build_exception 0x49a4c 以 [(旗標 & 0x1f) × 4 + 0x538bc] 取出放進 struct exception 的 name,math_err_default 0x4d083 印錯誤訊息時以 fputs 印出。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4994f",
+          "ref": "0x538c0"
+        },
+        {
+          "func": "0x499da",
+          "ref": "0x538bc"
+        }
+      ]
+    },
+    {
       "start": "0x51760",
       "size": 16,
       "name": "dos4g_vendor_string",
@@ -3304,6 +4115,84 @@
       ]
     },
     {
+      "start": "0x51770",
+      "size": 13,
+      "name": "math_err_type_domain_error",
+      "type": "C 字串 \"Domain error\"(13 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 1 格(錯誤種類 1)的 fixup 0x51984 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
+      "start": "0x5177d",
+      "size": 21,
+      "name": "math_err_type_argument_singularity",
+      "type": "C 字串 \"Argument singularity\"(21 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 2 格(錯誤種類 2)的 fixup 0x51988 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
+      "start": "0x51792",
+      "size": 21,
+      "name": "math_err_type_overflow_range_error",
+      "type": "C 字串 \"Overflow range error\"(21 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 3 格(錯誤種類 3)的 fixup 0x5198c 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
+      "start": "0x517a7",
+      "size": 22,
+      "name": "math_err_type_underflow_range_error",
+      "type": "C 字串 \"Underflow range error\"(22 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 4 格(錯誤種類 4)的 fixup 0x51990 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
+      "start": "0x517bd",
+      "size": 27,
+      "name": "math_err_type_total_loss_of_significance",
+      "type": "C 字串 \"Total loss of significance\"(27 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 5 格(錯誤種類 5)的 fixup 0x51994 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
+      "start": "0x517d8",
+      "size": 29,
+      "name": "math_err_type_partial_loss_of_significance",
+      "type": "C 字串 \"Partial loss of significance\"(29 bytes 含 NUL)",
+      "meaning": "math_err_type_names(0x51980)第 6 格(錯誤種類 6)的 fixup 0x51998 指向這個字串;math_err_default 在 matherr 回 0 時 0x4d05d push [種類 × 4 + 0x51980] 交給 fputs_unbuffered 寫到 stderr。程式碼沒有直接引用這個位址(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4d03e",
+          "ref": "0x51980"
+        }
+      ]
+    },
+    {
       "start": "0x517f5",
       "size": 5,
       "name": "math_err_in_text",
@@ -3312,6 +4201,18 @@
       "evidence": [
         {
           "func": "0x4d03e"
+        }
+      ]
+    },
+    {
+      "start": "0x517fa",
+      "size": 2,
+      "name": "align_pad_517fa",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "math_err_in_text 結束於 0x517fa,下一項 fmt_inf_text 起於 0x517fc(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -3416,6 +4317,18 @@
       ]
     },
     {
+      "start": "0x5183d",
+      "size": 3,
+      "name": "align_pad_5183d",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "asctime_wday_letter3 結束於 0x5183d,下一項 ctype_class_bits 起於 0x51840(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x51840",
       "size": 256,
       "name": "ctype_class_bits",
@@ -3427,6 +4340,18 @@
         },
         {
           "func": "0x3f656"
+        }
+      ]
+    },
+    {
+      "start": "0x51940",
+      "size": 4,
+      "name": "ctype_table_tail_unused",
+      "type": "byte[4](沒有引用)",
+      "meaning": "ctype_class_bits(0x51840,256 格)與 month_start_yday(0x51944)之間的 4 byte,檔內全 0;EXE 內沒有任何指令或 fixup 引用。字元類別表的 5 處讀取都先 inc al、and eax, 0xff,索引只到 255,所以這 4 byte 即使屬於原本的表(Watcom 的字元類別表多一格給 EOF)也讀不到(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -4306,6 +5231,18 @@
       "evidence": [
         {
           "func": "0x187d6"
+        }
+      ]
+    },
+    {
+      "start": "0x51ec5",
+      "size": 16,
+      "name": "unused_dword_0_3_table",
+      "type": "dword[4] 常數表(值 0 .. 3,沒有引用)",
+      "meaning": "draw_number_format 之後、action_ring_item_icons(0x51ed5)之前的 4 個 dword,值 0、1、2、3,與緊接的 action_ring_item_icons 逐 byte 相同;EXE 內沒有任何指令或 fixup 引用,位址也沒有對齊 4。推測是同一份初值表編譯出兩份、只有後一份被 player_action_ring 複製使用(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -6059,6 +6996,18 @@
       ]
     },
     {
+      "start": "0x52753",
+      "size": 1,
+      "name": "align_pad_52753",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "event58_treasure_items 結束於 0x52753,下一項 file_io_error 起於 0x52754(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x52754",
       "size": 4,
       "name": "file_io_error",
@@ -6221,6 +7170,18 @@
         {
           "doc": "docs/knowledge-base/39-ani-afm-format.md",
           "quote": "第 11 項起變成別的資料段內容「Stack...」字串,故 **opcode 只有 0–9**"
+        }
+      ]
+    },
+    {
+      "start": "0x52792",
+      "size": 2,
+      "name": "align_pad_52792",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ani_vm_op_table 結束於 0x52792,下一項 stk_saved_ss 起於 0x52794(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -6483,6 +7444,18 @@
       ]
     },
     {
+      "start": "0x527f6",
+      "size": 2,
+      "name": "align_pad_527f6",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "x87_real_type 結束於 0x527f6,下一項 crt_argc 起於 0x527f8(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x527f8",
       "size": 4,
       "name": "crt_argc",
@@ -6660,6 +7633,18 @@
         },
         {
           "func": "0x46d38"
+        }
+      ]
+    },
+    {
+      "start": "0x52828",
+      "size": 8,
+      "name": "unused_52828",
+      "type": "byte[8](沒有引用)",
+      "meaning": "getch_pushback 與 no87_env_count 之間(Watcom 執行期變數之間)的 8 byte,檔內全 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -6852,6 +7837,30 @@
         },
         {
           "func": "0x3d093"
+        }
+      ]
+    },
+    {
+      "start": "0x52a4d",
+      "size": 4,
+      "name": "stdio_open_streams_ptr_unused",
+      "type": "dword 指標(fixup 指向 stdio_open_streams,沒有指令引用)",
+      "meaning": "檔內有一筆 fixup 讓這格指向 0x541ac stdio_open_streams(Watcom stdio 已開啟串流串列頭);EXE 內沒有任何指令讀寫這格,位址沒有對齊 4,緊接 stdio_default_fmode(0x52a49)。後面 3 byte 是 0,到 0x52a54 ail_timer_callback(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
+      "start": "0x52a51",
+      "size": 3,
+      "name": "align_pad_52a51",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "stdio_open_streams_ptr_unused 結束於 0x52a51,下一項 ail_timer_callback 起於 0x52a54(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -7191,10 +8200,14 @@
       "size": 2048,
       "name": "ail_timer_isr_stack",
       "type": "byte[2048](ail_timer_isr 切換用的堆疊,堆疊頂 0x535fc)",
-      "meaning": "ail_timer_isr 存下 ss / esp 後 mov ss, ds、mov esp, 0x535fc(0x3eac8 .. 0x3eace),往下長。區段內沒有任何指令引用;下界 0x52dfc 是推測:取上一個 USE16 堆疊的頂端(0x52bfc + 0x200),兩者之間沒有其他被引用的位址。ail_timer_lock_memory 鎖住的 [0x52a54, 0x53604) 包含這一段(FD2.EXE 反組譯)。 【2026-11-19 長度複查】下界 0x52dfc 已由 USE16 堆疊頂(0x3ef2d / 0x3efe5,0x52bf0 + 0xc + 0x200)證出,區段內沒有任何 fixup,所以 2048 是這個堆疊的上界;實際深度靜態估約 0.4 .. 0.7 KB(含 AIL_DEBUG 追蹤時較深),但有 19 個間接呼叫、0x42980 遞迴與 sti 後的巢狀中斷未定,實際用量證不出。",
+      "meaning": "ail_timer_isr 存下 ss / esp 後 mov ss, ds、mov esp, 0x535fc(0x3eac8 .. 0x3eace),往下長。區段內沒有任何指令引用;下界 0x52dfc 是推測:取上一個 USE16 堆疊的頂端(0x52bfc + 0x200),兩者之間沒有其他被引用的位址。ail_timer_lock_memory 鎖住的 [0x52a54, 0x53604) 包含這一段(FD2.EXE 反組譯)。 【2026-11-19 長度複查】下界 0x52dfc 已由 USE16 堆疊頂(0x3ef2d / 0x3efe5,0x52bf0 + 0xc + 0x200)證出,區段內沒有任何 fixup,所以 2048 是這個堆疊的上界;實際深度靜態估約 0.4 .. 0.7 KB(含 AIL_DEBUG 追蹤時較深),但有 19 個間接呼叫、0x42980 遞迴與 sti 後的巢狀中斷未定,實際用量證不出。【2026-11-19 實機(續二百八十七,原版 FD2.EXE、DOSBox-X、SB16 DIG + SBPRO2 MDI)】標題選單 60 s、序章 60 s、再推進 20 句對白後各讀一次,最低的非 0 byte 是 0x53518 / 0x53518 / 0x53516,高水位 228 / 228 / 230 byte(推入的 0 看不到,所以是下界);0x52dfc .. 0x53515 全 0,2048 byte 用到約 11%。堆疊裡的返回位址落在 ail_timer_isr 的回呼迴圈(0x3eb42)。",
       "evidence": [
         {
           "no_refs": true
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "ISR 堆疊高水位 228 / 228 / 230 byte"
         }
       ]
     },
@@ -7207,6 +8220,18 @@
       "evidence": [
         {
           "func": "0x3ea8e"
+        }
+      ]
+    },
+    {
+      "start": "0x535fe",
+      "size": 2,
+      "name": "align_pad_535fe",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "ail_isr_saved_ss 結束於 0x535fe,下一項 ail_isr_saved_esp 起於 0x53600(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -7419,16 +8444,45 @@
     },
     {
       "start": "0x53730",
-      "size": 4,
+      "size": 48,
       "name": "dosx_sysreg_buffer_cr0",
-      "type": "dword(DOS extender 讀寫系統暫存器的緩衝第 0 格 CR0)",
-      "meaning": "dosx_cr0_set_em 以 ebx = 0、lea edx, [0x53730]、int 21h AX=2535h 讀系統暫存器(0x462e6 .. 0x462f2),or dword [0x53730], 4(設 EM)、and ..., 0xfffffffd(清 MP)後 inc ebx 再 int 21h 寫回(0x462f4 .. 0x46303);dosx_cr0_restore 讀出後把 [0x53776] 零延伸寫進這格(0x463d1)再寫回(FD2.EXE 反組譯)。長度未定:只登錄有指令存取的第 0 格;0x53734 .. 0x53770 的 60 bytes 沒有任何引用,推測是同一個系統暫存器緩衝的其餘部分。 【2026-11-19 長度複查】長度上界已證:0x53731 .. 0x5376f 沒有任何 fixup,下一個被引用位址 0x53770(0x462a4),所以 int 21h AX=2535h 的緩衝最多 64 bytes;確切長度由 DOS extender 定義,EXE 內無長度常數,維持只登 4 bytes。",
+      "type": "dword[12](Phar Lap 系統暫存器記錄:控制、除錯暫存器與保留格,欄位見 fields)",
+      "meaning": "dosx_cr0_set_em 以 ebx = 0、lea edx, [0x53730]、int 21h AX=2535h 讀系統暫存器(0x462e6 .. 0x462f2),or dword [0x53730], 4(設 EM)、and ..., 0xfffffffd(清 MP)後 inc ebx 再 int 21h 寫回(0x462f4 .. 0x46303);dosx_cr0_restore 讀出後把 [0x53776] 零延伸寫進這格(0x463d1)再寫回(FD2.EXE 反組譯)。長度未定:只登錄有指令存取的第 0 格;0x53734 .. 0x53770 的 60 bytes 沒有任何引用,推測是同一個系統暫存器緩衝的其餘部分。 【2026-11-19 長度複查】長度上界已證:0x53731 .. 0x5376f 沒有任何 fixup,下一個被引用位址 0x53770(0x462a4),所以 int 21h AX=2535h 的緩衝最多 64 bytes;確切長度由 DOS extender 定義,EXE 內無長度常數,維持只登 4 bytes。【2026-11-19 續二百八十七】int 21h AX=2535h 是 Phar Lap 386|DOS-Extender 的讀寫系統暫存器呼叫,DS:EDX 指向的記錄依 Ralf Brown 中斷表 Table 01375 是 CR0、DR0 .. DR3、保留 2 格、DR6 / DR7、保留 3 格,共 48 byte,所以登成 0x53730 .. 0x53760。實機(DOSBox-X 有 FPU,fpu_detect 結果 0x527f4 / 0x527f5 = 03 03、0x53920 / 0x53921 = 0)不走 emu387 安裝路徑,整段 64 byte 讀到全 0;bound 的 DOS/4GW 實際寫幾 byte 沒有實機驗證。",
       "evidence": [
         {
           "func": "0x462e6"
         },
         {
           "func": "0x463ba"
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "CR0(00h)、DR0 .. DR3(04h)、保留 2 個 dword(14h)、DR6 / DR7(1Ch)、保留 3 個 dword(24h),共 30h = 48 byte"
+        }
+      ],
+      "fields": {
+        "0x4": "dr0",
+        "0x8": "dr1",
+        "0xc": "dr2",
+        "0x10": "dr3",
+        "0x14": "reserved_14",
+        "0x18": "reserved_18",
+        "0x1c": "dr6",
+        "0x20": "dr7",
+        "0x24": "reserved_24",
+        "0x28": "reserved_28",
+        "0x2c": "reserved_2c"
+      }
+    },
+    {
+      "start": "0x53760",
+      "size": 16,
+      "name": "dosx_sysreg_record_spare",
+      "type": "byte[16](沒有引用)",
+      "meaning": "Phar Lap 系統暫存器記錄(0x53730,48 byte)之後到 emu387_old_int7_offset(0x53770)的 16 byte,檔內全 0,在 _cstart_ 的清零範圍(0x539ec 起)之外;EXE 內沒有任何指令或 fixup 引用。實機(續二百八十七)讀到全 0。用途無法由 EXE 判定(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -7499,6 +8553,18 @@
       ]
     },
     {
+      "start": "0x53779",
+      "size": 3,
+      "name": "align_pad_53779",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "emu387_installed 結束於 0x53779,下一項 dos_error_to_errno_table 起於 0x5377c(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x5377c",
       "size": 20,
       "name": "dos_error_to_errno_table",
@@ -7519,6 +8585,23 @@
       "evidence": [
         {
           "func": "0x466a2"
+        }
+      ]
+    },
+    {
+      "start": "0x53794",
+      "size": 80,
+      "name": "io_handle_mode_flags",
+      "type": "dword[20](檔案 handle 的開檔模式位元陣列,經 io_mode_table_ptr 存取)",
+      "meaning": "io_mode_table_ptr(0x537e4)初值的 fixup 指向這裡,io_handle_limit(0x53790)初值 20 = 格數。初值 1、2、2、3、2,其後 15 格 0:handle 0 .. 4(stdin、stdout、stderr、stdaux、stdprn)的開檔模式(Watcom 的 __init_mode / _iomode;1 讀、2 寫、3 讀寫,推論)。io_get_mode 0x466c5 讀 [[0x537e4] + handle × 4]、0x466e3 or 0x20(終端機),io_set_mode_flags 0x46706 寫入 旗標 | 0x4000;都經指標,沒有指令以絕對位址引用這段(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x466a2",
+          "ref": "0x537e4"
+        },
+        {
+          "func": "0x466f4",
+          "ref": "0x537e4"
         }
       ]
     },
@@ -7753,6 +8836,30 @@
       ]
     },
     {
+      "start": "0x53896",
+      "size": 8,
+      "name": "tz_name_ptrs",
+      "type": "dword 指標[2] 常數表(標準 / 夏令時區名稱;沒有指令引用)",
+      "meaning": "兩格的 fixup 依序指向 tz_std_name(0x53858,初值 \"EST\")與 tz_dst_name(0x53877,初值 \"EDT\"),即 C 函式庫的 tzname[2];EXE 內沒有任何指令讀寫這兩格(遊戲不用 tzname)。後面 2 byte 是 0,到 0x538a0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
+      "start": "0x5389e",
+      "size": 2,
+      "name": "align_pad_5389e",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "tz_name_ptrs 結束於 0x5389e,下一項 ail_mix_routine_index 起於 0x538a0(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x538a0",
       "size": 4,
       "name": "ail_mix_routine_index",
@@ -7951,6 +9058,18 @@
       ]
     },
     {
+      "start": "0x5391e",
+      "size": 2,
+      "name": "align_pad_5391e",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "fpu_default_control_word 結束於 0x5391e,下一項 emu387_dos4g_hooked 起於 0x53920(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x53920",
       "size": 1,
       "name": "emu387_dos4g_hooked",
@@ -7981,6 +9100,18 @@
       ]
     },
     {
+      "start": "0x53922",
+      "size": 2,
+      "name": "align_pad_53922",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "emu387_int2f_service_hooked 結束於 0x53922,下一項 emu387_state 起於 0x53924(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x53924",
       "size": 122,
       "name": "emu387_state",
@@ -7989,6 +9120,18 @@
       "evidence": [
         {
           "func": "0x4a104"
+        }
+      ]
+    },
+    {
+      "start": "0x5399e",
+      "size": 2,
+      "name": "align_pad_5399e",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "emu387_state 結束於 0x5399e,下一項 fpu_save_hook 起於 0x539a0(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。檔內是 00 00(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -9050,6 +10193,18 @@
       ]
     },
     {
+      "start": "0x53ac9",
+      "size": 8,
+      "name": "unused_53ac9",
+      "type": "byte[8](沒有引用)",
+      "meaning": "field_map_height 與 map_effect_image_bank 之間(戰場地圖尺寸與地圖效果圖像指標之間)的 8 byte,檔內全 0;在 _cstart_ 的清零範圍(0x539ec .. 0x546b0)內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x53ad1",
       "size": 4,
       "name": "map_effect_image_bank",
@@ -9177,6 +10332,18 @@
         {
           "doc": "docs/knowledge-base/14-text-control-codes.md",
           "quote": "1 + 2 + 2 + 3 + 2 = 10。"
+        }
+      ]
+    },
+    {
+      "start": "0x53ae5",
+      "size": 4,
+      "name": "unused_53ae5",
+      "type": "byte[4](沒有引用)",
+      "meaning": "message_number_value 與 next_unit_cycle_index 之間(訊息數值與單位巡迴索引之間)的 4 byte,檔內全 0;在 _cstart_ 的清零範圍(0x539ec .. 0x546b0)內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -9463,6 +10630,18 @@
         {
           "doc": "docs/knowledge-base/31-map-unit-sprites-fdicon.md",
           "quote": "各槽的 raw key 記在 `[0x53b17 + 槽 × 4]`,key 已在快取就直接回傳舊槽號。"
+        }
+      ]
+    },
+    {
+      "start": "0x53bb7",
+      "size": 40,
+      "name": "fdicon_cache_keys_spill",
+      "type": "byte[40](沒有指令引用;快取鍵寫超過 40 槽時會落到這裡)",
+      "meaning": "fdicon_cache_keys(0x53b17,40 槽)之後到 fdicon_cache_slot_count(0x53bdf)的 40 byte,在 _cstart_ 的清零範圍內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用。fdicon_cache_load 0x11138 寫第 槽數 格時沒有上限檢查,槽數到 40 .. 49時寫入會落在這段;fdicon_cache_keys 的長度複查已證原版資料最多用到 32 槽,所以原版資料寫不到這裡(FD2.EXE 反組譯、FDFIELD.DAT)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -10402,6 +11581,18 @@
       ]
     },
     {
+      "start": "0x53ed4",
+      "size": 4,
+      "name": "unused_53ed4",
+      "type": "byte[4](沒有引用)",
+      "meaning": "music_sequence_handle 與 ail_mdi_driver 之間(AIL 音樂序列 handle 與 MDI 驅動 handle 之間)的 4 byte,檔內全 0;在 _cstart_ 的清零範圍(0x539ec .. 0x546b0)內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x53ed8",
       "size": 4,
       "name": "ail_mdi_driver",
@@ -10595,6 +11786,18 @@
       "evidence": [
         {
           "func": "0x1bbdc"
+        }
+      ]
+    },
+    {
+      "start": "0x53f42",
+      "size": 4,
+      "name": "unused_53f42",
+      "type": "byte[4](沒有引用)",
+      "meaning": "item_submenu_enable_init 與 roster_pick_last_tick 之間(道具子選單初值表與名冊挑選計時之間)的 4 byte,檔內全 0;在 _cstart_ 的清零範圍(0x539ec .. 0x546b0)內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -11494,6 +12697,18 @@
       ]
     },
     {
+      "start": "0x54157",
+      "size": 1,
+      "name": "align_pad_54157",
+      "type": "byte[1](對齊填充,沒有引用)",
+      "meaning": "battle_anim_sfx_bank 結束於 0x54157,下一項 ail_dbg_clock_timer 起於 0x54158(4 byte 對齊);中間 1 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。在零填頁(BSS)與 _cstart_ 的清零範圍內,啟動時是 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x54158",
       "size": 4,
       "name": "ail_dbg_clock_timer",
@@ -11681,6 +12896,18 @@
       }
     },
     {
+      "start": "0x54196",
+      "size": 6,
+      "name": "unused_54196",
+      "type": "byte[6](沒有引用)",
+      "meaning": "ail_dbg_start_time(0x5417c,26 byte)與 nheap_dead_flag(0x5419c)之間的 6 byte,在零填頁(BSS,檔內沒有位元組)與 _cstart_ 的清零範圍內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用。用途無法由 EXE 判定(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
+        }
+      ]
+    },
+    {
       "start": "0x5419c",
       "size": 1,
       "name": "nheap_dead_flag",
@@ -11696,6 +12923,18 @@
         {
           "doc": "docs/knowledge-base/03-exe-and-data-structures.md",
           "quote": "兩處都是寫 0,全 image 沒有任何讀取"
+        }
+      ]
+    },
+    {
+      "start": "0x5419d",
+      "size": 3,
+      "name": "align_pad_5419d",
+      "type": "byte[3](對齊填充,沒有引用)",
+      "meaning": "nheap_dead_flag 結束於 0x5419d,下一項 stdio_free_stream_nodes 起於 0x541a0(4 byte 對齊);中間 3 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。在零填頁(BSS)與 _cstart_ 的清零範圍內,啟動時是 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -11962,6 +13201,18 @@
       "evidence": [
         {
           "func": "0x4007b"
+        }
+      ]
+    },
+    {
+      "start": "0x543ae",
+      "size": 2,
+      "name": "align_pad_543ae",
+      "type": "byte[2](對齊填充,沒有引用)",
+      "meaning": "asctime_static_buf 結束於 0x543ae,下一項 ail_dig_svc_driver 起於 0x543b0(4 byte 對齊);中間 2 byte 沒有任何指令或 fixup 引用,依對齊推定為填充。在零填頁(BSS)與 _cstart_ 的清零範圍內,啟動時是 0(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -12367,10 +13618,30 @@
       "size": 1,
       "name": "emu387_fa20_buffer",
       "type": "byte(交給 int 2Fh AX=FA20h 的緩衝起點,長度未定)",
-      "meaning": "0x49c26(安裝 emu387_int_entry 的函式)以 int 2Fh AX=FA00h 得 0x666、AX=FA22h 回 0 後設 [0x53921] = 1、再呼叫 AX=FA1Eh,0x49c7c mov ebx, 0x54630、dx = cs、cx = 位址高 16 位元,0x49c90 AH=FAh / AL=0x20 呼叫 int 2Fh 把這個位址交出去;對應的 0x49cf5 以 cx = bx = 0、AL=0x21 撤銷。EXE 內沒有指令直接存取它。長度未定:只登錄起點;到 BSS 結尾 0x546b0 有 128 bytes 沒有其他引用,推測是交給該介面使用的緩衝(FD2.EXE 反組譯)。 【2026-11-19 長度複查】上界已證:0x54631 .. 0x546af 沒有任何 fixup,到 BSS 終點 0x546b0(0x3cea2)為止最多 128 bytes;int 2Fh AX=FA20h 沒有長度參數(只給 DX = CS、CX:BX = 0x54630),確切長度證不出,維持只登起點。",
+      "meaning": "0x49c26(安裝 emu387_int_entry 的函式)以 int 2Fh AX=FA00h 得 0x666、AX=FA22h 回 0 後設 [0x53921] = 1、再呼叫 AX=FA1Eh,0x49c7c mov ebx, 0x54630、dx = cs、cx = 位址高 16 位元,0x49c90 AH=FAh / AL=0x20 呼叫 int 2Fh 把這個位址交出去;對應的 0x49cf5 以 cx = bx = 0、AL=0x21 撤銷。EXE 內沒有指令直接存取它。長度未定:只登錄起點;到 BSS 結尾 0x546b0 有 128 bytes 沒有其他引用,推測是交給該介面使用的緩衝(FD2.EXE 反組譯)。 【2026-11-19 長度複查】上界已證:0x54631 .. 0x546af 沒有任何 fixup,到 BSS 終點 0x546b0(0x3cea2)為止最多 128 bytes;int 2Fh AX=FA20h 沒有長度參數(只給 DX = CS、CX:BX = 0x54630),確切長度證不出,維持只登起點。【2026-11-19 實機(續二百八十七)】DOSBox-X 有 FPU,0x49c26 不被呼叫(0x53920 / 0x53921 = 0),0x54630 .. 0x546b0 讀到全 0;int 2Fh AX=FA20h 的緩衝長度沒有公開規格可查,實際長度仍證不出。",
       "evidence": [
         {
           "func": "0x49c26"
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "0x54630 .. 0x546b0 三次都全 0"
+        }
+      ]
+    },
+    {
+      "start": "0x54631",
+      "size": 127,
+      "name": "emu387_fa20_buffer_tail",
+      "type": "byte[127](沒有指令引用;可能是 FA20h 緩衝的後段)",
+      "meaning": "emu387_fa20_buffer(0x54630)之後到 BSS 結尾 0x546b0 的 127 byte,在零填頁(BSS)與 _cstart_ 的清零範圍內,啟動時是 0;EXE 內沒有任何指令或 fixup 引用。0x49c7c mov ebx, 0x54630 後以 int 2Fh AX=FA20h 把這個位址交給 DOS extender,對方用幾 byte 不由 FD2.EXE 決定;到 0x546b0 剛好 128 byte(推論,沒有實機驗證)(FD2.EXE 反組譯)。【2026-11-19 實機(續二百八十七)】DOSBox-X 有 FPU,0x49c26 不被呼叫(0x53920 / 0x53921 = 0),0x54630 .. 0x546b0 讀到全 0;int 2Fh AX=FA20h 的緩衝長度沒有公開規格可查,實際長度仍證不出。",
+      "evidence": [
+        {
+          "no_refs": true
+        },
+        {
+          "doc": "docs/knowledge-base/98-tooling-infrastructure.md",
+          "quote": "0x54630 .. 0x546b0 三次都全 0"
         }
       ]
     },
@@ -12712,6 +13983,18 @@
       "evidence": [
         {
           "func": "0x4e795"
+        }
+      ]
+    },
+    {
+      "start": "0x6017d",
+      "size": 4,
+      "name": "unused_6017d",
+      "type": "byte[4](沒有引用)",
+      "meaning": "blit_mask_width 與 copy_protection_answers 之間(blit 寬度暫存與防拷答案表之間)的 4 byte,檔內全 0;EXE 內沒有任何指令或 fixup 引用,程式行為與這段的內容無關。用途無法由 EXE 判定(可能是沒用到的變數或對齊)(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "no_refs": true
         }
       ]
     },
@@ -13220,6 +14503,134 @@
           "quote": "106-entry directory"
         }
       ]
+    },
+    {
+      "start": "0x62980",
+      "size": 2898,
+      "name": "acting_seq_bank",
+      "type": "byte[2898] 常數表(演出序列資料,每筆由 acting_seq_table 指向)",
+      "meaning": "acting_seq_table(0x627d8)106 格的 fixup 依序指向這裡,第 0 筆在 0x62980(表尾)、最後一筆 0x634b9,解完正好到物件 3 結尾 0x634d2。act 0x1366a 以 event_seq_table_get 0x4eb48 取指標,格式:u8 幀數,每幀 u8 拍數(bit7 = 1 原地姿態、0 = 走格)、u8 N、N 對(u8 單位索引, u8 pose)。逐筆解碼:104 筆的結尾正好是下一筆的起點;第 24 筆(event_handler_17 0x34a5d push 0x18 播放,第 4 圖第 8 回合的回合事件 17)的唯一一幀宣告 N = 5,只有 4 對,第 5 對讀到第 25 筆開頭的 01 05,即單位 1 寫 pose 5(act 0x1373f 原值寫 +3,沒有檢查);第 84 筆宣告 1 幀,後面 88 01 01 02 是不會播到的第 2 幀。除了這一對,全部 pose 都是 0 .. 3。pose 5 經繪製 0x127e0 的 [0x53a61] 索引 槽 × 12 + pose × 3 + 幀(0x1291e .. 0x12932)會取到下一個 FDICON 快取槽 pose 1(左)的圖(原程式行為。實機(續二百八十七 lc287d,原版 FD2.EXE、正常打到第 8 回合、不寫記憶體):事件 17 在第 8 回合敵方階段觸發,演出之後單位 1(悠妮的 0x34 轉職形態、快取槽 1)的 +3 = 5,單位 48 .. 51 = 0;對白結束後在敵方階段被改回 0。畫成別人圖的畫面沒有拍到)。EXE 內沒有寫入(FD2.EXE 反組譯)。",
+      "evidence": [
+        {
+          "func": "0x4eb48",
+          "ref": "0x627d8"
+        },
+        {
+          "doc": "docs/knowledge-base/50-cutscene-script-system-design.md",
+          "quote": "u8 幀數 + 幀×{ u8 拍數, u8 N, N×(u8 單位idx, u8 pose) }"
+        },
+        {
+          "doc": "docs/knowledge-base/evidence/static_s287_data_resources_20261119.json",
+          "quote": "\"unit1_pose_after_act\": 5"
+        }
+      ],
+      "fields": {
+        "0x1b": "act_1",
+        "0x26": "act_2",
+        "0x51": "act_3",
+        "0x70": "act_4",
+        "0x81": "act_5",
+        "0x86": "act_6",
+        "0x9b": "act_7",
+        "0xb0": "act_8",
+        "0xbd": "act_9",
+        "0xee": "act_10",
+        "0x107": "act_11",
+        "0x12a": "act_12",
+        "0x151": "act_13",
+        "0x17e": "act_14",
+        "0x183": "act_15",
+        "0x190": "act_16",
+        "0x1a9": "act_17",
+        "0x1be": "act_18",
+        "0x1cd": "act_19",
+        "0x1e8": "act_20",
+        "0x215": "act_21",
+        "0x234": "act_22",
+        "0x23d": "act_23",
+        "0x250": "act_24",
+        "0x25b": "act_25",
+        "0x260": "act_26",
+        "0x265": "act_27",
+        "0x26a": "act_28",
+        "0x32b": "act_29",
+        "0x352": "act_30",
+        "0x3a9": "act_31",
+        "0x3c0": "act_32",
+        "0x3c5": "act_33",
+        "0x3dc": "act_34",
+        "0x3f1": "act_35",
+        "0x3f6": "act_36",
+        "0x3fb": "act_37",
+        "0x400": "act_38",
+        "0x411": "act_39",
+        "0x41a": "act_40",
+        "0x461": "act_41",
+        "0x4ea": "act_42",
+        "0x505": "act_43",
+        "0x518": "act_44",
+        "0x52b": "act_45",
+        "0x534": "act_46",
+        "0x569": "act_47",
+        "0x56e": "act_48",
+        "0x587": "act_49",
+        "0x58c": "act_50",
+        "0x595": "act_51",
+        "0x59e": "act_52",
+        "0x5a7": "act_53",
+        "0x5ca": "act_54",
+        "0x5ef": "act_55",
+        "0x5f6": "act_56",
+        "0x603": "act_57",
+        "0x608": "act_58",
+        "0x60d": "act_59",
+        "0x668": "act_60",
+        "0x66d": "act_61",
+        "0x672": "act_62",
+        "0x677": "act_63",
+        "0x688": "act_64",
+        "0x69d": "act_65",
+        "0x6a6": "act_66",
+        "0x76f": "act_67",
+        "0x7b2": "act_68",
+        "0x7c1": "act_69",
+        "0x7ca": "act_70",
+        "0x7d1": "act_71",
+        "0x7d6": "act_72",
+        "0x7db": "act_73",
+        "0x7e0": "act_74",
+        "0x7f3": "act_75",
+        "0x7f8": "act_76",
+        "0x863": "act_77",
+        "0x868": "act_78",
+        "0x875": "act_79",
+        "0x87a": "act_80",
+        "0x889": "act_81",
+        "0x88e": "act_82",
+        "0x893": "act_83",
+        "0x89c": "act_84",
+        "0x8a5": "act_85",
+        "0x91e": "act_86",
+        "0x9a7": "act_87",
+        "0x9d2": "act_88",
+        "0x9db": "act_89",
+        "0xa20": "act_90",
+        "0xa3d": "act_91",
+        "0xa4e": "act_92",
+        "0xa53": "act_93",
+        "0xa88": "act_94",
+        "0xa95": "act_95",
+        "0xaa2": "act_96",
+        "0xaaf": "act_97",
+        "0xabe": "act_98",
+        "0xb13": "act_99",
+        "0xb18": "act_100",
+        "0xb1d": "act_101",
+        "0xb22": "act_102",
+        "0xb2f": "act_103",
+        "0xb34": "act_104",
+        "0xb39": "act_105"
+      }
     }
   ]
 }

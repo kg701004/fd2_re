@@ -102,6 +102,15 @@ class NativeLinearTablesOnCanonicalExeTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             dump_exe_tables.lin2file(self.raw, 0x0)
 
+    def test_lin2file_rejects_zero_filled_pages(self):
+        # obj2 vsize 0x56b0、檔內 4 頁:0x54000 起是零填頁(BSS),檔內沒有位元組
+        for lin in (0x54000, 0x54157, 0x556AF):
+            with self.assertRaises(ValueError, msg=hex(lin)):
+                dump_exe_tables.lin2file(self.raw, lin)
+        # 配對對照:obj2 最後一個檔內 byte 照常換算
+        self.assertEqual(dump_exe_tables.lin2file(self.raw, 0x53FFF),
+                         dump_exe_tables.lin2file(self.raw, 0x50000) + 0x3FFF)
+
 
 if __name__ == "__main__":
     unittest.main()

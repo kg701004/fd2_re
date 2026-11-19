@@ -52,10 +52,13 @@ ITEM_TABLE = 0x5274E
 
 
 def linear_bytes(data, meta, address, size):
+    # 2026-11-19:範圍要整段在檔內頁;vsize 超出檔內頁的部分是零填頁(BSS),檔內沒有位元組
+    # (照公式算會落到下一個 object 的檔內頁;同 disasm_le.object_bytes)
     obj = next(
         obj
         for obj in meta["objs"]
-        if obj["base"] <= address and address + size <= obj["base"] + obj["vsize"]
+        if obj["base"] <= address
+        and address + size <= obj["base"] + min(obj["vsize"], obj["pages"] * meta["page_size"])
     )
     offset = (
         meta["data_off"]
@@ -68,7 +71,7 @@ def linear_bytes(data, meta, address, size):
 
 def linear_offset(data, meta, address):
     obj = next(o for o in meta["objs"]
-               if o["base"] <= address < o["base"] + o["vsize"])
+               if o["base"] <= address < o["base"] + min(o["vsize"], o["pages"] * meta["page_size"]))
     return (meta["data_off"] + (obj["first"] - 1) * meta["page_size"]
             + address - obj["base"])
 
@@ -255,6 +258,20 @@ def selftest():
     print(f"    {'PASS' if ok5 else 'FAIL'}: {items}(該位址無 fixup 記錄={no_fixup})")
     if not ok5:
         fails.append(f"寶物表讀出 {items},無 fixup={no_fixup}")
+
+    print("\n(5b) 零填頁(BSS):obj2 0x54000 起檔內沒有位元組,必須找不到;配對對照:0x53fff 照常")
+    bss_hits = []
+    for fn, args in ((linear_bytes, (0x54000, 1)), (linear_bytes, (0x53FFF, 2)), (linear_offset, (0x54157,))):
+        try:
+            fn(data, meta, *args)
+            bss_hits.append((fn.__name__, args))
+        except StopIteration:
+            pass
+    ctrl = linear_bytes(data, meta, 0x53FFF, 1) == data[linear_offset(data, meta, 0x50000) + 0x3FFF:][:1]
+    ok5b = not bss_hits and ctrl
+    print(f"    {'PASS' if ok5b else 'FAIL'}: 沒擋下的 {bss_hits or '無'};對照 {ctrl}")
+    if not ok5b:
+        fails.append(f"BSS 沒擋下 {bss_hits} / 對照 {ctrl}")
 
     print("\n(6) 負向控制:未知版本的 EXE 必須被拒絕,不能沿用固定位址")
     ok6 = hashlib.md5(b"not the exe").hexdigest() not in EDITIONS

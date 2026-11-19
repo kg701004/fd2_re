@@ -30,6 +30,9 @@ TABLES = {
 def linear_file_offset(meta, linear):
     for obj in meta["objs"]:
         if obj["base"] <= linear < obj["base"] + obj["vsize"]:
+            # 2026-11-19:vsize 超出檔內頁的部分是零填頁(BSS),檔內沒有位元組(同 disasm_le.lin2file)
+            if linear - obj["base"] >= obj["pages"] * meta["page_size"]:
+                raise ValueError(f"linear address in zero-filled (BSS) pages: {linear:#x}")
             return meta["data_off"] + (obj["first"] - 1) * meta["page_size"] + (linear - obj["base"])
     raise ValueError(f"linear address outside LE objects: {linear:#x}")
 

@@ -102,10 +102,14 @@ def read_exe(exe: str | Path) -> tuple[bytes, dict]:
 
 
 def object_bytes(data: bytes, meta: dict, index: int) -> tuple[bytes, int]:
-    """回傳第 index 個 LE object 的位元組與其 base(逐 object 換算,不套 obj1 公式)。"""
+    """回傳第 index 個 LE object 檔內頁的位元組與其 base(逐 object 換算,不套 obj1 公式)。
+
+    2026-11-19:只取檔內頁(vsize 與 頁數 × 頁大小 取小者)。obj2 的 vsize 0x56b0 大於檔內 4 頁,
+    原本切到 vsize 會多帶 obj3 檔內的前 0x16b0 byte,在那裡找到的字串會配上錯的位址。
+    """
     obj = meta["objs"][index]
     off = meta["data_off"] + (obj["first"] - 1) * meta["page_size"]
-    return data[off:off + obj["vsize"]], obj["base"]
+    return data[off:off + min(obj["vsize"], obj["pages"] * meta["page_size"])], obj["base"]
 
 
 def trace_strings(data: bytes, meta: dict) -> dict[int, str]:
@@ -261,6 +265,13 @@ def selftest() -> int:
           f"8B 15 但沒有配對的寫 {unpaired!r};真實 EXE 0x37eb7 -> {real_startup!r}")
     if not ok6:
         fails.append(f"前導驗證:{(got6, lone, wrong_op, unpaired, real_startup)}")
+
+    print("\n(7) object_bytes 只取檔內頁:obj2 vsize 0x56b0 > 檔內 4 頁 → 0x4000;obj3 vsize 0x34d2 < 4 頁 → 0x34d2")
+    n2, n3 = len(object_bytes(data, meta, 1)[0]), len(object_bytes(data, meta, 2)[0])
+    ok7 = (n2, n3) == (0x4000, 0x34D2)
+    print(f"    {'PASS' if ok7 else 'FAIL'}: obj2 {n2:#x}、obj3 {n3:#x}")
+    if not ok7:
+        fails.append(f"object_bytes 長度 {n2:#x} / {n3:#x}")
 
     if fails:
         print("\nSELFTEST FAILED:")

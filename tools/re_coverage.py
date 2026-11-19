@@ -228,6 +228,26 @@ def decode_accesses(code: bytes, base: int, fx: dict[int, int],
     return out, sorted(set(fx) - seen), sorted(set(loose))
 
 
+def loose_uncovered(accesses: list[Access] | tuple[Access, ...], loose: set[int] | list[int]
+                    ) -> list[tuple[int, int]]:
+    """錨點不成立的指令中,fixup 沒有被錨點解碼補上的 [(指令位址, fixup 目標)]。
+
+    錨點不成立的指令不進大小核對;它的 fixup 若沒有另一條「錨點成立、目標相同、位址相差不到 16」的指令
+    對上,那次存取就整個從大小核對消失。2026-11-19 前只印個數,6 筆是否都補上要人工對(續二百八十七)。
+
+    Args:
+        accesses: decode_accesses 的 accesses。
+        loose: decode_accesses 的 unanchored 指令位址。
+
+    Returns:
+        沒有補上的 (指令位址, fixup 目標),依位址排序。
+    """
+    ls = set(loose)
+    trusted = [(a[0], a[1]) for a in accesses if a[0] not in ls]
+    return sorted({(a[0], a[1]) for a in accesses if a[0] in ls
+                   and not any(t == a[1] and abs(x - a[0]) < 16 for x, t in trusted)})
+
+
 def access_errors(spans: list[list], accesses: tuple[Access, ...] | list[Access]) -> list[str]:
     """直接定址(沒有 base / index)的存取 [目標, 目標+寬度) 碰到任何區段,就必須整段落在那一個區段內。
 
@@ -590,7 +610,8 @@ def load_world() -> dict:
     loose_kinds = {a[4] for a in accesses if a[0] in loose and any(b <= a[1] < b + n for b, n in objects)}
     return {"objects": objects, "funcs": funcs, "game": game, "library": library, "live": live,
             "present": present, "ctx": Ctx(funcs, fixups, read_doc, trusted),
-            "unresolved_data": in_data, "unanchored": sorted(loose), "unanchored_kinds": loose_kinds}
+            "unresolved_data": in_data, "unanchored": sorted(loose), "unanchored_kinds": loose_kinds,
+            "unanchored_uncovered": loose_uncovered(accesses, loose)}
 
 
 def load_maps() -> tuple[dict, dict]:
@@ -604,6 +625,8 @@ def evaluate(w: dict, dm: dict, rm: dict) -> dict:
     fok, ferr = check_files(rm.get("files"), w["present"], w["ctx"])
     # 對不上指令的資料 fixup 代表大小核對看不到那次存取:不能當沒事
     uerr = [f"資料 fixup {hex(s)} 對不上任何指令運算元,大小核對不完整" for s in w["unresolved_data"]]
+    uerr += [f"錨點不成立的指令 {hex(a)} 的 fixup(→ {hex(t)})沒有錨點解碼補上,大小核對看不到這次存取"
+             for a, t in w["unanchored_uncovered"]]
     return {"good": good, "errors": derr + rerr + ferr + uerr, "status": status, "files_ok": fok,
             "data": data_coverage(good, w["objects"], w["funcs"]),
             "code": code_coverage(w["funcs"], w["game"], w["library"], good)}
@@ -624,7 +647,8 @@ def print_summary(w: dict, r: dict) -> None:
     print(f"  資料區  obj2+obj3 bytes                       {pct(d['bytes_covered'], d['bytes_total'])}")
     print(f"          被程式碼引用的全域位址                {pct(d['globals_covered'], d['globals_total'])}")
     print(f"          指令層存取(大小核對用)              {len(w['ctx'].accesses)} 筆;對不上指令的資料 fixup "
-          f"{len(w['unresolved_data'])}、錨點不成立的指令 {len(w['unanchored'])}")
+          f"{len(w['unresolved_data'])}、錨點不成立的指令 {len(w['unanchored'])}"
+          f"(fixup 沒有由錨點解碼補上的 {len(w['unanchored_uncovered'])})")
     print(f"  資源    原版檔案(用途已登錄)                {pct(len(r['files_ok']), len(w['present']))}")
     print(f"          .DAT 資源 格式已驗                    {pct(vals.count('format') + vals.count('complete'), nres)}")
     print(f"          .DAT 資源 完成(格式已驗 + 用途)       {pct(vals.count('complete'), nres)}")
@@ -885,6 +909,22 @@ def selftest() -> int:
               acc_f == [(0x10000, 0x50010, 6, "r", "mem", False), (0x10007, 0x50020, 4, "r", "mem", False)])
         check("(7d3) 內部含錨點的線性指令列為 unanchored",
               loose3 == [0x10000] and (0x10001, 0x50010, 4, "r", "mem", False) in a3)
+        # (7g) 錨點不成立的指令:fixup 有錨點那條補上才算數(續二百八十七)。7c 的 0x10018 沒有對應的錨點指令,
+        # 7d3 的 0x10000 由錨點 0x10001(同一 fixup 目標)補上;目標不同或相差 >= 16 不算補上
+        check("(7g) 沒有錨點補上的被列出、有補上的不列",
+              loose_uncovered(acc, loose) == [(0x10018, 0x50050)] and loose_uncovered(a3, loose3) == [])
+        far_t = [(0x10000, 0x50010, 1, "r", "mem", False), (0x10001, 0x50011, 4, "r", "mem", False),
+                 (0x10010, 0x50010, 4, "r", "mem", False), (0x1000f, 0x50010, 4, "r", "mem", False)]
+        check("(7g2) 目標不同、相差 16 不算補上;相差 15 算",
+              loose_uncovered(far_t[:3], [0x10000]) == [(0x10000, 0x50010)]
+              and loose_uncovered(far_t[:2] + far_t[3:], [0x10000]) == [])
+        w_stub = {"objects": objects, "ctx": ctx, "live": {}, "present": {}, "unresolved_data": [],
+                  "funcs": funcs, "game": set(), "library": set()}
+        er = evaluate({**w_stub, "unanchored_uncovered": [(0x10018, 0x50050)]}, {"regions": []}, {})["errors"]
+        er0 = evaluate({**w_stub, "unanchored_uncovered": []}, {"regions": []}, {})["errors"]
+        check("(7g3) 沒有補上的列為登錄錯誤(--check 失敗)",
+              any("0x10018" in e and "沒有錨點解碼補上" in e for e in er)
+              and not any("沒有錨點解碼補上" in e for e in er0))
     else:
         print("SKIP (7) 沒有 capstone")
 

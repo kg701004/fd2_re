@@ -75,6 +75,11 @@ def lin2file(meta, lin):
     """
     for o in meta['objs']:
         if o['base'] <= lin < o['base'] + o['vsize']:
+            # 2026-11-19:object 的 vsize 可以大於檔內頁數 × 頁大小(obj2 0x56b0 > 4 頁 = 0x4000),
+            # 超出的部分是載入時填零的頁(BSS),檔內沒有對應位元組;原本照公式算下去會落到下一個
+            # object 的檔內頁,讀出看似合理的錯誤資料(例:0x54157 讀到 obj3 的 bytes)。
+            if lin - o['base'] >= o['pages'] * meta['page_size']:
+                raise ValueError(f"linear 位址 {lin:#x} 在 object 的零填頁(BSS),檔內沒有對應位元組")
             return (meta['data_off'] + (o['first'] - 1) * meta['page_size']
                     + lin - o['base'])
     raise ValueError(f"linear 位址 {lin:#x} 不落在任何 object 內")
@@ -195,6 +200,9 @@ def object_bytes(d, meta, start, length):
     obj = next((o for o in meta['objs'] if o['base'] <= start and start + length <= o['base'] + o['vsize']), None)
     if obj is None:
         raise ValueError("range outside one LE object")
+    # 2026-11-19:範圍要整段在檔內頁;零填頁(BSS)沒有檔內位元組(見 lin2file)
+    if start + length > obj['base'] + obj['pages'] * meta['page_size']:
+        raise ValueError("range reaches the object's zero-filled pages (BSS), no file bytes")
     foff = meta['data_off'] + (obj['first'] - 1) * meta['page_size'] + (start - obj['base'])
     return d[foff:foff + length]
 
@@ -299,8 +307,11 @@ def selftest():
                 return (meta["data_off"] + (o["first"] - 1) * meta["page_size"]
                         + lin - o["base"])
         return None
+    # 每個 object 的最後一個檔內 byte(vsize 與檔內頁取小者);零填頁另由 (3b) 測
+    def last_filed(o):
+        return o["base"] + min(o["vsize"], o["pages"] * meta["page_size"]) - 1
     bad = [hex(lin) for o in meta["objs"]
-           for lin in (o["base"], o["base"] + 1, o["base"] + o["vsize"] - 1,
+           for lin in (o["base"], o["base"] + 1, last_filed(o),
                        o["base"] + o["vsize"] // 2)
            if lin2file(meta, lin) != reference(lin)]
     ok2 = not bad
@@ -317,6 +328,42 @@ def selftest():
             fails.append(f"{lin:#x} 沒有被擋下")
         except ValueError:
             print(f"    PASS: {lin:#x} -> ValueError")
+
+    print("\n(3b) object 的零填頁(BSS)必須丟錯;配對對照:檔內最後一個 byte 照常換算")
+    # obj2 vsize 0x56b0、檔內 4 頁 → 0x54000 起是零填頁。0x54157 原本會換算到 obj3 的檔內頁。
+    for lin, n in ((0x54000, 1), (0x54157, 1), (0x53FFF, 2)):
+        try:
+            got = object_bytes(d, meta, lin, n)
+            print(f"    FAIL: object_bytes({lin:#x}, {n}) 沒有被擋下,讀出 {bytes(got).hex()}")
+            fails.append(f"object_bytes {lin:#x}+{n} 沒有被擋下")
+        except ValueError:
+            print(f"    PASS: object_bytes({lin:#x}, {n}) -> ValueError")
+    for lin in (0x54000, 0x54157, 0x556AF):
+        try:
+            got = lin2file(meta, lin)
+            print(f"    FAIL: lin2file({lin:#x}) 沒有被擋下,算出 {got:#x}")
+            fails.append(f"lin2file {lin:#x} 沒有被擋下")
+        except ValueError:
+            print(f"    PASS: lin2file({lin:#x}) -> ValueError")
+    try:
+        # 內容也要對:寶物表 0x5274e 的已知 4 byte(與 (1) 同一錨點)、0x53fff 與 lin2file 換算的那個 byte
+        ok3b = (bytes(object_bytes(d, meta, 0x5274E, 4)).hex() == "1d2b333d"
+                and bytes(object_bytes(d, meta, 0x53FFF, 1)) == d[lin2file(meta, 0x53FFF):][:1]
+                and lin2file(meta, 0x53FFF) == reference(0x53FFF))
+    except ValueError:
+        ok3b = False
+    # 長度邊界:0 與 0x10000 合法,-1 與 0x10001 丟錯
+    lens = []
+    for n in (0, 0x10000, -1, 0x10001):
+        try:
+            lens.append(len(object_bytes(d, meta, 0x10000, n)))
+        except ValueError:
+            lens.append("err")
+    ok3b = ok3b and lens == [0, 0x10000, "err", "err"]
+    print(f"    {'PASS' if lens == [0, 0x10000, 'err', 'err'] else 'FAIL'}: object_bytes 長度 0 / 0x10000 / -1 / 0x10001 -> {lens}")
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 0x53fff(obj2 最後一個檔內 byte)照常換算")
+    if not ok3b:
+        fails.append("檔內最後一個 byte 被誤擋")
 
     print("\n(4) 非恆真控制:各 object 的換算基準必須互不相同")
     # 若三個 object 用同一個基準,就等於又退回舊的單一公式。

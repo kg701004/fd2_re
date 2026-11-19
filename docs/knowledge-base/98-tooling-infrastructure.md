@@ -15942,3 +15942,77 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 - 0x52dfc 計時器 ISR 堆疊的實際深度、0x53730 / 0x54630 的實際長度:沒有 EXE 內常數,要活體量測。
 - 跳字佇列可能寫出陣列的極端情況、序章低階分支的表外讀取:由 FD2.EXE 反組譯與 FDFIELD.DAT 推得,沒有實機驗證。
 - 34 筆資源沒有用途(見 (4));FIGANI 的 k = 0 / 1 / 2 各代表什麼動作、DATO 頭像號對應哪個角色沒有登錄。
+
+## 2026-11-19 續二百八十七:規格層缺口補齊 —— 資料區 35714/35714、資源用途 1005/1005、LE 零填頁換算、單位記錄 +7 的 136 個值
+
+起因:使用者問「還有哪些問題?該如何全面完善?依照你的建議自動逐項進行」。續二百八十六結束時 `re_coverage` 還有三個缺口:資料區 89.9%(65 個空隙 3623 byte)、資源用途 971/1005、指令層「錨點不成立的指令 6」;另有續二百八十六 (7) 的四項。靜態可做的全部在本輪處理,證據由 `evidence/generators/ev_s287.py` 從 org_game 原版檔案重算(58 個 assert,`mut_s287.py` 31/31)。
+
+### (1) 工具盲點:LE 物件的零填頁(BSS)
+
+- obj2 的 vsize 是 0x56b0,檔內只有 4 頁(0x4000);0x54000 .. 0x556b0 是載入時填零的頁,檔內沒有位元組。`disasm_le.lin2file` / `object_bytes` 照「data_off + (first − 1) × 頁大小 + 位移」算下去會落到 obj3 的檔內頁,讀出看似合理的錯資料(org_game 原版 FD2.EXE:0x54157 換算到 obj3 的檔內位移)。這次登錄空隙時 `object_bytes(0x54157)` 讀到 `001e` 之類的非 0 值才發現。
+- 改成丟 ValueError;同一條公式的另外 4 份一起改:`dump_exe_tables.lin2file`、`derive_ail_entry_points.object_bytes`(原本切到 vsize,obj2 會多帶 obj3 的前 0x16b0 byte)、`extract_native_treasure_event_rules.linear_bytes` / `linear_offset`、`extract_native_unit_tables.linear_file_offset`。`callgraph_le` selftest 裡那一份只換算 fixup 來源(都在檔內頁),不改。
+- 影響:3 支工具修正前後輸出逐 byte 相同、`run_all.py` 92/92 IDENTICAL,所以現有結論沒有讀到 BSS;這是潛在錯誤。selftest:disasm_le (3b)(0x54000 / 0x54157 / 0x556af 丟錯,配對對照 0x53fff 照常)、test_dump_exe_tables 新題、derive_ail_entry_points (7)(obj2 0x4000、obj3 0x34d2)、extract_native_treasure_event_rules (5b)。
+
+### (2) 工具盲點:錨點不成立的指令
+
+- `re_coverage` 的「錨點不成立的指令 6」只印個數。這種指令不進大小核對,它的 fixup 若沒有另一條錨點解碼補上,那次存取就整個消失。新增 `loose_uncovered`:每條錨點不成立的指令要有一條「錨點成立、fixup 目標相同、位址差 < 16」的指令,否則列為登錄錯誤(`--check` 失敗)。
+- 現況 6/6 都補上:0x37027(→ 0x37028 寫 0x52794)、0x40102(→ 0x40101 讀 0x53690)、0x40112(→ 0x40113 取 0x40100)、0x42112(→ 0x42111 讀 0x5371c)、0x4211d(→ 0x4211e 取 0x45380)、0x45672(→ 0x45671 讀 0x5372c),都是函式前的填充把線性掃描帶錯位(FD2.EXE 反組譯)。selftest (7g) / (7g2) / (7g3)。
+
+### (3) 資料區 65 個空隙全部登錄(data_map 840 → 935 段)
+
+- 49 段對齊填充(103 byte):下一項起點 4 對齊、空隙 < 4、沒有任何指令引用或 fixup 指向(ev_s287 (B) 逐段核)。AIL 錯誤字串之間的填充是前一個字串留下的非 0 byte(例:0x51499 `73 69 7a`)。
+- 字串池拆成單一字串:數學函式名 23 條(0x516f4 "acos" .. 0x5175a "cotan",math_func_names 0x538c0 的 fixup 指向)、math 錯誤種類名 6 條(0x51770 "Domain error" .. 0x517d8,math_err_type_names 0x51980 指向);每條由 verify_data_types 核逐 byte 內容。
+- 有引用的表:0x53794 handle 模式旗標 20 個 dword(io_mode_table_ptr 初值指向,初值 1、2、2、3、2,其餘 0);0x53896 tzname[2](指向 "EST" / "EDT",遊戲不用);0x52a4d 指向 stdio_open_streams 的 dword(沒有指令引用)。
+- **演出序列庫 0x62980 .. 0x634d2(2898 byte)**:acting_seq_table 106 格依序指向這裡,逐筆照 doc50 §1.2 的格式解碼,104 筆的結尾正好是下一筆的起點,最後一筆正好結束在物件 3 結尾。兩筆不相接:
+  - 第 24 筆(event_handler_17 0x34a5d `push 0x18`,org_game 原版 FDFIELD 第 4 圖第 8 回合的回合事件 17)唯一一幀宣告 N = 5,只有 4 對;第 5 對讀到第 25 筆開頭的 `01 05`,act 0x1373f 把 pose 5 原值寫進單位 1 的 +3。繪製 0x127e0 以 `槽 × 12 + pose × 3 + 幀`(0x1291e .. 0x12932)取圖,pose 5 = 取到下一個 FDICON 快取槽 pose 1(左)的圖。單位 1 是第 4 圖的我方第 2 人,所以原版在這一刻可能把他畫成別人的向左圖,直到 +3 被改寫(實機見 (6b))。
+  - 第 84 筆宣告 1 幀,後面 `88 01 01 02` 是不會播到的第 2 幀(格式與第 83 筆的第 2 幀相同)。
+  - 除了第 24 筆那一對,106 筆的 pose 全是 0 .. 3。
+- 沒有引用的段(檔內位元組都核過):0x50000 `01 01 01 00`(位置與位元組符合 Watcom 的 `__nullarea`,推論)、ctype 表後 4 byte、0x51ec5 的 dword 0 .. 3(與緊接的 action_ring_item_icons 逐 byte 相同)、0x52828 / 0x53ac9 / 0x53ae5 / 0x53ed4 / 0x53f42 / 0x6017d / 0x54196 的零。0x53bb7 的 40 byte 是 fdicon_cache_keys 寫超過 40 槽時會落到的地方(續二百八十六已證原版資料最多 32 槽)。
+- 0x53734(60 byte)與 0x54631(127 byte):EXE 內沒有引用,分別緊接系統暫存器緩衝 0x53730 與 FA20h 緩衝 0x54630;緩衝實際多長由 DOS extender 決定,登錄成「沒有指令引用;可能是緩衝後段」。實際長度見 (6)。
+
+### (4) 資源用途 34 筆補齊
+
+- 11 筆空資源:每個容器的目錄最後一格(位移 = 檔案長度、長度 0),是前一筆的結尾,不是資源(load_res 0x111ba 以 [號 × 4 + 6] 與下一格求長度)。
+- BG 12 筆(10 個 10×3 全透明佔位與第 38 / 45 號):16 個 BG.DAT 載入點的資源號逐一追到來源 —— 常數 0 / 1 / 2(9 處,其中 0x2fb51 `push ebp` 前面 `xor ebp, ebp`)、map_cell_info 輸出 +6(地形屬性表 byte 2)、0x52470 章節表(只有 0 / 3)、片尾示範戰 [0x54133](0x52711 表)。org_game 原版 FDSHAP.DAT 33 個地形屬性表與兩張表的值集合正好缺這 12 個號碼,所以不會被載入。第 38 號是草原遠山與土崖、第 45 號是城牆拱門前的石板平台(解碼看圖,doc01 樣本表加列)。
+- TITLE 第 1 .. 6 號:標題選單按鈕字樣 START / LOAD / CONTINUE 各一般與選中(選中兩側多寶石飾);FD2.EXE 不開 TITLE.DAT。
+- FDMUS 第 0 / 2 / 5 / 7 / 9 號(3 byte `20 0d 0a`):不是「沒有用途」—— town_hub_main 按掃描碼 0x22 時曲號在 0 .. 9 循環(0x264cd .. 0x264e8),會以 play_bgm 載入。載入後的行為由實機確定(見 (6b)):序列被設成播放中、重播上一首已釋放的緩衝,停在佔位曲出擊會讓戰鬥開場卡死。
+
+### (5) 單位記錄 +7:FIGANI 組號 = DATO 頭像號
+
+- 兩者用同一個值(doc35:FIGANI 資源號 = +7 × 3 + k;doc14:開框碼與 info_card_build 以 +7 載 DATO)。136 個值三段:0 .. 31 是角色(JOIN 寫入角色號)、32 .. 67 是轉職形態(class_change_targets:0x20 + p 預設、0x32 + p 持指定道具、0x34 是悠妮持道具 0x5a;66 / 67 沒有轉職公式產生,FDFIELD 第 32 圖有一筆 66)、68 .. 135 是一般單位(建構器以 high_class 第 +7 − 68 列)。32 + 36 + 68 = 136,正好是 DATO 的頭像數與 FIGANI 的組數。
+- 名稱由遊戲資料取得:畫面上的名字是 FDTXT_000 第 +8 + 1 條(0x18d73 `movzx eax, byte [esi + 8]` / `inc eax`);第 1 .. 32 條與 characters.json 的 32 個角色名 32/32 相同,第 33 .. 68 條是空字串(轉職只改 +7,+8 不變),第 69 條起是士兵、騎兵、傭兵 … 女村民、男村民、卡納恩三世(續二百八十六之前 doc50 記的「DATO133 / 134 村民」與此一致)。136 個值的使用者(含 FDFIELD 使用筆數與地圖)列在證據檔 `E_unit_keys.keys`,resource_map 的 DATO 136 筆、FIGANI 408 筆都引用。
+- FIGANI k:k = 0 有 11 個載入點(每個場景的出場單位都載)、k = 1 有 6 個(攻擊 / 道具 / 法術效果 / 角色卡)、k = 2 只有 derived_strike_scene 0x2d253 與 spell_cast_scene 0x3024c;spell_cast_scene 在 k = 2 幀數為 0 時改載 k = 1(0x30289 .. 0x30298)。136 組只有 17 組有 k = 2 的幀:蜜蒂、羅德曼、謝多、索爾 / 鐵諾的轉職形態、魔法師系、火龍 / 雷龍、龍人法師、大惡魔、四魔神、暗黑龍。逐幀解碼第 18 組(蜜蒂)與第 90 組(魔法師):k = 0 站姿、k = 1 揮劍 / 一般攻擊、k = 2 放出大劍氣 / 舉杖施法。
+
+### (6) 實機:ISR 堆疊與兩個 extender 緩衝(續二百八十六 (7) 第 1 項)
+
+- 原版 FD2.EXE(md5 33464c81…)、WSL Ubuntu、預設 harness dosbox-x(SB16 DIG + SBPRO2 MDI),驅動 `evidence/generators/drivers_s287/lc287.py`,預測 `pred287.txt` 先寫。不寫記憶體、不下斷點;執行期位址 = LE 線性 + 0x19C000(續一百九十二)。標題畫面 CPU 一直停在 real mode(等鍵的 BIOS 呼叫),改用選擇子 0 平面讀,讀到的是不是本程式資料區由對照字串判定(0x51760 "RATIONAL DOS/4G"、0x516f0 "TZ" 三次都符合)。
+- 讀三次:A = 標題選單 60 s、B = 新遊戲序章 60 s、C = 再推進 20 句對白。ISR 堆疊高水位 228 / 228 / 230 byte(最低的非 0 byte 0x53518 / 0x53518 / 0x53516;推入的 0 看不到,所以是下界),0x52dfc 起 1818 byte 全 0,2048 byte 用到約 11%。堆疊裡有 0x3eb42(ail_timer_isr 回呼迴圈 0x3eb3c `call [edi + 0x52a54]` 的下一條)的返回位址。預測 P2(0x100 .. 0x400)的下限沒有成立,照實記錄、判準不改;P1 / P3 / P4 / P5 成立。
+- 0x53730 .. 0x53770 與 0x54630 .. 0x546b0 三次都全 0:DOSBox-X 有 FPU(fpu_detect 結果 0x527f4 / 0x527f5 = 03 03),emu387 安裝路徑(0x46200 / 0x462c9 呼叫 0x462e6、0x46264 / 0x46270 呼叫 0x49c26)不走,0x53920 / 0x53921 = 0。所以實機量不到這兩個緩衝被寫多長。
+- 改由規格定 0x53730:int 21h AX=2535h 是 Phar Lap 386|DOS-Extender 的讀寫系統暫存器呼叫,Ralf Brown 中斷表(INT 21/AX=2535h,Table 01375,https://mirror.cs.msu.ru/oldlinux.org/Linux.old/docs/interrupts/int-html/rb-2664.htm)的記錄格式:CR0(00h)、DR0 .. DR3(04h)、保留 2 個 dword(14h)、DR6 / DR7(1Ch)、保留 3 個 dword(24h),共 30h = 48 byte。data_map 0x53730 改登 48 byte(dword[12],fields 列各格),0x53760 .. 0x53770 的 16 byte 另登「沒有引用」。bound 的 DOS/4GW 實際寫幾 byte 沒有驗證。int 2Fh AX=FA20h 查不到公開規格,0x54630 維持只登起點。
+- ev_s287 (F) 從 `.wsl_build/lc287_live/lc287a/{A,B,C}/*.bin` 重算(堆疊三份 md5 釘住,inputs_manifest 登錄)。
+
+### (6b) 實機:FDMUS 佔位曲與演出第 24 筆(續二百八十七 (8) 原列的兩項,使用者要求同時進行)
+
+- 驅動 `drivers_s287/lc287b.py`(由 lc192.py 複製,加 `seq` / `unit` 讀取)與 `turns287.py`(正常結束回合),預測 `pred287b.txt`(補 1 .. 補 4 都在各次實機之前寫)。原版 FD2.EXE、存檔槽 0 章節 byte 改 4(第五章塞拉村)。
+- **佔位曲的靜態路徑**(實機前重讀):AIL_init_sequence 0x443d0 先寫 handle +4 = 2,0x42520 找不到 XMIDI 就把 0x515f4 "Invalid XMIDI sequence\n" 複製到 0x541f4、回 0,handle +8 .. +0x10 不重設;AIL_start_sequence 0x44790 只在 +4 == 1 時不做,否則 +4 = 4、+0x14 = [+0x10] + 8。play_bgm 0x25977 兩個回傳都不看。
+- **lc287b**:城鎮按 g 依序得 [0x51a11] = 1、2、3、4、5。第 2 號(佔位):錯誤緩衝 = "Invalid XMIDI sequence\n"、狀態 4、p10 沿用第 1 首(0x236e3c)、新緩衝在 0x1f6d98(舊的 0x236df4 沒被覆蓋),按鍵後約 2 s 的事件指標與第 1 首同時點一樣(0x236fee)—— 從頭重播上一首、讀的是已釋放的緩衝。第 5 號(佔位)兩次讀之間事件指標 0x236fd2 → 0x237090,持續在讀。停在 5 出擊:開場第 2 句對白之後停住,輸入迴圈 0 筆,[0x51a11] = 255(play_bgm(-1) 只淡出、不換曲),序列仍是狀態 4、事件指標停在 0x237c58(那裡已經是別的資料,一串遞增的 dword),10 次 EIP 取樣 9 次在 AIL XMIDI 序列器(0x42xxx .. 0x43xxx)。
+- **對照與重現**:lc287c / lc287d(不按 g)與 lc287e(經過佔位曲 2、停在真曲 4)都在第 15 .. 25 次 Return 進輸入迴圈;lc287f(停在佔位曲 2)重現卡住:30 次 Return 輸入迴圈 0 筆、事件指標停在 0x2372f4、EIP 6/10 在序列器。所以卡住歸因於「出擊時最後一首是佔位曲」,不是按 g 本身。這是原版玩家按 G 切歌就能碰到的卡死;有沒有聲音(重播上一首)實機聽不到,只由指標推得。
+- **演出第 24 筆**:lc287c 先 poke 回合數 6 想跳過前 5 回合,第 7 回合事件 16 之後劇本停住(跳過事件 14 / 15,預測檔已寫明的風險),作廢。lc287d 不寫記憶體、正常結束 7 次回合:回合事件 17 是 camp 0,在第 8 回合**敵方階段**開始時觸發(event_handler_17 1 次、act(0x18) 1 次)。演出之後單位 1 的 +3 = 5,單位 48 .. 51 = 0;單位 1 是悠妮(+8 = 9)持道具的 0x34 轉職形態、快取槽 1,所以繪製取的是槽 2(單位 2)pose 1 的圖。這一刻鏡頭在敵方那一側,畫面上沒拍到單位 1;對白結束、敵方行動開始後讀到 +3 = 0(被改回)。
+- 證據 ev_s287 (G) / (H):原始 dump(`.wsl_build/lc287b_live/cl/`)與 lc287b / d / e / f 的 CALLLOG(md5 釘住,inputs_manifest 登錄)重算;mut_s287 46/46。
+
+### (7) 驗證
+
+- selftest:`disasm_le`、`re_coverage`、`derive_ail_entry_points`、`extract_native_treasure_event_rules` PASS;`tools/test_dump_exe_tables` 7 題 OK(含零填頁一題)。修正前後:`derive_ail_entry_points --json`、`extract_native_unit_tables`、`extract_native_treasure_event_rules` 對 org_game 原版 FD2.EXE 的輸出逐 byte 相同;`run_all.py` 93/93 IDENTICAL。
+- `re_coverage --check`:遊戲函式 1202/1202、全域 900/900、資料 35714/35714、原版檔案 49/49、`.DAT` 資源 1005/1005 完成、錨點不成立的指令 6(沒補上 0)、登錄錯誤 0;`verify_data_types --check` / `verify_data_lower_bounds --check` rc 0。
+- 證據:ev_s287 88 個 assert 全部執行(census 93/93、9/9),mut_s287 46/46。
+- 閘門 `gates_s262.sh` 13/13 rc 0。第一次 `audit_evidence_provenance --diff` 擋下 (8) 兩行缺來源標記、`verify_address_claim_coverage` 擋下 (2) 的 5 個錯位假指令起點(0x40102 / 0x40112 / 0x42112 / 0x4211d / 0x45672);前者補「org_game 原版」與位址(寫入 (6b) 後 (8) 新的一行又擋一次,同樣補標記),後者以 `--mark-reviewed … other` 登錄(不是入口主張)。
+- 突變窮舉(`--exhaustive --tool`,加 `--confirm-timeouts`;selftest 讀 org_game 原版 FD2.EXE):
+  - disasm_le 第一輪 38/41,3 個逃逸都在 `object_bytes`:長度檢查的兩個常數(0 → 1、0x10000 → 0x10001)與頁號 `first − 1` → `first − 2` —— (3b) 的配對對照只核長度、沒核內容。補長度 0 / 0x10000 / −1 / 0x10001 四題與 0x5274e 寶物表 4 byte 內容,第二輪 41/41。
+  - re_coverage 101/102、derive_ail_entry_points 10/11、extract_native_treasure_event_rules 30/33,其餘都是已登錄的等價突變,歸零。`dump_exe_tables`、`extract_native_unit_tables` 沒有登錄 selftest(見 (8))。
+
+### (8) 仍未完成
+
+- 演出第 24 筆 pose 5 的畫面(單位 1 畫成槽 2 的向左圖;繪製 0x1291e):原版 FD2.EXE 實機記憶體已證 +3 = 5,畫面沒拍到(演出時鏡頭在敵方側;要再打一次到第 8 回合敵方階段、演出當下截圖)。
+- 續二百八十六 (7) 第 2 項(跳字佇列可能寫出陣列、序章低階分支的表外讀取)仍只有靜態推論;本輪的 +7 對照表確認 org_game 原版 FDFIELD 序章第 32 圖用到的 66 不屬於任何轉職公式(低階分支 0x10e2c 以 lower_class 第 66 列讀表外)。
+- bound 的 DOS/4GW 對 int 21h AX=2535h 實際寫幾 byte、int 2Fh AX=FA20h 緩衝的長度:DOSBox-X 有 FPU,不走這兩個呼叫;要在沒有 FPU 的設定下實機才量得到。
+- `extract_native_unit_tables.py` 沒有 selftest,本輪加的 BSS 檢查沒有自動化覆蓋(突變窮舉對它是 UNVERIFIABLE);修正前後輸出逐 byte 相同。
