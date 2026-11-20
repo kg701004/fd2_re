@@ -15960,7 +15960,7 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 ### (3) 資料區 65 個空隙全部登錄(data_map 840 → 935 段)
 
-- 49 段對齊填充(103 byte):下一項起點 4 對齊、空隙 < 4、沒有任何指令引用或 fixup 指向(ev_s287 (B) 逐段核)。AIL 錯誤字串之間的填充是前一個字串留下的非 0 byte(例:0x51499 `73 69 7a`)。
+- 49 段對齊填充(103 byte):下一項起點 4 對齊、空隙 < 4、沒有任何指令引用或 fixup 指向(ev_s287 (B) 逐段核)。其中 25 段(都在 AIL 字串區 0x512cf .. 0x5166b)內容不是 0(例:0x51499 `73 69 7a`);前一段字串都以 0 結尾、這些 byte 也沒有引用,來源不明(續二百八十七重驗:原寫「前一個字串留下的」沒有根據,改正)。
 - 字串池拆成單一字串:數學函式名 23 條(0x516f4 "acos" .. 0x5175a "cotan",math_func_names 0x538c0 的 fixup 指向)、math 錯誤種類名 6 條(0x51770 "Domain error" .. 0x517d8,math_err_type_names 0x51980 指向);每條由 verify_data_types 核逐 byte 內容。
 - 有引用的表:0x53794 handle 模式旗標 20 個 dword(io_mode_table_ptr 初值指向,初值 1、2、2、3、2,其餘 0);0x53896 tzname[2](指向 "EST" / "EDT",遊戲不用);0x52a4d 指向 stdio_open_streams 的 dword(沒有指令引用)。
 - **演出序列庫 0x62980 .. 0x634d2(2898 byte)**:acting_seq_table 106 格依序指向這裡,逐筆照 doc50 §1.2 的格式解碼,104 筆的結尾正好是下一筆的起點,最後一筆正好結束在物件 3 結尾。兩筆不相接:
@@ -15995,8 +15995,8 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 - 驅動 `drivers_s287/lc287b.py`(由 lc192.py 複製,加 `seq` / `unit` 讀取)與 `turns287.py`(正常結束回合),預測 `pred287b.txt`(補 1 .. 補 4 都在各次實機之前寫)。原版 FD2.EXE、存檔槽 0 章節 byte 改 4(第五章塞拉村)。
 - **佔位曲的靜態路徑**(實機前重讀):AIL_init_sequence 0x443d0 先寫 handle +4 = 2,0x42520 找不到 XMIDI 就把 0x515f4 "Invalid XMIDI sequence\n" 複製到 0x541f4、回 0,handle +8 .. +0x10 不重設;AIL_start_sequence 0x44790 只在 +4 == 1 時不做,否則 +4 = 4、+0x14 = [+0x10] + 8。play_bgm 0x25977 兩個回傳都不看。
-- **lc287b**:城鎮按 g 依序得 [0x51a11] = 1、2、3、4、5。第 2 號(佔位):錯誤緩衝 = "Invalid XMIDI sequence\n"、狀態 4、p10 沿用第 1 首(0x236e3c)、新緩衝在 0x1f6d98(舊的 0x236df4 沒被覆蓋),按鍵後約 2 s 的事件指標與第 1 首同時點一樣(0x236fee)—— 從頭重播上一首、讀的是已釋放的緩衝。第 5 號(佔位)兩次讀之間事件指標 0x236fd2 → 0x237090,持續在讀。停在 5 出擊:開場第 2 句對白之後停住,輸入迴圈 0 筆,[0x51a11] = 255(play_bgm(-1) 只淡出、不換曲),序列仍是狀態 4、事件指標停在 0x237c58(那裡已經是別的資料,一串遞增的 dword),10 次 EIP 取樣 9 次在 AIL XMIDI 序列器(0x42xxx .. 0x43xxx)。
-- **對照與重現**:lc287c / lc287d(不按 g)與 lc287e(經過佔位曲 2、停在真曲 4)都在第 15 .. 25 次 Return 進輸入迴圈;lc287f(停在佔位曲 2)重現卡住:30 次 Return 輸入迴圈 0 筆、事件指標停在 0x2372f4、EIP 6/10 在序列器。所以卡住歸因於「出擊時最後一首是佔位曲」,不是按 g 本身。這是原版玩家按 G 切歌就能碰到的卡死;有沒有聲音(重播上一首)實機聽不到,只由指標推得。
+- **lc287b**:城鎮按 g 依序得 [0x51a11] = 1、2、3、4、5。第 2 號(佔位):錯誤緩衝 = "Invalid XMIDI sequence\n"、狀態 4、p10 沿用第 1 首(0x236e3c)、新緩衝在 0x1f6d98(舊的 0x236df4 沒有另外讀;重播到與第 1 首同一點,表示舊緩衝到 0x236fee 為止內容仍在 —— 推論),按鍵後約 2 s 的事件指標與第 1 首同時點一樣(0x236fee)—— 從頭重播上一首、讀的是已釋放的緩衝。第 5 號(佔位)兩次讀之間事件指標 0x236fd2 → 0x237090,持續在讀。停在 5 出擊:開場第 2 句對白之後停住,輸入迴圈 0 筆,[0x51a11] = 255(play_bgm(-1) 只淡出、不換曲),序列仍是狀態 4、事件指標停在 0x237c58(那裡已經是別的資料,一串遞增的 dword,`cl/lc287b/stuck_evnt.bin`)。這次的 EIP 取樣當時只印在終端、沒有存檔,不列為證據(重驗改正;原寫 9/10)。錯誤緩衝在之後真曲載入成功時不會清除(sg3 / sg4 仍是同一字串),所以判定 init 失敗靠的是 p10 不在新緩衝內、仍指向舊緩衝,不是錯誤字串。
+- **對照與重現**:lc287c / lc287d(不按 g)與 lc287e(經過佔位曲 2、停在真曲 4)都在第 15 .. 25 次 Return 進輸入迴圈;lc287f(停在佔位曲 2)重現卡住:30 次 Return 輸入迴圈 0 筆、事件指標停在 0x2372f4;EIP 10 次取樣 6 次在 ail_xmidi_event(0x42980)/ ail_mdi_send_channel_message(0x422c0)、4 次在真實模式(0x3ef3 .. 0x3f19,`cl/lc287f_eip.json`)。CALLLOG 的 play_bgm 引數:卡住的 lc287b(…, 5, -1)/ lc287f(…, 2, -1)在出擊的 play_bgm(-1) 之後沒有再呼叫;lc287d / lc287e 在 play_bgm(-1) 之後都呼叫 play_bgm(3) 進戰鬥曲。所以停在淡出之後、戰鬥曲載入之前;主程式停在哪一個迴圈沒有確定(重驗補)。所以卡住歸因於「出擊時最後一首是佔位曲」,不是按 g 本身。這是原版玩家按 G 切歌就能碰到的卡死;有沒有聲音(重播上一首)實機聽不到,只由指標推得。
 - **演出第 24 筆**:lc287c 先 poke 回合數 6 想跳過前 5 回合,第 7 回合事件 16 之後劇本停住(跳過事件 14 / 15,預測檔已寫明的風險),作廢。lc287d 不寫記憶體、正常結束 7 次回合:回合事件 17 是 camp 0,在第 8 回合**敵方階段**開始時觸發(event_handler_17 1 次、act(0x18) 1 次)。演出之後單位 1 的 +3 = 5,單位 48 .. 51 = 0;單位 1 是悠妮(+8 = 9)持道具的 0x34 轉職形態、快取槽 1,所以繪製取的是槽 2(單位 2)pose 1 的圖。這一刻鏡頭在敵方那一側,畫面上沒拍到單位 1;對白結束、敵方行動開始後讀到 +3 = 0(被改回)。
 - 證據 ev_s287 (G) / (H):原始 dump(`.wsl_build/lc287b_live/cl/`)與 lc287b / d / e / f 的 CALLLOG(md5 釘住,inputs_manifest 登錄)重算;mut_s287 46/46。
 
@@ -16004,11 +16004,12 @@ type:`dword(檔案 I/O 錯誤碼:0 成功、2 配置失敗、3 開檔失敗、4 
 
 - selftest:`disasm_le`、`re_coverage`、`derive_ail_entry_points`、`extract_native_treasure_event_rules` PASS;`tools/test_dump_exe_tables` 7 題 OK(含零填頁一題)。修正前後:`derive_ail_entry_points --json`、`extract_native_unit_tables`、`extract_native_treasure_event_rules` 對 org_game 原版 FD2.EXE 的輸出逐 byte 相同;`run_all.py` 93/93 IDENTICAL。
 - `re_coverage --check`:遊戲函式 1202/1202、全域 900/900、資料 35714/35714、原版檔案 49/49、`.DAT` 資源 1005/1005 完成、錨點不成立的指令 6(沒補上 0)、登錄錯誤 0;`verify_data_types --check` / `verify_data_lower_bounds --check` rc 0。
-- 證據:ev_s287 88 個 assert 全部執行(census 93/93、9/9),mut_s287 46/46。
+- 證據:ev_s287 92 個 assert 全部執行(census 93/93、9/9),mut_s287 51/51。
 - 閘門 `gates_s262.sh` 13/13 rc 0。第一次 `audit_evidence_provenance --diff` 擋下 (8) 兩行缺來源標記、`verify_address_claim_coverage` 擋下 (2) 的 5 個錯位假指令起點(0x40102 / 0x40112 / 0x42112 / 0x4211d / 0x45672);前者補「org_game 原版」與位址(寫入 (6b) 後 (8) 新的一行又擋一次,同樣補標記),後者以 `--mark-reviewed … other` 登錄(不是入口主張)。
 - 突變窮舉(`--exhaustive --tool`,加 `--confirm-timeouts`;selftest 讀 org_game 原版 FD2.EXE):
   - disasm_le 第一輪 38/41,3 個逃逸都在 `object_bytes`:長度檢查的兩個常數(0 → 1、0x10000 → 0x10001)與頁號 `first − 1` → `first − 2` —— (3b) 的配對對照只核長度、沒核內容。補長度 0 / 0x10000 / −1 / 0x10001 四題與 0x5274e 寶物表 4 byte 內容,第二輪 41/41。
   - re_coverage 101/102、derive_ail_entry_points 10/11、extract_native_treasure_event_rules 30/33,其餘都是已登錄的等價突變,歸零。`dump_exe_tables`、`extract_native_unit_tables` 沒有登錄 selftest(見 (8))。
+- 重驗(2026-11-20,使用者「請重新仔細驗證分析全部內容」):另寫獨立腳本(自己解析 LE 標頭 / fixup、自己反組譯,不用 disasm_le / ev_s287),對 org_game 原版 FD2.EXE 重算 —— obj2 vsize 0x56b0 / 檔內 0x4000;演出表 106 格、0x62980 .. 0x634d2,不相接只有第 24 筆(多讀 `01 05`)與第 84 筆(尾端 `88 01 01 02`),pose 5 只出現在第 24 筆;data_map 935 段無重疊、無空隙、合計 35714;49 段填充 103 byte 都沒有引用;0x53730 只被 0x462e6 / 0x463ba 的 int 21h AX=2535h 用(首 dword 改 CR0);ISR 堆疊頂 0x535fc(0x3eabe 等 4 處);+7 ≥ 0x44 時減 0x44 取 high_class(0x1c8a3 / 0x1efdb / 0x2fa56);1005 筆資源用途都非空;TITLE 不在任何 EXE / BAT。實機原始 dump 逐值對過 (6b) 的指標。改正 3 處((2) 填充來源、(6b) lc287b EIP 取樣沒有存檔、舊緩衝措辭),ev_s287 (G) 補兩個判準(p10 不在新緩衝內 —— 錯誤字串成功時不清除,原本那條判不出來;出擊後 play_bgm(3) 有 / 沒有)。0x53730 的 48 byte 版面要再對 Ralf Brown 原文:ctyme 拒絕連線、delorie 404,BLOCKED。
 
 ### (8) 仍未完成
 

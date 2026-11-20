@@ -315,6 +315,10 @@ assert B["sg1"]["status"] == 4 and B["sg1"]["err"] == b""
 assert B["sg2"]["err"] == INVALID and B["sg2"]["status"] == 4 and B["sg2"]["p10"] == B["sg1"]["p10"]
 assert B["sg2"]["musbuf"] != B["sg1"]["musbuf"] and B["sg3"]["musbuf"] == B["sg1"]["musbuf"]
 assert B["sg2"]["evnt"] == B["sg1"]["evnt"]                     # 同樣按鍵後約 2 s 讀:從第 1 首開頭重播到同一點
+# init 失敗的判準是 p10 不在新的 3 byte 緩衝內(仍指向舊緩衝);錯誤字串成功時不清除(sg3 / sg4 真曲後仍在),不能當判準
+for k in ("sg2", "sg5a"):
+    assert not B[k]["musbuf"] <= B[k]["p10"] < B[k]["musbuf"] + 3 and B["sg1"]["musbuf"] <= B[k]["p10"] < B["sg1"]["musbuf"] + 0x1000, k
+assert B["sg3"]["err"] == B["sg4"]["err"] == INVALID and B["sg3"]["musbuf"] <= B["sg3"]["p10"] < B["sg3"]["musbuf"] + 0x1000
 # 佔位曲 5:沿用第 4 首的 p10,兩次讀之間事件指標前進
 assert B["sg5a"]["p10"] == B["sg4"]["p10"] and B["sg5a"]["err"] == INVALID and B["sg5b"]["evnt"] > B["sg5a"]["evnt"]
 # 出擊後卡住:play_bgm(-1)([0x51a11] = 255)只淡出,序列仍是狀態 4、緩衝仍是佔位曲那塊,事件指標不動
@@ -338,6 +342,12 @@ def inputs(inst: str) -> int:
 
 CALLLOG_MD5["lc287d"] = "b1f6bc7437a1b94c067ac55ddc0d8118"
 IL = {k: inputs(k) for k in CALLLOG_MD5}
+# 出擊開場:play_bgm(-1) 淡出之後,正常的實例呼叫 play_bgm(3)(戰鬥曲),卡住的沒有(重驗補)
+PB = {k: [c.stack[0] for c in cs._read(str(LB / f"{k}_CALLLOG.TXT"), calls=True).calls if c.eip - LIVE_DELTA == 0x25977]
+      for k in ("lc287b", "lc287f", "lc287d", "lc287e")}
+MINUS1 = 0xFFFFFFFF
+assert PB["lc287b"][-2:] == [5, MINUS1] and PB["lc287f"][-2:] == [2, MINUS1], PB
+assert all(PB[k][PB[k].index(MINUS1) + 1] == 3 for k in ("lc287d", "lc287e")), PB
 assert IL["lc287b"] == 0 and IL["lc287f"] == 0 and IL["lc287e"] >= 1 and IL["lc287d"] >= 1, IL
 
 # ================= (H) 實機:演出第 24 筆的 pose 5(lc287d,不寫記憶體、正常結束 7 次回合)=================
@@ -380,7 +390,8 @@ OUT.write_text(json.dumps({
                "fpu_detect": "03 03", "emu387_flags": "00 00"},
     "G_fdmus_placeholder": {"status_after_placeholder": B["sg2"]["status"], "ail_error": INVALID.decode(),
                             "replay_same_evnt": hex(B["sg2"]["evnt"]), "hang_evnt": [hex(B["sh1"]["evnt"]), hex(F["sh1"]["evnt"])],
-                            "input_loop_entries": IL, "calllog_md5": CALLLOG_MD5},
+                            "input_loop_entries": IL, "calllog_md5": CALLLOG_MD5,
+                            "play_bgm_args": {k: [a if a != MINUS1 else -1 for a in v] for k, v in PB.items()}},
     "H_act24_pose5": {"round": RND, "unit1_pose_after_act": U1[3], "unit1_slot": U1[2], "unit1_key7_key8": [U1[7], U1[8]],
                       "units48_51_pose": 0, "unit1_pose_later": U1B[3], "ev17_calls": 1, "act18_calls": 1},
 }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")

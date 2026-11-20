@@ -58,6 +58,11 @@ MUTANTS = [
     ("卡住時有換曲", 'assert B[k]["bgm"] == 255 and B[k]["status"] == 4', 'assert B[k]["bgm"] == 2 and B[k]["status"] == 4'),
     ("卡住的實例也進了輸入迴圈", 'IL["lc287b"] == 0 and IL["lc287f"] == 0', 'IL["lc287b"] >= 1 and IL["lc287f"] == 0'),
     ("輸入迴圈入口 0x117e8", "c.eip - LIVE_DELTA == 0x117E7)", "c.eip - LIVE_DELTA == 0x117E8)"),
+    ("p10 落在新緩衝", "assert not B[k][\"musbuf\"] <= B[k][\"p10\"]", "assert B[k][\"musbuf\"] <= B[k][\"p10\"]"),
+    ("錯誤字串成功時清除", "assert B[\"sg3\"][\"err\"] == B[\"sg4\"][\"err\"] == INVALID", "assert B[\"sg3\"][\"err\"] == B[\"sg4\"][\"err\"] == b\"\""),
+    ("卡住的實例有戰鬥曲", "PB[\"lc287b\"][-2:] == [5, MINUS1]", "PB[\"lc287b\"][-2:] == [MINUS1, 3]"),
+    ("正常實例淡出後換第 4 首", "PB[k].index(MINUS1) + 1] == 3 for k", "PB[k].index(MINUS1) + 1] == 4 for k"),
+    ("play_bgm 入口 0x25978", "c.eip - LIVE_DELTA == 0x25977]", "c.eip - LIVE_DELTA == 0x25978]"),
     # (H) 演出第 24 筆
     ("演出號 0x17", "c.stack[0] == 0x18]", "c.stack[0] == 0x17]"),
     ("單位 1 的 pose 是 1", "and U1[3] == 5 and U1[6] == 2", "and U1[3] == 1 and U1[6] == 2"),
